@@ -328,7 +328,7 @@ export function useSuspenseCountProjects<TArgs extends Prisma.ProjectsCountArgs,
 }
 import type { ProjectAccessType } from '@prisma/client';
 
-export function useCheckProjects<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; name?: string; iconUrl?: string; note?: string; docs?: string; isCompleted?: boolean; isDeleted?: boolean; createdBy?: string; defaultAccessType?: ProjectAccessType; defaultRoleId?: number; promptConfigId?: string; quickScriptEnabled?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckProjects<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; name?: string; iconUrl?: string; note?: string; docs?: string; isCompleted?: boolean; isDeleted?: boolean; createdBy?: string; defaultAccessType?: ProjectAccessType; defaultRoleId?: number; promptConfigId?: string; defaultCaseExportTemplateId?: number; quickScriptEnabled?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('Projects', `${endpoint}/projects/check`, args, options, fetch);
 }

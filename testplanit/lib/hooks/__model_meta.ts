@@ -986,6 +986,21 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, defaultCaseExportTemplateId: {
+                    name: "defaultCaseExportTemplateId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'defaultCaseExportTemplate',
+                }, defaultCaseExportTemplate: {
+                    name: "defaultCaseExportTemplate",
+                    type: "CaseExportTemplate",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'defaultForProjects',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "defaultCaseExportTemplateId" },
                 }, quickScriptEnabled: {
                     name: "quickScriptEnabled",
                     type: "Boolean",
@@ -2051,6 +2066,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'template',
+                }, defaultForProjects: {
+                    name: "defaultForProjects",
+                    type: "Projects",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'defaultCaseExportTemplate',
                 },
             }, uniqueConstraints: {
                 id: {

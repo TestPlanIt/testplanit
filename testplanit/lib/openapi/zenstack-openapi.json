@@ -853,6 +853,7 @@
           "defaultAccessType",
           "defaultRoleId",
           "promptConfigId",
+          "defaultCaseExportTemplateId",
           "quickScriptEnabled"
         ]
       },
@@ -3270,6 +3271,26 @@
               "$ref": "#/components/schemas/CaseExportTemplateProjectAssignment"
             }
           },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "defaultCaseExportTemplate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplate"
+              }
+            ]
+          },
           "quickScriptEnabled": {
             "type": "boolean"
           }
@@ -4283,6 +4304,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CaseExportTemplateProjectAssignment"
+            }
+          },
+          "defaultForProjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Projects"
             }
           }
         },
@@ -15219,6 +15246,19 @@
               }
             ]
           },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "quickScriptEnabled": {
             "oneOf": [
               {
@@ -15355,6 +15395,19 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentListRelationFilter"
+          },
+          "defaultCaseExportTemplate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateNullableScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -15433,6 +15486,16 @@
             ]
           },
           "promptConfigId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/SortOrder"
@@ -15534,6 +15597,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentOrderByRelationAggregateInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateOrderByWithRelationInput"
           }
         }
       },
@@ -15708,6 +15774,19 @@
               }
             ]
           },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "quickScriptEnabled": {
             "oneOf": [
               {
@@ -15844,6 +15923,19 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentListRelationFilter"
+          },
+          "defaultCaseExportTemplate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateNullableScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -16026,6 +16118,19 @@
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
               },
               {
                 "type": "null"
@@ -22261,6 +22366,9 @@
           },
           "projects": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentListRelationFilter"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsListRelationFilter"
           }
         }
       },
@@ -22335,6 +22443,9 @@
           },
           "projects": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentOrderByRelationAggregateInput"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsOrderByRelationAggregateInput"
           }
         }
       },
@@ -22522,6 +22633,9 @@
           },
           "projects": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentListRelationFilter"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsListRelationFilter"
           }
         }
       },
@@ -64685,6 +64799,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -64898,6 +65015,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -64984,6 +65104,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -67892,6 +68022,9 @@
           },
           "projects": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutTemplateInput"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsCreateNestedManyWithoutDefaultCaseExportTemplateInput"
           }
         },
         "required": [
@@ -68058,6 +68191,9 @@
           },
           "projects": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutTemplateNestedInput"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsUpdateManyWithoutDefaultCaseExportTemplateNestedInput"
           }
         }
       },
@@ -93848,6 +93984,31 @@
           }
         }
       },
+      "CaseExportTemplateNullableScalarRelationFilter": {
+        "type": "object",
+        "properties": {
+          "is": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+              }
+            ]
+          },
+          "isNot": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+              }
+            ]
+          }
+        }
+      },
       "ProjectStatusAssignmentOrderByRelationAggregateInput": {
         "type": "object",
         "properties": {
@@ -118033,6 +118194,27 @@
           }
         }
       },
+      "CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateCreateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedCreateWithoutDefaultForProjectsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateOrConnectWithoutDefaultForProjectsInput"
+          },
+          "connect": {
+            "$ref": "#/components/schemas/CaseExportTemplateWhereUniqueInput"
+          }
+        }
+      },
       "ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput": {
         "type": "object",
         "properties": {
@@ -123543,6 +123725,63 @@
                 "items": {
                   "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentScalarWhereInput"
                 }
+              }
+            ]
+          }
+        }
+      },
+      "CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateCreateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedCreateWithoutDefaultForProjectsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateOrConnectWithoutDefaultForProjectsInput"
+          },
+          "upsert": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpsertWithoutDefaultForProjectsInput"
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+              }
+            ]
+          },
+          "connect": {
+            "$ref": "#/components/schemas/CaseExportTemplateWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUpdateToOneWithWhereWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUpdateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedUpdateWithoutDefaultForProjectsInput"
               }
             ]
           }
@@ -141052,6 +141291,174 @@
           }
         }
       },
+      "ProjectsCreateNestedManyWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/ProjectsCreateManyDefaultCaseExportTemplateInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "CaseExportTemplateProjectAssignmentUncheckedCreateNestedManyWithoutTemplateInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateWithoutTemplateInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedCreateWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedCreateWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateOrConnectWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateOrConnectWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateManyTemplateInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ProjectsUncheckedCreateNestedManyWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/ProjectsCreateManyDefaultCaseExportTemplateInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
       "CaseExportTemplateProjectAssignmentUpdateManyWithoutTemplateNestedInput": {
         "type": "object",
         "properties": {
@@ -141193,6 +141600,447 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ProjectsUpdateManyWithoutDefaultCaseExportTemplateNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpsertWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUpsertWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/ProjectsCreateManyDefaultCaseExportTemplateInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUpdateWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateManyWithWhereWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUpdateManyWithWhereWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "CaseExportTemplateProjectAssignmentUncheckedUpdateManyWithoutTemplateNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateWithoutTemplateInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedCreateWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedCreateWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateOrConnectWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateOrConnectWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpsertWithWhereUniqueWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpsertWithWhereUniqueWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateManyTemplateInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateWithWhereUniqueWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateWithWhereUniqueWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithWhereWithoutTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithWhereWithoutTemplateInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ProjectsUncheckedUpdateManyWithoutDefaultCaseExportTemplateNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpsertWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUpsertWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/ProjectsCreateManyDefaultCaseExportTemplateInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUpdateWithWhereUniqueWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateManyWithWhereWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsUpdateManyWithWhereWithoutDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsScalarWhereInput"
                 }
               }
             ]
@@ -195422,6 +196270,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -195508,6 +196359,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -204543,6 +205404,19 @@
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
               },
               {
                 "type": "null"
@@ -217392,6 +218266,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -217472,6 +218349,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -224293,6 +225180,191 @@
           "data"
         ]
       },
+      "CaseExportTemplateCreateWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "framework": {
+            "type": "string"
+          },
+          "headerBody": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "templateBody": {
+            "type": "string"
+          },
+          "footerBody": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "fileExtension": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projects": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutTemplateInput"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "templateBody",
+          "fileExtension",
+          "language"
+        ]
+      },
+      "CaseExportTemplateUncheckedCreateWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "framework": {
+            "type": "string"
+          },
+          "headerBody": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "templateBody": {
+            "type": "string"
+          },
+          "footerBody": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "fileExtension": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projects": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedCreateNestedManyWithoutTemplateInput"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "templateBody",
+          "fileExtension",
+          "language"
+        ]
+      },
+      "CaseExportTemplateCreateOrConnectWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/CaseExportTemplateWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateCreateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedCreateWithoutDefaultForProjectsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
       "UserUpsertWithoutCreatedProjectsInput": {
         "type": "object",
         "properties": {
@@ -229654,6 +230726,387 @@
           }
         }
       },
+      "CaseExportTemplateUpsertWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUpdateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedUpdateWithoutDefaultForProjectsInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateCreateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedCreateWithoutDefaultForProjectsInput"
+              }
+            ]
+          },
+          "where": {
+            "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+          }
+        },
+        "required": [
+          "update",
+          "create"
+        ]
+      },
+      "CaseExportTemplateUpdateToOneWithWhereWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/CaseExportTemplateWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUpdateWithoutDefaultForProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateUncheckedUpdateWithoutDefaultForProjectsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "CaseExportTemplateUpdateWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "description": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "framework": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "headerBody": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "templateBody": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "footerBody": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fileExtension": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "language": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "projects": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutTemplateNestedInput"
+          }
+        }
+      },
+      "CaseExportTemplateUncheckedUpdateWithoutDefaultForProjectsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "description": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "framework": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "headerBody": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "templateBody": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "footerBody": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fileExtension": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "language": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "projects": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedUpdateManyWithoutTemplateNestedInput"
+          }
+        }
+      },
       "UserCreateWithoutProjectsInput": {
         "type": "object",
         "properties": {
@@ -230338,6 +231791,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -230428,6 +231884,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -231582,6 +233048,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -231732,6 +233201,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -232146,6 +233628,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -232236,6 +233721,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -232918,6 +234413,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -233068,6 +234566,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -233432,6 +234943,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -233522,6 +235036,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -234147,6 +235671,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -234297,6 +235824,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -234542,6 +236082,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -234632,6 +236175,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -237401,6 +238954,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -237551,6 +239107,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -240561,6 +242130,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -240651,6 +242223,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -241097,6 +242679,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -241247,6 +242832,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -248860,6 +250458,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -248950,6 +250551,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -249495,6 +251106,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -249645,6 +251259,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -251547,6 +253174,387 @@
           "data"
         ]
       },
+      "ProjectsCreateWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "docs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "defaultAccessType": {
+            "$ref": "#/components/schemas/ProjectAccessType"
+          },
+          "quickScriptEnabled": {
+            "type": "boolean"
+          },
+          "creator": {
+            "$ref": "#/components/schemas/UserCreateNestedOneWithoutCreatedProjectsInput"
+          },
+          "assignedUsers": {
+            "$ref": "#/components/schemas/ProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "assignedStatuses": {
+            "$ref": "#/components/schemas/ProjectStatusAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "milestoneTypes": {
+            "$ref": "#/components/schemas/MilestoneTypesAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "assignedTemplates": {
+            "$ref": "#/components/schemas/TemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "assignedWorkflows": {
+            "$ref": "#/components/schemas/ProjectWorkflowAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "milestones": {
+            "$ref": "#/components/schemas/MilestonesCreateNestedManyWithoutProjectInput"
+          },
+          "repositories": {
+            "$ref": "#/components/schemas/RepositoriesCreateNestedManyWithoutProjectInput"
+          },
+          "repositoryFolders": {
+            "$ref": "#/components/schemas/RepositoryFoldersCreateNestedManyWithoutProjectInput"
+          },
+          "repositoryCases": {
+            "$ref": "#/components/schemas/RepositoryCasesCreateNestedManyWithoutProjectInput"
+          },
+          "repositoryCaseVersions": {
+            "$ref": "#/components/schemas/RepositoryCaseVersionsCreateNestedManyWithoutProjectInput"
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/SessionsCreateNestedManyWithoutProjectInput"
+          },
+          "sessionVersions": {
+            "$ref": "#/components/schemas/SessionVersionsCreateNestedManyWithoutProjectInput"
+          },
+          "testRuns": {
+            "$ref": "#/components/schemas/TestRunsCreateNestedManyWithoutProjectInput"
+          },
+          "defaultRole": {
+            "$ref": "#/components/schemas/RolesCreateNestedOneWithoutDefaultForProjectsInput"
+          },
+          "userPermissions": {
+            "$ref": "#/components/schemas/UserProjectPermissionCreateNestedManyWithoutProjectInput"
+          },
+          "groupPermissions": {
+            "$ref": "#/components/schemas/GroupProjectPermissionCreateNestedManyWithoutProjectInput"
+          },
+          "sharedStepGroups": {
+            "$ref": "#/components/schemas/SharedStepGroupCreateNestedManyWithoutProjectInput"
+          },
+          "projectIntegrations": {
+            "$ref": "#/components/schemas/ProjectIntegrationCreateNestedManyWithoutProjectInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationCreateNestedManyWithoutProjectInput"
+          },
+          "codeRepositoryConfig": {
+            "$ref": "#/components/schemas/ProjectCodeRepositoryConfigCreateNestedOneWithoutProjectInput"
+          },
+          "promptConfig": {
+            "$ref": "#/components/schemas/PromptConfigCreateNestedOneWithoutProjectsInput"
+          },
+          "issues": {
+            "$ref": "#/components/schemas/IssueCreateNestedManyWithoutProjectInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageCreateNestedManyWithoutProjectInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigCreateNestedManyWithoutProjectInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheCreateNestedManyWithoutProjectInput"
+          },
+          "comments": {
+            "$ref": "#/components/schemas/CommentCreateNestedManyWithoutProjectInput"
+          },
+          "auditLogs": {
+            "$ref": "#/components/schemas/AuditLogCreateNestedManyWithoutProjectInput"
+          },
+          "shareLinks": {
+            "$ref": "#/components/schemas/ShareLinkCreateNestedManyWithoutProjectInput"
+          },
+          "assignedExportTemplates": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          }
+        },
+        "required": [
+          "name",
+          "creator"
+        ]
+      },
+      "ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "docs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "defaultAccessType": {
+            "$ref": "#/components/schemas/ProjectAccessType"
+          },
+          "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "quickScriptEnabled": {
+            "type": "boolean"
+          },
+          "assignedUsers": {
+            "$ref": "#/components/schemas/ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "assignedStatuses": {
+            "$ref": "#/components/schemas/ProjectStatusAssignmentUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "milestoneTypes": {
+            "$ref": "#/components/schemas/MilestoneTypesAssignmentUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "assignedTemplates": {
+            "$ref": "#/components/schemas/TemplateProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "assignedWorkflows": {
+            "$ref": "#/components/schemas/ProjectWorkflowAssignmentUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "milestones": {
+            "$ref": "#/components/schemas/MilestonesUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "repositories": {
+            "$ref": "#/components/schemas/RepositoriesUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "repositoryFolders": {
+            "$ref": "#/components/schemas/RepositoryFoldersUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "repositoryCases": {
+            "$ref": "#/components/schemas/RepositoryCasesUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "repositoryCaseVersions": {
+            "$ref": "#/components/schemas/RepositoryCaseVersionsUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/SessionsUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "sessionVersions": {
+            "$ref": "#/components/schemas/SessionVersionsUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "testRuns": {
+            "$ref": "#/components/schemas/TestRunsUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "userPermissions": {
+            "$ref": "#/components/schemas/UserProjectPermissionUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "groupPermissions": {
+            "$ref": "#/components/schemas/GroupProjectPermissionUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "sharedStepGroups": {
+            "$ref": "#/components/schemas/SharedStepGroupUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "projectIntegrations": {
+            "$ref": "#/components/schemas/ProjectIntegrationUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "codeRepositoryConfig": {
+            "$ref": "#/components/schemas/ProjectCodeRepositoryConfigUncheckedCreateNestedOneWithoutProjectInput"
+          },
+          "issues": {
+            "$ref": "#/components/schemas/IssueUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "comments": {
+            "$ref": "#/components/schemas/CommentUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "auditLogs": {
+            "$ref": "#/components/schemas/AuditLogUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "shareLinks": {
+            "$ref": "#/components/schemas/ShareLinkUncheckedCreateNestedManyWithoutProjectInput"
+          },
+          "assignedExportTemplates": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput"
+          }
+        },
+        "required": [
+          "name",
+          "createdBy"
+        ]
+      },
+      "ProjectsCreateOrConnectWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "ProjectsCreateManyDefaultCaseExportTemplateInputEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateManyDefaultCaseExportTemplateInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectsCreateManyDefaultCaseExportTemplateInput"
+                }
+              }
+            ]
+          },
+          "skipDuplicates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "CaseExportTemplateProjectAssignmentUpsertWithWhereUniqueWithoutTemplateInput": {
         "type": "object",
         "properties": {
@@ -251624,6 +253632,83 @@
           "data"
         ]
       },
+      "ProjectsUpsertWithWhereUniqueWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedUpdateWithoutDefaultCaseExportTemplateInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsCreateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedCreateWithoutDefaultCaseExportTemplateInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "update",
+          "create"
+        ]
+      },
+      "ProjectsUpdateWithWhereUniqueWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateWithoutDefaultCaseExportTemplateInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedUpdateWithoutDefaultCaseExportTemplateInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "ProjectsUpdateManyWithWhereWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/ProjectsScalarWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectsUpdateManyMutationInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsUncheckedUpdateManyWithoutDefaultCaseExportTemplateInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
       "CaseExportTemplateCreateWithoutProjectsInput": {
         "type": "object",
         "properties": {
@@ -251691,6 +253776,9 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsCreateNestedManyWithoutDefaultCaseExportTemplateInput"
           }
         },
         "required": [
@@ -251771,6 +253859,9 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsUncheckedCreateNestedManyWithoutDefaultCaseExportTemplateInput"
           }
         },
         "required": [
@@ -251952,6 +254043,9 @@
           },
           "shareLinks": {
             "$ref": "#/components/schemas/ShareLinkCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -252042,6 +254136,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -252360,6 +254464,9 @@
                 "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
               }
             ]
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsUpdateManyWithoutDefaultCaseExportTemplateNestedInput"
           }
         }
       },
@@ -252526,6 +254633,9 @@
                 "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
               }
             ]
+          },
+          "defaultForProjects": {
+            "$ref": "#/components/schemas/ProjectsUncheckedUpdateManyWithoutDefaultCaseExportTemplateNestedInput"
           }
         }
       },
@@ -252785,6 +254895,9 @@
           },
           "shareLinks": {
             "$ref": "#/components/schemas/ShareLinkUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -252935,6 +255048,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -262973,6 +265099,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -263063,6 +265192,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -263904,6 +266043,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -264054,6 +266196,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -264453,6 +266608,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -264543,6 +266701,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -266111,6 +268279,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -266261,6 +268432,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -270759,6 +272943,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -270849,6 +273036,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -274736,6 +276933,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -274886,6 +277086,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -278356,6 +280569,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -278446,6 +280662,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -279402,6 +281628,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -279552,6 +281781,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -291520,6 +293762,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -291610,6 +293855,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -295133,6 +297388,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -295283,6 +297541,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -302485,6 +304756,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -302575,6 +304849,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -303418,6 +305702,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -303568,6 +305855,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -305207,6 +307507,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -305297,6 +307600,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -308228,6 +310541,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -308378,6 +310694,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -324212,6 +326541,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -324302,6 +326634,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -326077,6 +328419,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -326227,6 +328572,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -328299,6 +330657,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -328389,6 +330750,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -328896,6 +331267,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -329046,6 +331420,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -332474,6 +334861,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -332564,6 +334954,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -333085,6 +335485,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -333235,6 +335638,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -336289,6 +338705,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -336379,6 +338798,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -337616,6 +340045,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -337766,6 +340198,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -338287,6 +340732,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -338377,6 +340825,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -339025,6 +341483,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -339175,6 +341636,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -354544,6 +357018,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -354634,6 +357111,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -355787,6 +358274,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -355937,6 +358427,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -359110,6 +361613,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -359200,6 +361706,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -360232,6 +362748,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -360382,6 +362901,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -363548,6 +366080,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -363638,6 +366173,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -364165,6 +366710,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -364315,6 +366863,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -365401,6 +367962,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -365475,6 +368039,16 @@
             "$ref": "#/components/schemas/ProjectAccessType"
           },
           "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
             "oneOf": [
               {
                 "type": "null"
@@ -366975,6 +369549,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -367065,6 +369642,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -368233,6 +370820,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -368383,6 +370973,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -369414,6 +372017,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -369504,6 +372110,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -370025,6 +372641,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -370175,6 +372794,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -370685,6 +373317,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -370775,6 +373410,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -371296,6 +373941,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -371446,6 +374094,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -377501,6 +380162,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -377591,6 +380255,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -379721,6 +382395,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -379871,6 +382548,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -384549,6 +387239,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentCreateNestedManyWithoutProjectInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateCreateNestedOneWithoutDefaultForProjectsInput"
           }
         },
         "required": [
@@ -384639,6 +387332,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -385007,6 +387710,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -385157,6 +387863,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -385581,6 +388300,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -389759,6 +392488,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -389899,6 +392631,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -390135,6 +392880,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -402864,6 +405622,16 @@
               }
             ]
           },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "quickScriptEnabled": {
             "type": "boolean"
           }
@@ -404233,6 +407001,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -404370,6 +407141,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -404603,6 +407387,19 @@
               },
               {
                 "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
               },
               {
                 "type": "null"
@@ -425308,6 +428105,101 @@
           "projectId"
         ]
       },
+      "ProjectsCreateManyDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "docs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "defaultAccessType": {
+            "$ref": "#/components/schemas/ProjectAccessType"
+          },
+          "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "quickScriptEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "createdBy"
+        ]
+      },
       "CaseExportTemplateProjectAssignmentUpdateWithoutTemplateInput": {
         "type": "object",
         "properties": {
@@ -425341,6 +428233,626 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "ProjectsUpdateWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "docs": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultAccessType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectAccessType"
+              },
+              {
+                "$ref": "#/components/schemas/EnumProjectAccessTypeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "quickScriptEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "creator": {
+            "$ref": "#/components/schemas/UserUpdateOneRequiredWithoutCreatedProjectsNestedInput"
+          },
+          "assignedUsers": {
+            "$ref": "#/components/schemas/ProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedStatuses": {
+            "$ref": "#/components/schemas/ProjectStatusAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "milestoneTypes": {
+            "$ref": "#/components/schemas/MilestoneTypesAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedTemplates": {
+            "$ref": "#/components/schemas/TemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedWorkflows": {
+            "$ref": "#/components/schemas/ProjectWorkflowAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "milestones": {
+            "$ref": "#/components/schemas/MilestonesUpdateManyWithoutProjectNestedInput"
+          },
+          "repositories": {
+            "$ref": "#/components/schemas/RepositoriesUpdateManyWithoutProjectNestedInput"
+          },
+          "repositoryFolders": {
+            "$ref": "#/components/schemas/RepositoryFoldersUpdateManyWithoutProjectNestedInput"
+          },
+          "repositoryCases": {
+            "$ref": "#/components/schemas/RepositoryCasesUpdateManyWithoutProjectNestedInput"
+          },
+          "repositoryCaseVersions": {
+            "$ref": "#/components/schemas/RepositoryCaseVersionsUpdateManyWithoutProjectNestedInput"
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/SessionsUpdateManyWithoutProjectNestedInput"
+          },
+          "sessionVersions": {
+            "$ref": "#/components/schemas/SessionVersionsUpdateManyWithoutProjectNestedInput"
+          },
+          "testRuns": {
+            "$ref": "#/components/schemas/TestRunsUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultRole": {
+            "$ref": "#/components/schemas/RolesUpdateOneWithoutDefaultForProjectsNestedInput"
+          },
+          "userPermissions": {
+            "$ref": "#/components/schemas/UserProjectPermissionUpdateManyWithoutProjectNestedInput"
+          },
+          "groupPermissions": {
+            "$ref": "#/components/schemas/GroupProjectPermissionUpdateManyWithoutProjectNestedInput"
+          },
+          "sharedStepGroups": {
+            "$ref": "#/components/schemas/SharedStepGroupUpdateManyWithoutProjectNestedInput"
+          },
+          "projectIntegrations": {
+            "$ref": "#/components/schemas/ProjectIntegrationUpdateManyWithoutProjectNestedInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationUpdateManyWithoutProjectNestedInput"
+          },
+          "codeRepositoryConfig": {
+            "$ref": "#/components/schemas/ProjectCodeRepositoryConfigUpdateOneWithoutProjectNestedInput"
+          },
+          "promptConfig": {
+            "$ref": "#/components/schemas/PromptConfigUpdateOneWithoutProjectsNestedInput"
+          },
+          "issues": {
+            "$ref": "#/components/schemas/IssueUpdateManyWithoutProjectNestedInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageUpdateManyWithoutProjectNestedInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigUpdateManyWithoutProjectNestedInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheUpdateManyWithoutProjectNestedInput"
+          },
+          "comments": {
+            "$ref": "#/components/schemas/CommentUpdateManyWithoutProjectNestedInput"
+          },
+          "auditLogs": {
+            "$ref": "#/components/schemas/AuditLogUpdateManyWithoutProjectNestedInput"
+          },
+          "shareLinks": {
+            "$ref": "#/components/schemas/ShareLinkUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedExportTemplates": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          }
+        }
+      },
+      "ProjectsUncheckedUpdateWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "docs": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdBy": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultAccessType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectAccessType"
+              },
+              {
+                "$ref": "#/components/schemas/EnumProjectAccessTypeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quickScriptEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "assignedUsers": {
+            "$ref": "#/components/schemas/ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedStatuses": {
+            "$ref": "#/components/schemas/ProjectStatusAssignmentUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "milestoneTypes": {
+            "$ref": "#/components/schemas/MilestoneTypesAssignmentUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedTemplates": {
+            "$ref": "#/components/schemas/TemplateProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedWorkflows": {
+            "$ref": "#/components/schemas/ProjectWorkflowAssignmentUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "milestones": {
+            "$ref": "#/components/schemas/MilestonesUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "repositories": {
+            "$ref": "#/components/schemas/RepositoriesUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "repositoryFolders": {
+            "$ref": "#/components/schemas/RepositoryFoldersUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "repositoryCases": {
+            "$ref": "#/components/schemas/RepositoryCasesUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "repositoryCaseVersions": {
+            "$ref": "#/components/schemas/RepositoryCaseVersionsUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/SessionsUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "sessionVersions": {
+            "$ref": "#/components/schemas/SessionVersionsUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "testRuns": {
+            "$ref": "#/components/schemas/TestRunsUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "userPermissions": {
+            "$ref": "#/components/schemas/UserProjectPermissionUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "groupPermissions": {
+            "$ref": "#/components/schemas/GroupProjectPermissionUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "sharedStepGroups": {
+            "$ref": "#/components/schemas/SharedStepGroupUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "projectIntegrations": {
+            "$ref": "#/components/schemas/ProjectIntegrationUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "codeRepositoryConfig": {
+            "$ref": "#/components/schemas/ProjectCodeRepositoryConfigUncheckedUpdateOneWithoutProjectNestedInput"
+          },
+          "issues": {
+            "$ref": "#/components/schemas/IssueUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "comments": {
+            "$ref": "#/components/schemas/CommentUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "auditLogs": {
+            "$ref": "#/components/schemas/AuditLogUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "shareLinks": {
+            "$ref": "#/components/schemas/ShareLinkUncheckedUpdateManyWithoutProjectNestedInput"
+          },
+          "assignedExportTemplates": {
+            "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput"
+          }
+        }
+      },
+      "ProjectsUncheckedUpdateManyWithoutDefaultCaseExportTemplateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "docs": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdBy": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultAccessType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectAccessType"
+              },
+              {
+                "$ref": "#/components/schemas/EnumProjectAccessTypeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quickScriptEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
               }
             ]
           }
@@ -465624,6 +469136,16 @@
               }
             ]
           },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "quickScriptEnabled": {
             "type": "boolean"
           }
@@ -466121,6 +469643,9 @@
           },
           "assignedExportTemplates": {
             "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentUpdateManyWithoutProjectNestedInput"
+          },
+          "defaultCaseExportTemplate": {
+            "$ref": "#/components/schemas/CaseExportTemplateUpdateOneWithoutDefaultForProjectsNestedInput"
           }
         }
       },
@@ -466252,6 +469777,19 @@
             ]
           },
           "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -466485,6 +470023,19 @@
             ]
           },
           "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -468338,6 +471889,16 @@
               }
             ]
           },
+          "defaultCaseExportTemplate": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateDefaultArgs"
+              }
+            ]
+          },
           "_count": {
             "oneOf": [
               {
@@ -469095,6 +472656,16 @@
               },
               {
                 "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentFindManyArgs"
+              }
+            ]
+          },
+          "defaultForProjects": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsFindManyArgs"
               }
             ]
           },
@@ -472514,6 +476085,9 @@
         "properties": {
           "projects": {
             "type": "boolean"
+          },
+          "defaultForProjects": {
+            "type": "boolean"
           }
         }
       },
@@ -474454,6 +478028,19 @@
               }
             ]
           },
+          "defaultCaseExportTemplateId": {
+            "type": "boolean"
+          },
+          "defaultCaseExportTemplate": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/CaseExportTemplateDefaultArgs"
+              }
+            ]
+          },
           "quickScriptEnabled": {
             "type": "boolean"
           },
@@ -475532,6 +479119,16 @@
               },
               {
                 "$ref": "#/components/schemas/CaseExportTemplateProjectAssignmentFindManyArgs"
+              }
+            ]
+          },
+          "defaultForProjects": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsFindManyArgs"
               }
             ]
           },
@@ -481773,6 +485370,9 @@
           "promptConfigId": {
             "type": "boolean"
           },
+          "defaultCaseExportTemplateId": {
+            "type": "boolean"
+          },
           "quickScriptEnabled": {
             "type": "boolean"
           },
@@ -481789,6 +485389,9 @@
           },
           "defaultRoleId": {
             "type": "boolean"
+          },
+          "defaultCaseExportTemplateId": {
+            "type": "boolean"
           }
         }
       },
@@ -481799,6 +485402,9 @@
             "type": "boolean"
           },
           "defaultRoleId": {
+            "type": "boolean"
+          },
+          "defaultCaseExportTemplateId": {
             "type": "boolean"
           }
         }
@@ -481843,6 +485449,9 @@
             "type": "boolean"
           },
           "promptConfigId": {
+            "type": "boolean"
+          },
+          "defaultCaseExportTemplateId": {
             "type": "boolean"
           },
           "quickScriptEnabled": {
@@ -481890,6 +485499,9 @@
             "type": "boolean"
           },
           "promptConfigId": {
+            "type": "boolean"
+          },
+          "defaultCaseExportTemplateId": {
             "type": "boolean"
           },
           "quickScriptEnabled": {
@@ -494749,6 +498361,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -511531,6 +515153,9 @@
           "promptConfigId": {
             "type": "integer"
           },
+          "defaultCaseExportTemplateId": {
+            "type": "integer"
+          },
           "quickScriptEnabled": {
             "type": "integer"
           },
@@ -511552,6 +515177,7 @@
           "defaultAccessType",
           "defaultRoleId",
           "promptConfigId",
+          "defaultCaseExportTemplateId",
           "quickScriptEnabled",
           "_all"
         ]
@@ -511578,6 +515204,16 @@
                 "type": "number"
               }
             ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
           }
         }
       },
@@ -511595,6 +515231,16 @@
             ]
           },
           "defaultRoleId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
             "oneOf": [
               {
                 "type": "null"
@@ -511738,6 +515384,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -511885,6 +515541,16 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          },
+          "defaultCaseExportTemplateId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
