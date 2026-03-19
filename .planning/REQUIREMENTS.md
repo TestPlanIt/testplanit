@@ -112,8 +112,8 @@
 - [x] **ADM-04**: E2E test verifies SSO configuration (add/edit providers, force SSO, email domain restrictions)
 - [x] **ADM-05**: E2E test verifies workflow management (create, edit, reorder states, assign to projects)
 - [x] **ADM-06**: E2E test verifies status management (create, edit, configure flags, scope assignment)
-- [ ] **ADM-07**: E2E test verifies configuration management (categories, variants, configuration groups)
-- [ ] **ADM-08**: E2E test verifies audit log viewing, filtering, and CSV export
+- [x] **ADM-07**: E2E test verifies configuration management (categories, variants, configuration groups)
+- [x] **ADM-08**: E2E test verifies audit log viewing, filtering, and CSV export
 - [x] **ADM-09**: E2E test verifies Elasticsearch admin (settings, reindex operations)
 - [x] **ADM-10**: E2E test verifies LLM integration management (add provider, test connection, per-project assignment)
 - [x] **ADM-11**: E2E test verifies app config management (edit_results_duration, project_docs_default)
@@ -277,8 +277,8 @@ Deferred to future. Not in current roadmap.
 | ADM-04 | Phase 17 | Complete |
 | ADM-05 | Phase 17 | Complete |
 | ADM-06 | Phase 17 | Complete |
-| ADM-07 | Phase 17 | Pending |
-| ADM-08 | Phase 17 | Pending |
+| ADM-07 | Phase 17 | Complete |
+| ADM-08 | Phase 17 | Complete |
 | ADM-09 | Phase 17 | Complete |
 | ADM-10 | Phase 17 | Complete |
 | ADM-11 | Phase 17 | Complete |
