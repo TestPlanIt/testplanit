@@ -302,11 +302,13 @@ Plans:
   3. Hook tests pass for UI state hooks (useExportData, useReportColumns, filter/sort hooks) and form hooks (useForm integrations, validation)
   4. Hook tests pass for integration hooks (useAutoTagJob, useIntegration, useLlm) with mocked providers
   5. Component tests pass for NotificationBell, NotificationContent, and NotificationPreferences; API tests pass for notification dispatch; unit tests pass for emailWorker, repoCacheWorker, and autoTagWorker
-**Plans:** 2 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 24-01-PLAN.md -- Custom hooks tests (UI state, form, auth, utility hooks)
+- [ ] 24-02-PLAN.md -- ZenStack hook shape verification and useAutoTagJob integration hook tests
+- [ ] 24-03-PLAN.md -- Notification component gap-fill and notification dispatch API tests
+- [ ] 24-04-PLAN.md -- Worker unit tests (emailWorker, repoCacheWorker, autoTagWorker)
 
 ---
 
@@ -340,4 +342,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 21. Integrations E2E, Components, and API Tests | 3/3 | Complete    | 2026-03-19 | - |
 | 22. Custom API Route Tests | 5/5 | Complete    | 2026-03-19 | - |
 | 23. General Components | 3/3 | Complete    | 2026-03-19 | - |
-| 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
+| 24. Hooks, Notifications, and Workers | v2.0 | 0/4 | Not started | - |
