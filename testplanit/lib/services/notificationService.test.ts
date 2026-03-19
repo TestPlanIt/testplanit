@@ -3,6 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getNotificationQueue } from "../queues";
 import { NotificationService } from "./notificationService";
 
+// Mock ~/server/db for createUserRegistrationNotification
+const mockFindMany = vi.fn();
+vi.mock("~/server/db", () => ({
+  db: {
+    user: {
+      findMany: mockFindMany,
+    },
+  },
+}));
+
 // Mock the queue
 const mockQueue = {
   add: vi.fn(),
@@ -565,6 +575,253 @@ describe("NotificationService", () => {
       );
 
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe("createUserRegistrationNotification", () => {
+    it("should notify all system admins when a new user registers via form", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-admin-1" } as any);
+      mockFindMany.mockResolvedValue([
+        { id: "admin-1" },
+        { id: "admin-2" },
+      ]);
+
+      await NotificationService.createUserRegistrationNotification(
+        "Jane Smith",
+        "jane@example.com",
+        "new-user-id",
+        "form"
+      );
+
+      expect(mockFindMany).toHaveBeenCalledWith({
+        where: {
+          access: "ADMIN",
+          isActive: true,
+          isDeleted: false,
+        },
+        select: { id: true },
+      });
+
+      // Should have called add twice (once per admin)
+      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "admin-1",
+          type: NotificationType.USER_REGISTERED,
+          title: "New User Registration",
+          message: "Jane Smith (jane@example.com) has registered via registration form",
+          relatedEntityId: "new-user-id",
+          relatedEntityType: "User",
+          data: expect.objectContaining({
+            newUserName: "Jane Smith",
+            newUserEmail: "jane@example.com",
+            newUserId: "new-user-id",
+            registrationMethod: "form",
+          }),
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should notify all system admins when a new user registers via SSO", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-sso-1" } as any);
+      mockFindMany.mockResolvedValue([{ id: "admin-only" }]);
+
+      await NotificationService.createUserRegistrationNotification(
+        "Bob Jones",
+        "bob@company.com",
+        "sso-user-id",
+        "sso"
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "admin-only",
+          type: NotificationType.USER_REGISTERED,
+          message: "Bob Jones (bob@company.com) has registered via SSO",
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should handle no system admins found gracefully", async () => {
+      mockFindMany.mockResolvedValue([]);
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      await NotificationService.createUserRegistrationNotification(
+        "Alice",
+        "alice@example.com",
+        "user-alice",
+        "form"
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "No system administrators found to notify"
+      );
+      expect(mockQueue.add).not.toHaveBeenCalled();
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it("should handle db errors without throwing", async () => {
+      mockFindMany.mockRejectedValue(new Error("DB connection error"));
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      // Should not throw — the method swallows errors
+      await expect(
+        NotificationService.createUserRegistrationNotification(
+          "Carol",
+          "carol@example.com",
+          "user-carol",
+          "form"
+        )
+      ).resolves.toBeUndefined();
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to create user registration notifications:",
+        expect.any(Error)
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe("createShareLinkAccessedNotification", () => {
+    it("should create share link accessed notification with viewer name", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-share-1" } as any);
+
+      const result = await NotificationService.createShareLinkAccessedNotification(
+        "owner-123",
+        "Sprint Report Q4",
+        "Alice Viewer",
+        "alice@test.com",
+        "share-link-abc",
+        100
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "owner-123",
+          type: NotificationType.SHARE_LINK_ACCESSED,
+          title: "Shared Report Viewed",
+          message: 'Alice Viewer viewed your shared report: "Sprint Report Q4"',
+          relatedEntityId: "share-link-abc",
+          relatedEntityType: "ShareLink",
+          data: expect.objectContaining({
+            shareLinkId: "share-link-abc",
+            projectId: 100,
+            viewerName: "Alice Viewer",
+            viewerEmail: "alice@test.com",
+          }),
+        }),
+        expect.any(Object)
+      );
+
+      expect(result).toBe("job-share-1");
+    });
+
+    it("should use viewer email when name is not available", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-share-2" } as any);
+
+      await NotificationService.createShareLinkAccessedNotification(
+        "owner-456",
+        "Test Summary",
+        null,
+        "anonymous@test.com",
+        "share-link-xyz"
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          message: 'anonymous@test.com viewed your shared report: "Test Summary"',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should use 'Someone' when both name and email are null", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-share-3" } as any);
+
+      await NotificationService.createShareLinkAccessedNotification(
+        "owner-789",
+        "Anonymous Report",
+        null,
+        null,
+        "share-link-anon"
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          message: 'Someone viewed your shared report: "Anonymous Report"',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should omit projectId from data when not provided", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-share-4" } as any);
+
+      await NotificationService.createShareLinkAccessedNotification(
+        "owner-000",
+        "Report Without Project",
+        "Bob",
+        null,
+        "share-link-no-project"
+        // no projectId argument
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          data: expect.not.objectContaining({ projectId: expect.anything() }),
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should include viewedAt timestamp in data", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-share-5" } as any);
+
+      const before = Date.now();
+      await NotificationService.createShareLinkAccessedNotification(
+        "owner-ts",
+        "Timestamped Report",
+        "Dave",
+        null,
+        "share-link-ts",
+        50
+      );
+      const after = Date.now();
+
+      const callArgs = mockQueue.add.mock.calls[0][1] as any;
+      const viewedAtMs = new Date(callArgs.data.viewedAt).getTime();
+      expect(viewedAtMs).toBeGreaterThanOrEqual(before);
+      expect(viewedAtMs).toBeLessThanOrEqual(after);
+    });
+  });
+
+  describe("markNotificationsAsRead", () => {
+    it("should return the provided notification IDs", async () => {
+      const ids = ["notif-1", "notif-2", "notif-3"];
+      const result = await NotificationService.markNotificationsAsRead(ids, "user-123");
+      expect(result).toEqual(ids);
+    });
+
+    it("should return empty array when no IDs provided", async () => {
+      const result = await NotificationService.markNotificationsAsRead([], "user-123");
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("getUnreadCount", () => {
+    it("should return 0 as placeholder implementation", async () => {
+      const count = await NotificationService.getUnreadCount("user-123");
+      expect(count).toBe(0);
     });
   });
 });
