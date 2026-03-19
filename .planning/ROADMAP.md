@@ -129,11 +129,12 @@ Plans:
   3. E2E tests pass for session creation with template, configuration, and milestone selection
   4. E2E tests pass for session execution (add results with status/notes/attachments) and session completion with summary view
   5. Component and hook tests pass for SessionResultForm, SessionResultsList, CompleteSessionDialog, and session hooks
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 13-01-PLAN.md -- Run component tests (TestRunCaseDetails, TestResultHistory, MagicSelectButton, MagicSelectDialog)
+- [ ] 13-02-PLAN.md -- Session lifecycle E2E tests (creation, execution, completion)
+- [ ] 13-03-PLAN.md -- Session component and hook tests (SessionResultForm, SessionResultsList, session hooks)
 
 ### Phase 14: Project Management E2E and Components
 **Goal**: All project management workflows are verified end-to-end with component coverage
@@ -324,7 +325,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 10. Test Case Repository E2E Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 11. Repository Components and Hooks | 2/2 | Complete    | 2026-03-19 | - |
 | 12. Test Execution E2E Tests | 2/2 | Complete    | 2026-03-19 | - |
-| 13. Run Components, Sessions E2E, and Session Components | v2.0 | 0/TBD | Not started | - |
+| 13. Run Components, Sessions E2E, and Session Components | v2.0 | 0/3 | Not started | - |
 | 14. Project Management E2E and Components | v2.0 | 0/TBD | Not started | - |
 | 15. AI Feature E2E and API Tests | v2.0 | 0/TBD | Not started | - |
 | 16. AI Component Tests | v2.0 | 0/TBD | Not started | - |
