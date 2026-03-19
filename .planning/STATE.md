@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-19T13:42:17.660Z"
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-03-19T13:43:33.407Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 27
 ---
 
@@ -63,6 +63,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 13-run-components-sessions-e2e-and-session-components P03 | 45 | 2 tasks | 3 files |
 | Phase 14-project-management-e2e-and-components P02 | 20 | 2 tasks | 2 files |
 | Phase 14-project-management-e2e-and-components P01 | 30 | 2 tasks | 3 files |
+| Phase 14-project-management-e2e-and-components P03 | 6 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 14-project-management-e2e-and-components]: Documentation AI assistant test is lenient — passes if button absent since AI requires LLM integration
 - [Phase Phase 14-project-management-e2e-and-components]: Wizard step Next button disabled check via toBeDisabled() since canProceed() returns false on empty name at step 0
 - [Phase Phase 14-project-management-e2e-and-components]: Quickscript toggle identified by data-testid='quickscript-enabled-toggle' for E2E tests
+- [Phase 14-project-management-e2e-and-components]: ProjectMenu active link check: split className by space and compare cls === 'bg-primary' to avoid false match on hover:bg-primary/10 substring
+- [Phase 14-project-management-e2e-and-components]: MilestoneItemCard DropdownMenu mocked as always-rendered (not gated on open state) to enable dropdown item assertions without simulating trigger click
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T13:42:17.658Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-19T13:43:33.405Z
+Stopped at: Completed 14-03-PLAN.md
 Resume file: None

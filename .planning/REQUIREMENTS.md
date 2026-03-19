@@ -88,9 +88,9 @@
 - [x] **PROJ-04**: E2E test verifies project documentation editor (TipTap wiki, AI writing assistant mocked)
 - [x] **PROJ-05**: E2E test verifies member management (add, remove, change roles, group assignment)
 - [x] **PROJ-06**: E2E test verifies project overview dashboard (stats, recent activity, assignments)
-- [ ] **PROJ-07**: Component tests for ProjectCard, ProjectMenu, ProjectQuickSelector, project settings forms
-- [ ] **PROJ-08**: Component tests for milestone components (list, detail, hierarchy, progress tracking)
-- [ ] **PROJ-09**: Hook tests for project-related hooks (useProjectPermissions and related)
+- [x] **PROJ-07**: Component tests for ProjectCard, ProjectMenu, ProjectQuickSelector, project settings forms
+- [x] **PROJ-08**: Component tests for milestone components (list, detail, hierarchy, progress tracking)
+- [x] **PROJ-09**: Hook tests for project-related hooks (useProjectPermissions and related)
 
 ### AI Features
 
@@ -259,9 +259,9 @@ Deferred to future. Not in current roadmap.
 | PROJ-04 | Phase 14 | Complete |
 | PROJ-05 | Phase 14 | Complete |
 | PROJ-06 | Phase 14 | Complete |
-| PROJ-07 | Phase 14 | Pending |
-| PROJ-08 | Phase 14 | Pending |
-| PROJ-09 | Phase 14 | Pending |
+| PROJ-07 | Phase 14 | Complete |
+| PROJ-08 | Phase 14 | Complete |
+| PROJ-09 | Phase 14 | Complete |
 | AI-01 | Phase 15 | Pending |
 | AI-02 | Phase 15 | Pending |
 | AI-03 | Phase 15 | Pending |
