@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-19T14:14:28.501Z"
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-19T14:26:35.201Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
   completed_phases: 7
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 20
+  completed_plans: 19
   percent: 27
 ---
 
@@ -66,6 +66,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 14-project-management-e2e-and-components P03 | 6 | 2 tasks | 5 files |
 | Phase 15-ai-feature-e2e-and-api-tests P02 | 20 | 2 tasks | 2 files |
 | Phase 15-ai-feature-e2e-and-api-tests P01 | 40 | 2 tasks | 3 files |
+| Phase 16-ai-component-tests P02 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 15-ai-feature-e2e-and-api-tests]: Auto-tag submit/status/cancel tests accept both 503 (queue unavailable) and 200/404 (queue available) as valid E2E outcomes
 - [Phase 15-ai-feature-e2e-and-api-tests]: AI wizard tests lenient: GenerateTestCasesWizard returns null when no LLM integration configured — conditional assertions required
 - [Phase 15-ai-feature-e2e-and-api-tests]: MagicSelect E2E selector scoped to dialog container to prevent partial text matches on project name containing 'Magic'
+- [Phase 16-ai-component-tests]: SingleResultView retry button uses title attr — use getByTitle('retryButton') for isolation in single-result tests
+- [Phase 16-ai-component-tests]: AI toggle visibility gated on both aiAvailable=true AND aiCheckLoading=false — use waitFor to assert after async checkAiExportAvailable resolves
 
 ### Pending Todos
 
@@ -127,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T14:10:56.998Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-19T14:26:35.198Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None

@@ -171,7 +171,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Component tests pass for AutoTagWizardDialog, AutoTagReviewDialog, AutoTagProgress, and TagChip covering all states (loading, empty, error, success)
   2. Component tests pass for QuickScript dialog, template selector, and AI preview pane with mocked LLM responses
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 16-01-PLAN.md -- AutoTag component tests (AutoTagWizardDialog, AutoTagReviewDialog, AutoTagProgress, TagChip)
@@ -324,7 +324,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 13. Run Components, Sessions E2E, and Session Components | 3/3 | Complete    | 2026-03-19 | - |
 | 14. Project Management E2E and Components | 3/3 | Complete    | 2026-03-19 | - |
 | 15. AI Feature E2E and API Tests | 2/2 | Complete    | 2026-03-19 | - |
-| 16. AI Component Tests | v2.0 | 0/2 | Planned | - |
+| 16. AI Component Tests | 1/2 | In Progress|  | - |
 | 17. Administration E2E Tests | v2.0 | 0/TBD | Not started | - |
 | 18. Administration Component Tests | v2.0 | 0/TBD | Not started | - |
 | 19. Reporting E2E and Component Tests | v2.0 | 0/TBD | Not started | - |

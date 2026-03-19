@@ -100,7 +100,7 @@
 - [x] **AI-04**: E2E test verifies QuickScript generation (template-based and AI-based) with mocked LLM
 - [x] **AI-05**: E2E test verifies writing assistant in TipTap editor with mocked LLM
 - [ ] **AI-06**: Component tests for AutoTagWizardDialog, AutoTagReviewDialog, AutoTagProgress, TagChip
-- [ ] **AI-07**: Component tests for QuickScript dialog, template selector, AI preview pane
+- [x] **AI-07**: Component tests for QuickScript dialog, template selector, AI preview pane
 - [x] **AI-08**: API tests for LLM endpoints (generate-test-cases, magic-select, chat, parse-markdown) with mocked providers
 - [x] **AI-09**: API tests for auto-tag endpoints (submit, status, cancel, apply) with mocked providers
 
@@ -268,7 +268,7 @@ Deferred to future. Not in current roadmap.
 | AI-04 | Phase 15 | Complete |
 | AI-05 | Phase 15 | Complete |
 | AI-06 | Phase 16 | Pending |
-| AI-07 | Phase 16 | Pending |
+| AI-07 | Phase 16 | Complete |
 | AI-08 | Phase 15 | Complete |
 | AI-09 | Phase 15 | Complete |
 | ADM-01 | Phase 17 | Pending |
