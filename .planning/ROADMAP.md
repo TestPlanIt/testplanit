@@ -285,11 +285,12 @@ Plans:
   2. Component tests pass for comment system (CommentEditor, CommentList, MentionSuggestion) and attachment components (display, upload, preview carousel)
   3. Component tests pass for DataTable (sorting, filtering, column visibility, row selection) and form components (ConfigurationSelect, FolderSelect, MilestoneSelect, DatePickerField)
   4. Component tests pass for onboarding dialogs, TipTap editor extensions (image resize, tables, code blocks), and DnD components (drag previews, drag interactions)
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 23-01-PLAN.md -- Header, DataTable, and form select component tests (COMP-01, COMP-04, COMP-05)
+- [ ] 23-02-PLAN.md -- Comment system, attachment, and onboarding component tests (COMP-02, COMP-03, COMP-06)
+- [ ] 23-03-PLAN.md -- TipTap extension and DnD component tests (COMP-07, COMP-08)
 
 ### Phase 24: Hooks, Notifications, and Workers
 **Goal**: All custom hooks, notification flows, and background workers are unit tested
@@ -338,5 +339,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 20. Search E2E and Component Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 21. Integrations E2E, Components, and API Tests | 3/3 | Complete    | 2026-03-19 | - |
 | 22. Custom API Route Tests | 5/5 | Complete    | 2026-03-19 | - |
-| 23. General Components | v2.0 | 0/TBD | Not started | - |
+| 23. General Components | v2.0 | 0/3 | Not started | - |
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
