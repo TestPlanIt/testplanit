@@ -98,10 +98,6 @@ Plans:
 - [ ] 11-01-PLAN.md -- Editor sub-components (StepsForm, FieldValueRenderer) and navigation (BreadcrumbComponent, TreeView)
 - [ ] 11-02-PLAN.md -- Repository Cases table component and useRepositoryCasesWithLastResult hook tests
 
-
-
-
-
 ### Phase 12: Test Execution E2E Tests
 **Goal**: All test run creation and execution workflows are verified end-to-end
 **Depends on**: Phase 10
@@ -178,8 +174,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 16-01-PLAN.md -- AutoTag component tests (AutoTagWizardDialog, AutoTagReviewDialog, AutoTagProgress, TagChip)
+- [ ] 16-02-PLAN.md -- QuickScript dialog and ExportPreviewPane component tests
 
 ### Phase 17: Administration E2E Tests
 **Goal**: All admin management workflows are verified end-to-end
@@ -328,7 +324,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 13. Run Components, Sessions E2E, and Session Components | 3/3 | Complete    | 2026-03-19 | - |
 | 14. Project Management E2E and Components | 3/3 | Complete    | 2026-03-19 | - |
 | 15. AI Feature E2E and API Tests | 2/2 | Complete    | 2026-03-19 | - |
-| 16. AI Component Tests | v2.0 | 0/TBD | Not started | - |
+| 16. AI Component Tests | v2.0 | 0/2 | Planned | - |
 | 17. Administration E2E Tests | v2.0 | 0/TBD | Not started | - |
 | 18. Administration Component Tests | v2.0 | 0/TBD | Not started | - |
 | 19. Reporting E2E and Component Tests | v2.0 | 0/TBD | Not started | - |
