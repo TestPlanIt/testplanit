@@ -235,7 +235,7 @@ Plans:
   3. E2E test passes for faceted search filters (custom field values, tags, states, date ranges)
   4. Component tests pass for UnifiedSearch, GlobalSearchSheet, search result components, and FacetedSearchFilters with all data states
   5. Component tests pass for result display components (CustomFieldDisplay, DateTimeDisplay, UserDisplay) covering all field types
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 20-01-PLAN.md -- Global search (Cmd+K) and faceted search filter E2E tests
@@ -331,7 +331,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 17. Administration E2E Tests | 4/4 | Complete    | 2026-03-19 | - |
 | 18. Administration Component Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 19. Reporting E2E and Component Tests | 3/3 | Complete    | 2026-03-19 | - |
-| 20. Search E2E and Component Tests | v2.0 | 0/2 | Not started | - |
+| 20. Search E2E and Component Tests | 1/2 | In Progress|  | - |
 | 21. Integrations E2E, Components, and API Tests | v2.0 | 0/TBD | Not started | - |
 | 22. Custom API Route Tests | v2.0 | 0/TBD | Not started | - |
 | 23. General Components | v2.0 | 0/TBD | Not started | - |

@@ -136,7 +136,7 @@
 - [ ] **SRCH-01**: E2E test verifies global search (Cmd+K, cross-entity search, result navigation)
 - [ ] **SRCH-02**: E2E test verifies advanced search operators (exact phrase, required/excluded terms, wildcards, field:value)
 - [ ] **SRCH-03**: E2E test verifies faceted search filters (custom field values, tags, states, dates)
-- [ ] **SRCH-04**: Component tests for UnifiedSearch, GlobalSearchSheet, SearchResultComponents, FacetedSearchFilters
+- [x] **SRCH-04**: Component tests for UnifiedSearch, GlobalSearchSheet, SearchResultComponents, FacetedSearchFilters
 - [ ] **SRCH-05**: Component tests for search result display (CustomFieldDisplay, DateTimeDisplay, UserDisplay)
 
 ### Integrations
@@ -295,7 +295,7 @@ Deferred to future. Not in current roadmap.
 | SRCH-01 | Phase 20 | Pending |
 | SRCH-02 | Phase 20 | Pending |
 | SRCH-03 | Phase 20 | Pending |
-| SRCH-04 | Phase 20 | Pending |
+| SRCH-04 | Phase 20 | Complete |
 | SRCH-05 | Phase 20 | Pending |
 | INTG-01 | Phase 21 | Pending |
 | INTG-02 | Phase 21 | Pending |
