@@ -77,7 +77,7 @@ Plans:
   3. E2E tests pass for bulk operations (multi-select, bulk edit, bulk delete, bulk move to folder)
   4. E2E tests pass for search/filter (text search, custom field filters, tag filters, state filters) and import/export (CSV, JSON, markdown)
   5. E2E tests pass for shared steps, version history, tag management, issue linking, and drag-and-drop reordering
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -92,7 +92,7 @@ Plans:
   2. Component tests pass for the repository table covering sorting, pagination, column visibility, and view switching
   3. Component tests pass for folder tree, breadcrumbs, and navigation with empty and nested states
   4. Hook tests pass for useRepositoryCasesWithFilteredFields, field hooks, and filter hooks with mock data
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 11-01-PLAN.md -- Editor sub-components (StepsForm, FieldValueRenderer) and navigation (BreadcrumbComponent, TreeView)
@@ -112,7 +112,7 @@ Plans:
   3. E2E test passes for bulk status updates and case assignment across multiple cases in a run
   4. E2E test passes for run completion workflow with status enforcement and multi-configuration test runs
   5. E2E test passes for test result import via API (JUnit XML format)
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 12-01-PLAN.md -- Test run creation wizard and case execution E2E tests
@@ -162,11 +162,11 @@ Plans:
   3. E2E test passes for magic select in test runs and QuickScript generation with mocked LLM
   4. E2E test passes for writing assistant in TipTap editor with mocked LLM
   5. API tests pass for all LLM and auto-tag endpoints (generate-test-cases, magic-select, chat, parse-markdown, submit, status, cancel, apply)
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 15-01-PLAN.md -- AI feature E2E tests (generation wizard, auto-tag, magic select, QuickScript, writing assistant)
+- [ ] 15-02-PLAN.md -- LLM and auto-tag API endpoint tests (auth, validation, error handling)
 
 ### Phase 16: AI Component Tests
 **Goal**: All AI feature UI components are tested with edge cases and mocked data
@@ -175,7 +175,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Component tests pass for AutoTagWizardDialog, AutoTagReviewDialog, AutoTagProgress, and TagChip covering all states (loading, empty, error, success)
   2. Component tests pass for QuickScript dialog, template selector, and AI preview pane with mocked LLM responses
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -191,7 +191,7 @@ Plans:
   3. E2E tests pass for workflow management (create, edit, reorder states) and status management (create, edit flags, scope assignment)
   4. E2E tests pass for configuration management (categories, variants, groups) and audit log (view, filter, CSV export)
   5. E2E tests pass for Elasticsearch admin (settings, reindex), LLM integration management, and app config management
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -204,7 +204,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Component tests pass for QueueManagement, ElasticsearchAdmin, and audit log viewer covering loading, empty, error, and populated states
   2. Component tests pass for user edit form, group edit form, and role permissions matrix covering validation and error states
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -220,7 +220,7 @@ Plans:
   3. E2E tests pass for share links (create, access public/password-protected/authenticated) and forecasting (milestone forecast, duration estimates)
   4. Component tests pass for ReportBuilder, ReportChart, DrillDownDrawer, and ReportFilters with all data states
   5. Component tests pass for all chart types (donut, gantt, bubble, sunburst, line, bar) and share link components (ShareDialog, PasswordGate, SharedReportViewer)
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -236,7 +236,7 @@ Plans:
   3. E2E test passes for faceted search filters (custom field values, tags, states, date ranges)
   4. Component tests pass for UnifiedSearch, GlobalSearchSheet, search result components, and FacetedSearchFilters with all data states
   5. Component tests pass for result display components (CustomFieldDisplay, DateTimeDisplay, UserDisplay) covering all field types
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -251,7 +251,7 @@ Plans:
   2. E2E test passes for code repository setup and QuickScript file context with mocked APIs
   3. Component tests pass for UnifiedIssueManager, CreateIssueDialog, SearchIssuesDialog, and integration configuration forms
   4. API tests pass for integration endpoints (test-connection, create-issue, search, sync) with mocked external services
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -267,7 +267,7 @@ Plans:
   3. API tests pass for milestone endpoints (descendants, forecast, summary) and share link endpoints (access, password-verify, report data)
   4. API tests pass for all report builder endpoints (all report types, drill-down queries) and admin endpoints (elasticsearch, queues, trash, user management)
   5. API tests pass for search, tag/issue count aggregation, file upload/download, health, metadata, and OpenAPI documentation endpoints
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -282,7 +282,7 @@ Plans:
   2. Component tests pass for comment system (CommentEditor, CommentList, MentionSuggestion) and attachment components (display, upload, preview carousel)
   3. Component tests pass for DataTable (sorting, filtering, column visibility, row selection) and form components (ConfigurationSelect, FolderSelect, MilestoneSelect, DatePickerField)
   4. Component tests pass for onboarding dialogs, TipTap editor extensions (image resize, tables, code blocks), and DnD components (drag previews, drag interactions)
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -298,7 +298,7 @@ Plans:
   3. Hook tests pass for UI state hooks (useExportData, useReportColumns, filter/sort hooks) and form hooks (useForm integrations, validation)
   4. Hook tests pass for integration hooks (useAutoTagJob, useIntegration, useLlm) with mocked providers
   5. Component tests pass for NotificationBell, NotificationContent, and NotificationPreferences; API tests pass for notification dispatch; unit tests pass for emailWorker, repoCacheWorker, and autoTagWorker
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
 - [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
@@ -327,7 +327,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 12. Test Execution E2E Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 13. Run Components, Sessions E2E, and Session Components | 3/3 | Complete    | 2026-03-19 | - |
 | 14. Project Management E2E and Components | 3/3 | Complete    | 2026-03-19 | - |
-| 15. AI Feature E2E and API Tests | v2.0 | 0/TBD | Not started | - |
+| 15. AI Feature E2E and API Tests | v2.0 | 0/2 | In progress | - |
 | 16. AI Component Tests | v2.0 | 0/TBD | Not started | - |
 | 17. Administration E2E Tests | v2.0 | 0/TBD | Not started | - |
 | 18. Administration Component Tests | v2.0 | 0/TBD | Not started | - |
