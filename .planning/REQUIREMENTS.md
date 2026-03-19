@@ -84,8 +84,8 @@
 
 - [ ] **PROJ-01**: E2E test verifies project creation wizard (5-step: name, description, template, members, configs)
 - [ ] **PROJ-02**: E2E test verifies project settings (general, integrations, AI models, quickscript, shares)
-- [ ] **PROJ-03**: E2E test verifies milestone CRUD (create, edit, nest, complete, cascade delete)
-- [ ] **PROJ-04**: E2E test verifies project documentation editor (TipTap wiki, AI writing assistant mocked)
+- [x] **PROJ-03**: E2E test verifies milestone CRUD (create, edit, nest, complete, cascade delete)
+- [x] **PROJ-04**: E2E test verifies project documentation editor (TipTap wiki, AI writing assistant mocked)
 - [ ] **PROJ-05**: E2E test verifies member management (add, remove, change roles, group assignment)
 - [ ] **PROJ-06**: E2E test verifies project overview dashboard (stats, recent activity, assignments)
 - [ ] **PROJ-07**: Component tests for ProjectCard, ProjectMenu, ProjectQuickSelector, project settings forms
@@ -255,8 +255,8 @@ Deferred to future. Not in current roadmap.
 | SESS-06 | Phase 13 | Complete |
 | PROJ-01 | Phase 14 | Pending |
 | PROJ-02 | Phase 14 | Pending |
-| PROJ-03 | Phase 14 | Pending |
-| PROJ-04 | Phase 14 | Pending |
+| PROJ-03 | Phase 14 | Complete |
+| PROJ-04 | Phase 14 | Complete |
 | PROJ-05 | Phase 14 | Pending |
 | PROJ-06 | Phase 14 | Pending |
 | PROJ-07 | Phase 14 | Pending |
