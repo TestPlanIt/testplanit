@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.17.0
 milestone_name: Copy/Move Test Cases Between Projects
-status: planning
-stopped_at: —
+status: in-progress
+stopped_at: Completed 28-01-PLAN.md
 last_updated: "2026-03-20"
-last_activity: 2026-03-20 — Roadmap created for v0.17.0 (Phases 28-32)
+last_activity: 2026-03-20 — Phase 28 Plan 01 complete (queue + worker)
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 1
+  completed_plans: 1
+  percent: 7
 ---
 
 # State
@@ -26,25 +26,25 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 28 of 32 (Queue and Worker)
-Plan: —
-Status: Ready to plan Phase 28
-Last activity: 2026-03-20 — Roadmap created, 31 requirements mapped across 5 phases (28-32)
+Plan: 01 of 01 (complete)
+Status: Phase 28 complete — ready for Phase 29
+Last activity: 2026-03-20 — Completed 28-01: copy-move queue and worker processor
 
-Progress: [░░░░░░░░░░] 0% (v0.17.0 phases)
+Progress: [█░░░░░░░░░] 7% (v0.17.0 phases — 1 of ~14 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v0.17.0): 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed (v0.17.0): 1
+- Average duration: ~3m 32s
+- Total execution time: ~3m 32s
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| -     | -     | -     | -        |
+| 28    | 1     | ~4m   | ~4m      |
 
 ## Accumulated Context
 
@@ -52,15 +52,16 @@ Progress: [░░░░░░░░░░] 0% (v0.17.0 phases)
 
 - Build order: worker (Phase 28) → API (Phase 29) → dialog UI (Phase 30) → entry points (Phase 31) → testing/docs (Phase 32)
 - Worker uses raw `prisma` (not `enhance()`); ZenStack access control gated once at API entry only
-- `concurrency: 1` on BullMQ queue to prevent ZenStack v3 deadlocks (40P01)
+- `concurrency: 1` on BullMQ worker to prevent ZenStack v3 deadlocks (40P01)
 - `attempts: 1` on queue — partial retries on copy/move create duplicates; surface failures cleanly
-- Shared steps inlined as standalone steps (sharedStepGroupId = null) in target; content fetched from SharedStepGroup before nulling
-- Move: copy all RepositoryCaseVersions rows to target then update projectId; only soft-delete source after target confirmed
-- Copy: version 1 only, fresh history
-- Field option IDs must be re-resolved by option name when source and target use different templates
-- folderMaxOrder pre-fetched before the per-case loop to avoid race condition (not fetched inside loop)
+- Shared step groups recreated as proper SharedStepGroups in target (not flattened); in-memory deduplication Map across cases
+- Move: all RepositoryCaseVersions rows re-created with `repositoryCaseId = newCase.id` and `projectId` updated to target
+- Copy: version 1 only, fresh history via createTestCaseVersionInTransaction
+- Field option IDs re-resolved by option name when source/target templates differ; values dropped if no match
+- folderMaxOrder pre-fetched before the per-case loop to avoid race condition (not inside transaction)
 - Unique constraint errors detected via string-matching err.info?.message for "duplicate key" (not err.code === "P2002")
-- Cross-project case links explicitly dropped (not migrated)
+- Cross-project case links (RepositoryCaseLink) dropped silently; droppedLinkCount reported in job result
+- Version history and template field options fetched separately to avoid PostgreSQL 63-char alias limit (ZenStack v3)
 
 ### Pending Todos
 
@@ -75,5 +76,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Roadmap created — Phase 28 ready to plan
+Stopped at: Completed 28-01-PLAN.md (Phase 28 Plan 01 — queue + worker)
 Resume file: None

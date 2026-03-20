@@ -19,15 +19,15 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 
 ### Data Carry-Over
 
-- [ ] **DATA-01**: Copied/moved cases carry over all steps to the target project
-- [ ] **DATA-02**: Copied/moved cases carry over custom field values to the target project
-- [ ] **DATA-03**: Copied/moved cases carry over tags to the target project
-- [ ] **DATA-04**: Copied/moved cases carry over issue links to the target project
-- [ ] **DATA-05**: Copied/moved cases carry over attachments by URL reference (no re-upload)
-- [ ] **DATA-06**: Moved cases preserve their full version history in the target project
-- [ ] **DATA-07**: Copied cases start at version 1 with fresh version history
-- [ ] **DATA-08**: Shared step groups are recreated in the target project so steps remain shared
-- [ ] **DATA-09**: User is prompted when a shared step group name already exists in the target — reuse existing or create new
+- [x] **DATA-01**: Copied/moved cases carry over all steps to the target project
+- [x] **DATA-02**: Copied/moved cases carry over custom field values to the target project
+- [x] **DATA-03**: Copied/moved cases carry over tags to the target project
+- [x] **DATA-04**: Copied/moved cases carry over issue links to the target project
+- [x] **DATA-05**: Copied/moved cases carry over attachments by URL reference (no re-upload)
+- [x] **DATA-06**: Moved cases preserve their full version history in the target project
+- [x] **DATA-07**: Copied cases start at version 1 with fresh version history
+- [x] **DATA-08**: Shared step groups are recreated in the target project so steps remain shared
+- [x] **DATA-09**: User is prompted when a shared step group name already exists in the target — reuse existing or create new
 
 ### Compatibility
 
@@ -86,15 +86,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLGSEL-04   | 30    | Pending |
 | DLGSEL-05   | 30    | Pending |
 | DLGSEL-06   | 30    | Pending |
-| DATA-01     | 28    | Pending |
-| DATA-02     | 28    | Pending |
-| DATA-03     | 28    | Pending |
-| DATA-04     | 28    | Pending |
-| DATA-05     | 28    | Pending |
-| DATA-06     | 28    | Pending |
-| DATA-07     | 28    | Pending |
-| DATA-08     | 28    | Pending |
-| DATA-09     | 28    | Pending |
+| DATA-01     | 28    | Complete |
+| DATA-02     | 28    | Complete |
+| DATA-03     | 28    | Complete |
+| DATA-04     | 28    | Complete |
+| DATA-05     | 28    | Complete |
+| DATA-06     | 28    | Complete |
+| DATA-07     | 28    | Complete |
+| DATA-08     | 28    | Complete |
+| DATA-09     | 28    | Complete |
 | COMPAT-01   | 29    | Pending |
 | COMPAT-02   | 29    | Pending |
 | COMPAT-03   | 29    | Pending |

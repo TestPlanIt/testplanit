@@ -491,7 +491,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 25. Default Template Schema | v2.1 | 1/1 | Complete | 2026-03-19 |
 | 26. Admin Assignment UI | v2.1 | 2/2 | Complete | 2026-03-19 |
 | 27. Export Dialog Filtering | v2.1 | 1/1 | Complete | 2026-03-19 |
-| 28. Queue and Worker | v0.17.0 | 0/2 | Planning complete | - |
+| 28. Queue and Worker | 1/2 | In Progress|  | - |
 | 29. API Endpoints and Access Control | v0.17.0 | 0/TBD | Not started | - |
 | 30. Dialog UI and Polling | v0.17.0 | 0/TBD | Not started | - |
 | 31. Entry Points | v0.17.0 | 0/TBD | Not started | - |
