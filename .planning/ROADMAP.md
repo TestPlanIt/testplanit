@@ -393,9 +393,13 @@ Plans:
   1. A copied case in the target project contains all original steps, custom field values, tags, issue links, and attachment records (pointing to the same S3 URLs)
   2. A copied case starts at version 1 in the target project with no prior version history
   3. A moved case in the target project retains its full version history from the source project
-  4. Shared step group content is inlined as standalone steps in the target; no dangling sharedStepGroupId references remain
+  4. Shared step groups are recreated as proper SharedStepGroups in the target project with all items copied
   5. When a shared step group name already exists in the target, the worker correctly applies the user-chosen resolution (reuse existing or create new)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 28-01-PLAN.md -- Queue registration and copy/move worker implementation
+- [ ] 28-02-PLAN.md -- Unit tests for copy/move worker processor
 
 ### Phase 29: API Endpoints and Access Control
 
@@ -487,7 +491,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 25. Default Template Schema | v2.1 | 1/1 | Complete | 2026-03-19 |
 | 26. Admin Assignment UI | v2.1 | 2/2 | Complete | 2026-03-19 |
 | 27. Export Dialog Filtering | v2.1 | 1/1 | Complete | 2026-03-19 |
-| 28. Queue and Worker | v0.17.0 | 0/TBD | Not started | - |
+| 28. Queue and Worker | v0.17.0 | 0/2 | Planning complete | - |
 | 29. API Endpoints and Access Control | v0.17.0 | 0/TBD | Not started | - |
 | 30. Dialog UI and Polling | v0.17.0 | 0/TBD | Not started | - |
 | 31. Entry Points | v0.17.0 | 0/TBD | Not started | - |
