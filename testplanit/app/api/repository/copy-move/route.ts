@@ -71,19 +71,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Move delete check
+    // 7. Move update check (move = soft-delete = update permission needed)
     if (body.operation === "move") {
-      const sourceCase = await enhancedDb.repositoryCases.findFirst({
-        where: {
-          projectId: body.sourceProjectId,
-          id: { in: body.caseIds },
-        },
-      });
-      if (!sourceCase) {
+      let hasSourceUpdateAccess = false;
+      if (user?.access === "ADMIN") {
+        hasSourceUpdateAccess = true;
+      } else {
+        const userPerms = user?.role?.rolePermissions?.find(
+          (p: any) => p.area === "TestCaseRepository"
+        );
+        hasSourceUpdateAccess = userPerms?.canAddEdit ?? false;
+      }
+      if (!hasSourceUpdateAccess) {
         return NextResponse.json(
           {
             error:
-              "No delete access on source project for move operation",
+              "No update access on source project for move operation (soft-delete requires edit permission)",
           },
           { status: 403 },
         );

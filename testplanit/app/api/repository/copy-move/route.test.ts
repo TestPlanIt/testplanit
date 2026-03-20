@@ -232,22 +232,26 @@ describe("POST /api/repository/copy-move", () => {
   });
 
   // Test 7
-  it("returns 403 when move operation and user lacks source delete access", async () => {
+  it("returns 403 when move operation and user lacks source update access", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue(baseUser);
+    // User without canAddEdit on TestCaseRepository
+    mockPrismaUserFindUnique.mockResolvedValue({
+      ...baseUser,
+      access: "USER",
+      role: { rolePermissions: [{ area: "TestCaseRepository", canAddEdit: false, canDelete: false, canClose: false }] },
+    });
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockGetCopyMoveQueue.mockReturnValue(mockQueue);
     mockEnhancedDb.projects.findFirst
       .mockResolvedValueOnce({ id: 10 }) // source
       .mockResolvedValueOnce({ id: 20 }); // target
-    mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null); // no delete access
     const { POST } = await import("./route");
     const res = await POST(
       makeRequest({ ...validBody, operation: "move" }),
     );
     expect(res.status).toBe(403);
     const data = await res.json();
-    expect(data.error).toMatch(/delete/i);
+    expect(data.error).toMatch(/update/i);
   });
 
   // Test 8

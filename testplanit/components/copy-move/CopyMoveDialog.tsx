@@ -3,17 +3,11 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,18 +15,23 @@ import {
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Boxes, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import {
+  Boxes,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
+  Loader2,
+  XCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFindManyProjects } from "~/lib/hooks";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
-import {
-  FolderSelect,
-  transformFolders,
-} from "@/components/forms/FolderSelect";
+
 import { useCopyMoveJob } from "./useCopyMoveJob";
 
 type WizardStep = "target" | "configure" | "progress";
@@ -84,7 +83,7 @@ export function CopyMoveDialog({
         select: { id: true, name: true, parentId: true },
         orderBy: { name: "asc" },
       },
-      { enabled: !!targetProjectId },
+      { enabled: !!targetProjectId }
     );
 
   // ── Reset on open ────────────────────────────────────────────────────────
@@ -124,7 +123,7 @@ export function CopyMoveDialog({
       }
       onOpenChange(nextOpen);
     },
-    [job, onOpenChange],
+    [job, onOpenChange]
   );
 
   // ── Preflight helper ─────────────────────────────────────────────────────
@@ -137,7 +136,7 @@ export function CopyMoveDialog({
         targetProjectId: projId,
       });
     },
-    [job, selectedCaseIds, sourceProjectId],
+    [job, selectedCaseIds, sourceProjectId]
   );
 
   // ── Step navigation ──────────────────────────────────────────────────────
@@ -165,8 +164,7 @@ export function CopyMoveDialog({
         ? autoAssignTemplates
         : false,
       targetRepositoryId: job.preflight?.targetRepositoryId,
-      targetDefaultWorkflowStateId:
-        job.preflight?.targetDefaultWorkflowStateId,
+      targetDefaultWorkflowStateId: job.preflight?.targetDefaultWorkflowStateId,
       targetTemplateId: job.preflight?.targetTemplateId,
     });
     setStep("progress");
@@ -174,319 +172,515 @@ export function CopyMoveDialog({
 
   // ── Derived values ───────────────────────────────────────────────────────
   const filteredProjects = projects.filter((p) => p.id !== sourceProjectId);
-  const folderOptions = transformFolders(folders);
+
+  type ProjectOption = (typeof filteredProjects)[number];
+  const selectedProject =
+    filteredProjects.find((p) => p.id === targetProjectId) ?? null;
+
+  const fetchProjects = useCallback(
+    async (query: string) => {
+      const filtered = filteredProjects.filter((p) =>
+        p.name.toLowerCase().includes(query.toLowerCase())
+      );
+      return filtered;
+    },
+    [filteredProjects]
+  );
+  // Build a flat, depth-annotated folder list preserving parent→child order
+  type FolderOption = { id: number; name: string; parentId: number | null; depth: number };
+  const flatFolders = useMemo(() => {
+    const result: FolderOption[] = [];
+    const buildTree = (parentId: number | null, depth: number) => {
+      for (const f of folders) {
+        if (f.parentId === parentId) {
+          result.push({ id: f.id, name: f.name, parentId: f.parentId, depth });
+          buildTree(f.id, depth + 1);
+        }
+      }
+    };
+    buildTree(null, 0);
+    return result;
+  }, [folders]);
+
+  const selectedFolder: FolderOption | null = flatFolders.find((f: FolderOption) => f.id === targetFolderId) ?? null;
+
+  const fetchFolders = useCallback(
+    async (query: string) => {
+      if (!query) return flatFolders;
+      return flatFolders.filter((f: FolderOption) =>
+        f.name.toLowerCase().includes(query.toLowerCase()),
+      );
+    },
+    [flatFolders],
+  );
 
   const preflight = job.preflight;
   const hasPermissionError =
     (preflight && !preflight.hasTargetWriteAccess) ||
-    (operation === "move" && preflight && !preflight.hasSourceDeleteAccess);
+    (operation === "move" && preflight && !preflight.hasSourceUpdateAccess);
 
   const workflowFallbacks =
     preflight?.workflowMappings.filter((m) => m.isDefaultFallback) ?? [];
 
-  const canGo =
-    !job.isPrefighting && !hasPermissionError && !!targetFolderId;
+  const canGo = !job.isPrefighting && !hasPermissionError && !!targetFolderId;
 
   const progressValue =
     ((job.progress?.processed ?? 0) / (job.progress?.total ?? 1)) * 100;
 
+  // ── Step metadata ────────────────────────────────────────────────────────
+  const stepNumber = step === "target" ? 1 : step === "configure" ? 2 : 3;
+  const stepDescriptions: Record<WizardStep, string> = {
+    target: t("step1Desc"),
+    configure: t("step2Desc"),
+    progress: t("step3Desc"),
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{stepDescriptions[step]}</DialogDescription>
         </DialogHeader>
 
-        {/* ── Step 1: Target Selection ─────────────────────────────────── */}
-        {step === "target" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label>{t("targetProject")}</Label>
-              <div className="border rounded-md overflow-hidden">
-                <Command>
-                  <CommandInput placeholder={t("searchProjects")} />
-                  <CommandList className="max-h-[200px]">
-                    {projectsLoading ? (
-                      <CommandEmpty>{t("loadingProjects")}</CommandEmpty>
-                    ) : filteredProjects.length === 0 ? (
-                      <CommandEmpty>{t("noProjectsFound")}</CommandEmpty>
-                    ) : (
-                      <CommandGroup>
-                        {filteredProjects.map((project) => (
-                          <CommandItem
-                            key={project.id}
-                            value={project.name}
-                            onSelect={() => {
-                              setTargetProjectId(project.id);
-                              setTargetFolderId(null);
-                            }}
-                            className={cn(
-                              targetProjectId === project.id &&
-                                "bg-accent text-accent-foreground",
-                            )}
-                          >
-                            {project.iconUrl ? (
-                              <Image
-                                src={project.iconUrl}
-                                alt={`${project.name} icon`}
-                                width={16}
-                                height={16}
-                                className="shrink-0 object-contain"
-                              />
-                            ) : (
-                              <Boxes className="h-4 w-4 shrink-0" />
-                            )}
-                            <span
-                              className={cn(
-                                "truncate",
-                                project.isCompleted && "opacity-60",
-                              )}
-                            >
-                              {project.name}
-                            </span>
-                            {project.isCompleted && (
-                              <span className="ml-auto text-xs text-muted-foreground">
-                                {t("completed")}
-                              </span>
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
+        {/* Progress indicator — matches ImportCasesWizard pattern */}
+        <div className="flex items-center gap-2 mb-4 shrink-0">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="flex items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  s < stepNumber
+                    ? "bg-primary text-primary-foreground"
+                    : s === stepNumber
+                      ? "bg-primary/10 text-primary border-2 border-primary"
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s < stepNumber ? <CheckCircle2 className="w-4 h-4" /> : s}
               </div>
+              {s < 3 && (
+                <div
+                  className={`w-12 h-0.5 mx-2 ${
+                    s < stepNumber ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              )}
             </div>
+          ))}
+        </div>
 
-            {targetProjectId && (
+        <div className="flex-1 min-h-0 overflow-y-auto px-0.5">
+          {/* ── Step 1: Target Selection ─────────────────────────────────── */}
+          {step === "target" && (
+            <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label>{t("targetFolder")}</Label>
-                <FolderSelect
-                  value={targetFolderId}
-                  onChange={(val) =>
-                    setTargetFolderId(val ? Number(val) : null)
-                  }
-                  folders={folderOptions}
-                  isLoading={foldersLoading}
-                  placeholder={t("selectFolder")}
+                <Label>{t("targetProject")}</Label>
+                <AsyncCombobox<ProjectOption>
+                  value={selectedProject}
+                  onValueChange={(project) => {
+                    setTargetProjectId(project?.id ?? null);
+                    setTargetFolderId(null);
+                  }}
+                  fetchOptions={fetchProjects}
+                  getOptionValue={(p) => p.id}
+                  renderOption={(p) => (
+                    <div className="flex items-center gap-2">
+                      {p.iconUrl ? (
+                        <Image
+                          src={p.iconUrl}
+                          alt={`${p.name} icon`}
+                          width={16}
+                          height={16}
+                          className="shrink-0 object-contain"
+                        />
+                      ) : (
+                        <Boxes className="h-4 w-4 shrink-0" />
+                      )}
+                      <span
+                        className={cn(
+                          "truncate",
+                          p.isCompleted && "opacity-60"
+                        )}
+                      >
+                        {p.name}
+                      </span>
+                      {p.isCompleted && (
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {t("completed")}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  placeholder={t("searchProjects")}
+                  disabled={projectsLoading}
+                  className="w-full"
                 />
               </div>
-            )}
 
-            <DialogFooter>
-              <Button
-                onClick={handleNext}
-                disabled={!targetProjectId || !targetFolderId}
-              >
-                {t("next")}
-              </Button>
-            </DialogFooter>
-          </div>
-        )}
-
-        {/* ── Step 2: Configure ────────────────────────────────────────── */}
-        {step === "configure" && (
-          <div className="flex flex-col gap-4">
-            {/* Operation selector */}
-            <div className="flex flex-col gap-2">
-              <Label>{t("operation")}</Label>
-              <RadioGroup
-                value={operation}
-                onValueChange={(val) => {
-                  const op = val as "copy" | "move";
-                  setOperation(op);
-                  if (targetProjectId) {
-                    triggerPreflight(op, targetProjectId);
-                  }
-                }}
-              >
-                <div className="flex items-start gap-2">
-                  <RadioGroupItem value="copy" id="op-copy" className="mt-0.5" />
-                  <div className="flex flex-col gap-0.5">
-                    <Label htmlFor="op-copy" className="font-medium cursor-pointer">
-                      {t("operationCopy")}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("operationCopyDesc")}
-                    </p>
-                  </div>
+              {targetProjectId && (
+                <div className="flex flex-col gap-1.5">
+                  <Label>{t("targetFolder")}</Label>
+                  <AsyncCombobox<FolderOption>
+                    value={selectedFolder}
+                    onValueChange={(folder) =>
+                      setTargetFolderId(folder?.id ?? null)
+                    }
+                    fetchOptions={fetchFolders}
+                    getOptionValue={(f) => f.id}
+                    renderOption={(f) => (
+                      <div
+                        className="flex items-center gap-1.5"
+                        style={{ paddingLeft: `${f.depth * 12}px` }}
+                      >
+                        <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{f.name}</span>
+                      </div>
+                    )}
+                    placeholder={t("selectFolder")}
+                    disabled={foldersLoading}
+                    className="w-full"
+                  />
                 </div>
-                <div className="flex items-start gap-2">
-                  <RadioGroupItem value="move" id="op-move" className="mt-0.5" />
-                  <div className="flex flex-col gap-0.5">
-                    <Label htmlFor="op-move" className="font-medium cursor-pointer">
-                      {t("operationMove")}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("operationMoveDesc")}
-                    </p>
-                  </div>
-                </div>
-              </RadioGroup>
+              )}
             </div>
+          )}
 
-            {/* Loading preflight */}
-            {job.isPrefighting && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {t("checkingCompatibility")}
+          {/* ── Step 2: Configure ────────────────────────────────────────── */}
+          {step === "configure" && (
+            <div className="flex flex-col gap-4">
+              {/* Operation selector */}
+              <div className="flex flex-col gap-2">
+                <Label>{t("operation")}</Label>
+                <RadioGroup
+                  value={operation}
+                  onValueChange={(val) => {
+                    const op = val as "copy" | "move";
+                    setOperation(op);
+                    if (targetProjectId) {
+                      triggerPreflight(op, targetProjectId);
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem
+                      value="copy"
+                      id="op-copy"
+                      className="mt-0.5"
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <Label
+                        htmlFor="op-copy"
+                        className="font-medium cursor-pointer"
+                      >
+                        {t("operationCopy")}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t("operationCopyDesc")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem
+                      value="move"
+                      id="op-move"
+                      className="mt-0.5"
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <Label
+                        htmlFor="op-move"
+                        className="font-medium cursor-pointer"
+                      >
+                        {t("operationMove")}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t("operationMoveDesc")}
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
               </div>
-            )}
 
-            {/* Permission warnings */}
-            {preflight && !preflight.hasTargetWriteAccess && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {t("noTargetWriteAccess")}
-                </AlertDescription>
-              </Alert>
-            )}
-            {operation === "move" &&
-              preflight &&
-              !preflight.hasSourceDeleteAccess && (
+              {/* Loading preflight */}
+              {job.isPrefighting && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("checkingCompatibility")}
+                </div>
+              )}
+
+              {/* Permission warnings */}
+              {preflight && !preflight.hasTargetWriteAccess && (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {t("noSourceDeleteAccess")}
+                    {t("noTargetWriteAccess")}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {operation === "move" &&
+                preflight &&
+                !preflight.hasSourceUpdateAccess && (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      {t("noSourceUpdateAccess")}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+              {/* Template warnings */}
+              {preflight?.templateMismatch && (
+                <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
+                  <AlertTitle>{t("templateMismatch")}</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                      {preflight.missingTemplates.map((tpl) => (
+                        <li key={tpl.id} className="text-xs">
+                          {tpl.name}
+                        </li>
+                      ))}
+                    </ul>
+                    {preflight.canAutoAssignTemplates ? (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Checkbox
+                          id="auto-assign"
+                          checked={autoAssignTemplates}
+                          onCheckedChange={(checked) =>
+                            setAutoAssignTemplates(!!checked)
+                          }
+                        />
+                        <Label
+                          htmlFor="auto-assign"
+                          className="text-xs cursor-pointer"
+                        >
+                          {t("autoAssignTemplates")}
+                        </Label>
+                      </div>
+                    ) : (
+                      <p className="text-xs mt-2">
+                        {t("templatesMayNotDisplay")}
+                      </p>
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
 
-            {/* Template warnings */}
-            {preflight?.templateMismatch && (
-              <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
-                <AlertTitle>{t("templateMismatch")}</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                    {preflight.missingTemplates.map((tpl) => (
-                      <li key={tpl.id} className="text-xs">
-                        {tpl.name}
-                      </li>
-                    ))}
-                  </ul>
-                  {preflight.canAutoAssignTemplates ? (
-                    <div className="flex items-center gap-2 mt-2">
-                      <Checkbox
-                        id="auto-assign"
-                        checked={autoAssignTemplates}
-                        onCheckedChange={(checked) =>
-                          setAutoAssignTemplates(!!checked)
-                        }
-                      />
-                      <Label htmlFor="auto-assign" className="text-xs cursor-pointer">
-                        {t("autoAssignTemplates")}
+              {/* Workflow warnings */}
+              {workflowFallbacks.length > 0 && (
+                <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
+                  <AlertTitle>{t("workflowFallback")}</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                      {workflowFallbacks.map((m) => (
+                        <li key={m.sourceStateId} className="text-xs">
+                          {m.sourceStateName} {"->"} {m.targetStateName}{" "}
+                          {t("default")}
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Collision list */}
+              {preflight && preflight.collisions.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <Label>{t("conflicts")}</Label>
+                  <RadioGroup
+                    value={conflictResolution}
+                    onValueChange={(val) =>
+                      setConflictResolution(val as "skip" | "rename")
+                    }
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="skip" id="cr-skip" />
+                      <Label htmlFor="cr-skip" className="cursor-pointer">
+                        {t("conflictSkip")}
                       </Label>
                     </div>
-                  ) : (
-                    <p className="text-xs mt-2">{t("templatesMayNotDisplay")}</p>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Workflow warnings */}
-            {workflowFallbacks.length > 0 && (
-              <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
-                <AlertTitle>{t("workflowFallback")}</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                    {workflowFallbacks.map((m) => (
-                      <li key={m.sourceStateId} className="text-xs">
-                        {m.sourceStateName} {"->"} {m.targetStateName}{" "}
-                        {t("default")}
-                      </li>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="rename" id="cr-rename" />
+                      <Label htmlFor="cr-rename" className="cursor-pointer">
+                        {t("conflictRename")}
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <div className="max-h-48 overflow-y-auto border rounded-md divide-y text-sm">
+                    {preflight.collisions.map((col) => (
+                      <div
+                        key={col.caseId}
+                        className="px-3 py-1.5 flex flex-col gap-0.5"
+                      >
+                        <span className="font-medium">{col.caseName}</span>
+                        {col.className && (
+                          <span className="text-xs text-muted-foreground">
+                            {col.className}
+                          </span>
+                        )}
+                      </div>
                     ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Collision list */}
-            {preflight && preflight.collisions.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <Label>{t("conflicts")}</Label>
-                <RadioGroup
-                  value={conflictResolution}
-                  onValueChange={(val) =>
-                    setConflictResolution(val as "skip" | "rename")
-                  }
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="skip" id="cr-skip" />
-                    <Label htmlFor="cr-skip" className="cursor-pointer">
-                      {t("conflictSkip")}
-                    </Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="rename" id="cr-rename" />
-                    <Label htmlFor="cr-rename" className="cursor-pointer">
-                      {t("conflictRename")}
-                    </Label>
+                </div>
+              )}
+
+              {/* Shared step group resolution */}
+              <div className="flex flex-col gap-2">
+                <Label>{t("sharedStepGroups")}</Label>
+                <RadioGroup
+                  value={sharedStepGroupResolution}
+                  onValueChange={(val) =>
+                    setSharedStepGroupResolution(val as "reuse" | "create_new")
+                  }
+                >
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem
+                      value="reuse"
+                      id="ssg-reuse"
+                      className="mt-0.5"
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <Label htmlFor="ssg-reuse" className="cursor-pointer">
+                        {t("sharedStepGroupReuse")}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t("sharedStepGroupReuseDesc")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem
+                      value="create_new"
+                      id="ssg-new"
+                      className="mt-0.5"
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <Label htmlFor="ssg-new" className="cursor-pointer">
+                        {t("sharedStepGroupCreateNew")}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t("sharedStepGroupCreateNewDesc")}
+                      </p>
+                    </div>
                   </div>
                 </RadioGroup>
-                <div className="max-h-48 overflow-y-auto border rounded-md divide-y text-sm">
-                  {preflight.collisions.map((col) => (
-                    <div
-                      key={col.caseId}
-                      className="px-3 py-1.5 flex flex-col gap-0.5"
-                    >
-                      <span className="font-medium">{col.caseName}</span>
-                      {col.className && (
-                        <span className="text-xs text-muted-foreground">
-                          {col.className}
-                        </span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: Progress + Results ───────────────────────────────── */}
+          {step === "progress" && (
+            <div className="flex flex-col gap-4">
+              {/* Active / waiting */}
+              {(job.status === "waiting" || job.status === "active") && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("processing")}
+                  </div>
+                  <Progress value={progressValue} />
+                  <p className="text-xs text-muted-foreground">
+                    {t("progressText", {
+                      processed: job.progress?.processed ?? 0,
+                      total: job.progress?.total ?? selectedCaseIds.length,
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Completed */}
+              {job.status === "completed" && job.result && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    {t("complete")}
+                  </div>
+                  <p className="text-sm">
+                    {t("successCount", {
+                      count:
+                        (job.result.copiedCount ?? 0) +
+                        (job.result.movedCount ?? 0),
+                      operation,
+                    })}
+                  </p>
+                  {job.result.skippedCount > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {t("skipped", { count: job.result.skippedCount })}
+                    </p>
+                  )}
+                  {job.result.droppedLinkCount > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {t("droppedLinks", {
+                        count: job.result.droppedLinkCount,
+                      })}
+                    </p>
+                  )}
+                  {job.result.errors.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        className="flex items-center gap-1.5 text-sm text-destructive"
+                        onClick={() => setErrorsExpanded((v) => !v)}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        {t("errorCount", { count: job.result.errors.length })}
+                      </button>
+                      {errorsExpanded && (
+                        <ul className="text-xs space-y-1 pl-5 list-disc">
+                          {job.result.errors.map((err) => (
+                            <li key={err.caseId}>
+                              <span className="font-medium">
+                                {err.caseName}
+                              </span>
+                              {": "}
+                              {err.error}
+                            </li>
+                          ))}
+                        </ul>
                       )}
                     </div>
-                  ))}
+                  )}
+                  {targetProjectId && (
+                    <Link
+                      href={`/projects/repository/${targetProjectId}`}
+                      className="text-sm text-primary underline"
+                    >
+                      {t("viewInTargetProject")}
+                    </Link>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Shared step group resolution */}
-            <div className="flex flex-col gap-2">
-              <Label>{t("sharedStepGroups")}</Label>
-              <RadioGroup
-                value={sharedStepGroupResolution}
-                onValueChange={(val) =>
-                  setSharedStepGroupResolution(val as "reuse" | "create_new")
-                }
-              >
-                <div className="flex items-start gap-2">
-                  <RadioGroupItem
-                    value="reuse"
-                    id="ssg-reuse"
-                    className="mt-0.5"
-                  />
-                  <div className="flex flex-col gap-0.5">
-                    <Label htmlFor="ssg-reuse" className="cursor-pointer">
-                      {t("sharedStepGroupReuse")}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("sharedStepGroupReuseDesc")}
-                    </p>
+              {/* Failed */}
+              {job.status === "failed" && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+                    <XCircle className="h-5 w-5" />
+                    {t("failed")}
                   </div>
+                  {job.error && (
+                    <p className="text-sm text-muted-foreground">{job.error}</p>
+                  )}
                 </div>
-                <div className="flex items-start gap-2">
-                  <RadioGroupItem
-                    value="create_new"
-                    id="ssg-new"
-                    className="mt-0.5"
-                  />
-                  <div className="flex flex-col gap-0.5">
-                    <Label htmlFor="ssg-new" className="cursor-pointer">
-                      {t("sharedStepGroupCreateNew")}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("sharedStepGroupCreateNewDesc")}
-                    </p>
-                  </div>
-                </div>
-              </RadioGroup>
+              )}
             </div>
+          )}
+        </div>
+        {/* end scrollable area */}
 
-            <DialogFooter>
+        {/* ── Unified footer — matches ImportCasesWizard pattern ──────── */}
+        <DialogFooter className="shrink-0">
+          {step === "target" && (
+            <Button
+              onClick={handleNext}
+              disabled={!targetProjectId || !targetFolderId}
+            >
+              {t("next")}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
+          {step === "configure" && (
+            <>
               <Button variant="outline" onClick={handleBack}>
+                <ChevronLeft className="h-4 w-4" />
                 {t("back")}
               </Button>
               <Button onClick={handleGo} disabled={!canGo}>
@@ -495,117 +689,21 @@ export function CopyMoveDialog({
                 ) : null}
                 {t("go")}
               </Button>
-            </DialogFooter>
-          </div>
-        )}
-
-        {/* ── Step 3: Progress + Results ───────────────────────────────── */}
-        {step === "progress" && (
-          <div className="flex flex-col gap-4">
-            {/* Active / waiting */}
-            {(job.status === "waiting" || job.status === "active") && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("processing")}
-                </div>
-                <Progress value={progressValue} />
-                <p className="text-xs text-muted-foreground">
-                  {t("progressText", {
-                    processed: job.progress?.processed ?? 0,
-                    total: job.progress?.total ?? selectedCaseIds.length,
-                  })}
-                </p>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => job.cancel()}>
-                    {t("cancel")}
-                  </Button>
-                </DialogFooter>
-              </div>
+            </>
+          )}
+          {step === "progress" &&
+            (job.status === "waiting" || job.status === "active") && (
+              <Button variant="outline" onClick={() => job.cancel()}>
+                {t("cancel")}
+              </Button>
             )}
-
-            {/* Completed */}
-            {job.status === "completed" && job.result && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  {t("complete")}
-                </div>
-                <p className="text-sm">
-                  {t("successCount", {
-                    count:
-                      (job.result.copiedCount ?? 0) +
-                      (job.result.movedCount ?? 0),
-                    operation,
-                  })}
-                </p>
-                {job.result.skippedCount > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("skipped", { count: job.result.skippedCount })}
-                  </p>
-                )}
-                {job.result.droppedLinkCount > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("droppedLinks", { count: job.result.droppedLinkCount })}
-                  </p>
-                )}
-                {job.result.errors.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <button
-                      className="flex items-center gap-1.5 text-sm text-destructive"
-                      onClick={() => setErrorsExpanded((v) => !v)}
-                    >
-                      <XCircle className="h-4 w-4" />
-                      {t("errorCount", { count: job.result.errors.length })}
-                    </button>
-                    {errorsExpanded && (
-                      <ul className="text-xs space-y-1 pl-5 list-disc">
-                        {job.result.errors.map((err) => (
-                          <li key={err.caseId}>
-                            <span className="font-medium">{err.caseName}</span>
-                            {": "}
-                            {err.error}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-                {targetProjectId && (
-                  <Link
-                    href={`/projects/repository/${targetProjectId}`}
-                    className="text-sm text-primary underline"
-                  >
-                    {t("viewInTargetProject")}
-                  </Link>
-                )}
-                <DialogFooter>
-                  <Button onClick={() => handleOpenChange(false)}>
-                    {t("close")}
-                  </Button>
-                </DialogFooter>
-              </div>
+          {step === "progress" &&
+            (job.status === "completed" || job.status === "failed") && (
+              <Button onClick={() => handleOpenChange(false)}>
+                {t("close")}
+              </Button>
             )}
-
-            {/* Failed */}
-            {job.status === "failed" && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-                  <XCircle className="h-5 w-5" />
-                  {t("failed")}
-                </div>
-                {job.error && (
-                  <p className="text-sm text-muted-foreground">{job.error}</p>
-                )}
-                <DialogFooter>
-                  <Button onClick={() => handleOpenChange(false)}>
-                    {t("close")}
-                  </Button>
-                </DialogFooter>
-              </div>
-            )}
-          </div>
-        )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

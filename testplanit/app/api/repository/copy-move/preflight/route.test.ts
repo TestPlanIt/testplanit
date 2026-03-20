@@ -365,14 +365,18 @@ describe("POST /api/repository/copy-move/preflight", () => {
   });
 
   // Test 16
-  it("checks hasSourceDeleteAccess for move operation", async () => {
+  it("checks hasSourceUpdateAccess for move operation — non-admin without canAddEdit", async () => {
     setupDefaultMocks();
-    // For move, route checks if user can find a source case via enhancedDb
-    mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null); // no delete access
+    // User without canAddEdit on TestCaseRepository
+    mockPrismaUserFindUnique.mockResolvedValue({
+      id: "user-1",
+      access: "USER",
+      role: { rolePermissions: [{ area: "TestCaseRepository", canAddEdit: false, canDelete: false, canClose: false }] },
+    });
     const { POST } = await import("./route");
     const res = await POST(makeRequest({ ...validBody, operation: "move" }));
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.hasSourceDeleteAccess).toBe(false);
+    expect(data.hasSourceUpdateAccess).toBe(false);
   });
 });

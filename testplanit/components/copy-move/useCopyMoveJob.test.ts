@@ -96,7 +96,7 @@ describe("useCopyMoveJob", () => {
     const preflightResponse = {
       hasSourceReadAccess: true,
       hasTargetWriteAccess: true,
-      hasSourceDeleteAccess: true,
+      hasSourceUpdateAccess: true,
       templateMismatch: false,
       missingTemplates: [],
       canAutoAssignTemplates: true,

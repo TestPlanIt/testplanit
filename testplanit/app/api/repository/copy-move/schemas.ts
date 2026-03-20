@@ -24,7 +24,7 @@ export const submitSchema = z.object({
 export interface PreflightResponse {
   hasSourceReadAccess: boolean;
   hasTargetWriteAccess: boolean;
-  hasSourceDeleteAccess: boolean;
+  hasSourceUpdateAccess: boolean;
   templateMismatch: boolean;
   missingTemplates: Array<{ id: number; name: string }>;
   canAutoAssignTemplates: boolean;

@@ -89,31 +89,36 @@ vi.mock("~/lib/navigation", () => ({
   ),
 }));
 
-// Mock FolderSelect as a simple HTML select for testing
-// Radix Select portals don't render in JSDOM
-vi.mock("@/components/forms/FolderSelect", () => ({
-  FolderSelect: ({ value, onChange, folders, isLoading, placeholder }: any) => (
-    <select
-      data-testid="folder-select"
-      value={value ?? ""}
-      disabled={isLoading || !folders || folders.length === 0}
-      onChange={(e) => onChange(e.target.value || null)}
-      aria-label={placeholder ?? "selectFolder"}
-    >
-      <option value="">-- {placeholder ?? "selectFolder"} --</option>
-      {(folders ?? []).map((f: any) => (
-        <option key={f.value} value={f.value}>
-          {f.label}
-        </option>
-      ))}
-    </select>
-  ),
-  transformFolders: (folders: any[]) =>
-    (folders ?? []).map((f: any) => ({
-      value: String(f.id),
-      label: f.name,
-      parentId: f.parentId,
-    })),
+// Mock AsyncCombobox as a simple select for testing
+// Radix Popover portals don't render in JSDOM
+// Uses placeholder to derive a stable test ID so multiple instances are distinguishable
+vi.mock("@/components/ui/async-combobox", () => ({
+  AsyncCombobox: ({ value, onValueChange, fetchOptions, getOptionValue, placeholder, disabled }: any) => {
+    const [options, setOptions] = React.useState<any[]>([]);
+    const testId = placeholder?.toLowerCase().includes("folder") ? "folder-select" : "project-select";
+    React.useEffect(() => {
+      fetchOptions("", 0, 50).then((opts: any[]) => setOptions(opts));
+    }, [fetchOptions]);
+    return (
+      <select
+        data-testid={testId}
+        value={value ? String(getOptionValue(value)) : ""}
+        disabled={disabled}
+        onChange={(e) => {
+          const opt = options.find((o: any) => String(getOptionValue(o)) === e.target.value);
+          onValueChange(opt ?? null);
+        }}
+        aria-label={placeholder ?? "select"}
+      >
+        <option value="">-- {placeholder ?? "select"} --</option>
+        {options.map((o: any) => (
+          <option key={getOptionValue(o)} value={getOptionValue(o)}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+    );
+  },
 }));
 
 vi.mock("next-intl", () => ({
@@ -149,7 +154,7 @@ const DEFAULT_PROPS = {
 const MOCK_PREFLIGHT = {
   hasSourceReadAccess: true,
   hasTargetWriteAccess: true,
-  hasSourceDeleteAccess: true,
+  hasSourceUpdateAccess: true,
   templateMismatch: false,
   missingTemplates: [] as Array<{ id: number; name: string }>,
   canAutoAssignTemplates: false,
@@ -171,16 +176,16 @@ const MOCK_PREFLIGHT = {
  * The cmdk Command input has role="combobox"; our folder select is a plain <select>.
  */
 async function advanceToConfigureStep(user: ReturnType<typeof userEvent.setup>) {
-  // Select "Target Project" from the Command list
-  const targetProjectItem = screen.getByText("Target Project");
-  await user.click(targetProjectItem);
+  // Select "Target Project" from the mocked AsyncCombobox select
+  const projectSelect = await screen.findByTestId("project-select");
+  await user.selectOptions(projectSelect, "2"); // Target Project id=2
 
   // Wait for folder picker to appear (mocked as a plain <select>)
   const folderSelect = await screen.findByTestId("folder-select");
   await user.selectOptions(folderSelect, "10"); // Root folder id=10
 
   // Click Next button
-  const nextBtn = screen.getByRole("button", { name: /^next$/i });
+  const nextBtn = screen.getByRole("button", { name: /next/i });
   await user.click(nextBtn);
 }
 
@@ -207,11 +212,16 @@ describe("CopyMoveDialog", () => {
   });
 
   // Test 1: Step 1 renders project picker with accessible projects (DLGSEL-03)
-  it("Step 1 renders project picker with accessible projects", () => {
+  it("Step 1 renders project picker with accessible projects", async () => {
     render(<CopyMoveDialog {...DEFAULT_PROPS} />);
 
-    expect(screen.getByText("Target Project")).toBeInTheDocument();
-    expect(screen.getByText("Another Project")).toBeInTheDocument();
+    // AsyncCombobox is mocked as a <select> — options should contain project names
+    const projectSelect = await screen.findByTestId("project-select");
+    expect(projectSelect).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /Target Project/i })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Another Project/i })).toBeInTheDocument();
+    });
   });
 
   // Test 2: Step 1 does not show source project in picker
@@ -230,8 +240,9 @@ describe("CopyMoveDialog", () => {
     // Initially no folder select visible
     expect(screen.queryByTestId("folder-select")).not.toBeInTheDocument();
 
-    // Select a project
-    await user.click(screen.getByText("Target Project"));
+    // Select a project via the mocked select
+    const projectSelect = await screen.findByTestId("project-select");
+    await user.selectOptions(projectSelect, "2");
 
     // Folder picker should now appear
     await waitFor(() => {
@@ -249,11 +260,12 @@ describe("CopyMoveDialog", () => {
     render(<CopyMoveDialog {...DEFAULT_PROPS} />);
 
     // Initially: Next button exists but is disabled (no project or folder selected)
-    const nextBtn = screen.getByRole("button", { name: /^next$/i });
+    const nextBtn = screen.getByRole("button", { name: /next/i });
     expect(nextBtn).toBeDisabled();
 
     // After project selected: folder select appears, Next still disabled (no folder)
-    await user.click(screen.getByText("Target Project"));
+    const projectSelect = await screen.findByTestId("project-select");
+    await user.selectOptions(projectSelect, "2");
     const folderSelect = await screen.findByTestId("folder-select");
     expect(folderSelect).toBeInTheDocument();
     expect(nextBtn).toBeDisabled();

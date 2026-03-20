@@ -58,19 +58,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Move delete access check
-    let hasSourceDeleteAccess = true;
-    if (body.operation === "move") {
-      const sourceCase = await enhancedDb.repositoryCases.findFirst({
-        where: {
-          projectId: body.sourceProjectId,
-          id: { in: body.caseIds },
-        },
-      });
-      hasSourceDeleteAccess = sourceCase !== null;
-    }
-
-    // Fetch source cases
+    // Fetch source cases first (needed for move check and compat analysis)
+    // Note: findMany uses ZenStack read policy — if user can't read, no cases returned
     const sourceCases = await enhancedDb.repositoryCases.findMany({
       where: {
         id: { in: body.caseIds },
@@ -86,6 +75,21 @@ export async function POST(request: Request) {
         workflowStateId: true,
       },
     });
+
+    // Move update-access check (move = soft-delete via isDeleted: true = needs update permission)
+    // Since the worker uses raw prisma, we verify the user's role permits canAddEdit on TestCaseRepository.
+    // Admin users always have access.
+    let hasSourceUpdateAccess = true;
+    if (body.operation === "move") {
+      if (user?.access === "ADMIN") {
+        hasSourceUpdateAccess = true;
+      } else {
+        const userPerms = user?.role?.rolePermissions?.find(
+          (p: any) => p.area === "TestCaseRepository"
+        );
+        hasSourceUpdateAccess = userPerms?.canAddEdit ?? false;
+      }
+    }
 
     // ─── Template compatibility ────────────────────────────────────────────────
 
@@ -265,7 +269,7 @@ export async function POST(request: Request) {
     const response: PreflightResponse = {
       hasSourceReadAccess: true,
       hasTargetWriteAccess: true,
-      hasSourceDeleteAccess,
+      hasSourceUpdateAccess,
       templateMismatch,
       missingTemplates,
       canAutoAssignTemplates,

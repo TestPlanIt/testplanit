@@ -1,12 +1,16 @@
 import { Button } from "@/components/ui/button";
 import {
-  Command, CommandEmpty, CommandGroup, CommandInput,
-  CommandItem, CommandList
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Check, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -176,7 +180,7 @@ export function AsyncCombobox<T>({
         resolvedTriggerLabel === false
       ) {
         return (
-          <span className="text-muted-foreground text-start">
+          <span className="text-muted-foreground group-hover:text-accent-foreground text-start transition-colors">
             {fallbackPlaceholder}
           </span>
         );
@@ -187,7 +191,7 @@ export function AsyncCombobox<T>({
       }
 
       return (
-        <span className="text-muted-foreground text-start">
+        <span className="text-muted-foreground group-hover:text-accent-foreground text-start transition-colors">
           {resolvedTriggerLabel as React.ReactNode}
         </span>
       );
@@ -242,7 +246,7 @@ export function AsyncCombobox<T>({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className={cn("justify-start text-left", className)}
+              className={cn("justify-start text-left group", className)}
               disabled={disabled}
             >
               {defaultContent}
