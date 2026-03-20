@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-stopped_at: Completed 31-01-PLAN.md (Phase 31 Plan 01 — CopyMoveDialog entry points)
-last_updated: "2026-03-20T22:42:22.476Z"
+stopped_at: Completed 32-02-PLAN.md (Phase 32 Plan 02 — copy/move documentation)
+last_updated: "2026-03-20T23:07:21.030Z"
 last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
-  total_phases: 25
+  total_phases: 26
   completed_phases: 21
-  total_plans: 55
-  completed_plans: 58
+  total_plans: 57
+  completed_plans: 59
   percent: 24
 ---
 
@@ -49,6 +49,7 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 | Phase 29 P03 | 7m | 2 tasks | 3 files |
 | Phase 30-dialog-ui-and-polling P01 | 8 | 2 tasks | 7 files |
 | Phase 31-entry-points P01 | 12 | 2 tasks | 5 files |
+| Phase 32-testing-and-documentation P02 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 - [Phase 30-01]: Notification try/catch in copyMoveWorker: failure logged but does not fail the job
 - [Phase 31-entry-points]: handleCopyMove placed before columns useMemo to avoid block-scoped variable used before declaration
 - [Phase 31-entry-points]: BulkEditModal closes before CopyMoveDialog opens to prevent nested dialogs
+- [Phase 32-02]: sidebar_position: 11 for copy-move docs (follows import-export.md at position 10)
+- [Phase 32-02]: No screenshots in v0.17.0 copy-move docs — text is sufficient per plan discretion
 
 ### Pending Todos
 
@@ -93,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T22:38:44.219Z
-Stopped at: Completed 31-01-PLAN.md (Phase 31 Plan 01 — CopyMoveDialog entry points)
+Last session: 2026-03-20T23:07:21.028Z
+Stopped at: Completed 32-02-PLAN.md (Phase 32 Plan 02 — copy/move documentation)
 Resume file: None

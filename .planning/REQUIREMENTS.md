@@ -51,7 +51,7 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 
 ### Documentation
 
-- [ ] **DOCS-01**: User-facing documentation covers copy/move workflow, template/workflow handling, and conflict resolution
+- [x] **DOCS-01**: User-facing documentation covers copy/move workflow, template/workflow handling, and conflict resolution
 
 ### Testing
 
@@ -106,7 +106,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENTRY-01    | 31    | Complete |
 | ENTRY-02    | 31    | Complete |
 | ENTRY-03    | 31    | Complete |
-| DOCS-01     | 32    | Pending |
+| DOCS-01     | 32    | Complete |
 | TEST-01     | 32    | Pending |
 | TEST-02     | 32    | Pending |
 | TEST-03     | 32    | Pending |
