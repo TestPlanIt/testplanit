@@ -209,13 +209,16 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    // Select all cases
+    // Wait for actual case rows to render (not just the loading skeleton)
+    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+
+    // Select all cases via header checkbox
     const headerCheckbox = page
-      .locator('thead input[type="checkbox"], thead [role="checkbox"]')
+      .locator('thead [role="checkbox"]')
       .first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
-    await page.waitForTimeout(1000);
 
     // QuickScript button should be visible
     const qsButton = page.getByTestId("quickscript-cases-button");
@@ -270,12 +273,16 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
+    // Wait for actual case rows to render (not just the loading skeleton)
+    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+
+    // Select all cases via header checkbox
     const headerCheckbox = page
-      .locator('thead input[type="checkbox"], thead [role="checkbox"]')
+      .locator('thead [role="checkbox"]')
       .first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
-    await page.waitForTimeout(1000);
 
     const qsButton = page.getByTestId("quickscript-cases-button");
     await expect(qsButton).toBeVisible({ timeout: 10000 });
@@ -340,12 +347,16 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
+    // Wait for actual case rows to render (not just the loading skeleton)
+    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+
+    // Select all cases via header checkbox
     const headerCheckbox = page
-      .locator('thead input[type="checkbox"], thead [role="checkbox"]')
+      .locator('thead [role="checkbox"]')
       .first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
-    await page.waitForTimeout(1000);
 
     const qsButton = page.getByTestId("quickscript-cases-button");
     await expect(qsButton).toBeVisible({ timeout: 10000 });

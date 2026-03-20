@@ -280,6 +280,9 @@ export default function ProjectsMenu({
     }))
     .filter((group) => group.items.length > 0);
 
+  // Stable key for tracking which sections exist (used as useEffect dependency)
+  const groupKeys = groups.map((g) => g.key).join(",");
+
   const [openSections, setOpenSections] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -304,7 +307,9 @@ export default function ProjectsMenu({
   }, [openSections]);
 
   useEffect(() => {
-    // Ensure the section containing the active page is open
+    // Ensure the section containing the active page is open.
+    // Include `groupKeys` in deps so that when permissions load (e.g., canSeeSettings
+    // becomes true after session loads), the newly-visible section auto-expands.
     const activePage =
       page === "settings" ? `settings/${settingsSubPage}` : page;
     const activeSection = groups.find((group) =>
@@ -313,7 +318,7 @@ export default function ProjectsMenu({
     if (activeSection && !openSections.includes(activeSection.key)) {
       setOpenSections((prev) => [...prev, activeSection.key]);
     }
-  }, [page, settingsSubPage]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, settingsSubPage, groupKeys]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card

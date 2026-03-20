@@ -36,12 +36,22 @@ test.describe("Milestone CRUD", () => {
     const nameInput = page.getByPlaceholder(/Name/i);
     await nameInput.fill(milestoneName);
 
+    // Wait for the milestone type default to load (required field).
+    // The milestoneTypeId field is populated via useEffect after fetching milestone types.
+    // The Select trigger shows a placeholder text until the default type loads.
+    // Wait for the select trigger to NOT contain the placeholder text (i.e., a value is selected).
+    const dialog = page.getByRole("dialog");
+    const milestoneTypeSelect = dialog.locator('[role="combobox"]').first();
+    await expect(milestoneTypeSelect).toBeVisible({ timeout: 10000 });
+    // The placeholder contains "Select" text; wait for it to show an actual type name instead
+    await expect(milestoneTypeSelect).not.toContainText(/select/i, { timeout: 10000 });
+
     // Submit and wait for the dialog to close (milestone created via ZenStack hook)
     const saveButton = page.getByRole("button", { name: /Save/i });
     await saveButton.click();
 
     // Dialog should close after successful creation
-    await expect(page.getByRole("dialog").first()).not.toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("dialog").first()).not.toBeVisible({ timeout: 30000 });
     await expect(page.getByText(milestoneName)).toBeVisible({ timeout: 10000 });
   });
 
@@ -133,15 +143,16 @@ test.describe("Milestone CRUD", () => {
     const activeTab = page.getByRole("tab", { name: /Active/i });
     await expect(activeTab).toBeVisible({ timeout: 10000 });
 
-    // Find the milestone card
-    const milestoneCard = page
-      .locator("div")
-      .filter({ hasText: milestoneName })
-      .first();
-    await expect(milestoneCard).toBeVisible({ timeout: 10000 });
+    // Wait for milestone text to appear (data loaded)
+    await expect(page.getByText(milestoneName)).toBeVisible({ timeout: 10000 });
 
-    // Open the 3-dot dropdown menu
-    const menuButton = milestoneCard.getByRole("button").last();
+    // Find the 3-dot dropdown trigger near this milestone.
+    // Each MilestoneItemCard has a DropdownMenuTrigger button with a MoreVertical icon.
+    // Locate the milestone text first, then find the closest card container and its menu button.
+    const milestoneText = page.getByText(milestoneName);
+    // The card is a parent div with border/rounded styling. Navigate up to find the dropdown.
+    const milestoneCard = milestoneText.locator("xpath=ancestor::div[contains(@class, 'rounded-lg')]").first();
+    const menuButton = milestoneCard.locator('button:has(svg)').last();
     await menuButton.click();
 
     // Click Complete
@@ -149,14 +160,26 @@ test.describe("Milestone CRUD", () => {
     await expect(completeMenuItem).toBeVisible({ timeout: 5000 });
     await completeMenuItem.click();
 
-    // Complete Milestone dialog should open
+    // Complete Milestone dialog should open (CompleteMilestoneDialog).
+    // It has a 2-step flow: first picks a completion date, then optionally confirms.
     const dialog = page.getByRole("dialog").first();
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Click Complete button in the dialog
-    const completeButton = dialog.getByRole("button", { name: /Complete/i });
-    await expect(completeButton).toBeVisible({ timeout: 5000 });
-    await completeButton.click();
+    // Click the submit button (shows "Complete" text from common.actions.complete).
+    // If there are no active runs/sessions, it completes directly.
+    // If there are dependencies, it shows a confirmation step — click the confirm button too.
+    const submitButton = dialog.getByRole("button", { name: /Complete/i });
+    await expect(submitButton).toBeVisible({ timeout: 5000 });
+    await submitButton.click();
+
+    // If a confirmation step appeared, click the confirm/complete button again
+    try {
+      const confirmButton = dialog.getByRole("button", { name: /Confirm|Complete/i });
+      await expect(confirmButton).toBeVisible({ timeout: 5000 });
+      await confirmButton.click();
+    } catch {
+      // No confirmation step — already completed
+    }
 
     // Wait for the server action to complete and dialog to close
     await expect(dialog).not.toBeVisible({ timeout: 30000 });
@@ -195,15 +218,13 @@ test.describe("Milestone CRUD", () => {
     const activeTab = page.getByRole("tab", { name: /Active/i });
     await expect(activeTab).toBeVisible({ timeout: 10000 });
 
-    // Find the parent milestone card
-    const parentCard = page
-      .locator("div")
-      .filter({ hasText: parentName })
-      .first();
-    await expect(parentCard).toBeVisible({ timeout: 10000 });
+    // Wait for milestone text to appear (data loaded)
+    await expect(page.getByText(parentName)).toBeVisible({ timeout: 10000 });
 
-    // Open the 3-dot dropdown menu
-    const menuButton = parentCard.getByRole("button").last();
+    // Find the 3-dot dropdown trigger near this milestone
+    const parentText = page.getByText(parentName);
+    const parentCard = parentText.locator("xpath=ancestor::div[contains(@class, 'rounded-lg')]").first();
+    const menuButton = parentCard.locator('button:has(svg)').last();
     await menuButton.click();
 
     // Click Delete

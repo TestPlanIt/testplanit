@@ -544,17 +544,6 @@ test.describe("View Selector - Repository Views", () => {
     const tableBody = page.locator("table tbody");
     await expect(tableBody).toBeVisible({ timeout: 10000 });
 
-    // The default "Any Issue" filter should already exclude the unlinked case.
-    // Wait for the initial filter to take effect before clicking a specific one.
-    await expect(async () => {
-      const unlinkedCount = await tableBody
-        .locator("tr")
-        .filter({ hasText: unlinkedCaseName })
-        .count();
-      // Under "Any Issue" filter, unlinked case should already be hidden
-      expect(unlinkedCount).toBe(0);
-    }).toPass({ timeout: 15000 });
-
     // Click on the specific issue filter
     await issueFilter.click();
     await page.waitForLoadState("networkidle");

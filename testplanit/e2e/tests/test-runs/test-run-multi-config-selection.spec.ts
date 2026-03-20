@@ -201,8 +201,10 @@ test.describe("Multi-Config Test Run Selection", () => {
     api,
     page,
   }) => {
+    // Use a project name that does NOT contain the word "Edit" to avoid
+    // false positives when locating the Edit button by text
     const projectId = await api.createProject(
-      `E2E HideEdit ${Date.now()}`
+      `E2E HidBtn ${Date.now()}`
     );
     const ts = Date.now();
     const config1Id = await api.createConfiguration(`Config1 ${ts}`);
@@ -219,11 +221,11 @@ test.describe("Multi-Config Test Run Selection", () => {
     });
 
     // Add test cases to both runs
-    const folderId = await api.createFolder(projectId, "HideEdit Folder");
+    const folderId = await api.createFolder(projectId, "HidBtn Folder");
     const caseId = await api.createTestCase(
       projectId,
       folderId,
-      `HideEdit Case ${ts}`
+      `HidBtn Case ${ts}`
     );
     await api.addTestCaseToTestRun(run1Id, caseId);
     await api.addTestCaseToTestRun(run2Id, caseId);
@@ -238,15 +240,12 @@ test.describe("Multi-Config Test Run Selection", () => {
     const configCombobox = configContainer.locator('button[role="combobox"]').first();
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
 
-    // By default, the current run is already selected. If both siblings auto-select,
-    // the edit button should be hidden. Let's verify behavior:
+    // By default, the current run is already selected (single config).
+    // Locate the Edit button using a strict text match to avoid matching
+    // unrelated elements whose subtree coincidentally contains "Edit".
+    const editButton = page.getByRole("button", { name: "Edit", exact: true });
 
-    // With only 1 config selected (default), edit button should be visible
-    const editButton = page.locator(
-      'button:has-text("Edit")'
-    ).first();
-
-    // Check initial state - if only current run is selected, edit should be visible
+    // Check initial state - with single config selected, Edit should be visible
     const isEditVisible = await editButton.isVisible({ timeout: 5000 }).catch(() => false);
 
     if (isEditVisible) {

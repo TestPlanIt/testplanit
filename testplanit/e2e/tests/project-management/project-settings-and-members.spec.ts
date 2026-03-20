@@ -215,14 +215,16 @@ test.describe("Project Member Management", () => {
 
   /**
    * Open the edit dialog for the test project.
+   * The actions column (pinned right) renders edit + delete buttons.
+   * The edit button is a ghost variant Button with a SquarePen SVG icon.
+   * Target the last <td> in the row (actions column) and click the first button.
    */
   async function openEditDialog(page: import("@playwright/test").Page) {
     const projectRow = await navigateAndFindProject(page);
 
-    const editButton = projectRow
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
+    // The edit button is the first button in the last cell (actions column)
+    const actionsCell = projectRow.locator("td").last();
+    const editButton = actionsCell.locator("button").first();
     await expect(editButton).toBeVisible({ timeout: 5000 });
     await editButton.click();
 

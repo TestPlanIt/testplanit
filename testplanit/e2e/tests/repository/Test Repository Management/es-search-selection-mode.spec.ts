@@ -13,6 +13,53 @@ import { expect, test } from "../../../fixtures";
  * - Clearing search restores full case list
  * - Select All uses search result IDs (not entire folder)
  */
+
+/**
+ * Helper to open the AddTestRunModal and navigate to step 2 (test case selection).
+ * Waits for the state select to be populated before clicking Next, which avoids
+ * a race condition where stateId=0 causes silent validation failure.
+ */
+async function openModalAndGoToStep2(
+  page: import("@playwright/test").Page,
+  runName: string
+) {
+  const newRunButton = page.getByTestId("new-run-button");
+  await expect(newRunButton).toBeVisible({ timeout: 15000 });
+  await newRunButton.click();
+
+  const dialog = page.locator('[role="dialog"]').first();
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+
+  // Fill the run name
+  const nameInput = dialog.getByTestId("run-name-input");
+  await nameInput.fill(runName);
+
+  // Wait for the state select to be populated (workflows must load first)
+  // The state select is inside a SelectTrigger with a SelectValue.
+  // When stateId is valid, the SelectValue renders the workflow name (not the placeholder).
+  // We wait for any SelectTrigger in the dialog to NOT contain the placeholder text.
+  const stateSelect = dialog.locator('label:has-text("State")').locator('..').locator('[role="combobox"]');
+  await expect(stateSelect).toBeVisible({ timeout: 10000 });
+  // Wait until the state select has a value (not empty/placeholder)
+  await expect(async () => {
+    const text = await stateSelect.textContent();
+    expect(text?.trim().length).toBeGreaterThan(0);
+    // Make sure it's not just the placeholder
+    expect(text).not.toMatch(/select.*state/i);
+  }).toPass({ timeout: 10000 });
+
+  // Click Next to go to step 2 (test case selection)
+  const nextButton = dialog.getByTestId("run-next-button");
+  await nextButton.click();
+
+  // Wait for step 2 dialog content to appear (ProjectRepository in selection mode)
+  // The dialog content changes completely, so re-query the dialog
+  const step2Dialog = page.locator('[role="dialog"]').first();
+  await expect(step2Dialog).toBeVisible({ timeout: 10000 });
+
+  return step2Dialog;
+}
+
 test.describe("Elasticsearch Search in Selection Mode", () => {
   test("should show ES search input when in selection mode (AddTestRunModal step 2)", async ({
     api,
@@ -32,20 +79,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    // Fill step 1 (basic info)
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    const nameInput = dialog.getByTestId("run-name-input");
-    await nameInput.fill(`ES Search Run ${Date.now()}`);
-
-    // Click Next to go to step 2 (test case selection)
-    const nextButton = dialog.getByTestId("run-next-button");
-    await nextButton.click();
+    const dialog = await openModalAndGoToStep2(page, `ES Search Run ${Date.now()}`);
 
     // In step 2, the ProjectRepository is rendered in selection mode
     // The ES search input should be visible
@@ -76,16 +110,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Fill step 1
-    await dialog.getByTestId("run-name-input").fill(`Filter Run ${Date.now()}`);
-    await dialog.getByTestId("run-next-button").click();
+    const dialog = await openModalAndGoToStep2(page, `Filter Run ${Date.now()}`);
 
     // Wait for step 2 to load
     const esSearchInput = dialog.locator(
@@ -134,15 +159,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    await dialog.getByTestId("run-name-input").fill(`Clear Run ${Date.now()}`);
-    await dialog.getByTestId("run-next-button").click();
+    const dialog = await openModalAndGoToStep2(page, `Clear Run ${Date.now()}`);
 
     const esSearchInput = dialog.locator(
       'input[placeholder*="Search in this project"]'
@@ -209,15 +226,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    await dialog.getByTestId("run-name-input").fill(`Select Run ${Date.now()}`);
-    await dialog.getByTestId("run-next-button").click();
+    const dialog = await openModalAndGoToStep2(page, `Select Run ${Date.now()}`);
 
     const esSearchInput = dialog.locator(
       'input[placeholder*="Search in this project"]'

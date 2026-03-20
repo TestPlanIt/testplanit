@@ -92,22 +92,22 @@ test.describe("Project Overview Dashboard", () => {
     await expect(milestonesHeading).toBeVisible({ timeout: 15000 });
 
     // The left panel has a collapse button with a ChevronLeft icon.
-    // There are two collapse buttons (left and right panel). The left one
-    // is rendered before the resize handle. Both are inside TooltipTrigger wrappers.
-    // The left panel's panel element has id="overview-left" via the id prop.
-    // The collapse button is the first button with variant="secondary" and size="sm"
-    // that appears after the left panel.
-    // Use the panel structure: the left collapse button is the first secondary
-    // button inside the panel group that is not inside a panel.
+    // There are two collapse buttons (left and right panel) inside the panel group,
+    // each in a <div> wrapper between the panels. Both are secondary/sm variant buttons.
+    // The left panel collapse button is the first such button after the left panel element.
     const leftPanel = page.locator('[data-panel-id="overview-left"]');
     await expect(leftPanel).toBeVisible({ timeout: 5000 });
 
-    // The collapse button is in a sibling div right after the left panel.
-    // Find buttons with the ChevronLeft icon near the panel group.
-    // Since both collapse buttons look similar, get the first one (left panel's button).
-    const panelGroup = page.locator('[data-panel-group]');
-    const collapseButtons = panelGroup.locator(':scope > div:not([data-panel-id]):not([data-panel-resize-handle-id]) button');
-    const collapseLeftBtn = collapseButtons.first();
+    // The left panel collapse button is between the left panel and the resize
+    // handle. It's a secondary variant Button wrapping a ChevronLeft SVG, inside
+    // a TooltipTrigger. Its tooltip text toggles between "Collapse Left Panel"
+    // and "Expand Left Panel". We locate it by finding the button that is a
+    // following-sibling of the left panel element but NOT inside a panel.
+    // The simplest reliable approach: the left panel element is followed by a div
+    // that contains the collapse button. Use xpath from the left panel.
+    const collapseLeftBtn = leftPanel
+      .locator('xpath=following-sibling::div[1]//button')
+      .first();
     await expect(collapseLeftBtn).toBeVisible({ timeout: 5000 });
     await collapseLeftBtn.click();
 

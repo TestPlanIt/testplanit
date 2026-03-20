@@ -11,7 +11,72 @@ import { expect, test } from "../../fixtures";
  * - Removing selected configurations via badge X button
  * - Select All functionality
  * - Pagination in the combobox dropdown
+ *
+ * Note: The dialog has overflow-y-auto which intercepts pointer events;
+ *       clicks inside the dialog use force: true or dispatchEvent("click").
+ * Note: The page may render multiple dialog instances in the DOM from different
+ *       trigger buttons. We use .last() to target the most recently opened one.
  */
+
+/** Helper: open the AddTestRunModal and locate the configurations combobox */
+async function openModalAndGetConfigCombobox(page: any) {
+  const newRunButton = page.getByTestId("new-run-button");
+  await expect(newRunButton).toBeVisible({ timeout: 15000 });
+  await newRunButton.click();
+
+  // Multiple dialog instances may exist in the DOM; target the last one (most recently opened)
+  const dialog = page.locator('[role="dialog"]').last();
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+
+  // The configurations label is inside a FormItem; the combobox is a sibling
+  const configLabel = dialog.locator(
+    'label:has-text("Configurations")'
+  );
+  await expect(configLabel).toBeVisible({ timeout: 5000 });
+  const configFormItem = configLabel.locator("..");
+  const configCombobox = configFormItem.locator(
+    'button[role="combobox"]'
+  );
+  await expect(configCombobox).toBeVisible({ timeout: 5000 });
+
+  return { dialog, configCombobox };
+}
+
+/** Helper: click the combobox trigger and wait for options to appear */
+async function openComboboxDropdown(page: any, configCombobox: any) {
+  // The dialog's overflow-y-auto can intercept pointer events.
+  // Use multiple strategies to open the popover.
+  await configCombobox.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+
+  // Strategy 1: mouse click at element coordinates
+  const box = await configCombobox.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  }
+  await page.waitForTimeout(300);
+
+  const popover = page.locator('[cmdk-list]').first();
+  let isOpen = await popover.isVisible().catch(() => false);
+
+  if (!isOpen) {
+    // Strategy 2: force click
+    await configCombobox.click({ force: true });
+    await page.waitForTimeout(300);
+    isOpen = await popover.isVisible().catch(() => false);
+  }
+
+  if (!isOpen) {
+    // Strategy 3: programmatic click via evaluate
+    await configCombobox.evaluate((el: HTMLElement) => {
+      el.click();
+    });
+    await page.waitForTimeout(300);
+  }
+
+  await expect(popover).toBeVisible({ timeout: 5000 });
+}
+
 test.describe("Test Run Configuration Combobox", () => {
   test("should display configurations in multi-select combobox when creating a test run", async ({
     api,
@@ -30,28 +95,8 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Click the "New Run" button to open the AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    // Wait for the dialog to appear
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Find the configurations combobox trigger (role="combobox" inside the form)
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
-
-    // Click to open the combobox popover
-    await configCombobox.click();
-
-    // Wait for the popover/command list to appear
-    const popover = page.locator('[role="listbox"], [cmdk-list]').first();
-    await expect(popover).toBeVisible({ timeout: 5000 });
+    const { configCombobox } = await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
     // Verify configurations appear in the dropdown
     await expect(
@@ -75,20 +120,9 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open the config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
+    const { configCombobox } =
+      await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
     // Select a configuration
     const configOption = page.locator(
@@ -97,12 +131,13 @@ test.describe("Test Run Configuration Combobox", () => {
     await expect(configOption).toBeVisible({ timeout: 5000 });
     await configOption.click();
 
-    // Verify the selected configuration appears as a badge in the trigger button
-    // The MultiAsyncCombobox renders selected items as Badge components
-    const badge = dialog.locator(
-      `[data-slot="badge"]:has-text("${configName}")`
-    );
-    await expect(badge).toBeVisible({ timeout: 5000 });
+    // Close the popover so the combobox trigger shows the selected badge
+    await page.keyboard.press("Escape");
+
+    // Verify the selected configuration appears inside the combobox trigger
+    await expect(configCombobox).toContainText(configName, {
+      timeout: 5000,
+    });
   });
 
   test("should remove configuration by clicking badge X button", async ({
@@ -118,39 +153,37 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
+    const { configCombobox } =
+      await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open combobox and select a configuration
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
-
+    // Select a configuration
     const configOption = page.locator(
       `[role="option"]:has-text("${configName}")`
     );
     await expect(configOption).toBeVisible({ timeout: 5000 });
     await configOption.click();
 
-    // Verify badge is visible
-    const badge = dialog.locator(
-      `[data-slot="badge"]:has-text("${configName}")`
-    );
-    await expect(badge).toBeVisible({ timeout: 5000 });
+    // Close the popover
+    await page.keyboard.press("Escape");
+
+    // Verify config is shown in combobox trigger
+    await expect(configCombobox).toContainText(configName, {
+      timeout: 5000,
+    });
 
     // Click the X button on the badge to remove it
-    const removeButton = badge.locator('[role="button"]');
-    await removeButton.click();
+    // The remove button is a span[role="button"] inside the badge, next to the config name
+    const removeButton = configCombobox
+      .locator(`text="${configName}"`)
+      .locator("..")
+      .locator('[role="button"]');
+    await removeButton.click({ force: true });
 
-    // Verify badge is no longer visible
-    await expect(badge).not.toBeVisible({ timeout: 3000 });
+    // Verify config is no longer in combobox trigger
+    await expect(configCombobox).not.toContainText(configName, {
+      timeout: 3000,
+    });
   });
 
   test("should search and filter configurations in combobox", async ({
@@ -169,22 +202,15 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
+    const { configCombobox } = await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    // Search for the timestamp to find only our test's configs (avoids pagination issues)
+    const searchInput = page.locator('[cmdk-input]').first();
+    await searchInput.fill(String(ts));
+    await page.waitForTimeout(500);
 
-    // Open the config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
-
-    // Both configs should be visible initially
+    // Both configs should be visible when filtered by timestamp
     await expect(
       page.locator(`[role="option"]:has-text("${configNameMatch}")`)
     ).toBeVisible({ timeout: 5000 });
@@ -192,11 +218,8 @@ test.describe("Test Run Configuration Combobox", () => {
       page.locator(`[role="option"]:has-text("${configNameNoMatch}")`)
     ).toBeVisible();
 
-    // Type in the search input to filter
-    const searchInput = page.locator('[cmdk-input], input[placeholder]').first();
+    // Now filter further with "Searchable" to narrow results
     await searchInput.fill("Searchable");
-
-    // Wait for filtering
     await page.waitForTimeout(500);
 
     // Matching config should be visible, non-matching should not
@@ -223,29 +246,17 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open the config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
+    const { configCombobox } =
+      await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
     // Select first configuration
     await page
       .locator(`[role="option"]:has-text("${config1}")`)
       .click();
 
-    // Re-open combobox (MultiAsyncCombobox stays open after selection, but
-    // the selected option is hidden when hideSelected=true)
-    // Verify it's hidden from the list
+    // The MultiAsyncCombobox stays open after selection with hideSelected=true
+    // The selected option is hidden from the list
     await expect(
       page.locator(`[role="option"]:has-text("${config1}")`)
     ).not.toBeVisible({ timeout: 3000 });
@@ -258,13 +269,11 @@ test.describe("Test Run Configuration Combobox", () => {
     // Close the popover by pressing Escape
     await page.keyboard.press("Escape");
 
-    // Verify both badges are visible
-    await expect(
-      dialog.locator(`[data-slot="badge"]:has-text("${config1}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      dialog.locator(`[data-slot="badge"]:has-text("${config2}")`)
-    ).toBeVisible();
+    // Verify both configurations appear in the combobox trigger
+    await expect(configCombobox).toContainText(config1, {
+      timeout: 5000,
+    });
+    await expect(configCombobox).toContainText(config2);
   });
 
   test("should use Select All to bulk select configurations", async ({
@@ -283,27 +292,22 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
+    const { configCombobox } =
+      await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    // Search for the timestamp to filter to only our test's configs
+    // (avoids pagination issues when other tests create configs in parallel)
+    const searchInput = page.locator('[cmdk-input]').first();
+    await searchInput.fill(`SelectAll`);
+    await page.waitForTimeout(500);
 
-    // Open the config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
-
-    // Wait for options to load
+    // Wait for our options to load
     await expect(
       page.locator(`[role="option"]:has-text("${config1}")`)
     ).toBeVisible({ timeout: 5000 });
 
-    // Click "Select All" option
+    // Click "Select All" option (selects all visible matching configs)
     const selectAllOption = page.locator(
       '[role="option"][data-value="__select_all__"]'
     );
@@ -313,13 +317,11 @@ test.describe("Test Run Configuration Combobox", () => {
     // Close the popover
     await page.keyboard.press("Escape");
 
-    // Verify both configurations are selected as badges
-    await expect(
-      dialog.locator(`[data-slot="badge"]:has-text("${config1}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      dialog.locator(`[data-slot="badge"]:has-text("${config2}")`)
-    ).toBeVisible();
+    // Verify both configurations are selected (shown in combobox trigger)
+    await expect(configCombobox).toContainText(config1, {
+      timeout: 5000,
+    });
+    await expect(configCombobox).toContainText(config2);
   });
 
   test("should show Clear All link when configurations are selected", async ({
@@ -335,20 +337,9 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open combobox and select a config
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
+    const { dialog, configCombobox } =
+      await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
     await page
       .locator(`[role="option"]:has-text("${configName}")`)
@@ -357,20 +348,20 @@ test.describe("Test Run Configuration Combobox", () => {
     // Close popover
     await page.keyboard.press("Escape");
 
-    // Verify badge is visible
-    await expect(
-      dialog.locator(`[data-slot="badge"]:has-text("${configName}")`)
-    ).toBeVisible({ timeout: 5000 });
+    // Verify config is shown in combobox trigger
+    await expect(configCombobox).toContainText(configName, {
+      timeout: 5000,
+    });
 
-    // Click "Clear All" link
+    // Click "Clear All" link (force: true for dialog overlay)
     const clearAll = dialog.locator('span:has-text("Clear All")');
     await expect(clearAll).toBeVisible();
-    await clearAll.click();
+    await clearAll.click({ force: true });
 
-    // Verify badge is removed
-    await expect(
-      dialog.locator(`[data-slot="badge"]:has-text("${configName}")`)
-    ).not.toBeVisible({ timeout: 3000 });
+    // Verify config is no longer in combobox trigger
+    await expect(configCombobox).not.toContainText(configName, {
+      timeout: 3000,
+    });
   });
 
   test("should show pagination controls in combobox dropdown", async ({
@@ -381,29 +372,14 @@ test.describe("Test Run Configuration Combobox", () => {
       `E2E Config Pagination ${Date.now()}`
     );
 
-    // The combobox uses local filtering with configurationsOptions which are
-    // fetched via useFindManyConfigurations. The MultiAsyncCombobox has
-    // pagination with "Previous" and "Next" buttons.
     const configName = `Paginated Config ${Date.now()}`;
     await api.createConfiguration(configName);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open the config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
+    const { configCombobox } = await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
 
     // Wait for options to appear
     await expect(
@@ -437,24 +413,15 @@ test.describe("Test Run Configuration Combobox", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    // Open AddTestRunModal
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const { dialog, configCombobox } =
+      await openModalAndGetConfigCombobox(page);
 
     // Fill in required name field
-    const nameInput = page.getByTestId("run-name-input").first();
+    const nameInput = dialog.getByTestId("run-name-input");
     await nameInput.fill(`Test Run ${Date.now()}`);
 
     // Select a configuration
-    const configCombobox = dialog
-      .locator('label:has-text("Configurations")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
+    await openComboboxDropdown(page, configCombobox);
 
     await page
       .locator(`[role="option"]:has-text("${configName}")`)
@@ -462,15 +429,14 @@ test.describe("Test Run Configuration Combobox", () => {
 
     await page.keyboard.press("Escape");
 
-    // Click "Next" to go to step 2
-    const nextButton = page.getByTestId("run-next-button");
-    await expect(nextButton).toBeVisible();
-    await nextButton.click();
+    // Click "Next" to go to step 2 (use dispatchEvent to bypass dialog overlay)
+    const nextButton = dialog.getByTestId("run-next-button");
+    await expect(nextButton).toBeVisible({ timeout: 10000 });
+    await nextButton.dispatchEvent("click");
 
     // Verify step 2 is shown (test case selection with repository)
-    // The dialog should now show the repository/case selection view
     await expect(
-      dialog.locator('text="Save"').or(page.getByTestId("run-save-button"))
+      dialog.getByTestId("run-save-button")
     ).toBeVisible({ timeout: 10000 });
   });
 });

@@ -33,16 +33,20 @@ test.describe("Auto-Tag Flow", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    // Wait for cases to load
+    // Wait for actual case rows to render (not just the loading skeleton)
+    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+
+    // Now select all cases via header checkbox
     const headerCheckbox = page
-      .locator('thead input[type="checkbox"], thead [role="checkbox"]')
+      .locator('thead [role="checkbox"]')
       .first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
 
     // Auto-tag button should be visible with LLM integration configured
     const autoTagButton = page.getByTestId("auto-tag-cases-button");
-    await expect(autoTagButton).toBeVisible({ timeout: 5000 });
+    await expect(autoTagButton).toBeVisible({ timeout: 10000 });
   });
 
   test("should open auto-tag dialog and show analysis progress with mocked API", async ({
@@ -120,17 +124,20 @@ test.describe("Auto-Tag Flow", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    // Select cases
+    // Wait for actual case rows to render (not just the loading skeleton)
+    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+
+    // Select cases via header checkbox
     const headerCheckbox = page
-      .locator('thead input[type="checkbox"], thead [role="checkbox"]')
+      .locator('thead [role="checkbox"]')
       .first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
-    await page.waitForTimeout(500);
 
     // Click the auto-tag button
     const autoTagButton = page.getByTestId("auto-tag-cases-button");
-    await expect(autoTagButton).toBeVisible({ timeout: 5000 });
+    await expect(autoTagButton).toBeVisible({ timeout: 10000 });
     await autoTagButton.click();
 
     // The dialog should open in "analyzing" state (autoStart skips configure)

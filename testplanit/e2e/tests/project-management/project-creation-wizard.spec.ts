@@ -74,16 +74,31 @@ test.describe("Project Creation Wizard", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Step 1: Project Details — enter project name
+    // The wizard loads data (templates, workflows, etc.) asynchronously.
+    // When data finishes loading, the form resets via useEffect, which can clear
+    // a previously filled input. Wait for the Next button to appear first (it is
+    // disabled while data loads OR while the name is empty). We fill the name,
+    // then confirm the Next button becomes enabled (proving data is loaded AND
+    // name is filled). If a reset cleared the input, the button stays disabled
+    // and we re-fill.
     const nameInput = dialog.getByRole("textbox").first();
     await expect(nameInput).toBeVisible({ timeout: 10000 });
+
+    const nextButton = dialog.getByRole("button", { name: /next/i });
+    await expect(nextButton).toBeVisible({ timeout: 10000 });
+
+    // Fill the name and wait for Next to be enabled (data loaded + name filled).
+    // Retry the fill if an async data load resets the form.
     await nameInput.fill(projectName);
+    try {
+      await expect(nextButton).toBeEnabled({ timeout: 5000 });
+    } catch {
+      // Data load reset the form — re-fill
+      await nameInput.fill(projectName);
+      await expect(nextButton).toBeEnabled({ timeout: 10000 });
+    }
     await expect(nameInput).toHaveValue(projectName);
 
-    // Helper: click Next and wait for the step title to change
-    const nextButton = dialog.getByRole("button", { name: /next/i });
-
-    // The Next button becomes enabled once name has content
-    await expect(nextButton).toBeEnabled({ timeout: 5000 });
     await nextButton.click();
 
     // Step 2: Templates — wait for step content to load (template list)
