@@ -148,7 +148,6 @@ vi.mock("@/components/WorkflowStateDisplay", () => ({
 
 vi.mock("@/components/ProjectIcon", () => ({
   ProjectIcon: ({ iconUrl }: { iconUrl: string }) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img data-testid="project-icon" src={iconUrl} alt="Project" />
   ),
 }));

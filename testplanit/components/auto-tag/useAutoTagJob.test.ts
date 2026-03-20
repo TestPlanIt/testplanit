@@ -29,7 +29,7 @@ function okResponse(body: unknown) {
 }
 
 /** Build a failed fetch response */
-function errorResponse(status: number, body: unknown) {
+function _errorResponse(status: number, body: unknown) {
   return Promise.resolve({
     ok: false,
     status,
@@ -394,7 +394,7 @@ describe("useAutoTagJob", () => {
       await result.current.cancel();
     });
 
-    const cancelCall = fetchMock.mock.calls.find(([url]: [string]) =>
+    const cancelCall = fetchMock.mock.calls.find(([url]: any) =>
       url.includes("/api/auto-tag/cancel/"),
     );
     expect(cancelCall).toBeDefined();

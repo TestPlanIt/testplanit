@@ -69,7 +69,7 @@ test.describe("Admin SSO Provider Management", () => {
     baseURL,
   }) => {
     // Track existing Google provider to restore state
-    let existingProviderId: number | null = null;
+    let existingProviderId: string | null = null;
     try {
       const listRes = await request.get(
         `${baseURL}/api/model/ssoProvider/findFirst`,
@@ -156,41 +156,106 @@ test.describe("Admin SSO Provider Management", () => {
     }
   });
 
-  test("Admin can toggle Force SSO setting", async ({ page }) => {
-    await page.goto("/en-US/admin/sso");
-    await page.waitForLoadState("networkidle");
+  test("Admin can toggle Force SSO setting", async ({
+    page,
+    request,
+    baseURL,
+  }) => {
+    // Ensure at least one SSO provider exists so the Force SSO toggle has something to update
+    let createdProviderId: string | null = null;
+    try {
+      const findRes = await request.get(
+        `${baseURL}/api/model/ssoProvider/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {},
+              select: { id: true },
+            }),
+          },
+        }
+      );
+      const found = findRes.ok() ? await findRes.json() : null;
+      if (!found?.data?.id) {
+        // Create a temporary Google provider so we have something to toggle
+        const createRes = await request.post(
+          `${baseURL}/api/model/ssoProvider/create`,
+          {
+            data: {
+              data: {
+                name: `google-temp-e2e-${Date.now()}`,
+                type: "GOOGLE",
+                enabled: false,
+                forceSso: false,
+                config: { clientId: "temp-e2e", clientSecret: "temp-e2e" },
+              },
+            },
+          }
+        );
+        if (createRes.ok()) {
+          const created = await createRes.json();
+          createdProviderId = created?.data?.id ?? null;
+        }
+      }
+    } catch {
+      // Non-fatal - test may still work if providers already exist
+    }
 
-    // Find the Force SSO Login label
-    const forceSsoLabel = page.getByText("Force SSO Login");
-    await expect(forceSsoLabel).toBeVisible({ timeout: 10000 });
+    try {
+      await page.goto("/en-US/admin/sso");
+      await page.waitForLoadState("networkidle");
+      // Wait a moment for the useFindManySsoProvider hook to populate the ssoProviders array
+      await page.waitForTimeout(1000);
 
-    // Get the switch directly adjacent to Force SSO label
-    // The structure is: generic > { "Force SSO Login" text, paragraph } + switch
-    // We find the parent container of the Force SSO text and get the switch sibling
-    const forceSsoContainer = forceSsoLabel.locator("../.."); // grandparent div
-    const forceSsoSwitch = forceSsoContainer
-      .locator('button[role="switch"]')
-      .first();
+      // Find the Force SSO Login label
+      const forceSsoLabel = page.getByText("Force SSO Login");
+      await expect(forceSsoLabel).toBeVisible({ timeout: 10000 });
 
-    // Wait for switch to be visible
-    await expect(forceSsoSwitch).toBeVisible({ timeout: 5000 });
+      // Navigate from the label to the container div and find the switch within it
+      // Structure: div.flex > { div > { Label("Force SSO Login"), p }, Switch }
+      const forceSsoContainer = forceSsoLabel.locator("../..");
+      const forceSsoSwitch = forceSsoContainer
+        .locator('button[role="switch"]')
+        .first();
 
-    const initialState = await forceSsoSwitch.getAttribute("data-state");
+      await expect(forceSsoSwitch).toBeVisible({ timeout: 5000 });
 
-    // Toggle Force SSO
-    await forceSsoSwitch.click();
-    await page.waitForTimeout(1500);
+      const initialState = await forceSsoSwitch.getAttribute("data-state");
 
-    // State should have changed
-    const newState = await forceSsoSwitch.getAttribute("data-state");
-    expect(newState).not.toBe(initialState);
+      // Toggle Force SSO — the handler calls updateProvider for ALL ssoProviders
+      // which may result in multiple API calls or none if the hook hasn't loaded providers yet.
+      // Use polling instead of waitForResponse since the number of API calls varies.
+      await forceSsoSwitch.click();
 
-    // Toggle back to restore original state
-    await forceSsoSwitch.click();
-    await page.waitForTimeout(1500);
+      // Poll for state change
+      await expect
+        .poll(
+          async () => forceSsoSwitch.getAttribute("data-state"),
+          { message: "Force SSO switch state should change after toggle", timeout: 15000 }
+        )
+        .not.toBe(initialState);
 
-    const restoredState = await forceSsoSwitch.getAttribute("data-state");
-    expect(restoredState).toBe(initialState);
+      // Toggle back to restore original state
+      await forceSsoSwitch.click();
+
+      await expect
+        .poll(
+          async () => forceSsoSwitch.getAttribute("data-state"),
+          { message: "Force SSO switch state should be restored", timeout: 15000 }
+        )
+        .toBe(initialState);
+    } finally {
+      // Clean up temporary provider if we created one
+      if (createdProviderId) {
+        try {
+          await request.post(`${baseURL}/api/model/ssoProvider/delete`, {
+            data: { where: { id: createdProviderId } },
+          });
+        } catch {
+          // Non-fatal
+        }
+      }
+    }
   });
 
   test("Admin can manage email domain restrictions", async ({
@@ -226,9 +291,7 @@ test.describe("Admin SSO Provider Management", () => {
       }
 
       // Domain input should now be visible
-      const domainInput = page.locator('input').filter({
-        hasPlaceholder: /domain|example/i,
-      }).last();
+      const domainInput = page.locator('input[placeholder]').last();
       await expect(domainInput).toBeVisible({ timeout: 5000 });
 
       // Type the test domain

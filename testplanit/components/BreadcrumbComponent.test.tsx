@@ -63,7 +63,7 @@ describe("BreadcrumbComponent", () => {
     expect(screen.getByText("Root Folder")).toBeInTheDocument();
 
     // No separator should appear for a single item
-    const separators = document.querySelectorAll('[aria-hidden="true"]');
+    const _separators = document.querySelectorAll('[aria-hidden="true"]');
     // For single item, there should be no separator (the separator component adds one between items)
     expect(screen.queryByRole("separator")).not.toBeInTheDocument();
   });

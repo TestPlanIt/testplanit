@@ -52,16 +52,14 @@ test.describe("Multi-Config Test Run Selection", () => {
 
     // The configuration selector (MultiAsyncCombobox) should be visible
     // It shows because configurationGroupId is set and there are 2+ sibling runs
-    const configSelector = page.locator('button[role="combobox"]').first();
-    await expect(configSelector).toBeVisible({ timeout: 15000 });
+    // The "Configurations:" label should be visible (rendered next to the combobox)
+    const configurationsLabel = page.locator('span:has-text("Configurations:")').first();
+    await expect(configurationsLabel).toBeVisible({ timeout: 15000 });
 
-    // It should display the current run's configuration as a badge
-    // The "Configurations:" label should be visible
-    await expect(
-      page.locator('text="Configurations:"').or(
-        page.locator('span:has-text("Configurations")')
-      )
-    ).toBeVisible({ timeout: 5000 });
+    // Find the combobox within the same container as the "Configurations:" label
+    const configContainer = configurationsLabel.locator("../..");
+    const configSelector = configContainer.locator('button[role="combobox"]').first();
+    await expect(configSelector).toBeVisible({ timeout: 5000 });
   });
 
   test("should not show configuration selector for single-config test runs", async ({
@@ -133,15 +131,22 @@ test.describe("Multi-Config Test Run Selection", () => {
     await page.goto(`/en-US/projects/runs/${projectId}/${run1Id}`);
     await page.waitForLoadState("load");
 
-    // Open the configuration combobox
-    const configCombobox = page.locator('button[role="combobox"]').first();
-    await expect(configCombobox).toBeVisible({ timeout: 15000 });
+    // Wait for the "Configurations:" label and find the combobox next to it
+    const configurationsLabel = page.locator('span:has-text("Configurations:")').first();
+    await expect(configurationsLabel).toBeVisible({ timeout: 15000 });
+    const configContainer = configurationsLabel.locator("../..");
+    const configCombobox = configContainer.locator('button[role="combobox"]').first();
+    await expect(configCombobox).toBeVisible({ timeout: 5000 });
     await configCombobox.click();
 
+    // Wait for dropdown options to load
+    await page.waitForTimeout(500);
+
     // Both configuration options should be visible in the dropdown
+    // The options show configuration names from sibling test runs
     await expect(
       page.locator(`[role="option"]:has-text("${config1Name}")`)
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
     await expect(
       page.locator(`[role="option"]:has-text("${config2Name}")`)
     ).toBeVisible({ timeout: 5000 });
@@ -226,9 +231,12 @@ test.describe("Multi-Config Test Run Selection", () => {
     await page.goto(`/en-US/projects/runs/${projectId}/${run1Id}`);
     await page.waitForLoadState("load");
 
-    // Wait for the multi-config selector to appear
-    const configCombobox = page.locator('button[role="combobox"]').first();
-    await expect(configCombobox).toBeVisible({ timeout: 15000 });
+    // Wait for the multi-config selector to appear via "Configurations:" label
+    const configurationsLabel = page.locator('span:has-text("Configurations:")').first();
+    await expect(configurationsLabel).toBeVisible({ timeout: 15000 });
+    const configContainer = configurationsLabel.locator("../..");
+    const configCombobox = configContainer.locator('button[role="combobox"]').first();
+    await expect(configCombobox).toBeVisible({ timeout: 5000 });
 
     // By default, the current run is already selected. If both siblings auto-select,
     // the edit button should be hidden. Let's verify behavior:

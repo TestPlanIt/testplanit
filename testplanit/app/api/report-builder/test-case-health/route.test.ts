@@ -12,7 +12,7 @@ vi.mock("~/utils/testCaseHealthUtils", () => ({
 import { handleTestCaseHealthPOST } from "~/utils/testCaseHealthUtils";
 import { GET, POST } from "./route";
 
-const createGETRequest = (): NextRequest => {
+const _createGETRequest = (): NextRequest => {
   return new NextRequest("http://localhost/api/report-builder/test-case-health");
 };
 

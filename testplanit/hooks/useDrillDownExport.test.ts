@@ -43,6 +43,9 @@ vi.mock("date-fns", () => ({
 const sampleContext = {
   metricId: "testResults",
   metricLabel: "Test Results",
+  metricValue: 42,
+  reportType: "test-execution",
+  mode: "project" as const,
   projectId: 1,
   dimensions: {},
 };
@@ -236,7 +239,7 @@ describe("useDrillDownExport", () => {
       await result.current.exportToCSV();
     });
 
-    const csvData = mockUnparse.mock.calls[0][0] as Record<string, any>[];
+    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as Record<string, any>[];
     expect(csvData).toHaveLength(1);
     // The keys use translation function output
     expect(Object.keys(csvData[0])).toContain("testCases");
@@ -268,7 +271,7 @@ describe("useDrillDownExport", () => {
       await result.current.exportToCSV();
     });
 
-    const csvData = mockUnparse.mock.calls[0][0] as Record<string, any>[];
+    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as Record<string, any>[];
     expect(csvData).toHaveLength(1);
     expect(csvData[0]["Progress"]).toBe("13/18");
     expect(csvData[0]["Passed"]).toBe(10);
@@ -286,7 +289,7 @@ describe("useDrillDownExport", () => {
       await result.current.exportToCSV();
     });
 
-    const csvData = mockUnparse.mock.calls[0][0] as any[];
+    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as any[];
     expect(csvData).toHaveLength(0);
   });
 
@@ -313,8 +316,8 @@ describe("useDrillDownExport", () => {
     const contextWithDimensions = {
       ...sampleContext,
       dimensions: {
-        user: { name: "Alice Smith" },
-        status: { name: "Passed" },
+        user: { id: 1, name: "Alice Smith" },
+        status: { id: 2, name: "Passed" },
       },
     };
 

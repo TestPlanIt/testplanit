@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -168,7 +168,7 @@ vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({
     open,
     children,
-    onOpenChange,
+    onOpenChange: _onOpenChange,
   }: {
     open: boolean;
     children: React.ReactNode;
@@ -360,7 +360,7 @@ vi.mock("@/components/ui/popover", () => ({
   ),
   PopoverTrigger: ({
     children,
-    asChild,
+    asChild: _asChild,
   }: {
     children: React.ReactNode;
     asChild?: boolean;
@@ -416,10 +416,10 @@ vi.mock("./TagChip", () => ({
 vi.mock("@/components/tables/DataTable", () => ({
   DataTable: ({
     data,
-    columns,
+    columns: _columns,
   }: {
     data: Array<{ id: string; name: string }>;
-    columns: unknown[];
+    columns?: unknown[];
     [key: string]: unknown;
   }) => (
     <table data-testid="data-table">
@@ -773,7 +773,7 @@ describe("AutoTagWizardDialog", () => {
   });
 
   it("does not render when open=false", () => {
-    const { container } = renderWithQueryClient(
+    const { container: _container } = renderWithQueryClient(
       <AutoTagWizardDialog {...defaultProps} open={false} />
     );
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();

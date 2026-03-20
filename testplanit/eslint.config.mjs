@@ -93,6 +93,18 @@ const eslintConfig = [{
       },
     ],
   },
+},
+// Relax rules that don't apply to test files
+{
+  files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+  rules: {
+    "react/jsx-no-literals": "off",
+    "react/display-name": "off",
+    "@next/next/no-img-element": "off",
+    "react-hooks/incompatible-library": "off",
+    "jsx-a11y/role-has-required-aria-props": "off",
+    "no-restricted-imports": "off",
+  },
 }];
 
 export default eslintConfig;

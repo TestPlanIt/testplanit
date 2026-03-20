@@ -219,9 +219,7 @@ describe("AttachmentsDisplay", () => {
     );
     // When preventEditing is true, the delete popover trigger should not render
     // The delete button only renders when deferredMode && !preventEditing
-    const deleteButtons = screen.queryAllByData
-      ? screen.queryAllByData?.("variant", "destructive")
-      : [];
+    const _deleteButtons = document.querySelectorAll('[data-variant="destructive"]');
     // Just check no trash button is visible for preventEditing
     expect(screen.queryByTestId("popover-trigger")).not.toBeInTheDocument();
   });

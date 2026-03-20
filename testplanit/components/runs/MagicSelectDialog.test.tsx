@@ -89,7 +89,7 @@ function mockFetchCount(overrides: Record<string, any> = {}) {
   } as any);
 }
 
-function mockFetchSelectSuccess(overrides: Record<string, any> = {}) {
+function _mockFetchSelectSuccess(overrides: Record<string, any> = {}) {
   global.fetch = vi.fn().mockResolvedValueOnce({
     ok: true,
     json: async () => ({

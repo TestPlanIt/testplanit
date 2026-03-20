@@ -121,7 +121,7 @@ vi.mock("./StepsResults", () => ({
 // Mock react-select
 vi.mock("react-select", () => ({
   default: vi.fn(
-    ({ value, options, onChange }: { value?: any; options?: any[]; onChange?: any }) => (
+    ({ value, _options, _onChange }: { value?: any; _options?: any[]; _onChange?: any }) => (
       <div data-testid="multi-select">
         {Array.isArray(value)
           ? value.map((v: any) => <span key={v.value}>{v.label}</span>)

@@ -19,7 +19,7 @@ test.describe("Folder Creation", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}`);
+    return await api.createProject(`E2E Folder Create ${Date.now()}-${Math.random().toString(36).substring(7)}`);
   }
 
   test("Create Root-Level Folder @smoke", async ({ api }) => {

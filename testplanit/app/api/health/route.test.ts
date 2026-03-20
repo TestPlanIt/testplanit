@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockDbQueryRaw,
-  mockValkeyPing,
+  _mockValkeyPing,
   mockEsClientPing,
   mockS3Send,
   mockGetVersionInfo,
@@ -10,7 +10,7 @@ const {
   mockValkeyConnection,
 } = vi.hoisted(() => ({
   mockDbQueryRaw: vi.fn(),
-  mockValkeyPing: vi.fn(),
+  _mockValkeyPing: vi.fn(),
   mockEsClientPing: vi.fn(),
   mockS3Send: vi.fn(),
   mockGetVersionInfo: vi.fn(),
@@ -185,7 +185,7 @@ describe("GET /api/health", () => {
       // Reimport to get null valkey — instead, test via the module-level behavior
       // The route checks valkeyConnection directly; when it's null, returns disabled
       // We can simulate by overriding the module mock
-      const { GET: freshGET } = await import("./route");
+      const { GET: _freshGET } = await import("./route");
       // Since the module was already cached, let's test the behavior indirectly:
       // The "disabled" path happens when valkeyConnection is falsy at module level
       // This is covered by the integration test since the default mock returns an object

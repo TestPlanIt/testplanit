@@ -18,10 +18,10 @@ test.describe.configure({ mode: "serial" });
 const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 test.describe("Integration Setup - Admin CRUD via API", () => {
-  let jiraIntegrationId: number;
-  let githubIntegrationId: number;
-  let azureIntegrationId: number;
-  let simpleUrlIntegrationId: number;
+  let _jiraIntegrationId: number;
+  let _githubIntegrationId: number;
+  let _azureIntegrationId: number;
+  let _simpleUrlIntegrationId: number;
 
   test("Admin can create a Jira integration with API_KEY auth", async ({
     request,
@@ -49,7 +49,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     expect(body.provider).toBe("JIRA");
     expect(body.authType).toBe("API_KEY");
     expect(body.status).toBe("ACTIVE");
-    jiraIntegrationId = body.id;
+    _jiraIntegrationId = body.id;
   });
 
   test("Admin can create a GitHub integration with PERSONAL_ACCESS_TOKEN auth", async ({
@@ -75,7 +75,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     expect(body).toHaveProperty("id");
     expect(body.provider).toBe("GITHUB");
     expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
-    githubIntegrationId = body.id;
+    _githubIntegrationId = body.id;
   });
 
   test("Admin can create an Azure DevOps integration with PERSONAL_ACCESS_TOKEN auth", async ({
@@ -102,7 +102,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     expect(body).toHaveProperty("id");
     expect(body.provider).toBe("AZURE_DEVOPS");
     expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
-    azureIntegrationId = body.id;
+    _azureIntegrationId = body.id;
   });
 
   test("Admin can create a SIMPLE_URL integration", async ({
@@ -127,7 +127,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     const body = await response.json();
     expect(body).toHaveProperty("id");
     expect(body.provider).toBe("SIMPLE_URL");
-    simpleUrlIntegrationId = body.id;
+    _simpleUrlIntegrationId = body.id;
   });
 
   test("Each integration is retrievable via GET", async ({

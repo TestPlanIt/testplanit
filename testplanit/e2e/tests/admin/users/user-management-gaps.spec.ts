@@ -188,7 +188,7 @@ test.describe("User Management Gaps", () => {
 
         // Admin viewing another user's profile should see 2FA status as read-only switch
         // The TwoFactorSettings component renders a disabled switch when !isOwnProfile
-        const twoFactorSection = page.locator('[data-testid="two-factor-settings"]').or(
+        const _twoFactorSection = page.locator('[data-testid="two-factor-settings"]').or(
           page.getByText(/two.factor|2fa/i).first()
         );
 

@@ -100,9 +100,7 @@ test.describe("Password Change", () => {
 
   test("Session persists after password change via API", async ({
     page,
-    request,
     api,
-    baseURL,
   }) => {
     const timestamp = Date.now();
     const testEmail = `pw-session-${timestamp}@${TEST_EMAIL_DOMAIN}`;

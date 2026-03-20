@@ -14,7 +14,7 @@ import { expect, test } from "../../fixtures";
  *
  * Note: The state field auto-populates with the default workflow.
  * Note: The dialog has overflow-y-auto which intercepts pointer events;
- *       clicks inside the dialog use dispatchEvent("click").
+ *       clicks inside the dialog use force: true or dispatchEvent("click").
  */
 
 test.describe("Test Run Creation Wizard", () => {
@@ -72,7 +72,7 @@ test.describe("Test Run Creation Wizard", () => {
     await page
       .locator('[data-testid^="folder-node-"]')
       .first()
-      .waitFor({ state: "visible", timeout: 10000 });
+      .waitFor({ state: "attached", timeout: 10000 });
 
     // Click the folder containing our test case
     // The folder node has data-testid="folder-node-{id}" and contains a span with the name
@@ -81,12 +81,12 @@ test.describe("Test Run Creation Wizard", () => {
       .filter({ hasText: `Wizard Folder ${ts}` })
       .first();
 
-    if (await folderNode.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Use force: true to click even if pointer events are intercepted
-      await folderNode.click({ force: true });
-      // Wait for the Cases table to reload with the new folder's data
-      await page.waitForTimeout(1500);
-    }
+    // Scroll the folder node into view within the dialog's scrollable container, then click
+    await folderNode.waitFor({ state: "attached", timeout: 5000 });
+    await folderNode.scrollIntoViewIfNeeded();
+    await folderNode.click({ force: true });
+    // Wait for the Cases table to reload with the new folder's data
+    await page.waitForTimeout(1500);
 
     // Find the case in the table and click its checkbox to select it
     const caseRow = page.locator(`tr:has-text("Wizard Case ${ts}")`).first();
@@ -145,29 +145,15 @@ test.describe("Test Run Creation Wizard", () => {
     }, runName);
     await expect(nameInput).toHaveValue(runName);
 
-    // Verify the configuration combobox is present in Step 1
-    // (MultiAsyncCombobox with button[role="combobox"] trigger)
-    // We open it to verify the config appears, then close without selecting
-    // to avoid dialog-closing issues from portal-rendered popover content
-    const dialog = page
-      .locator('[data-testid="run-name-input"]')
-      .first()
-      .locator("xpath=ancestor::*[@role='dialog'][1]");
-
-    const configTrigger = dialog.locator('button[role="combobox"]').first();
-    // Just verify the combobox trigger exists (config field is present)
-    if (await configTrigger.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // Config field is present — skip clicking to avoid dialog close
-      // The configuration was created via API so it would be selectable
-    }
-
-    // Proceed to Step 2
+    // Proceed to Step 2 — skip config selection to avoid dialog-closing issues
+    // The configuration was created via API so it would be selectable if needed
     const nextBtn = page.getByTestId("run-next-button").first();
     await expect(nextBtn).toBeVisible({ timeout: 5000 });
     await nextBtn.dispatchEvent("click");
 
     // Wait for step 2 to load
-    await expect(page.getByTestId("run-save-button").first()).toBeVisible({
+    const saveButton = page.getByTestId("run-save-button").first();
+    await expect(saveButton).toBeVisible({
       timeout: 15000,
     });
 
@@ -175,7 +161,7 @@ test.describe("Test Run Creation Wizard", () => {
     await page
       .locator('[data-testid^="folder-node-"]')
       .first()
-      .waitFor({ state: "visible", timeout: 10000 });
+      .waitFor({ state: "attached", timeout: 10000 });
 
     // Click the folder containing our test case
     const configFolderNode = page
@@ -183,12 +169,11 @@ test.describe("Test Run Creation Wizard", () => {
       .filter({ hasText: `Config Folder ${ts}` })
       .first();
 
-    if (
-      await configFolderNode.isVisible({ timeout: 5000 }).catch(() => false)
-    ) {
-      await configFolderNode.click({ force: true });
-      await page.waitForTimeout(1500);
-    }
+    // Scroll the folder node into view within the dialog, then click
+    await configFolderNode.waitFor({ state: "attached", timeout: 5000 });
+    await configFolderNode.scrollIntoViewIfNeeded();
+    await configFolderNode.click({ force: true });
+    await page.waitForTimeout(1500);
 
     // Select a test case
     const caseRow = page.locator(`tr:has-text("Config Case ${ts}")`).first();
@@ -201,12 +186,20 @@ test.describe("Test Run Creation Wizard", () => {
       await caseRow.dispatchEvent("click");
     }
 
-    // Save
-    await page.getByTestId("run-save-button").first().dispatchEvent("click");
+    // Wait a moment for the selection to register before saving
+    await page.waitForTimeout(500);
 
-    // Verify run was created
+    // Save — wait for the button to be enabled, then click
+    await expect(saveButton).toBeEnabled({ timeout: 5000 });
+    await saveButton.dispatchEvent("click");
+
+    // Wait for the dialog to close (the dialog should disappear after save)
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 15000 });
+
+    // Verify the run was created — the run name should appear on the page
+    // After saving, the dialog closes and the runs list refreshes
     await expect(
-      page.locator(`text="${runName}"`).first()
+      page.getByText(runName).first()
     ).toBeVisible({ timeout: 20000 });
   });
 
@@ -303,7 +296,7 @@ test.describe("Test Run Creation Wizard", () => {
     await page
       .locator('[data-testid^="folder-node-"]')
       .first()
-      .waitFor({ state: "visible", timeout: 10000 });
+      .waitFor({ state: "attached", timeout: 10000 });
 
     // Click the folder containing our test case
     const stepsFolderNode = page
@@ -311,16 +304,17 @@ test.describe("Test Run Creation Wizard", () => {
       .filter({ hasText: `Steps Folder ${ts}` })
       .first();
 
-    if (
-      await stepsFolderNode.isVisible({ timeout: 5000 }).catch(() => false)
-    ) {
-      await stepsFolderNode.click({ force: true });
-      await page.waitForTimeout(1500);
-    }
+    // Scroll the folder node into view within the dialog, then click
+    await stepsFolderNode.waitFor({ state: "attached", timeout: 5000 });
+    await stepsFolderNode.scrollIntoViewIfNeeded();
+    await stepsFolderNode.click({ force: true });
+    // Wait for the Cases table to reload with the new folder's data
+    await page.waitForTimeout(2000);
 
-    // The case we created should now be visible in the repository
+    // The case we created should now be visible in the repository table
+    // Use a broader selector to find the case name in any table cell or row
     await expect(
-      page.locator(`text="${caseName}"`).first()
+      page.locator(`tr`).filter({ hasText: caseName }).first()
     ).toBeVisible({ timeout: 15000 });
   });
 });

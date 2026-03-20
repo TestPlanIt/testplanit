@@ -28,7 +28,6 @@ vi.mock("@/components/Avatar", () => ({
     height: number;
     image: string;
   }) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       data-testid="avatar"
       src={image || "default-avatar.png"}

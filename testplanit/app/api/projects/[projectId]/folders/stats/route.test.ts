@@ -206,7 +206,7 @@ describe("Folder Stats API Route", () => {
 
       const [request, context] = createRequest("1", { runId: "5" });
       const response = await GET(request, context);
-      const data = await response.json();
+      const _data = await response.json();
 
       expect(response.status).toBe(200);
       expect(prisma.testRunCases.findMany).toHaveBeenCalledWith(

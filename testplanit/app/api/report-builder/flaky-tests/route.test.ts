@@ -9,7 +9,7 @@ vi.mock("~/utils/flakyTestsUtils", () => ({
 import { handleFlakyTestsPOST } from "~/utils/flakyTestsUtils";
 import { GET, POST } from "./route";
 
-const createGETRequest = (): NextRequest => {
+const _createGETRequest = (): NextRequest => {
   return new NextRequest("http://localhost/api/report-builder/flaky-tests");
 };
 

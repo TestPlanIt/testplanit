@@ -159,8 +159,15 @@ test.describe("Prompt Configurations - Edit Operations", () => {
   test.beforeEach(async ({ page, api, baseURL }) => {
     promptsPage = new PromptConfigurationsPage(page);
 
-    // Create a config via API for editing
+    // Create a config via API for editing, including prompts for all features.
+    // The edit form validates that each feature has a non-empty systemPrompt,
+    // so we must create PromptConfigPrompts for every feature.
     const apiBase = baseURL || "http://localhost:3002";
+    const features = [
+      "markdown_parsing", "test_case_generation", "magic_select_cases",
+      "editor_assistant", "llm_test", "export_code_generation", "auto_tag",
+    ];
+
     const response = await api["request"].post(
       `${apiBase}/api/model/promptConfig/create`,
       {
@@ -170,6 +177,15 @@ test.describe("Prompt Configurations - Edit Operations", () => {
             description: "Config for edit testing",
             isDefault: false,
             isActive: true,
+            prompts: {
+              create: features.map((feature) => ({
+                feature,
+                systemPrompt: `Default system prompt for ${feature}`,
+                userPrompt: "",
+                temperature: 0.7,
+                maxOutputTokens: 2048,
+              })),
+            },
           },
         },
       }

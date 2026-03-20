@@ -223,7 +223,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
         createRequest({ title: "OAuth Issue", projectId: "PROJ" }),
         params
       );
-      const data = await response.json();
+      const _data = await response.json();
 
       expect(response.status).toBe(200);
       expect(mockAdapter.createIssue).toHaveBeenCalledOnce();

@@ -116,7 +116,7 @@ describe("Admin Trash Route", () => {
 
       const request = createMockRequest();
       const response = await GET(request, createMockContext("Projects"));
-      const data = await response.json();
+      const _data = await response.json();
 
       expect(response.status).toBe(401);
     });

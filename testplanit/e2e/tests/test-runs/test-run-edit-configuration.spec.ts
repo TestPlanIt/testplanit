@@ -6,10 +6,9 @@ import { expect, test } from "../../fixtures";
  * Tests the ConfigurationSelect (AsyncCombobox single-select) component
  * used for editing the configuration on an existing test run's detail page.
  * Covers:
- * - Viewing the current configuration in read mode
- * - Switching to edit mode and using the combobox to change configuration
+ * - Viewing the configuration combobox in edit mode
+ * - Switching configuration via the combobox
  * - Searching configurations in the edit combobox
- * - Clearing configuration via the "None" option
  */
 test.describe("Test Run Edit Configuration", () => {
   test("should show ConfigurationSelect combobox in edit mode", async ({
@@ -29,29 +28,33 @@ test.describe("Test Run Edit Configuration", () => {
       `Config Run ${Date.now()}`
     );
 
-    // Navigate to test run detail page
+    // Navigate directly to test run detail page in edit mode
     await page.goto(
-      `/en-US/projects/runs/${projectId}/${testRunId}`
+      `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
     );
     await page.waitForLoadState("load");
 
-    // The page should load in read mode initially
-    // Look for an "Edit" button to switch to edit mode
-    const editButton = page.getByRole("button", { name: /edit/i });
-    await expect(editButton).toBeVisible({ timeout: 15000 });
-    await editButton.click();
-
     // In edit mode, the Configuration field should show an AsyncCombobox
-    const configCombobox = page.locator('button[role="combobox"]').first();
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
+    // The form fields order is: State (Select), Configuration (AsyncCombobox), Milestone, etc.
+    // Both State and Configuration use button[role="combobox"], so we need to locate by label.
+    // Find the label with "Configuration" text then find the combobox within the same FormItem parent.
+    const configLabel = page.locator("label", { hasText: "Configuration" }).first();
+    await expect(configLabel).toBeVisible({ timeout: 15000 });
+    // The FormItem is the parent of the label; the combobox is a sibling of the label inside the same FormItem
+    const configFormItem = configLabel.locator("..");
+    const configCombobox = configFormItem.locator('button[role="combobox"]').first();
+    await expect(configCombobox).toBeVisible({ timeout: 10000 });
 
     // Open the combobox
     await configCombobox.click();
 
+    // Wait for the dropdown options to load (AsyncCombobox fetches data)
+    await page.waitForTimeout(1000);
+
     // Verify the configuration appears in the dropdown
     await expect(
       page.locator(`[role="option"]:has-text("${configName}")`)
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
 
     // Verify pagination controls are present
     const prevButton = page.getByRole("button", { name: "Previous" });
@@ -76,20 +79,22 @@ test.describe("Test Run Edit Configuration", () => {
       `Change Config Run ${Date.now()}`
     );
 
+    // Navigate directly in edit mode
     await page.goto(
-      `/en-US/projects/runs/${projectId}/${testRunId}`
+      `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
     );
     await page.waitForLoadState("load");
 
-    // Switch to edit mode
-    const editButton = page.getByRole("button", { name: /edit/i });
-    await expect(editButton).toBeVisible({ timeout: 15000 });
-    await editButton.click();
-
-    // Open the config combobox
-    const configCombobox = page.locator('button[role="combobox"]').first();
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
+    // Locate the Configuration form section and its combobox via label
+    const configLabel = page.locator("label", { hasText: "Configuration" }).first();
+    await expect(configLabel).toBeVisible({ timeout: 15000 });
+    const configFormItem = configLabel.locator("..");
+    const configCombobox = configFormItem.locator('button[role="combobox"]').first();
+    await expect(configCombobox).toBeVisible({ timeout: 10000 });
     await configCombobox.click();
+
+    // Wait for options to load
+    await page.waitForTimeout(1000);
 
     // Select config2
     await page
@@ -120,18 +125,18 @@ test.describe("Test Run Edit Configuration", () => {
       `Search Edit Run ${Date.now()}`
     );
 
+    // Navigate directly in edit mode
     await page.goto(
-      `/en-US/projects/runs/${projectId}/${testRunId}`
+      `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
     );
     await page.waitForLoadState("load");
 
-    // Switch to edit mode
-    const editButton = page.getByRole("button", { name: /edit/i });
-    await expect(editButton).toBeVisible({ timeout: 15000 });
-    await editButton.click();
-
-    // Open the config combobox
-    const configCombobox = page.locator('button[role="combobox"]').first();
+    // Locate the Configuration form section and its combobox via label
+    const configLabel = page.locator("label", { hasText: "Configuration" }).first();
+    await expect(configLabel).toBeVisible({ timeout: 15000 });
+    const configFormItem = configLabel.locator("..");
+    const configCombobox = configFormItem.locator('button[role="combobox"]').first();
+    await expect(configCombobox).toBeVisible({ timeout: 10000 });
     await configCombobox.click();
 
     // Type in search

@@ -157,10 +157,10 @@ test.describe("Auto-Tag Flow", () => {
     const llmId = await api.createLlmIntegration(`E2E LLM Routes ${ts}`);
     await api.linkLlmToProject(projectId, llmId);
 
-    let submitIntercepted = false;
+    let _submitIntercepted = false;
 
     await page.route("**/api/auto-tag/submit", async (route) => {
-      submitIntercepted = true;
+      _submitIntercepted = true;
       await route.fulfill({
         status: 200,
         contentType: "application/json",

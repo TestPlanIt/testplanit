@@ -255,7 +255,7 @@ describe("Header", () => {
     // Wait for the fetch to complete and trial badge to appear
     await waitFor(() => {
       // Trial badges appear with Clock icon — look for the badge containing a number
-      const badges = screen.queryAllByRole("generic");
+      const _badges = screen.queryAllByRole("generic");
       // The badge with days remaining will be present after fetch completes
       expect(global.fetch).toHaveBeenCalledWith("/api/config/trial");
     });

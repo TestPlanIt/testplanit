@@ -5,9 +5,8 @@ import { SearchableEntityType } from "~/types/search";
 import { GlobalSearchSheet } from "./GlobalSearchSheet";
 
 // Stable mock refs via vi.hoisted()
-const { mockRouterPush, mockOnResultClick } = vi.hoisted(() => ({
+const { mockRouterPush } = vi.hoisted(() => ({
   mockRouterPush: vi.fn(),
-  mockOnResultClick: vi.fn(),
 }));
 
 // Mock next-intl
@@ -162,7 +161,7 @@ vi.mock("@/components/search/SearchHelpContent", () => ({
 vi.mock("@/components/ui/sheet", () => ({
   Sheet: ({
     open,
-    onOpenChange,
+    onOpenChange: _onOpenChange,
     children,
   }: {
     open: boolean;
@@ -204,7 +203,7 @@ vi.mock("@/components/ui/popover", () => ({
   ),
   PopoverTrigger: ({
     children,
-    asChild,
+    asChild: _asChild,
   }: {
     children: React.ReactNode;
     asChild?: boolean;

@@ -118,7 +118,7 @@ test.describe("Configuration Management - Page Display", () => {
 
     // The page title "Configurations" appears in the card header
     // Use the CardTitle text which renders in the page header
-    const pageHeader = page.locator("main > div").first();
+    const _pageHeader = page.locator("main > div").first();
     await expect(
       page.getByText("Configurations").first()
     ).toBeVisible({ timeout: 10000 });

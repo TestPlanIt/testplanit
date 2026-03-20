@@ -23,7 +23,8 @@ test.describe("Project Documentation Editor", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify page loaded with project name in the header
-    await expect(page.getByText(projectName)).toBeVisible({ timeout: 15000 });
+    // The project name may appear in both the header and the breadcrumb
+    await expect(page.getByText(projectName).first()).toBeVisible({ timeout: 15000 });
 
     // The "Edit Documentation" button should be present for editors
     await expect(

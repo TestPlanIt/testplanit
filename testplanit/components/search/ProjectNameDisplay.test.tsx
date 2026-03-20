@@ -14,8 +14,7 @@ vi.mock("~/lib/navigation", () => ({
 
 vi.mock("@/components/ProjectIcon", () => ({
   ProjectIcon: ({ iconUrl, width, height }: { iconUrl?: string | null; width: number; height: number }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img 
+    <img
       data-testid="project-icon" 
       src={iconUrl || "default-icon.png"} 
       width={width} 

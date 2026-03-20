@@ -197,7 +197,7 @@ describe("Admin Elasticsearch Reindex Route", () => {
 
       const request = createMockRequest({ method: "GET" });
       const response = await GET(request);
-      const data = await response.json();
+      const _data = await response.json();
 
       expect(response.status).toBe(401);
     });

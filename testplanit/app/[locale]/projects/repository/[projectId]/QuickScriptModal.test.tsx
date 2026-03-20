@@ -152,15 +152,15 @@ vi.mock("@/components/ui/command", () => ({
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({
     children,
-    open,
-    onOpenChange,
-  }: React.PropsWithChildren<{ open?: boolean; onOpenChange?: any }>) => (
+    _open,
+    _onOpenChange,
+  }: React.PropsWithChildren<{ _open?: boolean; _onOpenChange?: any }>) => (
     <div data-testid="popover">{children}</div>
   ),
   PopoverTrigger: ({
     children,
-    asChild,
-  }: React.PropsWithChildren<{ asChild?: boolean }>) => <>{children}</>,
+    _asChild,
+  }: React.PropsWithChildren<{ _asChild?: boolean }>) => <>{children}</>,
   PopoverContent: ({ children }: React.PropsWithChildren<object>) => (
     <div data-testid="popover-content">{children}</div>
   ),
@@ -250,7 +250,7 @@ vi.mock("@/components/ui/button", () => ({
     "aria-expanded"?: boolean;
     "data-testid"?: string;
   }>) => (
-    <button onClick={onClick} disabled={disabled} {...props}>
+    <button onClick={onClick} disabled={disabled} {...(props as any)}>
       {children}
     </button>
   ),
@@ -276,8 +276,8 @@ vi.mock("@/components/ui/tooltip", () => ({
   }: React.PropsWithChildren<{ delayDuration?: number }>) => <>{children}</>,
   TooltipTrigger: ({
     children,
-    asChild,
-  }: React.PropsWithChildren<{ asChild?: boolean }>) => <>{children}</>,
+    _asChild,
+  }: React.PropsWithChildren<{ _asChild?: boolean }>) => <>{children}</>,
   TooltipContent: ({ children }: React.PropsWithChildren<object>) => (
     <div data-testid="tooltip-content">{children}</div>
   ),

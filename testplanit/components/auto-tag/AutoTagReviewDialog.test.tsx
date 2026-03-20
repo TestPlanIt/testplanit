@@ -41,7 +41,7 @@ vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({
     open,
     children,
-    onOpenChange,
+    onOpenChange: _onOpenChange,
   }: {
     open: boolean;
     children: React.ReactNode;
@@ -112,7 +112,7 @@ vi.mock("@/components/ui/popover", () => ({
   ),
   PopoverTrigger: ({
     children,
-    asChild,
+    asChild: _asChild,
   }: {
     children: React.ReactNode;
     asChild?: boolean;
@@ -268,7 +268,7 @@ describe("AutoTagReviewDialog", () => {
 
   it("returns null when job.suggestions is null", () => {
     const nullSuggestionsJob = buildMockJob({ suggestions: null });
-    const { container } = renderWithQueryClient(
+    const { container: _container } = renderWithQueryClient(
       <AutoTagReviewDialog {...defaultProps} job={nullSuggestionsJob} />
     );
     // Dialog should not render

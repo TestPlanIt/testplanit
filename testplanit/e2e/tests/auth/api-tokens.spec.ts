@@ -313,11 +313,9 @@ test.describe("API Token Authentication", () => {
    * verify token rejected.
    */
   test("token for deactivated user is rejected with 401", async ({
-    request,
     baseURL,
     browser,
     api,
-    adminUserId,
   }) => {
     // Create a test user
     const email = `api-token-test-${Date.now()}@example.com`;

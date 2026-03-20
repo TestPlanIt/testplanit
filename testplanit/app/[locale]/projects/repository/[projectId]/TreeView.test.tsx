@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock ZenStack hooks
 vi.mock("~/lib/hooks", () => ({
@@ -60,11 +60,11 @@ vi.mock("react-arborist", () => ({
     ({
       data,
       children: NodeRenderer,
-      onSelect,
+      _onSelect,
     }: {
       data: any[];
       children: React.ComponentType<any>;
-      onSelect?: (nodes: any[]) => void;
+      _onSelect?: (nodes: any[]) => void;
     }) => (
       <div data-testid="arborist-tree">
         {data.map((node: any) => (

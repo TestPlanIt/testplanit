@@ -40,7 +40,7 @@ vi.mock("d3", () => ({
     })),
   })),
   scaleBand: vi.fn(() => {
-    const fn = vi.fn((val: any) => 0) as any;
+    const fn = vi.fn((_val: any) => 0) as any;
     fn.domain = vi.fn().mockReturnThis();
     fn.range = vi.fn().mockReturnThis();
     fn.padding = vi.fn().mockReturnThis();

@@ -167,12 +167,12 @@ test.describe("Session Lifecycle", () => {
     await expect(saveButton).toBeVisible({ timeout: 15000 });
 
     // Fill in an elapsed time value
-    const elapsedInput = page.locator('input[placeholder]').filter({
+    const _elapsedInput = page.locator('input[placeholder]').filter({
       hasText: /elapsed|time/i,
     });
     // Try to find any input for elapsed (it has placeholder text)
     const allInputs = page.locator("input");
-    const inputCount = await allInputs.count();
+    const _inputCount = await allInputs.count();
 
     // Look for elapsed input specifically by finding inputs after status select
     // The elapsed input is one of the text inputs in the result form

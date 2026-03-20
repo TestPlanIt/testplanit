@@ -100,7 +100,7 @@ vi.mock("~/lib/navigation", () => ({
 
 // --- Heavy sub-component mocks ---
 vi.mock("@/components/tiptap/TipTapEditor", () => ({
-  default: ({ content, readOnly, placeholder }: any) => (
+  default: ({ content: _content, readOnly, placeholder }: any) => (
     <div
       data-testid="tiptap-editor"
       data-readonly={readOnly ? "true" : "false"}

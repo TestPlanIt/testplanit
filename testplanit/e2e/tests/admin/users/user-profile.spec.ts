@@ -434,7 +434,7 @@ test.describe("User Profile Management", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Navigate to own profile
       await page.goto(`/en-US/users/profile/${userId}`);
@@ -491,7 +491,7 @@ test.describe("User Profile Management", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Navigate to profile again
       await page.goto(`/en-US/users/profile/${userId}`);
@@ -521,7 +521,7 @@ test.describe("User Profile Management", () => {
       await emailInput.fill("admin@example.com");
       await passwordInput.fill("admin");
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       await api.deleteUser(userId);
     }
@@ -725,7 +725,7 @@ test.describe("User Profile Management", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Start on English profile page
       await page.goto(`/en-US/users/profile/${userId}`);
@@ -823,7 +823,7 @@ test.describe("User Profile Access Control", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Navigate to own profile
       await page.goto(`/en-US/users/profile/${userId}`);
@@ -871,7 +871,7 @@ test.describe("User Profile Access Control", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Attempt to navigate to admin user's profile (a different user)
       await page.goto(`/en-US/users/profile/${adminUserId}`);
@@ -918,7 +918,7 @@ test.describe("User Profile Access Control", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Navigate to own profile
       await page.goto(`/en-US/users/profile/${userId}`);
@@ -984,7 +984,7 @@ test.describe("User Profile Access Control", () => {
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
       await submitButton.click();
-      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+      await page.waitForURL(/\/[a-z]{2}-[A-Z]{2}\/?$/, { timeout: 10000 });
 
       // Navigate to admin user's profile (a different user)
       await page.goto(`/en-US/users/profile/${adminUserId}`);

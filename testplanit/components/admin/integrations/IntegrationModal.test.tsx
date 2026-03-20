@@ -54,7 +54,7 @@ vi.mock("sonner", () => ({
 
 // Mock Dialog as open-conditional div
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ open, children, onOpenChange }: any) =>
+  Dialog: ({ open, children, onOpenChange: _onOpenChange }: any) =>
     open ? (
       <div role="dialog" data-testid="modal">
         {children}

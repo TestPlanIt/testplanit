@@ -91,28 +91,35 @@ test.describe("Project Overview Dashboard", () => {
     const milestonesHeading = page.getByText(/current milestones/i);
     await expect(milestonesHeading).toBeVisible({ timeout: 15000 });
 
-    // The collapse button is a ChevronLeft icon button
-    // There are two such buttons — one for left panel, one for right panel
-    // The left panel button has the "rounded-r-none" class when not collapsed
-    const collapseLeftBtn = page
-      .locator('button.rounded-r-none')
-      .first();
+    // The left panel has a collapse button with a ChevronLeft icon.
+    // There are two collapse buttons (left and right panel). The left one
+    // is rendered before the resize handle. Both are inside TooltipTrigger wrappers.
+    // The left panel's panel element has id="overview-left" via the id prop.
+    // The collapse button is the first button with variant="secondary" and size="sm"
+    // that appears after the left panel.
+    // Use the panel structure: the left collapse button is the first secondary
+    // button inside the panel group that is not inside a panel.
+    const leftPanel = page.locator('[data-panel-id="overview-left"]');
+    await expect(leftPanel).toBeVisible({ timeout: 5000 });
+
+    // The collapse button is in a sibling div right after the left panel.
+    // Find buttons with the ChevronLeft icon near the panel group.
+    // Since both collapse buttons look similar, get the first one (left panel's button).
+    const panelGroup = page.locator('[data-panel-group]');
+    const collapseButtons = panelGroup.locator(':scope > div:not([data-panel-id]):not([data-panel-resize-handle-id]) button');
+    const collapseLeftBtn = collapseButtons.first();
     await expect(collapseLeftBtn).toBeVisible({ timeout: 5000 });
     await collapseLeftBtn.click();
 
-    // After collapsing, the milestones heading should no longer be visible
-    // (panel collapses to 0 size)
-    await expect(milestonesHeading).not.toBeVisible({ timeout: 5000 });
+    // After collapsing, the panel goes to 0% width. Wait for animation (300ms)
+    // and verify milestones heading is no longer visible.
+    await expect(milestonesHeading).not.toBeVisible({ timeout: 10000 });
 
-    // Click again to expand — button now has rotate-180 + rounded-l-none class
-    const expandLeftBtn = page
-      .locator('button.rounded-l-none.rotate-180')
-      .first();
-    await expect(expandLeftBtn).toBeVisible({ timeout: 5000 });
-    await expandLeftBtn.click();
+    // Click the same button (now acts as expand) to re-expand
+    await collapseLeftBtn.click();
 
     // Panel should re-expand
-    await expect(milestonesHeading).toBeVisible({ timeout: 5000 });
+    await expect(milestonesHeading).toBeVisible({ timeout: 10000 });
   });
 
   test("accordion sections can be collapsed by clicking their trigger", async ({
@@ -130,11 +137,9 @@ test.describe("Project Overview Dashboard", () => {
     // Click to collapse the Test Runs section
     await testRunsTrigger.click();
 
-    // The accordion content for test-runs should be hidden
-    // (AccordionContent animates to height 0 when collapsed)
-    // We verify it by checking the accordion item's data-state attribute
-    const testRunsItem = page.locator('[data-value="test-runs"]');
-    await expect(testRunsItem).toHaveAttribute("data-state", "closed", {
+    // The accordion trigger should have data-state="closed" after clicking
+    // Radix Accordion sets data-state on the trigger element, not data-value
+    await expect(testRunsTrigger).toHaveAttribute("data-state", "closed", {
       timeout: 5000,
     });
   });
@@ -192,10 +197,14 @@ test.describe("Project Overview Dashboard", () => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
-    // The ResizablePanelGroup renders with autoSaveId="project-overview-horizontal"
-    const panelGroup = page.locator(
-      '[data-panel-group-id="project-overview-horizontal"]'
-    );
+    // The ResizablePanelGroup renders with the data-panel-group attribute.
+    // Note: autoSaveId is not the same as id — data-panel-group-id uses the id prop,
+    // which is auto-generated. Use the data-panel-group attribute instead.
+    const panelGroup = page.locator('[data-panel-group]');
     await expect(panelGroup).toBeVisible({ timeout: 15000 });
+
+    // Verify there are resize handles present (indicating a resizable layout)
+    const resizeHandles = page.locator('[data-panel-resize-handle-id]');
+    await expect(resizeHandles.first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
@@ -82,7 +81,7 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
   TooltipTrigger: ({
     children,
-    asChild,
+    asChild: _asChild,
   }: {
     children: React.ReactNode;
     asChild?: boolean;

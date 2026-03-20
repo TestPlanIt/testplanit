@@ -36,7 +36,7 @@ export class PromptConfigurationsPage extends BasePage {
     this.dataTable = page.locator("table");
 
     // Dialog elements
-    this.dialog = page.locator('[role="dialog"]');
+    this.dialog = page.locator('[role="dialog"]').first();
     this.nameInput = this.dialog.getByLabel("Name", { exact: true });
     this.descriptionInput = this.dialog.getByLabel("Description");
     this.isDefaultSwitch = this.dialog

@@ -128,7 +128,7 @@ test.describe("Test Run Bulk Operations and Completion", () => {
       await page.waitForTimeout(2000);
 
       // Verify the completed badge appears
-      const completedBadge = page.locator('text="Completed On"').or(
+      const _completedBadge = page.locator('text="Completed On"').or(
         page.locator('[class*="badge"]').filter({ hasText: /completed/i })
       );
       // Just verify via API since UI varies
@@ -210,7 +210,7 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     await expect(runItem).toBeVisible({ timeout: 15000 });
 
     // Click the three-dot menu button on the run item
-    const moreMenuButton = runItem.locator('button[variant="ghost"]').or(
+    const _moreMenuButton = runItem.locator('button[variant="ghost"]').or(
       runItem.locator('button').filter({ has: page.locator('[data-lucide="more-vertical"]') })
     ).first();
 

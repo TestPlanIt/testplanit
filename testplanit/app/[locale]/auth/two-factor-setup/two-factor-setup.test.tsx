@@ -82,7 +82,7 @@ describe("TwoFactorSetupPage", () => {
     mockRouterPush.mockClear();
 
     // Default: setup-required returns the setup data
-    mockFetch = vi.fn().mockImplementation((url: string, options?: any) => {
+    mockFetch = vi.fn().mockImplementation((url: string, _options?: any) => {
       if (url === "/api/auth/two-factor/setup-required") {
         return Promise.resolve({
           ok: true,
@@ -100,7 +100,7 @@ describe("TwoFactorSetupPage", () => {
         json: () => Promise.resolve({}),
       });
     });
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
 
     // Mock clipboard
     Object.assign(navigator, {
@@ -120,7 +120,7 @@ describe("TwoFactorSetupPage", () => {
   it("shows loading spinner while initial setup API call is in progress", async () => {
     // Make the fetch never resolve to keep it in loading state
     mockFetch.mockReturnValue(new Promise(() => {}));
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
 
     render(<TwoFactorSetupPage />);
 
@@ -240,7 +240,7 @@ describe("TwoFactorSetupPage", () => {
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
 
     render(<TwoFactorSetupPage />);
     await waitForSetupToComplete();

@@ -31,7 +31,7 @@ test.describe("Group Management", () => {
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 
-  test("Admin can create a new group", async ({ page, api }) => {
+  test("Admin can create a new group", async ({ page }) => {
     const groupName = `Test Group ${Date.now()}`;
 
     // We'll track the created group ID for cleanup via ZenStack API
@@ -207,7 +207,7 @@ test.describe("Group Management", () => {
       await expect(alertDialog).toBeVisible({ timeout: 5000 });
 
       // Confirm deletion
-      const confirmButton = alertDialog
+      const _confirmButton = alertDialog
         .locator(
           'button[class*="destructive"]:not([disabled]), [data-role="destructive"]'
         )

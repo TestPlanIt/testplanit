@@ -79,33 +79,33 @@ test.describe("Project Creation Wizard", () => {
     await nameInput.fill(projectName);
     await expect(nameInput).toHaveValue(projectName);
 
-    // The Next button becomes enabled once name has content
+    // Helper: click Next and wait for the step title to change
     const nextButton = dialog.getByRole("button", { name: /next/i });
+
+    // The Next button becomes enabled once name has content
     await expect(nextButton).toBeEnabled({ timeout: 5000 });
     await nextButton.click();
 
-    // Step 2: Templates — wait for template list to load
-    // The wizard shows a scroll area with template cards
-    // At least one template should be pre-selected (the default)
-    // We can proceed with defaults
-    const nextButton2 = dialog.getByRole("button", { name: /next/i });
-    await expect(nextButton2).toBeVisible({ timeout: 15000 });
-    await expect(nextButton2).toBeEnabled({ timeout: 10000 });
-    await nextButton2.click();
+    // Step 2: Templates — wait for step content to load (template list)
+    // The step title changes to "Templates" after advancing
+    await expect(dialog.getByText(/templates/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(nextButton).toBeEnabled({ timeout: 10000 });
+    await nextButton.click();
 
-    // Step 3: Workflows & Statuses
-    const nextButton3 = dialog.getByRole("button", { name: /next/i });
-    await expect(nextButton3).toBeVisible({ timeout: 15000 });
-    await expect(nextButton3).toBeEnabled({ timeout: 10000 });
-    await nextButton3.click();
+    // Step 3: Workflows & Statuses — wait for step content
+    await expect(dialog.getByText(/workflows/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(nextButton).toBeEnabled({ timeout: 10000 });
+    await nextButton.click();
 
     // Step 4: Integrations (optional — skip to next)
-    const nextButton4 = dialog.getByRole("button", { name: /next/i });
-    await expect(nextButton4).toBeVisible({ timeout: 10000 });
-    await nextButton4.click();
+    await expect(dialog.getByText(/integrations/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(nextButton).toBeVisible({ timeout: 10000 });
+    await nextButton.click();
 
-    // Step 5: Permissions — the final step shows "Create" button
-    const createButton = dialog.getByRole("button", { name: /create/i });
+    // Step 5: Permissions — the final step shows "Create Project" button instead of Next
+    // Wait for the permissions step content to appear
+    await expect(dialog.getByText(/permissions/i).first()).toBeVisible({ timeout: 15000 });
+    const createButton = dialog.getByRole("button", { name: /create project/i });
     await expect(createButton).toBeVisible({ timeout: 10000 });
     await expect(createButton).toBeEnabled({ timeout: 5000 });
     await createButton.click();
@@ -113,8 +113,12 @@ test.describe("Project Creation Wizard", () => {
     // Dialog should close after successful creation
     await expect(dialog).not.toBeVisible({ timeout: 30000 });
 
+    // Wait for the page to settle after project creation
+    await page.waitForLoadState("networkidle");
+
     // Verify the new project appears in the admin list
-    await expect(page.getByText(projectName)).toBeVisible({ timeout: 15000 });
+    // The page may need a moment to refresh the project list
+    await expect(page.getByText(projectName).first()).toBeVisible({ timeout: 20000 });
   });
 
   test("can navigate back through wizard steps using Previous button", async ({
@@ -190,15 +194,18 @@ test.describe("Project Creation Wizard", () => {
 
     // The step indicator renders 5 round buttons (one per step)
     // They're type="button" elements in a flex row
-    const stepButtons = dialog.locator('button[type="button"]').filter({
+    const _stepButtons = dialog.locator('button[type="button"]').filter({
       hasNot: dialog.getByRole("button", { name: /next|previous|cancel/i }),
     });
 
-    // Verify there are at least 5 step indicator items visible
+    // Verify there are at least 5 step indicator buttons visible
     // (steps 0-4: Details, Templates, Workflows, Integrations, Permissions)
-    const stepIndicatorCount = await dialog
-      .locator('div.w-10.h-10.rounded-full')
-      .count();
+    // The step indicators are <button> elements with type="button" inside the progress indicator row
+    // With Tailwind CSS v4, class selectors may not work reliably, so we target
+    // the button elements inside the step indicator flex container
+    const stepIndicators = dialog.locator('.flex.items-center.gap-2 button[type="button"]');
+    await expect(stepIndicators.first()).toBeVisible({ timeout: 10000 });
+    const stepIndicatorCount = await stepIndicators.count();
     expect(stepIndicatorCount).toBeGreaterThanOrEqual(5);
   });
 });

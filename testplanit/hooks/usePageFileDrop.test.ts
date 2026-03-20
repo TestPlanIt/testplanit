@@ -348,7 +348,7 @@ describe("usePageFileDrop", () => {
     });
 
     it("should reset isDragActive to false when enabled becomes false", () => {
-      let enabled = true;
+      let _enabled = true;
       const { result, rerender } = renderHook(
         ({ en }: { en: boolean }) =>
           usePageFileDrop({ ...defaultOptions, enabled: en }),

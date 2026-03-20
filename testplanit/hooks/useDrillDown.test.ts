@@ -20,11 +20,14 @@ function createWrapper() {
 const sampleContext = {
   metricId: "testResults",
   metricLabel: "Test Results",
+  metricValue: 42,
+  reportType: "test-execution",
+  mode: "project" as const,
   projectId: 1,
   dimensions: {},
 };
 
-const mockDrillDownResponse = {
+const _mockDrillDownResponse = {
   data: [{ id: 1, name: "Result 1" }],
   total: 1,
   hasMore: false,

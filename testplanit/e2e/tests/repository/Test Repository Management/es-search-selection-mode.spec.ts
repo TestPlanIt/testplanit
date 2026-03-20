@@ -37,14 +37,14 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await newRunButton.click();
 
     // Fill step 1 (basic info)
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    const nameInput = page.getByTestId("run-name-input");
+    const nameInput = dialog.getByTestId("run-name-input");
     await nameInput.fill(`ES Search Run ${Date.now()}`);
 
     // Click Next to go to step 2 (test case selection)
-    const nextButton = page.getByTestId("run-next-button");
+    const nextButton = dialog.getByTestId("run-next-button");
     await nextButton.click();
 
     // In step 2, the ProjectRepository is rendered in selection mode
@@ -80,12 +80,12 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await expect(newRunButton).toBeVisible({ timeout: 15000 });
     await newRunButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Fill step 1
-    await page.getByTestId("run-name-input").fill(`Filter Run ${Date.now()}`);
-    await page.getByTestId("run-next-button").click();
+    await dialog.getByTestId("run-name-input").fill(`Filter Run ${Date.now()}`);
+    await dialog.getByTestId("run-next-button").click();
 
     // Wait for step 2 to load
     const esSearchInput = dialog.locator(
@@ -138,11 +138,11 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await expect(newRunButton).toBeVisible({ timeout: 15000 });
     await newRunButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    await page.getByTestId("run-name-input").fill(`Clear Run ${Date.now()}`);
-    await page.getByTestId("run-next-button").click();
+    await dialog.getByTestId("run-name-input").fill(`Clear Run ${Date.now()}`);
+    await dialog.getByTestId("run-next-button").click();
 
     const esSearchInput = dialog.locator(
       'input[placeholder*="Search in this project"]'
@@ -213,11 +213,11 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await expect(newRunButton).toBeVisible({ timeout: 15000 });
     await newRunButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    await page.getByTestId("run-name-input").fill(`Select Run ${Date.now()}`);
-    await page.getByTestId("run-next-button").click();
+    await dialog.getByTestId("run-name-input").fill(`Select Run ${Date.now()}`);
+    await dialog.getByTestId("run-next-button").click();
 
     const esSearchInput = dialog.locator(
       'input[placeholder*="Search in this project"]'

@@ -28,7 +28,7 @@ test.describe("View Selector - Repository Views", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E View Selector Test ${Date.now()}`);
+    return await api.createProject(`E2E View Selector ${Date.now()}-${Math.random().toString(36).substring(7)}`);
   }
 
   /**
@@ -450,53 +450,55 @@ test.describe("View Selector - Repository Views", () => {
     await repositoryPage.goto(projectId);
     await selectView(page, "Issue");
 
-    // Click on "No Issues" filter
+    // Wait for the Issue view to fully load - the "No Issues" filter should be visible
     const noIssuesFilter = page.locator(
       '[role="button"]:has-text("No Issues")'
     );
     await expect(noIssuesFilter.first()).toBeVisible({ timeout: 10000 });
+
+    // Wait for initial data to load in the table before clicking filter
+    const tableBody = page.locator("table tbody");
+    await expect(tableBody).toBeVisible({ timeout: 10000 });
+
+    // Click on "No Issues" filter
     await noIssuesFilter.first().click();
     await page.waitForLoadState("networkidle");
 
-    // Wait for the filter to be applied (check that the count updates)
-    await page.waitForTimeout(1000);
-
-    // Search for the unlinked case (pagination may hide it otherwise)
-    const searchInput = page.locator('input[placeholder="Filter cases..."]');
-    await searchInput.fill(unlinkedCaseName);
+    // Wait for the ZenStack query to refetch with the new filter
+    // The filter changes selectedFilter state which causes a re-render and data refetch
+    await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
 
-    // The unlinked case should be visible in the filtered results
-    await expect(
-      page.locator(`text="${unlinkedCaseName}"`).first()
-    ).toBeVisible({ timeout: 10000 });
-
-    // Search for the linked case - it should NOT appear in No Issues filter
-    await searchInput.fill(linkedCaseName);
-    await page.waitForLoadState("networkidle");
-
-    // Wait a bit for the search to complete
-    await page.waitForTimeout(1000);
-
-    // The linked case should NOT be visible (it has an issue)
-    // Check that the table either has no rows or shows "no results" type message
-    const tableRows = page.locator("table tbody tr");
-
-    // Wait for the filter to take effect - either rows disappear or we see empty state
+    // Verify the "No Issues" filter button has the selected styling (bg-primary/20)
     await expect(async () => {
-      const rowCount = await tableRows.count();
+      const hasSelectedClass = await noIssuesFilter.first().evaluate((el) => {
+        return el.className.includes("bg-primary");
+      });
+      expect(hasSelectedClass).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    // Now check the table: only the unlinked case should be visible
+    await expect(async () => {
+      const rows = tableBody.locator("tr");
+      const rowCount = await rows.count();
 
       if (rowCount === 0) {
-        // No rows - this is expected (filter working correctly)
-        expect(rowCount).toBe(0);
-      } else {
-        // If there are rows, none should contain the linked case name
-        const containsLinkedCase = await tableRows
-          .filter({ hasText: linkedCaseName })
-          .count();
-        expect(containsLinkedCase).toBe(0);
+        // Table might still be loading - fail to retry
+        expect(rowCount).toBeGreaterThan(0);
       }
-    }).toPass({ timeout: 10000 });
+
+      // The unlinked case (no issues) should be visible
+      const unlinkedCount = await rows
+        .filter({ hasText: unlinkedCaseName })
+        .count();
+      expect(unlinkedCount).toBeGreaterThan(0);
+
+      // The linked case (has issue) should NOT be visible
+      const linkedCount = await rows
+        .filter({ hasText: linkedCaseName })
+        .count();
+      expect(linkedCount).toBe(0);
+    }).toPass({ timeout: 15000 });
   });
 
   test("Issue view filters correctly by specific issue", async ({
@@ -532,30 +534,59 @@ test.describe("View Selector - Repository Views", () => {
     await repositoryPage.goto(projectId);
     await selectView(page, "Issue");
 
-    // Click on the specific issue filter (look for the issue name in the button)
+    // Wait for the Issue view to fully load and show filter options
     const issueFilter = page
       .locator('[role="button"]')
       .filter({ hasText: issueName });
-    await expect(issueFilter).toBeVisible({ timeout: 10000 });
+    await expect(issueFilter).toBeVisible({ timeout: 15000 });
+
+    // Wait for initial data to load in the table
+    const tableBody = page.locator("table tbody");
+    await expect(tableBody).toBeVisible({ timeout: 10000 });
+
+    // The default "Any Issue" filter should already exclude the unlinked case.
+    // Wait for the initial filter to take effect before clicking a specific one.
+    await expect(async () => {
+      const unlinkedCount = await tableBody
+        .locator("tr")
+        .filter({ hasText: unlinkedCaseName })
+        .count();
+      // Under "Any Issue" filter, unlinked case should already be hidden
+      expect(unlinkedCount).toBe(0);
+    }).toPass({ timeout: 15000 });
+
+    // Click on the specific issue filter
     await issueFilter.click();
     await page.waitForLoadState("networkidle");
 
-    // After clicking the specific issue filter, only the linked case should appear
-    // Wait for the table to update
-    await page.waitForTimeout(1000);
+    // Wait for the filter to update and the ZenStack query to refetch
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
 
-    // Use polling assertion to handle async table updates
+    // Verify the filter button has selected styling
+    await expect(async () => {
+      const hasSelectedClass = await issueFilter.evaluate((el) => {
+        return el.className.includes("bg-primary");
+      });
+      expect(hasSelectedClass).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    // After clicking the specific issue filter, only the linked case should appear
     await expect(async () => {
       // The linked case should be visible in the table
-      const linkedCaseLocator = page.locator(`text="${linkedCaseName}"`);
-      const linkedCount = await linkedCaseLocator.count();
+      const linkedCount = await tableBody
+        .locator("tr")
+        .filter({ hasText: linkedCaseName })
+        .count();
       expect(linkedCount).toBeGreaterThan(0);
 
       // The unlinked case should NOT be visible in the table
-      const unlinkedCaseLocator = page.locator(`text="${unlinkedCaseName}"`);
-      const unlinkedCount = await unlinkedCaseLocator.count();
+      const unlinkedCount = await tableBody
+        .locator("tr")
+        .filter({ hasText: unlinkedCaseName })
+        .count();
       expect(unlinkedCount).toBe(0);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 15000 });
   });
 
   // ============================================================
@@ -853,7 +884,7 @@ test.describe("View Selector - Filter Persistence", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E View Selector Test ${Date.now()}`);
+    return await api.createProject(`E2E View Selector ${Date.now()}-${Math.random().toString(36).substring(7)}`);
   }
 
   test("Filter selection updates state in view", async ({ api, page }) => {

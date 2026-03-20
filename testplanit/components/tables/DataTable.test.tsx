@@ -8,7 +8,7 @@
  * Logic-only tests follow the same pattern as DataTable.columnVisibility.test.ts.
  */
 import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,7 +38,7 @@ interface TestRow {
   [key: string]: any;
 }
 
-interface CustomColumnMeta {
+interface _CustomColumnMeta {
   isVisible?: boolean;
   isPinned?: "left" | "right";
 }

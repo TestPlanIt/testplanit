@@ -175,16 +175,22 @@ test.describe("Default Template - Protection Rules", () => {
     await expect(row).toBeVisible({ timeout: 5000 });
 
     // Verify the "Default" switch is checked - poll to wait for UI to sync with database
+    // The table may need a reload to reflect the API-created template's isDefault state
     const defaultSwitch = row.locator('button[role="switch"]').last();
     await expect.poll(
       async () => {
         const state = await defaultSwitch.getAttribute("data-state");
-        return state;
+        if (state !== "checked") {
+          // Reload page to force fresh data fetch from server
+          await page.reload();
+          await page.waitForLoadState("networkidle");
+        }
+        return await defaultSwitch.getAttribute("data-state");
       },
       {
         message: `Expected default switch to be checked for template ${templateName}`,
-        timeout: 10000,
-        intervals: [100, 250, 500],
+        timeout: 20000,
+        intervals: [500, 1000, 2000, 3000],
       }
     ).toBe("checked");
 

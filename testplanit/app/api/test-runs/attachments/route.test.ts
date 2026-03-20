@@ -111,7 +111,7 @@ describe("Test Run Attachments API Route", () => {
       const request = createFormDataRequest(formData);
 
       const response = await POST(request);
-      const data = await response.json();
+      const _data = await response.json();
 
       expect(response.status).toBe(401);
     });
@@ -230,7 +230,7 @@ describe("Test Run Attachments API Route", () => {
 
       const request = createFormDataRequest(formData);
       const response = await POST(request);
-      const data = await response.json();
+      const _data = await response.json();
 
       expect(response.status).toBe(200);
       expect(prisma.attachments.create).toHaveBeenCalledWith(

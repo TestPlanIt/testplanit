@@ -1,4 +1,4 @@
-import { act, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
@@ -84,7 +84,7 @@ describe("TwoFactorVerifyPage", () => {
       ok: true,
       json: () => Promise.resolve({}),
     });
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
   });
 
   it("renders OTP input slots for 6-digit code entry", () => {
@@ -95,7 +95,7 @@ describe("TwoFactorVerifyPage", () => {
     expect(otpContainer).toBeInTheDocument();
 
     // Should have 6 slots
-    const otpSlots = document.querySelectorAll("[data-input-otp-container] > *");
+    const _otpSlots = document.querySelectorAll("[data-input-otp-container] > *");
     // The OTP group should contain slots
     const inputOtpGroup = document.querySelector("[data-input-otp-container]");
     expect(inputOtpGroup).toBeInTheDocument();
@@ -183,7 +183,7 @@ describe("TwoFactorVerifyPage", () => {
       ok: false,
       json: () => Promise.resolve({ error: errorMessage }),
     });
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
 
     render(<TwoFactorVerifyPage />);
 

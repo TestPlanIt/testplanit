@@ -393,6 +393,30 @@ export class ApiHelper {
   }
 
   /**
+   * Create multiple test cases in parallel batches for faster setup.
+   * Uses concurrent requests (batch size of 5) to speed up data creation.
+   * @returns Array of created case IDs
+   */
+  async createTestCasesBatch(
+    projectId: number,
+    folderId: number,
+    names: string[],
+    batchSize: number = 5
+  ): Promise<number[]> {
+    const caseIds: number[] = [];
+
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map((name) => this.createTestCase(projectId, folderId, name))
+      );
+      caseIds.push(...batchResults);
+    }
+
+    return caseIds;
+  }
+
+  /**
    * Create a test case with field values via API
    */
   async createTestCaseWithFieldValues(

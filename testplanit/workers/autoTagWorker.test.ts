@@ -380,10 +380,10 @@ describe("AutoTagWorker", () => {
     it("should fetch testRun entities with testRunType field", async () => {
       const testRunJobData = {
         entityIds: [101],
-        entityType: "testRun" as const,
+        entityType: "testRun",
         projectId: 10,
         userId: "user-1",
-      };
+      } as any;
       mockAnalyzeTags.mockResolvedValue({
         ...baseAnalysisResult,
         suggestions: [
@@ -422,10 +422,10 @@ describe("AutoTagWorker", () => {
     it("should fetch session entities", async () => {
       const sessionJobData = {
         entityIds: [201],
-        entityType: "session" as const,
+        entityType: "session",
         projectId: 10,
         userId: "user-1",
-      };
+      } as any;
       mockAnalyzeTags.mockResolvedValue({
         ...baseAnalysisResult,
         suggestions: [

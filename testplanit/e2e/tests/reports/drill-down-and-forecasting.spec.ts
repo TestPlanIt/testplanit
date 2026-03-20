@@ -269,7 +269,6 @@ test.describe("Report Builder - Forecasting", () => {
   });
 
   test("Forecasting API returns empty/zero response for empty project", async ({
-    api,
     page,
   }) => {
     // Call forecast with no real case IDs to test graceful empty handling

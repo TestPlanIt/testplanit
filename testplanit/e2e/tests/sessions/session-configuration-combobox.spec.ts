@@ -33,15 +33,17 @@ test.describe("Session Configuration Combobox", () => {
     await newSessionButton.click();
 
     // Wait for dialog
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Find the Configuration field's combobox trigger
     // The ConfigurationSelect renders an AsyncCombobox with role="combobox"
     // It's in the right column of the form, after Template and State selects
+    // Use label-based scoping to target the correct combobox (not Template or State)
     const configCombobox = dialog
-      .locator('button[role="combobox"]')
-      .first();
+      .locator('label:has-text("Configuration")')
+      .locator('..')
+      .locator('button[role="combobox"]');
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
 
     // Click to open the combobox popover
@@ -72,13 +74,14 @@ test.describe("Session Configuration Combobox", () => {
     await expect(newSessionButton).toBeVisible({ timeout: 15000 });
     await newSessionButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
     const configCombobox = dialog
-      .locator('button[role="combobox"]')
-      .first();
+      .locator('label:has-text("Configuration")')
+      .locator('..')
+      .locator('button[role="combobox"]');
     await configCombobox.click();
 
     // Select the configuration
@@ -108,13 +111,14 @@ test.describe("Session Configuration Combobox", () => {
     await expect(newSessionButton).toBeVisible({ timeout: 15000 });
     await newSessionButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
     const configCombobox = dialog
-      .locator('button[role="combobox"]')
-      .first();
+      .locator('label:has-text("Configuration")')
+      .locator('..')
+      .locator('button[role="combobox"]');
     await configCombobox.click();
 
     // First select a configuration
@@ -156,13 +160,14 @@ test.describe("Session Configuration Combobox", () => {
     await expect(newSessionButton).toBeVisible({ timeout: 15000 });
     await newSessionButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
     const configCombobox = dialog
-      .locator('button[role="combobox"]')
-      .first();
+      .locator('label:has-text("Configuration")')
+      .locator('..')
+      .locator('button[role="combobox"]');
     await configCombobox.click();
 
     // Wait for both to load
@@ -207,13 +212,14 @@ test.describe("Session Configuration Combobox", () => {
     await expect(newSessionButton).toBeVisible({ timeout: 15000 });
     await newSessionButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
     const configCombobox = dialog
-      .locator('button[role="combobox"]')
-      .first();
+      .locator('label:has-text("Configuration")')
+      .locator('..')
+      .locator('button[role="combobox"]');
     await configCombobox.click();
 
     // Wait for options
@@ -254,7 +260,7 @@ test.describe("Session Configuration Combobox", () => {
     await expect(newSessionButton).toBeVisible({ timeout: 15000 });
     await newSessionButton.click();
 
-    const dialog = page.locator('[role="dialog"]');
+    const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Fill required fields
@@ -263,8 +269,9 @@ test.describe("Session Configuration Combobox", () => {
 
     // Select a configuration
     const configCombobox = dialog
-      .locator('button[role="combobox"]')
-      .first();
+      .locator('label:has-text("Configuration")')
+      .locator('..')
+      .locator('button[role="combobox"]');
     await configCombobox.click();
 
     await page

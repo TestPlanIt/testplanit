@@ -360,7 +360,7 @@ describe("TestResultHistory", () => {
   });
 
   it("expands result row on click", async () => {
-    const user = userEvent.setup();
+    const _user = userEvent.setup();
     renderWithQueryClient(<TestResultHistory {...defaultProps} />);
 
     // Get all chevron buttons in the table rows (not header)

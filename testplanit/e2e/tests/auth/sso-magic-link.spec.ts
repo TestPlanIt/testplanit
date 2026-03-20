@@ -87,7 +87,7 @@ async function deleteSsoProvider(
  */
 async function signInAsAdmin(
   page: import("@playwright/test").Page,
-  baseURL: string
+  _baseURL: string
 ): Promise<import("@playwright/test").Cookie[]> {
   const signinPage = new SigninPage(page);
   await signinPage.goto();
@@ -122,7 +122,7 @@ test.describe("SSO and Magic Link", () => {
     const testPassword = "Password123!";
 
     // Sign in as admin to get authenticated context for API calls
-    const adminCookies = await signInAsAdmin(page, baseURL!);
+    const _adminCookies = await signInAsAdmin(page, baseURL!);
 
     // Create Google SSO provider using the admin-authenticated page.request
     const providerResult = await ensureSsoProvider(

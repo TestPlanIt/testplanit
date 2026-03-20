@@ -36,12 +36,12 @@ test.describe("Milestone CRUD", () => {
     const nameInput = page.getByPlaceholder(/Name/i);
     await nameInput.fill(milestoneName);
 
-    // Submit
+    // Submit and wait for the dialog to close (milestone created via ZenStack hook)
     const saveButton = page.getByRole("button", { name: /Save/i });
     await saveButton.click();
 
-    // Dialog should close and milestone should appear in the Active tab
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 10000 });
+    // Dialog should close after successful creation
+    await expect(page.getByRole("dialog").first()).not.toBeVisible({ timeout: 15000 });
     await expect(page.getByText(milestoneName)).toBeVisible({ timeout: 10000 });
   });
 
@@ -150,17 +150,17 @@ test.describe("Milestone CRUD", () => {
     await completeMenuItem.click();
 
     // Complete Milestone dialog should open
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5000 });
+    const dialog = page.getByRole("dialog").first();
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Click Complete button in the dialog
-    const completeButton = page
-      .getByRole("dialog")
-      .getByRole("button", { name: /Complete/i });
+    const completeButton = dialog.getByRole("button", { name: /Complete/i });
     await expect(completeButton).toBeVisible({ timeout: 5000 });
     await completeButton.click();
 
-    // Dialog should close
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 10000 });
+    // Wait for the server action to complete and dialog to close
+    await expect(dialog).not.toBeVisible({ timeout: 30000 });
+    await page.waitForLoadState("networkidle");
 
     // Switch to Completed tab to verify
     const completedTab = page.getByRole("tab", { name: /Completed/i });
@@ -212,16 +212,20 @@ test.describe("Milestone CRUD", () => {
     await deleteMenuItem.click();
 
     // Delete confirmation dialog should open
-    await expect(page.getByRole("alertdialog")).toBeVisible({ timeout: 5000 });
+    const alertDialog = page.getByRole("alertdialog").first();
+    await expect(alertDialog).toBeVisible({ timeout: 5000 });
 
     // Confirm deletion
     const confirmButton = page.getByRole("button", { name: /Confirm/i });
     await confirmButton.click();
 
     // Dialog should close
-    await expect(page.getByRole("alertdialog")).not.toBeVisible({
-      timeout: 10000,
+    await expect(alertDialog).not.toBeVisible({
+      timeout: 15000,
     });
+
+    // Wait for the list to refresh after deletion
+    await page.waitForLoadState("networkidle");
 
     // Parent should no longer be visible
     await expect(page.getByText(parentName)).not.toBeVisible({

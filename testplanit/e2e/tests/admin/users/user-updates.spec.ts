@@ -104,13 +104,8 @@ test.describe("User Update Operations", () => {
       const submitButton = page.getByTestId("profile-submit-button");
       await expect(submitButton).toBeVisible();
 
-      // Find the theme combobox (shadcn Select component)
-      // Look for the combobox by the label text
-      const themeLabel = page.getByText("Theme", { exact: false }).first();
-      await expect(themeLabel).toBeVisible();
-
-      // Find the combobox trigger button (next sibling or within same form item)
-      const themeCombobox = page.locator('[role="combobox"]').filter({ hasText: /Light|Dark|System/i }).first();
+      // Find the theme select trigger using data-testid
+      const themeCombobox = page.getByTestId("profile-theme-select");
       await expect(themeCombobox).toBeVisible();
 
       // Get the current theme value from the combobox text
@@ -142,8 +137,8 @@ test.describe("User Update Operations", () => {
       const submitButtonRevert = page.getByTestId("profile-submit-button");
       await expect(submitButtonRevert).toBeVisible();
 
-      // Find and click the theme combobox again
-      const themeComboboxRevert = page.locator('[role="combobox"]').filter({ hasText: /Light|Dark|System/i }).first();
+      // Find and click the theme select trigger again
+      const themeComboboxRevert = page.getByTestId("profile-theme-select");
       await expect(themeComboboxRevert).toBeVisible();
       await themeComboboxRevert.click();
 

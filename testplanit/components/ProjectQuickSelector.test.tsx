@@ -9,7 +9,7 @@ const mockUseTranslations = vi.hoisted(() => vi.fn());
 const mockRouterPush = vi.hoisted(() => vi.fn());
 
 // Stable empty array to prevent re-render loops
-const stableEmptyArray = vi.hoisted(() => [] as any[]);
+const _stableEmptyArray = vi.hoisted(() => [] as any[]);
 
 // --- Mocks ---
 vi.mock("~/lib/hooks", () => ({
@@ -27,7 +27,6 @@ vi.mock("next-intl", () => ({
 // Mock next/image as a simple img tag
 vi.mock("next/image", () => ({
   default: ({ src, alt, width, height, className }: any) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={alt} width={width} height={height} className={className} />
   ),
 }));
@@ -38,13 +37,13 @@ vi.mock("@/components/ui/popover", () => ({
     <div data-testid="popover" data-open={String(open)}>
       {/* Pass down toggle to trigger */}
       {React.Children.map(children, (child) =>
-        React.cloneElement(child as React.ReactElement, { _onOpenChange: onOpenChange, _open: open })
+        React.cloneElement(child as React.ReactElement<any>, { _onOpenChange: onOpenChange, _open: open })
       )}
     </div>
   ),
-  PopoverTrigger: ({ asChild, children, _onOpenChange }: any) => {
+  PopoverTrigger: ({ asChild: _asChild, children, _onOpenChange }: any) => {
     const child = React.Children.only(children) as React.ReactElement;
-    return React.cloneElement(child, {
+    return React.cloneElement(child as React.ReactElement<any>, {
       onClick: () => _onOpenChange?.(true),
       "data-testid": "popover-trigger",
     });

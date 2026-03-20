@@ -13,7 +13,7 @@ import {
 const { mockPathname, mockParams, mockSession } = vi.hoisted(() => ({
   mockPathname: vi.fn(() => "/en-US/projects/"),
   mockParams: vi.fn(() => ({})),
-  mockSession: vi.fn(() => ({ data: null, status: "unauthenticated" })),
+  mockSession: vi.fn((): any => ({ data: null, status: "unauthenticated" })),
 }));
 
 vi.mock("~/lib/navigation", () => ({

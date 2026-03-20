@@ -216,8 +216,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Dialog should render with wizard content visible
-    const dialogContent = dialog.locator('[data-slot="dialog-content"]').first();
-    await expect(dialogContent).toBeVisible({ timeout: 5000 });
+    // Dialog is already confirmed visible above, verify it has content (wizard tabs)
+    await expect(dialog.locator('[role="tab"], [role="tabpanel"], form').first()).toBeVisible({ timeout: 5000 });
   });
 });

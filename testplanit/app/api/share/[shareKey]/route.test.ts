@@ -218,7 +218,7 @@ describe("POST /api/share/[shareKey]", () => {
 
     const [req, ctx] = createPostRequest("abc123", {});
     const response = await POST(req, ctx);
-    const data = await response.json();
+    const _data = await response.json();
 
     expect(response.status).toBe(404);
   });
@@ -232,7 +232,7 @@ describe("POST /api/share/[shareKey]", () => {
 
     const [req, ctx] = createPostRequest("abc123", {});
     const response = await POST(req, ctx);
-    const data = await response.json();
+    const _data = await response.json();
 
     expect(response.status).toBe(403);
   });
@@ -246,7 +246,7 @@ describe("POST /api/share/[shareKey]", () => {
 
     const [req, ctx] = createPostRequest("abc123", {});
     const response = await POST(req, ctx);
-    const data = await response.json();
+    const _data = await response.json();
 
     expect(response.status).toBe(403);
   });

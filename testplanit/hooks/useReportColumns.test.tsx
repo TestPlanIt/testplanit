@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-literals */
 import { render, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useReportColumns } from "./useReportColumns";

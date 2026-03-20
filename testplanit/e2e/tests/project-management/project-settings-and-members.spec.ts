@@ -37,12 +37,11 @@ test.describe("Project Settings Pages", () => {
     );
     await page.waitForLoadState("networkidle");
 
-    // The page renders a Card with "Integrations" title
-    // t("admin.menu.integrations") = "Integrations"
-    const pageTitle = page.getByRole("heading", { name: /integrations/i });
+    // The page renders a Card with "Issue Integrations" title via tGlobal("admin.menu.integrations")
+    // CardTitle renders as a <div>, not a heading element, so use getByText
+    const pageTitle = page.getByText(/issue integrations/i);
     await expect(pageTitle.first()).toBeVisible({ timeout: 15000 });
 
-    // The project name is displayed in the CardDescription (uppercase)
     // The page content area should be visible
     const mainContent = page.locator("main");
     await expect(mainContent).toBeVisible({ timeout: 5000 });
@@ -56,9 +55,9 @@ test.describe("Project Settings Pages", () => {
     );
     await page.waitForLoadState("networkidle");
 
-    // The page always renders the "Available Integrations" card
-    // t("projects.settings.integrations.availableIntegrations")
-    const availableSection = page.getByText(/available integrations/i);
+    // The page always renders the "Available Issue Integrations" card
+    // t("projects.settings.integrations.availableIntegrations") = "Available Issue Integrations"
+    const availableSection = page.getByText(/available issue integrations/i);
     await expect(availableSection.first()).toBeVisible({ timeout: 15000 });
   });
 
@@ -99,8 +98,8 @@ test.describe("Project Settings Pages", () => {
     const mainContent = page.locator("main");
     await expect(mainContent).toBeVisible({ timeout: 15000 });
 
-    // The page should show a heading related to shares/manage
-    const sharesTitle = page.getByRole("heading", { name: /manage shares/i });
+    // The page shows "Manage Shares" via t("title") in a CardTitle (renders as <div>, not heading)
+    const sharesTitle = page.getByText(/manage shares/i);
     await expect(sharesTitle.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -110,9 +109,10 @@ test.describe("Project Settings Pages", () => {
     await page.goto(`/en-US/projects/settings/${testProjectId}/shares`);
     await page.waitForLoadState("networkidle");
 
-    // ShareLinkList renders within the CardContent
+    // ShareLinkList renders within the Card's CardContent area
     // Even with no shares, the component renders (empty state or table headers)
-    const cardContent = page.locator(".space-y-6, [class*='CardContent']").first();
+    // The shares page CardContent doesn't have space-y-6; use the main Card structure
+    const cardContent = page.locator("main").locator("[class*='p-6']").first();
     await expect(cardContent).toBeVisible({ timeout: 15000 });
   });
 
@@ -169,73 +169,79 @@ test.describe("Project Settings Pages", () => {
     );
     await page.waitForLoadState("networkidle");
 
-    // The settings menu section should be visible
+    // The settings menu section should be visible (accordion auto-expands for active page)
     const settingsSection = page.getByTestId("project-menu-section-settings");
     await expect(settingsSection).toBeVisible({ timeout: 15000 });
 
-    // The integrations link should be active (has text-primary-foreground class)
-    const integrationsLink = page.locator("#settings-integrations-link");
+    // The integrations link should be active (has bg-primary and text-primary-foreground classes)
+    // The link id="settings-integrations-link" is set on the <a> element
+    const integrationsLink = page.locator("a#settings-integrations-link");
     await expect(integrationsLink).toBeVisible({ timeout: 10000 });
-    await expect(integrationsLink).toHaveClass(/text-primary-foreground/);
+    await expect(integrationsLink).toHaveClass(/bg-primary/);
   });
 });
 
 test.describe("Project Member Management", () => {
-  let testProjectId: number;
+  let _testProjectId: number;
+  const projectPrefix = "E2E Members";
 
   test.beforeEach(async ({ api }) => {
-    testProjectId = await api.createProject(
-      `E2E Members ${Date.now()}`
+    _testProjectId = await api.createProject(
+      `${projectPrefix} ${Date.now()}`
     );
   });
 
-  test("edit project dialog opens from admin projects table", async ({
-    page,
-  }) => {
+  /**
+   * Navigate to admin projects page and filter for the test project.
+   * The table uses server-side pagination, so the newly created project
+   * may not appear on the first page without filtering.
+   */
+  async function navigateAndFindProject(page: import("@playwright/test").Page) {
     await page.goto("/en-US/admin/projects");
     await page.waitForLoadState("networkidle");
 
-    // Find the row for our test project — project name appears in a link or cell
+    // Use the Filter component's input (placeholder "Filter projects...")
+    const filterInput = page.getByPlaceholder(/filter projects/i);
+    await expect(filterInput).toBeVisible({ timeout: 10000 });
+    await filterInput.fill(projectPrefix);
+
+    // Wait for the debounced search to filter results
     const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
+      hasText: new RegExp(projectPrefix, "i"),
     });
     await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
+    return projectRow.first();
+  }
 
-    // The actions column has an edit button (SquarePen icon, variant="ghost")
-    // It's in the rightmost column and triggers handleOpenEditModal
+  /**
+   * Open the edit dialog for the test project.
+   */
+  async function openEditDialog(page: import("@playwright/test").Page) {
+    const projectRow = await navigateAndFindProject(page);
+
     const editButton = projectRow
-      .first()
       .getByRole("button")
       .filter({ has: page.locator("svg") })
       .first();
     await expect(editButton).toBeVisible({ timeout: 5000 });
     await editButton.click();
 
-    // Edit project dialog should open
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
+    return dialog;
+  }
+
+  test("edit project dialog opens from admin projects table", async ({
+    page,
+  }) => {
+    const dialog = await openEditDialog(page);
+    await expect(dialog).toBeVisible();
   });
 
   test("edit project dialog has Details, Users, and Groups tabs", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/projects");
-    await page.waitForLoadState("networkidle");
-
-    const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
-    });
-    await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
-
-    const editButton = projectRow
-      .first()
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await editButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openEditDialog(page);
 
     // Verify the 3 tabs are present
     const detailsTab = dialog.getByRole("tab", { name: /details/i });
@@ -248,23 +254,7 @@ test.describe("Project Member Management", () => {
   });
 
   test("Users tab shows user permissions table", async ({ page }) => {
-    await page.goto("/en-US/admin/projects");
-    await page.waitForLoadState("networkidle");
-
-    const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
-    });
-    await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
-
-    const editButton = projectRow
-      .first()
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await editButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openEditDialog(page);
 
     // Click Users tab
     const usersTab = dialog.getByRole("tab", { name: /users/i });
@@ -278,23 +268,7 @@ test.describe("Project Member Management", () => {
   });
 
   test("Users tab has an Add User combobox", async ({ page }) => {
-    await page.goto("/en-US/admin/projects");
-    await page.waitForLoadState("networkidle");
-
-    const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
-    });
-    await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
-
-    const editButton = projectRow
-      .first()
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await editButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openEditDialog(page);
 
     const usersTab = dialog.getByRole("tab", { name: /users/i });
     await usersTab.click();
@@ -306,23 +280,7 @@ test.describe("Project Member Management", () => {
   });
 
   test("Groups tab shows group permissions table", async ({ page }) => {
-    await page.goto("/en-US/admin/projects");
-    await page.waitForLoadState("networkidle");
-
-    const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
-    });
-    await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
-
-    const editButton = projectRow
-      .first()
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await editButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openEditDialog(page);
 
     // Click Groups tab
     const groupsTab = dialog.getByRole("tab", { name: /groups/i });
@@ -338,23 +296,7 @@ test.describe("Project Member Management", () => {
   test("edit project dialog can be saved with existing details", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/projects");
-    await page.waitForLoadState("networkidle");
-
-    const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
-    });
-    await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
-
-    const editButton = projectRow
-      .first()
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await editButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openEditDialog(page);
 
     // Details tab is active by default — submit the form
     const saveButton = dialog.getByRole("button", { name: /save/i });
@@ -366,23 +308,7 @@ test.describe("Project Member Management", () => {
   });
 
   test("edit project dialog can be cancelled", async ({ page }) => {
-    await page.goto("/en-US/admin/projects");
-    await page.waitForLoadState("networkidle");
-
-    const projectRow = page.locator("tr").filter({
-      hasText: new RegExp(`E2E Members`, "i"),
-    });
-    await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
-
-    const editButton = projectRow
-      .first()
-      .getByRole("button")
-      .filter({ has: page.locator("svg") })
-      .first();
-    await editButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openEditDialog(page);
 
     // Close dialog via escape or close button
     await page.keyboard.press("Escape");
