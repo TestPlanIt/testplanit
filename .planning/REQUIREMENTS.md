@@ -39,9 +39,9 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 ### Bulk Operations
 
 - [x] **BULK-01**: Bulk copy/move of 100+ cases is processed asynchronously via BullMQ with progress polling
-- [ ] **BULK-02**: User sees a progress indicator during bulk operations
+- [x] **BULK-02**: User sees a progress indicator during bulk operations
 - [x] **BULK-03**: User can cancel an in-flight bulk operation
-- [ ] **BULK-04**: Per-case errors are reported to the user after operation completes
+- [x] **BULK-04**: Per-case errors are reported to the user after operation completes
 
 ### Entry Points
 
@@ -100,9 +100,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMPAT-03   | 29    | Complete |
 | COMPAT-04   | 29    | Complete |
 | BULK-01     | 29    | Complete |
-| BULK-02     | 30    | Pending |
+| BULK-02     | 30    | Complete |
 | BULK-03     | 29    | Complete |
-| BULK-04     | 30    | Pending |
+| BULK-04     | 30    | Complete |
 | ENTRY-01    | 31    | Pending |
 | ENTRY-02    | 31    | Pending |
 | ENTRY-03    | 31    | Pending |
