@@ -7,7 +7,7 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import TextFromJson from "@/components/TextFromJson";
-import { ExternalLink, Megaphone } from "lucide-react";
+import { ArrowRightLeft, Copy, ExternalLink, Megaphone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 
@@ -375,6 +375,41 @@ export function NotificationContent({
       <div className="space-y-1">
         <h4 className="font-medium text-sm">{notification.title}</h4>
         <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
+  // Handle copy/move job completion
+  if (notification.type === "COPY_MOVE_COMPLETE") {
+    const isCopy = data.operation === "copy";
+    const count = (data.copiedCount ?? 0) + (data.movedCount ?? 0);
+    const repositoryLink = `/projects/repository/${data.targetProjectId}`;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-start -mt-1 gap-2">
+          {isCopy ? (
+            <Copy className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          ) : (
+            <ArrowRightLeft className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          )}
+          <h4 className="font-medium text-sm">{notification.title}</h4>
+        </div>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>
+            {count} case(s) {isCopy ? "copied" : "moved"} successfully
+            {data.errorCount > 0 ? `, ${data.errorCount} failed` : ""}
+          </p>
+          <div className="flex items-center gap-1">
+            <Link
+              href={repositoryLink}
+              className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              View target repository
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

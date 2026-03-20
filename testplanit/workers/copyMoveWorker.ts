@@ -8,6 +8,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
+import { NotificationService } from "../lib/services/notificationService";
 import valkeyConnection from "../lib/valkey";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService";
 import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSync";
@@ -577,6 +578,29 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
       `copied=${result.copiedCount} moved=${result.movedCount} skipped=${result.skippedCount} ` +
       `droppedLinks=${result.droppedLinkCount}`
   );
+
+  // 13. Notify the submitting user that the job completed
+  try {
+    await NotificationService.createNotification({
+      userId: job.data.userId,
+      type: "COPY_MOVE_COMPLETE",
+      title: job.data.operation === "copy" ? "Copy Complete" : "Move Complete",
+      message: `${result.copiedCount + result.movedCount} case(s) ${job.data.operation === "copy" ? "copied" : "moved"} successfully${result.errors.length > 0 ? `, ${result.errors.length} failed` : ""}`,
+      relatedEntityId: String(job.data.targetProjectId),
+      relatedEntityType: "Project",
+      data: {
+        operation: job.data.operation,
+        sourceProjectId: job.data.sourceProjectId,
+        targetProjectId: job.data.targetProjectId,
+        copiedCount: result.copiedCount,
+        movedCount: result.movedCount,
+        skippedCount: result.skippedCount,
+        errorCount: result.errors.length,
+      },
+    });
+  } catch (notifErr) {
+    console.warn("Failed to create copy-move notification:", notifErr);
+  }
 
   return result;
 };
