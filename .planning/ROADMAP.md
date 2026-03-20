@@ -424,7 +424,7 @@ Plans:
 
 **Goal**: Users can complete a copy/move operation entirely through the dialog, from target selection through progress tracking to a final summary of outcomes
 **Depends on**: Phase 29
-**Requirements**: DLGSEL-01, DLGSEL-02, DLGSEL-03, DLGSEL-04, DLGSEL-05, DLGSEL-06, BULK-02, BULK-04
+**Requirements**: DLGSEL-03, DLGSEL-04, DLGSEL-05, DLGSEL-06, BULK-02, BULK-04
 **Success Criteria** (what must be TRUE):
 
   1. User can select a target project from a picker that shows only projects they have write access to, then pick a target folder within that project
@@ -442,7 +442,7 @@ Plans:
 
 **Goal**: The copy/move dialog is reachable from every UI location where users interact with test cases
 **Depends on**: Phase 30
-**Requirements**: ENTRY-01, ENTRY-02, ENTRY-03
+**Requirements**: DLGSEL-01, DLGSEL-02, ENTRY-01, ENTRY-02, ENTRY-03
 **Success Criteria** (what must be TRUE):
 
   1. The repository toolbar shows a "Copy/Move to Project" button positioned between "Create Test Run" and "Export"

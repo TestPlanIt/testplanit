@@ -80,8 +80,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 |-------------|-------|---------|
-| DLGSEL-01   | 30    | Pending |
-| DLGSEL-02   | 30    | Pending |
+| DLGSEL-01   | 31    | Pending |
+| DLGSEL-02   | 31    | Pending |
 | DLGSEL-03   | 30    | Pending |
 | DLGSEL-04   | 30    | Pending |
 | DLGSEL-05   | 30    | Pending |
