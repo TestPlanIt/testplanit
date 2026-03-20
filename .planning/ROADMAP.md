@@ -66,7 +66,7 @@
 - [x] **Phase 29: API Endpoints and Access Control** - Pre-flight checks, compatibility resolution, and job management endpoints (completed 2026-03-20)
 - [x] **Phase 30: Dialog UI and Polling** - Multi-step copy/move dialog with progress tracking and collision resolution (completed 2026-03-20)
 - [x] **Phase 31: Entry Points** - Copy/Move action wired into context menu, bulk toolbar, and repository toolbar (completed 2026-03-20)
-- [ ] **Phase 32: Testing and Documentation** - E2E, unit tests, and user documentation covering the full feature
+- [x] **Phase 32: Testing and Documentation** - E2E, unit tests, and user documentation covering the full feature (completed 2026-03-20)
 
 ## Phase Details
 
@@ -511,4 +511,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 29. API Endpoints and Access Control | v0.17.0 | 3/3 | Complete | 2026-03-20 |
 | 30. Dialog UI and Polling | v0.17.0 | 2/2 | Complete | 2026-03-20 |
 | 31. Entry Points | 1/1 | Complete    | 2026-03-20 | - |
-| 32. Testing and Documentation | 1/2 | In Progress|  | - |
+| 32. Testing and Documentation | 2/2 | Complete   | 2026-03-20 | - |

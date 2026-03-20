@@ -55,10 +55,10 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 
 ### Testing
 
-- [ ] **TEST-01**: E2E tests verify copy and move operations end-to-end including data carry-over
-- [ ] **TEST-02**: E2E tests verify template compatibility warnings and workflow state mapping
-- [ ] **TEST-03**: Unit tests verify the copy/move worker logic including error handling and partial failure recovery
-- [ ] **TEST-04**: Unit tests verify shared step group recreation and collision handling
+- [x] **TEST-01**: E2E tests verify copy and move operations end-to-end including data carry-over
+- [x] **TEST-02**: E2E tests verify template compatibility warnings and workflow state mapping
+- [x] **TEST-03**: Unit tests verify the copy/move worker logic including error handling and partial failure recovery
+- [x] **TEST-04**: Unit tests verify shared step group recreation and collision handling
 
 ## Future Requirements
 
@@ -107,10 +107,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENTRY-02    | 31    | Complete |
 | ENTRY-03    | 31    | Complete |
 | DOCS-01     | 32    | Complete |
-| TEST-01     | 32    | Pending |
-| TEST-02     | 32    | Pending |
-| TEST-03     | 32    | Pending |
-| TEST-04     | 32    | Pending |
+| TEST-01     | 32    | Complete |
+| TEST-02     | 32    | Complete |
+| TEST-03     | 32    | Complete |
+| TEST-04     | 32    | Complete |
 
 **Coverage:**
 

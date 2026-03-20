@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-stopped_at: Completed 32-02-PLAN.md (Phase 32 Plan 02 — copy/move documentation)
-last_updated: "2026-03-20T23:07:21.030Z"
+stopped_at: Completed 32-01-PLAN.md (Phase 32 Plan 01 — E2E tests for copy-move API)
+last_updated: "2026-03-20T23:08:10.446Z"
 last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
   total_phases: 26
-  completed_phases: 21
+  completed_phases: 22
   total_plans: 57
-  completed_plans: 59
+  completed_plans: 60
   percent: 24
 ---
 
@@ -50,6 +50,7 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 | Phase 30-dialog-ui-and-polling P01 | 8 | 2 tasks | 7 files |
 | Phase 31-entry-points P01 | 12 | 2 tasks | 5 files |
 | Phase 32-testing-and-documentation P02 | 1 | 1 tasks | 1 files |
+| Phase 32-testing-and-documentation P01 | 5 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 - [Phase 31-entry-points]: BulkEditModal closes before CopyMoveDialog opens to prevent nested dialogs
 - [Phase 32-02]: sidebar_position: 11 for copy-move docs (follows import-export.md at position 10)
 - [Phase 32-02]: No screenshots in v0.17.0 copy-move docs — text is sufficient per plan discretion
+- [Phase 32-01]: Data verification tests skip when queue unavailable (503) to avoid false failures in CI without Redis — intentional test resilience
+- [Phase 32-01]: pollUntilDone helper polls status endpoint at 500ms intervals (up to 30 attempts) before throwing timeout
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:07:21.028Z
-Stopped at: Completed 32-02-PLAN.md (Phase 32 Plan 02 — copy/move documentation)
+Last session: 2026-03-20T23:08:10.443Z
+Stopped at: Completed 32-01-PLAN.md (Phase 32 Plan 01 — E2E tests for copy-move API)
 Resume file: None
