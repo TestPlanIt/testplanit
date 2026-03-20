@@ -755,6 +755,10 @@ model TemplateProjectAssignment {
     @@id([templateId, projectId])
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
+    // Project admins with explicit SPECIFIC_ROLE can manage assignments for their projects
+    @@allow('create,delete', project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    // Users with PROJECTADMIN access assigned to the project can manage assignments
+    @@allow('create,delete', project.assignedUsers?[user == auth()] && auth().access == 'PROJECTADMIN')
     @@allow('read', auth().access != null)
 }
 
