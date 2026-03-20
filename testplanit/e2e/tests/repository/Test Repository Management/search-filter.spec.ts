@@ -19,7 +19,7 @@ test.describe("Search & Filter", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Search Filter ${Date.now()}-${Math.random().toString(36).substring(7)}`);
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Search Test Cases", async ({ api, page }) => {
@@ -414,7 +414,6 @@ test.describe("Search & Filter", () => {
   });
 
   test("Search Updates Pagination Count", async ({ api, page }) => {
-    test.setTimeout(120_000);
     const projectId = await getTestProjectId(api);
 
     // Create a folder with enough test cases to have pagination
@@ -423,9 +422,12 @@ test.describe("Search & Filter", () => {
     const uniqueId = Date.now();
 
     // Create 15 test cases - 5 with "Alpha" prefix, 10 with "Beta" prefix
-    const alphaNames = Array.from({ length: 5 }, (_, i) => `Alpha ${i} ${uniqueId}`);
-    const betaNames = Array.from({ length: 10 }, (_, i) => `Beta ${i} ${uniqueId}`);
-    await api.createTestCasesBatch(projectId, folderId, [...alphaNames, ...betaNames]);
+    for (let i = 0; i < 5; i++) {
+      await api.createTestCase(projectId, folderId, `Alpha ${i} ${uniqueId}`);
+    }
+    for (let i = 0; i < 10; i++) {
+      await api.createTestCase(projectId, folderId, `Beta ${i} ${uniqueId}`);
+    }
 
     await repositoryPage.goto(projectId);
 
@@ -434,7 +436,7 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify initial count shows 15 items
-    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 5000 });
 
     // Apply search filter for "Alpha"
     const searchInput = page.getByTestId("search-input");
@@ -442,18 +444,17 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify count updated to show only 5 items
-    await expect(page.locator('text=/of 5 items/')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/of 5 items/')).toBeVisible({ timeout: 5000 });
 
     // Clear the filter
     await searchInput.clear();
     await page.waitForLoadState("networkidle");
 
     // Verify count is back to 15 items
-    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 5000 });
   });
 
   test("Search Removes Pagination When Results Fit One Page", async ({ api, page }) => {
-    test.setTimeout(120_000);
     const projectId = await getTestProjectId(api);
 
     // Create a folder with enough test cases to trigger pagination (>10)
@@ -463,9 +464,12 @@ test.describe("Search & Filter", () => {
 
     // Create 15 test cases - only 3 have the unique search term
     const searchTerm = `UniqueTarget${uniqueId}`;
-    const targetNames = Array.from({ length: 3 }, (_, i) => `${searchTerm} Case ${i}`);
-    const otherNames = Array.from({ length: 12 }, (_, i) => `Other Case ${i} ${uniqueId}`);
-    await api.createTestCasesBatch(projectId, folderId, [...targetNames, ...otherNames]);
+    for (let i = 0; i < 3; i++) {
+      await api.createTestCase(projectId, folderId, `${searchTerm} Case ${i}`);
+    }
+    for (let i = 0; i < 12; i++) {
+      await api.createTestCase(projectId, folderId, `Other Case ${i} ${uniqueId}`);
+    }
 
     await repositoryPage.goto(projectId);
 
@@ -475,7 +479,7 @@ test.describe("Search & Filter", () => {
 
     // Verify pagination is initially visible (15 items > 10 per page)
     const paginationNav = page.locator('nav[aria-label="pagination"]');
-    await expect(paginationNav).toBeVisible({ timeout: 15000 });
+    await expect(paginationNav).toBeVisible({ timeout: 5000 });
 
     // Apply search filter that reduces results to less than page size
     const searchInput = page.getByTestId("search-input");
@@ -483,14 +487,13 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify pagination is no longer visible (3 items < 10 per page)
-    await expect(paginationNav).not.toBeVisible({ timeout: 10000 });
+    await expect(paginationNav).not.toBeVisible({ timeout: 5000 });
 
     // Verify only 3 items are shown
-    await expect(page.locator('text=/of 3 items/')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/of 3 items/')).toBeVisible({ timeout: 5000 });
   });
 
   test("Search Resets to First Page", async ({ api, page }) => {
-    test.setTimeout(120_000);
     const projectId = await getTestProjectId(api);
 
     // Create a folder with enough test cases for multiple pages
@@ -499,11 +502,10 @@ test.describe("Search & Filter", () => {
     const uniqueId = Date.now();
 
     // Create 25 test cases - some with "Target" prefix distributed across pages
-    const names = Array.from({ length: 25 }, (_, i) => {
+    for (let i = 0; i < 25; i++) {
       const prefix = i % 3 === 0 ? "Target" : "Other";
-      return `${prefix} ${i} ${uniqueId}`;
-    });
-    await api.createTestCasesBatch(projectId, folderId, names);
+      await api.createTestCase(projectId, folderId, `${prefix} ${i} ${uniqueId}`);
+    }
 
     await repositoryPage.goto(projectId);
 
@@ -513,13 +515,13 @@ test.describe("Search & Filter", () => {
 
     // Navigate to page 2
     const paginationNav = page.locator('nav[aria-label="pagination"]');
-    await expect(paginationNav).toBeVisible({ timeout: 15000 });
+    await expect(paginationNav).toBeVisible({ timeout: 5000 });
     const page2Link = paginationNav.locator('a:has-text("2")').first();
     await page2Link.click();
     await page.waitForLoadState("networkidle");
 
     // Verify we're on page 2
-    await expect(page.locator('text=/Showing 11-20 of/')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/Showing 11-20 of/')).toBeVisible({ timeout: 5000 });
 
     // Apply search filter
     const searchInput = page.getByTestId("search-input");
@@ -527,6 +529,6 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify we're reset to page 1 of filtered results (starts with "Showing 1-")
-    await expect(page.locator('text=/Showing 1-/')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/Showing 1-/')).toBeVisible({ timeout: 5000 });
   });
 });
