@@ -413,7 +413,12 @@ Plans:
   3. When source and target use different templates, the API response includes a template mismatch warning; admin users can auto-assign the missing template via the same endpoint
   4. When cases have workflow states not present in the target, the API response identifies the missing states so they can be associated or mapped to the target default
   5. A user can cancel an in-flight bulk job via the cancel endpoint, and the worker stops processing subsequent cases
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 29-01-PLAN.md -- Shared schemas and preflight endpoint (template/workflow compat + collision detection)
+- [ ] 29-02-PLAN.md -- Status polling and cancel endpoints
+- [ ] 29-03-PLAN.md -- Submit endpoint with admin auto-assign and job enqueue
 
 ### Phase 30: Dialog UI and Polling
 
@@ -492,7 +497,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 26. Admin Assignment UI | v2.1 | 2/2 | Complete | 2026-03-19 |
 | 27. Export Dialog Filtering | v2.1 | 1/1 | Complete | 2026-03-19 |
 | 28. Queue and Worker | 2/2 | Complete    | 2026-03-20 | - |
-| 29. API Endpoints and Access Control | v0.17.0 | 0/TBD | Not started | - |
+| 29. API Endpoints and Access Control | v0.17.0 | 0/3 | Planning complete | - |
 | 30. Dialog UI and Polling | v0.17.0 | 0/TBD | Not started | - |
 | 31. Entry Points | v0.17.0 | 0/TBD | Not started | - |
 | 32. Testing and Documentation | v0.17.0 | 0/TBD | Not started | - |
