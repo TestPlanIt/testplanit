@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
-status: completed
-stopped_at: Completed 28-02-PLAN.md (Phase 28 Plan 02 — unit tests for copy-move worker)
-last_updated: "2026-03-20T17:01:27.522Z"
-last_activity: "2026-03-20 — Completed 28-02: unit tests for copy-move worker processor"
+status: in_progress
+stopped_at: Completed 29-01-PLAN.md (Phase 29 Plan 01 — preflight API endpoint and shared schemas)
+last_updated: "2026-03-20T17:42:38Z"
+last_activity: "2026-03-20 — Completed 29-01: preflight endpoint with ZenStack access control, template/workflow compat, collision detection"
 progress:
   total_phases: 24
   completed_phases: 18
   total_plans: 49
-  completed_plans: 52
-  percent: 14
+  completed_plans: 53
+  percent: 21
 ---
 
 # State
@@ -21,30 +21,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Teams can plan, execute, and track testing across manual and automated workflows in one place — with AI assistance to reduce repetitive work.
-**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects — Phase 28 ready to plan
+**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects — Phase 29 in progress
 
 ## Current Position
 
-Phase: 28 of 32 (Queue and Worker)
-Plan: 02 of 02 (complete)
-Status: Phase 28 complete — ready for Phase 29
-Last activity: 2026-03-20 — Completed 28-02: unit tests for copy-move worker processor
+Phase: 29 of 32 (API Endpoints and Access Control)
+Plan: 01 of 04 (complete)
+Status: Phase 29 plan 01 complete — ready for 29-02
+Last activity: 2026-03-20 — Completed 29-01: preflight endpoint with ZenStack access control, template/workflow compat, collision detection
 
-Progress: [█░░░░░░░░░] 14% (v0.17.0 phases — 2 of ~14 plans complete)
+Progress: [██░░░░░░░░] 21% (v0.17.0 phases — 3 of ~14 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v0.17.0): 2
+- Total plans completed (v0.17.0): 3
 - Average duration: ~6m
-- Total execution time: ~12m
+- Total execution time: ~18m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 28    | 2     | ~12m  | ~6m      |
+| 29    | 1     | ~6m   | ~6m      |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Progress: [█░░░░░░░░░] 14% (v0.17.0 phases — 2 of ~14 plan
 - Version history and template field options fetched separately to avoid PostgreSQL 63-char alias limit (ZenStack v3)
 - mockPrisma.$transaction.mockReset() required in test beforeEach — mockClear() does not reset mockImplementation, causing rollback tests to pollute subsequent tests
 - Tests mock templateCaseAssignment + caseFieldAssignment separately to match worker's two-step field option fetch pattern
+- conflictResolution limited to skip/rename at API layer (overwrite not accepted despite worker support)
+- canAutoAssignTemplates true for both ADMIN and PROJECTADMIN access levels
+- Source workflow state names fetched from source project WorkflowAssignment (not a separate states query)
 
 ### Pending Todos
 
@@ -78,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 28-02-PLAN.md (Phase 28 Plan 02 — unit tests for copy-move worker)
+Stopped at: Completed 29-01-PLAN.md (Phase 29 Plan 01 — preflight API endpoint and shared schemas)
 Resume file: None

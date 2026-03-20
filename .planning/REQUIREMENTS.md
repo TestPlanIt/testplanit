@@ -31,10 +31,10 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 
 ### Compatibility
 
-- [ ] **COMPAT-01**: User sees a warning if source and target projects use different templates
+- [x] **COMPAT-01**: User sees a warning if source and target projects use different templates
 - [ ] **COMPAT-02**: Admin/Project Admin users can auto-assign missing templates to the target project (enabled by default)
-- [ ] **COMPAT-03**: If a test case uses a workflow state not in the target project, user can associate missing states with the target
-- [ ] **COMPAT-04**: Non-admin users see a warning that cases with unmatched workflow states will use the target project's default state
+- [x] **COMPAT-03**: If a test case uses a workflow state not in the target project, user can associate missing states with the target
+- [x] **COMPAT-04**: Non-admin users see a warning that cases with unmatched workflow states will use the target project's default state
 
 ### Bulk Operations
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-07     | 28    | Complete |
 | DATA-08     | 28    | Complete |
 | DATA-09     | 28    | Complete |
-| COMPAT-01   | 29    | Pending |
+| COMPAT-01   | 29    | Complete |
 | COMPAT-02   | 29    | Pending |
-| COMPAT-03   | 29    | Pending |
-| COMPAT-04   | 29    | Pending |
+| COMPAT-03   | 29    | Complete |
+| COMPAT-04   | 29    | Complete |
 | BULK-01     | 29    | Pending |
 | BULK-02     | 30    | Pending |
 | BULK-03     | 29    | Pending |
