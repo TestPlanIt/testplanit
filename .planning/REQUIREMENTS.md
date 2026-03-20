@@ -67,7 +67,7 @@ None — this is a self-contained feature per issue #79.
 ## Out of Scope
 
 | Feature | Reason |
-|---------|--------|
+| ------- | ------ |
 | Shared/cross-project test case library | Fundamentally different architecture, out of scope per issue #79 |
 | Per-user template preferences | Not in issue #79 |
 | Cross-project linked case references | Cases linked to cases not in target are dropped |
@@ -78,45 +78,47 @@ None — this is a self-contained feature per issue #79.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| DLGSEL-01 | — | Pending |
-| DLGSEL-02 | — | Pending |
-| DLGSEL-03 | — | Pending |
-| DLGSEL-04 | — | Pending |
-| DLGSEL-05 | — | Pending |
-| DLGSEL-06 | — | Pending |
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| DATA-05 | — | Pending |
-| DATA-06 | — | Pending |
-| DATA-07 | — | Pending |
-| DATA-08 | — | Pending |
-| DATA-09 | — | Pending |
-| COMPAT-01 | — | Pending |
-| COMPAT-02 | — | Pending |
-| COMPAT-03 | — | Pending |
-| COMPAT-04 | — | Pending |
-| BULK-01 | — | Pending |
-| BULK-02 | — | Pending |
-| BULK-03 | — | Pending |
-| BULK-04 | — | Pending |
-| ENTRY-01 | — | Pending |
-| ENTRY-02 | — | Pending |
-| ENTRY-03 | — | Pending |
-| DOCS-01 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
+| Requirement | Phase | Status  |
+|-------------|-------|---------|
+| DLGSEL-01   | 30    | Pending |
+| DLGSEL-02   | 30    | Pending |
+| DLGSEL-03   | 30    | Pending |
+| DLGSEL-04   | 30    | Pending |
+| DLGSEL-05   | 30    | Pending |
+| DLGSEL-06   | 30    | Pending |
+| DATA-01     | 28    | Pending |
+| DATA-02     | 28    | Pending |
+| DATA-03     | 28    | Pending |
+| DATA-04     | 28    | Pending |
+| DATA-05     | 28    | Pending |
+| DATA-06     | 28    | Pending |
+| DATA-07     | 28    | Pending |
+| DATA-08     | 28    | Pending |
+| DATA-09     | 28    | Pending |
+| COMPAT-01   | 29    | Pending |
+| COMPAT-02   | 29    | Pending |
+| COMPAT-03   | 29    | Pending |
+| COMPAT-04   | 29    | Pending |
+| BULK-01     | 29    | Pending |
+| BULK-02     | 30    | Pending |
+| BULK-03     | 29    | Pending |
+| BULK-04     | 30    | Pending |
+| ENTRY-01    | 31    | Pending |
+| ENTRY-02    | 31    | Pending |
+| ENTRY-03    | 31    | Pending |
+| DOCS-01     | 32    | Pending |
+| TEST-01     | 32    | Pending |
+| TEST-02     | 32    | Pending |
+| TEST-03     | 32    | Pending |
+| TEST-04     | 32    | Pending |
 
 **Coverage:**
+
 - v0.17.0 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️
+- Mapped to phases: 31
+- Unmapped: 0 ✓
 
 ---
+
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 after roadmap creation — all 31 requirements mapped to Phases 28-32*

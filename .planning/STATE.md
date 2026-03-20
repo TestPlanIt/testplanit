@@ -5,9 +5,9 @@ milestone_name: Copy/Move Test Cases Between Projects
 status: planning
 stopped_at: —
 last_updated: "2026-03-20"
-last_activity: 2026-03-20 — Milestone v0.17.0 started
+last_activity: 2026-03-20 — Roadmap created for v0.17.0 (Phases 28-32)
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,20 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Teams can plan, execute, and track testing across manual and automated workflows in one place — with AI assistance to reduce repetitive work.
-**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects
+**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects — Phase 28 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 28 of 32 (Queue and Worker)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-20 — Milestone v0.17.0 started
+Status: Ready to plan Phase 28
+Last activity: 2026-03-20 — Roadmap created, 31 requirements mapped across 5 phases (28-32)
 
 Progress: [░░░░░░░░░░] 0% (v0.17.0 phases)
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed (v0.17.0): 0
 - Average duration: —
 - Total execution time: —
@@ -43,29 +44,23 @@ Progress: [░░░░░░░░░░] 0% (v0.17.0 phases)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| -     | -     | -     | -        |
 
 ## Accumulated Context
-| Phase 25-default-template-schema P01 | 5min | 2 tasks | 5 files |
-| Phase 26-admin-assignment-ui P01 | 5 | 1 tasks | 1 files |
-| Phase 26 P02 | 15min | 2 tasks | 3 files |
-| Phase 26-admin-assignment-ui P02 | 45min | 3 tasks | 4 files |
-| Phase 27-export-dialog-filtering P01 | 15min | 2 tasks | 2 files |
 
 ### Decisions
 
-- Follow TemplateProjectAssignment pattern (existing pattern for case field template assignments)
-- Backward compatible fallback: no assignments = show all enabled templates
-- SCHEMA-01 already complete (CaseExportTemplateProjectAssignment join model exists in schema.zmodel)
-- ZenStack hooks for CaseExportTemplateProjectAssignment are already generated
-- [Phase 25-default-template-schema]: Used onDelete: SetNull on defaultCaseExportTemplateId FK so deleting a CaseExportTemplate clears the default on referencing projects
-- [Phase 25-default-template-schema]: Named relation 'ProjectDefaultExportTemplate' disambiguates from CaseExportTemplateProjectAssignment join-table relation
-- [Phase 26-admin-assignment-ui]: Mirrored Projects model access pattern for project-admin-scoped create/delete on CaseExportTemplateProjectAssignment
-- [Phase 26-admin-assignment-ui]: Added translation keys in Task 1 commit because TypeScript validates next-intl keys against en-US.json at compile time
-- [Phase 26-admin-assignment-ui]: MultiAsyncCombobox chosen over checkbox list for better UX with large template lists
-- [Phase 26-admin-assignment-ui]: selectedTemplates stored as TemplateOption[] objects so badge data available without re-lookup
-- [Phase 27-export-dialog-filtering]: Used templateId (not caseExportTemplateId) — join model field name per schema.zmodel
-- [Phase 27-export-dialog-filtering]: filteredTemplates pattern: fetch global templates + assignment filter in useMemo for project-scoped template display
+- Build order: worker (Phase 28) → API (Phase 29) → dialog UI (Phase 30) → entry points (Phase 31) → testing/docs (Phase 32)
+- Worker uses raw `prisma` (not `enhance()`); ZenStack access control gated once at API entry only
+- `concurrency: 1` on BullMQ queue to prevent ZenStack v3 deadlocks (40P01)
+- `attempts: 1` on queue — partial retries on copy/move create duplicates; surface failures cleanly
+- Shared steps inlined as standalone steps (sharedStepGroupId = null) in target; content fetched from SharedStepGroup before nulling
+- Move: copy all RepositoryCaseVersions rows to target then update projectId; only soft-delete source after target confirmed
+- Copy: version 1 only, fresh history
+- Field option IDs must be re-resolved by option name when source and target use different templates
+- folderMaxOrder pre-fetched before the per-case loop to avoid race condition (not fetched inside loop)
+- Unique constraint errors detected via string-matching err.info?.message for "duplicate key" (not err.code === "P2002")
+- Cross-project case links explicitly dropped (not migrated)
 
 ### Pending Todos
 
@@ -73,10 +68,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- [Phase 29] Verify `@@allow` delete semantics on RepositoryCases in schema.zmodel before implementing move permission check
+- [Phase 29] Verify TemplateProjectAssignment access rules permit admin auto-assign via enhance(db, { user }) without elevated-privilege client
+- [Phase 28] Verify RepositoryCaseVersions cascade behavior on source delete does not fire before copy completes inside transaction
 
 ## Session Continuity
 
-Last session: 2026-03-19T05:35:21.836Z
-Stopped at: Completed 27-export-dialog-filtering/27-01-PLAN.md
+Last session: 2026-03-20
+Stopped at: Roadmap created — Phase 28 ready to plan
 Resume file: None
