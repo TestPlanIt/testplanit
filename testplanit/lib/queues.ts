@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import {
-  AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
+  AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, COPY_MOVE_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME
 } from "./queueNames";
@@ -18,6 +18,7 @@ export {
   BUDGET_ALERT_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
+  COPY_MOVE_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -31,6 +32,7 @@ let _auditLogQueue: Queue | null = null;
 let _budgetAlertQueue: Queue | null = null;
 let _autoTagQueue: Queue | null = null;
 let _repoCacheQueue: Queue | null = null;
+let _copyMoveQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -418,6 +420,35 @@ export function getRepoCacheQueue(): Queue | null {
 }
 
 /**
+ * Get the copy-move queue instance (lazy initialization)
+ * Used for cross-project test case copy and move operations.
+ * attempts: 1 — no retry; partial retries on copy/move create duplicate cases.
+ * concurrency: 1 — enforced at the worker level to prevent ZenStack v3 deadlocks.
+ */
+export function getCopyMoveQueue(): Queue | null {
+  if (_copyMoveQueue) return _copyMoveQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${COPY_MOVE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _copyMoveQueue = new Queue(COPY_MOVE_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 1, // LOCKED: no retry - partial retry creates duplicates
+      removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
+      removeOnFail: { age: 3600 * 24 * 14 },
+    },
+  });
+  console.log(`Queue "${COPY_MOVE_QUEUE_NAME}" initialized.`);
+  _copyMoveQueue.on("error", (error) => {
+    console.error(`Queue ${COPY_MOVE_QUEUE_NAME} error:`, error);
+  });
+  return _copyMoveQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -433,5 +464,6 @@ export function getAllQueues() {
     budgetAlertQueue: getBudgetAlertQueue(),
     autoTagQueue: getAutoTagQueue(),
     repoCacheQueue: getRepoCacheQueue(),
+    copyMoveQueue: getCopyMoveQueue(),
   };
 }
