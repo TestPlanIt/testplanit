@@ -432,7 +432,11 @@ Plans:
   3. When a pre-flight collision check finds naming conflicts, user sees the list of conflicting case names and chooses a resolution strategy before any writes begin
   4. During a bulk operation, user sees a live progress indicator showing cases processed out of total
   5. After operation completes, user sees a per-case summary distinguishing successful copies/moves from cases that failed with their individual error reason
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 30-01-PLAN.md -- useCopyMoveJob polling hook, schema notification type, worker notification, and NotificationContent extension
+- [ ] 30-02-PLAN.md -- CopyMoveDialog three-step wizard component with tests and visual verification
 
 ### Phase 31: Entry Points
 
@@ -496,8 +500,8 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 25. Default Template Schema | v2.1 | 1/1 | Complete | 2026-03-19 |
 | 26. Admin Assignment UI | v2.1 | 2/2 | Complete | 2026-03-19 |
 | 27. Export Dialog Filtering | v2.1 | 1/1 | Complete | 2026-03-19 |
-| 28. Queue and Worker | 2/2 | Complete    | 2026-03-20 | - |
-| 29. API Endpoints and Access Control | 3/3 | Complete    | 2026-03-20 | - |
-| 30. Dialog UI and Polling | v0.17.0 | 0/TBD | Not started | - |
+| 28. Queue and Worker | v0.17.0 | 2/2 | Complete | 2026-03-20 |
+| 29. API Endpoints and Access Control | v0.17.0 | 3/3 | Complete | 2026-03-20 |
+| 30. Dialog UI and Polling | v0.17.0 | 0/2 | Planning complete | - |
 | 31. Entry Points | v0.17.0 | 0/TBD | Not started | - |
 | 32. Testing and Documentation | v0.17.0 | 0/TBD | Not started | - |
