@@ -132,13 +132,14 @@ test.describe("Project Creation Wizard", () => {
     // Wait for the page to settle after project creation
     await page.waitForLoadState("networkidle");
 
-    // Reload the page to ensure the project list is refreshed with the new project.
-    // ZenStack query invalidation from createProject may not always propagate
-    // quickly enough for the list to update before the dialog closes.
-    await page.reload();
+    // The admin project list is paginated and sorted alphabetically.
+    // Use the filter input to search for the newly created project.
     await page.waitForLoadState("networkidle");
+    const filterInput = page.getByPlaceholder(/filter projects/i);
+    await expect(filterInput).toBeVisible({ timeout: 10000 });
+    await filterInput.fill(projectName);
 
-    // Verify the new project appears in the admin list
+    // Verify the new project appears in the filtered list
     await expect(page.getByText(projectName).first()).toBeVisible({ timeout: 20000 });
   });
 

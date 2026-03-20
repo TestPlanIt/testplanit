@@ -44,19 +44,16 @@ test.describe("Milestone CRUD", () => {
     const milestoneTypeSelect = dialog.locator('[role="combobox"]').first();
     await expect(milestoneTypeSelect).toBeVisible({ timeout: 10000 });
 
-    // Wait for the default milestone type to be auto-selected.
-    // The SelectValue shows placeholder text when no value is set, and the
-    // actual value text when a value is set. We wait up to 10s for it to
-    // no longer show the placeholder (i.e., a default was selected).
-    try {
-      await expect(milestoneTypeSelect).not.toHaveText(/select/i, { timeout: 10000 });
-    } catch {
-      // Default was not auto-selected — manually pick the first option
-      await milestoneTypeSelect.click();
-      const firstOption = page.locator('[role="option"]').first();
-      await expect(firstOption).toBeVisible({ timeout: 5000 });
-      await firstOption.click();
-    }
+    // Wait for milestone types to load and auto-select the default.
+    // The useEffect sets milestoneTypeId when milestoneTypes load.
+    // Poll until the combobox no longer shows placeholder text.
+    await expect.poll(
+      async () => {
+        const text = await milestoneTypeSelect.textContent();
+        return text && !/select/i.test(text);
+      },
+      { message: "Milestone type should auto-select", timeout: 15000 }
+    ).toBeTruthy();
 
     // Submit and wait for the dialog to close (milestone created via ZenStack hook)
     const saveButton = page.getByRole("button", { name: /Save/i });
