@@ -13,6 +13,7 @@ const {
   mockLogDataExport,
   mockUseFindManyCaseExportTemplate,
   mockUseFindManyCaseExportTemplateProjectAssignment,
+  mockUseFindUniqueProjects,
 } = vi.hoisted(() => ({
   mockCheckAiExportAvailable: vi.fn(),
   mockGenerateAiExport: vi.fn(),
@@ -21,6 +22,7 @@ const {
   mockLogDataExport: vi.fn(),
   mockUseFindManyCaseExportTemplate: vi.fn(),
   mockUseFindManyCaseExportTemplateProjectAssignment: vi.fn(),
+  mockUseFindUniqueProjects: vi.fn(),
 }));
 
 // --- Mocks ---
@@ -41,6 +43,7 @@ vi.mock("~/lib/hooks", () => ({
   useFindManyCaseExportTemplate: mockUseFindManyCaseExportTemplate,
   useFindManyCaseExportTemplateProjectAssignment:
     mockUseFindManyCaseExportTemplateProjectAssignment,
+  useFindUniqueProjects: mockUseFindUniqueProjects,
 }));
 
 vi.mock("~/app/actions/aiExportActions", () => ({
@@ -327,6 +330,10 @@ beforeEach(() => {
 
   mockUseFindManyCaseExportTemplateProjectAssignment.mockReturnValue({
     data: [],
+  });
+
+  mockUseFindUniqueProjects.mockReturnValue({
+    data: null,
   });
 
   // Default: AI not available
