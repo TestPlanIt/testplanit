@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: in_progress
-stopped_at: Completed 29-01-PLAN.md (Phase 29 Plan 01 — preflight API endpoint and shared schemas)
-last_updated: "2026-03-20T17:42:38Z"
-last_activity: "2026-03-20 — Completed 29-01: preflight endpoint with ZenStack access control, template/workflow compat, collision detection"
+stopped_at: Completed 29-02-PLAN.md (Phase 29 Plan 02 — status and cancel endpoints for copy-move jobs)
+last_updated: "2026-03-20T17:46:00Z"
+last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
   total_phases: 24
   completed_phases: 18
   total_plans: 49
-  completed_plans: 53
-  percent: 21
+  completed_plans: 54
+  percent: 24
 ---
 
 # State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 29 of 32 (API Endpoints and Access Control)
-Plan: 01 of 04 (complete)
-Status: Phase 29 plan 01 complete — ready for 29-02
-Last activity: 2026-03-20 — Completed 29-01: preflight endpoint with ZenStack access control, template/workflow compat, collision detection
+Plan: 02 of 04 (complete)
+Status: Phase 29 plan 02 complete — ready for 29-03
+Last activity: 2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation
 
-Progress: [██░░░░░░░░] 21% (v0.17.0 phases — 3 of ~14 plans complete)
+Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plans complete)
 
 ## Performance Metrics
 
@@ -68,6 +68,8 @@ Progress: [██░░░░░░░░] 21% (v0.17.0 phases — 3 of ~14 plan
 - conflictResolution limited to skip/rename at API layer (overwrite not accepted despite worker support)
 - canAutoAssignTemplates true for both ADMIN and PROJECTADMIN access levels
 - Source workflow state names fetched from source project WorkflowAssignment (not a separate states query)
+- Cancel key prefix `copy-move:cancel:` (not `auto-tag:cancel:`) — must match copyMoveWorker.ts cancelKey() exactly
+- Active job cancellation uses Redis flag (not job.remove()) to allow graceful per-case boundary stops
 
 ### Pending Todos
 
