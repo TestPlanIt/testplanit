@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.17.0
 milestone_name: Copy/Move Test Cases Between Projects
 status: in-progress
-stopped_at: Completed 28-01-PLAN.md
+stopped_at: Completed 28-02-PLAN.md
 last_updated: "2026-03-20"
-last_activity: 2026-03-20 — Phase 28 Plan 01 complete (queue + worker)
+last_activity: 2026-03-20 — Phase 28 Plan 02 complete (unit tests for copy-move worker)
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
-  percent: 7
+  total_plans: 2
+  completed_plans: 2
+  percent: 14
 ---
 
 # State
@@ -26,25 +26,25 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 28 of 32 (Queue and Worker)
-Plan: 01 of 01 (complete)
+Plan: 02 of 02 (complete)
 Status: Phase 28 complete — ready for Phase 29
-Last activity: 2026-03-20 — Completed 28-01: copy-move queue and worker processor
+Last activity: 2026-03-20 — Completed 28-02: unit tests for copy-move worker processor
 
-Progress: [█░░░░░░░░░] 7% (v0.17.0 phases — 1 of ~14 plans complete)
+Progress: [█░░░░░░░░░] 14% (v0.17.0 phases — 2 of ~14 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v0.17.0): 1
-- Average duration: ~3m 32s
-- Total execution time: ~3m 32s
+- Total plans completed (v0.17.0): 2
+- Average duration: ~6m
+- Total execution time: ~12m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 28    | 1     | ~4m   | ~4m      |
+| 28    | 2     | ~12m  | ~6m      |
 
 ## Accumulated Context
 
@@ -62,6 +62,8 @@ Progress: [█░░░░░░░░░] 7% (v0.17.0 phases — 1 of ~14 plans
 - Unique constraint errors detected via string-matching err.info?.message for "duplicate key" (not err.code === "P2002")
 - Cross-project case links (RepositoryCaseLink) dropped silently; droppedLinkCount reported in job result
 - Version history and template field options fetched separately to avoid PostgreSQL 63-char alias limit (ZenStack v3)
+- mockPrisma.$transaction.mockReset() required in test beforeEach — mockClear() does not reset mockImplementation, causing rollback tests to pollute subsequent tests
+- Tests mock templateCaseAssignment + caseFieldAssignment separately to match worker's two-step field option fetch pattern
 
 ### Pending Todos
 
@@ -76,5 +78,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 28-01-PLAN.md (Phase 28 Plan 01 — queue + worker)
+Stopped at: Completed 28-02-PLAN.md (Phase 28 Plan 02 — unit tests for copy-move worker)
 Resume file: None
