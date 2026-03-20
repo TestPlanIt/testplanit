@@ -72,6 +72,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
   Activity,
   ArrowRight,
+  ArrowRightLeft,
   Bot,
   Check,
   ExternalLink,
@@ -890,6 +891,7 @@ const ActionsCell = React.memo(function ActionsCell({
   quickScriptEnabled,
   canAddEdit,
   onQuickScript,
+  onCopyMove,
 }: {
   row: any;
   isRunMode: boolean;
@@ -900,6 +902,7 @@ const ActionsCell = React.memo(function ActionsCell({
   quickScriptEnabled?: boolean;
   canAddEdit?: boolean;
   onQuickScript?: (caseId: number) => void;
+  onCopyMove?: (caseId: number) => void;
 }) {
   const t = useTranslations();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -949,6 +952,15 @@ const ActionsCell = React.memo(function ActionsCell({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
+          {!isRunMode && !isSelectionMode && onCopyMove && (
+            <DropdownMenuItem
+              onClick={() => onCopyMove(row.original.id)}
+              data-testid={`copy-move-case-${row.original.id}`}
+            >
+              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              <span>{t("repository.cases.copyMoveToProject")}</span>
+            </DropdownMenuItem>
+          )}
           {canDelete && (
             <DropdownMenuItem
               onClick={(e) => {
@@ -1292,7 +1304,8 @@ export const getColumns = (
   enableReorder?: boolean,
   quickScriptEnabled?: boolean,
   canAddEdit?: boolean,
-  onQuickScript?: (caseId: number) => void
+  onQuickScript?: (caseId: number) => void,
+  onCopyMove?: (caseId: number) => void
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -2157,7 +2170,7 @@ export const getColumns = (
     });
   } else {
     if (
-      (canDelete || canAddEditRun || (quickScriptEnabled && canAddEdit)) &&
+      (canDelete || canAddEditRun || (quickScriptEnabled && canAddEdit) || !!onCopyMove) &&
       !isSelectionMode
     ) {
       orderedColumns.push({
@@ -2183,6 +2196,7 @@ export const getColumns = (
             quickScriptEnabled={quickScriptEnabled}
             canAddEdit={canAddEdit}
             onQuickScript={onQuickScript}
+            onCopyMove={onCopyMove}
           />
         ),
       });

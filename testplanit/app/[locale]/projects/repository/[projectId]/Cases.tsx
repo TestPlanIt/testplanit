@@ -17,6 +17,7 @@ import {
   Updater as TableUpdater
 } from "@tanstack/react-table";
 import {
+  ArrowRightLeft,
   PenSquare,
   PlayCircle, ScrollText,
   Tags, Upload
@@ -46,6 +47,7 @@ import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
 import { BulkEditModal } from "./BulkEditModal";
+import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
 import { getColumns } from "./columns";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
@@ -194,6 +196,7 @@ export default function Cases({
     number[]
   >([]);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+  const [isCopyMoveOpen, setIsCopyMoveOpen] = useState(false);
 
   // Store rowSelection state here, it will be controlled by the useLayoutEffect
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -2761,6 +2764,13 @@ export default function Cases({
     [dateFormat, timezone, timeFormat]
   );
 
+  const handleCopyMove = useCallback((caseIds?: number[]) => {
+    if (caseIds) {
+      setSelectedCaseIdsForBulkEdit(caseIds);
+    }
+    setIsCopyMoveOpen(true);
+  }, []);
+
   const columns: CustomColumnDef<any>[] = useMemo(() => {
     return getColumns(
       userPreferencesForColumns,
@@ -2833,6 +2843,10 @@ export default function Cases({
       (caseId: number) => {
         setQuickScriptCaseIds([caseId]);
         setIsQuickScriptModalOpen(true);
+      },
+      // Copy/Move per-row action
+      (caseId: number) => {
+        handleCopyMove([caseId]);
       }
     );
   }, [
@@ -2860,6 +2874,7 @@ export default function Cases({
     selectedTestCases.length,
     selectedCaseIdsForBulkEdit.length,
     quickScriptEnabled,
+    handleCopyMove,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3357,6 +3372,24 @@ export default function Cases({
                     </span>
                   </Button>
                 )}
+              {canAddEdit &&
+                !isSelectionMode &&
+                !isRunMode &&
+                selectedCaseIdsForBulkEdit.length > 0 && (
+                  <Button
+                    onClick={() => setIsCopyMoveOpen(true)}
+                    variant="outline"
+                    data-testid="copy-move-button"
+                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                  >
+                    <ArrowRightLeft className="w-4 h-4 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("repository.cases.copyMoveToProject")} {"("}
+                      {selectedCaseIdsForBulkEdit.length}
+                      {")"}
+                    </span>
+                  </Button>
+                )}
               {canAddEdit && !isSelectionMode && !isRunMode && (
                 <Button
                   onClick={() => setIsExportModalOpen(true)}
@@ -3507,6 +3540,10 @@ export default function Cases({
           onSaveSuccess={() => handleCloseBulkEditModal(true)}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           projectId={projectId}
+          onCopyMove={() => {
+            setIsBulkEditModalOpen(false);
+            setIsCopyMoveOpen(true);
+          }}
         />
       )}
 
@@ -3519,6 +3556,16 @@ export default function Cases({
           totalCases={totalItems}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           totalProjectCases={totalProjectCases}
+        />
+      )}
+
+      {/* Copy/Move Dialog */}
+      {isValidProjectId && (
+        <CopyMoveDialog
+          open={isCopyMoveOpen}
+          onOpenChange={setIsCopyMoveOpen}
+          selectedCaseIds={selectedCaseIdsForBulkEdit}
+          sourceProjectId={projectId}
         />
       )}
 

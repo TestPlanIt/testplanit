@@ -1758,6 +1758,7 @@
       "noSearchResults": "No cases match your search criteria.",
       "bulkEdit": "Bulk Edit",
       "createTestRun": "Create Test Run",
+      "copyMoveToProject": "Copy / Move to Project",
       "export": "Export",
       "quickScript": "QuickScript",
       "cannotReorderAcrossPages": "Cannot reorder test cases across multiple pages. To reorder, view all cases on one page by selecting 'All' from the page size menu, or deselect cases from other pages. You can still drag selected cases to folders.",
