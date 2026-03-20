@@ -10,8 +10,8 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 
 ### Dialog & Selection
 
-- [ ] **DLGSEL-01**: User can select one or more test cases and choose "Copy/Move to Project" from context menu
-- [ ] **DLGSEL-02**: User can select "Copy/Move to Project" from bulk actions toolbar
+- [x] **DLGSEL-01**: User can select one or more test cases and choose "Copy/Move to Project" from context menu
+- [x] **DLGSEL-02**: User can select "Copy/Move to Project" from bulk actions toolbar
 - [ ] **DLGSEL-03**: User can pick a target project from a list filtered to projects they have write access to
 - [ ] **DLGSEL-04**: User can pick a target folder in the destination project via folder picker
 - [ ] **DLGSEL-05**: User can choose between Move (removes from source) or Copy (leaves source unchanged) operation
@@ -45,9 +45,9 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 
 ### Entry Points
 
-- [ ] **ENTRY-01**: Copy/Move to Project button appears between Create Test Run and Export in the repository toolbar
-- [ ] **ENTRY-02**: Copy/Move to Project option appears in the test case context menu (right-click)
-- [ ] **ENTRY-03**: Copy/Move to Project appears as an action in the bulk edit modal footer
+- [x] **ENTRY-01**: Copy/Move to Project button appears between Create Test Run and Export in the repository toolbar
+- [x] **ENTRY-02**: Copy/Move to Project option appears in the test case context menu (right-click)
+- [x] **ENTRY-03**: Copy/Move to Project appears as an action in the bulk edit modal footer
 
 ### Documentation
 
@@ -80,8 +80,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 |-------------|-------|---------|
-| DLGSEL-01   | 31    | Pending |
-| DLGSEL-02   | 31    | Pending |
+| DLGSEL-01   | 31    | Complete |
+| DLGSEL-02   | 31    | Complete |
 | DLGSEL-03   | 30    | Pending |
 | DLGSEL-04   | 30    | Pending |
 | DLGSEL-05   | 30    | Pending |
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BULK-02     | 30    | Complete |
 | BULK-03     | 29    | Complete |
 | BULK-04     | 30    | Complete |
-| ENTRY-01    | 31    | Pending |
-| ENTRY-02    | 31    | Pending |
-| ENTRY-03    | 31    | Pending |
+| ENTRY-01    | 31    | Complete |
+| ENTRY-02    | 31    | Complete |
+| ENTRY-03    | 31    | Complete |
 | DOCS-01     | 32    | Pending |
 | TEST-01     | 32    | Pending |
 | TEST-02     | 32    | Pending |

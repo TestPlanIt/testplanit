@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-stopped_at: Completed 30-01-PLAN.md (Phase 30 Plan 01 — useCopyMoveJob hook and notification delivery)
-last_updated: "2026-03-20T22:01:37.683Z"
+stopped_at: Completed 31-01-PLAN.md (Phase 31 Plan 01 — CopyMoveDialog entry points)
+last_updated: "2026-03-20T22:38:44.221Z"
 last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
-  total_phases: 24
-  completed_phases: 20
-  total_plans: 54
-  completed_plans: 57
+  total_phases: 25
+  completed_phases: 21
+  total_plans: 55
+  completed_plans: 58
   percent: 24
 ---
 
@@ -48,6 +48,7 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 | 29    | 1     | ~6m   | ~6m      |
 | Phase 29 P03 | 7m | 2 tasks | 3 files |
 | Phase 30-dialog-ui-and-polling P01 | 8 | 2 tasks | 7 files |
+| Phase 31-entry-points P01 | 12 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 - [Phase 30-01]: No localStorage persistence in useCopyMoveJob — dialog is ephemeral, no recovery needed
 - [Phase 30-01]: Progress type uses {processed, total} matching worker's job.updateProgress() shape (not {analyzed, total})
 - [Phase 30-01]: Notification try/catch in copyMoveWorker: failure logged but does not fail the job
+- [Phase 31-entry-points]: handleCopyMove placed before columns useMemo to avoid block-scoped variable used before declaration
+- [Phase 31-entry-points]: BulkEditModal closes before CopyMoveDialog opens to prevent nested dialogs
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T19:07:48.112Z
-Stopped at: Completed 30-01-PLAN.md (Phase 30 Plan 01 — useCopyMoveJob hook and notification delivery)
+Last session: 2026-03-20T22:38:44.219Z
+Stopped at: Completed 31-01-PLAN.md (Phase 31 Plan 01 — CopyMoveDialog entry points)
 Resume file: None
