@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Per-Project Export Template Assignment
+milestone: v0.17.0
+milestone_name: Copy/Move Test Cases Between Projects
 status: planning
-stopped_at: Completed 27-export-dialog-filtering/27-01-PLAN.md
-last_updated: "2026-03-19T05:37:52.328Z"
-last_activity: 2026-03-18 — Roadmap created for v2.1 (Phases 25-27)
+stopped_at: —
+last_updated: "2026-03-20"
+last_activity: 2026-03-20 — Milestone v0.17.0 started
 progress:
-  total_phases: 19
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -18,24 +18,24 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Teams can plan, execute, and track testing across manual and automated workflows in one place — with AI assistance to reduce repetitive work.
-**Current focus:** v2.1 Per-Project Export Template Assignment — Phase 25: Default Template Schema
+**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects
 
 ## Current Position
 
-Phase: 25 of 27 (Default Template Schema)
-Plan: — of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-18 — Roadmap created for v2.1 (Phases 25-27)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-20 — Milestone v0.17.0 started
 
-Progress: [░░░░░░░░░░] 0% (v2.1 phases)
+Progress: [░░░░░░░░░░] 0% (v0.17.0 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed (v2.1): 0
+- Total plans completed (v0.17.0): 0
 - Average duration: —
 - Total execution time: —
 
