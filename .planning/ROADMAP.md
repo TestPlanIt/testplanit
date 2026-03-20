@@ -497,7 +497,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 26. Admin Assignment UI | v2.1 | 2/2 | Complete | 2026-03-19 |
 | 27. Export Dialog Filtering | v2.1 | 1/1 | Complete | 2026-03-19 |
 | 28. Queue and Worker | 2/2 | Complete    | 2026-03-20 | - |
-| 29. API Endpoints and Access Control | 3/3 | Complete   | 2026-03-20 | - |
+| 29. API Endpoints and Access Control | 3/3 | Complete    | 2026-03-20 | - |
 | 30. Dialog UI and Polling | v0.17.0 | 0/TBD | Not started | - |
 | 31. Entry Points | v0.17.0 | 0/TBD | Not started | - |
 | 32. Testing and Documentation | v0.17.0 | 0/TBD | Not started | - |
