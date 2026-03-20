@@ -17,7 +17,7 @@ test.describe("Folder Edit", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Folder Edit ${Date.now()}-${Math.random().toString(36).substring(7)}`);
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Rename Existing Folder", async ({ api, page }) => {
@@ -70,24 +70,11 @@ test.describe("Folder Edit", () => {
     await expect(editDialog).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
-    // Wait for the tree to refetch and re-render with the new folder name.
-    // The React Query cache invalidation may take a moment to trigger a refetch.
-    // If the folder isn't visible after a short wait, reload the page to force a refetch.
-    let folderVisible = false;
-    try {
-      await expect(async () => {
-        await repositoryPage.verifyFolderExists(newName);
-      }).toPass({ timeout: 10000 });
-      folderVisible = true;
-    } catch {
-      // Tree didn't update via cache invalidation — reload the page
-    }
-
-    if (!folderVisible) {
-      await page.reload();
-      await page.waitForLoadState("networkidle");
+    // Wait for the tree to refetch and re-render with the new folder name
+    // The React Query cache invalidation may take a moment to trigger a refetch
+    await expect(async () => {
       await repositoryPage.verifyFolderExists(newName);
-    }
+    }).toPass({ timeout: 15000 });
 
     await repositoryPage.verifyFolderNotExists(originalName);
   });
