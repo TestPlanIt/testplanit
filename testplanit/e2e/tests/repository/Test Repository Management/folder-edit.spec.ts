@@ -17,7 +17,7 @@ test.describe("Folder Edit", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}`);
+    return await api.createProject(`E2E Folder Edit ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   }
 
   test("Rename Existing Folder", async ({ api, page }) => {

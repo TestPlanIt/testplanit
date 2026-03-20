@@ -27,7 +27,7 @@ test.describe("Project Settings Pages", () => {
 
   test.beforeEach(async ({ api }) => {
     testProjectId = await api.createProject(
-      `E2E Settings ${Date.now()}`
+      `E2E Settings ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
   });
 
