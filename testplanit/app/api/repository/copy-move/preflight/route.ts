@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         className: true,
         source: true,
         templateId: true,
-        workflowStateId: true,
+        stateId: true,
       },
     });
 
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
     const uniqueSourceStateIds = [
       ...new Set(
-        sourceCases.map((c: { workflowStateId: number }) => c.workflowStateId),
+        sourceCases.map((c: { stateId: number }) => c.stateId),
       ),
     ];
 

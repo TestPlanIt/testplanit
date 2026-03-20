@@ -350,6 +350,28 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
 
       await job.updateProgress({ processed: i, total: sourceCases.length });
 
+      // Collision check: skip or rename based on user's conflictResolution choice
+      const existingCase = await prisma.repositoryCases.findFirst({
+        where: {
+          projectId: job.data.targetProjectId,
+          name: sourceCase.name,
+          className: sourceCase.className,
+          source: sourceCase.source,
+          isDeleted: false,
+        },
+        select: { id: true },
+      });
+
+      let caseName = sourceCase.name;
+      if (existingCase) {
+        if (job.data.conflictResolution === "skip") {
+          result.skippedCount = (result.skippedCount ?? 0) + 1;
+          continue;
+        } else if (job.data.conflictResolution === "rename") {
+          caseName = `${sourceCase.name} (copy)`;
+        }
+      }
+
       const newCaseId = await prisma.$transaction(async (tx: any) => {
         // a. Create the target RepositoryCases row
         const newCase = await tx.repositoryCases.create({
@@ -359,7 +381,7 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
             folderId: job.data.targetFolderId,
             templateId: job.data.targetTemplateId,
             stateId: job.data.targetDefaultWorkflowStateId,
-            name: sourceCase.name,
+            name: caseName,
             className: sourceCase.className,
             source: sourceCase.source,
             automated: sourceCase.automated,

@@ -63,7 +63,7 @@ const baseSourceCases = [
     className: null,
     source: "MANUAL",
     templateId: 10,
-    workflowStateId: 100,
+    stateId: 100,
   },
 ];
 
@@ -278,7 +278,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
       .mockResolvedValueOnce([
-        { ...baseSourceCases[0], workflowStateId: 999 },
+        { ...baseSourceCases[0], stateId: 999 },
       ])
       .mockResolvedValueOnce([]);
 
@@ -306,7 +306,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
       .mockResolvedValueOnce([
-        { ...baseSourceCases[0], workflowStateId: 999 },
+        { ...baseSourceCases[0], stateId: 999 },
       ])
       .mockResolvedValueOnce([]);
 
