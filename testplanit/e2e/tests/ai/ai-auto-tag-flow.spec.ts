@@ -29,7 +29,8 @@ test.describe("Auto-Tag Flow", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+    // Click the specific folder (not Root Folder which has no cases)
+    const folderNode = page.getByTestId(`folder-node-${folderId}`);
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
@@ -120,7 +121,8 @@ test.describe("Auto-Tag Flow", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+    // Click the specific folder (not Root Folder which has no cases)
+    const folderNode = page.getByTestId(`folder-node-${folderId}`);
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
