@@ -177,7 +177,14 @@ export function CompleteMilestoneDialog({
       });
 
       // Handle the preview result
-      if (result.impact) {
+      if (result.status === "success") {
+        // The server action completed the milestone directly (no dependencies)
+        toast.success(
+          result.message || `Milestone "${milestoneToComplete.name}" completed.`
+        );
+        onCompleteSuccess();
+        onOpenChange(false);
+      } else if (result.impact) {
         // If there are dependencies to complete, show confirmation
         if (
           result.impact.activeTestRuns > 0 ||

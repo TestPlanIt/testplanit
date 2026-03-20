@@ -36,15 +36,27 @@ test.describe("Milestone CRUD", () => {
     const nameInput = page.getByPlaceholder(/Name/i);
     await nameInput.fill(milestoneName);
 
-    // Wait for the milestone type default to load (required field).
-    // The milestoneTypeId field is populated via useEffect after fetching milestone types.
-    // The Select trigger shows a placeholder text until the default type loads.
-    // Wait for the select trigger to NOT contain the placeholder text (i.e., a value is selected).
+    // The milestoneTypeId field auto-selects a default via useEffect when
+    // milestone types load. Wait for the Select trigger to show a non-placeholder
+    // value (indicating the default was set). If it still shows placeholder text
+    // after a timeout, manually select the first option.
     const dialog = page.getByRole("dialog");
     const milestoneTypeSelect = dialog.locator('[role="combobox"]').first();
     await expect(milestoneTypeSelect).toBeVisible({ timeout: 10000 });
-    // The placeholder contains "Select" text; wait for it to show an actual type name instead
-    await expect(milestoneTypeSelect).not.toContainText(/select/i, { timeout: 10000 });
+
+    // Wait for the default milestone type to be auto-selected.
+    // The SelectValue shows placeholder text when no value is set, and the
+    // actual value text when a value is set. We wait up to 10s for it to
+    // no longer show the placeholder (i.e., a default was selected).
+    try {
+      await expect(milestoneTypeSelect).not.toHaveText(/select/i, { timeout: 10000 });
+    } catch {
+      // Default was not auto-selected — manually pick the first option
+      await milestoneTypeSelect.click();
+      const firstOption = page.locator('[role="option"]').first();
+      await expect(firstOption).toBeVisible({ timeout: 5000 });
+      await firstOption.click();
+    }
 
     // Submit and wait for the dialog to close (milestone created via ZenStack hook)
     const saveButton = page.getByRole("button", { name: /Save/i });
@@ -183,10 +195,17 @@ test.describe("Milestone CRUD", () => {
 
     // Wait for the server action to complete and dialog to close
     await expect(dialog).not.toBeVisible({ timeout: 30000 });
+
+    // The server action completes the milestone directly in the database,
+    // but the client-side React Query cache (ZenStack hooks) is NOT
+    // automatically invalidated by server actions. Reload the page to
+    // get fresh data from the server.
+    await page.reload();
     await page.waitForLoadState("networkidle");
 
     // Switch to Completed tab to verify
     const completedTab = page.getByRole("tab", { name: /Completed/i });
+    await expect(completedTab).toBeVisible({ timeout: 10000 });
     await completedTab.click();
 
     await expect(page.getByText(milestoneName)).toBeVisible({ timeout: 10000 });

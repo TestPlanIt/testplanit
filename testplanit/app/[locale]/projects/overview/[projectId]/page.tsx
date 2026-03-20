@@ -151,6 +151,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   <div>
                     <Button
                       type="button"
+                      data-testid="collapse-left-panel"
                       onClick={toggleLeftCollapse}
                       variant="secondary"
                       size="sm"

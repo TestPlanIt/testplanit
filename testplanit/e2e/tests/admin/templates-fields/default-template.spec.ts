@@ -162,6 +162,11 @@ test.describe("Default Template - Protection Rules", () => {
       throw new Error(`Template ${templateId} was not marked as default in the database (isDefault=${verification.isDefault})`);
     }
 
+    // Re-set the template as default right before navigating, in case a concurrent
+    // test's createTemplate (which runs updateMany to unset all defaults) has cleared
+    // our template's isDefault flag since we created it.
+    await api.ensureTemplateIsDefault(templateId);
+
     await templatesPage.goto();
 
     // Wait for the page to load and show the correct data
@@ -181,7 +186,8 @@ test.describe("Default Template - Protection Rules", () => {
       async () => {
         const state = await defaultSwitch.getAttribute("data-state");
         if (state !== "checked") {
-          // Reload page to force fresh data fetch from server
+          // A concurrent test may have stolen isDefault; reclaim it and reload
+          await api.ensureTemplateIsDefault(templateId);
           await page.reload();
           await page.waitForLoadState("networkidle");
         }

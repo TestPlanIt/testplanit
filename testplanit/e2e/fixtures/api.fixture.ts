@@ -1946,18 +1946,11 @@ export class ApiHelper {
     resultFieldIds?: number[];
     projectIds?: number[];
   }): Promise<number> {
-    // If setting as default, unset other defaults first
-    if (options.isDefault) {
-      await this.request.patch(
-        `${this.baseURL}/api/model/templates/updateMany`,
-        {
-          data: {
-            where: { isDefault: true },
-            data: { isDefault: false },
-          },
-        }
-      );
-    }
+    // Note: We intentionally do NOT clear other templates' isDefault flag here.
+    // The application's server-side logic handles the cascade (unsetting previous
+    // defaults when a new default is set). Clearing all defaults via updateMany
+    // causes race conditions in parallel tests — other tests' createProject calls
+    // may fail because they can't find any default template.
 
     const response = await this.request.post(
       `${this.baseURL}/api/model/templates/create`,
@@ -2130,6 +2123,24 @@ export class ApiHelper {
         },
       })
       .catch(() => {});
+  }
+
+  /**
+   * Ensure a template is marked as default. Only sets the given template as
+   * default without clearing others — the app's server-side logic handles
+   * the cascade. This avoids race conditions where clearing all defaults
+   * breaks parallel tests that depend on a default template existing.
+   */
+  async ensureTemplateIsDefault(templateId: number): Promise<void> {
+    await this.request.patch(
+      `${this.baseURL}/api/model/templates/update`,
+      {
+        data: {
+          where: { id: templateId },
+          data: { isDefault: true, isEnabled: true },
+        },
+      }
+    );
   }
 
   /**

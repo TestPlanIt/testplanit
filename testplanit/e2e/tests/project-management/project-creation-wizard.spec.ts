@@ -76,28 +76,29 @@ test.describe("Project Creation Wizard", () => {
     // Step 1: Project Details — enter project name
     // The wizard loads data (templates, workflows, etc.) asynchronously.
     // When data finishes loading, the form resets via useEffect, which can clear
-    // a previously filled input. Wait for the Next button to appear first (it is
-    // disabled while data loads OR while the name is empty). We fill the name,
-    // then confirm the Next button becomes enabled (proving data is loaded AND
-    // name is filled). If a reset cleared the input, the button stays disabled
-    // and we re-fill.
+    // a previously filled input. The Next button is disabled while data loads
+    // OR while the name is empty. We need to keep re-filling the name until
+    // the Next button stays enabled, which proves all async data has loaded
+    // AND the name field survived without being reset.
     const nameInput = dialog.getByRole("textbox").first();
     await expect(nameInput).toBeVisible({ timeout: 10000 });
 
     const nextButton = dialog.getByRole("button", { name: /next/i });
     await expect(nextButton).toBeVisible({ timeout: 10000 });
 
-    // Fill the name and wait for Next to be enabled (data loaded + name filled).
-    // Retry the fill if an async data load resets the form.
-    await nameInput.fill(projectName);
-    try {
-      await expect(nextButton).toBeEnabled({ timeout: 5000 });
-    } catch {
-      // Data load reset the form — re-fill
+    // Retry filling the name until Next is enabled. Multiple async data loads
+    // can each trigger a form reset, so we may need several attempts.
+    for (let attempt = 0; attempt < 10; attempt++) {
       await nameInput.fill(projectName);
-      await expect(nextButton).toBeEnabled({ timeout: 10000 });
+      try {
+        await expect(nextButton).toBeEnabled({ timeout: 3000 });
+        break;
+      } catch {
+        // Data load reset the form — retry
+      }
     }
     await expect(nameInput).toHaveValue(projectName);
+    await expect(nextButton).toBeEnabled({ timeout: 5000 });
 
     await nextButton.click();
 
@@ -131,8 +132,13 @@ test.describe("Project Creation Wizard", () => {
     // Wait for the page to settle after project creation
     await page.waitForLoadState("networkidle");
 
+    // Reload the page to ensure the project list is refreshed with the new project.
+    // ZenStack query invalidation from createProject may not always propagate
+    // quickly enough for the list to update before the dialog closes.
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+
     // Verify the new project appears in the admin list
-    // The page may need a moment to refresh the project list
     await expect(page.getByText(projectName).first()).toBeVisible({ timeout: 20000 });
   });
 
@@ -153,11 +159,23 @@ test.describe("Project Creation Wizard", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Fill name and go to step 2
+    // The wizard loads data asynchronously and resets the form when data arrives.
+    // Retry filling the name until the Next button stays enabled.
     const nameInput = dialog.getByRole("textbox").first();
     await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.fill(projectName);
 
     const nextButton = dialog.getByRole("button", { name: /next/i });
+    await expect(nextButton).toBeVisible({ timeout: 10000 });
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      await nameInput.fill(projectName);
+      try {
+        await expect(nextButton).toBeEnabled({ timeout: 3000 });
+        break;
+      } catch {
+        // Data load reset the form — retry
+      }
+    }
     await expect(nextButton).toBeEnabled({ timeout: 5000 });
     await nextButton.click();
 

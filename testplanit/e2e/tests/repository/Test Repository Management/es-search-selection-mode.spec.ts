@@ -15,6 +15,37 @@ import { expect, test } from "../../../fixtures";
  */
 
 /**
+ * Helper to click a folder node in the ProjectRepository tree inside the dialog.
+ * Step 2 of AddTestRunModal shows a folder tree; cases only load when a folder is selected.
+ */
+async function clickFolderInDialog(
+  page: import("@playwright/test").Page,
+  folderName: string
+) {
+  // Wait for the folder tree to load
+  await page
+    .locator('[data-testid^="folder-node-"]')
+    .first()
+    .waitFor({ state: "attached", timeout: 10000 });
+
+  // Small delay for React to stabilize rendering
+  await page.waitForTimeout(500);
+
+  // Locate and click the specific folder node
+  const folderNode = page
+    .locator('[data-testid^="folder-node-"]')
+    .filter({ hasText: folderName })
+    .first();
+
+  await folderNode.waitFor({ state: "attached", timeout: 5000 });
+  // Use force:true since the dialog overlay can intercept clicks
+  await folderNode.click({ force: true });
+
+  // Wait for the Cases table to reload with the folder's data
+  await page.waitForTimeout(1500);
+}
+
+/**
  * Helper to open the AddTestRunModal and navigate to step 2 (test case selection).
  * Waits for the state select to be populated before clicking Next, which avoids
  * a race condition where stateId=0 causes silent validation failure.
@@ -27,7 +58,7 @@ async function openModalAndGoToStep2(
   await expect(newRunButton).toBeVisible({ timeout: 15000 });
   await newRunButton.click();
 
-  const dialog = page.locator('[role="dialog"]').first();
+  const dialog = page.locator('[role="dialog"]').last();
   await expect(dialog).toBeVisible({ timeout: 10000 });
 
   // Fill the run name
@@ -49,12 +80,13 @@ async function openModalAndGoToStep2(
   }).toPass({ timeout: 10000 });
 
   // Click Next to go to step 2 (test case selection)
+  // Use evaluate click to bypass overflow-y-auto intercepting pointer events
   const nextButton = dialog.getByTestId("run-next-button");
-  await nextButton.click();
+  await nextButton.evaluate((el: HTMLElement) => el.click());
 
   // Wait for step 2 dialog content to appear (ProjectRepository in selection mode)
   // The dialog content changes completely, so re-query the dialog
-  const step2Dialog = page.locator('[role="dialog"]').first();
+  const step2Dialog = page.locator('[role="dialog"]').last();
   await expect(step2Dialog).toBeVisible({ timeout: 10000 });
 
   return step2Dialog;
@@ -96,7 +128,8 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     const projectId = await api.createProject(
       `E2E ES Filter ${Date.now()}`
     );
-    const folderId = await api.createFolder(projectId, "ES Filter Folder");
+    const folderName = `ES Filter Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
     const matchingCase = `UniqueLoginTest ${ts}`;
     const nonMatchingCase = `PaymentFlow ${ts}`;
@@ -117,6 +150,9 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
       'input[placeholder*="Search in this project"]'
     );
     await expect(esSearchInput).toBeVisible({ timeout: 10000 });
+
+    // Click the folder to load its cases into the table
+    await clickFolderInDialog(page, folderName);
 
     // Wait for cases to initially load in the table
     await expect(dialog.locator(`text="${matchingCase}"`)).toBeVisible({
@@ -147,7 +183,8 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     const projectId = await api.createProject(
       `E2E ES Clear ${Date.now()}`
     );
-    const folderId = await api.createFolder(projectId, "ES Clear Folder");
+    const folderName = `ES Clear Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
     const case1 = `ClearTestAlpha ${ts}`;
     const case2 = `ClearTestBeta ${ts}`;
@@ -165,6 +202,9 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
       'input[placeholder*="Search in this project"]'
     );
     await expect(esSearchInput).toBeVisible({ timeout: 10000 });
+
+    // Click the folder to load its cases into the table
+    await clickFolderInDialog(page, folderName);
 
     // Wait for both cases to be visible
     await expect(dialog.locator(`text="${case1}"`)).toBeVisible({
@@ -214,7 +254,8 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     const projectId = await api.createProject(
       `E2E ES Select ${Date.now()}`
     );
-    const folderId = await api.createFolder(projectId, "ES Select Folder");
+    const folderName = `ES Select Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
     const searchableCase = `SelectableLogin ${ts}`;
     const otherCase = `OtherPayment ${ts}`;
@@ -232,6 +273,9 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
       'input[placeholder*="Search in this project"]'
     );
     await expect(esSearchInput).toBeVisible({ timeout: 10000 });
+
+    // Click the folder to load its cases into the table
+    await clickFolderInDialog(page, folderName);
 
     // Wait for cases to load
     await expect(dialog.locator(`text="${searchableCase}"`)).toBeVisible({

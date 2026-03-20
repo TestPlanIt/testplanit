@@ -91,34 +91,26 @@ test.describe("Project Overview Dashboard", () => {
     const milestonesHeading = page.getByText(/current milestones/i);
     await expect(milestonesHeading).toBeVisible({ timeout: 15000 });
 
-    // The left panel has a collapse button with a ChevronLeft icon.
-    // There are two collapse buttons (left and right panel) inside the panel group,
-    // each in a <div> wrapper between the panels. Both are secondary/sm variant buttons.
-    // The left panel collapse button is the first such button after the left panel element.
+    // The left panel is a ResizablePanel with id="overview-left".
+    // When collapsed, react-resizable-panels sets data-panel-size="0" on the panel element.
     const leftPanel = page.locator('[data-panel-id="overview-left"]');
     await expect(leftPanel).toBeVisible({ timeout: 5000 });
 
-    // The left panel collapse button is between the left panel and the resize
-    // handle. It's a secondary variant Button wrapping a ChevronLeft SVG, inside
-    // a TooltipTrigger. Its tooltip text toggles between "Collapse Left Panel"
-    // and "Expand Left Panel". We locate it by finding the button that is a
-    // following-sibling of the left panel element but NOT inside a panel.
-    // The simplest reliable approach: the left panel element is followed by a div
-    // that contains the collapse button. Use xpath from the left panel.
-    const collapseLeftBtn = leftPanel
-      .locator('xpath=following-sibling::div[1]//button')
-      .first();
+    // The left panel has a collapse button identified by data-testid.
+    const collapseLeftBtn = page.getByTestId("collapse-left-panel");
     await expect(collapseLeftBtn).toBeVisible({ timeout: 5000 });
     await collapseLeftBtn.click();
 
-    // After collapsing, the panel goes to 0% width. Wait for animation (300ms)
-    // and verify milestones heading is no longer visible.
-    await expect(milestonesHeading).not.toBeVisible({ timeout: 10000 });
+    // After collapsing, react-resizable-panels sets the panel size to 0.
+    // Verify via the data-panel-size attribute that the panel collapsed.
+    // The value may be "0", "0.0", or "0.00" depending on the library version.
+    await expect(leftPanel).toHaveAttribute("data-panel-size", /^0(\.0+)?$/, { timeout: 10000 });
 
     // Click the same button (now acts as expand) to re-expand
     await collapseLeftBtn.click();
 
-    // Panel should re-expand
+    // Panel should re-expand — size should be greater than 0
+    // Wait for the milestones heading to become visible again
     await expect(milestonesHeading).toBeVisible({ timeout: 10000 });
   });
 
