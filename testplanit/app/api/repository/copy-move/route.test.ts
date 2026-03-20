@@ -257,10 +257,18 @@ describe("POST /api/repository/copy-move", () => {
     mockEnhancedDb.repositoryCases.findMany.mockResolvedValue([
       { templateId: 99 },
     ]);
+    // First findMany call returns [] (no existing assignments), second call (resolve targetTemplateId) also returns []
+    // Provide targetTemplateId in body to bypass the resolve step
     mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue([]);
     const { POST } = await import("./route");
     const res = await POST(
-      makeRequest({ ...validBody, autoAssignTemplates: true }),
+      makeRequest({
+        ...validBody,
+        autoAssignTemplates: true,
+        targetTemplateId: 99,
+        targetRepositoryId: 200,
+        targetDefaultWorkflowStateId: 100,
+      }),
     );
     expect(res.status).toBe(200);
     expect(mockEnhancedDb.templateProjectAssignment.create).toHaveBeenCalledWith(
@@ -284,7 +292,13 @@ describe("POST /api/repository/copy-move", () => {
     mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue([]);
     const { POST } = await import("./route");
     const res = await POST(
-      makeRequest({ ...validBody, autoAssignTemplates: true }),
+      makeRequest({
+        ...validBody,
+        autoAssignTemplates: true,
+        targetTemplateId: 88,
+        targetRepositoryId: 200,
+        targetDefaultWorkflowStateId: 100,
+      }),
     );
     expect(res.status).toBe(200);
     expect(mockEnhancedDb.templateProjectAssignment.create).toHaveBeenCalledWith(
@@ -306,7 +320,13 @@ describe("POST /api/repository/copy-move", () => {
     mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue([]);
     const { POST } = await import("./route");
     const res = await POST(
-      makeRequest({ ...validBody, autoAssignTemplates: true }),
+      makeRequest({
+        ...validBody,
+        autoAssignTemplates: true,
+        targetTemplateId: 77,
+        targetRepositoryId: 200,
+        targetDefaultWorkflowStateId: 100,
+      }),
     );
     expect(res.status).toBe(200);
     expect(
