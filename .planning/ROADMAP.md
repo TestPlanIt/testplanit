@@ -465,7 +465,11 @@ Plans:
   3. Unit tests pass for worker logic covering field option ID remapping across template boundaries, shared step group flattening, and partial failure recovery
   4. Unit tests pass for shared step group collision handling (reuse vs. create new) and for move version history preservation
   5. User documentation is published covering the copy/move workflow, how template and workflow conflicts are handled, and how to resolve naming collisions
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 32-01-PLAN.md -- E2E API tests for copy/move endpoints (TEST-01, TEST-02) and worker test verification (TEST-03, TEST-04)
+- [ ] 32-02-PLAN.md -- User-facing documentation for copy/move feature (DOCS-01)
 
 ---
 
@@ -507,4 +511,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 29. API Endpoints and Access Control | v0.17.0 | 3/3 | Complete | 2026-03-20 |
 | 30. Dialog UI and Polling | v0.17.0 | 2/2 | Complete | 2026-03-20 |
 | 31. Entry Points | 1/1 | Complete    | 2026-03-20 | - |
-| 32. Testing and Documentation | v0.17.0 | 0/TBD | Not started | - |
+| 32. Testing and Documentation | v0.17.0 | 0/2 | Planning complete | - |
