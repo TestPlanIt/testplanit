@@ -63,7 +63,7 @@
 **Milestone Goal:** Users can move or copy test cases directly between projects without export/import cycles, with intelligent handling of templates, workflows, and bulk operations.
 
 - [x] **Phase 28: Queue and Worker** - BullMQ worker processes copy/move jobs with full data carry-over (completed 2026-03-20)
-- [ ] **Phase 29: API Endpoints and Access Control** - Pre-flight checks, compatibility resolution, and job management endpoints
+- [x] **Phase 29: API Endpoints and Access Control** - Pre-flight checks, compatibility resolution, and job management endpoints (completed 2026-03-20)
 - [ ] **Phase 30: Dialog UI and Polling** - Multi-step copy/move dialog with progress tracking and collision resolution
 - [ ] **Phase 31: Entry Points** - Copy/Move action wired into context menu, bulk toolbar, and repository toolbar
 - [ ] **Phase 32: Testing and Documentation** - E2E, unit tests, and user documentation covering the full feature
@@ -497,7 +497,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 26. Admin Assignment UI | v2.1 | 2/2 | Complete | 2026-03-19 |
 | 27. Export Dialog Filtering | v2.1 | 1/1 | Complete | 2026-03-19 |
 | 28. Queue and Worker | 2/2 | Complete    | 2026-03-20 | - |
-| 29. API Endpoints and Access Control | 2/3 | In Progress|  | - |
+| 29. API Endpoints and Access Control | 3/3 | Complete   | 2026-03-20 | - |
 | 30. Dialog UI and Polling | v0.17.0 | 0/TBD | Not started | - |
 | 31. Entry Points | v0.17.0 | 0/TBD | Not started | - |
 | 32. Testing and Documentation | v0.17.0 | 0/TBD | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
-status: in_progress
-stopped_at: Completed 29-02-PLAN.md (Phase 29 Plan 02 — status and cancel endpoints for copy-move jobs)
-last_updated: "2026-03-20T17:46:00Z"
+status: completed
+stopped_at: Completed 29-03-PLAN.md (Phase 29 Plan 03 — submit endpoint with permission checks and template auto-assign)
+last_updated: "2026-03-20T17:56:07.890Z"
 last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
   total_phases: 24
-  completed_phases: 18
-  total_plans: 49
-  completed_plans: 54
+  completed_phases: 19
+  total_plans: 52
+  completed_plans: 55
   percent: 24
 ---
 
@@ -46,6 +46,7 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 |-------|-------|-------|----------|
 | 28    | 2     | ~12m  | ~6m      |
 | 29    | 1     | ~6m   | ~6m      |
+| Phase 29 P03 | 7m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 - Source workflow state names fetched from source project WorkflowAssignment (not a separate states query)
 - Cancel key prefix `copy-move:cancel:` (not `auto-tag:cancel:`) — must match copyMoveWorker.ts cancelKey() exactly
 - Active job cancellation uses Redis flag (not job.remove()) to allow graceful per-case boundary stops
+- [Phase 29]: conflictResolution limited to skip/rename at API layer (overwrite rejected by Zod schema, not exposed to worker)
+- [Phase 29]: Auto-assign template failures wrapped in per-template try/catch — graceful for project admins lacking project access
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20
-Stopped at: Completed 29-01-PLAN.md (Phase 29 Plan 01 — preflight API endpoint and shared schemas)
+Last session: 2026-03-20T17:56:07.887Z
+Stopped at: Completed 29-03-PLAN.md (Phase 29 Plan 03 — submit endpoint with permission checks and template auto-assign)
 Resume file: None
