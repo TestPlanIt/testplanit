@@ -25,7 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { ApplicationArea, CaseFields as PrismaCaseField, Prisma } from "@prisma/client";
 import { isEqual } from "lodash";
 import {
-  AlertCircle, ChevronLeft,
+  AlertCircle, ArrowRightLeft, ChevronLeft,
   ChevronRight, CircleSlash2, Info, Loader2, LockIcon,
   Trash2
 } from "lucide-react";
@@ -135,6 +135,7 @@ interface BulkEditModalProps {
   onSaveSuccess: () => void;
   selectedCaseIds: number[];
   projectId: number;
+  onCopyMove?: () => void;
 }
 
 const VARIOUS_PLACEHOLDER = "<various>";
@@ -147,6 +148,7 @@ export function BulkEditModal({
   onSaveSuccess,
   selectedCaseIds,
   projectId,
+  onCopyMove,
 }: BulkEditModalProps) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -2039,6 +2041,19 @@ export function BulkEditModal({
               </PopoverContent>
             </Popover>
           </div>
+          {/* Center: Copy/Move */}
+          {onCopyMove && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCopyMove}
+              disabled={isLoading || isUpdating || isDeleting || isSaving}
+              data-testid="bulk-edit-copy-move-button"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              {t("repository.cases.copyMoveToProject")}
+            </Button>
+          )}
           {/* Right: Cancel and Save */}
           <div className="flex gap-2">
             <DialogClose asChild>

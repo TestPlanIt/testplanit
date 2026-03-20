@@ -215,6 +215,12 @@ vi.mock("@/components/auto-tag/AutoTagWizardDialog", () => ({
   )),
 }));
 
+vi.mock("@/components/copy-move/CopyMoveDialog", () => ({
+  CopyMoveDialog: vi.fn(() => (
+    <div data-testid="copy-move-dialog">CopyMoveDialog stub</div>
+  )),
+}));
+
 vi.mock("@/components/Debounce", () => ({
   useDebounce: vi.fn((value: any) => value),
 }));
