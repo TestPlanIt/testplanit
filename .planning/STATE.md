@@ -101,6 +101,12 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 
 None yet.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260321-fk3 | Fix #143 — add audit logging to workers | 2026-03-21 | 60e17043 | [260321-fk3](./quick/260321-fk3-fix-issue-143-add-audit-logging-to-worke/) |
+
 ### Blockers/Concerns
 
 - [Phase 29] Verify `@@allow` delete semantics on RepositoryCases in schema.zmodel before implementing move permission check

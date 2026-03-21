@@ -9,6 +9,7 @@ import {
   MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
 import { SYNC_QUEUE_NAME } from "../lib/queueNames";
+import { captureAuditEvent } from "../lib/services/auditLog";
 import valkeyConnection from "../lib/valkey";
 
 // Extend SyncJobData with multi-tenant support
@@ -40,6 +41,23 @@ const processor = async (job: Job) => {
           serviceOptions
         );
 
+        // Audit logging — record sync operation
+        captureAuditEvent({
+          action: "BULK_UPDATE",
+          entityType: "Issue",
+          entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+          entityName: `Issue Sync`,
+          userId: jobData.userId,
+          projectId: jobData.projectId ? Number(jobData.projectId) : undefined,
+          metadata: {
+            source: "sync-worker",
+            integrationId: jobData.integrationId,
+            syncedCount: result.synced,
+            errorCount: result.errors.length,
+            jobId: job.id,
+          },
+        }).catch(() => {});
+
         if (result.errors.length > 0) {
           console.warn(
             `Sync completed with ${result.errors.length} errors:`,
@@ -68,6 +86,23 @@ const processor = async (job: Job) => {
           job, // Pass job for progress reporting
           serviceOptions
         );
+
+        // Audit logging — record project sync operation
+        captureAuditEvent({
+          action: "BULK_UPDATE",
+          entityType: "Issue",
+          entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+          entityName: `Issue Sync`,
+          userId: jobData.userId,
+          projectId: jobData.projectId ? Number(jobData.projectId) : undefined,
+          metadata: {
+            source: "sync-worker:project",
+            integrationId: jobData.integrationId,
+            syncedCount: result.synced,
+            errorCount: result.errors.length,
+            jobId: job.id,
+          },
+        }).catch(() => {});
 
         if (result.errors.length > 0) {
           console.warn(
@@ -99,6 +134,19 @@ const processor = async (job: Job) => {
         if (!result.success) {
           throw new Error(result.error || "Failed to refresh issue");
         }
+
+        // Audit logging — record single issue refresh
+        captureAuditEvent({
+          action: "UPDATE",
+          entityType: "Issue",
+          entityId: String(jobData.issueId),
+          userId: jobData.userId,
+          metadata: {
+            source: "sync-worker:refresh",
+            integrationId: jobData.integrationId,
+            jobId: job.id,
+          },
+        }).catch(() => {});
 
         console.log(`Refreshed issue ${jobData.issueId} successfully`);
         return result;

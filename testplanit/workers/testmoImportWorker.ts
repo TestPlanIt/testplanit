@@ -21,6 +21,7 @@ import {
 import {
   getElasticsearchReindexQueue, TESTMO_IMPORT_QUEUE_NAME
 } from "../lib/queues";
+import { captureAuditEvent } from "../lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
 import valkeyConnection from "../lib/valkey";
 import {
@@ -7019,6 +7020,22 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
         configuration: toInputJsonValue(serializedConfiguration),
       },
     });
+
+    // Audit logging — record the completed import
+    captureAuditEvent({
+      action: "BULK_CREATE",
+      entityType: "TestmoImportJob",
+      entityId: jobId,
+      entityName: `Testmo Import`,
+      userId: importJob.createdById,
+      metadata: {
+        source: "testmo-import",
+        jobId: jobId,
+        processedCount: context.processedCount,
+        durationMs: totalTimeMs,
+        entityProgress: context.entityProgress,
+      },
+    }).catch(() => {}); // best-effort
 
     // Trigger full Elasticsearch reindex after successful import
     // This ensures all imported data is searchable
