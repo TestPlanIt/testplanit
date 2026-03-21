@@ -119,7 +119,7 @@ The following data is **not transferred** during copy or move operations:
 |---|---|
 | **Test run results** | Test execution history (pass/fail results, run assignments) is tied to test runs in the source project and is not carried over. Copied or moved cases start with no test run history in the target project. |
 | **Result field values** | Custom field values recorded during test execution belong to the source project's test runs. |
-| **JUnit/automated test results** | Imported JUnit, TestNG, xUnit, NUnit, and other automated test results are linked to source project test runs. |
+| **Automated test results** | Imported JUnit, TestNG, xUnit, NUnit, and other automated test results are linked to source project test runs. |
 | **Cross-project case links** | Links between test cases in different projects are dropped. The result summary reports the count of dropped links. |
 | **Forecast data** | Manual and automated forecast estimates are reset to defaults in the target. |
 
