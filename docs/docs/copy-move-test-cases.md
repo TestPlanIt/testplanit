@@ -18,7 +18,7 @@ Two operations are available:
 
 ### Entry Points
 
-There are three ways to open the Copy/Move dialog:
+There are several ways to open the Copy/Move dialog:
 
 #### Repository Toolbar
 
@@ -38,8 +38,8 @@ There are three ways to open the Copy/Move dialog:
 
 #### Folder Context Menu
 
-1. Right-click any folder in the folder tree.
-2. Select **Copy / Move** from the context menu.
+1. Click the three-dot menu on any folder in the folder tree.
+2. Select **Copy / Move**.
 3. The dialog opens with all test cases from that folder and its subfolders pre-selected.
 
 This copies or moves the **entire folder tree** — including all subfolders (even empty ones) and every test case within them. The folder hierarchy is recreated in the target project, and each test case is placed in its corresponding folder.
