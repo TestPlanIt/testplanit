@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-last_updated: "2026-03-21T20:57:50.501Z"
+last_updated: "2026-03-21T20:59:35.380Z"
 last_activity: "2026-03-21 — Completed 38-02: resolveIntegration unit tests for 3-tier resolution chain"
 progress:
   total_phases: 25
   completed_phases: 21
   total_plans: 55
-  completed_plans: 56
+  completed_plans: 57
 ---
 
 # State
@@ -44,6 +44,7 @@ Last activity: 2026-03-21 — Completed 38-02: resolveIntegration unit tests for
 - [Phase 36-01]: __clear__ sentinel used in Select to represent null since shadcn Select cannot natively represent null values; clearing integration also clears modelOverride
 - [Phase 37-project-ai-models-overrides]: FeatureOverrides component fetches its own LlmFeatureConfig and PromptConfigPrompt data — page.tsx passes only integrations and projectDefaultIntegration as props
 - [Phase 38-02]: Use createForWorker (not getInstance) for resolveIntegration tests to avoid singleton state bleed between tests
+- [Phase 38-export-import-and-testing]: [Phase 38-01]: Export uses llmIntegrationName (human-readable) not raw ID for portability; import resolves names against active integrations only, sets null with unresolvedIntegrations reporting on miss
 
 ### Pending Todos
 

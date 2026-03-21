@@ -32,7 +32,7 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 ### Export/Import
 
-- [ ] **EXPORT-01**: Per-prompt LLM assignments (integration reference + model override) are included in prompt config export/import
+- [x] **EXPORT-01**: Per-prompt LLM assignments (integration reference + model override) are included in prompt config export/import
 
 ### Compatibility
 
@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADMIN-03 | Phase 36 | Complete |
 | PROJ-01 | Phase 37 | Complete |
 | PROJ-02 | Phase 37 | Complete |
-| EXPORT-01 | Phase 38 | Pending |
+| EXPORT-01 | Phase 38 | Complete |
 | TEST-01 | Phase 38 | Complete |
 | TEST-02 | Phase 38 | Complete |
 | TEST-03 | Phase 38 | Pending |
