@@ -1,4 +1,5 @@
 import { enhance } from "@zenstackhq/runtime";
+import { RepositoryCaseSource } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
@@ -213,10 +214,10 @@ export async function POST(request: Request) {
     // ─── Collision detection ──────────────────────────────────────────────────
 
     const sourceNames = sourceCases.map(
-      (c: { name: string; className: string | null; source: string }) => ({
-        name: c.name,
-        className: c.className,
-        source: c.source,
+      (c: any) => ({
+        name: c.name as string,
+        className: c.className as string | null,
+        source: c.source as RepositoryCaseSource,
       }),
     );
 
@@ -224,13 +225,11 @@ export async function POST(request: Request) {
       where: {
         projectId: body.targetProjectId,
         isDeleted: false,
-        OR: sourceNames.map(
-          (n: { name: string; className: string | null; source: string }) => ({
-            name: n.name,
-            className: n.className,
-            source: n.source,
-          }),
-        ),
+        OR: sourceNames.map((n) => ({
+          name: n.name,
+          className: n.className,
+          source: n.source,
+        })),
       },
       select: { id: true, name: true, className: true, source: true },
     });
