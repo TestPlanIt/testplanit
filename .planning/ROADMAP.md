@@ -529,4 +529,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 30. Dialog UI and Polling | v0.17.0 | 2/2 | Complete | 2026-03-20 |
 | 31. Entry Points | 1/1 | Complete    | 2026-03-20 | - |
 | 32. Testing and Documentation | 2/2 | Complete    | 2026-03-20 | - |
-| 33. Folder Tree Copy/Move | 2/2 | Complete   | 2026-03-21 | - |
+| 33. Folder Tree Copy/Move | 2/2 | Complete    | 2026-03-21 | - |
