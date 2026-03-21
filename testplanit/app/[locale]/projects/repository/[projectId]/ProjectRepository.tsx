@@ -43,6 +43,7 @@ import {
   usePagination
 } from "~/lib/contexts/PaginationContext";
 import {
+  useCountProjects,
   useFindFirstProjects,
   useFindFirstRepositories,
   useFindManyRepositoryCases,
@@ -1296,6 +1297,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
   const canDelete = projectPermissions?.canDelete ?? false;
 
+  // Check if user has access to more than 1 project (needed for copy/move visibility)
+  const { data: projectCount } = useCountProjects({
+    where: { isDeleted: false },
+  });
+  const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
+
   if (session && session.user.access !== "NONE") {
     return (
       <div>
@@ -1422,7 +1429,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 : undefined
                             }
                             onCopyMoveFolder={
-                              canAddEdit ? handleCopyMoveFolder : undefined
+                              showCopyMove ? handleCopyMoveFolder : undefined
                             }
                           />
                         ) : null}

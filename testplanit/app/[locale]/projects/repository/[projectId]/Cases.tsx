@@ -39,6 +39,7 @@ import {
 } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import {
+  useCountProjects,
   useCountRepositoryCases,
   useCountTestRunCases, useFindFirstTestRuns, useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates, useFindManyTestRunCases, useFindUniqueProjects, useUpdateRepositoryCases, useUpdateTestRunCases
 } from "~/lib/hooks";
@@ -234,6 +235,12 @@ export default function Cases({
     permissions: testRunResultPermissions,
   } = useProjectPermissions(projectId, "TestRunResults");
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
+
+  // Check if user has access to more than 1 project (needed for copy/move visibility)
+  const { data: projectCount } = useCountProjects({
+    where: { isDeleted: false },
+  });
+  const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
   // *** NEW: Fetch total project case count ***
   const { data: totalProjectCasesCountData } =
@@ -2864,10 +2871,12 @@ export default function Cases({
         setQuickScriptCaseIds([caseId]);
         setIsQuickScriptModalOpen(true);
       },
-      // Copy/Move per-row action
-      (caseId: number) => {
-        handleCopyMove([caseId]);
-      }
+      // Copy/Move per-row action (only when user has write access and multiple projects)
+      showCopyMove
+        ? (caseId: number) => {
+            handleCopyMove([caseId]);
+          }
+        : undefined
     );
   }, [
     userPreferencesForColumns,
@@ -2895,6 +2904,7 @@ export default function Cases({
     selectedCaseIdsForBulkEdit.length,
     quickScriptEnabled,
     handleCopyMove,
+    showCopyMove,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3392,7 +3402,7 @@ export default function Cases({
                     </span>
                   </Button>
                 )}
-              {canAddEdit &&
+              {showCopyMove &&
                 !isSelectionMode &&
                 !isRunMode &&
                 selectedCaseIdsForBulkEdit.length > 0 && (
@@ -3560,10 +3570,10 @@ export default function Cases({
           onSaveSuccess={() => handleCloseBulkEditModal(true)}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           projectId={projectId}
-          onCopyMove={() => {
+          onCopyMove={showCopyMove ? () => {
             setIsBulkEditModalOpen(false);
             setIsCopyMoveOpen(true);
-          }}
+          } : undefined}
         />
       )}
 
