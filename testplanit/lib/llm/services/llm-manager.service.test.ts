@@ -132,6 +132,12 @@ const createMockPrisma = () => ({
     update: vi.fn(),
     upsert: vi.fn(),
   },
+  llmFeatureConfig: {
+    findUnique: vi.fn(),
+  },
+  projectLlmIntegration: {
+    findFirst: vi.fn(),
+  },
 });
 
 describe("LlmManager", () => {
@@ -608,6 +614,191 @@ describe("LlmManager", () => {
       const adapter2 = await manager.getAdapter(1);
 
       expect(adapter1).not.toBe(adapter2);
+    });
+  });
+
+  describe("resolveIntegration", () => {
+    let resolveManager: LlmManager;
+    let resolvePrisma: ReturnType<typeof createMockPrisma>;
+
+    beforeEach(() => {
+      resolvePrisma = createMockPrisma();
+      // Use createForWorker to get a fresh (non-singleton) instance per test
+      resolveManager = LlmManager.createForWorker(
+        resolvePrisma as unknown as PrismaClient
+      );
+    });
+
+    // Level 1 — LlmFeatureConfig override
+    it("returns LlmFeatureConfig integration when active", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        llmIntegrationId: 10,
+        model: "gpt-4o",
+        llmIntegration: { isDeleted: false, status: "ACTIVE" },
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 10, model: "gpt-4o" });
+    });
+
+    it("Level 1 — includes model field when set on LlmFeatureConfig", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        llmIntegrationId: 10,
+        model: "claude-3-opus",
+        llmIntegration: { isDeleted: false, status: "ACTIVE" },
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 10, model: "claude-3-opus" });
+    });
+
+    it("Level 1 — model is undefined when LlmFeatureConfig model is null", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        llmIntegrationId: 10,
+        model: null,
+        llmIntegration: { isDeleted: false, status: "ACTIVE" },
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 10, model: undefined });
+    });
+
+    it("Level 1 — skips LlmFeatureConfig when integration is deleted", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        llmIntegrationId: 10,
+        model: null,
+        llmIntegration: { isDeleted: true, status: "ACTIVE" },
+      });
+      // Should fall through to Level 3 (no resolvedPrompt provided)
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+        llmIntegrationId: 5,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 5 });
+    });
+
+    it("Level 1 — skips LlmFeatureConfig when integration status is not ACTIVE", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        llmIntegrationId: 10,
+        model: null,
+        llmIntegration: { isDeleted: false, status: "INACTIVE" },
+      });
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+        llmIntegrationId: 5,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 5 });
+    });
+
+    it("Level 1 — skips LlmFeatureConfig when llmIntegration relation is null", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        llmIntegrationId: 10,
+        model: null,
+        llmIntegration: null,
+      });
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+        llmIntegrationId: 5,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 5 });
+    });
+
+    // Level 2 — per-prompt assignment
+    it("Level 2 — returns per-prompt integration when Level 1 is empty", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+        isDeleted: false,
+        status: "ACTIVE",
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1,
+        { llmIntegrationId: 7, modelOverride: "claude-3-haiku" }
+      );
+      expect(result).toEqual({ integrationId: 7, model: "claude-3-haiku" });
+    });
+
+    it("Level 2 — returns undefined model when no modelOverride provided", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+        isDeleted: false,
+        status: "ACTIVE",
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1,
+        { llmIntegrationId: 7 }
+      );
+      expect(result).toEqual({ integrationId: 7, model: undefined });
+    });
+
+    it("Level 2 — skips per-prompt when integration is inactive, falls to Level 3", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+        isDeleted: false,
+        status: "INACTIVE",
+      });
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+        llmIntegrationId: 3,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1,
+        { llmIntegrationId: 7, modelOverride: "claude-3-haiku" }
+      );
+      expect(result).toEqual({ integrationId: 3 });
+    });
+
+    // Level 3 — project default
+    it("Level 3 — returns project default integration when Levels 1 and 2 are empty", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+        llmIntegrationId: 5,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 5 });
+    });
+
+    it("Level 3 — falls back to system default when no project integration exists", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue(null);
+      resolvePrisma.llmProviderConfig.findFirst.mockResolvedValue({
+        llmIntegrationId: 1,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 1 });
+    });
+
+    it("returns null when no integration found at any level", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue(null);
+      resolvePrisma.llmProviderConfig.findFirst.mockResolvedValue(null);
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toBeNull();
     });
   });
 });
