@@ -42,8 +42,8 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 - [x] **TEST-01**: Unit tests cover PromptResolver 3-tier resolution chain (per-prompt, project override, project default fallback)
 - [x] **TEST-02**: Unit tests cover LlmFeatureConfig override behavior
-- [ ] **TEST-03**: E2E tests cover admin prompt editor LLM integration selector workflow
-- [ ] **TEST-04**: E2E tests cover project AI Models per-feature override workflow
+- [x] **TEST-03**: E2E tests cover admin prompt editor LLM integration selector workflow
+- [x] **TEST-04**: E2E tests cover project AI Models per-feature override workflow
 
 ### Documentation
 
@@ -83,8 +83,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPORT-01 | Phase 38 | Complete |
 | TEST-01 | Phase 38 | Complete |
 | TEST-02 | Phase 38 | Complete |
-| TEST-03 | Phase 38 | Pending |
-| TEST-04 | Phase 38 | Pending |
+| TEST-03 | Phase 38 | Complete |
+| TEST-04 | Phase 38 | Complete |
 | DOCS-01 | Phase 39 | Pending |
 | DOCS-02 | Phase 39 | Pending |
 
