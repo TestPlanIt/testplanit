@@ -63,9 +63,9 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 ### Folder Tree
 
 - [ ] **TREE-01**: User can right-click a folder and choose Copy/Move to copy/move the entire folder tree with all contained cases
-- [ ] **TREE-02**: Folder hierarchy is recreated in the target project preserving parent-child structure
-- [ ] **TREE-03**: All cases within the folder tree are processed with the same compatibility handling (templates, workflows, collisions)
-- [ ] **TREE-04**: User can choose to merge into an existing folder or create the tree fresh in the target
+- [x] **TREE-02**: Folder hierarchy is recreated in the target project preserving parent-child structure
+- [x] **TREE-03**: All cases within the folder tree are processed with the same compatibility handling (templates, workflows, collisions)
+- [x] **TREE-04**: User can choose to merge into an existing folder or create the tree fresh in the target
 
 ## Future Requirements
 
@@ -119,9 +119,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-03     | 32    | Complete |
 | TEST-04     | 32    | Complete |
 | TREE-01     | 33    | Pending |
-| TREE-02     | 33    | Pending |
-| TREE-03     | 33    | Pending |
-| TREE-04     | 33    | Pending |
+| TREE-02     | 33    | Complete |
+| TREE-03     | 33    | Complete |
+| TREE-04     | 33    | Complete |
 
 **Coverage:**
 

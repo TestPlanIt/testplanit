@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-stopped_at: Completed 32-01-PLAN.md (Phase 32 Plan 01 — E2E tests for copy-move API)
-last_updated: "2026-03-20T23:12:16.684Z"
+stopped_at: Completed 33-01-PLAN.md (Phase 33 Plan 01 — folder tree worker support)
+last_updated: "2026-03-21T03:08:39.858Z"
 last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
-  total_phases: 26
+  total_phases: 27
   completed_phases: 22
-  total_plans: 57
-  completed_plans: 60
+  total_plans: 59
+  completed_plans: 61
   percent: 24
 ---
 
@@ -51,6 +51,7 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 | Phase 31-entry-points P01 | 12 | 2 tasks | 5 files |
 | Phase 32-testing-and-documentation P02 | 1 | 1 tasks | 1 files |
 | Phase 32-testing-and-documentation P01 | 5 | 2 tasks | 1 files |
+| Phase 33-folder-tree-copy-move P01 | 12 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,7 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 - [Phase 32-02]: No screenshots in v0.17.0 copy-move docs — text is sufficient per plan discretion
 - [Phase 32-01]: Data verification tests skip when queue unavailable (503) to avoid false failures in CI without Redis — intentional test resilience
 - [Phase 32-01]: pollUntilDone helper polls status endpoint at 500ms intervals (up to 30 attempts) before throwing timeout
+- [Phase 33-01]: FolderTreeNode uses localKey (string) as stable client key; BFS-ordered array trusted from client; merge behavior reuses existing same-name folder silently
 
 ### Roadmap Evolution
 
@@ -103,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:08:10.443Z
-Stopped at: Completed 32-01-PLAN.md (Phase 32 Plan 01 — E2E tests for copy-move API)
+Last session: 2026-03-21T03:08:39.855Z
+Stopped at: Completed 33-01-PLAN.md (Phase 33 Plan 01 — folder tree worker support)
 Resume file: None
