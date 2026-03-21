@@ -23,18 +23,18 @@ There are three ways to open the Copy/Move dialog:
 #### Repository Toolbar
 
 1. Select one or more test cases using the checkboxes in the repository list.
-2. Click **Copy/Move to Project** in the toolbar.
+2. Click **Copy/Move** in the toolbar.
 
 #### Context Menu
 
-1. Right-click any test case row in the repository.
-2. Select **Copy/Move to Project** from the context menu.
+1. Click the Actions menu on any test case row in the repository.
+2. Select **Copy/Move** from the context menu.
 
 #### Bulk Edit Modal
 
 1. Select multiple test cases using checkboxes.
 2. Open the bulk edit modal.
-3. Click **Copy/Move to Project** in the modal footer.
+3. Click **Copy/Move** in the modal footer.
 
 ### Step-by-Step Workflow
 
