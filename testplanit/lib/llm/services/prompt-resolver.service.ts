@@ -10,6 +10,8 @@ export interface ResolvedPrompt {
   source: "project" | "default" | "fallback";
   promptConfigId?: string;
   promptConfigName?: string;
+  llmIntegrationId?: number;
+  modelOverride?: string;
 }
 
 /**
@@ -58,6 +60,8 @@ export class PromptResolver {
             source: "project",
             promptConfigId: prompt.promptConfig.id,
             promptConfigName: prompt.promptConfig.name,
+            llmIntegrationId: prompt.llmIntegrationId ?? undefined,
+            modelOverride: prompt.modelOverride ?? undefined,
           };
         }
       }
@@ -87,6 +91,8 @@ export class PromptResolver {
           source: "default",
           promptConfigId: defaultConfig.id,
           promptConfigName: defaultConfig.name,
+          llmIntegrationId: prompt.llmIntegrationId ?? undefined,
+          modelOverride: prompt.modelOverride ?? undefined,
         };
       }
     }

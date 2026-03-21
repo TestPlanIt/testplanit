@@ -355,6 +355,70 @@ export class LlmManager {
     return this.getDefaultIntegration();
   }
 
+  /**
+   * Resolve which LLM integration to use for a feature call.
+   * Three-level resolution chain:
+   *   1. Project LlmFeatureConfig override (highest priority)
+   *   2. Per-prompt PromptConfigPrompt.llmIntegrationId
+   *   3. Project default integration (getProjectIntegration)
+   *
+   * Returns { integrationId, model } or null if no integration available.
+   */
+  async resolveIntegration(
+    feature: string,
+    projectId: number,
+    resolvedPrompt?: { llmIntegrationId?: number; modelOverride?: string }
+  ): Promise<{ integrationId: number; model?: string } | null> {
+    // Level 1: Project LlmFeatureConfig override
+    const featureConfig = await this.prisma.llmFeatureConfig.findUnique({
+      where: {
+        projectId_feature: { projectId, feature },
+      },
+      select: {
+        llmIntegrationId: true,
+        model: true,
+        llmIntegration: {
+          select: { isDeleted: true, status: true },
+        },
+      },
+    });
+
+    if (
+      featureConfig?.llmIntegrationId &&
+      featureConfig.llmIntegration &&
+      !featureConfig.llmIntegration.isDeleted &&
+      featureConfig.llmIntegration.status === "ACTIVE"
+    ) {
+      return {
+        integrationId: featureConfig.llmIntegrationId,
+        model: featureConfig.model ?? undefined,
+      };
+    }
+
+    // Level 2: Per-prompt PromptConfigPrompt assignment
+    if (resolvedPrompt?.llmIntegrationId) {
+      // Verify the integration is still active
+      const integration = await this.prisma.llmIntegration.findUnique({
+        where: { id: resolvedPrompt.llmIntegrationId },
+        select: { isDeleted: true, status: true },
+      });
+      if (integration && !integration.isDeleted && integration.status === "ACTIVE") {
+        return {
+          integrationId: resolvedPrompt.llmIntegrationId,
+          model: resolvedPrompt.modelOverride,
+        };
+      }
+    }
+
+    // Level 3: Project default integration
+    const defaultId = await this.getProjectIntegration(projectId);
+    if (defaultId) {
+      return { integrationId: defaultId };
+    }
+
+    return null;
+  }
+
   async listAvailableIntegrations(): Promise<
     Array<{ id: number; name: string; provider: string }>
   > {
