@@ -385,55 +385,57 @@ export function CopyMoveDialog({
               </div>
 
               {targetProjectId && (
-                <div className="flex flex-row gap-1.5 mt-2">
+                <div>
                   <Label>{t("targetFolder")}</Label>
-                  <AsyncCombobox<FolderOption>
-                    value={selectedFolder}
-                    onValueChange={(folder) =>
-                      setTargetFolderId(folder?.id ?? null)
-                    }
-                    fetchOptions={fetchFolders}
-                    getOptionValue={(f) => f.id}
-                    renderOption={(f) => (
-                      <div
-                        className="flex items-center gap-1.5"
-                        style={{ paddingLeft: `${f.depth * 12}px` }}
-                      >
-                        <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{f.name}</span>
-                      </div>
-                    )}
-                    placeholder={t("selectFolder")}
-                    disabled={foldersLoading}
-                    className="w-full"
-                  />
-                  <div className="flex items-center gap-2 mb-2">
-                    <Input
-                      value={newFolderName}
-                      onChange={(e) => setNewFolderName(e.target.value)}
-                      placeholder={t("newFolderPlaceholder")}
-                      className="flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleCreateFolder();
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCreateFolder}
-                      disabled={
-                        !newFolderName.trim() ||
-                        isCreatingFolder ||
-                        !targetRepo?.id
+                  <div className="flex gap-1.5">
+                    <AsyncCombobox<FolderOption>
+                      value={selectedFolder}
+                      onValueChange={(folder) =>
+                        setTargetFolderId(folder?.id ?? null)
                       }
-                    >
-                      <FolderPlus className="h-4 w-4" />
-                      {t("createFolder")}
-                    </Button>
+                      fetchOptions={fetchFolders}
+                      getOptionValue={(f) => f.id}
+                      renderOption={(f) => (
+                        <div
+                          className="flex items-center gap-1.5"
+                          style={{ paddingLeft: `${f.depth * 12}px` }}
+                        >
+                          <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{f.name}</span>
+                        </div>
+                      )}
+                      placeholder={t("selectFolder")}
+                      disabled={foldersLoading}
+                      className="w-full"
+                    />
+                    <div className="flex items-center gap-2 mb-2">
+                      <Input
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                        placeholder={t("newFolderPlaceholder")}
+                        className="flex-1 min-w-48"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateFolder();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCreateFolder}
+                        disabled={
+                          !newFolderName.trim() ||
+                          isCreatingFolder ||
+                          !targetRepo?.id
+                        }
+                        aria-label={t("createFolder")}
+                      >
+                        <FolderPlus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -443,6 +445,14 @@ export function CopyMoveDialog({
           {/* ── Step 2: Configure ────────────────────────────────────────── */}
           {step === "configure" && (
             <div className="flex flex-col gap-4">
+              {/* Destination summary */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-md bg-muted px-3 py-2">
+                <FolderOpen className="h-4 w-4 shrink-0" />
+                <span>
+                  {selectedProject?.name ?? ""} / <span className="font-medium text-foreground">{selectedFolder?.name ?? ""}</span>
+                </span>
+              </div>
+
               {/* Operation selector */}
               <div className="flex flex-col gap-2">
                 <Label>{t("operation")}</Label>
