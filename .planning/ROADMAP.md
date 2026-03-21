@@ -473,13 +473,16 @@ Plans:
 
 ### Phase 33: Folder Tree Copy/Move
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 32
-**Plans:** 0 plans
+**Goal**: Users can copy or move an entire folder (with all subfolders and contained test cases) to another project, preserving the folder hierarchy
+**Depends on**: Phase 31
+**Requirements**: TREE-01, TREE-02, TREE-03, TREE-04
+**Success Criteria** (what must be TRUE):
 
-Plans:
-- [ ] TBD (run /gsd:plan-phase 33 to break down)
+  1. User can right-click a folder in the tree view and choose Copy/Move to open the CopyMoveDialog with all cases from that folder tree pre-selected
+  2. The folder hierarchy is recreated in the target project preserving parent-child structure
+  3. All cases within the folder tree are processed with the same compatibility handling as individual case copy/move
+  4. User can choose to place the copied/moved tree inside an existing folder or at root level in the target
+**Plans**: TBD
 
 ---
 
