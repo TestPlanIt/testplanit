@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-last_updated: "2026-03-21T21:08:37.550Z"
-last_activity: "2026-03-21 — Completed 38-02: resolveIntegration unit tests for 3-tier resolution chain"
+last_updated: "2026-03-21T21:15:00Z"
+last_activity: "2026-03-21 — Completed 39-01: per-prompt LLM and per-feature override documentation"
 progress:
   total_phases: 25
   completed_phases: 22
   total_plans: 55
-  completed_plans: 58
+  completed_plans: 59
 ---
 
 # State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 ## Current Position
 
-Phase: 38 of 39 (Export Import and Testing)
-Plan: 38-02 complete
-Status: In progress — Phase 38 Plan 02 complete
-Last activity: 2026-03-21 — Completed 38-02: resolveIntegration unit tests for 3-tier resolution chain
+Phase: 39 of 39 (Documentation)
+Plan: 39-01 complete
+Status: Complete — all phases and plans done
+Last activity: 2026-03-21 — Completed 39-01: per-prompt LLM and per-feature override documentation
 
 ## Accumulated Context
 
@@ -47,6 +47,7 @@ Last activity: 2026-03-21 — Completed 38-02: resolveIntegration unit tests for
 - [Phase 38-export-import-and-testing]: [Phase 38-01]: Export uses llmIntegrationName (human-readable) not raw ID for portability; import resolves names against active integrations only, sets null with unresolvedIntegrations reporting on miss
 - [Phase 38-03]: Use api.createProject() for projectId in AI models tests; projectId fixture defaults to 1 which does not exist in E2E database
 - [Phase 38-03]: __clear__ sentinel in LLM Integration select renders as 'Project Default (clear)' per en-US translation, not 'Project Default'
+- [Phase 39-01]: Documentation updated in-place on existing pages — no new sidebar entries or pages needed; resolution chain section uses explicit anchor for cross-referencing
 
 ### Pending Todos
 

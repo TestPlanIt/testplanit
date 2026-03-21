@@ -463,7 +463,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 39-01-PLAN.md -- Write user-facing documentation for per-prompt LLM configuration and project-level overrides
+- [x] 39-01-PLAN.md -- Write user-facing documentation for per-prompt LLM configuration and project-level overrides
 
 ---
 
@@ -512,4 +512,4 @@ Phases execute in numeric order: 34 → 35 → 36 + 37 (parallel) → 38 → 39
 | 36. Admin Prompt Editor LLM Selector | 2/2 | Complete    | 2026-03-21 | - |
 | 37. Project AI Models Overrides | 1/1 | Complete    | 2026-03-21 | - |
 | 38. Export/Import and Testing | 3/3 | Complete    | 2026-03-21 | - |
-| 39. Documentation | v0.17.0 | 0/TBD | Not started | - |
+| 39. Documentation | 1/1 | Complete    | 2026-03-21 | - |

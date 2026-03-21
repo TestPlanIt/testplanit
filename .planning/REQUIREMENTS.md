@@ -47,8 +47,8 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 ### Documentation
 
-- [ ] **DOCS-01**: User-facing documentation for configuring per-prompt LLM integrations in admin prompt editor
-- [ ] **DOCS-02**: User-facing documentation for project-level per-feature LLM overrides on AI Models settings page
+- [x] **DOCS-01**: User-facing documentation for configuring per-prompt LLM integrations in admin prompt editor
+- [x] **DOCS-02**: User-facing documentation for project-level per-feature LLM overrides on AI Models settings page
 
 ## Future Requirements
 
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-02 | Phase 38 | Complete |
 | TEST-03 | Phase 38 | Complete |
 | TEST-04 | Phase 38 | Complete |
-| DOCS-01 | Phase 39 | Pending |
-| DOCS-02 | Phase 39 | Pending |
+| DOCS-01 | Phase 39 | Complete |
+| DOCS-02 | Phase 39 | Complete |
 
 **Coverage:**
 - v0.17.0 requirements: 19 total
