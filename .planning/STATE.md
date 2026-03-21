@@ -1,71 +1,101 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Per-Project Export Template Assignment
-status: planning
-stopped_at: Completed 27-export-dialog-filtering/27-01-PLAN.md
-last_updated: "2026-03-19T05:37:52.328Z"
-last_activity: 2026-03-18 — Roadmap created for v2.1 (Phases 25-27)
+milestone: v2.0
+milestone_name: Comprehensive Test Coverage
+status: completed
+stopped_at: Completed 33-02-PLAN.md (Phase 33 Plan 02 — folder copy/move UI entry point)
+last_updated: "2026-03-21T03:34:32.880Z"
+last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
 progress:
-  total_phases: 19
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
-  percent: 0
+  total_phases: 27
+  completed_phases: 23
+  total_plans: 59
+  completed_plans: 62
+  percent: 24
 ---
 
 # State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Teams can plan, execute, and track testing across manual and automated workflows in one place — with AI assistance to reduce repetitive work.
-**Current focus:** v2.1 Per-Project Export Template Assignment — Phase 25: Default Template Schema
+**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects — Phase 29 in progress
 
 ## Current Position
 
-Phase: 25 of 27 (Default Template Schema)
-Plan: — of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-18 — Roadmap created for v2.1 (Phases 25-27)
+Phase: 29 of 32 (API Endpoints and Access Control)
+Plan: 02 of 04 (complete)
+Status: Phase 29 plan 02 complete — ready for 29-03
+Last activity: 2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation
 
-Progress: [░░░░░░░░░░] 0% (v2.1 phases)
+Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed (v2.1): 0
-- Average duration: —
-- Total execution time: —
+
+- Total plans completed (v0.17.0): 3
+- Average duration: ~6m
+- Total execution time: ~18m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 28    | 2     | ~12m  | ~6m      |
+| 29    | 1     | ~6m   | ~6m      |
+| Phase 29 P03 | 7m | 2 tasks | 3 files |
+| Phase 30-dialog-ui-and-polling P01 | 8 | 2 tasks | 7 files |
+| Phase 31-entry-points P01 | 12 | 2 tasks | 5 files |
+| Phase 32-testing-and-documentation P02 | 1 | 1 tasks | 1 files |
+| Phase 32-testing-and-documentation P01 | 5 | 2 tasks | 1 files |
+| Phase 33-folder-tree-copy-move P01 | 12 | 2 tasks | 4 files |
+| Phase 33-folder-tree-copy-move P02 | 15 | 2 tasks | 7 files |
 
 ## Accumulated Context
-| Phase 25-default-template-schema P01 | 5min | 2 tasks | 5 files |
-| Phase 26-admin-assignment-ui P01 | 5 | 1 tasks | 1 files |
-| Phase 26 P02 | 15min | 2 tasks | 3 files |
-| Phase 26-admin-assignment-ui P02 | 45min | 3 tasks | 4 files |
-| Phase 27-export-dialog-filtering P01 | 15min | 2 tasks | 2 files |
 
 ### Decisions
 
-- Follow TemplateProjectAssignment pattern (existing pattern for case field template assignments)
-- Backward compatible fallback: no assignments = show all enabled templates
-- SCHEMA-01 already complete (CaseExportTemplateProjectAssignment join model exists in schema.zmodel)
-- ZenStack hooks for CaseExportTemplateProjectAssignment are already generated
-- [Phase 25-default-template-schema]: Used onDelete: SetNull on defaultCaseExportTemplateId FK so deleting a CaseExportTemplate clears the default on referencing projects
-- [Phase 25-default-template-schema]: Named relation 'ProjectDefaultExportTemplate' disambiguates from CaseExportTemplateProjectAssignment join-table relation
-- [Phase 26-admin-assignment-ui]: Mirrored Projects model access pattern for project-admin-scoped create/delete on CaseExportTemplateProjectAssignment
-- [Phase 26-admin-assignment-ui]: Added translation keys in Task 1 commit because TypeScript validates next-intl keys against en-US.json at compile time
-- [Phase 26-admin-assignment-ui]: MultiAsyncCombobox chosen over checkbox list for better UX with large template lists
-- [Phase 26-admin-assignment-ui]: selectedTemplates stored as TemplateOption[] objects so badge data available without re-lookup
-- [Phase 27-export-dialog-filtering]: Used templateId (not caseExportTemplateId) — join model field name per schema.zmodel
-- [Phase 27-export-dialog-filtering]: filteredTemplates pattern: fetch global templates + assignment filter in useMemo for project-scoped template display
+- Build order: worker (Phase 28) → API (Phase 29) → dialog UI (Phase 30) → entry points (Phase 31) → testing/docs (Phase 32)
+- Worker uses raw `prisma` (not `enhance()`); ZenStack access control gated once at API entry only
+- `concurrency: 1` on BullMQ worker to prevent ZenStack v3 deadlocks (40P01)
+- `attempts: 1` on queue — partial retries on copy/move create duplicates; surface failures cleanly
+- Shared step groups recreated as proper SharedStepGroups in target (not flattened); in-memory deduplication Map across cases
+- Move: all RepositoryCaseVersions rows re-created with `repositoryCaseId = newCase.id` and `projectId` updated to target
+- Copy: version 1 only, fresh history via createTestCaseVersionInTransaction
+- Field option IDs re-resolved by option name when source/target templates differ; values dropped if no match
+- folderMaxOrder pre-fetched before the per-case loop to avoid race condition (not inside transaction)
+- Unique constraint errors detected via string-matching err.info?.message for "duplicate key" (not err.code === "P2002")
+- Cross-project case links (RepositoryCaseLink) dropped silently; droppedLinkCount reported in job result
+- Version history and template field options fetched separately to avoid PostgreSQL 63-char alias limit (ZenStack v3)
+- mockPrisma.$transaction.mockReset() required in test beforeEach — mockClear() does not reset mockImplementation, causing rollback tests to pollute subsequent tests
+- Tests mock templateCaseAssignment + caseFieldAssignment separately to match worker's two-step field option fetch pattern
+- conflictResolution limited to skip/rename at API layer (overwrite not accepted despite worker support)
+- canAutoAssignTemplates true for both ADMIN and PROJECTADMIN access levels
+- Source workflow state names fetched from source project WorkflowAssignment (not a separate states query)
+- Cancel key prefix `copy-move:cancel:` (not `auto-tag:cancel:`) — must match copyMoveWorker.ts cancelKey() exactly
+- Active job cancellation uses Redis flag (not job.remove()) to allow graceful per-case boundary stops
+- [Phase 29]: conflictResolution limited to skip/rename at API layer (overwrite rejected by Zod schema, not exposed to worker)
+- [Phase 29]: Auto-assign template failures wrapped in per-template try/catch — graceful for project admins lacking project access
+- [Phase 30-01]: No localStorage persistence in useCopyMoveJob — dialog is ephemeral, no recovery needed
+- [Phase 30-01]: Progress type uses {processed, total} matching worker's job.updateProgress() shape (not {analyzed, total})
+- [Phase 30-01]: Notification try/catch in copyMoveWorker: failure logged but does not fail the job
+- [Phase 31-entry-points]: handleCopyMove placed before columns useMemo to avoid block-scoped variable used before declaration
+- [Phase 31-entry-points]: BulkEditModal closes before CopyMoveDialog opens to prevent nested dialogs
+- [Phase 32-02]: sidebar_position: 11 for copy-move docs (follows import-export.md at position 10)
+- [Phase 32-02]: No screenshots in v0.17.0 copy-move docs — text is sufficient per plan discretion
+- [Phase 32-01]: Data verification tests skip when queue unavailable (503) to avoid false failures in CI without Redis — intentional test resilience
+- [Phase 32-01]: pollUntilDone helper polls status endpoint at 500ms intervals (up to 30 attempts) before throwing timeout
+- [Phase 33-01]: FolderTreeNode uses localKey (string) as stable client key; BFS-ordered array trusted from client; merge behavior reuses existing same-name folder silently
+- [Phase 33-02]: TreeView and Cases are siblings in ProjectRepository — folder copy/move state lifted to ProjectRepository, passed as props to both components
+- [Phase 33-02]: onCopyMoveFolder prop guarded by canAddEdit in ProjectRepository — only shown to users with edit permission
+- [Phase 33-02]: effectiveCaseIds replaces selectedCaseIds everywhere in CopyMoveDialog when in folder mode (preflight, submit, progress count)
+
+### Roadmap Evolution
+
+- Phase 33 added: Folder Tree Copy/Move — support copying/moving entire folder hierarchies with their content
 
 ### Pending Todos
 
@@ -73,10 +103,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- [Phase 29] Verify `@@allow` delete semantics on RepositoryCases in schema.zmodel before implementing move permission check
+- [Phase 29] Verify TemplateProjectAssignment access rules permit admin auto-assign via enhance(db, { user }) without elevated-privilege client
+- [Phase 28] Verify RepositoryCaseVersions cascade behavior on source delete does not fire before copy completes inside transaction
 
 ## Session Continuity
 
-Last session: 2026-03-19T05:35:21.836Z
-Stopped at: Completed 27-export-dialog-filtering/27-01-PLAN.md
+Last session: 2026-03-21T03:31:04.647Z
+Stopped at: Completed 33-02-PLAN.md (Phase 33 Plan 02 — folder copy/move UI entry point)
 Resume file: None

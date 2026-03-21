@@ -17,6 +17,7 @@ import {
   Updater as TableUpdater
 } from "@tanstack/react-table";
 import {
+  ArrowRightLeft,
   PenSquare,
   PlayCircle, ScrollText,
   Tags, Upload
@@ -38,6 +39,7 @@ import {
 } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import {
+  useCountProjects,
   useCountRepositoryCases,
   useCountTestRunCases, useFindFirstTestRuns, useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates, useFindManyTestRunCases, useFindUniqueProjects, useUpdateRepositoryCases, useUpdateTestRunCases
 } from "~/lib/hooks";
@@ -46,6 +48,7 @@ import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
 import { BulkEditModal } from "./BulkEditModal";
+import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
 import { getColumns } from "./columns";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
@@ -79,6 +82,10 @@ interface CasesProps {
   };
   /** When provided, restricts displayed cases to these IDs (from Elasticsearch search) */
   searchResultIds?: number[] | null;
+  /** When set, opens CopyMoveDialog in folder mode for the given folder */
+  copyMoveFolderId?: number | null;
+  copyMoveFolderName?: string;
+  onCopyMoveFolderDialogClose?: () => void;
 }
 
 export default function Cases({
@@ -100,6 +107,9 @@ export default function Cases({
   selectedFolderCaseCount,
   overridePagination,
   searchResultIds,
+  copyMoveFolderId,
+  copyMoveFolderName,
+  onCopyMoveFolderDialogClose,
 }: CasesProps) {
   const t = useTranslations();
 
@@ -194,6 +204,11 @@ export default function Cases({
     number[]
   >([]);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+  const [isCopyMoveOpen, setIsCopyMoveOpen] = useState(false);
+
+  // Folder copy/move state — driven by props from ProjectRepository
+  const [activeCopyMoveFolderId, setActiveCopyMoveFolderId] = useState<number | null>(null);
+  const [activeCopyMoveFolderName, setActiveCopyMoveFolderName] = useState<string>("");
 
   // Store rowSelection state here, it will be controlled by the useLayoutEffect
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -220,6 +235,12 @@ export default function Cases({
     permissions: testRunResultPermissions,
   } = useProjectPermissions(projectId, "TestRunResults");
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
+
+  // Check if user has access to more than 1 project (needed for copy/move visibility)
+  const { data: projectCount } = useCountProjects({
+    where: { isDeleted: false },
+  });
+  const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
   // *** NEW: Fetch total project case count ***
   const { data: totalProjectCasesCountData } =
@@ -2761,6 +2782,22 @@ export default function Cases({
     [dateFormat, timezone, timeFormat]
   );
 
+  const handleCopyMove = useCallback((caseIds?: number[]) => {
+    if (caseIds) {
+      setSelectedCaseIdsForBulkEdit(caseIds);
+    }
+    setIsCopyMoveOpen(true);
+  }, []);
+
+  // Open dialog in folder mode when copyMoveFolderId prop is set by ProjectRepository
+  useEffect(() => {
+    if (copyMoveFolderId != null) {
+      setActiveCopyMoveFolderId(copyMoveFolderId);
+      setActiveCopyMoveFolderName(copyMoveFolderName ?? "");
+      setIsCopyMoveOpen(true);
+    }
+  }, [copyMoveFolderId, copyMoveFolderName]);
+
   const columns: CustomColumnDef<any>[] = useMemo(() => {
     return getColumns(
       userPreferencesForColumns,
@@ -2833,7 +2870,13 @@ export default function Cases({
       (caseId: number) => {
         setQuickScriptCaseIds([caseId]);
         setIsQuickScriptModalOpen(true);
-      }
+      },
+      // Copy/Move per-row action (only when user has write access and multiple projects)
+      showCopyMove
+        ? (caseId: number) => {
+            handleCopyMove([caseId]);
+          }
+        : undefined
     );
   }, [
     userPreferencesForColumns,
@@ -2860,6 +2903,8 @@ export default function Cases({
     selectedTestCases.length,
     selectedCaseIdsForBulkEdit.length,
     quickScriptEnabled,
+    handleCopyMove,
+    showCopyMove,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3357,6 +3402,24 @@ export default function Cases({
                     </span>
                   </Button>
                 )}
+              {showCopyMove &&
+                !isSelectionMode &&
+                !isRunMode &&
+                selectedCaseIdsForBulkEdit.length > 0 && (
+                  <Button
+                    onClick={() => setIsCopyMoveOpen(true)}
+                    variant="outline"
+                    data-testid="copy-move-button"
+                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                  >
+                    <ArrowRightLeft className="w-4 h-4 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("repository.cases.copyMoveToProject")} {"("}
+                      {selectedCaseIdsForBulkEdit.length}
+                      {")"}
+                    </span>
+                  </Button>
+                )}
               {canAddEdit && !isSelectionMode && !isRunMode && (
                 <Button
                   onClick={() => setIsExportModalOpen(true)}
@@ -3507,6 +3570,10 @@ export default function Cases({
           onSaveSuccess={() => handleCloseBulkEditModal(true)}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           projectId={projectId}
+          onCopyMove={showCopyMove ? () => {
+            setIsBulkEditModalOpen(false);
+            setIsCopyMoveOpen(true);
+          } : undefined}
         />
       )}
 
@@ -3519,6 +3586,25 @@ export default function Cases({
           totalCases={totalItems}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           totalProjectCases={totalProjectCases}
+        />
+      )}
+
+      {/* Copy/Move Dialog */}
+      {isValidProjectId && (
+        <CopyMoveDialog
+          open={isCopyMoveOpen}
+          onOpenChange={(open) => {
+            setIsCopyMoveOpen(open);
+            if (!open && activeCopyMoveFolderId != null) {
+              setActiveCopyMoveFolderId(null);
+              setActiveCopyMoveFolderName("");
+              onCopyMoveFolderDialogClose?.();
+            }
+          }}
+          selectedCaseIds={selectedCaseIdsForBulkEdit}
+          sourceProjectId={projectId}
+          sourceFolderId={activeCopyMoveFolderId ?? undefined}
+          sourceFolderName={activeCopyMoveFolderName || undefined}
         />
       )}
 

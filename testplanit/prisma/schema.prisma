@@ -76,6 +76,7 @@ enum NotificationType {
   MILESTONE_DUE_REMINDER
   SHARE_LINK_ACCESSED
   LLM_BUDGET_ALERT
+  COPY_MOVE_COMPLETE
 }
 
 enum WorkflowType {

@@ -43,6 +43,7 @@ import {
   usePagination
 } from "~/lib/contexts/PaginationContext";
 import {
+  useCountProjects,
   useFindFirstProjects,
   useFindFirstRepositories,
   useFindManyRepositoryCases,
@@ -377,6 +378,23 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);
+
+  // Folder copy/move state — wired from TreeView context menu to Cases dialog
+  const [copyMoveFolderId, setCopyMoveFolderId] = useState<number | null>(null);
+  const [copyMoveFolderName, setCopyMoveFolderName] = useState<string>("");
+
+  const handleCopyMoveFolder = useCallback(
+    (folderId: number, folderName: string) => {
+      setCopyMoveFolderId(folderId);
+      setCopyMoveFolderName(folderName);
+    },
+    []
+  );
+
+  const handleCopyMoveFolderDialogClose = useCallback(() => {
+    setCopyMoveFolderId(null);
+    setCopyMoveFolderName("");
+  }, []);
 
   // Elasticsearch-powered search state (for selection mode)
   const [esSearchQuery, setEsSearchQuery] = useState("");
@@ -1250,6 +1268,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     }),
   });
 
+  // Check if user has access to more than 1 project (needed for copy/move visibility)
+  // Must be before early returns to satisfy Rules of Hooks
+  const { data: projectCount } = useCountProjects({
+    where: { isDeleted: false },
+  });
+  const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
+
   if (isComponentLoading) {
     return null;
   }
@@ -1404,6 +1429,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 ? dndContainerRef.current
                                 : undefined
                             }
+                            onCopyMoveFolder={
+                              showCopyMove ? handleCopyMoveFolder : undefined
+                            }
                           />
                         ) : null}
                       </div>
@@ -1546,6 +1574,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         selectedFolderCaseCount={selectedFolderCaseCount}
                         overridePagination={overridePagination}
                         searchResultIds={esSearchResultIds}
+                        copyMoveFolderId={copyMoveFolderId}
+                        copyMoveFolderName={copyMoveFolderName}
+                        onCopyMoveFolderDialogClose={
+                          handleCopyMoveFolderDialogClose
+                        }
                       />
                     </>
                   </ResizablePanel>

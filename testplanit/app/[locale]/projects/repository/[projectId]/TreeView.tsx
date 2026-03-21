@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { RepositoryFolders } from "@prisma/client";
 import {
-  ChevronRight, Folder,
+  ArrowRightLeft, ChevronRight, Folder,
   FolderOpen, MoreVertical,
   SquarePenIcon,
   Trash2Icon
@@ -70,6 +70,7 @@ const TreeView: React.FC<{
   onRefetchStats?: () => void;
   /** Ref to an element to scope DnD events to (prevents "Cannot have two HTML5 backends" error in portals) */
   dndRootElement?: HTMLElement | null;
+  onCopyMoveFolder?: (folderId: number, folderName: string) => void;
 }> = ({
   onSelectFolder,
   onHierarchyChange,
@@ -81,6 +82,7 @@ const TreeView: React.FC<{
   onRefetchFolders,
   onRefetchStats,
   dndRootElement,
+  onCopyMoveFolder,
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
@@ -877,7 +879,7 @@ const TreeView: React.FC<{
       <div
         ref={setCombinedRef}
         style={style}
-        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 cursor-pointer px-2 py-1`}
+        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 hover:text-secondary-foreground [&:hover_.text-muted-foreground]:text-secondary-foreground cursor-pointer px-2 py-1`}
         onClick={async () => {
           node.select();
           // Toggle expand/collapse when clicking anywhere on the folder row
@@ -979,6 +981,19 @@ const TreeView: React.FC<{
                     {t("repository.folderActions.edit")}
                   </div>
                 </DropdownMenuItem>
+                {onCopyMoveFolder && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopyMoveFolder(data?.folderId ?? 0, node.data.name);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ArrowRightLeft className="h-4 w-4" />
+                      {t("repository.cases.copyMoveToProject")}
+                    </div>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => {
                     const folderNode: FolderNode = {

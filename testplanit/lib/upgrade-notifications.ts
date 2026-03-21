@@ -210,6 +210,17 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Requires an LLM integration configured in your project settings.</p>
     `,
   },
+  "0.17.0": {
+    title: "New Feature: Copy/Move Test Cases",
+    message: `
+      <p>Copy/Move test cases and entire folder trees directly between projects. No more export/import cycles.</p>
+      <ul>
+        <li>Select cases or use the folder menu to choose <strong>Copy/Move</strong></li>
+        <li>Template and workflow compatibility handled automatically</li>
+        <li>Steps, custom fields, tags, issue links, and attachments all carry over</li>
+      </ul>
+    `,
+  },
 };
 
 /**

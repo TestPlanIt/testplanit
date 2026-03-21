@@ -426,8 +426,8 @@ export function SearchIssuesDialog({
                             isAlreadyLinked
                               ? "border-muted bg-muted/50 opacity-40 cursor-not-allowed"
                               : isSelected
-                                ? "border-primary bg-primary/5 cursor-pointer"
-                                : "hover:bg-accent cursor-pointer"
+                                ? "border-primary bg-primary/5 [&_.text-muted-foreground]:text-foreground cursor-pointer"
+                                : "hover:bg-accent hover:text-accent-foreground [&:hover_.text-muted-foreground]:text-accent-foreground cursor-pointer"
                           }`}
                           onClick={() =>
                             !isAlreadyLinked && handleIssueToggle(issue)
