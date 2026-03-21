@@ -430,7 +430,7 @@ Plans:
   2. Project admin can assign a specific LLM integration to a feature; the assignment is saved as a LlmFeatureConfig record
   3. Project admin can clear a per-feature override; the feature falls back to prompt-level assignment or project default
   4. The effective resolution chain is displayed per feature (which LLM will actually be used and why — override, prompt-level, or default)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 37-01-PLAN.md -- Build per-feature override UI on AI Models settings page with resolution chain display and LlmFeatureConfig CRUD
@@ -510,6 +510,6 @@ Phases execute in numeric order: 34 → 35 → 36 + 37 (parallel) → 38 → 39
 | 34. Schema and Migration | 1/1 | Complete    | 2026-03-21 | - |
 | 35. Resolution Chain | 1/1 | Complete    | 2026-03-21 | - |
 | 36. Admin Prompt Editor LLM Selector | v0.17.0 | 0/TBD | Not started | - |
-| 37. Project AI Models Overrides | v0.17.0 | 0/TBD | Not started | - |
+| 37. Project AI Models Overrides | v0.17.0 | 0/1 | Planning complete | - |
 | 38. Export/Import and Testing | v0.17.0 | 0/TBD | Not started | - |
 | 39. Documentation | v0.17.0 | 0/TBD | Not started | - |
