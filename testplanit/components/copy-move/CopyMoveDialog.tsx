@@ -359,7 +359,7 @@ export function CopyMoveDialog({
               </div>
 
               {targetProjectId && (
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 mt-2">
                   <Label>{t("targetFolder")}</Label>
                   <AsyncCombobox<FolderOption>
                     value={selectedFolder}
