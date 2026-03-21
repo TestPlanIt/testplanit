@@ -397,7 +397,7 @@ export function NotificationContent({
         </div>
         <div className="text-sm text-muted-foreground space-y-1">
           <p>
-            {count} case(s) {isCopy ? "copied" : "moved"} successfully
+            {count} {"case(s)"} {isCopy ? "copied" : "moved"} {"successfully"}
             {data.errorCount > 0 ? `, ${data.errorCount} failed` : ""}
           </p>
           <div className="flex items-center gap-1">
@@ -405,7 +405,7 @@ export function NotificationContent({
               href={repositoryLink}
               className="font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              View target repository
+              {"View target repository"}
               <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
