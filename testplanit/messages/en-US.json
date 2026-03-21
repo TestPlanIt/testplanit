@@ -4266,6 +4266,7 @@
       "step2Desc": "Choose the operation and review compatibility.",
       "step3Desc": "Track progress and review results.",
       "targetProject": "Target Project",
+      "selectProject": "Select a project...",
       "searchProjects": "Search projects...",
       "loadingProjects": "Loading projects...",
       "noProjectsFound": "No projects found.",

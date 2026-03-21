@@ -49,8 +49,8 @@ export interface CopyMoveDialogProps {
   onOpenChange: (open: boolean) => void;
   selectedCaseIds: number[];
   sourceProjectId: number;
-  sourceFolderId?: number;    // triggers folder-tree mode
-  sourceFolderName?: string;  // display name for folder
+  sourceFolderId?: number; // triggers folder-tree mode
+  sourceFolderName?: string; // display name for folder
 }
 
 export function CopyMoveDialog({
@@ -134,9 +134,7 @@ export function CopyMoveDialog({
     while (queue.length > 0) {
       const current = queue.shift()!;
       ids.push(current);
-      const children = sourceFolders.filter(
-        (f: any) => f.parentId === current
-      );
+      const children = sourceFolders.filter((f: any) => f.parentId === current);
       for (const child of children) queue.push(child.id);
     }
     return ids;
@@ -436,7 +434,7 @@ export function CopyMoveDialog({
         <div className="flex-1 min-h-0 overflow-y-auto px-0.5">
           {/* ── Step 1: Target Selection ─────────────────────────────────── */}
           {step === "target" && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 mb-2">
               <div className="flex flex-col gap-1.5">
                 <Label>{t("targetProject")}</Label>
                 <AsyncCombobox<ProjectOption>
@@ -475,7 +473,7 @@ export function CopyMoveDialog({
                       )}
                     </div>
                   )}
-                  placeholder={t("searchProjects")}
+                  placeholder={t("selectProject")}
                   disabled={projectsLoading}
                   className="w-full"
                 />
@@ -546,7 +544,10 @@ export function CopyMoveDialog({
               <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-md bg-muted px-3 py-2">
                 <FolderOpen className="h-4 w-4 shrink-0" />
                 <span>
-                  {selectedProject?.name ?? ""} / <span className="font-medium text-foreground">{selectedFolder?.name ?? ""}</span>
+                  {selectedProject?.name ?? ""} /{" "}
+                  <span className="font-medium text-foreground">
+                    {selectedFolder?.name ?? ""}
+                  </span>
                 </span>
               </div>
 
