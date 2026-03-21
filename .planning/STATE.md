@@ -6,7 +6,7 @@ status: planning
 last_updated: "2026-03-21"
 last_activity: "2026-03-21 — Milestone v0.17.0 Per-Prompt LLM Configuration started"
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-21 — Milestone v0.17.0 Per-Prompt LLM Configuration started
+Phase: 34 of 39 (Schema and Migration)
+Plan: Not started
+Status: Roadmap complete — ready for Phase 34
+Last activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 requirements)
 
 ## Accumulated Context
 

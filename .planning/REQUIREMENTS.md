@@ -68,30 +68,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHEMA-01 | — | Pending |
-| SCHEMA-02 | — | Pending |
-| SCHEMA-03 | — | Pending |
-| RESOLVE-01 | — | Pending |
-| RESOLVE-02 | — | Pending |
-| RESOLVE-03 | — | Pending |
-| ADMIN-01 | — | Pending |
-| ADMIN-02 | — | Pending |
-| ADMIN-03 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| EXPORT-01 | — | Pending |
-| COMPAT-01 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
-| DOCS-01 | — | Pending |
-| DOCS-02 | — | Pending |
+| SCHEMA-01 | Phase 34 | Pending |
+| SCHEMA-02 | Phase 34 | Pending |
+| SCHEMA-03 | Phase 34 | Pending |
+| RESOLVE-01 | Phase 35 | Pending |
+| RESOLVE-02 | Phase 35 | Pending |
+| RESOLVE-03 | Phase 35 | Pending |
+| COMPAT-01 | Phase 35 | Pending |
+| ADMIN-01 | Phase 36 | Pending |
+| ADMIN-02 | Phase 36 | Pending |
+| ADMIN-03 | Phase 36 | Pending |
+| PROJ-01 | Phase 37 | Pending |
+| PROJ-02 | Phase 37 | Pending |
+| EXPORT-01 | Phase 38 | Pending |
+| TEST-01 | Phase 38 | Pending |
+| TEST-02 | Phase 38 | Pending |
+| TEST-03 | Phase 38 | Pending |
+| TEST-04 | Phase 38 | Pending |
+| DOCS-01 | Phase 39 | Pending |
+| DOCS-02 | Phase 39 | Pending |
 
 **Coverage:**
 - v0.17.0 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-21*
