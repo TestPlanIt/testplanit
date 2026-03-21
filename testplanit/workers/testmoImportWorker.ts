@@ -7030,7 +7030,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
       userId: importJob.createdById,
       metadata: {
         source: "testmo-import",
-        jobId: job.id,
+        jobId: jobId,
         processedCount: context.processedCount,
         durationMs: totalTimeMs,
         entityProgress: context.entityProgress,
