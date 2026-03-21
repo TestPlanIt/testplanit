@@ -181,7 +181,7 @@ const mockSourceCaseWithSharedSteps = {
 };
 
 // Source template fields with Dropdown type
-const mockSourceTemplateFields = [
+const _mockSourceTemplateFields = [
   {
     caseFieldId: 5,
     fieldType: "Dropdown",
@@ -191,7 +191,7 @@ const mockSourceTemplateFields = [
 ];
 
 // Target template fields with same systemName but different option IDs
-const mockTargetTemplateFields = [
+const _mockTargetTemplateFields = [
   {
     caseFieldId: 7,
     fieldType: "Dropdown",
@@ -843,9 +843,7 @@ describe("CopyMoveWorker", () => {
       mockTx.sharedStepGroup.findFirst.mockResolvedValue(null);
       mockTx.sharedStepGroup.create.mockResolvedValue({ id: 999 });
 
-      let txCallCount = 0;
       mockPrisma.$transaction.mockImplementation(async (fn: Function) => {
-        txCallCount++;
         return fn(mockTx);
       });
 
