@@ -27,6 +27,7 @@ export interface CopyMoveJobData extends MultiTenantJobData {
   userId: string;
   targetTemplateId: number;
   targetDefaultWorkflowStateId: number;
+  folderTree?: FolderTreeNode[];
 }
 
 export interface CopyMoveJobResult {
@@ -35,6 +36,14 @@ export interface CopyMoveJobResult {
   skippedCount: number;
   droppedLinkCount: number;
   errors: Array<{ caseId: number; caseName: string; error: string }>;
+}
+
+export interface FolderTreeNode {
+  localKey: string;          // String(sourceFolderId) — stable client key
+  sourceFolderId: number;    // original source folder ID
+  name: string;
+  parentLocalKey: string | null;  // null = root of copied tree
+  caseIds: number[];         // cases directly in this folder
 }
 
 // ─── Redis cancellation key helper ──────────────────────────────────────────
@@ -261,13 +270,84 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
     throw new Error("Job cancelled by user");
   }
 
-  // 4. Pre-fetch folderMaxOrder once to avoid race conditions inside the loop
-  const maxOrderRow = await prisma.repositoryCases.findFirst({
-    where: { folderId: job.data.targetFolderId },
-    orderBy: { order: "desc" },
-    select: { order: true },
-  });
-  let nextOrder = (maxOrderRow?.order ?? -1) + 1;
+  // 4. Pre-fetch folderMaxOrder (only used for non-folder-tree jobs)
+  let nextOrder = 0;
+  if (!job.data.folderTree) {
+    const maxOrderRow = await prisma.repositoryCases.findFirst({
+      where: { folderId: job.data.targetFolderId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    nextOrder = (maxOrderRow?.order ?? -1) + 1;
+  }
+
+  // 4b. Folder tree recreation (BFS order — client sends array already sorted BFS)
+  const sourceFolderToTargetFolderMap = new Map<string, number>();
+  const folderNextOrderMap = new Map<number, number>();
+
+  if (job.data.folderTree && job.data.folderTree.length > 0) {
+    for (const node of job.data.folderTree) {
+      // Determine the parent folder ID in the target
+      let parentTargetId: number;
+      if (node.parentLocalKey === null) {
+        parentTargetId = job.data.targetFolderId;
+      } else {
+        const mappedParent = sourceFolderToTargetFolderMap.get(node.parentLocalKey);
+        if (mappedParent === undefined) {
+          throw new Error("Folder tree ordering error: parent not yet created");
+        }
+        parentTargetId = mappedParent;
+      }
+
+      // Check for an existing folder with the same name under the same parent (merge behavior)
+      const existingFolder = await prisma.repositoryFolders.findFirst({
+        where: {
+          projectId: job.data.targetProjectId,
+          repositoryId: job.data.targetRepositoryId,
+          parentId: parentTargetId,
+          name: node.name,
+          isDeleted: false,
+        },
+      });
+
+      let targetFolderId: number;
+      if (existingFolder) {
+        // Merge: reuse existing folder
+        targetFolderId = existingFolder.id;
+      } else {
+        // Create new folder under parentTargetId
+        const maxFolderOrderRow = await prisma.repositoryFolders.findFirst({
+          where: { projectId: job.data.targetProjectId, repositoryId: job.data.targetRepositoryId, parentId: parentTargetId },
+          orderBy: { order: "desc" },
+          select: { order: true },
+        });
+        const newFolder = await prisma.repositoryFolders.create({
+          data: {
+            projectId: job.data.targetProjectId,
+            repositoryId: job.data.targetRepositoryId,
+            parentId: parentTargetId,
+            name: node.name,
+            order: (maxFolderOrderRow?.order ?? -1) + 1,
+            creatorId: job.data.userId,
+          },
+        });
+        targetFolderId = newFolder.id;
+      }
+
+      sourceFolderToTargetFolderMap.set(node.localKey, targetFolderId);
+    }
+
+    // Pre-fetch max case orders for each unique target folder created during tree recreation
+    const uniqueTargetFolderIds = [...new Set(sourceFolderToTargetFolderMap.values())];
+    for (const fId of uniqueTargetFolderIds) {
+      const maxRow = await prisma.repositoryCases.findFirst({
+        where: { folderId: fId },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      });
+      folderNextOrderMap.set(fId, (maxRow?.order ?? -1) + 1);
+    }
+  }
 
   // 5. Pre-fetch source cases with their related data
   const sourceCases = await prisma.repositoryCases.findMany({
@@ -395,13 +475,30 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
         }
       }
 
+      // Determine target folder for this case (either from folderTree map or flat targetFolderId)
+      const caseFolderKey = String(sourceCase.folderId);
+      const caseFolderId = job.data.folderTree
+        ? (sourceFolderToTargetFolderMap.get(caseFolderKey) ?? job.data.targetFolderId)
+        : job.data.targetFolderId;
+
+      // Determine case order for this folder
+      let caseOrder: number;
+      if (job.data.folderTree) {
+        const currentOrder = folderNextOrderMap.get(caseFolderId) ?? 0;
+        caseOrder = currentOrder;
+        folderNextOrderMap.set(caseFolderId, currentOrder + 1);
+      } else {
+        caseOrder = nextOrder;
+        nextOrder++;
+      }
+
       const newCaseId = await prisma.$transaction(async (tx: any) => {
         // a. Create the target RepositoryCases row
         const newCase = await tx.repositoryCases.create({
           data: {
             projectId: job.data.targetProjectId,
             repositoryId: job.data.targetRepositoryId,
-            folderId: job.data.targetFolderId,
+            folderId: caseFolderId,
             templateId: job.data.targetTemplateId,
             stateId: job.data.targetDefaultWorkflowStateId,
             name: caseName,
@@ -410,11 +507,10 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
             automated: sourceCase.automated,
             estimate: sourceCase.estimate,
             creatorId: sourceCase.creatorId,
-            order: nextOrder,
+            order: caseOrder,
             currentVersion: 1,
           },
         });
-        nextOrder++;
 
         // b. Create Steps
         for (const step of sourceCase.steps) {
@@ -516,7 +612,7 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
                 // Update location FKs to target
                 projectId: job.data.targetProjectId,
                 repositoryId: job.data.targetRepositoryId,
-                folderId: job.data.targetFolderId,
+                folderId: caseFolderId,
                 // Preserve static snapshot fields
                 staticProjectId: ver.staticProjectId,
                 staticProjectName: ver.staticProjectName,
@@ -592,6 +688,16 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
       where: { id: { in: job.data.caseIds } },
       data: { isDeleted: true },
     });
+
+    // Move: soft-delete source FOLDERS after all cases soft-deleted
+    if (job.data.folderTree && job.data.folderTree.length > 0) {
+      const folderIds = job.data.folderTree.map((n) => n.sourceFolderId);
+      await prisma.repositoryFolders.updateMany({
+        where: { id: { in: folderIds } },
+        data: { isDeleted: true },
+      });
+    }
+
     result.movedCount = result.copiedCount;
     result.copiedCount = 0;
   }

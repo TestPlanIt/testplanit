@@ -224,6 +224,7 @@ export async function POST(request: Request) {
       targetTemplateId: resolvedTargetTemplateId,
       targetDefaultWorkflowStateId: resolvedTargetDefaultWorkflowStateId,
       tenantId: getCurrentTenantId(),
+      folderTree: body.folderTree,
     };
 
     const job = await queue.add("copy-move", jobData);
