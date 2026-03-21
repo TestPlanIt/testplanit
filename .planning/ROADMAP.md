@@ -387,7 +387,7 @@ Plans:
   2. Database migration adds both columns with proper FK constraint to LlmIntegration and index on llmIntegrationId
   3. A PromptConfigPrompt record can be saved with a specific LLM integration and retrieved with the relation included
   4. LlmFeatureConfig model confirmed to have correct fields and access rules for project admins
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 34-01-PLAN.md -- Add llmIntegrationId and modelOverride to PromptConfigPrompt in schema.zmodel, generate migration, validate
@@ -507,7 +507,7 @@ Phases execute in numeric order: 34 → 35 → 36 + 37 (parallel) → 38 → 39
 | 31. Copy/Move UI Entry Points | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
 | 32. Progress and Result Feedback | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
 | 33. Copy/Move Test Coverage | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
-| 34. Schema and Migration | v0.17.0 | 0/TBD | Not started | - |
+| 34. Schema and Migration | v0.17.0 | 0/1 | Planning complete | - |
 | 35. Resolution Chain | v0.17.0 | 0/TBD | Not started | - |
 | 36. Admin Prompt Editor LLM Selector | v0.17.0 | 0/TBD | Not started | - |
 | 37. Project AI Models Overrides | v0.17.0 | 0/TBD | Not started | - |
