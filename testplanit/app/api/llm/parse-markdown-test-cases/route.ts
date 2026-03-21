@@ -114,14 +114,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const activeLlmIntegration = project.projectLlmIntegrations[0];
-    if (!activeLlmIntegration) {
-      return NextResponse.json(
-        { error: "No active LLM integration found for this project" },
-        { status: 400 }
-      );
-    }
-
     const manager = LlmManager.getInstance(prisma);
 
     // Resolve prompt from database (falls back to hard-coded default)
@@ -131,8 +123,23 @@ export async function POST(request: NextRequest) {
       projectId
     );
 
+    // Resolve LLM integration via 3-tier chain
+    const resolved = await manager.resolveIntegration(
+      LLM_FEATURES.MARKDOWN_PARSING,
+      projectId,
+      resolvedPrompt
+    );
+    if (!resolved) {
+      return NextResponse.json(
+        { error: "No active LLM integration found for this project" },
+        { status: 400 }
+      );
+    }
+
+    // Keep activeLlmIntegration for provider config token limits lookup
+    const activeLlmIntegration = project.projectLlmIntegrations[0];
     const configuredMaxTokens =
-      activeLlmIntegration.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
+      activeLlmIntegration?.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
       resolvedPrompt.maxOutputTokens;
     const maxTokens = Math.max(configuredMaxTokens, 4000);
 
@@ -148,6 +155,7 @@ export async function POST(request: NextRequest) {
       maxTokens,
       userId: session.user.id,
       feature: "markdown_test_case_parsing",
+      ...(resolved.model ? { model: resolved.model } : {}),
       metadata: {
         projectId,
         markdownLength: markdown.length,
@@ -156,7 +164,7 @@ export async function POST(request: NextRequest) {
     };
 
     const response = await manager.chat(
-      activeLlmIntegration.llmIntegrationId,
+      resolved.integrationId,
       llmRequest
     );
 

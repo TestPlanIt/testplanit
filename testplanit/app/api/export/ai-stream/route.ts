@@ -134,13 +134,22 @@ export async function POST(req: NextRequest) {
         // Send an immediate keepalive so the proxy sees bytes right away
         keepAlive(controller);
 
-        // Get LLM integration
-        const llmIntegration = await prisma.projectLlmIntegration.findFirst({
-          where: { projectId, isActive: true },
-          select: { llmIntegrationId: true },
-        });
+        // Resolve prompt
+        const resolver = new PromptResolver(prisma);
+        const resolvedPrompt = await resolver.resolve(
+          LLM_FEATURES.EXPORT_CODE_GENERATION,
+          projectId
+        );
 
-        if (!llmIntegration) {
+        // Resolve LLM integration via 3-tier chain
+        const llmManager = LlmManager.getInstance(prisma);
+        const resolved = await llmManager.resolveIntegration(
+          LLM_FEATURES.EXPORT_CODE_GENERATION,
+          projectId,
+          resolvedPrompt
+        );
+
+        if (!resolved) {
           send(controller, {
             type: "fallback",
             code: mustacheFallback,
@@ -149,19 +158,12 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        // Resolve prompt
-        const resolver = new PromptResolver(prisma);
-        const resolvedPrompt = await resolver.resolve(
-          LLM_FEATURES.EXPORT_CODE_GENERATION,
-          projectId
-        );
-
         // Token budget
         // maxTokensPerRequest is the hard ceiling enforced by validateRequest() in the base
         // adapter — requests exceeding it throw before hitting the LLM API.
         // defaultMaxTokens is the fallback when a request doesn't specify maxTokens.
         const providerConfig = await prisma.llmProviderConfig.findFirst({
-          where: { llmIntegrationId: llmIntegration.llmIntegrationId },
+          where: { llmIntegrationId: resolved.integrationId },
           select: { defaultMaxTokens: true, maxTokensPerRequest: true },
         });
         const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
@@ -259,7 +261,6 @@ export async function POST(req: NextRequest) {
           userPrompt += `\n\nDEFAULT FOOTER (use as a starting point — extend or modify teardown as needed):\n\`\`\`\n${footer}\n\`\`\``;
         }
 
-        const llmManager = LlmManager.getInstance(prisma);
         const request: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
@@ -270,13 +271,14 @@ export async function POST(req: NextRequest) {
           userId: session.user.id,
           projectId,
           feature: LLM_FEATURES.EXPORT_CODE_GENERATION,
+          ...(resolved.model ? { model: resolved.model } : {}),
           timeout: 0, // No timeout for streaming — allow the full response to arrive
         };
 
         try {
           let finishReason: string | undefined;
           for await (const chunk of llmManager.chatStream(
-            llmIntegration.llmIntegrationId,
+            resolved.integrationId,
             request
           )) {
             if (chunk.finishReason) finishReason = chunk.finishReason;

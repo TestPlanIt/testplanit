@@ -44,36 +44,41 @@ export class TagAnalysisService {
   async analyzeTags(params: AnalyzeTagsParams): Promise<TagAnalysisResult> {
     const { entityIds, entityType, projectId, userId } = params;
 
-    // 1. Get project-level LLM integration (falls back to system default)
-    const integrationId = await this.llmManager.getProjectIntegration(projectId);
-    if (!integrationId) {
+    // 1. Resolve prompt via 3-tier chain (needed before resolveIntegration)
+    const resolvedPrompt = await this.promptResolver.resolve(
+      LLM_FEATURES.AUTO_TAG,
+      projectId,
+    );
+
+    // 2. Get LLM integration via 3-tier resolution chain
+    const resolved = await this.llmManager.resolveIntegration(
+      LLM_FEATURES.AUTO_TAG,
+      projectId,
+      resolvedPrompt,
+    );
+    if (!resolved) {
       throw new Error(
         "No LLM integration configured. Please set up an LLM provider in admin settings or assign one to this project.",
       );
     }
+    const integrationId = resolved.integrationId;
 
-    // 2. Fetch LlmProviderConfig for token limits
+    // 3. Fetch LlmProviderConfig for token limits
     const providerConfig = await this.prisma.llmProviderConfig.findFirst({
       where: { llmIntegrationId: integrationId },
     });
     const maxTokensPerRequest = providerConfig?.maxTokensPerRequest ?? 4096;
 
     console.log(
-      `[auto-tag] Using integration ${integrationId}, model: ${providerConfig?.defaultModel}, maxTokensPerRequest: ${maxTokensPerRequest}`,
+      `[auto-tag] Using integration ${integrationId}, model: ${resolved.model ?? providerConfig?.defaultModel}, maxTokensPerRequest: ${maxTokensPerRequest}`,
     );
 
-    // 3. Fetch all existing (non-deleted) tags
+    // 4. Fetch all existing (non-deleted) tags
     const existingTags = await (this.prisma as any).tags.findMany({
       where: { isDeleted: false },
     });
     const existingTagNames: string[] = existingTags.map(
       (t: any) => t.name as string,
-    );
-
-    // 4. Resolve prompt via 3-tier chain
-    const resolvedPrompt = await this.promptResolver.resolve(
-      LLM_FEATURES.AUTO_TAG,
-      projectId,
     );
 
     // 5. Fetch entities
@@ -149,6 +154,7 @@ export class TagAnalysisService {
           projectId,
           feature: LLM_FEATURES.AUTO_TAG,
           disableThinking: false,
+          ...(resolved.model ? { model: resolved.model } : {}),
         });
       } catch (error: any) {
         // If the LLM timed out, back off on batch size (same as truncated response)

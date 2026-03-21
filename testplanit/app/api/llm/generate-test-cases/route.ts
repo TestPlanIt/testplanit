@@ -459,14 +459,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const activeLlmIntegration = project.projectLlmIntegrations[0];
-    if (!activeLlmIntegration) {
-      return NextResponse.json(
-        { error: "No active LLM integration found for this project" },
-        { status: 400 }
-      );
-    }
-
     const manager = LlmManager.getInstance(prisma);
 
     // Resolve prompt template from database (falls back to hard-coded default)
@@ -475,6 +467,22 @@ export async function POST(request: NextRequest) {
       LLM_FEATURES.TEST_CASE_GENERATION,
       projectId
     );
+
+    // Resolve LLM integration via 3-tier chain
+    const resolved = await manager.resolveIntegration(
+      LLM_FEATURES.TEST_CASE_GENERATION,
+      projectId,
+      resolvedPrompt
+    );
+    if (!resolved) {
+      return NextResponse.json(
+        { error: "No active LLM integration found for this project" },
+        { status: 400 }
+      );
+    }
+
+    // Keep projectLlmIntegrations for provider config max tokens lookup
+    const activeLlmIntegration = project.projectLlmIntegrations[0];
 
     // Build the prompts using resolved template as base (or fall back to hard-coded)
     const systemPromptBase = resolvedPrompt.source !== "fallback" ? resolvedPrompt.systemPrompt : undefined;
@@ -510,6 +518,7 @@ export async function POST(request: NextRequest) {
       maxTokens, // Use the higher of configured or minimum required
       userId: session.user.id,
       feature: "test_case_generation",
+      ...(resolved.model ? { model: resolved.model } : {}),
       metadata: {
         projectId,
         issueKey: issue.key,
@@ -519,7 +528,7 @@ export async function POST(request: NextRequest) {
     };
 
     const response = await manager.chat(
-      activeLlmIntegration.llmIntegrationId,
+      resolved.integrationId,
       llmRequest
     );
 

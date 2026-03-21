@@ -611,13 +611,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Keep activeLlmIntegration for provider config token limits lookup (used later)
     const activeLlmIntegration = project.projectLlmIntegrations[0];
-    if (!activeLlmIntegration) {
-      return NextResponse.json(
-        { error: "No active LLM integration found for this project" },
-        { status: 400 }
-      );
-    }
 
     // Get total count of active test cases in repository
     const repositoryTotalCount = await prisma.repositoryCases.count({
@@ -988,18 +983,31 @@ export async function POST(request: NextRequest) {
       projectId
     );
 
+    // Resolve LLM integration via 3-tier chain
+    const resolved = await manager.resolveIntegration(
+      LLM_FEATURES.MAGIC_SELECT_CASES,
+      projectId,
+      resolvedPrompt
+    );
+    if (!resolved) {
+      return NextResponse.json(
+        { error: "No active LLM integration found for this project" },
+        { status: 400 }
+      );
+    }
+
     // Use resolved system prompt if from DB, otherwise use built-in
     const systemPrompt = resolvedPrompt.source !== "fallback"
       ? resolvedPrompt.systemPrompt
       : buildSystemPrompt();
 
-    // Use configured max tokens
+    // Use configured max tokens (still use activeLlmIntegration for provider config)
     const configuredMaxTokens =
-      activeLlmIntegration.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
+      activeLlmIntegration?.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
       resolvedPrompt.maxOutputTokens;
     const maxTokens = Math.max(configuredMaxTokens, 2000);
     const maxTokensPerRequest =
-      activeLlmIntegration.llmIntegration.llmProviderConfig?.maxTokensPerRequest ?? 4096;
+      activeLlmIntegration?.llmIntegration.llmProviderConfig?.maxTokensPerRequest ?? 4096;
 
     // Estimate tokens for the fixed parts of the prompt (system + test run context)
     const testRunContext = buildUserPrompt(testRunMetadata, issues, [], clarification);
@@ -1066,6 +1074,7 @@ export async function POST(request: NextRequest) {
           maxTokens,
           userId: session.user.id,
           feature: "magic_select_cases",
+          ...(resolved.model ? { model: resolved.model } : {}),
           metadata: {
             projectId,
             testRunName: testRunMetadata.name,
@@ -1077,7 +1086,7 @@ export async function POST(request: NextRequest) {
         };
 
         const response = await manager.chat(
-          activeLlmIntegration.llmIntegrationId,
+          resolved.integrationId,
           llmRequest,
         );
 
