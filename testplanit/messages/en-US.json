@@ -1739,7 +1739,8 @@
     "folderActions": {
       "edit": "Edit Folder",
       "delete": "Delete Folder",
-      "rename": "Rename Folder"
+      "rename": "Rename Folder",
+      "copyMove": "Copy / Move to Project"
     },
     "cases": {
       "filter": "Filter cases...",

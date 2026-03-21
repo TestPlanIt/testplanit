@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PreflightResponse } from "~/app/api/repository/copy-move/schemas";
-import type { CopyMoveJobResult } from "~/workers/copyMoveWorker";
+import type { CopyMoveJobResult, FolderTreeNode } from "~/workers/copyMoveWorker";
 
 const POLL_INTERVAL_MS = 2000;
 
@@ -41,6 +41,7 @@ export interface UseCopyMoveJobReturn {
     targetRepositoryId?: number;
     targetDefaultWorkflowStateId?: number;
     targetTemplateId?: number;
+    folderTree?: FolderTreeNode[];
   }) => Promise<void>;
   cancel: () => Promise<void>;
   reset: () => void;
@@ -114,6 +115,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
       targetRepositoryId?: number;
       targetDefaultWorkflowStateId?: number;
       targetTemplateId?: number;
+      folderTree?: FolderTreeNode[];
     }) => {
       setIsSubmitting(true);
       setStatus("waiting");
