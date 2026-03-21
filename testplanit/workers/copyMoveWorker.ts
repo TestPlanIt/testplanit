@@ -8,6 +8,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
+import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import valkeyConnection from "../lib/valkey";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService";
@@ -723,6 +724,41 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
   // 12. Cross-project case links (RepositoryCaseLink) are dropped silently
   // droppedLinkCount could be calculated here if needed; currently reported as 0
   result.droppedLinkCount = 0;
+
+  // 12b. Audit logging — log bulk operation for created cases
+  for (const targetId of createdTargetIds) {
+    captureAuditEvent({
+      action: "CREATE",
+      entityType: "RepositoryCases",
+      entityId: String(targetId),
+      projectId: job.data.targetProjectId,
+      userId: job.data.userId,
+      metadata: {
+        source: `copy-move:${job.data.operation}`,
+        sourceProjectId: job.data.sourceProjectId,
+        jobId: job.id,
+      },
+    }).catch(() => {}); // best-effort, don't fail the job
+  }
+
+  // Audit logging — log soft-deletes for moved source cases
+  if (job.data.operation === "move") {
+    for (const sourceId of job.data.caseIds) {
+      captureAuditEvent({
+        action: "DELETE",
+        entityType: "RepositoryCases",
+        entityId: String(sourceId),
+        projectId: job.data.sourceProjectId,
+        userId: job.data.userId,
+        metadata: {
+          source: "copy-move:move",
+          targetProjectId: job.data.targetProjectId,
+          jobId: job.id,
+          softDelete: true,
+        },
+      }).catch(() => {});
+    }
+  }
 
   console.log(
     `Copy-move job ${job.id} completed: ` +
