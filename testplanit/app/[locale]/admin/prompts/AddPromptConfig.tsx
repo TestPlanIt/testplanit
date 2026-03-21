@@ -48,6 +48,8 @@ const createFormSchema = (_t: any) => {
       userPrompt: z.string(),
       temperature: z.number().min(0).max(2),
       maxOutputTokens: z.number().min(1).max(1048576),
+      llmIntegrationId: z.number().nullable().optional(),
+      modelOverride: z.string().nullable().optional(),
     });
   }
 
@@ -77,6 +79,8 @@ function getDefaultPromptValues(): Record<string, any> {
       userPrompt: fallback?.userPrompt || "",
       temperature: fallback?.temperature ?? 0.7,
       maxOutputTokens: fallback?.maxOutputTokens ?? 2048,
+      llmIntegrationId: null,
+      modelOverride: null,
     };
   }
   return prompts;
@@ -147,6 +151,8 @@ export function AddPromptConfig({
             userPrompt: string;
             temperature: number;
             maxOutputTokens: number;
+            llmIntegrationId?: number | null;
+            modelOverride?: string | null;
           };
           await createPromptConfigPrompt({
             data: {
@@ -156,6 +162,8 @@ export function AddPromptConfig({
               userPrompt: promptData.userPrompt || "",
               temperature: promptData.temperature,
               maxOutputTokens: promptData.maxOutputTokens,
+              ...(promptData.llmIntegrationId ? { llmIntegrationId: promptData.llmIntegrationId } : {}),
+              ...(promptData.modelOverride ? { modelOverride: promptData.modelOverride } : {}),
             },
           });
         }
