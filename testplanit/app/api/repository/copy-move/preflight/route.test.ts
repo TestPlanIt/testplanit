@@ -44,6 +44,7 @@ const mockEnhancedDb = {
   repositoryCases: { findMany: vi.fn(), findFirst: vi.fn() },
   projectWorkflowAssignment: { findMany: vi.fn() },
   repositories: { findFirst: vi.fn() },
+  templates: { findMany: vi.fn() },
 };
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -129,6 +130,8 @@ function setupDefaultMocks() {
   mockEnhancedDb.repositories.findFirst.mockResolvedValue(
     baseTargetRepository,
   );
+
+  mockEnhancedDb.templates.findMany.mockResolvedValue([]);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

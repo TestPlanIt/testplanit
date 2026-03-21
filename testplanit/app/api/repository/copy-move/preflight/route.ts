@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     const targetTemplateAssignments =
       await enhancedDb.templateProjectAssignment.findMany({
         where: { projectId: body.targetProjectId },
-        include: { template: { select: { id: true, name: true } } },
+        include: { template: { select: { id: true, templateName: true } } },
       });
 
     const targetTemplateIds = new Set(
@@ -113,12 +113,19 @@ export async function POST(request: Request) {
       (id) => !targetTemplateIds.has(id),
     );
 
-    // Build missing templates array — we only have templateId here; name needs to come from source cases
-    // We'll build a map from the target assignments for matched ones; for missing ones we use id only
-    // The actual template names for missing IDs would need a separate query — use a generic approach
+    // Fetch actual template names for missing IDs
+    const missingTemplateRecords = missingTemplateIds.length > 0
+      ? await enhancedDb.templates.findMany({
+          where: { id: { in: missingTemplateIds } },
+          select: { id: true, templateName: true },
+        })
+      : [];
+    const templateNameMap = new Map(
+      missingTemplateRecords.map((t: { id: number; templateName: string }) => [t.id, t.templateName]),
+    );
     const missingTemplates = missingTemplateIds.map((id: number) => ({
       id,
-      name: `Template ${id}`,
+      name: templateNameMap.get(id) ?? `Template ${id}`,
     }));
 
     const templateMismatch = missingTemplates.length > 0;
