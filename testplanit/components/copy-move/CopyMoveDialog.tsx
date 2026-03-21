@@ -109,8 +109,8 @@ export function CopyMoveDialog({
       const created = await createFolder({
         data: {
           name: newFolderName.trim(),
-          projectId: targetProjectId,
-          repositoryId: targetRepo.id,
+          project: { connect: { id: targetProjectId } },
+          repository: { connect: { id: targetRepo.id } },
           parentId: targetFolderId, // nest under currently selected folder, or root if none
           order: maxOrder + 1,
         },
