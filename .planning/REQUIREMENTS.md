@@ -27,8 +27,8 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 ### Project Settings UI
 
-- [ ] **PROJ-01**: Project AI Models page allows project admins to override per-prompt LLM assignments per feature via LlmFeatureConfig
-- [ ] **PROJ-02**: Project AI Models page displays the effective resolution chain per feature (which LLM will actually be used and why)
+- [x] **PROJ-01**: Project AI Models page allows project admins to override per-prompt LLM assignments per feature via LlmFeatureConfig
+- [x] **PROJ-02**: Project AI Models page displays the effective resolution chain per feature (which LLM will actually be used and why)
 
 ### Export/Import
 
@@ -78,8 +78,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADMIN-01 | Phase 36 | Complete |
 | ADMIN-02 | Phase 36 | Complete |
 | ADMIN-03 | Phase 36 | Complete |
-| PROJ-01 | Phase 37 | Pending |
-| PROJ-02 | Phase 37 | Pending |
+| PROJ-01 | Phase 37 | Complete |
+| PROJ-02 | Phase 37 | Complete |
 | EXPORT-01 | Phase 38 | Pending |
 | TEST-01 | Phase 38 | Pending |
 | TEST-02 | Phase 38 | Pending |

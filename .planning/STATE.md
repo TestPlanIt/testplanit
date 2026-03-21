@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
-status: completed
-last_updated: "2026-03-21T20:42:48.105Z"
-last_activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 requirements)
+status: executing
+last_updated: "2026-03-21T20:43:42.497Z"
+last_activity: "2026-03-21 — Completed 36-01: admin prompt editor LLM integration and model override selectors"
 progress:
   total_phases: 25
-  completed_phases: 20
+  completed_phases: 21
   total_plans: 52
-  completed_plans: 54
+  completed_plans: 55
 ---
 
 # State
@@ -42,6 +42,7 @@ Last activity: 2026-03-21 — Completed 36-01: admin prompt editor LLM integrati
 - [Phase 35-resolution-chain]: Explicit-integration endpoints (chat, test, admin chat) unchanged - client-specified integration takes precedence over server-side resolution chain
 - [Phase 36-admin-prompt-editor-llm-selector]: llmIntegrations column uses Map<id,name> to collect unique integrations across prompts, renders three states: Project Default (size 0), single badge (size 1), N LLMs badge (size N)
 - [Phase 36-01]: __clear__ sentinel used in Select to represent null since shadcn Select cannot natively represent null values; clearing integration also clears modelOverride
+- [Phase 37-project-ai-models-overrides]: FeatureOverrides component fetches its own LlmFeatureConfig and PromptConfigPrompt data — page.tsx passes only integrations and projectDefaultIntegration as props
 
 ### Pending Todos
 
