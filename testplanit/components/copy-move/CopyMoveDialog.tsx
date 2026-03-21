@@ -29,7 +29,11 @@ import {
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFindManyProjects, useFindFirstRepositories, useCreateRepositoryFolders } from "~/lib/hooks";
+import {
+  useFindManyProjects,
+  useFindFirstRepositories,
+  useCreateRepositoryFolders,
+} from "~/lib/hooks";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -93,10 +97,14 @@ export function CopyMoveDialog({
   // Target project's repository (needed for creating folders)
   const { data: targetRepo } = useFindFirstRepositories(
     {
-      where: { projectId: targetProjectId ?? 0, isActive: true, isDeleted: false },
+      where: {
+        projectId: targetProjectId ?? 0,
+        isActive: true,
+        isDeleted: false,
+      },
       select: { id: true },
     },
-    { enabled: !!targetProjectId },
+    { enabled: !!targetProjectId }
   );
 
   const { mutateAsync: createFolder } = useCreateRepositoryFolders();
@@ -105,24 +113,36 @@ export function CopyMoveDialog({
     if (!newFolderName.trim() || !targetProjectId || !targetRepo?.id) return;
     setIsCreatingFolder(true);
     try {
-      const maxOrder = folders.reduce((max, f) => Math.max(max, (f as any).order ?? 0), 0);
+      const maxOrder = folders.reduce(
+        (max, f) => Math.max(max, (f as any).order ?? 0),
+        0
+      );
       const created = await createFolder({
         data: {
           name: newFolderName.trim(),
           project: { connect: { id: targetProjectId } },
           repository: { connect: { id: targetRepo.id } },
-          ...(targetFolderId ? { parent: { connect: { id: targetFolderId } } } : {}),
+          ...(targetFolderId
+            ? { parent: { connect: { id: targetFolderId } } }
+            : {}),
           order: maxOrder + 1,
-        },
+        } as any,
       });
-      setTargetFolderId(created.id);
+      if (created?.id) setTargetFolderId(created.id);
       setNewFolderName("");
     } catch (err) {
       console.error("Failed to create folder:", err);
     } finally {
       setIsCreatingFolder(false);
     }
-  }, [newFolderName, targetProjectId, targetRepo, targetFolderId, folders, createFolder]);
+  }, [
+    newFolderName,
+    targetProjectId,
+    targetRepo,
+    targetFolderId,
+    folders,
+    createFolder,
+  ]);
 
   // ── Reset on open ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -227,7 +247,12 @@ export function CopyMoveDialog({
     [filteredProjects]
   );
   // Build a flat, depth-annotated folder list preserving parent→child order
-  type FolderOption = { id: number; name: string; parentId: number | null; depth: number };
+  type FolderOption = {
+    id: number;
+    name: string;
+    parentId: number | null;
+    depth: number;
+  };
   const flatFolders = useMemo(() => {
     const result: FolderOption[] = [];
     const buildTree = (parentId: number | null, depth: number) => {
@@ -242,16 +267,17 @@ export function CopyMoveDialog({
     return result;
   }, [folders]);
 
-  const selectedFolder: FolderOption | null = flatFolders.find((f: FolderOption) => f.id === targetFolderId) ?? null;
+  const selectedFolder: FolderOption | null =
+    flatFolders.find((f: FolderOption) => f.id === targetFolderId) ?? null;
 
   const fetchFolders = useCallback(
     async (query: string) => {
       if (!query) return flatFolders;
       return flatFolders.filter((f: FolderOption) =>
-        f.name.toLowerCase().includes(query.toLowerCase()),
+        f.name.toLowerCase().includes(query.toLowerCase())
       );
     },
-    [flatFolders],
+    [flatFolders]
   );
 
   const preflight = job.preflight;
@@ -359,7 +385,7 @@ export function CopyMoveDialog({
               </div>
 
               {targetProjectId && (
-                <div className="flex flex-col gap-1.5 mt-2">
+                <div className="flex flex-row gap-1.5 mt-2">
                   <Label>{t("targetFolder")}</Label>
                   <AsyncCombobox<FolderOption>
                     value={selectedFolder}
@@ -381,7 +407,7 @@ export function CopyMoveDialog({
                     disabled={foldersLoading}
                     className="w-full"
                   />
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <Input
                       value={newFolderName}
                       onChange={(e) => setNewFolderName(e.target.value)}
@@ -399,7 +425,11 @@ export function CopyMoveDialog({
                       variant="outline"
                       size="sm"
                       onClick={handleCreateFolder}
-                      disabled={!newFolderName.trim() || isCreatingFolder || !targetRepo?.id}
+                      disabled={
+                        !newFolderName.trim() ||
+                        isCreatingFolder ||
+                        !targetRepo?.id
+                      }
                     >
                       <FolderPlus className="h-4 w-4" />
                       {t("createFolder")}

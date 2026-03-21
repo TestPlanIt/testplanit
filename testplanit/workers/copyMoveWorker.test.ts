@@ -203,10 +203,15 @@ async function loadWorker() {
   return mod;
 }
 
+type JobData = Omit<typeof baseCopyJobData, "operation" | "sharedStepGroupResolution"> & {
+  operation: "copy" | "move";
+  sharedStepGroupResolution: "reuse" | "create_new";
+};
+
 function makeMockJob(
   overrides: Partial<{
     id: string;
-    data: typeof baseCopyJobData;
+    data: JobData;
   }> = {}
 ): unknown {
   return {
