@@ -1,7 +1,14 @@
 "use client";
 
 import {
-  BookOpen, Clock, HelpCircle, LucideWaypoints, MessageSquareHeart, Navigation, Search, Waypoints
+  BookOpen,
+  Clock,
+  HelpCircle,
+  LucideWaypoints,
+  MessageSquareHeart,
+  Navigation,
+  Search,
+  Waypoints,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -15,7 +22,7 @@ import svgIcon from "~/public/tpi_logo.svg";
 
 import {
   FeedbackBanner,
-  FeedbackSurveySheet
+  FeedbackSurveySheet,
 } from "@/components/FeedbackSurveySheet";
 import { GlobalSearchSheet } from "@/components/GlobalSearchSheet";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -26,7 +33,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { UserDropdownMenu } from "@/components/UserDropdownMenu";
@@ -71,7 +78,13 @@ export const Header = () => {
   const { data: allProjects = [] } = useFindManyProjects({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
-    select: { id: true, name: true, iconUrl: true, isCompleted: true, isDeleted: true },
+    select: {
+      id: true,
+      name: true,
+      iconUrl: true,
+      isCompleted: true,
+      isDeleted: true,
+    },
   });
   const demoProject = allProjects.find((p) => p.name === "Demo Project");
 
@@ -251,7 +264,7 @@ export const Header = () => {
                   variant="destructive"
                   className="gap-1 px-3 py-1.5 text-center"
                 >
-                  {t("common.access.admin")} {t("common.fields.configuration")}
+                  {t("common.access.admin")} {t("common.fields.tools")}
                 </Badge>
               )}
               {trialDaysRemaining !== null && (
@@ -323,11 +336,13 @@ export const Header = () => {
                     <Navigation className="mr-2 h-4 w-4" />
                     {t("help.menu.startTour")}
                   </DropdownMenuItem>
-                  {isOnProjectPage && (
-                    isDemoProject ? (
+                  {isOnProjectPage &&
+                    (isDemoProject ? (
                       <DropdownMenuItem
                         onClick={() =>
-                          (window as any).startOnboardingTour?.("demoProjectTour")
+                          (window as any).startOnboardingTour?.(
+                            "demoProjectTour"
+                          )
                         }
                         className="cursor-pointer"
                       >
@@ -344,8 +359,7 @@ export const Header = () => {
                         <Waypoints className="mr-2 h-4 w-4" />
                         {t("help.menu.startProjectTour")}
                       </DropdownMenuItem>
-                    )
-                  )}
+                    ))}
                   {!isOnProjectPage && demoProject && (
                     <DropdownMenuItem
                       onClick={() =>

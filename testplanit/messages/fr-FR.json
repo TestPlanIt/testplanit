@@ -362,6 +362,7 @@
       "multipleValues": "Valeurs multiples",
       "provider": "Fournisseur",
       "updatedAt": "Mise à jour le",
+      "tools": "Outils",
       "configKeys": {
         "edit_results_duration": "Durée de modification des résultats",
         "project_docs_default": "Documentation du projet par défaut",
@@ -1739,7 +1740,8 @@
     "folderActions": {
       "edit": "Modifier le dossier",
       "delete": "Supprimer le dossier",
-      "rename": "Renommer le dossier"
+      "rename": "Renommer le dossier",
+      "copyMove": "Copier / Déplacer vers le projet"
     },
     "cases": {
       "filter": "Boîtiers de filtre...",
@@ -4270,7 +4272,6 @@
       "noProjectsFound": "Aucun projet trouvé.",
       "completed": "(Complet)",
       "targetFolder": "Dossier cible",
-      "selectFolder": "Sélectionnez un dossier...",
       "newFolderPlaceholder": "Nom du nouveau dossier...",
       "createFolder": "Créer",
       "next": "Suivant",
@@ -4307,7 +4308,8 @@
       "errorCount": "{count} cas ont échoué",
       "viewInTargetProject": "Voir dans le projet cible",
       "close": "Fermer",
-      "failed": "Échoué"
+      "failed": "Échoué",
+      "folderMode": "Dossier \"{folderName}\" — {caseCount, plural, one {# cas} other {# cas}}"
     }
   },
   "issues": {

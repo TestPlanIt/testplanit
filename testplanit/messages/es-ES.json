@@ -362,6 +362,7 @@
       "multipleValues": "Valores múltiples",
       "provider": "Proveedor",
       "updatedAt": "Actualizado el",
+      "tools": "Herramientas",
       "configKeys": {
         "edit_results_duration": "Editar Duración de Resultados",
         "project_docs_default": "Projektdokument",
@@ -1739,7 +1740,8 @@
     "folderActions": {
       "edit": "Editar carpeta",
       "delete": "Eliminar carpeta",
-      "rename": "Renombrar carpeta"
+      "rename": "Renombrar carpeta",
+      "copyMove": "Copiar / Mover al proyecto"
     },
     "cases": {
       "filter": "Filtrar casos...",
@@ -4270,7 +4272,6 @@
       "noProjectsFound": "No se encontraron proyectos.",
       "completed": "(Completo)",
       "targetFolder": "Carpeta de destino",
-      "selectFolder": "Seleccione una carpeta...",
       "newFolderPlaceholder": "Nuevo nombre de carpeta...",
       "createFolder": "Crear",
       "next": "Próximo",
@@ -4307,7 +4308,8 @@
       "errorCount": "{count} caso(s) fallido(s)",
       "viewInTargetProject": "Ver en el proyecto de destino",
       "close": "Cerca",
-      "failed": "Fallido"
+      "failed": "Fallido",
+      "folderMode": "Carpeta \"{folderName}\" — {caseCount, plural, one {# caso} other {# casos}}"
     }
   },
   "issues": {

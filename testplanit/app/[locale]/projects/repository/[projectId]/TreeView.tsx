@@ -879,7 +879,7 @@ const TreeView: React.FC<{
       <div
         ref={setCombinedRef}
         style={style}
-        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 cursor-pointer px-2 py-1`}
+        className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 hover:text-secondary-foreground [&:hover_.text-muted-foreground]:text-secondary-foreground cursor-pointer px-2 py-1`}
         onClick={async () => {
           node.select();
           // Toggle expand/collapse when clicking anywhere on the folder row

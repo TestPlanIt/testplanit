@@ -362,6 +362,7 @@
       "multipleValues": "Multiple Values",
       "provider": "Provider",
       "updatedAt": "Updated At",
+      "tools": "Tools",
       "configKeys": {
         "edit_results_duration": "Edit Results Duration",
         "project_docs_default": "Project Docs Default",
