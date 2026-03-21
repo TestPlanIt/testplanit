@@ -27,7 +27,7 @@ There are several ways to open the Copy/Move dialog:
 
 #### Context Menu
 
-1. Click the Actions menu on any test case row in the repository.
+1. Click the three-dot menu on any test case row in the repository.
 2. Select **Copy/Move** from the context menu.
 
 #### Bulk Edit Modal
@@ -39,7 +39,7 @@ There are several ways to open the Copy/Move dialog:
 #### Folder Context Menu
 
 1. Click the three-dot menu on any folder in the folder tree.
-2. Select **Copy / Move**.
+2. Select **Copy/Move**.
 3. The dialog opens with all test cases from that folder and its subfolders pre-selected.
 
 This copies or moves the **entire folder tree** — including all subfolders (even empty ones) and every test case within them. The folder hierarchy is recreated in the target project, and each test case is placed in its corresponding folder.
@@ -99,16 +99,29 @@ If the selected cases reference shared step groups, you can choose how those gro
 
 ## What Data is Carried Over
 
-| Data | Included | Notes |
-|---|---|---|
-| Test steps | Yes | All steps recreated in target |
-| Custom field values | Yes | Field option IDs re-resolved by option name when templates differ; values are dropped if no matching option is found |
-| Tags | Yes | Connected to target case |
-| Issue links | Yes | Linked to target case |
-| Attachments | Yes | Reference the same files; no re-upload required |
-| Shared step groups | Yes | Recreated or reused in target project per your choice |
-| Comments | No | Not carried over |
-| Cross-project case links | No | Dropped silently; the result summary reports the count of dropped links |
+| Data | Copied | Moved | Notes |
+|---|---|---|---|
+| Test steps | Yes | Yes | All steps recreated in target |
+| Custom field values | Yes | Yes | Field option IDs re-resolved by option name when templates differ; values are dropped if no matching option is found |
+| Tags | Yes | Yes | Connected to target case |
+| Issue links | Yes | Yes | Linked to target case |
+| Attachments | Yes | Yes | Reference the same files; no re-upload required |
+| Shared step groups | Yes | Yes | Recreated or reused in target project per your choice |
+| Version history | No | Yes | Copies start at version 1; moves preserve full history |
+| Comments | No | Yes | Copies start with no comments; moves preserve all comments |
+| Folder structure | Yes | Yes | When copying/moving a folder, the full tree is recreated |
+
+### Data Not Included
+
+The following data is **not transferred** during copy or move operations:
+
+| Data | Reason |
+|---|---|
+| **Test run results** | Test execution history (pass/fail results, run assignments) is tied to test runs in the source project and is not carried over. Copied or moved cases start with no test run history in the target project. |
+| **Result field values** | Custom field values recorded during test execution belong to the source project's test runs. |
+| **JUnit/automated test results** | Imported JUnit, TestNG, xUnit, NUnit, and other automated test results are linked to source project test runs. |
+| **Cross-project case links** | Links between test cases in different projects are dropped. The result summary reports the count of dropped links. |
+| **Forecast data** | Manual and automated forecast estimates are reset to defaults in the target. |
 
 ## Copy vs Move Differences
 
@@ -116,6 +129,7 @@ If the selected cases reference shared step groups, you can choose how those gro
 |---|---|---|
 | Source case | Unchanged | Removed from source project (soft-deleted) |
 | Version history | Starts at version 1 with no prior history | Full version history preserved |
+| Comments | Not included | Preserved |
 | Reversibility | Delete the copy to undo | Cannot be undone automatically |
 
 ## Folder Tree Copy/Move
