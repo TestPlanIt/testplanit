@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-last_updated: "2026-03-21T20:12:00.308Z"
+last_updated: "2026-03-21T20:29:05.306Z"
 last_activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 requirements)
 progress:
   total_phases: 25
-  completed_phases: 18
-  total_plans: 48
-  completed_plans: 51
+  completed_phases: 19
+  total_plans: 49
+  completed_plans: 52
 ---
 
 # State
@@ -38,6 +38,8 @@ Last activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 re
 - Unique constraint errors detected via string-matching err.info?.message for "duplicate key" (not err.code === "P2002")
 - [Phase 34-schema-and-migration]: No onDelete:Cascade on PromptConfigPrompt.llmIntegration relation — deleting LLM integration sets llmIntegrationId to NULL, preserving prompts
 - [Phase 34-schema-and-migration]: Index added on PromptConfigPrompt.llmIntegrationId following LlmFeatureConfig established pattern
+- [Phase 35-resolution-chain]: Prompt resolver called before resolveIntegration so per-prompt LLM fields are available to the 3-tier chain
+- [Phase 35-resolution-chain]: Explicit-integration endpoints (chat, test, admin chat) unchanged - client-specified integration takes precedence over server-side resolution chain
 
 ### Pending Todos
 

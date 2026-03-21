@@ -15,9 +15,9 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 ### Prompt Resolution
 
-- [ ] **RESOLVE-01**: PromptResolver returns per-prompt LLM integration ID and model override when set
-- [ ] **RESOLVE-02**: When no per-prompt LLM is set, system falls back to project default integration (existing behavior preserved)
-- [ ] **RESOLVE-03**: Resolution chain enforced: project LlmFeatureConfig > PromptConfigPrompt assignment > project default integration
+- [x] **RESOLVE-01**: PromptResolver returns per-prompt LLM integration ID and model override when set
+- [x] **RESOLVE-02**: When no per-prompt LLM is set, system falls back to project default integration (existing behavior preserved)
+- [x] **RESOLVE-03**: Resolution chain enforced: project LlmFeatureConfig > PromptConfigPrompt assignment > project default integration
 
 ### Admin UI
 
@@ -36,7 +36,7 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 ### Compatibility
 
-- [ ] **COMPAT-01**: Existing projects and prompt configs without per-prompt LLM assignments continue to work without changes
+- [x] **COMPAT-01**: Existing projects and prompt configs without per-prompt LLM assignments continue to work without changes
 
 ### Testing
 
@@ -71,10 +71,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHEMA-01 | Phase 34 | Complete |
 | SCHEMA-02 | Phase 34 | Complete |
 | SCHEMA-03 | Phase 34 | Complete |
-| RESOLVE-01 | Phase 35 | Pending |
-| RESOLVE-02 | Phase 35 | Pending |
-| RESOLVE-03 | Phase 35 | Pending |
-| COMPAT-01 | Phase 35 | Pending |
+| RESOLVE-01 | Phase 35 | Complete |
+| RESOLVE-02 | Phase 35 | Complete |
+| RESOLVE-03 | Phase 35 | Complete |
+| COMPAT-01 | Phase 35 | Complete |
 | ADMIN-01 | Phase 36 | Pending |
 | ADMIN-02 | Phase 36 | Pending |
 | ADMIN-03 | Phase 36 | Pending |
