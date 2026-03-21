@@ -79,7 +79,13 @@ function PromptConfigList() {
         ? { [sortConfig.column]: sortConfig.direction }
         : { name: "asc" },
       include: {
-        prompts: true,
+        prompts: {
+          include: {
+            llmIntegration: {
+              select: { id: true, name: true },
+            },
+          },
+        },
       },
       where: {
         AND: [
@@ -116,7 +122,13 @@ function PromptConfigList() {
         ? { [sortConfig.column]: sortConfig.direction }
         : { name: "asc" },
       include: {
-        prompts: true,
+        prompts: {
+          include: {
+            llmIntegration: {
+              select: { id: true, name: true },
+            },
+          },
+        },
         projects: true,
       },
       where: {
