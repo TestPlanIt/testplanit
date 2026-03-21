@@ -72,6 +72,7 @@ vi.mock("next-auth/react", async (importOriginal) => {
 vi.mock("~/lib/hooks", () => ({
   useFindManyRepositoryFolders: vi.fn(() => ({ data: [], isLoading: false })),
   useCountRepositoryCases: vi.fn(() => ({ data: 0, isLoading: false, refetch: vi.fn() })),
+  useCountProjects: vi.fn(() => ({ data: 0, isLoading: false })),
   useFindManyTemplates: vi.fn(() => ({ data: [], isLoading: false })),
   useFindUniqueProjects: vi.fn(() => ({ data: null, isLoading: false })),
   useFindManyProjectLlmIntegration: vi.fn(() => ({ data: [], isLoading: false })),
