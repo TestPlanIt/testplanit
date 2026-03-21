@@ -378,6 +378,23 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);
 
+  // Folder copy/move state — wired from TreeView context menu to Cases dialog
+  const [copyMoveFolderId, setCopyMoveFolderId] = useState<number | null>(null);
+  const [copyMoveFolderName, setCopyMoveFolderName] = useState<string>("");
+
+  const handleCopyMoveFolder = useCallback(
+    (folderId: number, folderName: string) => {
+      setCopyMoveFolderId(folderId);
+      setCopyMoveFolderName(folderName);
+    },
+    []
+  );
+
+  const handleCopyMoveFolderDialogClose = useCallback(() => {
+    setCopyMoveFolderId(null);
+    setCopyMoveFolderName("");
+  }, []);
+
   // Elasticsearch-powered search state (for selection mode)
   const [esSearchQuery, setEsSearchQuery] = useState("");
   const debouncedEsSearchQuery = useDebounce(esSearchQuery, 300);
@@ -1404,6 +1421,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 ? dndContainerRef.current
                                 : undefined
                             }
+                            onCopyMoveFolder={
+                              canAddEdit ? handleCopyMoveFolder : undefined
+                            }
                           />
                         ) : null}
                       </div>
@@ -1546,6 +1566,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         selectedFolderCaseCount={selectedFolderCaseCount}
                         overridePagination={overridePagination}
                         searchResultIds={esSearchResultIds}
+                        copyMoveFolderId={copyMoveFolderId}
+                        copyMoveFolderName={copyMoveFolderName}
+                        onCopyMoveFolderDialogClose={
+                          handleCopyMoveFolderDialogClose
+                        }
                       />
                     </>
                   </ResizablePanel>

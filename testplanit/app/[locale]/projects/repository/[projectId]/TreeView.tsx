@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { RepositoryFolders } from "@prisma/client";
 import {
-  ChevronRight, Folder,
+  ChevronRight, Copy, Folder,
   FolderOpen, MoreVertical,
   SquarePenIcon,
   Trash2Icon
@@ -70,6 +70,7 @@ const TreeView: React.FC<{
   onRefetchStats?: () => void;
   /** Ref to an element to scope DnD events to (prevents "Cannot have two HTML5 backends" error in portals) */
   dndRootElement?: HTMLElement | null;
+  onCopyMoveFolder?: (folderId: number, folderName: string) => void;
 }> = ({
   onSelectFolder,
   onHierarchyChange,
@@ -81,6 +82,7 @@ const TreeView: React.FC<{
   onRefetchFolders,
   onRefetchStats,
   dndRootElement,
+  onCopyMoveFolder,
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
@@ -1000,6 +1002,19 @@ const TreeView: React.FC<{
                     {t("repository.folderActions.delete")}
                   </div>
                 </DropdownMenuItem>
+                {onCopyMoveFolder && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopyMoveFolder(data?.folderId ?? 0, node.data.name);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Copy className="h-4 w-4" />
+                      {t("repository.folderActions.copyMove")}
+                    </div>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

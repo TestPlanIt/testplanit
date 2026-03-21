@@ -4308,7 +4308,8 @@
       "errorCount": "{count} case(s) failed",
       "viewInTargetProject": "View in target project",
       "close": "Close",
-      "failed": "Failed"
+      "failed": "Failed",
+      "folderMode": "Folder \"{folderName}\" — {caseCount, plural, one {# case} other {# cases}}"
     }
   },
   "issues": {

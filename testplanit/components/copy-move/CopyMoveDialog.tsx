@@ -33,10 +33,12 @@ import {
   useFindManyProjects,
   useFindFirstRepositories,
   useCreateRepositoryFolders,
+  useFindManyRepositoryCases,
 } from "~/lib/hooks";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
+import type { FolderTreeNode } from "~/workers/copyMoveWorker";
 
 import { useCopyMoveJob } from "./useCopyMoveJob";
 
@@ -47,6 +49,8 @@ export interface CopyMoveDialogProps {
   onOpenChange: (open: boolean) => void;
   selectedCaseIds: number[];
   sourceProjectId: number;
+  sourceFolderId?: number;    // triggers folder-tree mode
+  sourceFolderName?: string;  // display name for folder
 }
 
 export function CopyMoveDialog({
@@ -54,6 +58,8 @@ export function CopyMoveDialog({
   onOpenChange,
   selectedCaseIds,
   sourceProjectId,
+  sourceFolderId,
+  sourceFolderName,
 }: CopyMoveDialogProps) {
   const t = useTranslations("components.copyMove");
 
@@ -108,6 +114,88 @@ export function CopyMoveDialog({
   );
 
   const { mutateAsync: createFolder } = useCreateRepositoryFolders();
+
+  // ── Folder-mode data hooks ────────────────────────────────────────────────
+  const { data: sourceFolders = [] } = useFindManyRepositoryFolders(
+    sourceFolderId
+      ? {
+          where: { projectId: sourceProjectId, isDeleted: false },
+          select: { id: true, name: true, parentId: true, order: true },
+        }
+      : undefined,
+    { enabled: !!sourceFolderId }
+  );
+
+  // Collect all folder IDs in the subtree rooted at sourceFolderId
+  const folderSubtreeIds = useMemo(() => {
+    if (!sourceFolderId || sourceFolders.length === 0) return [];
+    const ids: number[] = [];
+    const queue: number[] = [sourceFolderId];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      ids.push(current);
+      const children = sourceFolders.filter(
+        (f: any) => f.parentId === current
+      );
+      for (const child of children) queue.push(child.id);
+    }
+    return ids;
+  }, [sourceFolderId, sourceFolders]);
+
+  const { data: folderCases = [] } = useFindManyRepositoryCases(
+    folderSubtreeIds.length > 0
+      ? {
+          where: { folderId: { in: folderSubtreeIds }, isDeleted: false },
+          select: { id: true, folderId: true },
+        }
+      : undefined,
+    { enabled: folderSubtreeIds.length > 0 }
+  );
+
+  // In folder mode use cases from subtree; otherwise fall back to selectedCaseIds
+  const effectiveCaseIds = useMemo(() => {
+    if (sourceFolderId && folderCases.length > 0) {
+      return folderCases.map((c: any) => c.id);
+    }
+    return selectedCaseIds;
+  }, [sourceFolderId, folderCases, selectedCaseIds]);
+
+  // Build BFS-ordered folder tree for submit
+  const folderTree: FolderTreeNode[] | undefined = useMemo(() => {
+    if (!sourceFolderId || sourceFolders.length === 0) return undefined;
+
+    const casesByFolder = new Map<number, number[]>();
+    for (const c of folderCases) {
+      const fId = (c as any).folderId as number;
+      if (!casesByFolder.has(fId)) casesByFolder.set(fId, []);
+      casesByFolder.get(fId)!.push((c as any).id as number);
+    }
+
+    const nodes: FolderTreeNode[] = [];
+    const queue: Array<{ folderId: number; parentLocalKey: string | null }> = [
+      { folderId: sourceFolderId, parentLocalKey: null },
+    ];
+    while (queue.length > 0) {
+      const { folderId, parentLocalKey } = queue.shift()!;
+      const folder = sourceFolders.find((f: any) => f.id === folderId);
+      if (!folder) continue;
+      const localKey = String(folderId);
+      nodes.push({
+        localKey,
+        sourceFolderId: folderId,
+        name: (folder as any).name as string,
+        parentLocalKey,
+        caseIds: casesByFolder.get(folderId) ?? [],
+      });
+      const children = sourceFolders
+        .filter((f: any) => f.parentId === folderId)
+        .sort((a: any, b: any) => a.order - b.order);
+      for (const child of children) {
+        queue.push({ folderId: (child as any).id, parentLocalKey: localKey });
+      }
+    }
+    return nodes.length > 0 ? nodes : undefined;
+  }, [sourceFolderId, sourceFolders, folderCases]);
 
   const handleCreateFolder = useCallback(async () => {
     if (!newFolderName.trim() || !targetProjectId || !targetRepo?.id) return;
@@ -191,12 +279,12 @@ export function CopyMoveDialog({
     (op: "copy" | "move", projId: number) => {
       job.runPreflight({
         operation: op,
-        caseIds: selectedCaseIds,
+        caseIds: effectiveCaseIds,
         sourceProjectId,
         targetProjectId: projId,
       });
     },
-    [job, selectedCaseIds, sourceProjectId]
+    [job, effectiveCaseIds, sourceProjectId]
   );
 
   // ── Step navigation ──────────────────────────────────────────────────────
@@ -214,7 +302,7 @@ export function CopyMoveDialog({
     if (!targetProjectId || !targetFolderId) return;
     job.submit({
       operation,
-      caseIds: selectedCaseIds,
+      caseIds: effectiveCaseIds,
       sourceProjectId,
       targetProjectId,
       targetFolderId,
@@ -226,6 +314,7 @@ export function CopyMoveDialog({
       targetRepositoryId: job.preflight?.targetRepositoryId,
       targetDefaultWorkflowStateId: job.preflight?.targetDefaultWorkflowStateId,
       targetTemplateId: job.preflight?.targetTemplateId,
+      folderTree,
     });
     setStep("progress");
   };
@@ -308,6 +397,14 @@ export function CopyMoveDialog({
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{stepDescriptions[step]}</DialogDescription>
+          {sourceFolderName && (
+            <p className="text-sm text-muted-foreground">
+              {t("folderMode", {
+                folderName: sourceFolderName,
+                caseCount: effectiveCaseIds.length,
+              })}
+            </p>
+          )}
         </DialogHeader>
 
         {/* Progress indicator — matches ImportCasesWizard pattern */}
@@ -685,7 +782,7 @@ export function CopyMoveDialog({
                   <p className="text-xs text-muted-foreground">
                     {t("progressText", {
                       processed: job.progress?.processed ?? 0,
-                      total: job.progress?.total ?? selectedCaseIds.length,
+                      total: job.progress?.total ?? effectiveCaseIds.length,
                     })}
                   </p>
                 </div>

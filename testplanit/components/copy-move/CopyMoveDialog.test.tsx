@@ -77,6 +77,7 @@ vi.mock("~/lib/hooks", () => ({
   useFindManyProjects: () => mockProjectsData,
   useFindFirstRepositories: () => ({ data: { id: 100 } }),
   useCreateRepositoryFolders: () => ({ mutateAsync: vi.fn().mockResolvedValue({ id: 99 }) }),
+  useFindManyRepositoryCases: () => ({ data: [] }),
 }));
 
 vi.mock("~/lib/hooks/repository-folders", () => ({

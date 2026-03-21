@@ -81,6 +81,10 @@ interface CasesProps {
   };
   /** When provided, restricts displayed cases to these IDs (from Elasticsearch search) */
   searchResultIds?: number[] | null;
+  /** When set, opens CopyMoveDialog in folder mode for the given folder */
+  copyMoveFolderId?: number | null;
+  copyMoveFolderName?: string;
+  onCopyMoveFolderDialogClose?: () => void;
 }
 
 export default function Cases({
@@ -102,6 +106,9 @@ export default function Cases({
   selectedFolderCaseCount,
   overridePagination,
   searchResultIds,
+  copyMoveFolderId,
+  copyMoveFolderName,
+  onCopyMoveFolderDialogClose,
 }: CasesProps) {
   const t = useTranslations();
 
@@ -197,6 +204,10 @@ export default function Cases({
   >([]);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   const [isCopyMoveOpen, setIsCopyMoveOpen] = useState(false);
+
+  // Folder copy/move state — driven by props from ProjectRepository
+  const [activeCopyMoveFolderId, setActiveCopyMoveFolderId] = useState<number | null>(null);
+  const [activeCopyMoveFolderName, setActiveCopyMoveFolderName] = useState<string>("");
 
   // Store rowSelection state here, it will be controlled by the useLayoutEffect
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -2771,6 +2782,15 @@ export default function Cases({
     setIsCopyMoveOpen(true);
   }, []);
 
+  // Open dialog in folder mode when copyMoveFolderId prop is set by ProjectRepository
+  useEffect(() => {
+    if (copyMoveFolderId != null) {
+      setActiveCopyMoveFolderId(copyMoveFolderId);
+      setActiveCopyMoveFolderName(copyMoveFolderName ?? "");
+      setIsCopyMoveOpen(true);
+    }
+  }, [copyMoveFolderId, copyMoveFolderName]);
+
   const columns: CustomColumnDef<any>[] = useMemo(() => {
     return getColumns(
       userPreferencesForColumns,
@@ -3563,9 +3583,18 @@ export default function Cases({
       {isValidProjectId && (
         <CopyMoveDialog
           open={isCopyMoveOpen}
-          onOpenChange={setIsCopyMoveOpen}
+          onOpenChange={(open) => {
+            setIsCopyMoveOpen(open);
+            if (!open && activeCopyMoveFolderId != null) {
+              setActiveCopyMoveFolderId(null);
+              setActiveCopyMoveFolderName("");
+              onCopyMoveFolderDialogClose?.();
+            }
+          }}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           sourceProjectId={projectId}
+          sourceFolderId={activeCopyMoveFolderId ?? undefined}
+          sourceFolderName={activeCopyMoveFolderName || undefined}
         />
       )}
 
