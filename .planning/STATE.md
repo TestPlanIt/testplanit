@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-last_updated: "2026-03-21T20:46:48.126Z"
-last_activity: "2026-03-21 — Completed 36-01: admin prompt editor LLM integration and model override selectors"
+last_updated: "2026-03-21T20:57:50.501Z"
+last_activity: "2026-03-21 — Completed 38-02: resolveIntegration unit tests for 3-tier resolution chain"
 progress:
   total_phases: 25
   completed_phases: 21
-  total_plans: 52
-  completed_plans: 55
+  total_plans: 55
+  completed_plans: 56
 ---
 
 # State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 ## Current Position
 
-Phase: 36 of 39 (Admin Prompt Editor LLM Selector)
-Plan: 36-01 complete
-Status: In progress — Phase 36 Plan 01 complete
-Last activity: 2026-03-21 — Completed 36-01: admin prompt editor LLM integration and model override selectors
+Phase: 38 of 39 (Export Import and Testing)
+Plan: 38-02 complete
+Status: In progress — Phase 38 Plan 02 complete
+Last activity: 2026-03-21 — Completed 38-02: resolveIntegration unit tests for 3-tier resolution chain
 
 ## Accumulated Context
 
@@ -43,6 +43,7 @@ Last activity: 2026-03-21 — Completed 36-01: admin prompt editor LLM integrati
 - [Phase 36-admin-prompt-editor-llm-selector]: llmIntegrations column uses Map<id,name> to collect unique integrations across prompts, renders three states: Project Default (size 0), single badge (size 1), N LLMs badge (size N)
 - [Phase 36-01]: __clear__ sentinel used in Select to represent null since shadcn Select cannot natively represent null values; clearing integration also clears modelOverride
 - [Phase 37-project-ai-models-overrides]: FeatureOverrides component fetches its own LlmFeatureConfig and PromptConfigPrompt data — page.tsx passes only integrations and projectDefaultIntegration as props
+- [Phase 38-02]: Use createForWorker (not getInstance) for resolveIntegration tests to avoid singleton state bleed between tests
 
 ### Pending Todos
 
