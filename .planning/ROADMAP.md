@@ -401,7 +401,7 @@ Plans:
   2. Resolution chain enforced: project LlmFeatureConfig > PromptConfigPrompt.llmIntegrationId > project default integration
   3. When neither per-prompt nor project override exists, the project default LLM integration is used (existing behavior preserved)
   4. Existing projects and prompt configs without per-prompt LLM assignments continue to work without any changes
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 35-01-PLAN.md -- Extend PromptResolver to surface per-prompt LLM info and update LlmManager to apply the resolution chain
