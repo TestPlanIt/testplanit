@@ -77,7 +77,7 @@
 
 - [x] **Phase 34: Schema and Migration** - PromptConfigPrompt supports per-prompt LLM assignment with DB migration (completed 2026-03-21)
 - [x] **Phase 35: Resolution Chain** - PromptResolver and LlmManager implement the full three-level LLM resolution chain with backward compatibility (completed 2026-03-21)
-- [ ] **Phase 36: Admin Prompt Editor LLM Selector** - Admin can assign an LLM integration and model override to each prompt, with mixed-integration indicator
+- [x] **Phase 36: Admin Prompt Editor LLM Selector** - Admin can assign an LLM integration and model override to each prompt, with mixed-integration indicator (completed 2026-03-21)
 - [ ] **Phase 37: Project AI Models Overrides** - Project admins can set per-feature LLM overrides with resolution chain display
 - [ ] **Phase 38: Export/Import and Testing** - Per-prompt LLM fields in export/import, unit tests for resolution chain, E2E tests for admin and project UI
 - [ ] **Phase 39: Documentation** - User-facing docs for per-prompt LLM configuration and project-level overrides
@@ -509,7 +509,7 @@ Phases execute in numeric order: 34 → 35 → 36 + 37 (parallel) → 38 → 39
 | 33. Copy/Move Test Coverage | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
 | 34. Schema and Migration | 1/1 | Complete    | 2026-03-21 | - |
 | 35. Resolution Chain | 1/1 | Complete    | 2026-03-21 | - |
-| 36. Admin Prompt Editor LLM Selector | v0.17.0 | 0/TBD | Not started | - |
+| 36. Admin Prompt Editor LLM Selector | 2/2 | Complete   | 2026-03-21 | - |
 | 37. Project AI Models Overrides | v0.17.0 | 0/1 | Planning complete | - |
 | 38. Export/Import and Testing | v0.17.0 | 0/TBD | Not started | - |
 | 39. Documentation | v0.17.0 | 0/TBD | Not started | - |

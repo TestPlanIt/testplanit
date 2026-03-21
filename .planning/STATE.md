@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-last_updated: "2026-03-21T20:32:26.236Z"
+last_updated: "2026-03-21T20:42:48.105Z"
 last_activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 requirements)
 progress:
   total_phases: 25
-  completed_phases: 19
-  total_plans: 49
-  completed_plans: 52
+  completed_phases: 20
+  total_plans: 52
+  completed_plans: 54
 ---
 
 # State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 ## Current Position
 
-Phase: 34 of 39 (Schema and Migration)
-Plan: Not started
-Status: Roadmap complete — ready for Phase 34
-Last activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 requirements)
+Phase: 36 of 39 (Admin Prompt Editor LLM Selector)
+Plan: 36-01 complete
+Status: In progress — Phase 36 Plan 01 complete
+Last activity: 2026-03-21 — Completed 36-01: admin prompt editor LLM integration and model override selectors
 
 ## Accumulated Context
 
@@ -40,6 +40,7 @@ Last activity: 2026-03-21 — Milestone v0.17.0 roadmap created (6 phases, 19 re
 - [Phase 34-schema-and-migration]: Index added on PromptConfigPrompt.llmIntegrationId following LlmFeatureConfig established pattern
 - [Phase 35-resolution-chain]: Prompt resolver called before resolveIntegration so per-prompt LLM fields are available to the 3-tier chain
 - [Phase 35-resolution-chain]: Explicit-integration endpoints (chat, test, admin chat) unchanged - client-specified integration takes precedence over server-side resolution chain
+- [Phase 36-admin-prompt-editor-llm-selector]: llmIntegrations column uses Map<id,name> to collect unique integrations across prompts, renders three states: Project Default (size 0), single badge (size 1), N LLMs badge (size N)
 
 ### Pending Todos
 

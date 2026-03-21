@@ -23,7 +23,7 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 - [ ] **ADMIN-01**: Admin prompt editor shows per-feature LLM integration selector dropdown alongside existing prompt fields
 - [ ] **ADMIN-02**: Admin prompt editor shows per-feature model override selector (models from selected integration)
-- [ ] **ADMIN-03**: Prompt config list/table shows summary indicator when prompts use mixed LLM integrations
+- [x] **ADMIN-03**: Prompt config list/table shows summary indicator when prompts use mixed LLM integrations
 
 ### Project Settings UI
 
@@ -77,7 +77,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMPAT-01 | Phase 35 | Complete |
 | ADMIN-01 | Phase 36 | Pending |
 | ADMIN-02 | Phase 36 | Pending |
-| ADMIN-03 | Phase 36 | Pending |
+| ADMIN-03 | Phase 36 | Complete |
 | PROJ-01 | Phase 37 | Pending |
 | PROJ-02 | Phase 37 | Pending |
 | EXPORT-01 | Phase 38 | Pending |
