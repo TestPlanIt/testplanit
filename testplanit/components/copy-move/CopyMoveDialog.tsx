@@ -62,6 +62,8 @@ export function CopyMoveDialog({
   sourceFolderName,
 }: CopyMoveDialogProps) {
   const t = useTranslations("components.copyMove");
+  const tNav = useTranslations("navigation.projects.dropdown");
+  const tRepo = useTranslations("repository.cases.importWizard.page1");
 
   // ── Wizard state ────────────────────────────────────────────────────────
   const [step, setStep] = useState<WizardStep>("target");
@@ -473,7 +475,7 @@ export function CopyMoveDialog({
                       )}
                     </div>
                   )}
-                  placeholder={t("selectProject")}
+                  placeholder={tNav("selectProject")}
                   disabled={projectsLoading}
                   className="w-full"
                 />
@@ -499,7 +501,7 @@ export function CopyMoveDialog({
                           <span className="truncate">{f.name}</span>
                         </div>
                       )}
-                      placeholder={t("selectFolder")}
+                      placeholder={tRepo("selectFolderPlaceholder")}
                       disabled={foldersLoading}
                       className="w-full"
                     />
