@@ -2,35 +2,35 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
-status: completed
-stopped_at: Completed 33-02-PLAN.md (Phase 33 Plan 02 — folder copy/move UI entry point)
-last_updated: "2026-03-21T03:34:32.880Z"
-last_activity: "2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation"
+status: in_progress
+stopped_at: ""
+last_updated: "2026-03-21"
+last_activity: "2026-03-21 — Resumed v2.0 milestone (phases 10-24 remaining)"
 progress:
-  total_phases: 27
-  completed_phases: 23
-  total_plans: 59
-  completed_plans: 62
-  percent: 24
+  total_phases: 16
+  completed_phases: 1
+  total_plans: 0
+  completed_plans: 0
+  percent: 6
 ---
 
 # State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-20)
+See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Teams can plan, execute, and track testing across manual and automated workflows in one place — with AI assistance to reduce repetitive work.
-**Current focus:** v0.17.0 Copy/Move Test Cases Between Projects — Phase 29 in progress
+**Current focus:** v2.0 Comprehensive Test Coverage — Phase 10 next
 
 ## Current Position
 
-Phase: 29 of 32 (API Endpoints and Access Control)
-Plan: 02 of 04 (complete)
-Status: Phase 29 plan 02 complete — ready for 29-03
-Last activity: 2026-03-20 — Completed 29-02: status polling and cancel endpoints with multi-tenant isolation
+Phase: 10 of 24 (Test Case Repository E2E Tests)
+Plan: Not started
+Status: Milestone resumed — ready for Phase 10
+Last activity: 2026-03-21 — Resumed v2.0 milestone
 
-Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plans complete)
+Progress: [█░░░░░░░░░] 6% (v2.0 phases — 1 of 16 complete)
 
 ## Performance Metrics
 
