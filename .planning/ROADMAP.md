@@ -415,7 +415,7 @@ Plans:
   2. Admin can select an LLM integration and model override for a prompt; the selection is saved when the prompt config is submitted
   3. On returning to the editor, the previously saved per-prompt LLM assignment is pre-selected in the selector
   4. Prompt config list/table shows a summary indicator when prompts within a config use mixed LLM integrations
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 36-01-PLAN.md -- Add LLM integration and model override selectors to PromptFeatureSection accordion and wire save/load
