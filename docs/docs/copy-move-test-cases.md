@@ -36,6 +36,14 @@ There are three ways to open the Copy/Move dialog:
 2. Open the bulk edit modal.
 3. Click **Copy/Move** in the modal footer.
 
+#### Folder Context Menu
+
+1. Right-click any folder in the folder tree.
+2. Select **Copy / Move** from the context menu.
+3. The dialog opens with all test cases from that folder and its subfolders pre-selected.
+
+This copies or moves the **entire folder tree** — including all subfolders (even empty ones) and every test case within them. The folder hierarchy is recreated in the target project, and each test case is placed in its corresponding folder.
+
 ### Step-by-Step Workflow
 
 The dialog walks you through three steps.
@@ -109,6 +117,16 @@ If the selected cases reference shared step groups, you can choose how those gro
 | Source case | Unchanged | Removed from source project (soft-deleted) |
 | Version history | Starts at version 1 with no prior history | Full version history preserved |
 | Reversibility | Delete the copy to undo | Cannot be undone automatically |
+
+## Folder Tree Copy/Move
+
+When you copy or move a folder from the folder context menu, the entire folder tree is transferred:
+
+- **All subfolders** are recreated in the target project under your chosen destination folder, preserving the parent-child hierarchy.
+- **Empty subfolders** are included — the full structure is preserved even if some folders contain no test cases.
+- **Test cases stay in their folders** — each case is placed in the corresponding recreated folder, not flattened into a single folder.
+- **Folder name collisions** are handled by merging: if a folder with the same name already exists at the same level in the target, cases are added to the existing folder rather than creating a duplicate.
+- **Move operations** soft-delete both the source test cases and the source folders after all cases are successfully transferred.
 
 ## Troubleshooting
 

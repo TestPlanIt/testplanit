@@ -693,4 +693,211 @@ test.describe("Copy-Move API Endpoints", () => {
       }
     });
   });
+
+  // ─── Folder Tree Copy/Move ─────────────────────────────────────────────────
+
+  test.describe("folder tree copy/move", () => {
+    test("submit with folderTree creates folders and maps cases to correct folders", async ({
+      request,
+      baseURL,
+      apiHelper,
+    }) => {
+      // Create source project with a folder containing a subfolder
+      const sourceProject = await apiHelper.createProject({
+        name: `FolderTreeSource ${Date.now()}`,
+      });
+      const sourceFolder = await apiHelper.createFolder(
+        sourceProject.id,
+        "ParentFolder"
+      );
+      const sourceSubfolder = await apiHelper.createFolder(
+        sourceProject.id,
+        "ChildFolder",
+        sourceFolder.id
+      );
+
+      // Create a test case in each folder
+      const parentCase = await apiHelper.createTestCase(sourceProject.id, {
+        name: `ParentCase ${Date.now()}`,
+        folderId: sourceFolder.id,
+      });
+      const childCase = await apiHelper.createTestCase(sourceProject.id, {
+        name: `ChildCase ${Date.now()}`,
+        folderId: sourceSubfolder.id,
+      });
+
+      // Create target project with a destination folder
+      const targetProject = await apiHelper.createProject({
+        name: `FolderTreeTarget ${Date.now()}`,
+      });
+      const targetFolder = await apiHelper.createFolder(
+        targetProject.id,
+        "Destination"
+      );
+
+      // Build the folderTree in BFS order
+      const folderTree = [
+        {
+          localKey: String(sourceFolder.id),
+          sourceFolderId: sourceFolder.id,
+          name: "ParentFolder",
+          parentLocalKey: null,
+          caseIds: [parentCase.id],
+        },
+        {
+          localKey: String(sourceSubfolder.id),
+          sourceFolderId: sourceSubfolder.id,
+          name: "ChildFolder",
+          parentLocalKey: String(sourceFolder.id),
+          caseIds: [childCase.id],
+        },
+      ];
+
+      // Submit with folderTree
+      const submitRes = await request.post(
+        `${baseURL}/api/repository/copy-move`,
+        {
+          data: {
+            operation: "copy",
+            caseIds: [parentCase.id, childCase.id],
+            sourceProjectId: sourceProject.id,
+            targetProjectId: targetProject.id,
+            targetFolderId: targetFolder.id,
+            conflictResolution: "skip",
+            sharedStepGroupResolution: "reuse",
+            folderTree,
+          },
+        }
+      );
+
+      // Accept 200 (queue available) or 503 (queue unavailable)
+      expect([200, 503]).toContain(submitRes.status());
+
+      if (submitRes.status() === 200) {
+        const { jobId } = await submitRes.json();
+        expect(jobId).toBeTruthy();
+
+        // Poll until done
+        const { state, result } = await pollUntilDone(
+          request,
+          baseURL!,
+          jobId
+        );
+        expect(state).toBe("completed");
+        expect(result.copiedCount).toBe(2);
+
+        // Verify folders were created under the target destination
+        const foldersRes = await request.get(
+          `${baseURL}/api/model/repositoryFolders/findMany?q=${encodeURIComponent(
+            JSON.stringify({
+              where: {
+                projectId: targetProject.id,
+                parentId: targetFolder.id,
+                isDeleted: false,
+              },
+            })
+          )}`
+        );
+        const targetFolders = await foldersRes.json();
+        const parentFolderInTarget = targetFolders.find(
+          (f: any) => f.name === "ParentFolder"
+        );
+        expect(parentFolderInTarget).toBeTruthy();
+
+        // Verify subfolder exists under the recreated parent
+        if (parentFolderInTarget) {
+          const subFoldersRes = await request.get(
+            `${baseURL}/api/model/repositoryFolders/findMany?q=${encodeURIComponent(
+              JSON.stringify({
+                where: {
+                  projectId: targetProject.id,
+                  parentId: parentFolderInTarget.id,
+                  isDeleted: false,
+                },
+              })
+            )}`
+          );
+          const subFolders = await subFoldersRes.json();
+          const childFolderInTarget = subFolders.find(
+            (f: any) => f.name === "ChildFolder"
+          );
+          expect(childFolderInTarget).toBeTruthy();
+        }
+      }
+    });
+
+    test("move with folderTree soft-deletes source folders", async ({
+      request,
+      baseURL,
+      apiHelper,
+    }) => {
+      const sourceProject = await apiHelper.createProject({
+        name: `FolderMoveSource ${Date.now()}`,
+      });
+      const sourceFolder = await apiHelper.createFolder(
+        sourceProject.id,
+        "MoveFolder"
+      );
+      const testCase = await apiHelper.createTestCase(sourceProject.id, {
+        name: `MoveCase ${Date.now()}`,
+        folderId: sourceFolder.id,
+      });
+
+      const targetProject = await apiHelper.createProject({
+        name: `FolderMoveTarget ${Date.now()}`,
+      });
+      const targetFolder = await apiHelper.createFolder(
+        targetProject.id,
+        "MoveDest"
+      );
+
+      const folderTree = [
+        {
+          localKey: String(sourceFolder.id),
+          sourceFolderId: sourceFolder.id,
+          name: "MoveFolder",
+          parentLocalKey: null,
+          caseIds: [testCase.id],
+        },
+      ];
+
+      const submitRes = await request.post(
+        `${baseURL}/api/repository/copy-move`,
+        {
+          data: {
+            operation: "move",
+            caseIds: [testCase.id],
+            sourceProjectId: sourceProject.id,
+            targetProjectId: targetProject.id,
+            targetFolderId: targetFolder.id,
+            conflictResolution: "skip",
+            sharedStepGroupResolution: "reuse",
+            folderTree,
+          },
+        }
+      );
+
+      expect([200, 503]).toContain(submitRes.status());
+
+      if (submitRes.status() === 200) {
+        const { jobId } = await submitRes.json();
+        const { state, result } = await pollUntilDone(
+          request,
+          baseURL!,
+          jobId
+        );
+        expect(state).toBe("completed");
+        expect(result.movedCount).toBe(1);
+
+        // Verify source folder is soft-deleted
+        const sourceFolderRes = await request.get(
+          `${baseURL}/api/model/repositoryFolders/findFirst?q=${encodeURIComponent(
+            JSON.stringify({ where: { id: sourceFolder.id } })
+          )}`
+        );
+        const updatedSourceFolder = await sourceFolderRes.json();
+        expect(updatedSourceFolder.isDeleted).toBe(true);
+      }
+    });
+  });
 });
