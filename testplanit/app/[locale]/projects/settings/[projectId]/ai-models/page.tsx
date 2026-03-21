@@ -34,6 +34,7 @@ import {
   useFindManyProjectLlmIntegration, useUpdateProjects
 } from "~/lib/hooks";
 import { useFindManyPromptConfig } from "~/lib/hooks/prompt-config";
+import { FeatureOverrides } from "./feature-overrides";
 import { LlmIntegrationsList } from "./llm-integrations-list";
 
 export default function ProjectAiModelsPage() {
@@ -266,6 +267,13 @@ export default function ProjectAiModelsPage() {
               </Select>
             </CardContent>
           </Card>
+
+          <FeatureOverrides
+            projectId={projectId}
+            integrations={llmIntegrations ?? []}
+            projectDefaultIntegration={currentIntegration}
+            promptConfigId={project.promptConfigId ?? null}
+          />
         </CardContent>
       </Card>
     </main>
