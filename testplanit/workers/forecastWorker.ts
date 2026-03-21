@@ -6,6 +6,7 @@ import {
   MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
+import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import valkeyConnection from "../lib/valkey";
 import {
@@ -190,6 +191,21 @@ const processor = async (job: Job) => {
               data: { isCompleted: true },
             });
             successCount++;
+            // Audit logging — record milestone auto-completion
+            captureAuditEvent({
+              action: "UPDATE",
+              entityType: "Milestones",
+              entityId: String(milestone.id),
+              entityName: milestone.name,
+              projectId: milestone.projectId,
+              metadata: {
+                source: "forecast-worker:auto-complete",
+                jobId: job.id,
+              },
+              changes: {
+                isCompleted: { old: false, new: true },
+              },
+            }).catch(() => {});
             console.log(
               `Job ${job.id}: Auto-completed milestone "${milestone.name}" (ID: ${milestone.id})`
             );
