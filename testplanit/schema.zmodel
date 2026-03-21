@@ -2420,6 +2420,7 @@ model LlmIntegration {
     llmResponseCaches      LlmResponseCache[]
     projectLlmIntegrations ProjectLlmIntegration[]
     llmRateLimits          LlmRateLimit[]
+    promptConfigPrompts    PromptConfigPrompt[]
 
     @@unique([name])
     @@index([provider, status])
@@ -3202,11 +3203,15 @@ model PromptConfigPrompt {
     temperature     Float        @default(0.7)
     maxOutputTokens Int          @default(2048)
     variables       Json         @default("[]") // Array of variable definitions
+    llmIntegrationId  Int?
+    llmIntegration    LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+    modelOverride     String?          // Override model name for this specific prompt
     createdAt       DateTime     @default(now()) @db.Timestamptz(6)
     updatedAt       DateTime     @updatedAt
 
     @@unique([promptConfigId, feature])
     @@index([feature])
+    @@index([llmIntegrationId])
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
