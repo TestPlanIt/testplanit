@@ -700,56 +700,58 @@ test.describe("Copy-Move API Endpoints", () => {
     test("submit with folderTree creates folders and maps cases to correct folders", async ({
       request,
       baseURL,
-      apiHelper,
+      api: apiHelper,
     }) => {
       // Create source project with a folder containing a subfolder
-      const sourceProject = await apiHelper.createProject({
-        name: `FolderTreeSource ${Date.now()}`,
-      });
-      const sourceFolder = await apiHelper.createFolder(
-        sourceProject.id,
+      const sourceProjectId = await apiHelper.createProject(
+        `FolderTreeSource ${Date.now()}`
+      );
+      const sourceFolderId = await apiHelper.createFolder(
+        sourceProjectId,
         "ParentFolder"
       );
-      const sourceSubfolder = await apiHelper.createFolder(
-        sourceProject.id,
+      const sourceSubfolderId = await apiHelper.createFolder(
+        sourceProjectId,
         "ChildFolder",
-        sourceFolder.id
+        sourceFolderId
       );
 
       // Create a test case in each folder
-      const parentCase = await apiHelper.createTestCase(sourceProject.id, {
-        name: `ParentCase ${Date.now()}`,
-        folderId: sourceFolder.id,
-      });
-      const childCase = await apiHelper.createTestCase(sourceProject.id, {
-        name: `ChildCase ${Date.now()}`,
-        folderId: sourceSubfolder.id,
-      });
+      const parentCaseId = await apiHelper.createTestCase(
+        sourceProjectId,
+        sourceFolderId,
+        `ParentCase ${Date.now()}`
+      );
+      const childCaseId = await apiHelper.createTestCase(
+        sourceProjectId,
+        sourceSubfolderId,
+        `ChildCase ${Date.now()}`
+      );
 
       // Create target project with a destination folder
-      const targetProject = await apiHelper.createProject({
-        name: `FolderTreeTarget ${Date.now()}`,
-      });
-      const targetFolder = await apiHelper.createFolder(
-        targetProject.id,
+      const targetProjectId = await apiHelper.createProject(
+        `FolderTreeTarget ${Date.now()}`
+      );
+      const targetFolderId = await apiHelper.createFolder(
+        targetProjectId,
         "Destination"
       );
 
       // Build the folderTree in BFS order
       const folderTree = [
         {
-          localKey: String(sourceFolder.id),
-          sourceFolderId: sourceFolder.id,
+          localKey: String(sourceFolderId),
+          sourceFolderId: sourceFolderId,
           name: "ParentFolder",
           parentLocalKey: null,
-          caseIds: [parentCase.id],
+          caseIds: [parentCaseId],
         },
         {
-          localKey: String(sourceSubfolder.id),
-          sourceFolderId: sourceSubfolder.id,
+          localKey: String(sourceSubfolderId),
+          sourceFolderId: sourceSubfolderId,
           name: "ChildFolder",
-          parentLocalKey: String(sourceFolder.id),
-          caseIds: [childCase.id],
+          parentLocalKey: String(sourceFolderId),
+          caseIds: [childCaseId],
         },
       ];
 
@@ -759,10 +761,10 @@ test.describe("Copy-Move API Endpoints", () => {
         {
           data: {
             operation: "copy",
-            caseIds: [parentCase.id, childCase.id],
-            sourceProjectId: sourceProject.id,
-            targetProjectId: targetProject.id,
-            targetFolderId: targetFolder.id,
+            caseIds: [parentCaseId, childCaseId],
+            sourceProjectId: sourceProjectId,
+            targetProjectId: targetProjectId,
+            targetFolderId: targetFolderId,
             conflictResolution: "skip",
             sharedStepGroupResolution: "reuse",
             folderTree,
@@ -791,8 +793,8 @@ test.describe("Copy-Move API Endpoints", () => {
           `${baseURL}/api/model/repositoryFolders/findMany?q=${encodeURIComponent(
             JSON.stringify({
               where: {
-                projectId: targetProject.id,
-                parentId: targetFolder.id,
+                projectId: targetProjectId,
+                parentId: targetFolderId,
                 isDeleted: false,
               },
             })
@@ -810,7 +812,7 @@ test.describe("Copy-Move API Endpoints", () => {
             `${baseURL}/api/model/repositoryFolders/findMany?q=${encodeURIComponent(
               JSON.stringify({
                 where: {
-                  projectId: targetProject.id,
+                  projectId: targetProjectId,
                   parentId: parentFolderInTarget.id,
                   isDeleted: false,
                 },
@@ -829,35 +831,36 @@ test.describe("Copy-Move API Endpoints", () => {
     test("move with folderTree soft-deletes source folders", async ({
       request,
       baseURL,
-      apiHelper,
+      api: apiHelper,
     }) => {
-      const sourceProject = await apiHelper.createProject({
-        name: `FolderMoveSource ${Date.now()}`,
-      });
-      const sourceFolder = await apiHelper.createFolder(
-        sourceProject.id,
+      const sourceProjectId = await apiHelper.createProject(
+        `FolderMoveSource ${Date.now()}`
+      );
+      const sourceFolderId = await apiHelper.createFolder(
+        sourceProjectId,
         "MoveFolder"
       );
-      const testCase = await apiHelper.createTestCase(sourceProject.id, {
-        name: `MoveCase ${Date.now()}`,
-        folderId: sourceFolder.id,
-      });
+      const testCaseId = await apiHelper.createTestCase(
+        sourceProjectId,
+        sourceFolderId,
+        `MoveCase ${Date.now()}`
+      );
 
-      const targetProject = await apiHelper.createProject({
-        name: `FolderMoveTarget ${Date.now()}`,
-      });
-      const targetFolder = await apiHelper.createFolder(
-        targetProject.id,
+      const targetProjectId = await apiHelper.createProject(
+        `FolderMoveTarget ${Date.now()}`
+      );
+      const targetFolderId = await apiHelper.createFolder(
+        targetProjectId,
         "MoveDest"
       );
 
       const folderTree = [
         {
-          localKey: String(sourceFolder.id),
-          sourceFolderId: sourceFolder.id,
+          localKey: String(sourceFolderId),
+          sourceFolderId: sourceFolderId,
           name: "MoveFolder",
           parentLocalKey: null,
-          caseIds: [testCase.id],
+          caseIds: [testCaseId],
         },
       ];
 
@@ -866,10 +869,10 @@ test.describe("Copy-Move API Endpoints", () => {
         {
           data: {
             operation: "move",
-            caseIds: [testCase.id],
-            sourceProjectId: sourceProject.id,
-            targetProjectId: targetProject.id,
-            targetFolderId: targetFolder.id,
+            caseIds: [testCaseId],
+            sourceProjectId: sourceProjectId,
+            targetProjectId: targetProjectId,
+            targetFolderId: targetFolderId,
             conflictResolution: "skip",
             sharedStepGroupResolution: "reuse",
             folderTree,
@@ -892,7 +895,7 @@ test.describe("Copy-Move API Endpoints", () => {
         // Verify source folder is soft-deleted
         const sourceFolderRes = await request.get(
           `${baseURL}/api/model/repositoryFolders/findFirst?q=${encodeURIComponent(
-            JSON.stringify({ where: { id: sourceFolder.id } })
+            JSON.stringify({ where: { id: sourceFolderId } })
           )}`
         );
         const updatedSourceFolder = await sourceFolderRes.json();

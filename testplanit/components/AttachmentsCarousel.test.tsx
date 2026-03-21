@@ -1,3 +1,4 @@
+import type { Attachments } from "@prisma/client";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AttachmentsCarousel } from "./AttachmentsCarousel";
@@ -124,21 +125,27 @@ vi.mock("@/components/ui/textarea", () => ({
   ),
 }));
 
-function makeAttachment(overrides: Partial<any> = {}) {
+let idCounter = 1;
+function makeAttachment(overrides: Record<string, unknown> = {}): Attachments {
   return {
-    id: `att-${Date.now()}-${Math.random()}`,
+    id: idCounter++,
     name: "test-image.png",
     url: "uploads/test-image.png",
     size: BigInt(1024),
     note: "A test attachment",
     isDeleted: false,
+    mimeType: "image/png",
     createdAt: new Date("2026-01-15"),
     createdById: "user-1",
+    testCaseId: null,
+    sessionId: null,
+    sessionResultsId: null,
+    testRunsId: null,
+    testRunResultsId: null,
     testRunStepResultId: null,
-    repositoryCaseId: null,
-    sessionResultId: null,
+    junitTestResultId: null,
     ...overrides,
-  };
+  } as Attachments;
 }
 
 describe("AttachmentsCarousel", () => {
