@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -21,13 +22,14 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderOpen,
+  FolderPlus,
   Loader2,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFindManyProjects } from "~/lib/hooks";
+import { useFindManyProjects, useFindFirstRepositories, useCreateRepositoryFolders } from "~/lib/hooks";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -64,6 +66,8 @@ export function CopyMoveDialog({
   >("reuse");
   const [autoAssignTemplates, setAutoAssignTemplates] = useState(true);
   const [errorsExpanded, setErrorsExpanded] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
   // ── Job hook ─────────────────────────────────────────────────────────────
   const job = useCopyMoveJob();
@@ -86,6 +90,40 @@ export function CopyMoveDialog({
       { enabled: !!targetProjectId }
     );
 
+  // Target project's repository (needed for creating folders)
+  const { data: targetRepo } = useFindFirstRepositories(
+    {
+      where: { projectId: targetProjectId ?? 0, isActive: true, isDeleted: false },
+      select: { id: true },
+    },
+    { enabled: !!targetProjectId },
+  );
+
+  const { mutateAsync: createFolder } = useCreateRepositoryFolders();
+
+  const handleCreateFolder = useCallback(async () => {
+    if (!newFolderName.trim() || !targetProjectId || !targetRepo?.id) return;
+    setIsCreatingFolder(true);
+    try {
+      const maxOrder = folders.reduce((max, f) => Math.max(max, (f as any).order ?? 0), 0);
+      const created = await createFolder({
+        data: {
+          name: newFolderName.trim(),
+          projectId: targetProjectId,
+          repositoryId: targetRepo.id,
+          parentId: targetFolderId, // nest under currently selected folder, or root if none
+          order: maxOrder + 1,
+        },
+      });
+      setTargetFolderId(created.id);
+      setNewFolderName("");
+    } catch (err) {
+      console.error("Failed to create folder:", err);
+    } finally {
+      setIsCreatingFolder(false);
+    }
+  }, [newFolderName, targetProjectId, targetRepo, targetFolderId, folders, createFolder]);
+
   // ── Reset on open ────────────────────────────────────────────────────────
   useEffect(() => {
     if (open) {
@@ -97,6 +135,8 @@ export function CopyMoveDialog({
       setSharedStepGroupResolution("reuse");
       setAutoAssignTemplates(true);
       setErrorsExpanded(false);
+      setNewFolderName("");
+      setIsCreatingFolder(false);
       job.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -341,6 +381,30 @@ export function CopyMoveDialog({
                     disabled={foldersLoading}
                     className="w-full"
                   />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      placeholder={t("newFolderPlaceholder")}
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleCreateFolder();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreateFolder}
+                      disabled={!newFolderName.trim() || isCreatingFolder || !targetRepo?.id}
+                    >
+                      <FolderPlus className="h-4 w-4" />
+                      {t("createFolder")}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

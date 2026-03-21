@@ -4271,6 +4271,8 @@
       "completed": "(Complete)",
       "targetFolder": "Target Folder",
       "selectFolder": "Select a folder...",
+      "newFolderPlaceholder": "New folder name...",
+      "createFolder": "Create",
       "next": "Next",
       "operation": "Operation",
       "operationCopy": "Copy",

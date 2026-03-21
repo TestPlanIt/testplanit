@@ -75,6 +75,8 @@ vi.mock("./useCopyMoveJob", () => ({
 
 vi.mock("~/lib/hooks", () => ({
   useFindManyProjects: () => mockProjectsData,
+  useFindFirstRepositories: () => ({ data: { id: 100 } }),
+  useCreateRepositoryFolders: () => ({ mutateAsync: vi.fn().mockResolvedValue({ id: 99 }) }),
 }));
 
 vi.mock("~/lib/hooks/repository-folders", () => ({
