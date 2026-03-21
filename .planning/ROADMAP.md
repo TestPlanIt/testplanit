@@ -445,7 +445,7 @@ Plans:
   3. Unit tests pass for LlmFeatureConfig override behavior (create, update, delete, fallback)
   4. E2E tests pass for admin prompt editor LLM integration selector workflow (select, save, reload, clear)
   5. E2E tests pass for project AI Models per-feature override workflow (assign, clear, verify effective LLM)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 - [ ] 38-01-PLAN.md -- Add per-prompt LLM fields to prompt config export/import
