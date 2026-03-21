@@ -213,9 +213,9 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
   "0.17.0": {
     title: "New Feature: Copy/Move Test Cases",
     message: `
-      <p>Copy or move test cases — and entire folder trees — directly between projects. No more export/import cycles.</p>
+      <p>Copy/Move test cases and entire folder trees directly between projects. No more export/import cycles.</p>
       <ul>
-        <li>Select cases or right-click a folder and choose <strong>Copy/Move</strong></li>
+        <li>Select cases or use the folder menu to choose <strong>Copy/Move</strong></li>
         <li>Template and workflow compatibility handled automatically</li>
         <li>Steps, custom fields, tags, issue links, and attachments all carry over</li>
       </ul>
