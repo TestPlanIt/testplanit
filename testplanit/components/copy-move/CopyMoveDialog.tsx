@@ -111,7 +111,7 @@ export function CopyMoveDialog({
           name: newFolderName.trim(),
           project: { connect: { id: targetProjectId } },
           repository: { connect: { id: targetRepo.id } },
-          parentId: targetFolderId, // nest under currently selected folder, or root if none
+          ...(targetFolderId ? { parent: { connect: { id: targetFolderId } } } : {}),
           order: maxOrder + 1,
         },
       });
