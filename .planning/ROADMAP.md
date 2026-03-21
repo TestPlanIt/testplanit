@@ -460,7 +460,7 @@ Plans:
   1. Documentation explains how admins configure per-prompt LLM integrations in the admin prompt editor
   2. Documentation explains how project admins set per-feature LLM overrides on the AI Models settings page
   3. Documentation describes the resolution chain precedence (project override > prompt-level > project default)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 39-01-PLAN.md -- Write user-facing documentation for per-prompt LLM configuration and project-level overrides
