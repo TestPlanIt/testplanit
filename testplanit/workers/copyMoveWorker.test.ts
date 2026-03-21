@@ -61,6 +61,11 @@ const mockPrisma = {
     deleteMany: vi.fn(),
   },
   repositoryCaseVersions: { findMany: vi.fn() },
+  repositoryFolders: {
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    updateMany: vi.fn(),
+  },
   templateCaseAssignment: { findMany: vi.fn() },
   caseFieldAssignment: { findMany: vi.fn() },
   $transaction: vi.fn((fn: Function) => fn(mockTx)),
@@ -248,6 +253,11 @@ describe("CopyMoveWorker", () => {
     // Reset $transaction so it uses the default fn(mockTx) behavior after rollback tests
     mockPrisma.$transaction.mockReset();
     mockPrisma.$transaction.mockImplementation((fn: Function) => fn(mockTx));
+
+    // Folder mocks: no existing folders by default
+    mockPrisma.repositoryFolders.findFirst.mockResolvedValue(null);
+    mockPrisma.repositoryFolders.create.mockResolvedValue({ id: 5000 });
+    mockPrisma.repositoryFolders.updateMany.mockResolvedValue({ count: 0 });
 
     // Transaction: create returns new case with id 1001
     mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
@@ -1123,6 +1133,195 @@ describe("CopyMoveWorker", () => {
 
       // The processor should NOT throw — ES failures are non-fatal
       await expect(processor(makeMockJob() as Job)).resolves.toBeDefined();
+    });
+  });
+
+  // ─── Folder tree operations ───────────────────────────────────────────────
+
+  describe("folder tree operations", () => {
+    // Sample folder tree: root folder (100) with one child (101)
+    // case 1 is in folder 100, case 2 is in folder 101
+    const sampleFolderTree = [
+      { localKey: "100", sourceFolderId: 100, name: "Root Folder", parentLocalKey: null, caseIds: [1] },
+      { localKey: "101", sourceFolderId: 101, name: "Child Folder", parentLocalKey: "100", caseIds: [2] },
+    ];
+
+    const sourceCase1 = { ...mockSourceCase, id: 1, folderId: 100 };
+    const sourceCase2 = { ...mockSourceCase, id: 2, folderId: 101, tags: [], issues: [], attachments: [], caseFieldValues: [], steps: [], comments: [] };
+
+    const folderTreeJobData = {
+      ...baseCopyJobData,
+      caseIds: [1, 2],
+      folderTree: sampleFolderTree,
+    };
+
+    beforeEach(() => {
+      mockPrisma.repositoryCases.findMany.mockResolvedValue([sourceCase1, sourceCase2]);
+
+      // Folder creation: root → id 5001, child → id 5002
+      let folderCreateCount = 0;
+      mockPrisma.repositoryFolders.create.mockImplementation(() => {
+        folderCreateCount++;
+        return Promise.resolve({ id: folderCreateCount === 1 ? 5001 : 5002 });
+      });
+
+      // Case creation: case 1 → 1001, case 2 → 1002
+      let caseCreateCount = 0;
+      mockTx.repositoryCases.create.mockImplementation(() => {
+        caseCreateCount++;
+        return Promise.resolve({ id: caseCreateCount === 1 ? 1001 : 1002 });
+      });
+    });
+
+    it("recreates folders in target project in BFS order and places cases in corresponding folders", async () => {
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ id: "job-tree-1", data: folderTreeJobData }) as Job);
+
+      // Root folder created with parentId = targetFolderId (2000)
+      expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: "Root Folder",
+            parentId: 2000,
+            projectId: 20,
+            repositoryId: 200,
+          }),
+        })
+      );
+
+      // Child folder created with parentId = 5001 (the newly created root folder ID)
+      expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: "Child Folder",
+            parentId: 5001,
+            projectId: 20,
+            repositoryId: 200,
+          }),
+        })
+      );
+
+      // Case 1 (folderId 100) goes into root target folder 5001
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            folderId: 5001,
+          }),
+        })
+      );
+
+      // Case 2 (folderId 101) goes into child target folder 5002
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            folderId: 5002,
+          }),
+        })
+      );
+    });
+
+    it("merges into existing folder when a folder with the same name exists under the same parent", async () => {
+      // Simulate root folder already existing in target
+      mockPrisma.repositoryFolders.findFirst.mockImplementation((args: any) => {
+        if (args?.where?.name === "Root Folder" && args?.where?.parentId === 2000) {
+          return Promise.resolve({ id: 9999 }); // existing folder
+        }
+        return Promise.resolve(null);
+      });
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ id: "job-tree-merge", data: folderTreeJobData }) as Job);
+
+      // Only child folder should be created; root was merged (reused existing id 9999)
+      const createCalls = mockPrisma.repositoryFolders.create.mock.calls;
+      const rootCreateCall = createCalls.find((call: any[]) => call[0]?.data?.name === "Root Folder");
+      expect(rootCreateCall).toBeUndefined();
+
+      // Child folder created with parentId = 9999 (the merged root folder)
+      expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: "Child Folder",
+            parentId: 9999,
+          }),
+        })
+      );
+    });
+
+    it("soft-deletes source folders after all cases processed on move", async () => {
+      const moveTreeJobData = {
+        ...folderTreeJobData,
+        operation: "move" as const,
+      };
+
+      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ id: "job-tree-move", data: moveTreeJobData }) as Job);
+
+      // Source folders should be soft-deleted
+      expect(mockPrisma.repositoryFolders.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [100, 101] } },
+        data: { isDeleted: true },
+      });
+    });
+
+    it("version history folderId references point to the recreated target folder", async () => {
+      const moveTreeJobData = {
+        ...folderTreeJobData,
+        operation: "move" as const,
+      };
+
+      const mockVersionForCase1 = {
+        id: 10, version: 1, repositoryCaseId: 1,
+        projectId: 10, repositoryId: 100, folderId: 100,
+        staticProjectId: 10, staticProjectName: "Source",
+        folderName: "Root Folder", templateId: 30, templateName: "Default",
+        name: "Test Case 1", stateId: 5, stateName: "Draft",
+        estimate: null, forecastManual: null, forecastAutomated: null,
+        order: 0, createdAt: new Date("2024-01-01"),
+        creatorId: "user-1", creatorName: "User One",
+        automated: false, isArchived: false, isDeleted: false,
+        steps: [], tags: [], issues: [], links: [], attachments: [],
+      };
+
+      mockPrisma.repositoryCaseVersions.findMany.mockImplementation((args: any) => {
+        if (args?.where?.repositoryCaseId === 1) return Promise.resolve([mockVersionForCase1]);
+        return Promise.resolve([]);
+      });
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ id: "job-tree-ver", data: moveTreeJobData }) as Job);
+
+      // Version row for case 1 should have folderId = 5001 (target root folder), not 2000 (flat targetFolderId)
+      expect(mockTx.repositoryCaseVersions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            folderId: 5001,
+          }),
+        })
+      );
+    });
+
+    it("when folderTree is undefined, existing flat behavior is unchanged (regression guard)", async () => {
+      // Use default single source case with no folderTree
+      mockPrisma.repositoryCases.findMany.mockResolvedValue([mockSourceCase]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      // No folder creation calls should have been made
+      expect(mockPrisma.repositoryFolders.create).not.toHaveBeenCalled();
+      expect(mockPrisma.repositoryFolders.updateMany).not.toHaveBeenCalled();
+
+      // Case should be created with the flat targetFolderId (2000)
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            folderId: 2000,
+          }),
+        })
+      );
     });
   });
 });
