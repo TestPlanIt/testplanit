@@ -9,9 +9,9 @@ Requirements for per-prompt LLM configuration (issue #128). Each maps to roadmap
 
 ### Schema
 
-- [ ] **SCHEMA-01**: PromptConfigPrompt supports an optional `llmIntegrationId` foreign key to LlmIntegration
-- [ ] **SCHEMA-02**: PromptConfigPrompt supports an optional `modelOverride` string field
-- [ ] **SCHEMA-03**: Database migration adds both fields with proper FK constraint and index
+- [x] **SCHEMA-01**: PromptConfigPrompt supports an optional `llmIntegrationId` foreign key to LlmIntegration
+- [x] **SCHEMA-02**: PromptConfigPrompt supports an optional `modelOverride` string field
+- [x] **SCHEMA-03**: Database migration adds both fields with proper FK constraint and index
 
 ### Prompt Resolution
 
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHEMA-01 | Phase 34 | Pending |
-| SCHEMA-02 | Phase 34 | Pending |
-| SCHEMA-03 | Phase 34 | Pending |
+| SCHEMA-01 | Phase 34 | Complete |
+| SCHEMA-02 | Phase 34 | Complete |
+| SCHEMA-03 | Phase 34 | Complete |
 | RESOLVE-01 | Phase 35 | Pending |
 | RESOLVE-02 | Phase 35 | Pending |
 | RESOLVE-03 | Phase 35 | Pending |

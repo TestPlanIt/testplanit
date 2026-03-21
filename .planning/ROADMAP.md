@@ -75,7 +75,7 @@
 
 **Milestone Goal:** Allow each prompt within a PromptConfig to use a different LLM integration, so teams can optimize cost, speed, and quality per AI feature. Resolution chain: Project LlmFeatureConfig > PromptConfigPrompt > Project default.
 
-- [ ] **Phase 34: Schema and Migration** - PromptConfigPrompt supports per-prompt LLM assignment with DB migration
+- [x] **Phase 34: Schema and Migration** - PromptConfigPrompt supports per-prompt LLM assignment with DB migration (completed 2026-03-21)
 - [ ] **Phase 35: Resolution Chain** - PromptResolver and LlmManager implement the full three-level LLM resolution chain with backward compatibility
 - [ ] **Phase 36: Admin Prompt Editor LLM Selector** - Admin can assign an LLM integration and model override to each prompt, with mixed-integration indicator
 - [ ] **Phase 37: Project AI Models Overrides** - Project admins can set per-feature LLM overrides with resolution chain display
@@ -507,7 +507,7 @@ Phases execute in numeric order: 34 → 35 → 36 + 37 (parallel) → 38 → 39
 | 31. Copy/Move UI Entry Points | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
 | 32. Progress and Result Feedback | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
 | 33. Copy/Move Test Coverage | v0.17.0-copy-move | TBD | Complete | 2026-03-21 |
-| 34. Schema and Migration | v0.17.0 | 0/1 | Planning complete | - |
+| 34. Schema and Migration | 1/1 | Complete    | 2026-03-21 | - |
 | 35. Resolution Chain | v0.17.0 | 0/TBD | Not started | - |
 | 36. Admin Prompt Editor LLM Selector | v0.17.0 | 0/TBD | Not started | - |
 | 37. Project AI Models Overrides | v0.17.0 | 0/TBD | Not started | - |
