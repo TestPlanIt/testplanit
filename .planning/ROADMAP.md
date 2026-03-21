@@ -482,7 +482,11 @@ Plans:
   2. The folder hierarchy is recreated in the target project preserving parent-child structure
   3. All cases within the folder tree are processed with the same compatibility handling as individual case copy/move
   4. User can choose to place the copied/moved tree inside an existing folder or at root level in the target
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 33-01-PLAN.md -- Worker folder tree recreation, API schema extension, and unit tests
+- [ ] 33-02-PLAN.md -- TreeView context menu entry, CopyMoveDialog folder mode, and wiring
 
 ---
 
@@ -525,3 +529,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 30. Dialog UI and Polling | v0.17.0 | 2/2 | Complete | 2026-03-20 |
 | 31. Entry Points | 1/1 | Complete    | 2026-03-20 | - |
 | 32. Testing and Documentation | 2/2 | Complete    | 2026-03-20 | - |
+| 33. Folder Tree Copy/Move | v0.17.0 | 0/2 | Planning complete | - |
