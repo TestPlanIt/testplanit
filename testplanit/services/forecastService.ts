@@ -145,15 +145,21 @@ export async function updateRepositoryCaseForecast(
         : null;
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
 
-    // 5. Update all cases in the group (using updateMany can reset fields to defaults, so we use individual updates)
-    for (const caseId of uniqueCaseIds) {
-      await prisma.repositoryCases.update({
-        where: { id: caseId },
-        data: {
-          forecastManual: avgManual,
-          forecastAutomated: avgJunit,
-        },
-      });
+    // 5. Update only cases whose forecast values have actually changed
+    const currentForecasts = await prisma.repositoryCases.findMany({
+      where: { id: { in: uniqueCaseIds } },
+      select: { id: true, forecastManual: true, forecastAutomated: true },
+    });
+    for (const current of currentForecasts) {
+      if (current.forecastManual !== avgManual || current.forecastAutomated !== avgJunit) {
+        await prisma.repositoryCases.update({
+          where: { id: current.id },
+          data: {
+            forecastManual: avgManual,
+            forecastAutomated: avgJunit,
+          },
+        });
+      }
     }
     if (process.env.DEBUG_FORECAST) {
       console.log(
@@ -280,14 +286,20 @@ export async function updateTestRunForecast(
       .map((trc) => trc.repositoryCaseId);
 
     if (!repositoryCaseIdsToForecast.length) {
-      // No applicable cases in this test run, so clear its forecasts
-      await prisma.testRuns.update({
+      // No applicable cases in this test run, so clear its forecasts (only if not already null)
+      const currentRun = await prisma.testRuns.findUnique({
         where: { id: testRunId },
-        data: {
-          forecastManual: null,
-          forecastAutomated: null,
-        },
+        select: { forecastManual: true, forecastAutomated: true },
       });
+      if (currentRun && (currentRun.forecastManual !== null || currentRun.forecastAutomated !== null)) {
+        await prisma.testRuns.update({
+          where: { id: testRunId },
+          data: {
+            forecastManual: null,
+            forecastAutomated: null,
+          },
+        });
+      }
       if (process.env.DEBUG_FORECAST) {
         console.log(
           `Cleared forecasts for TestRun ID: ${testRunId} as no pending/untested cases were found`
@@ -319,16 +331,30 @@ export async function updateTestRunForecast(
       }
     }
 
-    // 5. Update the TestRun record
-    await prisma.testRuns.update({
+    // 5. Update the TestRun record only if values have changed
+    const newForecastManual = hasManual ? totalForecastManual : null;
+    const newForecastAutomated = hasAutomated
+      ? parseFloat(totalForecastAutomated.toFixed(3))
+      : null;
+
+    const currentRun = await prisma.testRuns.findUnique({
       where: { id: testRunId },
-      data: {
-        forecastManual: hasManual ? totalForecastManual : null,
-        forecastAutomated: hasAutomated
-          ? parseFloat(totalForecastAutomated.toFixed(3))
-          : null,
-      },
+      select: { forecastManual: true, forecastAutomated: true },
     });
+
+    if (
+      !currentRun ||
+      currentRun.forecastManual !== newForecastManual ||
+      currentRun.forecastAutomated !== newForecastAutomated
+    ) {
+      await prisma.testRuns.update({
+        where: { id: testRunId },
+        data: {
+          forecastManual: newForecastManual,
+          forecastAutomated: newForecastAutomated,
+        },
+      });
+    }
 
     if (process.env.DEBUG_FORECAST) {
       console.log(
