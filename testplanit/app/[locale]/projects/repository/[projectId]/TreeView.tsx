@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { RepositoryFolders } from "@prisma/client";
 import {
-  ChevronRight, Copy, Folder,
+  ArrowRightLeft, ChevronRight, Folder,
   FolderOpen, MoreVertical,
   SquarePenIcon,
   Trash2Icon
@@ -995,13 +995,7 @@ const TreeView: React.FC<{
                     };
                     setDeleteModalState({ open: true, node: folderNode });
                   }}
-                  className="text-destructive"
                 >
-                  <div className="flex items-center gap-2">
-                    <Trash2Icon className="h-4 w-4" />
-                    {t("repository.folderActions.delete")}
-                  </div>
-                </DropdownMenuItem>
                 {onCopyMoveFolder && (
                   <DropdownMenuItem
                     onClick={(e) => {
@@ -1010,11 +1004,32 @@ const TreeView: React.FC<{
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <Copy className="h-4 w-4" />
-                      {t("repository.folderActions.copyMove")}
+                      <ArrowRightLeft className="h-4 w-4" />
+                      {t("repository.cases.copyMoveToProject")}
                     </div>
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem
+                  onClick={() => {
+                    const folderNode: FolderNode = {
+                      id: data?.folderId || 0,
+                      parent: data?.parentId ?? 0,
+                      text: node.data.name,
+                      droppable: true,
+                      hasChildren: !!node.children?.length,
+                      data: data?.originalData,
+                      directCaseCount: data?.directCaseCount || 0,
+                      totalCaseCount: data?.totalCaseCount || 0,
+                    };
+                    setDeleteModalState({ open: true, node: folderNode });
+                  }}
+                  className="text-destructive"
+                >
+                  <div className="flex items-center gap-2">
+                    <Trash2Icon className="h-4 w-4" />
+                    {t("repository.folderActions.delete")}
+                  </div>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
