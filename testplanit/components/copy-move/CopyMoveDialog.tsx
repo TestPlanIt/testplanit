@@ -704,7 +704,7 @@ export function CopyMoveDialog({
                   )}
                   {targetProjectId && (
                     <Link
-                      href={`/projects/repository/${targetProjectId}`}
+                      href={`/projects/repository/${targetProjectId}${targetFolderId ? `?node=${targetFolderId}&view=folders` : ""}`}
                       className="text-sm text-primary underline"
                     >
                       {t("viewInTargetProject")}
