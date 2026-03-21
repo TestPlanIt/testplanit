@@ -1437,6 +1437,7 @@ model LlmIntegration {
   llmResponseCaches      LlmResponseCache[]
   projectLlmIntegrations ProjectLlmIntegration[]
   llmRateLimits          LlmRateLimit[]
+  promptConfigPrompts    PromptConfigPrompt[]
 
   @@unique([name])
   @@index([provider, status])
@@ -1765,20 +1766,24 @@ model PromptConfig {
 }
 
 model PromptConfigPrompt {
-  id              String       @id() @default(cuid())
-  promptConfigId  String
-  promptConfig    PromptConfig @relation(fields: [promptConfigId], references: [id], onDelete: Cascade)
-  feature         String
-  systemPrompt    String       @db.Text()
-  userPrompt      String       @db.Text()
-  temperature     Float        @default(0.7)
-  maxOutputTokens Int          @default(2048)
-  variables       Json         @default("[]")
-  createdAt       DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt       DateTime     @updatedAt()
+  id               String          @id() @default(cuid())
+  promptConfigId   String
+  promptConfig     PromptConfig    @relation(fields: [promptConfigId], references: [id], onDelete: Cascade)
+  feature          String
+  systemPrompt     String          @db.Text()
+  userPrompt       String          @db.Text()
+  temperature      Float           @default(0.7)
+  maxOutputTokens  Int             @default(2048)
+  variables        Json            @default("[]")
+  llmIntegrationId Int?
+  llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+  modelOverride    String?
+  createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt()
 
   @@unique([promptConfigId, feature])
   @@index([feature])
+  @@index([llmIntegrationId])
 }
 
 model OllamaModelRegistry {

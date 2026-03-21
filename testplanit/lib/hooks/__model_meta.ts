@@ -5137,6 +5137,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'llmIntegration',
+                }, promptConfigPrompts: {
+                    name: "promptConfigPrompts",
+                    type: "PromptConfigPrompt",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'llmIntegration',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -6506,6 +6512,24 @@ const metadata: ModelMeta = {
                     name: "variables",
                     type: "Json",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": "[]" }] }],
+                }, llmIntegrationId: {
+                    name: "llmIntegrationId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'llmIntegration',
+                }, llmIntegration: {
+                    name: "llmIntegration",
+                    type: "LlmIntegration",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'promptConfigPrompts',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "llmIntegrationId" },
+                }, modelOverride: {
+                    name: "modelOverride",
+                    type: "String",
+                    isOptional: true,
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",

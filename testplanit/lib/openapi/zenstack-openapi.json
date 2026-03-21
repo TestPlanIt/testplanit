@@ -1848,6 +1848,8 @@
           "temperature",
           "maxOutputTokens",
           "variables",
+          "llmIntegrationId",
+          "modelOverride",
           "createdAt",
           "updatedAt"
         ]
@@ -7537,6 +7539,12 @@
             "items": {
               "$ref": "#/components/schemas/LlmRateLimit"
             }
+          },
+          "promptConfigPrompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptConfigPrompt"
+            }
           }
         },
         "required": [
@@ -9061,6 +9069,36 @@
             "type": "integer"
           },
           "variables": {},
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "llmIntegration": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegration"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -41288,6 +41326,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitListRelationFilter"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptListRelationFilter"
           }
         }
       },
@@ -41348,6 +41389,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitOrderByRelationAggregateInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptOrderByRelationAggregateInput"
           }
         }
       },
@@ -41480,6 +41524,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitListRelationFilter"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptListRelationFilter"
           }
         }
       },
@@ -51325,6 +51372,32 @@
           "variables": {
             "$ref": "#/components/schemas/JsonFilter"
           },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -51354,6 +51427,19 @@
               },
               {
                 "$ref": "#/components/schemas/PromptConfigWhereInput"
+              }
+            ]
+          },
+          "llmIntegration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationNullableScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationWhereInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -51386,6 +51472,26 @@
           "variables": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "createdAt": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -51394,6 +51500,9 @@
           },
           "promptConfig": {
             "$ref": "#/components/schemas/PromptConfigOrderByWithRelationInput"
+          },
+          "llmIntegration": {
+            "$ref": "#/components/schemas/LlmIntegrationOrderByWithRelationInput"
           }
         }
       },
@@ -51501,6 +51610,32 @@
           "variables": {
             "$ref": "#/components/schemas/JsonFilter"
           },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -51530,6 +51665,19 @@
               },
               {
                 "$ref": "#/components/schemas/PromptConfigWhereInput"
+              }
+            ]
+          },
+          "llmIntegration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationNullableScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationWhereInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -51642,6 +51790,32 @@
           },
           "variables": {
             "$ref": "#/components/schemas/JsonWithAggregatesFilter"
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "createdAt": {
             "oneOf": [
@@ -78161,6 +78335,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -78270,6 +78447,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -83975,6 +84155,16 @@
               {}
             ]
           },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -83985,6 +84175,9 @@
           },
           "promptConfig": {
             "$ref": "#/components/schemas/PromptConfigCreateNestedOneWithoutPromptsInput"
+          },
+          "llmIntegration": {
+            "$ref": "#/components/schemas/LlmIntegrationCreateNestedOneWithoutPromptConfigPromptsInput"
           }
         },
         "required": [
@@ -84065,6 +84258,19 @@
               {}
             ]
           },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -84089,6 +84295,9 @@
           },
           "promptConfig": {
             "$ref": "#/components/schemas/PromptConfigUpdateOneRequiredWithoutPromptsNestedInput"
+          },
+          "llmIntegration": {
+            "$ref": "#/components/schemas/LlmIntegrationUpdateOneWithoutPromptConfigPromptsNestedInput"
           }
         }
       },
@@ -84122,6 +84331,26 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
             ]
           },
           "createdAt": {
@@ -84209,6 +84438,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -97007,6 +97249,20 @@
           }
         }
       },
+      "PromptConfigPromptListRelationFilter": {
+        "type": "object",
+        "properties": {
+          "every": {
+            "$ref": "#/components/schemas/PromptConfigPromptWhereInput"
+          },
+          "some": {
+            "$ref": "#/components/schemas/PromptConfigPromptWhereInput"
+          },
+          "none": {
+            "$ref": "#/components/schemas/PromptConfigPromptWhereInput"
+          }
+        }
+      },
       "OllamaModelRegistryOrderByRelationAggregateInput": {
         "type": "object",
         "properties": {
@@ -97016,6 +97272,14 @@
         }
       },
       "LlmRateLimitOrderByRelationAggregateInput": {
+        "type": "object",
+        "properties": {
+          "_count": {
+            "$ref": "#/components/schemas/SortOrder"
+          }
+        }
+      },
+      "PromptConfigPromptOrderByRelationAggregateInput": {
         "type": "object",
         "properties": {
           "_count": {
@@ -98251,28 +98515,6 @@
           },
           "_max": {
             "$ref": "#/components/schemas/NestedFloatFilter"
-          }
-        }
-      },
-      "PromptConfigPromptListRelationFilter": {
-        "type": "object",
-        "properties": {
-          "every": {
-            "$ref": "#/components/schemas/PromptConfigPromptWhereInput"
-          },
-          "some": {
-            "$ref": "#/components/schemas/PromptConfigPromptWhereInput"
-          },
-          "none": {
-            "$ref": "#/components/schemas/PromptConfigPromptWhereInput"
-          }
-        }
-      },
-      "PromptConfigPromptOrderByRelationAggregateInput": {
-        "type": "object",
-        "properties": {
-          "_count": {
-            "$ref": "#/components/schemas/SortOrder"
           }
         }
       },
@@ -177887,6 +178129,62 @@
           }
         }
       },
+      "PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateManyLlmIntegrationInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
       "LlmProviderConfigUncheckedCreateNestedOneWithoutLlmIntegrationInput": {
         "type": "object",
         "properties": {
@@ -178238,6 +178536,62 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/LlmRateLimitWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateManyLlmIntegrationInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
                 }
               }
             ]
@@ -179191,6 +179545,153 @@
           }
         }
       },
+      "PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpsertWithWhereUniqueWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUpsertWithWhereUniqueWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateManyLlmIntegrationInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateWithWhereUniqueWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUpdateWithWhereUniqueWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithWhereWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithWhereWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
       "LlmProviderConfigUncheckedUpdateOneWithoutLlmIntegrationNestedInput": {
         "type": "object",
         "properties": {
@@ -180124,6 +180625,153 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/LlmRateLimitScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpsertWithWhereUniqueWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUpsertWithWhereUniqueWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateManyLlmIntegrationInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateWithWhereUniqueWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUpdateWithWhereUniqueWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithWhereWithoutLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithWhereWithoutLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
                 }
               }
             ]
@@ -186738,6 +187386,27 @@
           }
         }
       },
+      "LlmIntegrationCreateNestedOneWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationCreateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedCreateWithoutPromptConfigPromptsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/LlmIntegrationCreateOrConnectWithoutPromptConfigPromptsInput"
+          },
+          "connect": {
+            "$ref": "#/components/schemas/LlmIntegrationWhereUniqueInput"
+          }
+        }
+      },
       "PromptConfigUpdateOneRequiredWithoutPromptsNestedInput": {
         "type": "object",
         "properties": {
@@ -186770,6 +187439,63 @@
               },
               {
                 "$ref": "#/components/schemas/PromptConfigUncheckedUpdateWithoutPromptsInput"
+              }
+            ]
+          }
+        }
+      },
+      "LlmIntegrationUpdateOneWithoutPromptConfigPromptsNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationCreateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedCreateWithoutPromptConfigPromptsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/LlmIntegrationCreateOrConnectWithoutPromptConfigPromptsInput"
+          },
+          "upsert": {
+            "$ref": "#/components/schemas/LlmIntegrationUpsertWithoutPromptConfigPromptsInput"
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationWhereInput"
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationWhereInput"
+              }
+            ]
+          },
+          "connect": {
+            "$ref": "#/components/schemas/LlmIntegrationWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUpdateToOneWithWhereWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUpdateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedUpdateWithoutPromptConfigPromptsInput"
               }
             ]
           }
@@ -333318,6 +334044,168 @@
           "data"
         ]
       },
+      "PromptConfigPromptCreateWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "userPrompt": {
+            "type": "string"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "maxOutputTokens": {
+            "type": "integer"
+          },
+          "variables": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "promptConfig": {
+            "$ref": "#/components/schemas/PromptConfigCreateNestedOneWithoutPromptsInput"
+          }
+        },
+        "required": [
+          "feature",
+          "systemPrompt",
+          "userPrompt",
+          "promptConfig"
+        ]
+      },
+      "PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "promptConfigId": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "userPrompt": {
+            "type": "string"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "maxOutputTokens": {
+            "type": "integer"
+          },
+          "variables": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "promptConfigId",
+          "feature",
+          "systemPrompt",
+          "userPrompt"
+        ]
+      },
+      "PromptConfigPromptCreateOrConnectWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "PromptConfigPromptCreateManyLlmIntegrationInputEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateManyLlmIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptCreateManyLlmIntegrationInput"
+                }
+              }
+            ]
+          },
+          "skipDuplicates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "LlmProviderConfigUpsertWithoutLlmIntegrationInput": {
         "type": "object",
         "properties": {
@@ -334713,6 +335601,241 @@
           }
         }
       },
+      "PromptConfigPromptUpsertWithWhereUniqueWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateWithoutLlmIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateWithoutLlmIntegrationInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptCreateWithoutLlmIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateWithoutLlmIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "update",
+          "create"
+        ]
+      },
+      "PromptConfigPromptUpdateWithWhereUniqueWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/PromptConfigPromptWhereUniqueInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateWithoutLlmIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateWithoutLlmIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "PromptConfigPromptUpdateManyWithWhereWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUpdateManyMutationInput"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "PromptConfigPromptScalarWhereInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "feature": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "systemPrompt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "userPrompt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "temperature": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FloatFilter"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "maxOutputTokens": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "variables": {
+            "$ref": "#/components/schemas/JsonFilter"
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
       "ProjectsCreateWithoutProjectLlmIntegrationsInput": {
         "type": "object",
         "properties": {
@@ -335133,6 +336256,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -335200,6 +336326,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -335899,6 +337028,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -336010,6 +337142,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -367318,6 +368453,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -367385,6 +368523,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -367566,6 +368707,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -367677,6 +368821,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -367709,6 +368856,16 @@
               {}
             ]
           },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -367716,6 +368873,9 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "llmIntegration": {
+            "$ref": "#/components/schemas/LlmIntegrationCreateNestedOneWithoutPromptConfigPromptsInput"
           }
         },
         "required": [
@@ -367751,6 +368911,26 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
             ]
           },
           "createdAt": {
@@ -368272,138 +369452,6 @@
           "data"
         ]
       },
-      "PromptConfigPromptScalarWhereInput": {
-        "type": "object",
-        "properties": {
-          "AND": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
-                }
-              }
-            ]
-          },
-          "OR": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
-            }
-          },
-          "NOT": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/PromptConfigPromptScalarWhereInput"
-                }
-              }
-            ]
-          },
-          "id": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/StringFilter"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "promptConfigId": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/StringFilter"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "feature": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/StringFilter"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "systemPrompt": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/StringFilter"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "userPrompt": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/StringFilter"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "temperature": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/FloatFilter"
-              },
-              {
-                "type": "number"
-              }
-            ]
-          },
-          "maxOutputTokens": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/IntFilter"
-              },
-              {
-                "type": "integer"
-              }
-            ]
-          },
-          "variables": {
-            "$ref": "#/components/schemas/JsonFilter"
-          },
-          "createdAt": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/DateTimeFilter"
-              },
-              {
-                "type": "string",
-                "format": "date-time"
-              }
-            ]
-          },
-          "updatedAt": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/DateTimeFilter"
-              },
-              {
-                "type": "string",
-                "format": "date-time"
-              }
-            ]
-          }
-        }
-      },
       "ProjectsUpsertWithWhereUniqueWithoutPromptConfigInput": {
         "type": "object",
         "properties": {
@@ -368582,6 +369630,165 @@
               },
               {
                 "$ref": "#/components/schemas/PromptConfigUncheckedCreateWithoutPromptsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "LlmIntegrationCreateWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/LlmProvider"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IntegrationStatus"
+          },
+          "credentials": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "llmProviderConfig": {
+            "$ref": "#/components/schemas/LlmProviderConfigCreateNestedOneWithoutLlmIntegrationInput"
+          },
+          "ollamaModelRegistry": {
+            "$ref": "#/components/schemas/OllamaModelRegistryCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmRateLimits": {
+            "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          }
+        },
+        "required": [
+          "name",
+          "provider",
+          "credentials"
+        ]
+      },
+      "LlmIntegrationUncheckedCreateWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/LlmProvider"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IntegrationStatus"
+          },
+          "credentials": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "llmProviderConfig": {
+            "$ref": "#/components/schemas/LlmProviderConfigUncheckedCreateNestedOneWithoutLlmIntegrationInput"
+          },
+          "ollamaModelRegistry": {
+            "$ref": "#/components/schemas/OllamaModelRegistryUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "llmRateLimits": {
+            "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          }
+        },
+        "required": [
+          "name",
+          "provider",
+          "credentials"
+        ]
+      },
+      "LlmIntegrationCreateOrConnectWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/LlmIntegrationWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationCreateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedCreateWithoutPromptConfigPromptsInput"
               }
             ]
           }
@@ -368830,6 +370037,277 @@
           }
         }
       },
+      "LlmIntegrationUpsertWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUpdateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedUpdateWithoutPromptConfigPromptsInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationCreateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedCreateWithoutPromptConfigPromptsInput"
+              }
+            ]
+          },
+          "where": {
+            "$ref": "#/components/schemas/LlmIntegrationWhereInput"
+          }
+        },
+        "required": [
+          "update",
+          "create"
+        ]
+      },
+      "LlmIntegrationUpdateToOneWithWhereWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/LlmIntegrationWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUpdateWithoutPromptConfigPromptsInput"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationUncheckedUpdateWithoutPromptConfigPromptsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "LlmIntegrationUpdateWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "provider": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmProvider"
+              },
+              {
+                "$ref": "#/components/schemas/EnumLlmProviderFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationStatus"
+              },
+              {
+                "$ref": "#/components/schemas/EnumIntegrationStatusFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "credentials": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "llmProviderConfig": {
+            "$ref": "#/components/schemas/LlmProviderConfigUpdateOneWithoutLlmIntegrationNestedInput"
+          },
+          "ollamaModelRegistry": {
+            "$ref": "#/components/schemas/OllamaModelRegistryUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmRateLimits": {
+            "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          }
+        }
+      },
+      "LlmIntegrationUncheckedUpdateWithoutPromptConfigPromptsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "provider": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmProvider"
+              },
+              {
+                "$ref": "#/components/schemas/EnumLlmProviderFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationStatus"
+              },
+              {
+                "$ref": "#/components/schemas/EnumIntegrationStatusFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "credentials": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isDeleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "llmProviderConfig": {
+            "$ref": "#/components/schemas/LlmProviderConfigUncheckedUpdateOneWithoutLlmIntegrationNestedInput"
+          },
+          "ollamaModelRegistry": {
+            "$ref": "#/components/schemas/OllamaModelRegistryUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmUsages": {
+            "$ref": "#/components/schemas/LlmUsageUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmFeatureConfigs": {
+            "$ref": "#/components/schemas/LlmFeatureConfigUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmResponseCaches": {
+            "$ref": "#/components/schemas/LlmResponseCacheUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "projectLlmIntegrations": {
+            "$ref": "#/components/schemas/ProjectLlmIntegrationUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "llmRateLimits": {
+            "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          }
+        }
+      },
       "LlmIntegrationCreateWithoutOllamaModelRegistryInput": {
         "type": "object",
         "properties": {
@@ -368886,6 +370364,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -368953,6 +370434,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -369134,6 +370618,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -369245,6 +370732,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -369304,6 +370794,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -369371,6 +370864,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -370451,6 +371947,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -370562,6 +372061,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -372289,6 +373791,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -372356,6 +373861,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -373055,6 +374563,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -373166,6 +374677,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -373589,6 +375103,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -373656,6 +375173,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -374355,6 +375875,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -374466,6 +375989,9 @@
           },
           "llmRateLimits": {
             "$ref": "#/components/schemas/LlmRateLimitUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -374525,6 +376051,9 @@
           },
           "projectLlmIntegrations": {
             "$ref": "#/components/schemas/ProjectLlmIntegrationCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -374592,6 +376121,9 @@
           },
           "projectLlmIntegrations": {
             "$ref": "#/components/schemas/ProjectLlmIntegrationUncheckedCreateNestedManyWithoutLlmIntegrationInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedCreateNestedManyWithoutLlmIntegrationInput"
           }
         },
         "required": [
@@ -374773,6 +376305,9 @@
           },
           "projectLlmIntegrations": {
             "$ref": "#/components/schemas/ProjectLlmIntegrationUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -374884,6 +376419,9 @@
           },
           "projectLlmIntegrations": {
             "$ref": "#/components/schemas/ProjectLlmIntegrationUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
+          },
+          "promptConfigPrompts": {
+            "$ref": "#/components/schemas/PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationNestedInput"
           }
         }
       },
@@ -463111,6 +464649,64 @@
           "maxRequests"
         ]
       },
+      "PromptConfigPromptCreateManyLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "promptConfigId": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "userPrompt": {
+            "type": "string"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "maxOutputTokens": {
+            "type": "integer"
+          },
+          "variables": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "promptConfigId",
+          "feature",
+          "systemPrompt",
+          "userPrompt"
+        ]
+      },
       "OllamaModelRegistryUpdateWithoutLlmIntegrationInput": {
         "type": "object",
         "properties": {
@@ -465842,6 +467438,353 @@
               },
               {
                 "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "PromptConfigPromptUpdateWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "feature": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "systemPrompt": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "userPrompt": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "temperature": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/FloatFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "maxOutputTokens": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "variables": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "promptConfig": {
+            "$ref": "#/components/schemas/PromptConfigUpdateOneRequiredWithoutPromptsNestedInput"
+          }
+        }
+      },
+      "PromptConfigPromptUncheckedUpdateWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "feature": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "systemPrompt": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "userPrompt": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "temperature": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/FloatFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "maxOutputTokens": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "variables": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "PromptConfigPromptUncheckedUpdateManyWithoutLlmIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "promptConfigId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "feature": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "systemPrompt": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "userPrompt": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "temperature": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/FloatFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "maxOutputTokens": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "variables": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -469046,6 +470989,26 @@
               {}
             ]
           },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -469227,6 +471190,19 @@
               {}
             ]
           },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -469248,6 +471224,9 @@
                 "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
               }
             ]
+          },
+          "llmIntegration": {
+            "$ref": "#/components/schemas/LlmIntegrationUpdateOneWithoutPromptConfigPromptsNestedInput"
           }
         }
       },
@@ -469320,6 +471299,32 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -469415,6 +471420,32 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -474735,6 +476766,16 @@
               }
             ]
           },
+          "promptConfigPrompts": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptFindManyArgs"
+              }
+            ]
+          },
           "_count": {
             "oneOf": [
               {
@@ -475377,6 +477418,16 @@
               },
               {
                 "$ref": "#/components/schemas/PromptConfigDefaultArgs"
+              }
+            ]
+          },
+          "llmIntegration": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationDefaultArgs"
               }
             ]
           }
@@ -476444,6 +478495,9 @@
             "type": "boolean"
           },
           "llmRateLimits": {
+            "type": "boolean"
+          },
+          "promptConfigPrompts": {
             "type": "boolean"
           }
         }
@@ -482221,6 +484275,16 @@
               }
             ]
           },
+          "promptConfigPrompts": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/PromptConfigPromptFindManyArgs"
+              }
+            ]
+          },
           "_count": {
             "oneOf": [
               {
@@ -483419,6 +485483,22 @@
             "type": "boolean"
           },
           "variables": {
+            "type": "boolean"
+          },
+          "llmIntegrationId": {
+            "type": "boolean"
+          },
+          "llmIntegration": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/LlmIntegrationDefaultArgs"
+              }
+            ]
+          },
+          "modelOverride": {
             "type": "boolean"
           },
           "createdAt": {
@@ -494317,6 +496397,12 @@
           "variables": {
             "type": "boolean"
           },
+          "llmIntegrationId": {
+            "type": "boolean"
+          },
+          "modelOverride": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "boolean"
           },
@@ -494336,6 +496422,9 @@
           },
           "maxOutputTokens": {
             "type": "boolean"
+          },
+          "llmIntegrationId": {
+            "type": "boolean"
           }
         }
       },
@@ -494346,6 +496435,9 @@
             "type": "boolean"
           },
           "maxOutputTokens": {
+            "type": "boolean"
+          },
+          "llmIntegrationId": {
             "type": "boolean"
           }
         }
@@ -494372,6 +496464,12 @@
             "type": "boolean"
           },
           "maxOutputTokens": {
+            "type": "boolean"
+          },
+          "llmIntegrationId": {
+            "type": "boolean"
+          },
+          "modelOverride": {
             "type": "boolean"
           },
           "createdAt": {
@@ -494404,6 +496502,12 @@
             "type": "boolean"
           },
           "maxOutputTokens": {
+            "type": "boolean"
+          },
+          "llmIntegrationId": {
+            "type": "boolean"
+          },
+          "modelOverride": {
             "type": "boolean"
           },
           "createdAt": {
@@ -510014,6 +512118,26 @@
             "type": "integer"
           },
           "variables": {},
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -536935,6 +539059,12 @@
           "variables": {
             "type": "integer"
           },
+          "llmIntegrationId": {
+            "type": "integer"
+          },
+          "modelOverride": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "integer"
           },
@@ -536954,6 +539084,8 @@
           "temperature",
           "maxOutputTokens",
           "variables",
+          "llmIntegrationId",
+          "modelOverride",
           "createdAt",
           "updatedAt",
           "_all"
@@ -536981,6 +539113,16 @@
                 "type": "number"
               }
             ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
           }
         }
       },
@@ -536998,6 +539140,16 @@
             ]
           },
           "maxOutputTokens": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "llmIntegrationId": {
             "oneOf": [
               {
                 "type": "null"
@@ -537079,6 +539231,26 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },
@@ -537176,6 +539348,26 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "llmIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "modelOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },
