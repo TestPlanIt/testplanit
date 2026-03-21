@@ -981,21 +981,6 @@ const TreeView: React.FC<{
                     {t("repository.folderActions.edit")}
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    const folderNode: FolderNode = {
-                      id: data?.folderId || 0,
-                      parent: data?.parentId ?? 0,
-                      text: node.data.name,
-                      droppable: true,
-                      hasChildren: !!node.children?.length,
-                      data: data?.originalData,
-                      directCaseCount: data?.directCaseCount || 0,
-                      totalCaseCount: data?.totalCaseCount || 0,
-                    };
-                    setDeleteModalState({ open: true, node: folderNode });
-                  }}
-                >
                 {onCopyMoveFolder && (
                   <DropdownMenuItem
                     onClick={(e) => {
