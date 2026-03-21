@@ -87,6 +87,10 @@ Progress: [██░░░░░░░░] 24% (v0.17.0 phases — 4 of ~14 plan
 - [Phase 32-01]: Data verification tests skip when queue unavailable (503) to avoid false failures in CI without Redis — intentional test resilience
 - [Phase 32-01]: pollUntilDone helper polls status endpoint at 500ms intervals (up to 30 attempts) before throwing timeout
 
+### Roadmap Evolution
+
+- Phase 33 added: Folder Tree Copy/Move — support copying/moving entire folder hierarchies with their content
+
 ### Pending Todos
 
 None yet.

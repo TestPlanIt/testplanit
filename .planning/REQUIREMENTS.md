@@ -60,6 +60,13 @@ Requirements for cross-project test case copy/move. Each maps to roadmap phases.
 - [x] **TEST-03**: Unit tests verify the copy/move worker logic including error handling and partial failure recovery
 - [x] **TEST-04**: Unit tests verify shared step group recreation and collision handling
 
+### Folder Tree
+
+- [ ] **TREE-01**: User can right-click a folder and choose Copy/Move to copy/move the entire folder tree with all contained cases
+- [ ] **TREE-02**: Folder hierarchy is recreated in the target project preserving parent-child structure
+- [ ] **TREE-03**: All cases within the folder tree are processed with the same compatibility handling (templates, workflows, collisions)
+- [ ] **TREE-04**: User can choose to merge into an existing folder or create the tree fresh in the target
+
 ## Future Requirements
 
 None — this is a self-contained feature per issue #79.
@@ -111,14 +118,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-02     | 32    | Complete |
 | TEST-03     | 32    | Complete |
 | TEST-04     | 32    | Complete |
+| TREE-01     | 33    | Pending |
+| TREE-02     | 33    | Pending |
+| TREE-03     | 33    | Pending |
+| TREE-04     | 33    | Pending |
 
 **Coverage:**
 
-- v0.17.0 requirements: 31 total
-- Mapped to phases: 31
+- v0.17.0 requirements: 35 total
+- Mapped to phases: 35
 - Unmapped: 0 ✓
 
 ---
 
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after roadmap creation — all 31 requirements mapped to Phases 28-32*
+*Last updated: 2026-03-20 after adding Phase 33 (Folder Tree Copy/Move)*

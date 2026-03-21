@@ -471,6 +471,16 @@ Plans:
 - [ ] 32-01-PLAN.md -- E2E API tests for copy/move endpoints (TEST-01, TEST-02) and worker test verification (TEST-03, TEST-04)
 - [ ] 32-02-PLAN.md -- User-facing documentation for copy/move feature (DOCS-01)
 
+### Phase 33: Folder Tree Copy/Move
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 32
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 33 to break down)
+
 ---
 
 ## Progress
