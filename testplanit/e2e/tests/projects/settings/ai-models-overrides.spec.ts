@@ -13,7 +13,7 @@ test.describe("Project AI Models - Feature Overrides Table", () => {
   test("Feature overrides table shows all 7 features", async ({
     page,
     api,
-    baseURL,
+    _baseURL,
   }) => {
     // Create a fresh project so we have a valid projectId
     const projectId = await api.createProject(`E2E AI Models Features ${Date.now()}`);

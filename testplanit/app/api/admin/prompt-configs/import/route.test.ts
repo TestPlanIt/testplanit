@@ -135,7 +135,7 @@ describe("POST /api/admin/prompt-configs/import", () => {
 
       const request = createMockRequest({ ...validImportBody, name: "" });
       const response = await POST(request);
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(400);
     });
@@ -234,7 +234,7 @@ describe("POST /api/admin/prompt-configs/import", () => {
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(201);
       expect(prisma.promptConfig.create).toHaveBeenCalledWith(

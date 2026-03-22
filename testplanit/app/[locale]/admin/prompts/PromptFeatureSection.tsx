@@ -72,9 +72,11 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
         <span className="flex items-center gap-2">
           {t(`featureLabels.${feature}` as any) || LLM_FEATURE_LABELS[feature]}
           <span className="text-xs font-normal text-muted-foreground">
-            ({selectedIntegration
+            {"("}
+            {selectedIntegration
               ? `${selectedIntegration.name}${watch(`prompts.${feature}.modelOverride`) ? ` · ${watch(`prompts.${feature}.modelOverride`)}` : ""}`
-              : t("llmIntegrationPlaceholder")})
+              : t("llmIntegrationPlaceholder")}
+            {")"}
           </span>
         </span>
       </AccordionTrigger>
