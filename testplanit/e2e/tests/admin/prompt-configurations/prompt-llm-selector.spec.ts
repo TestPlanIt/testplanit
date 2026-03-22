@@ -77,7 +77,6 @@ test.describe("Prompt LLM Selector - Select Integration", () => {
   test("Select LLM integration for a prompt feature and save", async ({
     page,
     api,
-    _baseURL,
   }) => {
     const llmName = `E2E LLM ${Date.now()}`;
     await api.createLlmIntegration(llmName);
