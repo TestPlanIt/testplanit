@@ -1153,7 +1153,25 @@
         "promptConfig": "Configuración del mensaje",
         "promptConfigDescription": "Seleccione qué configuración de solicitud de IA utilizar para este proyecto",
         "useSystemDefault": "Usar el sistema predeterminado",
-        "promptConfigChanged": "La configuración del mensaje se actualizó correctamente."
+        "promptConfigChanged": "La configuración del mensaje se actualizó correctamente.",
+        "featureOverrides": {
+          "title": "Anulaciones LLM por función",
+          "description": "Anule la integración LLM predeterminada para funciones de IA específicas. Las anulaciones tienen la máxima prioridad en la cadena de resolución.",
+          "feature": "Característica",
+          "override": "Anular",
+          "effectiveLlm": "Maestría en Derecho eficaz",
+          "source": "Fuente",
+          "noOverride": "Sin anulación",
+          "projectOverride": "Anulación del proyecto",
+          "promptConfig": "Configuración de solicitud",
+          "projectDefault": "Proyecto predeterminado",
+          "noLlmConfigured": "No se ha configurado ningún LLM",
+          "selectIntegration": "Seleccionar integración...",
+          "clearOverride": "Claro",
+          "overrideSaved": "Anulación de función guardada",
+          "overrideCleared": "Anulación de función borrada",
+          "overrideError": "No se pudo guardar la anulación de la función."
+        }
       },
       "shares": {
         "title": "Administrar acciones",
@@ -3946,6 +3964,12 @@
       "filterPlaceholder": "Configuraciones de solicitud de filtro...",
       "features": "Características",
       "featureCount": "{count, plural, one {# característica} other {# características}}",
+      "llmIntegration": "Integración del LLM",
+      "modelOverride": "Anulación del modelo",
+      "llmIntegrationPlaceholder": "Proyecto predeterminado",
+      "modelOverridePlaceholder": "Integración predeterminada",
+      "projectDefault": "Proyecto predeterminado (borrar)",
+      "integrationDefault": "Integración predeterminada (borrar)",
       "systemPrompt": "Indicador del sistema",
       "userPrompt": "Aviso al usuario",
       "temperature": "Temperatura",
@@ -3966,6 +3990,9 @@
         "confirmMessage": "¿Seguro que desea eliminar <strong>{name}</strong>? Los proyectos que usen este mensaje volverán a la configuración predeterminada del sistema.",
         "warning": "Esta acción no se puede deshacer. Todos los proyectos que utilicen esta configuración volverán a la configuración de solicitud predeterminada."
       },
+      "llmColumn": "Máster en Derecho",
+      "projectDefaultLabel": "Proyecto predeterminado",
+      "mixedLlms": "{count} LLMs",
       "cannotDeleteDefault": "No se puede eliminar la configuración predeterminada del mensaje. Primero, configure otra como predeterminada.",
       "defaultChanged": "La configuración del mensaje predeterminado se actualizó correctamente.",
       "featureLabels": {

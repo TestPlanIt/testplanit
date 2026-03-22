@@ -301,13 +301,19 @@ function validateMultiTenantJobData(jobData) {
 var FORECAST_QUEUE_NAME = "forecast-updates";
 var NOTIFICATION_QUEUE_NAME = "notifications";
 var EMAIL_QUEUE_NAME = "emails";
+var AUDIT_LOG_QUEUE_NAME = "audit-logs";
 
-// lib/services/notificationService.ts
-var import_client4 = require("@prisma/client");
-
-// workers/notificationWorker.ts
-var import_bullmq2 = require("bullmq");
-var import_node_url = require("node:url");
+// lib/auditContext.ts
+var import_async_hooks = require("async_hooks");
+var auditContextStorage = new import_async_hooks.AsyncLocalStorage();
+function getAuditContext() {
+  const stored = auditContextStorage.getStore();
+  if (stored) {
+    return stored;
+  }
+  return globalFallbackContext;
+}
+var globalFallbackContext;
 
 // lib/queues.ts
 var import_bullmq = require("bullmq");
@@ -391,6 +397,7 @@ var valkey_default = valkeyConnection;
 // lib/queues.ts
 var _notificationQueue = null;
 var _emailQueue = null;
+var _auditLogQueue = null;
 function getNotificationQueue() {
   if (_notificationQueue) return _notificationQueue;
   if (!valkey_default) {
@@ -453,8 +460,77 @@ function getEmailQueue() {
   });
   return _emailQueue;
 }
+function getAuditLogQueue() {
+  if (_auditLogQueue) return _auditLogQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${AUDIT_LOG_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _auditLogQueue = new import_bullmq.Queue(AUDIT_LOG_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5e3
+      },
+      // Long retention for audit logs - keep completed jobs for 1 year
+      removeOnComplete: {
+        age: 3600 * 24 * 365,
+        // 1 year
+        count: 1e5
+      },
+      // Keep failed jobs for investigation
+      removeOnFail: {
+        age: 3600 * 24 * 90
+        // 90 days
+      }
+    }
+  });
+  console.log(`Queue "${AUDIT_LOG_QUEUE_NAME}" initialized.`);
+  _auditLogQueue.on("error", (error) => {
+    console.error(`Queue ${AUDIT_LOG_QUEUE_NAME} error:`, error);
+  });
+  return _auditLogQueue;
+}
+
+// lib/services/auditLog.ts
+async function captureAuditEvent(event) {
+  const queue = getAuditLogQueue();
+  if (!queue) {
+    console.warn("[AuditLog] Queue not available, logging to console:", {
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId
+    });
+    return;
+  }
+  const context = getAuditContext() || null;
+  const jobData = {
+    event,
+    context,
+    queuedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    // Include tenantId for multi-tenant support
+    ...isMultiTenantMode() ? { tenantId: getCurrentTenantId() } : {}
+  };
+  try {
+    await queue.add("audit-event", jobData, {
+      // Use entity ID for deduplication within short window
+      jobId: `${event.action}-${event.entityType}-${event.entityId}-${Date.now()}`
+    });
+  } catch (error) {
+    console.error("[AuditLog] Failed to queue audit event:", error);
+  }
+}
+
+// lib/services/notificationService.ts
+var import_client4 = require("@prisma/client");
 
 // workers/notificationWorker.ts
+var import_bullmq2 = require("bullmq");
+var import_node_url = require("node:url");
 var import_meta = {};
 var JOB_CREATE_NOTIFICATION = "create-notification";
 var JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
@@ -887,14 +963,20 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
       (junitDurations.reduce((a, b) => a + b, 0) / junitDurations.length).toFixed(3)
     ) : null;
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
-    for (const caseId of uniqueCaseIds) {
-      await prisma2.repositoryCases.update({
-        where: { id: caseId },
-        data: {
-          forecastManual: avgManual,
-          forecastAutomated: avgJunit
-        }
-      });
+    const currentForecasts = await prisma2.repositoryCases.findMany({
+      where: { id: { in: uniqueCaseIds } },
+      select: { id: true, forecastManual: true, forecastAutomated: true }
+    });
+    for (const current of currentForecasts) {
+      if (current.forecastManual !== avgManual || current.forecastAutomated !== avgJunit) {
+        await prisma2.repositoryCases.update({
+          where: { id: current.id },
+          data: {
+            forecastManual: avgManual,
+            forecastAutomated: avgJunit
+          }
+        });
+      }
     }
     if (process.env.DEBUG_FORECAST) {
       console.log(
@@ -988,13 +1070,19 @@ async function updateTestRunForecast(testRunId, options = {}) {
       (trc) => trc.status === null || trc.status?.systemName === "UNTESTED"
     ).map((trc) => trc.repositoryCaseId);
     if (!repositoryCaseIdsToForecast.length) {
-      await prisma2.testRuns.update({
+      const currentRun2 = await prisma2.testRuns.findUnique({
         where: { id: testRunId },
-        data: {
-          forecastManual: null,
-          forecastAutomated: null
-        }
+        select: { forecastManual: true, forecastAutomated: true }
       });
+      if (currentRun2 && (currentRun2.forecastManual !== null || currentRun2.forecastAutomated !== null)) {
+        await prisma2.testRuns.update({
+          where: { id: testRunId },
+          data: {
+            forecastManual: null,
+            forecastAutomated: null
+          }
+        });
+      }
       if (process.env.DEBUG_FORECAST) {
         console.log(
           `Cleared forecasts for TestRun ID: ${testRunId} as no pending/untested cases were found`
@@ -1020,13 +1108,21 @@ async function updateTestRunForecast(testRunId, options = {}) {
         hasAutomated = true;
       }
     }
-    await prisma2.testRuns.update({
+    const newForecastManual = hasManual ? totalForecastManual : null;
+    const newForecastAutomated = hasAutomated ? parseFloat(totalForecastAutomated.toFixed(3)) : null;
+    const currentRun = await prisma2.testRuns.findUnique({
       where: { id: testRunId },
-      data: {
-        forecastManual: hasManual ? totalForecastManual : null,
-        forecastAutomated: hasAutomated ? parseFloat(totalForecastAutomated.toFixed(3)) : null
-      }
+      select: { forecastManual: true, forecastAutomated: true }
     });
+    if (!currentRun || currentRun.forecastManual !== newForecastManual || currentRun.forecastAutomated !== newForecastAutomated) {
+      await prisma2.testRuns.update({
+        where: { id: testRunId },
+        data: {
+          forecastManual: newForecastManual,
+          forecastAutomated: newForecastAutomated
+        }
+      });
+    }
     if (process.env.DEBUG_FORECAST) {
       console.log(
         `Updated TestRun ID ${testRunId} with forecastManual=${totalForecastManual}, forecastAutomated=${totalForecastAutomated}`
@@ -1244,6 +1340,21 @@ var processor2 = async (job) => {
               data: { isCompleted: true }
             });
             successCount++;
+            captureAuditEvent({
+              action: "UPDATE",
+              entityType: "Milestones",
+              entityId: String(milestone.id),
+              entityName: milestone.name,
+              projectId: milestone.projectId,
+              metadata: {
+                source: "forecast-worker:auto-complete",
+                jobId: job.id
+              },
+              changes: {
+                isCompleted: { old: false, new: true }
+              }
+            }).catch(() => {
+            });
             console.log(
               `Job ${job.id}: Auto-completed milestone "${milestone.name}" (ID: ${milestone.id})`
             );

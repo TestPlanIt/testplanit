@@ -31,5 +31,6 @@
     "i18n-ally.namespace": false,
     "i18n-ally.extract.autoDetect": true,
     "i18n-ally.sortKeys": true,
-    "tailwindCSS.lint.suggestCanonicalClasses": "ignore"
+    "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
+    "prisma.pinToPrisma6": true
 }

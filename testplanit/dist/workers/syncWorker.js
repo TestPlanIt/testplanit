@@ -827,6 +827,7 @@ var import_bullmq = require("bullmq");
 
 // lib/queueNames.ts
 var SYNC_QUEUE_NAME = "issue-sync";
+var AUDIT_LOG_QUEUE_NAME = "audit-logs";
 
 // lib/valkey.ts
 var import_ioredis = __toESM(require("ioredis"));
@@ -906,6 +907,7 @@ var valkey_default = valkeyConnection;
 
 // lib/queues.ts
 var _syncQueue = null;
+var _auditLogQueue = null;
 function getSyncQueue() {
   if (_syncQueue) return _syncQueue;
   if (!valkey_default) {
@@ -936,6 +938,41 @@ function getSyncQueue() {
     console.error(`Queue ${SYNC_QUEUE_NAME} error:`, error);
   });
   return _syncQueue;
+}
+function getAuditLogQueue() {
+  if (_auditLogQueue) return _auditLogQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${AUDIT_LOG_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _auditLogQueue = new import_bullmq.Queue(AUDIT_LOG_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5e3
+      },
+      // Long retention for audit logs - keep completed jobs for 1 year
+      removeOnComplete: {
+        age: 3600 * 24 * 365,
+        // 1 year
+        count: 1e5
+      },
+      // Keep failed jobs for investigation
+      removeOnFail: {
+        age: 3600 * 24 * 90
+        // 90 days
+      }
+    }
+  });
+  console.log(`Queue "${AUDIT_LOG_QUEUE_NAME}" initialized.`);
+  _auditLogQueue.on("error", (error) => {
+    console.error(`Queue ${AUDIT_LOG_QUEUE_NAME} error:`, error);
+  });
+  return _auditLogQueue;
 }
 
 // lib/integrations/cache/IssueCache.ts
@@ -4066,6 +4103,47 @@ var SyncService = class {
 };
 var syncService = new SyncService();
 
+// lib/auditContext.ts
+var import_async_hooks = require("async_hooks");
+var auditContextStorage = new import_async_hooks.AsyncLocalStorage();
+function getAuditContext() {
+  const stored = auditContextStorage.getStore();
+  if (stored) {
+    return stored;
+  }
+  return globalFallbackContext;
+}
+var globalFallbackContext;
+
+// lib/services/auditLog.ts
+async function captureAuditEvent(event) {
+  const queue = getAuditLogQueue();
+  if (!queue) {
+    console.warn("[AuditLog] Queue not available, logging to console:", {
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId
+    });
+    return;
+  }
+  const context = getAuditContext() || null;
+  const jobData = {
+    event,
+    context,
+    queuedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    // Include tenantId for multi-tenant support
+    ...isMultiTenantMode() ? { tenantId: getCurrentTenantId() } : {}
+  };
+  try {
+    await queue.add("audit-event", jobData, {
+      // Use entity ID for deduplication within short window
+      jobId: `${event.action}-${event.entityType}-${event.entityId}-${Date.now()}`
+    });
+  } catch (error) {
+    console.error("[AuditLog] Failed to queue audit event:", error);
+  }
+}
+
 // workers/syncWorker.ts
 var import_meta = {};
 var processor = async (job) => {
@@ -4088,6 +4166,22 @@ var processor = async (job) => {
           // Pass job for progress reporting
           serviceOptions
         );
+        captureAuditEvent({
+          action: "BULK_UPDATE",
+          entityType: "Issue",
+          entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+          entityName: `Issue Sync`,
+          userId: jobData.userId,
+          projectId: jobData.projectId ? Number(jobData.projectId) : void 0,
+          metadata: {
+            source: "sync-worker",
+            integrationId: jobData.integrationId,
+            syncedCount: result.synced,
+            errorCount: result.errors.length,
+            jobId: job.id
+          }
+        }).catch(() => {
+        });
         if (result.errors.length > 0) {
           console.warn(
             `Sync completed with ${result.errors.length} errors:`,
@@ -4114,6 +4208,22 @@ var processor = async (job) => {
           // Pass job for progress reporting
           serviceOptions
         );
+        captureAuditEvent({
+          action: "BULK_UPDATE",
+          entityType: "Issue",
+          entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+          entityName: `Issue Sync`,
+          userId: jobData.userId,
+          projectId: jobData.projectId ? Number(jobData.projectId) : void 0,
+          metadata: {
+            source: "sync-worker:project",
+            integrationId: jobData.integrationId,
+            syncedCount: result.synced,
+            errorCount: result.errors.length,
+            jobId: job.id
+          }
+        }).catch(() => {
+        });
         if (result.errors.length > 0) {
           console.warn(
             `Project sync completed with ${result.errors.length} errors:`,
@@ -4140,6 +4250,18 @@ var processor = async (job) => {
         if (!result.success) {
           throw new Error(result.error || "Failed to refresh issue");
         }
+        captureAuditEvent({
+          action: "UPDATE",
+          entityType: "Issue",
+          entityId: String(jobData.issueId),
+          userId: jobData.userId,
+          metadata: {
+            source: "sync-worker:refresh",
+            integrationId: jobData.integrationId,
+            jobId: job.id
+          }
+        }).catch(() => {
+        });
         console.log(`Refreshed issue ${jobData.issueId} successfully`);
         return result;
       } catch (error) {
