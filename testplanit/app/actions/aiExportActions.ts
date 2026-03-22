@@ -105,13 +105,22 @@ export async function generateAiExportBatch(args: {
 
   const caseName = `Combined (${args.cases.length} tests)`;
 
-  // Get LLM integration (hard requirement)
-  const llmIntegration = await prisma.projectLlmIntegration.findFirst({
-    where: { projectId: args.projectId, isActive: true },
-    select: { llmIntegrationId: true },
-  });
+  // Resolve prompt
+  const resolver = new PromptResolver(prisma);
+  const resolvedPrompt = await resolver.resolve(
+    LLM_FEATURES.EXPORT_CODE_GENERATION,
+    args.projectId
+  );
 
-  if (!llmIntegration) {
+  // Resolve LLM integration via 3-tier chain
+  const llmManager = LlmManager.getInstance(prisma);
+  const resolved = await llmManager.resolveIntegration(
+    LLM_FEATURES.EXPORT_CODE_GENERATION,
+    args.projectId,
+    resolvedPrompt
+  );
+
+  if (!resolved) {
     return {
       code: mustacheFallback,
       generatedBy: "template",
@@ -121,16 +130,9 @@ export async function generateAiExportBatch(args: {
     };
   }
 
-  // Resolve prompt
-  const resolver = new PromptResolver(prisma);
-  const resolvedPrompt = await resolver.resolve(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId
-  );
-
   // Determine token budget and assemble code context (if repo configured)
   const providerConfig = await prisma.llmProviderConfig.findFirst({
-    where: { llmIntegrationId: llmIntegration.llmIntegrationId },
+    where: { llmIntegrationId: resolved.integrationId },
     select: { defaultMaxTokens: true },
   });
   const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
@@ -197,8 +199,6 @@ export async function generateAiExportBatch(args: {
   }
 
   try {
-    const llmManager = LlmManager.getInstance(prisma);
-
     const request: LlmRequest = {
       messages: [
         { role: "system", content: systemPrompt },
@@ -209,13 +209,14 @@ export async function generateAiExportBatch(args: {
       userId: session.user.id,
       projectId: args.projectId,
       feature: LLM_FEATURES.EXPORT_CODE_GENERATION,
+      ...(resolved.model ? { model: resolved.model } : {}),
     };
 
     console.log(
       `[generateAiExportBatch] Calling LLM for ${args.cases.length} cases...`
     );
     const response = await llmManager.chat(
-      llmIntegration.llmIntegrationId,
+      resolved.integrationId,
       request
     );
     console.log(`[generateAiExportBatch] LLM responded`);
@@ -285,13 +286,22 @@ export async function generateAiExport(args: {
     args.caseData
   );
 
-  // 5. Get LLM integration (hard requirement)
-  const llmIntegration = await prisma.projectLlmIntegration.findFirst({
-    where: { projectId: args.projectId, isActive: true },
-    select: { llmIntegrationId: true },
-  });
+  // 5. Resolve prompt
+  const resolver = new PromptResolver(prisma);
+  const resolvedPrompt = await resolver.resolve(
+    LLM_FEATURES.EXPORT_CODE_GENERATION,
+    args.projectId
+  );
 
-  if (!llmIntegration) {
+  // 6. Resolve LLM integration via 3-tier chain
+  const llmManager = LlmManager.getInstance(prisma);
+  const resolved = await llmManager.resolveIntegration(
+    LLM_FEATURES.EXPORT_CODE_GENERATION,
+    args.projectId,
+    resolvedPrompt
+  );
+
+  if (!resolved) {
     const fullCode = [header, mustacheFallback, footer]
       .filter(Boolean)
       .join("\n\n");
@@ -304,16 +314,9 @@ export async function generateAiExport(args: {
     };
   }
 
-  // 6. Resolve prompt
-  const resolver = new PromptResolver(prisma);
-  const resolvedPrompt = await resolver.resolve(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId
-  );
-
   // 7. Determine token budget and assemble code context (if repo configured)
   const providerConfig = await prisma.llmProviderConfig.findFirst({
-    where: { llmIntegrationId: llmIntegration.llmIntegrationId },
+    where: { llmIntegrationId: resolved.integrationId },
     select: { defaultMaxTokens: true },
   });
   const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
@@ -380,8 +383,6 @@ export async function generateAiExport(args: {
 
   // 10. Call LLM (wrapped in try/catch for GEN-05 fallback)
   try {
-    const llmManager = LlmManager.getInstance(prisma);
-
     const request: LlmRequest = {
       messages: [
         { role: "system", content: systemPrompt },
@@ -392,11 +393,12 @@ export async function generateAiExport(args: {
       userId: session.user.id,
       projectId: args.projectId,
       feature: LLM_FEATURES.EXPORT_CODE_GENERATION, // GEN-07: usage tracked automatically
+      ...(resolved.model ? { model: resolved.model } : {}),
     };
 
     console.log(`[generateAiExport] Calling LLM for case ${args.caseId}...`);
     const response = await llmManager.chat(
-      llmIntegration.llmIntegrationId,
+      resolved.integrationId,
       request
     );
     console.log(`[generateAiExport] LLM responded for case ${args.caseId}`);

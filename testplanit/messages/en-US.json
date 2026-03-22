@@ -1153,7 +1153,25 @@
         "promptConfig": "Prompt Configuration",
         "promptConfigDescription": "Select which AI prompt configuration to use for this project",
         "useSystemDefault": "Use System Default",
-        "promptConfigChanged": "Prompt configuration updated successfully."
+        "promptConfigChanged": "Prompt configuration updated successfully.",
+        "featureOverrides": {
+          "title": "Per-Feature LLM Overrides",
+          "description": "Override the default LLM integration for specific AI features. Overrides take highest priority in the resolution chain.",
+          "feature": "Feature",
+          "override": "Override",
+          "effectiveLlm": "Effective LLM",
+          "source": "Source",
+          "noOverride": "No override",
+          "projectOverride": "Project Override",
+          "promptConfig": "Prompt Config",
+          "projectDefault": "Project Default",
+          "noLlmConfigured": "No LLM configured",
+          "selectIntegration": "Select integration...",
+          "clearOverride": "Clear",
+          "overrideSaved": "Feature override saved",
+          "overrideCleared": "Feature override cleared",
+          "overrideError": "Failed to save feature override"
+        }
       },
       "shares": {
         "title": "Manage Shares",
@@ -3946,6 +3964,12 @@
       "filterPlaceholder": "Filter prompt configurations...",
       "features": "Features",
       "featureCount": "{count, plural, one {# feature} other {# features}}",
+      "llmIntegration": "LLM Integration",
+      "modelOverride": "Model Override",
+      "llmIntegrationPlaceholder": "Project Default",
+      "modelOverridePlaceholder": "Integration Default",
+      "projectDefault": "Project Default (clear)",
+      "integrationDefault": "Integration Default (clear)",
       "systemPrompt": "System Prompt",
       "userPrompt": "User Prompt",
       "temperature": "Temperature",
@@ -3966,6 +3990,9 @@
         "confirmMessage": "Are you sure you want to delete <strong>{name}</strong>? Projects using this prompt will fall back to the system default.",
         "warning": "This action cannot be undone. All projects using this configuration will revert to the default prompt configuration."
       },
+      "llmColumn": "LLM",
+      "projectDefaultLabel": "Project Default",
+      "mixedLlms": "{count} LLMs",
       "cannotDeleteDefault": "Cannot delete the default prompt configuration. Set another as default first.",
       "defaultChanged": "Default prompt configuration updated successfully.",
       "featureLabels": {

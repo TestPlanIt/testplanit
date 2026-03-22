@@ -158,7 +158,65 @@ After creating an LLM integration:
 1. Go to **Project Settings** → **AI Models**
 2. Select the integration from available options
 3. Optionally assign a **[Prompt Configuration](../prompt-configurations)** to customize how AI prompts behave for this project
-4. Save settings
+4. Optionally override the LLM integration for individual AI features (see [Per-Feature LLM Overrides](#per-feature-llm-overrides) below)
+5. Save settings
+
+## Per-Feature LLM Overrides
+
+Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page and applies to the following features: Test Case Generation, Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, LLM Connection Test, QuickScript, and Auto-tagging.
+
+### How to Configure
+
+1. Navigate to **Project Settings** → **AI Models**
+2. Find the **Per-Feature LLM Overrides** card, which shows a table with four columns:
+   - **Feature** — The AI feature name
+   - **Override** — A dropdown to select a specific LLM integration for this feature. An **X** button appears next to the dropdown when an override is active; click it to clear the override.
+   - **Effective LLM** — The LLM integration that will actually be used when this feature is invoked
+   - **Source** — A color-coded badge showing where the effective LLM comes from (see below)
+3. For any feature row, select an LLM integration from the **Override** dropdown to assign that integration for this feature in this project
+4. To remove an override, click the **X** button next to the dropdown — the feature will fall back to the next level in the resolution chain
+
+### Source Badges
+
+| Badge | Color | Meaning |
+|-------|-------|---------|
+| Project Override | Blue | A per-feature override is set on this project |
+| Prompt Config | Gray | The prompt configuration has a per-prompt LLM assignment |
+| Project Default | Outline | The project's default LLM integration is being used |
+| No LLM configured | Red | No integration is available at any level |
+
+### Use Cases
+
+- Use a fast, inexpensive model (e.g., GPT-3.5) for connection tests and a more capable model (e.g., GPT-4) for test case generation
+- Override a single feature to use a different AI provider without changing the configuration for other features
+- Allow project teams to customize their LLM usage independently of the system-wide prompt configuration
+
+## LLM Resolution Chain {#llm-resolution-chain}
+
+When an AI feature is invoked, TestPlanIt resolves which LLM integration to use by checking three levels in order of priority:
+
+1. **Project Feature Override** (highest priority) — If the project has a per-feature LLM override configured for this specific feature (via the **Per-Feature LLM Overrides** table), that integration is used.
+2. **Prompt Configuration Assignment** — If the resolved prompt configuration has a per-prompt LLM integration assigned to this feature, that integration is used (along with the model override, if one is set).
+3. **Project Default Integration** (lowest priority) — The project's default LLM integration is used as the final fallback.
+
+```text
+Feature invoked
+  |
+  v
+Project Feature Override set? --> YES --> Use override integration
+  |
+  NO
+  v
+Prompt has per-prompt LLM assigned? --> YES --> Use prompt's integration (+ model override if set)
+  |
+  NO
+  v
+Use project default integration
+```
+
+This resolution chain applies independently per AI feature. Different features in the same project can resolve to different LLM integrations depending on what is configured at each level.
+
+Per-prompt LLM assignments are configured in the admin prompt editor. See [Prompt Configurations — Per-Prompt LLM Assignment](./prompt-configurations#per-prompt-llm-assignment) for details.
 
 ## Security Considerations
 

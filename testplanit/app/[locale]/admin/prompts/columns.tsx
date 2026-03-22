@@ -10,8 +10,12 @@ import { useCountProjects } from "~/lib/hooks/projects";
 import { DeletePromptConfig } from "./DeletePromptConfig";
 import { EditPromptConfig } from "./EditPromptConfig";
 
+export interface PromptConfigPromptWithIntegration extends PromptConfigPrompt {
+  llmIntegration?: { id: number; name: string } | null;
+}
+
 export interface ExtendedPromptConfig extends PromptConfig {
-  prompts?: PromptConfigPrompt[];
+  prompts?: PromptConfigPromptWithIntegration[];
   projects?: Projects[];
 }
 
@@ -36,7 +40,7 @@ export const getColumns = (
   userPreferences: any,
   handleToggleDefault: (id: string, currentIsDefault: boolean) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
-  _t: ReturnType<typeof useTranslations<"admin.prompts">>
+  t: ReturnType<typeof useTranslations<"admin.prompts">>
 ): ColumnDef<ExtendedPromptConfig>[] => [
   {
     id: "name",
@@ -73,6 +77,47 @@ export const getColumns = (
         {row.original.description || "-"}
       </span>
     ),
+  },
+  {
+    id: "llmIntegrations",
+    header: t("llmColumn"),
+    enableSorting: false,
+    enableResizing: true,
+    size: 160,
+    cell: ({ row }) => {
+      const prompts = row.original.prompts || [];
+      // Collect unique non-null integration IDs with names
+      const integrationMap = new Map<number, string>();
+      for (const p of prompts) {
+        if (p.llmIntegrationId && p.llmIntegration) {
+          integrationMap.set(p.llmIntegrationId, p.llmIntegration.name);
+        }
+      }
+
+      if (integrationMap.size === 0) {
+        return (
+          <span className="text-sm text-muted-foreground">
+            {t("projectDefaultLabel")}
+          </span>
+        );
+      }
+
+      if (integrationMap.size === 1) {
+        const [, name] = [...integrationMap.entries()][0];
+        return (
+          <Badge variant="outline" className="text-xs">
+            {name}
+          </Badge>
+        );
+      }
+
+      // Mixed integrations
+      return (
+        <Badge variant="secondary" className="text-xs">
+          {t("mixedLlms", { count: integrationMap.size })}
+        </Badge>
+      );
+    },
   },
   {
     id: "projects",

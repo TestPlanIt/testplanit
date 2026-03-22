@@ -80,6 +80,9 @@ var fs = __toESM(require("fs"));
 function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
+function getCurrentTenantId() {
+  return process.env.INSTANCE_TENANT_ID;
+}
 var tenantClients = /* @__PURE__ */ new Map();
 var tenantConfigs = null;
 var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
@@ -226,6 +229,7 @@ var import_bullmq = require("bullmq");
 // lib/queueNames.ts
 var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
 var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
+var AUDIT_LOG_QUEUE_NAME = "audit-logs";
 
 // lib/valkey.ts
 var import_ioredis = __toESM(require("ioredis"));
@@ -305,6 +309,7 @@ var valkey_default = valkeyConnection;
 
 // lib/queues.ts
 var _elasticsearchReindexQueue = null;
+var _auditLogQueue = null;
 function getElasticsearchReindexQueue() {
   if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
   if (!valkey_default) {
@@ -331,6 +336,82 @@ function getElasticsearchReindexQueue() {
     console.error(`Queue ${ELASTICSEARCH_REINDEX_QUEUE_NAME} error:`, error);
   });
   return _elasticsearchReindexQueue;
+}
+function getAuditLogQueue() {
+  if (_auditLogQueue) return _auditLogQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${AUDIT_LOG_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _auditLogQueue = new import_bullmq.Queue(AUDIT_LOG_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5e3
+      },
+      // Long retention for audit logs - keep completed jobs for 1 year
+      removeOnComplete: {
+        age: 3600 * 24 * 365,
+        // 1 year
+        count: 1e5
+      },
+      // Keep failed jobs for investigation
+      removeOnFail: {
+        age: 3600 * 24 * 90
+        // 90 days
+      }
+    }
+  });
+  console.log(`Queue "${AUDIT_LOG_QUEUE_NAME}" initialized.`);
+  _auditLogQueue.on("error", (error) => {
+    console.error(`Queue ${AUDIT_LOG_QUEUE_NAME} error:`, error);
+  });
+  return _auditLogQueue;
+}
+
+// lib/auditContext.ts
+var import_async_hooks = require("async_hooks");
+var auditContextStorage = new import_async_hooks.AsyncLocalStorage();
+function getAuditContext() {
+  const stored = auditContextStorage.getStore();
+  if (stored) {
+    return stored;
+  }
+  return globalFallbackContext;
+}
+var globalFallbackContext;
+
+// lib/services/auditLog.ts
+async function captureAuditEvent(event) {
+  const queue = getAuditLogQueue();
+  if (!queue) {
+    console.warn("[AuditLog] Queue not available, logging to console:", {
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId
+    });
+    return;
+  }
+  const context = getAuditContext() || null;
+  const jobData = {
+    event,
+    context,
+    queuedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    // Include tenantId for multi-tenant support
+    ...isMultiTenantMode() ? { tenantId: getCurrentTenantId() } : {}
+  };
+  try {
+    await queue.add("audit-event", jobData, {
+      // Use entity ID for deduplication within short window
+      jobId: `${event.action}-${event.entityType}-${event.entityId}-${Date.now()}`
+    });
+  } catch (error) {
+    console.error("[AuditLog] Failed to queue audit event:", error);
+  }
 }
 
 // lib/services/testCaseVersionService.ts
@@ -11493,6 +11574,21 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
         entityProgress: toInputJsonValue(context.entityProgress),
         configuration: toInputJsonValue(serializedConfiguration)
       }
+    });
+    captureAuditEvent({
+      action: "BULK_CREATE",
+      entityType: "TestmoImportJob",
+      entityId: jobId,
+      entityName: `Testmo Import`,
+      userId: importJob.createdById,
+      metadata: {
+        source: "testmo-import",
+        jobId,
+        processedCount: context.processedCount,
+        durationMs: totalTimeMs,
+        entityProgress: context.entityProgress
+      }
+    }).catch(() => {
     });
     const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (elasticsearchReindexQueue) {

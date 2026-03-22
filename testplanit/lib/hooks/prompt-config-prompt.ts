@@ -327,7 +327,7 @@ export function useSuspenseCountPromptConfigPrompt<TArgs extends Prisma.PromptCo
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('PromptConfigPrompt', `${endpoint}/promptConfigPrompt/count`, args, options, fetch);
 }
 
-export function useCheckPromptConfigPrompt<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; promptConfigId?: string; feature?: string; systemPrompt?: string; userPrompt?: string; maxOutputTokens?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckPromptConfigPrompt<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; promptConfigId?: string; feature?: string; systemPrompt?: string; userPrompt?: string; maxOutputTokens?: number; llmIntegrationId?: number; modelOverride?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('PromptConfigPrompt', `${endpoint}/promptConfigPrompt/check`, args, options, fetch);
 }

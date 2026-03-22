@@ -333,52 +333,52 @@ model Roles {
 }
 
 model Projects {
-    id                      Int                                   @id @default(autoincrement())
-    name                    String                                @unique @length(1)
-    iconUrl                 String?
-    note                    String?
-    docs                    String?
-    isCompleted             Boolean                               @default(false)
-    isDeleted               Boolean                               @default(false)
-    completedAt             DateTime?                             @db.Date
-    createdAt               DateTime                              @default(now()) @db.Timestamptz(6)
-    createdBy               String
-    creator                 User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
-    assignedUsers           ProjectAssignment[]
-    assignedStatuses        ProjectStatusAssignment[]
-    milestoneTypes          MilestoneTypesAssignment[]
-    assignedTemplates       TemplateProjectAssignment[]
-    assignedWorkflows       ProjectWorkflowAssignment[]
-    milestones              Milestones[]
-    repositories            Repositories[]
-    repositoryFolders       RepositoryFolders[]
-    repositoryCases         RepositoryCases[]
-    repositoryCaseVersions  RepositoryCaseVersions[]
-    sessions                Sessions[]
-    sessionVersions         SessionVersions[]
-    testRuns                TestRuns[]
-    defaultAccessType       ProjectAccessType                     @default(GLOBAL_ROLE)
-    defaultRoleId           Int?
-    defaultRole             Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-    userPermissions         UserProjectPermission[]
-    groupPermissions        GroupProjectPermission[]
-    sharedStepGroups        SharedStepGroup[]
-    projectIntegrations     ProjectIntegration[]
-    projectLlmIntegrations  ProjectLlmIntegration[]
-    codeRepositoryConfig    ProjectCodeRepositoryConfig?
-    promptConfigId          String?
-    promptConfig            PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
-    issues                  Issue[]
-    llmUsages               LlmUsage[]
-    llmFeatureConfigs       LlmFeatureConfig[]
-    llmResponseCaches       LlmResponseCache[]
-    comments                Comment[]
-    auditLogs               AuditLog[]
-    shareLinks              ShareLink[]
-    assignedExportTemplates             CaseExportTemplateProjectAssignment[]
-    defaultCaseExportTemplateId         Int?
-    defaultCaseExportTemplate           CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
-    quickScriptEnabled                  Boolean                               @default(false)
+    id                          Int                                   @id @default(autoincrement())
+    name                        String                                @unique @length(1)
+    iconUrl                     String?
+    note                        String?
+    docs                        String?
+    isCompleted                 Boolean                               @default(false)
+    isDeleted                   Boolean                               @default(false)
+    completedAt                 DateTime?                             @db.Date
+    createdAt                   DateTime                              @default(now()) @db.Timestamptz(6)
+    createdBy                   String
+    creator                     User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers               ProjectAssignment[]
+    assignedStatuses            ProjectStatusAssignment[]
+    milestoneTypes              MilestoneTypesAssignment[]
+    assignedTemplates           TemplateProjectAssignment[]
+    assignedWorkflows           ProjectWorkflowAssignment[]
+    milestones                  Milestones[]
+    repositories                Repositories[]
+    repositoryFolders           RepositoryFolders[]
+    repositoryCases             RepositoryCases[]
+    repositoryCaseVersions      RepositoryCaseVersions[]
+    sessions                    Sessions[]
+    sessionVersions             SessionVersions[]
+    testRuns                    TestRuns[]
+    defaultAccessType           ProjectAccessType                     @default(GLOBAL_ROLE)
+    defaultRoleId               Int?
+    defaultRole                 Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions             UserProjectPermission[]
+    groupPermissions            GroupProjectPermission[]
+    sharedStepGroups            SharedStepGroup[]
+    projectIntegrations         ProjectIntegration[]
+    projectLlmIntegrations      ProjectLlmIntegration[]
+    codeRepositoryConfig        ProjectCodeRepositoryConfig?
+    promptConfigId              String?
+    promptConfig                PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+    issues                      Issue[]
+    llmUsages                   LlmUsage[]
+    llmFeatureConfigs           LlmFeatureConfig[]
+    llmResponseCaches           LlmResponseCache[]
+    comments                    Comment[]
+    auditLogs                   AuditLog[]
+    shareLinks                  ShareLink[]
+    assignedExportTemplates     CaseExportTemplateProjectAssignment[]
+    defaultCaseExportTemplateId Int?
+    defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
+    quickScriptEnabled          Boolean                               @default(false)
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -790,21 +790,21 @@ model TemplateResultAssignment {
 }
 
 model CaseExportTemplate {
-    id            Int                                   @id @default(autoincrement())
-    name          String                                @unique @length(1)
-    description   String?
-    category      String                                @length(1)
-    framework     String                                @length(1) @default("")
-    headerBody    String?
-    templateBody  String
-    footerBody    String?
-    fileExtension String                                @length(1)
-    language      String                                @length(1)
-    isDefault     Boolean                               @default(false)
-    isEnabled     Boolean                               @default(true)
-    isDeleted     Boolean                               @default(false)
-    createdAt     DateTime                              @default(now()) @db.Timestamptz(6)
-    updatedAt     DateTime                              @updatedAt
+    id                 Int                                   @id @default(autoincrement())
+    name               String                                @unique @length(1)
+    description        String?
+    category           String                                @length(1)
+    framework          String                                @length(1) @default("")
+    headerBody         String?
+    templateBody       String
+    footerBody         String?
+    fileExtension      String                                @length(1)
+    language           String                                @length(1)
+    isDefault          Boolean                               @default(false)
+    isEnabled          Boolean                               @default(true)
+    isDeleted          Boolean                               @default(false)
+    createdAt          DateTime                              @default(now()) @db.Timestamptz(6)
+    updatedAt          DateTime                              @updatedAt
     projects           CaseExportTemplateProjectAssignment[]
     defaultForProjects Projects[]                            @relation("ProjectDefaultExportTemplate")
 
@@ -2420,6 +2420,7 @@ model LlmIntegration {
     llmResponseCaches      LlmResponseCache[]
     projectLlmIntegrations ProjectLlmIntegration[]
     llmRateLimits          LlmRateLimit[]
+    promptConfigPrompts    PromptConfigPrompt[]
 
     @@unique([name])
     @@index([provider, status])
@@ -3193,20 +3194,24 @@ model PromptConfig {
 }
 
 model PromptConfigPrompt {
-    id              String       @id @default(cuid())
-    promptConfigId  String
-    promptConfig    PromptConfig @relation(fields: [promptConfigId], references: [id], onDelete: Cascade)
-    feature         String       // e.g., "test_case_generation", "markdown_parsing"
-    systemPrompt    String       @db.Text
-    userPrompt      String       @db.Text  // Can include {{placeholders}}
-    temperature     Float        @default(0.7)
-    maxOutputTokens Int          @default(2048)
-    variables       Json         @default("[]") // Array of variable definitions
-    createdAt       DateTime     @default(now()) @db.Timestamptz(6)
-    updatedAt       DateTime     @updatedAt
+    id               String          @id @default(cuid())
+    promptConfigId   String
+    promptConfig     PromptConfig    @relation(fields: [promptConfigId], references: [id], onDelete: Cascade)
+    feature          String       // e.g., "test_case_generation", "markdown_parsing"
+    systemPrompt     String          @db.Text
+    userPrompt       String          @db.Text  // Can include {{placeholders}}
+    temperature      Float           @default(0.7)
+    maxOutputTokens  Int             @default(2048)
+    variables        Json            @default("[]") // Array of variable definitions
+    llmIntegrationId Int?
+    llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+    modelOverride    String?          // Override model name for this specific prompt
+    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime        @updatedAt
 
     @@unique([promptConfigId, feature])
     @@index([feature])
+    @@index([llmIntegrationId])
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')

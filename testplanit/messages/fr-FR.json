@@ -1153,7 +1153,25 @@
         "promptConfig": "Configuration de l'invite",
         "promptConfigDescription": "Sélectionnez la configuration d'invite IA à utiliser pour ce projet.",
         "useSystemDefault": "Utiliser les paramètres par défaut du système",
-        "promptConfigChanged": "Configuration de l'invite mise à jour avec succès."
+        "promptConfigChanged": "Configuration de l'invite mise à jour avec succès.",
+        "featureOverrides": {
+          "title": "Remplacements LLM par fonctionnalité",
+          "description": "Remplacez l'intégration LLM par défaut pour certaines fonctionnalités d'IA. Les remplacements sont prioritaires dans la chaîne de résolution.",
+          "feature": "Fonctionnalité",
+          "override": "Outrepasser",
+          "effectiveLlm": "LLM efficace",
+          "source": "Source",
+          "noOverride": "Aucune modification possible",
+          "projectOverride": "Remplacement du projet",
+          "promptConfig": "Invite de configuration",
+          "projectDefault": "Projet par défaut",
+          "noLlmConfigured": "Aucun LLM configuré",
+          "selectIntegration": "Sélectionnez l'intégration...",
+          "clearOverride": "Clair",
+          "overrideSaved": "Remplacement de fonctionnalité enregistré",
+          "overrideCleared": "Remplacement de fonctionnalité effacé",
+          "overrideError": "Échec de l'enregistrement de la modification de fonctionnalité"
+        }
       },
       "shares": {
         "title": "Gérer les actions",
@@ -3946,6 +3964,12 @@
       "filterPlaceholder": "Configurations des invites de filtre...",
       "features": "Caractéristiques",
       "featureCount": "{count, plural, one {# fonctionnalité} other {# fonctionnalités}}",
+      "llmIntegration": "Intégration LLM",
+      "modelOverride": "Remplacement du modèle",
+      "llmIntegrationPlaceholder": "Projet par défaut",
+      "modelOverridePlaceholder": "Intégration par défaut",
+      "projectDefault": "Valeur par défaut du projet (effacer)",
+      "integrationDefault": "Intégration par défaut (effacer)",
       "systemPrompt": "Invite système",
       "userPrompt": "Invite de l'utilisateur",
       "temperature": "Température",
@@ -3966,6 +3990,9 @@
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>{name}</strong>? Les projets utilisant cette invite utiliseront la valeur par défaut du système.",
         "warning": "Cette action est irréversible. Tous les projets utilisant cette configuration reviendront à la configuration d'invite de commande par défaut."
       },
+      "llmColumn": "LLM",
+      "projectDefaultLabel": "Projet par défaut",
+      "mixedLlms": "{count} LLM",
       "cannotDeleteDefault": "Impossible de supprimer la configuration d'invite par défaut. Veuillez d'abord en définir une autre comme invite par défaut.",
       "defaultChanged": "La configuration d'invite par défaut a été mise à jour avec succès.",
       "featureLabels": {

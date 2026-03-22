@@ -47,6 +47,8 @@ const createFormSchema = () => {
       userPrompt: z.string(),
       temperature: z.number().min(0).max(2),
       maxOutputTokens: z.number().min(1).max(1048576),
+      llmIntegrationId: z.number().nullable().optional(),
+      modelOverride: z.string().nullable().optional(),
     });
   }
 
@@ -103,6 +105,8 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
           userPrompt: existing?.userPrompt || "",
           temperature: existing?.temperature ?? 0.7,
           maxOutputTokens: existing?.maxOutputTokens ?? 2048,
+          llmIntegrationId: existing?.llmIntegrationId ?? null,
+          modelOverride: existing?.modelOverride ?? null,
         };
       }
 
@@ -153,6 +157,8 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
           userPrompt: string;
           temperature: number;
           maxOutputTokens: number;
+          llmIntegrationId?: number | null;
+          modelOverride?: string | null;
         };
         if (promptData.id) {
           await updatePromptConfigPrompt({
@@ -162,6 +168,8 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
               userPrompt: promptData.userPrompt || "",
               temperature: promptData.temperature,
               maxOutputTokens: promptData.maxOutputTokens,
+              llmIntegrationId: promptData.llmIntegrationId || null,
+              modelOverride: promptData.modelOverride || null,
             },
           });
         }

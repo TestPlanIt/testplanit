@@ -3,15 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: completed
-stopped_at: Completed 33-02-PLAN.md (Phase 33 Plan 02 — folder copy/move UI entry point)
-last_updated: "2026-03-21T17:18:20.987Z"
-last_activity: 2026-03-21 — All v2.0 phases confirmed complete
+last_updated: "2026-03-21T21:17:59.641Z"
+last_activity: "2026-03-21 — Completed 39-01: per-prompt LLM and per-feature override documentation"
 progress:
   total_phases: 25
   completed_phases: 23
-  total_plans: 59
-  completed_plans: 62
-  percent: 100
+  total_plans: 56
+  completed_plans: 59
 ---
 
 # State
@@ -21,100 +19,40 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Teams can plan, execute, and track testing across manual and automated workflows in one place — with AI assistance to reduce repetitive work.
-**Current focus:** v2.0 Comprehensive Test Coverage — All phases complete, running lifecycle
+**Current focus:** v0.17.0 Per-Prompt LLM Configuration
 
 ## Current Position
 
-Phase: 24 of 24 (all complete)
-Plan: All complete
-Status: Running milestone lifecycle (audit → complete → cleanup)
-Last activity: 2026-03-21 — All v2.0 phases confirmed complete
-
-Progress: [██████████] 100% (v2.0 phases — 16 of 16 complete)
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed (v0.17.0): 3
-- Average duration: ~6m
-- Total execution time: ~18m
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 28    | 2     | ~12m  | ~6m      |
-| 29    | 1     | ~6m   | ~6m      |
-| Phase 29 P03 | 7m | 2 tasks | 3 files |
-| Phase 30-dialog-ui-and-polling P01 | 8 | 2 tasks | 7 files |
-| Phase 31-entry-points P01 | 12 | 2 tasks | 5 files |
-| Phase 32-testing-and-documentation P02 | 1 | 1 tasks | 1 files |
-| Phase 32-testing-and-documentation P01 | 5 | 2 tasks | 1 files |
-| Phase 33-folder-tree-copy-move P01 | 12 | 2 tasks | 4 files |
-| Phase 33-folder-tree-copy-move P02 | 15 | 2 tasks | 7 files |
+Phase: 39 of 39 (Documentation)
+Plan: 39-01 complete
+Status: Complete — all phases and plans done
+Last activity: 2026-03-21 — Completed 39-01: per-prompt LLM and per-feature override documentation
 
 ## Accumulated Context
 
 ### Decisions
 
-- Build order: worker (Phase 28) → API (Phase 29) → dialog UI (Phase 30) → entry points (Phase 31) → testing/docs (Phase 32)
+(Carried from previous milestone)
+
 - Worker uses raw `prisma` (not `enhance()`); ZenStack access control gated once at API entry only
-- `concurrency: 1` on BullMQ worker to prevent ZenStack v3 deadlocks (40P01)
-- `attempts: 1` on queue — partial retries on copy/move create duplicates; surface failures cleanly
-- Shared step groups recreated as proper SharedStepGroups in target (not flattened); in-memory deduplication Map across cases
-- Move: all RepositoryCaseVersions rows re-created with `repositoryCaseId = newCase.id` and `projectId` updated to target
-- Copy: version 1 only, fresh history via createTestCaseVersionInTransaction
-- Field option IDs re-resolved by option name when source/target templates differ; values dropped if no match
-- folderMaxOrder pre-fetched before the per-case loop to avoid race condition (not inside transaction)
 - Unique constraint errors detected via string-matching err.info?.message for "duplicate key" (not err.code === "P2002")
-- Cross-project case links (RepositoryCaseLink) dropped silently; droppedLinkCount reported in job result
-- Version history and template field options fetched separately to avoid PostgreSQL 63-char alias limit (ZenStack v3)
-- mockPrisma.$transaction.mockReset() required in test beforeEach — mockClear() does not reset mockImplementation, causing rollback tests to pollute subsequent tests
-- Tests mock templateCaseAssignment + caseFieldAssignment separately to match worker's two-step field option fetch pattern
-- conflictResolution limited to skip/rename at API layer (overwrite not accepted despite worker support)
-- canAutoAssignTemplates true for both ADMIN and PROJECTADMIN access levels
-- Source workflow state names fetched from source project WorkflowAssignment (not a separate states query)
-- Cancel key prefix `copy-move:cancel:` (not `auto-tag:cancel:`) — must match copyMoveWorker.ts cancelKey() exactly
-- Active job cancellation uses Redis flag (not job.remove()) to allow graceful per-case boundary stops
-- [Phase 29]: conflictResolution limited to skip/rename at API layer (overwrite rejected by Zod schema, not exposed to worker)
-- [Phase 29]: Auto-assign template failures wrapped in per-template try/catch — graceful for project admins lacking project access
-- [Phase 30-01]: No localStorage persistence in useCopyMoveJob — dialog is ephemeral, no recovery needed
-- [Phase 30-01]: Progress type uses {processed, total} matching worker's job.updateProgress() shape (not {analyzed, total})
-- [Phase 30-01]: Notification try/catch in copyMoveWorker: failure logged but does not fail the job
-- [Phase 31-entry-points]: handleCopyMove placed before columns useMemo to avoid block-scoped variable used before declaration
-- [Phase 31-entry-points]: BulkEditModal closes before CopyMoveDialog opens to prevent nested dialogs
-- [Phase 32-02]: sidebar_position: 11 for copy-move docs (follows import-export.md at position 10)
-- [Phase 32-02]: No screenshots in v0.17.0 copy-move docs — text is sufficient per plan discretion
-- [Phase 32-01]: Data verification tests skip when queue unavailable (503) to avoid false failures in CI without Redis — intentional test resilience
-- [Phase 32-01]: pollUntilDone helper polls status endpoint at 500ms intervals (up to 30 attempts) before throwing timeout
-- [Phase 33-01]: FolderTreeNode uses localKey (string) as stable client key; BFS-ordered array trusted from client; merge behavior reuses existing same-name folder silently
-- [Phase 33-02]: TreeView and Cases are siblings in ProjectRepository — folder copy/move state lifted to ProjectRepository, passed as props to both components
-- [Phase 33-02]: onCopyMoveFolder prop guarded by canAddEdit in ProjectRepository — only shown to users with edit permission
-- [Phase 33-02]: effectiveCaseIds replaces selectedCaseIds everywhere in CopyMoveDialog when in folder mode (preflight, submit, progress count)
-
-### Roadmap Evolution
-
-- Phase 33 added: Folder Tree Copy/Move — support copying/moving entire folder hierarchies with their content
+- [Phase 34-schema-and-migration]: No onDelete:Cascade on PromptConfigPrompt.llmIntegration relation — deleting LLM integration sets llmIntegrationId to NULL, preserving prompts
+- [Phase 34-schema-and-migration]: Index added on PromptConfigPrompt.llmIntegrationId following LlmFeatureConfig established pattern
+- [Phase 35-resolution-chain]: Prompt resolver called before resolveIntegration so per-prompt LLM fields are available to the 3-tier chain
+- [Phase 35-resolution-chain]: Explicit-integration endpoints (chat, test, admin chat) unchanged - client-specified integration takes precedence over server-side resolution chain
+- [Phase 36-admin-prompt-editor-llm-selector]: llmIntegrations column uses Map<id,name> to collect unique integrations across prompts, renders three states: Project Default (size 0), single badge (size 1), N LLMs badge (size N)
+- [Phase 36-01]: __clear__ sentinel used in Select to represent null since shadcn Select cannot natively represent null values; clearing integration also clears modelOverride
+- [Phase 37-project-ai-models-overrides]: FeatureOverrides component fetches its own LlmFeatureConfig and PromptConfigPrompt data — page.tsx passes only integrations and projectDefaultIntegration as props
+- [Phase 38-02]: Use createForWorker (not getInstance) for resolveIntegration tests to avoid singleton state bleed between tests
+- [Phase 38-export-import-and-testing]: [Phase 38-01]: Export uses llmIntegrationName (human-readable) not raw ID for portability; import resolves names against active integrations only, sets null with unresolvedIntegrations reporting on miss
+- [Phase 38-03]: Use api.createProject() for projectId in AI models tests; projectId fixture defaults to 1 which does not exist in E2E database
+- [Phase 38-03]: __clear__ sentinel in LLM Integration select renders as 'Project Default (clear)' per en-US translation, not 'Project Default'
+- [Phase 39-01]: Documentation updated in-place on existing pages — no new sidebar entries or pages needed; resolution chain section uses explicit anchor for cross-referencing
 
 ### Pending Todos
 
 None yet.
 
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260321-fk3 | Fix #143 — add audit logging to workers | 2026-03-21 | 60e17043 | [260321-fk3](./quick/260321-fk3-fix-issue-143-add-audit-logging-to-worke/) |
-
 ### Blockers/Concerns
 
-- [Phase 29] Verify `@@allow` delete semantics on RepositoryCases in schema.zmodel before implementing move permission check
-- [Phase 29] Verify TemplateProjectAssignment access rules permit admin auto-assign via enhance(db, { user }) without elevated-privilege client
-- [Phase 28] Verify RepositoryCaseVersions cascade behavior on source delete does not fire before copy completes inside transaction
-
-## Session Continuity
-
-Last session: 2026-03-21T03:31:04.647Z
-Stopped at: Completed 33-02-PLAN.md (Phase 33 Plan 02 — folder copy/move UI entry point)
-Resume file: None
+None yet.
