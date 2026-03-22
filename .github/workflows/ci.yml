@@ -66,7 +66,7 @@ jobs:
         working-directory: packages/api
 
       - name: Install CLI dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
         working-directory: cli
 
       - name: Run CLI unit tests
