@@ -73,7 +73,6 @@ vi.mock("~/lib/hooks", () => ({
   useCountProjects: vi.fn(() => ({ data: 2, isLoading: false })),
   useFindManyRepositoryFolders: vi.fn(() => ({ data: [], isLoading: false })),
   useCountRepositoryCases: vi.fn(() => ({ data: 0, isLoading: false, refetch: vi.fn() })),
-  useCountProjects: vi.fn(() => ({ data: 0, isLoading: false })),
   useFindManyTemplates: vi.fn(() => ({ data: [], isLoading: false })),
   useFindUniqueProjects: vi.fn(() => ({ data: null, isLoading: false })),
   useFindManyProjectLlmIntegration: vi.fn(() => ({ data: [], isLoading: false })),
