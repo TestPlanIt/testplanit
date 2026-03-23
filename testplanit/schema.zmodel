@@ -379,6 +379,7 @@ model Projects {
     defaultCaseExportTemplateId Int?
     defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled          Boolean                               @default(false)
+    duplicateScanResults        DuplicateScanResult[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -1221,6 +1222,67 @@ model RepositoryCaseLink {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+enum DuplicateScanResultStatus {
+    PENDING
+    MERGED
+    LINKED
+    DISMISSED
+}
+
+model DuplicateScanResult {
+    id            Int                        @id @default(autoincrement())
+    projectId     Int
+    project       Projects                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    caseAId       Int
+    caseA         RepositoryCases            @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
+    caseBId       Int
+    caseB         RepositoryCases            @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
+    score         Float
+    matchedFields String[]
+    status        DuplicateScanResultStatus  @default(PENDING)
+    scanJobId     String?
+    isDeleted     Boolean                    @default(false)
+    createdAt     DateTime                   @default(now()) @db.Timestamptz(6)
+
+    @@unique([caseAId, caseBId, scanJobId])
+    @@index([projectId, status, isDeleted])
+    @@index([scanJobId])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    @@deny('read', caseA.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        caseA.project.creator == auth() ||
+        caseA.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        caseA.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        caseA.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (caseA.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (caseA.project.assignedUsers?[user == auth()] &&
+         caseA.project.defaultAccessType == 'SPECIFIC_ROLE' && caseA.project.defaultRole != null)
+    )
+
+    @@allow('create,update,delete',
+        caseA.project.creator == auth() ||
+        caseA.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                       (role.name == 'Project Admin' ||
+                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        caseA.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        caseA.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                        ((accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                         (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
 model RepositoryCases {
     id                     Int                      @id @default(autoincrement())
     projectId              Int
@@ -1261,6 +1323,8 @@ model RepositoryCases {
     junitTestSteps         JUnitTestStep[]          @relation("JUnitTestStepCase")
     linksFrom              RepositoryCaseLink[]     @relation("CaseALinks")
     linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
+    duplicateScanResultsA  DuplicateScanResult[]   @relation("DuplicateCaseA")
+    duplicateScanResultsB  DuplicateScanResult[]   @relation("DuplicateCaseB")
     comments               Comment[]
 
     @@unique([projectId, name, className, source])
