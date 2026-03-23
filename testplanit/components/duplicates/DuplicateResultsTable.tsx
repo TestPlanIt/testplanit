@@ -91,6 +91,7 @@ export function DuplicateResultsTable({ projectId }: DuplicateResultsTableProps)
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12">#</TableHead>
             <TableHead>Confidence</TableHead>
             <TableHead>Case A</TableHead>
             <TableHead>Case B</TableHead>
@@ -99,8 +100,9 @@ export function DuplicateResultsTable({ projectId }: DuplicateResultsTableProps)
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
+          {items.map((item, index) => (
             <TableRow key={item.id}>
+              <TableCell className="text-muted-foreground">{index + 1}</TableCell>
               <TableCell>
                 <ConfidenceBadge score={item.score} />
               </TableCell>
