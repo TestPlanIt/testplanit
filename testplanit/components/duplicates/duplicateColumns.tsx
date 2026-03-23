@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
+import { ArrowRightLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   type ConfidenceBucket,
@@ -33,7 +35,8 @@ function ConfidenceBadge({ score }: { score: number }) {
 }
 
 export const getColumns = (
-  t: ReturnType<typeof useTranslations<"repository.duplicates">>
+  t: ReturnType<typeof useTranslations<"repository.duplicates">>,
+  onCompare?: (id: number) => void
 ): ColumnDef<DuplicateCandidateRow>[] => [
   {
     id: "confidence",
@@ -82,6 +85,29 @@ export const getColumns = (
       <span className="text-right block">
         {(row.original.score * 100).toFixed(0)}%
       </span>
+    ),
+  },
+  {
+    id: "actions",
+    header: "",
+    enableSorting: false,
+    enableResizing: false,
+    enableHiding: false,
+    size: 80,
+    maxSize: 80,
+    cell: ({ row }) => (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onCompare?.(row.original.id);
+        }}
+        className="gap-1.5 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowRightLeft className="h-3.5 w-3.5" />
+        <span className="text-xs">{t("compareButton")}</span>
+      </Button>
     ),
   },
 ];
