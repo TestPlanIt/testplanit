@@ -40,6 +40,18 @@ export function DuplicateResultsTable({
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  const [sortConfig, setSortConfig] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  }>({ column: "score", direction: "desc" });
+
+  const handleSortChange = (column: string) => {
+    setSortConfig((prev) => ({
+      column,
+      direction:
+        prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
 
   const columns = useMemo(() => getColumns(t), [t]);
 
@@ -58,7 +70,7 @@ export function DuplicateResultsTable({
 
   const items: DuplicateCandidateRow[] = useMemo(() => {
     const raw = data?.pages.flatMap((p) => p.items) ?? [];
-    return raw.map((item) => ({
+    const mapped = raw.map((item) => ({
       id: item.id,
       name: `${item.caseA.name} / ${item.caseB.name}`,
       projectId: item.projectId,
@@ -70,7 +82,42 @@ export function DuplicateResultsTable({
       matchedFields: item.matchedFields,
       status: item.status,
     }));
-  }, [data]);
+
+    if (sortConfig) {
+      const { column, direction } = sortConfig;
+      const dir = direction === "asc" ? 1 : -1;
+      mapped.sort((a, b) => {
+        let aVal: string | number;
+        let bVal: string | number;
+        switch (column) {
+          case "confidence":
+          case "score":
+            aVal = a.score;
+            bVal = b.score;
+            break;
+          case "caseA":
+            aVal = a.caseAName.toLowerCase();
+            bVal = b.caseAName.toLowerCase();
+            break;
+          case "caseB":
+            aVal = a.caseBName.toLowerCase();
+            bVal = b.caseBName.toLowerCase();
+            break;
+          case "matchedFields":
+            aVal = a.matchedFields.join(", ").toLowerCase();
+            bVal = b.matchedFields.join(", ").toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+        if (aVal < bVal) return -1 * dir;
+        if (aVal > bVal) return 1 * dir;
+        return 0;
+      });
+    }
+
+    return mapped;
+  }, [data, sortConfig]);
 
   if (isLoading) {
     return (
@@ -94,6 +141,8 @@ export function DuplicateResultsTable({
       <DataTable
         columns={columns}
         data={items}
+        onSortChange={handleSortChange}
+        sortConfig={sortConfig}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}
         isLoading={isLoading}
