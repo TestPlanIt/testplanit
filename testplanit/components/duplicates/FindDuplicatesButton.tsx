@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { ScanSearch } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -14,7 +15,11 @@ interface StatusData {
   jobId: string;
   state: string;
   progress: { analyzed: number; total: number } | null;
-  result: { pairsFound: number; casesScanned: number; scanJobId: number } | null;
+  result: {
+    pairsFound: number;
+    casesScanned: number;
+    scanJobId: number;
+  } | null;
   failedReason: string | null;
 }
 
@@ -25,6 +30,7 @@ interface FindDuplicatesButtonProps {
 const STORAGE_KEY_PREFIX = "duplicate-scan-job:";
 
 export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
+  const t = useTranslations("repository.duplicates");
   const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
 
   const [scanJobId, setScanJobId] = useState<string | null>(() => {
@@ -64,7 +70,8 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     enabled: scanState === "complete",
   });
 
-  const badgeCount = scanState === "complete" ? (refreshedCount ?? 0) : (pendingCount ?? 0);
+  const badgeCount =
+    scanState === "complete" ? (refreshedCount ?? 0) : (pendingCount ?? 0);
 
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["duplicate-scan-status", scanJobId],
@@ -80,19 +87,16 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       setScanState("complete");
       sessionStorage.removeItem(storageKey);
       const pairsFound = statusData.result?.pairsFound ?? 0;
-      if (pairsFound > 0) {
-        toast.success(`Duplicate analysis complete — ${pairsFound} potential duplicate${pairsFound === 1 ? "" : "s"} found`);
-      } else {
-        toast.success("Duplicate analysis complete — no duplicates found");
-      }
+      toast.success(t("scanComplete", { count: pairsFound }));
     } else if (statusData.state === "failed") {
       setScanState("failed");
       sessionStorage.removeItem(storageKey);
-      toast.error("Duplicate analysis failed", {
-        description: statusData.failedReason ?? "An unexpected error occurred",
+      toast.error(t("scanFailed"), {
+        description:
+          statusData.failedReason ?? t("scanFailedDescription"),
       });
     }
-  }, [statusData, storageKey]);
+  }, [statusData, storageKey, t]);
 
   const handleScan = async () => {
     try {
@@ -125,7 +129,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       <div className="flex items-center gap-2">
         <Progress value={progressPercent} className="w-32 h-2" />
         <span className="text-xs text-muted-foreground">
-          {analyzed}/{total}
+          {t("analyzing", { analyzed, total })}
         </span>
       </div>
     );
@@ -135,19 +139,18 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     const resultsCount = refreshedCount ?? statusData?.result?.pairsFound ?? 0;
     return (
       <div className="relative">
-        <Button variant="outline" asChild className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
+        <Button
+          variant={resultsCount > 0 ? "destructive" : "outline"}
+          asChild
+          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        >
           <Link href={`/projects/repository/${projectId}/duplicates`}>
             <ScanSearch className="h-4 w-4 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-              View Results
+              {t("viewResults", { count: resultsCount })}
             </span>
           </Link>
         </Button>
-        {resultsCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
-            {resultsCount > 99 ? "99+" : resultsCount}
-          </span>
-        )}
       </div>
     );
   }
@@ -161,30 +164,27 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       >
         <ScanSearch className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-          Retry Scan
+          {t("retryScan")}
         </span>
       </Button>
     );
   }
 
-  // idle
+  // idle — show "View N Results" if pending duplicates exist, otherwise "Find Duplicates"
   return (
     <div className="relative">
       <Button
-        variant="outline"
+        variant={badgeCount > 0 ? "destructive" : "outline"}
         onClick={handleScan}
         className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
       >
         <ScanSearch className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-          Find Duplicates
+          {badgeCount > 0
+            ? t("viewResults", { count: badgeCount })
+            : t("findDuplicates")}
         </span>
       </Button>
-      {badgeCount > 0 && (
-        <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
-          {badgeCount > 99 ? "99+" : badgeCount}
-        </span>
-      )}
     </div>
   );
 }

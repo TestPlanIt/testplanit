@@ -2057,6 +2057,15 @@
       "generatingParallelProgress": "Generated {done} of {total} files...",
       "cancelledGeneration": "Cancelled"
     },
+    "duplicates": {
+      "findDuplicates": "Find Duplicates",
+      "viewResults": "View {count, plural, one {# Result} other {# Results}}",
+      "retryScan": "Retry Scan",
+      "analyzing": "{analyzed}/{total}",
+      "scanComplete": "Duplicate analysis complete — {count, plural, =0 {no duplicates found} one {# potential duplicate found} other {# potential duplicates found}}",
+      "scanFailed": "Duplicate analysis failed",
+      "scanFailedDescription": "An unexpected error occurred"
+    },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",
       "title": "Generate Test Cases with AI",
