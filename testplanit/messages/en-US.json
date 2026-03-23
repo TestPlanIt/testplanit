@@ -2071,6 +2071,7 @@
       "noDuplicatesFound": "No duplicates found",
       "noDuplicatesDescription": "Last scan completed with no matching pairs.",
       "loadMore": "Load More",
+      "filterPlaceholder": "Filter duplicates...",
       "columnConfidence": "Confidence",
       "columnCaseA": "Case A",
       "columnCaseB": "Case B",

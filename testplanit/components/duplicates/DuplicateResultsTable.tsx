@@ -1,11 +1,12 @@
 "use client";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   type DuplicateCandidateRow,
   getColumns,
@@ -44,6 +45,7 @@ export function DuplicateResultsTable({
   }>({ column: "score", direction: "desc" });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(25);
+  const [searchString, setSearchString] = useState("");
 
   const handleSortChange = (column: string) => {
     setSortConfig((prev) => ({
@@ -58,6 +60,11 @@ export function DuplicateResultsTable({
     setPageSize(typeof size === "number" ? size : 100);
     setCurrentPage(1);
   };
+
+  const handleFilterChange = useCallback((value: string) => {
+    setSearchString(value);
+    setCurrentPage(1);
+  }, []);
 
   const columns = useMemo(() => getColumns(t), [t]);
 
@@ -75,7 +82,7 @@ export function DuplicateResultsTable({
 
   const sortedItems: DuplicateCandidateRow[] = useMemo(() => {
     const raw = allItems ?? [];
-    const mapped = raw.map((item) => ({
+    let mapped = raw.map((item) => ({
       id: item.id,
       name: `${item.caseA.name} / ${item.caseB.name}`,
       projectId: item.projectId,
@@ -88,6 +95,18 @@ export function DuplicateResultsTable({
       status: item.status,
     }));
 
+    // Filter by search string
+    if (searchString) {
+      const lower = searchString.toLowerCase();
+      mapped = mapped.filter(
+        (item) =>
+          item.caseAName.toLowerCase().includes(lower) ||
+          item.caseBName.toLowerCase().includes(lower) ||
+          item.matchedFields.some((f) => f.toLowerCase().includes(lower))
+      );
+    }
+
+    // Sort
     if (sortConfig) {
       const { column, direction } = sortConfig;
       const dir = direction === "asc" ? 1 : -1;
@@ -122,7 +141,7 @@ export function DuplicateResultsTable({
     }
 
     return mapped;
-  }, [allItems, sortConfig]);
+  }, [allItems, sortConfig, searchString]);
 
   const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -138,7 +157,7 @@ export function DuplicateResultsTable({
     );
   }
 
-  if (totalItems === 0) {
+  if ((allItems ?? []).length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <p className="text-lg font-medium">{t("noDuplicatesFound")}</p>
@@ -148,38 +167,56 @@ export function DuplicateResultsTable({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <PaginationInfo
-          startIndex={startIndex + 1}
-          endIndex={endIndex}
-          totalRows={totalItems}
-          pageSize={pageSize}
-          pageSizeOptions={[...PAGE_SIZE_OPTIONS]}
-          handlePageSizeChange={handlePageSizeChange}
-        />
+    <div>
+      <div className="flex flex-row items-start">
+        <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+          <div className="text-muted-foreground w-full text-nowrap">
+            <Filter
+              placeholder={t("filterPlaceholder")}
+              initialSearchString={searchString}
+              onSearchChange={handleFilterChange}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col w-full sm:w-2/3 items-end">
+          {totalItems > 0 && (
+            <>
+              <div className="justify-end">
+                <PaginationInfo
+                  startIndex={startIndex + 1}
+                  endIndex={endIndex}
+                  totalRows={totalItems}
+                  searchString={searchString}
+                  pageSize={pageSize}
+                  pageSizeOptions={[...PAGE_SIZE_OPTIONS]}
+                  handlePageSizeChange={handlePageSizeChange}
+                />
+              </div>
+              <div className="justify-end -mx-4">
+                <PaginationComponent
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={pageItems}
-        onSortChange={handleSortChange}
-        sortConfig={sortConfig}
-        columnVisibility={columnVisibility}
-        onColumnVisibilityChange={setColumnVisibility}
-        isLoading={isLoading}
-        pageSize={pageSize}
-      />
-
-      {totalPages > 1 && (
-        <div className="flex justify-end -mx-4">
-          <PaginationComponent
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </div>
-      )}
+      <div className="mt-4">
+        <DataTable
+          columns={columns}
+          data={pageItems}
+          onSortChange={handleSortChange}
+          sortConfig={sortConfig}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          isLoading={isLoading}
+          pageSize={pageSize}
+        />
+      </div>
     </div>
   );
 }
