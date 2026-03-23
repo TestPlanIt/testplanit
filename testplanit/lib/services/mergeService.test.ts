@@ -1,52 +1,61 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ----- Mock prismaBase module -----
-// We need to intercept the prisma.$transaction call and capture all inner calls.
+// Use vi.hoisted() so that the mock objects are available before vi.mock() factories run
+// (vi.mock is hoisted to the top of the file by Vitest).
 
-const mockTx = {
-  testRunCases: {
-    findMany: vi.fn(),
-    deleteMany: vi.fn(),
-    updateMany: vi.fn(),
-  },
-  steps: {
-    findFirst: vi.fn(),
-    findMany: vi.fn(),
-    update: vi.fn(),
-  },
-  caseFieldValues: { updateMany: vi.fn() },
-  resultFieldValues: { updateMany: vi.fn() },
-  attachments: { updateMany: vi.fn() },
-  repositoryCases: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
-  repositoryCaseVersions: {
-    findMany: vi.fn(),
-    update: vi.fn(),
-  },
-  jUnitTestResult: { updateMany: vi.fn() },
-  jUnitProperty: { updateMany: vi.fn() },
-  jUnitAttachment: { updateMany: vi.fn() },
-  jUnitTestStep: { updateMany: vi.fn() },
-  comment: { updateMany: vi.fn() },
-  repositoryCaseLink: {
-    findMany: vi.fn(),
-    createMany: vi.fn(),
-    create: vi.fn(),
-  },
-  duplicateScanResult: { updateMany: vi.fn() },
-};
+const { mockTx, mockPrisma } = vi.hoisted(() => {
+  const mockTx = {
+    testRunCases: {
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    steps: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+    },
+    caseFieldValues: { updateMany: vi.fn() },
+    resultFieldValues: { updateMany: vi.fn() },
+    attachments: { updateMany: vi.fn() },
+    repositoryCases: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    repositoryCaseVersions: {
+      findMany: vi.fn(),
+      update: vi.fn(),
+    },
+    jUnitTestResult: { updateMany: vi.fn() },
+    jUnitProperty: { updateMany: vi.fn() },
+    jUnitAttachment: { updateMany: vi.fn() },
+    jUnitTestStep: { updateMany: vi.fn() },
+    comment: { updateMany: vi.fn() },
+    repositoryCaseLink: {
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+      create: vi.fn(),
+    },
+    duplicateScanResult: { updateMany: vi.fn() },
+  };
 
-const mockPrisma = {
-  $transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<any>) => fn(mockTx)),
-  repositoryCaseLink: {
-    create: vi.fn(),
-  },
-  duplicateScanResult: {
-    updateMany: vi.fn(),
-  },
-};
+  const mockPrisma = {
+    $transaction: vi.fn((fn: any) => {
+      if (typeof fn === "function") return fn(mockTx);
+      // Array form (linkCases uses static array)
+      return Promise.all(fn);
+    }),
+    repositoryCaseLink: {
+      create: vi.fn(),
+    },
+    duplicateScanResult: {
+      updateMany: vi.fn(),
+    },
+  };
+
+  return { mockTx, mockPrisma };
+});
 
 vi.mock("~/lib/prismaBase", () => ({
   prisma: mockPrisma,
