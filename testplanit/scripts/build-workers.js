@@ -28,6 +28,7 @@ const entryPoints = [
   'workers/autoTagWorker.ts',
   'workers/budgetAlertWorker.ts',
   'workers/repoCacheWorker.ts',
+  'workers/duplicateScanWorker.ts',
   'scheduler.ts',
 ];
 
