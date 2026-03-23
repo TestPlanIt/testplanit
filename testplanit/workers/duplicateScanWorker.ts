@@ -1,0 +1,202 @@
+import { Job, Worker } from "bullmq";
+import { pathToFileURL } from "node:url";
+import { DuplicateScanService } from "../lib/services/duplicateScanService";
+import {
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  validateMultiTenantJobData,
+} from "../lib/multiTenantPrisma";
+import { DUPLICATE_SCAN_QUEUE_NAME } from "../lib/queueNames";
+import { getElasticsearchClient } from "../services/elasticsearchService";
+import valkeyConnection from "../lib/valkey";
+
+// ─── Job data / result types ────────────────────────────────────────────────
+
+export interface DuplicateScanJobData extends MultiTenantJobData {
+  projectId: number;
+  userId: string;
+}
+
+export interface DuplicateScanJobResult {
+  pairsFound: number;
+  casesScanned: number;
+  scanJobId: string;
+}
+
+// ─── Redis cancellation key helper ──────────────────────────────────────────
+
+function cancelKey(jobId: string | undefined): string {
+  return `duplicate-scan:cancel:${jobId}`;
+}
+
+// ─── Processor ──────────────────────────────────────────────────────────────
+
+export const processor = async (
+  job: Job<DuplicateScanJobData>
+): Promise<DuplicateScanJobResult> => {
+  console.log(
+    `Processing duplicate scan job ${job.id} for project ${job.data.projectId}` +
+      (job.data.tenantId ? ` (tenant: ${job.data.tenantId})` : "")
+  );
+
+  // 1. Validate multi-tenant context
+  validateMultiTenantJobData(job.data);
+
+  // 2. Get tenant-specific Prisma client
+  const prisma = getPrismaClientForJob(job.data);
+
+  // 3. Create DuplicateScanService instance
+  const esClient = getElasticsearchClient();
+  const service = new DuplicateScanService(prisma as any, esClient);
+
+  // 4. Check for pre-start cancellation
+  const redis = await worker!.client;
+  const cancelled = await redis.get(cancelKey(job.id));
+  if (cancelled) {
+    await redis.del(cancelKey(job.id));
+    throw new Error("Job cancelled by user");
+  }
+
+  // 5. Fetch all non-deleted cases for the project (shallow select only)
+  const cases = await prisma.repositoryCases.findMany({
+    where: { projectId: job.data.projectId, isDeleted: false },
+    select: { id: true, name: true },
+  });
+
+  const total = cases.length;
+  const seenPairs = new Set<string>();
+  const allPairs: Array<{
+    caseAId: number;
+    caseBId: number;
+    score: number;
+    confidence: string;
+    matchedFields: string[];
+  }> = [];
+
+  // 6. For each case, check cancellation, find similar cases, deduplicate
+  for (let i = 0; i < cases.length; i++) {
+    const testCase = cases[i];
+
+    // Mid-loop cancellation check
+    const isCancelled = await redis.get(cancelKey(job.id));
+    if (isCancelled) {
+      await redis.del(cancelKey(job.id));
+      throw new Error("Job cancelled by user");
+    }
+
+    const pairs = await service.findSimilarCases(
+      { id: testCase.id, name: testCase.name },
+      job.data.projectId,
+      job.data.tenantId
+    );
+
+    for (const pair of pairs) {
+      const key = `${pair.caseAId}:${pair.caseBId}`;
+      if (!seenPairs.has(key)) {
+        seenPairs.add(key);
+        allPairs.push(pair);
+      }
+    }
+
+    await job.updateProgress({ analyzed: i + 1, total });
+  }
+
+  // 7. Sort by score descending and cap at 100
+  allPairs.sort((a, b) => b.score - a.score);
+  const top100 = allPairs.slice(0, 100);
+
+  // 8. Delete previous scan results for this project, then insert new ones
+  await prisma.duplicateScanResult.deleteMany({
+    where: { projectId: job.data.projectId },
+  });
+
+  await prisma.duplicateScanResult.createMany({
+    data: top100.map((p) => ({
+      projectId: job.data.projectId,
+      caseAId: p.caseAId,
+      caseBId: p.caseBId,
+      score: p.score,
+      matchedFields: p.matchedFields,
+      scanJobId: job.id,
+    })),
+    skipDuplicates: true,
+  });
+
+  return {
+    pairsFound: top100.length,
+    casesScanned: total,
+    scanJobId: job.id!,
+  };
+};
+
+// ─── Worker setup ───────────────────────────────────────────────────────────
+
+let worker: Worker<DuplicateScanJobData, DuplicateScanJobResult> | null = null;
+
+export function startDuplicateScanWorker() {
+  if (isMultiTenantMode()) {
+    console.log("Duplicate scan worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Duplicate scan worker starting in SINGLE-TENANT mode");
+  }
+
+  worker = new Worker<DuplicateScanJobData, DuplicateScanJobResult>(
+    DUPLICATE_SCAN_QUEUE_NAME,
+    processor,
+    { connection: valkeyConnection as any, concurrency: 1 }
+  );
+
+  worker.on("completed", (job) =>
+    console.log(`Duplicate scan job ${job.id} completed`)
+  );
+  worker.on("failed", (job, err) =>
+    console.error(`Duplicate scan job ${job?.id} failed:`, err.message)
+  );
+  worker.on("error", (err) => {
+    console.error("Duplicate scan worker error:", err);
+  });
+
+  console.log(
+    `Duplicate scan worker started for queue "${DUPLICATE_SCAN_QUEUE_NAME}".`
+  );
+
+  // Graceful shutdown
+  process.on("SIGTERM", async () => {
+    console.log("Shutting down duplicate scan worker...");
+    if (worker) {
+      await worker.close();
+    }
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
+    process.exit(0);
+  });
+
+  process.on("SIGINT", async () => {
+    console.log("Shutting down duplicate scan worker...");
+    if (worker) {
+      await worker.close();
+    }
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
+    process.exit(0);
+  });
+
+  return worker;
+}
+
+// Run the worker if this file is executed directly
+if (
+  (typeof import.meta !== "undefined" &&
+    import.meta.url === pathToFileURL(process.argv[1]).href) ||
+  typeof import.meta === "undefined" ||
+  (import.meta as any).url === undefined
+) {
+  console.log("Duplicate scan worker running...");
+  startDuplicateScanWorker();
+}
+
+export default worker;
