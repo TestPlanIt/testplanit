@@ -4,13 +4,14 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import {
   type DuplicateCandidateRow,
   getColumns,
 } from "./duplicateColumns";
+import { DuplicateComparisonDialog } from "./DuplicateComparisonDialog";
 
 interface DuplicateCandidate {
   id: number;
@@ -36,6 +37,7 @@ export function DuplicateResultsTable({
   projectId,
 }: DuplicateResultsTableProps) {
   const t = useTranslations("repository.duplicates");
+  const queryClient = useQueryClient();
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -46,6 +48,12 @@ export function DuplicateResultsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(25);
   const [searchString, setSearchString] = useState("");
+  const [selectedPair, setSelectedPair] = useState<DuplicateCandidateRow | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleResolved = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["duplicate-scan-candidates", projectId] });
+  }, [queryClient, projectId]);
 
   const handleSortChange = (column: string) => {
     setSortConfig((prev) => ({
@@ -143,6 +151,14 @@ export function DuplicateResultsTable({
     return mapped;
   }, [allItems, sortConfig, searchString]);
 
+  const handleRowClick = useCallback((id: number | string) => {
+    const row = sortedItems.find((item) => item.id === id);
+    if (row) {
+      setSelectedPair(row);
+      setDialogOpen(true);
+    }
+  }, [sortedItems]);
+
   const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -215,8 +231,29 @@ export function DuplicateResultsTable({
           onColumnVisibilityChange={setColumnVisibility}
           isLoading={isLoading}
           pageSize={pageSize}
+          onTestCaseClick={handleRowClick}
         />
       </div>
+
+      <DuplicateComparisonDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        pair={
+          selectedPair
+            ? {
+                id: selectedPair.id,
+                caseAId: selectedPair.caseAId,
+                caseBId: selectedPair.caseBId,
+                caseAName: selectedPair.caseAName,
+                caseBName: selectedPair.caseBName,
+                projectId: Number(projectId),
+                score: selectedPair.score,
+                matchedFields: selectedPair.matchedFields,
+              }
+            : null
+        }
+        onResolved={handleResolved}
+      />
     </div>
   );
 }
