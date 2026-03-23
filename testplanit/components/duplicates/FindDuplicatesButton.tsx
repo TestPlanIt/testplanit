@@ -22,9 +22,20 @@ interface FindDuplicatesButtonProps {
   projectId: string;
 }
 
+const STORAGE_KEY_PREFIX = "duplicate-scan-job:";
+
 export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
-  const [scanJobId, setScanJobId] = useState<string | null>(null);
-  const [scanState, setScanState] = useState<ScanState>("idle");
+  const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
+
+  const [scanJobId, setScanJobId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem(storageKey);
+  });
+  const [scanState, setScanState] = useState<ScanState>(() =>
+    typeof window !== "undefined" && sessionStorage.getItem(storageKey)
+      ? "active"
+      : "idle"
+  );
 
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["duplicate-scan-status", scanJobId],
@@ -38,6 +49,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     if (!statusData) return;
     if (statusData.state === "completed") {
       setScanState("complete");
+      sessionStorage.removeItem(storageKey);
       const pairsFound = statusData.result?.pairsFound ?? 0;
       if (pairsFound > 0) {
         toast.success(`Duplicate analysis complete — ${pairsFound} potential duplicate${pairsFound === 1 ? "" : "s"} found`);
@@ -46,11 +58,12 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       }
     } else if (statusData.state === "failed") {
       setScanState("failed");
+      sessionStorage.removeItem(storageKey);
       toast.error("Duplicate analysis failed", {
         description: statusData.failedReason ?? "An unexpected error occurred",
       });
     }
-  }, [statusData]);
+  }, [statusData, storageKey]);
 
   const handleScan = async () => {
     try {
@@ -62,6 +75,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       });
       const data = await res.json();
       setScanJobId(data.jobId);
+      sessionStorage.setItem(storageKey, data.jobId);
     } catch {
       setScanState("failed");
     }
