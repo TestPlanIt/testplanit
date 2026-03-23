@@ -47,11 +47,12 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     queryKey: ["duplicate-scan-pending-count", projectId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=1`
+        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=100`
       );
       if (!res.ok) return 0;
       const data = await res.json();
-      return data.items.length + (data.nextCursor ? 1 : 0);
+      // If nextCursor exists there are more than 100
+      return data.nextCursor ? 100 : data.items.length;
     },
     enabled: scanState === "idle",
   });
@@ -170,21 +171,34 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     );
   }
 
-  // idle — show "View N Results" if pending duplicates exist, otherwise "Find Duplicates"
-  return (
-    <div className="relative">
+  // idle — link to results if pending duplicates exist, otherwise scan button
+  if (badgeCount > 0) {
+    return (
       <Button
-        variant={badgeCount > 0 ? "destructive" : "outline"}
-        onClick={handleScan}
+        variant="destructive"
+        asChild
         className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
       >
-        <ScanSearch className="h-4 w-4 shrink-0" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-          {badgeCount > 0
-            ? t("viewResults", { count: badgeCount })
-            : t("findDuplicates")}
-        </span>
+        <Link href={`/projects/repository/${projectId}/duplicates`}>
+          <ScanSearch className="h-4 w-4 shrink-0" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            {t("viewResults", { count: badgeCount })}
+          </span>
+        </Link>
       </Button>
-    </div>
+    );
+  }
+
+  return (
+    <Button
+      variant="outline"
+      onClick={handleScan}
+      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+    >
+      <ScanSearch className="h-4 w-4 shrink-0" />
+      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+        {t("findDuplicates")}
+      </span>
+    </Button>
   );
 }
