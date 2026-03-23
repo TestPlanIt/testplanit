@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Bot, Bug, Calendar, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheckBig, FolderTree, Hash, LayoutTemplate, Link, ListChecks, ListOrdered, Search, SquareCheckBig, Tags, Type, User, UserCog, Workflow, X
 } from "lucide-react";
+import { FindDuplicatesButton } from "@/components/duplicates/FindDuplicatesButton";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
@@ -1504,6 +1505,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 folderName={selectedFolderName}
                                 onImportComplete={refetchFolderStats}
                               />
+                              <FindDuplicatesButton projectId={projectIdParam} />
                               <AddCaseModal folderId={selectedFolderId ?? 0} />
                             </div>
                           )}
