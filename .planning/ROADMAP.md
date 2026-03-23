@@ -26,7 +26,7 @@ Phases 28-33: v0.17.0 Copy/Move Test Cases Between Projects (shipped 2026-03-21)
 
 **Milestone Goal:** Help test engineers find and resolve duplicate test cases that cover the same functionality, reducing redundant coverage and improving test suite quality.
 
-- [ ] **Phase 47: Detection Foundation** - Schema model + multi-signal similarity scoring engine
+- [x] **Phase 47: Detection Foundation** - Schema model + multi-signal similarity scoring engine (completed 2026-03-23)
 - [ ] **Phase 48: Async Project-Wide Scan** - BullMQ scan worker, API, and results view
 - [ ] **Phase 49: Resolution Engine** - Side-by-side comparison, merge, link, and dismiss
 - [ ] **Phase 50: Creation-Time and Import Warnings** - Soft non-blocking warnings at creation and import
@@ -45,7 +45,7 @@ Phases 28-33: v0.17.0 Copy/Move Test Cases Between Projects (shipped 2026-03-21)
   3. `DuplicateScanService.findSimilarCases(caseData, projectId)` returns scored candidate pairs using name, steps, tags, and field values
   4. Similarity results are expressed as high/medium/low confidence buckets (not raw floats) with matched field labels
   5. All queries are scoped to a single project — no cross-project results are returned under any inputs
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 47-01-PLAN.md — Similarity scoring utilities (Jaro-Winkler, combineScores, scoreToConfidence) with TDD
@@ -61,7 +61,12 @@ Plans:
   2. Scan runs in the background via BullMQ and reports progress without blocking the UI
   3. Scan results survive a page reload — candidate pairs are readable from `DuplicateScanResult` table
   4. User can navigate to a dedicated duplicates page that lists candidate pairs sorted by confidence (high first)
-**Plans**: TBD
+**Plans:** 1/3 plans executed
+
+Plans:
+- [ ] 48-01-PLAN.md — BullMQ duplicateScanWorker with tests and build registration
+- [ ] 48-02-PLAN.md — API routes (submit, status, cancel, candidates)
+- [ ] 48-03-PLAN.md — UI: toolbar button with progress, duplicates results page
 
 ### Phase 49: Resolution Engine
 **Goal**: Users can resolve any candidate pair by merging, linking as related, or dismissing — with full history preservation
@@ -114,8 +119,8 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 47. Detection Foundation | 2/3 | In Progress|  | - |
-| 48. Async Project-Wide Scan | v0.19.0 | 0/TBD | Not started | - |
+| 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
+| 48. Async Project-Wide Scan | 1/3 | In Progress|  | - |
 | 49. Resolution Engine | v0.19.0 | 0/TBD | Not started | - |
 | 50. Creation-Time and Import Warnings | v0.19.0 | 0/TBD | Not started | - |
 | 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |

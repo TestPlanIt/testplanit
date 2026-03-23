@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: Completed 47-03-PLAN.md
-last_updated: "2026-03-23T16:40:00.000Z"
+stopped_at: Completed 48-01-PLAN.md
+last_updated: "2026-03-23T20:48:24.707Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 4
   percent: 67
 ---
 
@@ -51,6 +51,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 
 | Phase 47 P01 | 2 | 1 tasks | 2 files |
 | Phase 47 P03 | 2 | 1 tasks | 2 files |
+| Phase 48 P01 | 15m | 2 tasks | 4 files |
 
 ### Decisions
 
@@ -67,6 +68,9 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 47]: Lowercase normalization inside jaroWinkler itself — callers never need to handle case
 - [Phase 47 P03]: ES _score used as steps signal proxy (normalized by MAX_ES_SCORE=10.0) — avoids separate step-level comparison
 - [Phase 47 P03]: stepsScore threshold for matchedFields set at 0.3 (normalized) — aligns with steps weight in scoring formula
+- [Phase 48]: No $transaction() for deleteMany+createMany — avoids timeout on large case sets
+- [Phase 48]: concurrency:1 at worker level prevents overlapping scans for same project
+- [Phase 48]: Shallow repositoryCases select (id,name only) avoids ZenStack v3 alias limit
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T16:40:00.000Z
-Stopped at: Completed 47-03-PLAN.md
+Last session: 2026-03-23T20:48:24.705Z
+Stopped at: Completed 48-01-PLAN.md
 Resume file: None

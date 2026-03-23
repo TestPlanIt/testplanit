@@ -20,8 +20,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Scanning
 
 - [ ] **SCAN-01**: User can trigger an on-demand project-wide duplicate scan from the repository view
-- [ ] **SCAN-02**: Scan runs asynchronously via BullMQ worker with progress reporting
-- [ ] **SCAN-03**: Scan results persist to a DuplicateScanResult table and survive page reloads
+- [x] **SCAN-02**: Scan runs asynchronously via BullMQ worker with progress reporting
+- [x] **SCAN-03**: Scan results persist to a DuplicateScanResult table and survive page reloads
 - [ ] **SCAN-04**: User can view scan results in a dedicated duplicates page showing candidate pairs sorted by confidence
 
 ### Warnings
@@ -91,8 +91,8 @@ Deferred to a later release. Tracked but not in current roadmap.
 | DET-06      | Phase 51 | Pending |
 | DET-07      | Phase 51 | Pending |
 | SCAN-01     | Phase 48 | Pending |
-| SCAN-02     | Phase 48 | Pending |
-| SCAN-03     | Phase 48 | Pending |
+| SCAN-02     | Phase 48 | Complete |
+| SCAN-03     | Phase 48 | Complete |
 | SCAN-04     | Phase 48 | Pending |
 | WARN-01     | Phase 50 | Pending |
 | WARN-02     | Phase 50 | Pending |
