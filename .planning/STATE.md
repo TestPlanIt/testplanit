@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: Completed 49-02-PLAN.md
-last_updated: "2026-03-23T23:03:44.681Z"
+stopped_at: "Checkpoint: 49-03-PLAN.md Task 3 awaiting human verification"
+last_updated: "2026-03-23T23:10:15.601Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 67
 ---
 
@@ -79,6 +79,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 49]: vi.hoisted() required for mock objects in vi.mock() factories — vi.mock is hoisted before variable declarations in Vitest
 - [Phase 49]: linkCases uses static array form of prisma.$transaction([op1, op2]) to avoid interactive tx overhead for simple two-step operations
 - [Phase 49]: Steps model uses step (Json) field not title; CaseFieldValues relation is field not caseField with displayName not name
+- [Phase 49-resolution-engine]: onTestCaseClick DataTable prop used for row click in DuplicateResultsTable — avoids modifying duplicateColumns.tsx
+- [Phase 49-resolution-engine]: Merge button disabled until survivor explicitly selected — prevents accidental destructive merge
 
 ### Pending Todos
 
@@ -91,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:03:44.679Z
-Stopped at: Completed 49-02-PLAN.md
+Last session: 2026-03-23T23:10:11.598Z
+Stopped at: Checkpoint: 49-03-PLAN.md Task 3 awaiting human verification
 Resume file: None

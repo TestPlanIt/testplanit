@@ -28,7 +28,7 @@ Phases 28-33: v0.17.0 Copy/Move Test Cases Between Projects (shipped 2026-03-21)
 
 - [x] **Phase 47: Detection Foundation** - Schema model + multi-signal similarity scoring engine (completed 2026-03-23)
 - [x] **Phase 48: Async Project-Wide Scan** - BullMQ scan worker, API, and results view (completed 2026-03-23)
-- [ ] **Phase 49: Resolution Engine** - Side-by-side comparison, merge, link, and dismiss
+- [x] **Phase 49: Resolution Engine** - Side-by-side comparison, merge, link, and dismiss (completed 2026-03-23)
 - [ ] **Phase 50: Creation-Time and Import Warnings** - Soft non-blocking warnings at creation and import
 - [ ] **Phase 51: LLM Semantic Tier** - Optional LLM-powered semantic analysis on candidate pairs
 - [ ] **Phase 52: Testing, Documentation, and Notification** - Full test coverage, user docs, upgrade notice
@@ -78,7 +78,7 @@ Plans:
   3. Merge completes as a single atomic transaction — no partial merge state is observable if the operation fails mid-way
   4. User can link two cases as related (SAME_TEST_DIFFERENT_SOURCE) without merging them
   5. User can dismiss a candidate pair as not-duplicate and it does not resurface in future scans
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 49-01-PLAN.md — Merge/link/dismiss service with TDD (mergeCases, linkCases, dismissPair)
@@ -126,7 +126,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
-| 49. Resolution Engine | 2/3 | In Progress|  | - |
+| 49. Resolution Engine | 3/3 | Complete   | 2026-03-23 | - |
 | 50. Creation-Time and Import Warnings | v0.19.0 | 0/TBD | Not started | - |
 | 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
