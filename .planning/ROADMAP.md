@@ -61,7 +61,7 @@ Plans:
   2. Scan runs in the background via BullMQ and reports progress without blocking the UI
   3. Scan results survive a page reload — candidate pairs are readable from `DuplicateScanResult` table
   4. User can navigate to a dedicated duplicates page that lists candidate pairs sorted by confidence (high first)
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 48-01-PLAN.md — BullMQ duplicateScanWorker with tests and build registration
@@ -120,7 +120,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
-| 48. Async Project-Wide Scan | 1/3 | In Progress|  | - |
+| 48. Async Project-Wide Scan | 2/3 | In Progress|  | - |
 | 49. Resolution Engine | v0.19.0 | 0/TBD | Not started | - |
 | 50. Creation-Time and Import Warnings | v0.19.0 | 0/TBD | Not started | - |
 | 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |

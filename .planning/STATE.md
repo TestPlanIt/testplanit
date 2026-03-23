@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: Completed 48-01-PLAN.md
-last_updated: "2026-03-23T20:48:24.707Z"
+stopped_at: Completed 48-02-PLAN.md
+last_updated: "2026-03-23T20:49:07.739Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 67
 ---
 
@@ -52,6 +52,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 | Phase 47 P01 | 2 | 1 tasks | 2 files |
 | Phase 47 P03 | 2 | 1 tasks | 2 files |
 | Phase 48 P01 | 15m | 2 tasks | 4 files |
+| Phase 48 P02 | 8 | 2 tasks | 4 files |
 
 ### Decisions
 
@@ -71,6 +72,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 48]: No $transaction() for deleteMany+createMany — avoids timeout on large case sets
 - [Phase 48]: concurrency:1 at worker level prevents overlapping scans for same project
 - [Phase 48]: Shallow repositoryCases select (id,name only) avoids ZenStack v3 alias limit
+- [Phase 48]: Raw prisma client used in candidates route to avoid ZenStack 63-char alias issue
+- [Phase 48]: Duplicate scan job prevention via getJobs active+waiting check in submit route
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T20:48:24.705Z
-Stopped at: Completed 48-01-PLAN.md
+Last session: 2026-03-23T20:49:00.573Z
+Stopped at: Completed 48-02-PLAN.md
 Resume file: None
