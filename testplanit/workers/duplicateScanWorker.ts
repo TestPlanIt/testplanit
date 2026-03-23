@@ -117,10 +117,11 @@ export const processor = async (
   allPairs.sort((a, b) => b.score - a.score);
   const top100 = allPairs.slice(0, 100);
 
-  // 8. Replace previous scan results atomically — delete old + insert new in one transaction
+  // 8. Soft-delete old pending results, then insert new ones atomically
   await prisma.$transaction(async (tx: any) => {
-    await tx.duplicateScanResult.deleteMany({
-      where: { projectId: job.data.projectId, status: "PENDING" },
+    await tx.duplicateScanResult.updateMany({
+      where: { projectId: job.data.projectId, status: "PENDING", isDeleted: false },
+      data: { isDeleted: true },
     });
 
     if (top100.length > 0) {
