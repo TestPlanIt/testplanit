@@ -37,6 +37,35 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       : "idle"
   );
 
+  const { data: pendingCount } = useQuery<number>({
+    queryKey: ["duplicate-scan-pending-count", projectId],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=1`
+      );
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.items.length + (data.nextCursor ? 1 : 0);
+    },
+    enabled: scanState === "idle",
+  });
+
+  // Refetch pending count after a scan completes
+  const { data: refreshedCount } = useQuery<number>({
+    queryKey: ["duplicate-scan-pending-count-refresh", projectId, scanState],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=100`
+      );
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.items.length;
+    },
+    enabled: scanState === "complete",
+  });
+
+  const badgeCount = scanState === "complete" ? (refreshedCount ?? 0) : (pendingCount ?? 0);
+
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["duplicate-scan-status", scanJobId],
     queryFn: () =>
@@ -103,15 +132,23 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
   }
 
   if (scanState === "complete") {
+    const resultsCount = refreshedCount ?? statusData?.result?.pairsFound ?? 0;
     return (
-      <Button variant="outline" asChild className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
-        <Link href={`/projects/repository/${projectId}/duplicates`}>
-          <ScanSearch className="h-4 w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            View Results ({statusData?.result?.pairsFound ?? 0})
+      <div className="relative">
+        <Button variant="outline" asChild className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
+          <Link href={`/projects/repository/${projectId}/duplicates`}>
+            <ScanSearch className="h-4 w-4 shrink-0" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+              View Results
+            </span>
+          </Link>
+        </Button>
+        {resultsCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
+            {resultsCount > 99 ? "99+" : resultsCount}
           </span>
-        </Link>
-      </Button>
+        )}
+      </div>
     );
   }
 
@@ -132,15 +169,22 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
 
   // idle
   return (
-    <Button
-      variant="outline"
-      onClick={handleScan}
-      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-    >
-      <ScanSearch className="h-4 w-4 shrink-0" />
-      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-        Find Duplicates
-      </span>
-    </Button>
+    <div className="relative">
+      <Button
+        variant="outline"
+        onClick={handleScan}
+        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+      >
+        <ScanSearch className="h-4 w-4 shrink-0" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+          Find Duplicates
+        </span>
+      </Button>
+      {badgeCount > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
+          {badgeCount > 99 ? "99+" : badgeCount}
+        </span>
+      )}
+    </div>
   );
 }
