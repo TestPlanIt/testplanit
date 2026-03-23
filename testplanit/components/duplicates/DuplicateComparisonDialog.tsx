@@ -56,11 +56,15 @@ function CasePanel({
   isSelected,
   onSelect,
   t,
+  tCommon,
+  tRepo,
 }: {
   caseDetails: CaseDetails;
   isSelected: boolean;
   onSelect: () => void;
   t: ReturnType<typeof useTranslations<"repository.duplicates">>;
+  tCommon: ReturnType<typeof useTranslations<"common">>;
+  tRepo: ReturnType<typeof useTranslations<"repository">>;
 }) {
   const lastRun = caseDetails.testRuns?.[0];
 
@@ -97,28 +101,28 @@ function CasePanel({
           </div>
         )}
         <div>
-          <span className="font-medium text-muted-foreground">{t("folderLabel")}: </span>
+          <span className="font-medium text-muted-foreground">{tCommon("fields.folder")}: </span>
           <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
         </div>
         <div>
-          <span className="font-medium text-muted-foreground">{t("createdLabel")}: </span>
+          <span className="font-medium text-muted-foreground">{tCommon("fields.created")}: </span>
           <span>{new Date(caseDetails.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
 
       {/* Description */}
       <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{t("descriptionLabel")}</p>
+        <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.description")}</p>
         <p className="text-sm text-muted-foreground italic line-clamp-3">
-          {caseDetails.description || t("noDescription")}
+          {caseDetails.description || tCommon("empty.description")}
         </p>
       </div>
 
       {/* Steps */}
       <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{t("stepsLabel")}</p>
+        <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.steps")}</p>
         {caseDetails.steps.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">{t("noSteps")}</p>
+          <p className="text-sm text-muted-foreground italic">{tRepo("fields.noSteps")}</p>
         ) : (
           <ol className="list-decimal list-inside space-y-1 text-sm max-h-32 overflow-y-auto">
             {caseDetails.steps.map((step, i) => (
@@ -135,9 +139,9 @@ function CasePanel({
 
       {/* Tags */}
       <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{t("tagsLabel")}</p>
+        <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.tags")}</p>
         {caseDetails.tags.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">{t("noTags")}</p>
+          <p className="text-sm text-muted-foreground italic">{tRepo("views.noTags")}</p>
         ) : (
           <div className="flex flex-wrap gap-1">
             {caseDetails.tags.map((tag) => (
@@ -168,7 +172,7 @@ function CasePanel({
 
       {/* Attachments */}
       <div className="mb-3 text-sm">
-        <span className="font-medium text-muted-foreground">{t("attachmentsLabel")}: </span>
+        <span className="font-medium text-muted-foreground">{tCommon("fields.attachments")}: </span>
         <span>{caseDetails._count.attachments}</span>
       </div>
 
@@ -197,6 +201,8 @@ export function DuplicateComparisonDialog({
   onResolved,
 }: DuplicateComparisonDialogProps) {
   const t = useTranslations("repository.duplicates");
+  const tCommon = useTranslations("common");
+  const tRepo = useTranslations("repository");
   const [survivorId, setSurvivorId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeAction, setActiveAction] = useState<"merge" | "link" | "dismiss" | null>(null);
@@ -329,12 +335,16 @@ export function DuplicateComparisonDialog({
                   isSelected={survivorId === data.caseA.id}
                   onSelect={() => setSurvivorId(data.caseA.id)}
                   t={t}
+                  tCommon={tCommon}
+                  tRepo={tRepo}
                 />
                 <CasePanel
                   caseDetails={data.caseB}
                   isSelected={survivorId === data.caseB.id}
                   onSelect={() => setSurvivorId(data.caseB.id)}
                   t={t}
+                  tCommon={tCommon}
+                  tRepo={tRepo}
                 />
               </div>
             </>
