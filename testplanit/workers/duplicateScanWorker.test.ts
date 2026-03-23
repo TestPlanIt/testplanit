@@ -9,7 +9,7 @@ const {
   mockFindSimilarCases,
   mockUpdateProgress,
   mockFindMany,
-  mockDeleteMany,
+  mockUpdateMany,
   mockCreateMany,
 } = vi.hoisted(() => ({
   mockRedisGet: vi.fn(),
@@ -17,7 +17,7 @@ const {
   mockFindSimilarCases: vi.fn(),
   mockUpdateProgress: vi.fn(),
   mockFindMany: vi.fn(),
-  mockDeleteMany: vi.fn(),
+  mockUpdateMany: vi.fn(),
   mockCreateMany: vi.fn(),
 }));
 
@@ -48,14 +48,15 @@ vi.mock("../lib/valkey", () => ({
 
 // ─── Mock prisma ─────────────────────────────────────────────────────────────
 
-const mockPrisma = {
+const mockPrisma: any = {
   repositoryCases: {
     findMany: (...args: any[]) => mockFindMany(...args),
   },
   duplicateScanResult: {
-    deleteMany: (...args: any[]) => mockDeleteMany(...args),
+    updateMany: (...args: any[]) => mockUpdateMany(...args),
     createMany: (...args: any[]) => mockCreateMany(...args),
   },
+  $transaction: vi.fn(async (fn: (tx: any) => Promise<any>) => fn(mockPrisma)),
   $disconnect: vi.fn(),
 };
 
@@ -95,9 +96,9 @@ const baseJobData = {
 };
 
 const mockCases = [
-  { id: 1, name: "Login Test" },
-  { id: 2, name: "Signup Test" },
-  { id: 3, name: "Logout Test" },
+  { id: 1, name: "Login Test", steps: [], tags: [] },
+  { id: 2, name: "Signup Test", steps: [], tags: [] },
+  { id: 3, name: "Logout Test", steps: [], tags: [] },
 ];
 
 function makePair(caseAId: number, caseBId: number, score = 0.8) {
@@ -141,7 +142,7 @@ describe("DuplicateScanWorker", () => {
     mockRedisGet.mockResolvedValue(null);
     mockRedisDel.mockResolvedValue(1);
     mockUpdateProgress.mockResolvedValue(undefined);
-    mockDeleteMany.mockResolvedValue({ count: 0 });
+    mockUpdateMany.mockResolvedValue({ count: 0 });
     mockCreateMany.mockResolvedValue({ count: 0 });
     // Default: no similar cases
     mockFindSimilarCases.mockResolvedValue([]);
@@ -177,7 +178,7 @@ describe("DuplicateScanWorker", () => {
     });
 
     it("Test 2: Duplicate pairs (same caseAId:caseBId key) are deduplicated — only first occurrence kept", async () => {
-      mockFindMany.mockResolvedValue([{ id: 1, name: "Case A" }, { id: 2, name: "Case B" }]);
+      mockFindMany.mockResolvedValue([{ id: 1, name: "Case A", steps: [], tags: [] }, { id: 2, name: "Case B", steps: [], tags: [] }]);
 
       // Case 1 finds pair (1,2), Case 2 also finds pair (1,2) — should deduplicate
       mockFindSimilarCases
@@ -193,7 +194,7 @@ describe("DuplicateScanWorker", () => {
 
     it("Test 3: Results capped at 100 pairs sorted by score descending", async () => {
       // 60 cases, each returning 5 pairs = 300 unique pairs, should cap at 100
-      const manyPairs = Array.from({ length: 60 }, (_, i) => ({ id: i + 1, name: `Case ${i + 1}` }));
+      const manyPairs = Array.from({ length: 60 }, (_, i) => ({ id: i + 1, name: `Case ${i + 1}`, steps: [], tags: [] }));
       mockFindMany.mockResolvedValue(manyPairs);
 
       // Each case returns 5 pairs with distinct caseBIds
@@ -214,24 +215,25 @@ describe("DuplicateScanWorker", () => {
       expect(result.pairsFound).toBe(100);
     });
 
-    it("Test 4: deleteMany called for projectId before createMany inserts new results", async () => {
+    it("Test 4: old PENDING results soft-deleted before createMany inserts new results", async () => {
       mockFindMany.mockResolvedValue(mockCases);
       mockFindSimilarCases.mockResolvedValue([makePair(1, 2)]);
 
       const callOrder: string[] = [];
-      mockDeleteMany.mockImplementation(async () => { callOrder.push("deleteMany"); return { count: 0 }; });
+      mockUpdateMany.mockImplementation(async () => { callOrder.push("updateMany"); return { count: 0 }; });
       mockCreateMany.mockImplementation(async () => { callOrder.push("createMany"); return { count: 1 }; });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-4" }) as Job);
 
-      // deleteMany should be called for the correct project
-      expect(mockDeleteMany).toHaveBeenCalledWith({
-        where: { projectId: 42 },
+      // updateMany should soft-delete PENDING results for the correct project
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        where: { projectId: 42, status: "PENDING", isDeleted: false },
+        data: { isDeleted: true },
       });
 
-      // deleteMany must come before createMany
-      expect(callOrder.indexOf("deleteMany")).toBeLessThan(callOrder.indexOf("createMany"));
+      // soft-delete must come before createMany
+      expect(callOrder.indexOf("updateMany")).toBeLessThan(callOrder.indexOf("createMany"));
     });
 
     it("Test 5: job.updateProgress called with { analyzed: i+1, total } after each case", async () => {
@@ -287,7 +289,7 @@ describe("DuplicateScanWorker", () => {
 
   describe("result persistence", () => {
     it("Test 8: createMany uses skipDuplicates: true as safety net against @@unique constraint", async () => {
-      mockFindMany.mockResolvedValue([{ id: 1, name: "Case A" }, { id: 2, name: "Case B" }]);
+      mockFindMany.mockResolvedValue([{ id: 1, name: "Case A", steps: [], tags: [] }, { id: 2, name: "Case B", steps: [], tags: [] }]);
       mockFindSimilarCases.mockResolvedValue([makePair(1, 2, 0.9)]);
 
       const { processor } = await loadWorker();
