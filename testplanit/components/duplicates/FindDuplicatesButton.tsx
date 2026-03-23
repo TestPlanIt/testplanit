@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ScanSearch } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 type ScanState = "idle" | "active" | "complete" | "failed";
 
@@ -37,8 +38,17 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     if (!statusData) return;
     if (statusData.state === "completed") {
       setScanState("complete");
+      const pairsFound = statusData.result?.pairsFound ?? 0;
+      if (pairsFound > 0) {
+        toast.success(`Duplicate analysis complete — ${pairsFound} potential duplicate${pairsFound === 1 ? "" : "s"} found`);
+      } else {
+        toast.success("Duplicate analysis complete — no duplicates found");
+      }
     } else if (statusData.state === "failed") {
       setScanState("failed");
+      toast.error("Duplicate analysis failed", {
+        description: statusData.failedReason ?? "An unexpected error occurred",
+      });
     }
   }, [statusData]);
 
