@@ -33,7 +33,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Resolution
 
-- [ ] **RES-01**: User can view two candidate duplicate cases side-by-side (title, steps, tags, folder, last run status) before deciding
+- [x] **RES-01**: User can view two candidate duplicate cases side-by-side (title, steps, tags, folder, last run status) before deciding
 - [x] **RES-02**: User can merge two cases — surviving case inherits all test run history, steps, attachments, tags, and field values
 - [x] **RES-03**: Merge handles TestRunCases unique constraint conflicts when both cases appear in the same test run
 - [x] **RES-04**: Merge preserves version history from the merged case (re-parents versions to survivor before soft-deleting)
@@ -98,7 +98,7 @@ Deferred to a later release. Tracked but not in current roadmap.
 | WARN-02     | Phase 50 | Pending |
 | WARN-03     | Phase 50 | Pending |
 | WARN-04     | Phase 50 | Pending |
-| RES-01      | Phase 49 | Pending |
+| RES-01      | Phase 49 | Complete |
 | RES-02      | Phase 49 | Complete |
 | RES-03      | Phase 49 | Complete |
 | RES-04      | Phase 49 | Complete |

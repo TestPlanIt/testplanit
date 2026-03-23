@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: Completed 49-01-PLAN.md
-last_updated: "2026-03-23T22:58:41.269Z"
+stopped_at: Completed 49-02-PLAN.md
+last_updated: "2026-03-23T23:03:44.681Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 67
 ---
 
@@ -54,6 +54,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 | Phase 48 P01 | 15m | 2 tasks | 4 files |
 | Phase 48 P02 | 8 | 2 tasks | 4 files |
 | Phase 49 P01 | 5m | 1 tasks | 2 files |
+| Phase 49-resolution-engine P02 | 5m | 2 tasks | 2 files |
 
 ### Decisions
 
@@ -77,6 +78,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 48]: Duplicate scan job prevention via getJobs active+waiting check in submit route
 - [Phase 49]: vi.hoisted() required for mock objects in vi.mock() factories — vi.mock is hoisted before variable declarations in Vitest
 - [Phase 49]: linkCases uses static array form of prisma.$transaction([op1, op2]) to avoid interactive tx overhead for simple two-step operations
+- [Phase 49]: Steps model uses step (Json) field not title; CaseFieldValues relation is field not caseField with displayName not name
 
 ### Pending Todos
 
@@ -89,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T22:58:41.267Z
-Stopped at: Completed 49-01-PLAN.md
+Last session: 2026-03-23T23:03:44.679Z
+Stopped at: Completed 49-02-PLAN.md
 Resume file: None

@@ -78,7 +78,7 @@ Plans:
   3. Merge completes as a single atomic transaction — no partial merge state is observable if the operation fails mid-way
   4. User can link two cases as related (SAME_TEST_DIFFERENT_SOURCE) without merging them
   5. User can dismiss a candidate pair as not-duplicate and it does not resurface in future scans
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 49-01-PLAN.md — Merge/link/dismiss service with TDD (mergeCases, linkCases, dismissPair)
@@ -126,7 +126,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
-| 49. Resolution Engine | 1/3 | In Progress|  | - |
+| 49. Resolution Engine | 2/3 | In Progress|  | - |
 | 50. Creation-Time and Import Warnings | v0.19.0 | 0/TBD | Not started | - |
 | 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
