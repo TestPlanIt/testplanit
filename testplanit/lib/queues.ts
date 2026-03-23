@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import {
-  AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, COPY_MOVE_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
+  AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, COPY_MOVE_QUEUE_NAME, DUPLICATE_SCAN_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME
 } from "./queueNames";
@@ -19,6 +19,7 @@ export {
   AUTO_TAG_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
   COPY_MOVE_QUEUE_NAME,
+  DUPLICATE_SCAN_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -33,6 +34,7 @@ let _budgetAlertQueue: Queue | null = null;
 let _autoTagQueue: Queue | null = null;
 let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
+let _duplicateScanQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -449,6 +451,37 @@ export function getCopyMoveQueue(): Queue | null {
 }
 
 /**
+ * Get the duplicate scan queue instance (lazy initialization)
+ * Used for background duplicate detection scanning jobs
+ */
+export function getDuplicateScanQueue(): Queue | null {
+  if (_duplicateScanQueue) return _duplicateScanQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${DUPLICATE_SCAN_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _duplicateScanQueue = new Queue(DUPLICATE_SCAN_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 1,
+      removeOnComplete: { age: 3600 * 24, count: 100 },
+      removeOnFail: { age: 3600 * 24 * 7 },
+    },
+  });
+
+  console.log(`Queue "${DUPLICATE_SCAN_QUEUE_NAME}" initialized.`);
+
+  _duplicateScanQueue.on("error", (error) => {
+    console.error(`Queue ${DUPLICATE_SCAN_QUEUE_NAME} error:`, error);
+  });
+
+  return _duplicateScanQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -465,5 +498,6 @@ export function getAllQueues() {
     autoTagQueue: getAutoTagQueue(),
     repoCacheQueue: getRepoCacheQueue(),
     copyMoveQueue: getCopyMoveQueue(),
+    duplicateScanQueue: getDuplicateScanQueue(),
   };
 }
