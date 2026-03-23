@@ -59,10 +59,15 @@ export const processor = async (
     throw new Error("Job cancelled by user");
   }
 
-  // 5. Fetch all non-deleted cases for the project (shallow select only)
+  // 5. Fetch all non-deleted cases for the project with steps and tags for richer matching
   const cases = await prisma.repositoryCases.findMany({
     where: { projectId: job.data.projectId, isDeleted: false },
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      steps: { select: { step: true, expectedResult: true }, orderBy: { order: "asc" } },
+      tags: { select: { name: true } },
+    },
   });
 
   const total = cases.length;
@@ -87,7 +92,12 @@ export const processor = async (
     }
 
     const pairs = await service.findSimilarCases(
-      { id: testCase.id, name: testCase.name },
+      {
+        id: testCase.id,
+        name: testCase.name,
+        steps: testCase.steps,
+        tags: testCase.tags,
+      },
       job.data.projectId,
       job.data.tenantId
     );
@@ -107,21 +117,25 @@ export const processor = async (
   allPairs.sort((a, b) => b.score - a.score);
   const top100 = allPairs.slice(0, 100);
 
-  // 8. Delete previous scan results for this project, then insert new ones
-  await prisma.duplicateScanResult.deleteMany({
-    where: { projectId: job.data.projectId },
-  });
+  // 8. Replace previous scan results atomically — delete old + insert new in one transaction
+  await prisma.$transaction(async (tx: any) => {
+    await tx.duplicateScanResult.deleteMany({
+      where: { projectId: job.data.projectId, status: "PENDING" },
+    });
 
-  await prisma.duplicateScanResult.createMany({
-    data: top100.map((p) => ({
-      projectId: job.data.projectId,
-      caseAId: p.caseAId,
-      caseBId: p.caseBId,
-      score: p.score,
-      matchedFields: p.matchedFields,
-      scanJobId: job.id,
-    })),
-    skipDuplicates: true,
+    if (top100.length > 0) {
+      await tx.duplicateScanResult.createMany({
+        data: top100.map((p) => ({
+          projectId: job.data.projectId,
+          caseAId: p.caseAId,
+          caseBId: p.caseBId,
+          score: p.score,
+          matchedFields: p.matchedFields,
+          scanJobId: job.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
   });
 
   return {
