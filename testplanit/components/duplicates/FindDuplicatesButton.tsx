@@ -80,9 +80,12 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
 
   if (scanState === "complete") {
     return (
-      <Button variant="outline" size="sm" asChild>
+      <Button variant="outline" asChild className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
         <Link href={`/projects/repository/${projectId}/duplicates`}>
-          View Results ({statusData?.result?.pairsFound ?? 0})
+          <ScanSearch className="h-4 w-4 shrink-0" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            View Results ({statusData?.result?.pairsFound ?? 0})
+          </span>
         </Link>
       </Button>
     );
@@ -92,20 +95,28 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     return (
       <Button
         variant="outline"
-        size="sm"
         onClick={handleScan}
-        className="text-destructive"
+        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
       >
-        Retry Scan
+        <ScanSearch className="h-4 w-4 shrink-0" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+          Retry Scan
+        </span>
       </Button>
     );
   }
 
   // idle
   return (
-    <Button variant="outline" size="sm" onClick={handleScan}>
-      <ScanSearch className="h-4 w-4 mr-1" />
-      Find Duplicates
+    <Button
+      variant="outline"
+      onClick={handleScan}
+      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+    >
+      <ScanSearch className="h-4 w-4 shrink-0" />
+      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+        Find Duplicates
+      </span>
     </Button>
   );
 }
