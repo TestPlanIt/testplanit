@@ -1230,19 +1230,19 @@ enum DuplicateScanResultStatus {
 }
 
 model DuplicateScanResult {
-    id            Int                        @id @default(autoincrement())
+    id            Int                       @id @default(autoincrement())
     projectId     Int
-    project       Projects                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project       Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
     caseAId       Int
-    caseA         RepositoryCases            @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
+    caseA         RepositoryCases           @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
     caseBId       Int
-    caseB         RepositoryCases            @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
+    caseB         RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
     score         Float
     matchedFields String[]
-    status        DuplicateScanResultStatus  @default(PENDING)
+    status        DuplicateScanResultStatus @default(PENDING)
     scanJobId     String?
-    isDeleted     Boolean                    @default(false)
-    createdAt     DateTime                   @default(now()) @db.Timestamptz(6)
+    isDeleted     Boolean                   @default(false)
+    createdAt     DateTime                  @default(now()) @db.Timestamptz(6)
 
     @@unique([caseAId, caseBId, scanJobId])
     @@index([projectId, status, isDeleted])
@@ -1323,8 +1323,8 @@ model RepositoryCases {
     junitTestSteps         JUnitTestStep[]          @relation("JUnitTestStepCase")
     linksFrom              RepositoryCaseLink[]     @relation("CaseALinks")
     linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
-    duplicateScanResultsA  DuplicateScanResult[]   @relation("DuplicateCaseA")
-    duplicateScanResultsB  DuplicateScanResult[]   @relation("DuplicateCaseB")
+    duplicateScanResultsA  DuplicateScanResult[]    @relation("DuplicateCaseA")
+    duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
     comments               Comment[]
 
     @@unique([projectId, name, className, source])

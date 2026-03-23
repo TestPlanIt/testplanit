@@ -12,7 +12,7 @@ export default function DuplicatesPage() {
   const { projectId } = useParams<{ projectId: string }>();
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-2 py-6">
       <div className="mb-6 flex items-center gap-2">
         <Link href={`/projects/repository/${projectId}`}>
           <Button variant="outline" size="icon" className="mr-2">

@@ -1005,6 +1005,12 @@ const metadata: ModelMeta = {
                     name: "quickScriptEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, duplicateScanResults: {
+                    name: "duplicateScanResults",
+                    type: "DuplicateScanResult",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -2904,6 +2910,87 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        duplicateScanResult: {
+            name: 'DuplicateScanResult', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'duplicateScanResults',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                }, caseAId: {
+                    name: "caseAId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'caseA',
+                }, caseA: {
+                    name: "caseA",
+                    type: "RepositoryCases",
+                    isDataModel: true,
+                    backLink: 'duplicateScanResultsA',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "caseAId" },
+                }, caseBId: {
+                    name: "caseBId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'caseB',
+                }, caseB: {
+                    name: "caseB",
+                    type: "RepositoryCases",
+                    isDataModel: true,
+                    backLink: 'duplicateScanResultsB',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "caseBId" },
+                }, score: {
+                    name: "score",
+                    type: "Float",
+                }, matchedFields: {
+                    name: "matchedFields",
+                    type: "String",
+                    isArray: true,
+                }, status: {
+                    name: "status",
+                    type: "DuplicateScanResultStatus",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, scanJobId: {
+                    name: "scanJobId",
+                    type: "String",
+                    isOptional: true,
+                }, isDeleted: {
+                    name: "isDeleted",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, caseAId_caseBId_scanJobId: {
+                    name: "caseAId_caseBId_scanJobId",
+                    fields: ["caseAId", "caseBId", "scanJobId"]
+                },
+            },
+        },
         repositoryCases: {
             name: 'RepositoryCases', fields: {
                 id: {
@@ -3117,6 +3204,18 @@ const metadata: ModelMeta = {
                 }, linksTo: {
                     name: "linksTo",
                     type: "RepositoryCaseLink",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'caseB',
+                }, duplicateScanResultsA: {
+                    name: "duplicateScanResultsA",
+                    type: "DuplicateScanResult",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'caseA',
+                }, duplicateScanResultsB: {
+                    name: "duplicateScanResultsB",
+                    type: "DuplicateScanResult",
                     isDataModel: true,
                     isArray: true,
                     backLink: 'caseB',
@@ -7785,7 +7884,7 @@ const metadata: ModelMeta = {
         user: ['Account', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
@@ -7798,7 +7897,7 @@ const metadata: ModelMeta = {
         configurations: ['ConfigurationConfigVariant'],
         repositories: ['RepositoryFolders', 'RepositoryCases'],
         repositoryFolders: ['RepositoryCases'],
-        repositoryCases: ['RepositoryCaseLink', 'RepositoryCaseVersions', 'CaseFieldValues', 'Attachments', 'Steps', 'TestRunCases', 'JUnitTestResult', 'JUnitProperty', 'JUnitAttachment', 'JUnitTestStep', 'Comment'],
+        repositoryCases: ['RepositoryCaseLink', 'DuplicateScanResult', 'RepositoryCaseVersions', 'CaseFieldValues', 'Attachments', 'Steps', 'TestRunCases', 'JUnitTestResult', 'JUnitProperty', 'JUnitAttachment', 'JUnitTestStep', 'Comment'],
         steps: ['TestRunStepResults'],
         sessions: ['Attachments', 'SessionResults', 'SessionVersions', 'SessionFieldValues', 'Comment'],
         sessionResults: ['ResultFieldValues', 'Attachments'],

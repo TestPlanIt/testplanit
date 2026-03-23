@@ -108,6 +108,13 @@ enum LinkType {
   DEPENDS_ON
 }
 
+enum DuplicateScanResultStatus {
+  PENDING
+  MERGED
+  LINKED
+  DISMISSED
+}
+
 enum TestRunType {
   REGULAR
   JUNIT
@@ -484,6 +491,7 @@ model Projects {
   defaultCaseExportTemplateId Int?
   defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
   quickScriptEnabled          Boolean                               @default(false)
+  duplicateScanResults        DuplicateScanResult[]
 
   @@index([isDeleted, isCompleted])
   @@index([createdBy])
@@ -921,6 +929,26 @@ model RepositoryCaseLink {
   @@unique([caseAId, caseBId, type])
 }
 
+model DuplicateScanResult {
+  id            Int                       @id() @default(autoincrement())
+  projectId     Int
+  project       Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  caseAId       Int
+  caseA         RepositoryCases           @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
+  caseBId       Int
+  caseB         RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
+  score         Float
+  matchedFields String[]
+  status        DuplicateScanResultStatus @default(PENDING)
+  scanJobId     String?
+  isDeleted     Boolean                   @default(false)
+  createdAt     DateTime                  @default(now()) @db.Timestamptz(6)
+
+  @@unique([caseAId, caseBId, scanJobId])
+  @@index([projectId, status, isDeleted])
+  @@index([scanJobId])
+}
+
 model RepositoryCases {
   id                     Int                      @id() @default(autoincrement())
   projectId              Int
@@ -961,6 +989,8 @@ model RepositoryCases {
   junitTestSteps         JUnitTestStep[]          @relation("JUnitTestStepCase")
   linksFrom              RepositoryCaseLink[]     @relation("CaseALinks")
   linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
+  duplicateScanResultsA  DuplicateScanResult[]    @relation("DuplicateCaseA")
+  duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
   comments               Comment[]
 
   @@unique([projectId, name, className, source])

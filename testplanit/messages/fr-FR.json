@@ -2057,6 +2057,27 @@
       "generatingParallelProgress": "Génération de {done} de fichiers {total}...",
       "cancelledGeneration": "Annulé"
     },
+    "duplicates": {
+      "findDuplicates": "Trouver les doublons",
+      "viewResults": "Afficher {count, plural, one {# Résultat} other {# Résultats}}",
+      "retryScan": "Réessayer l'analyse",
+      "analyzing": "{analyzed}/{total}",
+      "scanComplete": "Analyse des doublons terminée — {count, plural, =0 {aucun doublon trouvé} one {# doublon potentiel trouvé} other {# doublons potentiels trouvés}}",
+      "scanFailed": "L'analyse en double a échoué",
+      "scanFailedDescription": "Une erreur inattendue s'est produite.",
+      "pageTitle": "Candidats en double",
+      "pageDescription": "Examiner les cas de test potentiellement dupliqués trouvés lors de la dernière analyse.",
+      "loading": "Chargement des candidats en double...",
+      "noDuplicatesFound": "Aucun doublon trouvé",
+      "noDuplicatesDescription": "Dernière analyse terminée sans aucune paire correspondante.",
+      "loadMore": "Charger plus",
+      "filterPlaceholder": "Filtrer les doublons...",
+      "columnConfidence": "Confiance",
+      "columnCaseA": "Cas A",
+      "columnCaseB": "Cas B",
+      "columnMatchedFields": "Champs appariés",
+      "columnScore": "Score"
+    },
     "generateTestCases": {
       "buttonText": "Générer des cas de test",
       "title": "Générer des cas de test avec l'IA",

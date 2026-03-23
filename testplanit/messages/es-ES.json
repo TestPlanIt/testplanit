@@ -2057,6 +2057,27 @@
       "generatingParallelProgress": "Se generaron {done} de {total} archivos...",
       "cancelledGeneration": "Cancelado"
     },
+    "duplicates": {
+      "findDuplicates": "Buscar duplicados",
+      "viewResults": "Ver {count, plural, one {# Resultado} other {# Resultados}}",
+      "retryScan": "Reintentar escaneo",
+      "analyzing": "{analyzed}/{total}",
+      "scanComplete": "Análisis de duplicados completado — {count, plural, =0 {no se encontraron duplicados} one {# posible duplicado encontrado} other {# posibles duplicados encontrados}}",
+      "scanFailed": "El análisis duplicado falló.",
+      "scanFailedDescription": "Se produjo un error inesperado.",
+      "pageTitle": "Candidatos duplicados",
+      "pageDescription": "Revise los posibles casos de prueba duplicados encontrados durante el último escaneo.",
+      "loading": "Cargando candidatos duplicados...",
+      "noDuplicatesFound": "No se encontraron duplicados",
+      "noDuplicatesDescription": "El último escaneo se completó sin encontrar pares coincidentes.",
+      "loadMore": "Cargar más",
+      "filterPlaceholder": "Filtrar duplicados...",
+      "columnConfidence": "Confianza",
+      "columnCaseA": "Caso A",
+      "columnCaseB": "Caso B",
+      "columnMatchedFields": "Campos coincidentes",
+      "columnScore": "Puntaje"
+    },
     "generateTestCases": {
       "buttonText": "Generar Casos de Prueba",
       "title": "Generar casos de prueba con IA",
