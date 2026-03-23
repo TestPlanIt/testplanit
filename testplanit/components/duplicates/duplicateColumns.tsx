@@ -17,7 +17,6 @@ export interface DuplicateCandidateRow {
   score: number;
   matchedFields: string[];
   status: string;
-  rowNumber: number;
 }
 
 function ConfidenceBadge({ score }: { score: number }) {
@@ -36,21 +35,6 @@ function ConfidenceBadge({ score }: { score: number }) {
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"repository.duplicates">>
 ): ColumnDef<DuplicateCandidateRow>[] => [
-  {
-    id: "rowNumber",
-    accessorKey: "rowNumber",
-    header: "#",
-    enableSorting: false,
-    enableResizing: false,
-    enableHiding: false,
-    size: 50,
-    maxSize: 50,
-    minSize: 50,
-    meta: { isPinned: "left" },
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.rowNumber}</span>
-    ),
-  },
   {
     id: "confidence",
     accessorKey: "score",
@@ -82,7 +66,7 @@ export const getColumns = (
     id: "matchedFields",
     accessorKey: "matchedFields",
     header: t("columnMatchedFields"),
-    enableSorting: false,
+    enableSorting: true,
     enableResizing: true,
     size: 200,
     cell: ({ row }) => row.original.matchedFields.join(", "),

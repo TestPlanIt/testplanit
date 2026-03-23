@@ -58,7 +58,7 @@ export function DuplicateResultsTable({
 
   const items: DuplicateCandidateRow[] = useMemo(() => {
     const raw = data?.pages.flatMap((p) => p.items) ?? [];
-    return raw.map((item, index) => ({
+    return raw.map((item) => ({
       id: item.id,
       name: `${item.caseA.name} / ${item.caseB.name}`,
       projectId: item.projectId,
@@ -69,7 +69,6 @@ export function DuplicateResultsTable({
       score: item.score,
       matchedFields: item.matchedFields,
       status: item.status,
-      rowNumber: index + 1,
     }));
   }, [data]);
 
