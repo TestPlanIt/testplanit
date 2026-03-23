@@ -2066,7 +2066,16 @@
       "scanFailed": "Duplicate analysis failed",
       "scanFailedDescription": "An unexpected error occurred",
       "pageTitle": "Duplicate Candidates",
-      "pageDescription": "Review potential duplicate test cases found during the last scan."
+      "pageDescription": "Review potential duplicate test cases found during the last scan.",
+      "loading": "Loading duplicate candidates...",
+      "noDuplicatesFound": "No duplicates found",
+      "noDuplicatesDescription": "Last scan completed with no matching pairs.",
+      "loadMore": "Load More",
+      "columnConfidence": "Confidence",
+      "columnCaseA": "Case A",
+      "columnCaseB": "Case B",
+      "columnMatchedFields": "Matched Fields",
+      "columnScore": "Score"
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",

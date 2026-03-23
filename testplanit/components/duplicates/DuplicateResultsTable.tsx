@@ -1,20 +1,14 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  type ConfidenceBucket,
-  scoreToConfidence,
-} from "~/lib/utils/similarity";
+import { DataTable } from "@/components/tables/DataTable";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import {
+  type DuplicateCandidateRow,
+  getColumns,
+} from "./duplicateColumns";
 
 interface DuplicateCandidate {
   id: number;
@@ -39,21 +33,16 @@ interface DuplicateResultsTableProps {
   projectId: string;
 }
 
-function ConfidenceBadge({ score }: { score: number }) {
-  const confidence: ConfidenceBucket | null = scoreToConfidence(score);
+export function DuplicateResultsTable({
+  projectId,
+}: DuplicateResultsTableProps) {
+  const t = useTranslations("repository.duplicates");
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
 
-  if (!confidence) return null;
+  const columns = useMemo(() => getColumns(t), [t]);
 
-  if (confidence === "HIGH") {
-    return <Badge variant="destructive">HIGH</Badge>;
-  }
-  if (confidence === "MEDIUM") {
-    return <Badge variant="default">MEDIUM</Badge>;
-  }
-  return <Badge variant="secondary">LOW</Badge>;
-}
-
-export function DuplicateResultsTable({ projectId }: DuplicateResultsTableProps) {
   const { data, isLoading, fetchNextPage, hasNextPage } =
     useInfiniteQuery<CandidatesPage>({
       queryKey: ["duplicate-scan-candidates", projectId],
@@ -67,12 +56,27 @@ export function DuplicateResultsTable({ projectId }: DuplicateResultsTableProps)
       initialPageParam: undefined as number | undefined,
     });
 
-  const items = data?.pages.flatMap((p) => p.items) ?? [];
+  const items: DuplicateCandidateRow[] = useMemo(() => {
+    const raw = data?.pages.flatMap((p) => p.items) ?? [];
+    return raw.map((item, index) => ({
+      id: item.id,
+      name: `${item.caseA.name} / ${item.caseB.name}`,
+      projectId: item.projectId,
+      caseAId: item.caseAId,
+      caseAName: item.caseA.name,
+      caseBId: item.caseBId,
+      caseBName: item.caseB.name,
+      score: item.score,
+      matchedFields: item.matchedFields,
+      status: item.status,
+      rowNumber: index + 1,
+    }));
+  }, [data]);
 
   if (isLoading) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <p className="text-sm">Loading duplicate candidates...</p>
+        <p className="text-sm">{t("loading")}</p>
       </div>
     );
   }
@@ -80,47 +84,27 @@ export function DuplicateResultsTable({ projectId }: DuplicateResultsTableProps)
   if (items.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <p className="text-lg font-medium">No duplicates found</p>
-        <p className="text-sm">Last scan completed with no matching pairs.</p>
+        <p className="text-lg font-medium">{t("noDuplicatesFound")}</p>
+        <p className="text-sm">{t("noDuplicatesDescription")}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">#</TableHead>
-            <TableHead>Confidence</TableHead>
-            <TableHead>Case A</TableHead>
-            <TableHead>Case B</TableHead>
-            <TableHead>Matched Fields</TableHead>
-            <TableHead className="text-right">Score</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item, index) => (
-            <TableRow key={item.id}>
-              <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-              <TableCell>
-                <ConfidenceBadge score={item.score} />
-              </TableCell>
-              <TableCell>{item.caseA.name}</TableCell>
-              <TableCell>{item.caseB.name}</TableCell>
-              <TableCell>{item.matchedFields.join(", ")}</TableCell>
-              <TableCell className="text-right">
-                {(item.score * 100).toFixed(0)}%
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DataTable
+        columns={columns}
+        data={items}
+        columnVisibility={columnVisibility}
+        onColumnVisibilityChange={setColumnVisibility}
+        isLoading={isLoading}
+        pageSize={25}
+      />
 
       {hasNextPage && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={() => fetchNextPage()}>
-            Load More
+            {t("loadMore")}
           </Button>
         </div>
       )}
