@@ -121,7 +121,6 @@ function CasePanel({
             name={caseDetails.name}
             source={caseDetails.source as any}
             automated={caseDetails.automated}
-            maxLines={2}
             size="large"
           />
           <a
