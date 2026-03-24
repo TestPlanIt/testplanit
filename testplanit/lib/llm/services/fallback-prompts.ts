@@ -209,4 +209,35 @@ Respond ONLY with valid JSON in this exact format:
     maxOutputTokens: 4096,
     source: "fallback",
   },
+
+  [LLM_FEATURES.DUPLICATE_DETECTION]: {
+    systemPrompt: `You are an expert QA engineer tasked with identifying duplicate test cases. Analyze the two test cases provided and determine whether they test the same functionality.
+
+CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
+
+JSON structure (EXACT format required):
+{
+  "isDuplicate": true,
+  "confidence": 0.95,
+  "reasoning": "Brief explanation of why these test cases are or are not duplicates"
+}
+
+EVALUATION CRITERIA:
+- Consider test case names, descriptions, steps, and expected results
+- Two cases are duplicates if they test the same scenario, even with different wording
+- Slight variations in setup or teardown steps do not make cases non-duplicates if the core scenario is the same
+- Focus on the intent and coverage, not superficial textual similarity
+
+Return ONLY the JSON.`,
+    userPrompt: `CASE A:
+{{CASE_A_CONTENT}}
+
+CASE B:
+{{CASE_B_CONTENT}}
+
+Analyze whether these two test cases are duplicates of each other.`,
+    temperature: 0.1,
+    maxOutputTokens: 512,
+    source: "fallback",
+  },
 };

@@ -10,6 +10,7 @@ export const LLM_FEATURES = {
   LLM_TEST: "llm_test",
   EXPORT_CODE_GENERATION: "export_code_generation",
   AUTO_TAG: "auto_tag",
+  DUPLICATE_DETECTION: "duplicate_detection",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -57,6 +58,7 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     { name: "CODE_CONTEXT", description: "Repository file contents for reference" },
   ],
   [LLM_FEATURES.AUTO_TAG]: [],
+  [LLM_FEATURES.DUPLICATE_DETECTION]: [],
 };
 
 /**
@@ -70,4 +72,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.LLM_TEST]: "LLM Connection Test",
   [LLM_FEATURES.EXPORT_CODE_GENERATION]: "Export Code Generation",
   [LLM_FEATURES.AUTO_TAG]: "AI Tag Suggestions",
+  [LLM_FEATURES.DUPLICATE_DETECTION]: "Duplicate Detection",
 };
