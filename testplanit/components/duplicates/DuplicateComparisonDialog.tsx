@@ -84,7 +84,7 @@ function CasePanel({
       {isSelected && (
         <div className="mb-2">
           <Badge variant="default" className="text-xs">
-            {t("selectedAsSurvivor")}
+            {t("selectedAsPrimary")}
           </Badge>
         </div>
       )}
@@ -196,7 +196,7 @@ export function DuplicateComparisonDialog({
   const t = useTranslations("repository.duplicates");
   const tCommon = useTranslations("common");
   const tRepo = useTranslations("repository");
-  const [survivorId, setSurvivorId] = useState<number | null>(null);
+  const [primaryId, setPrimaryId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeAction, setActiveAction] = useState<"merge" | "link" | "dismiss" | null>(null);
 
@@ -216,7 +216,7 @@ export function DuplicateComparisonDialog({
 
   const handleResolve = async (action: "merge" | "link" | "dismiss") => {
     if (!pair) return;
-    if (action === "merge" && survivorId === null) return;
+    if (action === "merge" && primaryId === null) return;
 
     setIsSubmitting(true);
     setActiveAction(action);
@@ -224,8 +224,8 @@ export function DuplicateComparisonDialog({
     try {
       let body: Record<string, unknown>;
       if (action === "merge") {
-        const victimId = survivorId === pair.caseAId ? pair.caseBId : pair.caseAId;
-        body = { action: "merge", survivorId, victimId, projectId: pair.projectId };
+        const victimId = primaryId === pair.caseAId ? pair.caseBId : pair.caseAId;
+        body = { action: "merge", survivorId: primaryId, victimId, projectId: pair.projectId };
       } else if (action === "link") {
         body = { action: "link", caseAId: pair.caseAId, caseBId: pair.caseBId, projectId: pair.projectId };
       } else {
@@ -257,7 +257,7 @@ export function DuplicateComparisonDialog({
         toast.success(t("dismissSuccess"));
       }
 
-      setSurvivorId(null);
+      setPrimaryId(null);
       onResolved();
       onOpenChange(false);
     } catch {
@@ -321,20 +321,20 @@ export function DuplicateComparisonDialog({
 
           {!isLoading && !isError && data && (
             <>
-              <p className="text-xs text-muted-foreground mb-3">{t("selectSurvivor")}</p>
+              <p className="text-xs text-muted-foreground mb-3">{t("selectPrimary")}</p>
               <div className="grid grid-cols-2 gap-4">
                 <CasePanel
                   caseDetails={data.caseA}
-                  isSelected={survivorId === data.caseA.id}
-                  onSelect={() => setSurvivorId(data.caseA.id)}
+                  isSelected={primaryId === data.caseA.id}
+                  onSelect={() => setPrimaryId(data.caseA.id)}
                   t={t}
                   tCommon={tCommon}
                   tRepo={tRepo}
                 />
                 <CasePanel
                   caseDetails={data.caseB}
-                  isSelected={survivorId === data.caseB.id}
-                  onSelect={() => setSurvivorId(data.caseB.id)}
+                  isSelected={primaryId === data.caseB.id}
+                  onSelect={() => setPrimaryId(data.caseB.id)}
                   t={t}
                   tCommon={tCommon}
                   tRepo={tRepo}
@@ -379,7 +379,7 @@ export function DuplicateComparisonDialog({
             <Button
               variant="destructive"
               onClick={() => handleResolve("merge")}
-              disabled={isSubmitting || isLoading || survivorId === null}
+              disabled={isSubmitting || isLoading || primaryId === null}
             >
               {isSubmitting && activeAction === "merge" ? (
                 <>
