@@ -317,10 +317,13 @@ function CasePanel({
             <div>
               <span className="font-medium">{lastRun.testRun?.name ?? ""}</span>
               <span className="text-muted-foreground ml-2">
-                {t("runStatusDate", {
-                  status: lastRun.status?.name ?? "",
-                  date: new Date(lastRun.createdAt).toLocaleDateString(),
-                })}
+                {lastRun.status?.name ?? ""}
+                {" — "}
+                <DateFormatter
+                  date={lastRun.createdAt}
+                  formatString={dateTimeFormat}
+                  timezone={prefs?.timezone}
+                />
               </span>
             </div>
           ) : (
