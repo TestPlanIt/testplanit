@@ -27,9 +27,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Warnings
 
 - [x] **WARN-01**: User sees a soft, non-blocking warning after creating a test case that resembles an existing one
-- [ ] **WARN-02**: User sees per-row soft warnings during CSV/test-result import when imported cases resemble existing ones
-- [ ] **WARN-03**: Import warnings are advisory only — they never prevent or block the import
-- [ ] **WARN-04**: CLI imports warn of possible duplicates but never prevent the import from completing
+- [x] **WARN-02**: User sees per-row soft warnings during CSV/test-result import when imported cases resemble existing ones
+- [x] **WARN-03**: Import warnings are advisory only — they never prevent or block the import
+- [x] **WARN-04**: CLI imports warn of possible duplicates but never prevent the import from completing
 
 ### Resolution
 
@@ -95,9 +95,9 @@ Deferred to a later release. Tracked but not in current roadmap.
 | SCAN-03     | Phase 48 | Complete |
 | SCAN-04     | Phase 48 | Complete |
 | WARN-01     | Phase 50 | Complete |
-| WARN-02     | Phase 50 | Pending |
-| WARN-03     | Phase 50 | Pending |
-| WARN-04     | Phase 50 | Pending |
+| WARN-02     | Phase 50 | Complete |
+| WARN-03     | Phase 50 | Complete |
+| WARN-04     | Phase 50 | Complete |
 | RES-01      | Phase 49 | Complete |
 | RES-02      | Phase 49 | Complete |
 | RES-03      | Phase 49 | Complete |

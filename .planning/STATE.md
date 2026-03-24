@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: Completed 50-01-PLAN.md
-last_updated: "2026-03-24T13:01:36.073Z"
+stopped_at: Completed 50-02-PLAN.md
+last_updated: "2026-03-24T13:09:39.513Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 67
 ---
 
@@ -56,6 +56,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 | Phase 49 P01 | 5m | 1 tasks | 2 files |
 | Phase 49-resolution-engine P02 | 5m | 2 tasks | 2 files |
 | Phase 50-creation-time-and-import-warnings P01 | 4 | 2 tasks | 3 files |
+| Phase 50-creation-time-and-import-warnings P02 | 15 | 2 tasks | 4 files |
 
 ### Decisions
 
@@ -85,6 +86,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 50]: getCurrentTenantId() used for tenantId in check-new route — Projects model has no tenant relation
 - [Phase 50]: caseAId=0 convention for new cases — DuplicateScanService sets caseAId=Math.min(0, candidate.id) when sourceId is null
 - [Phase 50]: View action link only shown for single match in duplicate warning toast — multiple matches show count only
+- [Phase 50]: getCurrentTenantId() used in import routes for tenantId — avoids non-existent prisma.project model, consistent with check-new pattern
+- [Phase 50]: Duplicate check guarded by esClient null check in both import routes — graceful degradation when Elasticsearch unavailable
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:01:36.071Z
-Stopped at: Completed 50-01-PLAN.md
+Last session: 2026-03-24T13:09:39.511Z
+Stopped at: Completed 50-02-PLAN.md
 Resume file: None

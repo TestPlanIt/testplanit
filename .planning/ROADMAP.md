@@ -29,7 +29,7 @@ Phases 28-33: v0.17.0 Copy/Move Test Cases Between Projects (shipped 2026-03-21)
 - [x] **Phase 47: Detection Foundation** - Schema model + multi-signal similarity scoring engine (completed 2026-03-23)
 - [x] **Phase 48: Async Project-Wide Scan** - BullMQ scan worker, API, and results view (completed 2026-03-23)
 - [x] **Phase 49: Resolution Engine** - Side-by-side comparison, merge, link, and dismiss (completed 2026-03-23)
-- [ ] **Phase 50: Creation-Time and Import Warnings** - Soft non-blocking warnings at creation and import
+- [x] **Phase 50: Creation-Time and Import Warnings** - Soft non-blocking warnings at creation and import (completed 2026-03-24)
 - [ ] **Phase 51: LLM Semantic Tier** - Optional LLM-powered semantic analysis on candidate pairs
 - [ ] **Phase 52: Testing, Documentation, and Notification** - Full test coverage, user docs, upgrade notice
 
@@ -94,7 +94,7 @@ Plans:
   2. During CSV or test-result import, each row that resembles an existing case shows a per-row advisory warning in the import preview
   3. An import with duplicate warnings completes fully — no rows are skipped or blocked due to similarity
   4. CLI imports print duplicate warnings to output but exit with success (not an error code)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 50-01-PLAN.md — Check-new API endpoint + post-save duplicate warning toast in AddCase
@@ -131,6 +131,6 @@ Plans:
 | 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
 | 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
-| 50. Creation-Time and Import Warnings | 1/2 | In Progress|  | - |
+| 50. Creation-Time and Import Warnings | 2/2 | Complete   | 2026-03-24 | - |
 | 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
