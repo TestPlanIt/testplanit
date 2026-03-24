@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DuplicateResultsTable } from "@/components/duplicates/DuplicateResultsTable";
-import { ArrowLeft, Loader2, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, CopyCheck, Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,7 +32,9 @@ export default function DuplicatesPage() {
     if (!jobId) return;
     try {
       await fetch(`/api/duplicate-scan/cancel/${jobId}`, { method: "POST" });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     sessionStorage.removeItem(storageKey);
     setIsScanning(false);
     setScanProgress(null);
@@ -49,9 +51,7 @@ export default function DuplicatesPage() {
 
       const poll = async () => {
         try {
-          const statusRes = await fetch(
-            `/api/duplicate-scan/status/${jobId}`
-          );
+          const statusRes = await fetch(`/api/duplicate-scan/status/${jobId}`);
           if (!statusRes.ok) {
             // Job no longer exists (obliterated/expired)
             sessionStorage.removeItem(storageKey);
@@ -147,14 +147,18 @@ export default function DuplicatesPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{t("pageTitle")}</h1>
+          <h1 className="text-2xl font-bold flex gap-1">
+            <CopyCheck className="w-6 h-6 shrink-0" />
+            {t("pageTitle")}
+          </h1>
           <p className="text-muted-foreground">{t("pageDescription")}</p>
         </div>
         <div className="flex items-center gap-3">
           {isScanning && (
             <div className="flex items-center gap-2">
-              {scanProgress && scanProgress.total > 0 && (
-                (scanProgress as any).phase === "ai" ? (
+              {scanProgress &&
+                scanProgress.total > 0 &&
+                ((scanProgress as any).phase === "ai" ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -176,8 +180,7 @@ export default function DuplicatesPage() {
                       })}
                     </span>
                   </>
-                )
-              )}
+                ))}
               <Button
                 variant="ghost"
                 size="icon"

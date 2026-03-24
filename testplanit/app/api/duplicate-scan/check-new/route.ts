@@ -9,6 +9,7 @@ import { getElasticsearchClient } from "~/services/elasticsearchService";
 
 const checkNewSchema = z.object({
   projectId: z.number(),
+  caseId: z.number().optional(),
   name: z.string().min(1),
   tags: z.array(z.string()).optional(),
 });
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { projectId, name, tags } = parsed.data;
+  const { projectId, caseId, name, tags } = parsed.data;
 
   const esClient = getElasticsearchClient();
 
@@ -68,15 +69,46 @@ export async function POST(request: Request) {
     const caseNameMap = new Map(caseRecords.map((c) => [c.id, c.name]));
 
     const cases = top3.map((pair) => {
-      // The candidate is the non-zero ID (source case has no id, so caseAId is 0 and caseBId is the candidate)
       const candidateId = pair.caseAId === 0 ? pair.caseBId : pair.caseAId;
       return {
         id: candidateId,
         name: caseNameMap.get(candidateId) ?? "",
+        score: pair.score,
         confidence: pair.confidence,
         matchedFields: pair.matchedFields,
       };
     });
+
+    // Persist as DuplicateScanResult records so they appear on the duplicates page
+    if (caseId && cases.length > 0) {
+      try {
+        for (const c of cases) {
+          const [lowId, highId] = [Math.min(caseId, c.id), Math.max(caseId, c.id)];
+          await prisma.duplicateScanResult.upsert({
+            where: {
+              caseAId_caseBId_scanJobId: { caseAId: lowId, caseBId: highId, scanJobId: "creation-check" },
+            },
+            update: {
+              score: c.score,
+              matchedFields: c.matchedFields,
+              isDeleted: false,
+              status: "PENDING",
+            },
+            create: {
+              projectId,
+              caseAId: lowId,
+              caseBId: highId,
+              score: c.score,
+              matchedFields: c.matchedFields,
+              detectionMethod: "creation-check",
+              scanJobId: "creation-check",
+            },
+          });
+        }
+      } catch (e) {
+        console.error("Failed to persist creation-check results:", e);
+      }
+    }
 
     return NextResponse.json({ cases });
   } catch (error) {

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ScanSearch, X } from "lucide-react";
+import { CopyCheck, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
@@ -101,8 +101,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       setScanState("failed");
       sessionStorage.removeItem(storageKey);
       toast.error(t("scanFailed"), {
-        description:
-          statusData.failedReason ?? t("scanFailedDescription"),
+        description: statusData.failedReason ?? t("scanFailedDescription"),
       });
     }
   }, [statusData, storageKey, t]);
@@ -138,8 +137,12 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
   const handleCancel = async () => {
     if (!scanJobId) return;
     try {
-      await fetch(`/api/duplicate-scan/cancel/${scanJobId}`, { method: "POST" });
-    } catch { /* ignore */ }
+      await fetch(`/api/duplicate-scan/cancel/${scanJobId}`, {
+        method: "POST",
+      });
+    } catch {
+      /* ignore */
+    }
     sessionStorage.removeItem(storageKey);
     setScanState("idle");
     setScanJobId(null);
@@ -185,7 +188,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
           className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
         >
           <Link href={`/projects/repository/${projectId}/duplicates`}>
-            <ScanSearch className="h-4 w-4 shrink-0" />
+            <CopyCheck className="h-4 w-4 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
               {t("viewResults", { count: resultsCount })}
             </span>
@@ -203,7 +206,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
         onClick={handleScan}
         className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
       >
-        <ScanSearch className="h-4 w-4 shrink-0" />
+        <CopyCheck className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
           {t("retryScan")}
         </span>
@@ -220,7 +223,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
         className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
       >
         <Link href={`/projects/repository/${projectId}/duplicates`}>
-          <ScanSearch className="h-4 w-4 shrink-0" />
+          <CopyCheck className="h-4 w-4 shrink-0" />
           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
             {t("viewResults", { count: badgeCount })}
           </span>
@@ -236,7 +239,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
       onClick={handleScan}
       className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
     >
-      <ScanSearch className="h-4 w-4 shrink-0" />
+      <CopyCheck className="h-4 w-4 shrink-0" />
       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
         {t("findDuplicates")}
       </span>

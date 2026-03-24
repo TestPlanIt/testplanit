@@ -107,6 +107,7 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 300,
+    maxSize: 800,
     cell: ({ row, column }) => (
       <div
         className="overflow-hidden min-w-0 [&_*]:min-w-0 [&_span]:truncate [&_span]:whitespace-nowrap [&_span]:overflow-hidden [&_span]:block"
@@ -129,6 +130,7 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 300,
+    maxSize: 800,
     cell: ({ row, column }) => (
       <div
         className="overflow-hidden min-w-0 [&_*]:min-w-0 [&_span]:truncate [&_span]:whitespace-nowrap [&_span]:overflow-hidden [&_span]:block"

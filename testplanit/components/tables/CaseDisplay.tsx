@@ -3,7 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "@prisma/client";
 import { LinkIcon } from "lucide-react";
@@ -79,7 +79,9 @@ export const CaseDisplay: React.FC<Case> = ({
     <Link href={link} className={`flex items-start max-w-full w-full group`}>
       {nameDisplay}
       {isLargeOrXl && (
-        <LinkIcon className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`} />
+        <LinkIcon
+          className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+        />
       )}
     </Link>
   ) : (
