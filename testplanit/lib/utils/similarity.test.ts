@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   jaroWinkler,
+  levenshteinRatio,
   jaccardSimilarity,
   combineScores,
   scoreToConfidence,
@@ -38,6 +39,37 @@ describe("jaroWinkler", () => {
   it("returns 0.0 if one string is empty and the other is not", () => {
     expect(jaroWinkler("abc", "")).toBe(0.0);
     expect(jaroWinkler("", "abc")).toBe(0.0);
+  });
+});
+
+describe("levenshteinRatio", () => {
+  it("returns 1.0 for identical strings", () => {
+    expect(levenshteinRatio("Login Happy Path", "Login Happy Path")).toBe(1.0);
+  });
+
+  it("returns 1.0 for two empty strings", () => {
+    expect(levenshteinRatio("", "")).toBe(1.0);
+  });
+
+  it("is case insensitive", () => {
+    expect(levenshteinRatio("LOGIN TEST", "login test")).toBe(1.0);
+  });
+
+  it("scores lower than Jaro-Winkler for strings differing by a few words", () => {
+    // "login" vs "logout" = 2 edits in a ~25 char string
+    const lev = levenshteinRatio("Verify user can login successfully", "Verify user can logout successfully");
+    const jw = jaroWinkler("Verify user can login successfully", "Verify user can logout successfully");
+    expect(lev).toBeLessThan(jw);
+    expect(lev).toBeLessThan(0.95);
+  });
+
+  it("returns 0.0 if one string is empty and the other is not", () => {
+    expect(levenshteinRatio("abc", "")).toBe(0.0);
+    expect(levenshteinRatio("", "abc")).toBe(0.0);
+  });
+
+  it("returns low score for completely different strings", () => {
+    expect(levenshteinRatio("Login test", "Password reset")).toBeLessThan(0.4);
   });
 });
 

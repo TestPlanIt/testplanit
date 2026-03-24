@@ -13,6 +13,7 @@ import type { Client } from "@elastic/elasticsearch";
 import { getRepositoryCaseIndexName } from "~/services/elasticsearchService";
 import {
   jaroWinkler,
+  levenshteinRatio,
   jaccardSimilarity,
   combineScores,
   scoreToConfidence,
@@ -146,13 +147,16 @@ export class DuplicateScanService {
       const normalizedEsScore = Math.min(rawEsScore / MAX_ES_SCORE, 1.0);
 
       // Per-signal scores
-      const nameScore = jaroWinkler(caseData.name, candidate.name);
+      // Use Levenshtein ratio as the primary name gate — it measures actual edit
+      // distance and doesn't over-score strings with shared prefixes like Jaro-Winkler.
+      // e.g., "Verify user can login" vs "Verify user can logout" = ~0.88 (3 edits/25 chars)
+      const nameLevenshtein = levenshteinRatio(caseData.name, candidate.name);
 
-      // Hard gate: names must be very similar to be considered duplicates.
-      // Jaro-Winkler gives high scores to strings sharing common prefixes/patterns
-      // (e.g., "Verify user can login" vs "Verify user can logout" scores ~0.93),
-      // so the threshold must be high to avoid false positives.
-      if (nameScore < 0.90) continue;
+      // Hard gate: names must be very similar by edit distance
+      if (nameLevenshtein < 0.85) continue;
+
+      // Use Jaro-Winkler as the name signal in the combined score (better gradient)
+      const nameScore = jaroWinkler(caseData.name, candidate.name);
 
       // ES MLT handles step text similarity — use normalized ES score as the steps signal
       const stepsScore = normalizedEsScore;

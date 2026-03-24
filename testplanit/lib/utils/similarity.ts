@@ -15,6 +15,49 @@ export const FIELD_WEIGHTS = {
 export type ConfidenceBucket = "HIGH" | "MEDIUM" | "LOW";
 
 /**
+ * Computes the Levenshtein edit distance between two strings.
+ * Uses single-row DP for memory efficiency.
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  let curr = new Array<number>(n + 1);
+
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j]! + 1,
+        curr[j - 1]! + 1,
+        prev[j - 1]! + cost,
+      );
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n]!;
+}
+
+/**
+ * Computes normalized Levenshtein similarity ratio between two strings.
+ * Both inputs are lowercased and trimmed before comparison.
+ *
+ * Returns 1.0 for identical strings, 0.0 for completely different strings.
+ * The ratio is: 1 - (editDistance / maxLength).
+ */
+export function levenshteinRatio(s1: string, s2: string): number {
+  const a = s1.toLowerCase().trim();
+  const b = s2.toLowerCase().trim();
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 1.0;
+  return 1 - levenshteinDistance(a, b) / maxLen;
+}
+
+/**
  * Computes Jaro-Winkler similarity between two strings.
  * Both inputs are lowercased before comparison.
  *
