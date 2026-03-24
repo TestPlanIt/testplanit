@@ -76,7 +76,12 @@ export const processor = async (
     select: { caseAId: true, caseBId: true },
   });
   const dismissedPairs = new Set<string>(
-    dismissedRows.map((r: { caseAId: number; caseBId: number }) => `${r.caseAId}:${r.caseBId}`)
+    dismissedRows.map((r: { caseAId: number; caseBId: number }) => {
+      // Normalize to canonical ordering (smaller ID first) to match scan pair keys
+      const a = Math.min(r.caseAId, r.caseBId);
+      const b = Math.max(r.caseAId, r.caseBId);
+      return `${a}:${b}`;
+    })
   );
 
   const total = cases.length;
