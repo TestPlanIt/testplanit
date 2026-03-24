@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { DuplicateResultsTable } from "@/components/duplicates/DuplicateResultsTable";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -15,6 +16,7 @@ export default function DuplicatesPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState<{ analyzed: number; total: number } | null>(null);
 
   const handleRescan = async () => {
     setIsScanning(true);
@@ -35,13 +37,22 @@ export default function DuplicatesPage() {
       const poll = async () => {
         const statusRes = await fetch(`/api/duplicate-scan/status/${jobId}`);
         const status = await statusRes.json();
+        if (status.progress) {
+          setScanProgress(status.progress);
+        }
         if (status.state === "completed") {
-          toast.success(t("scanComplete", { count: status.result?.pairsFound ?? 0 }));
-          queryClient.invalidateQueries({ queryKey: ["duplicate-scan-candidates", projectId] });
+          toast.success(
+            t("scanComplete", { count: status.result?.pairsFound ?? 0 })
+          );
+          queryClient.invalidateQueries({
+            queryKey: ["duplicate-scan-candidates", projectId],
+          });
           setIsScanning(false);
+          setScanProgress(null);
         } else if (status.state === "failed") {
           toast.error(t("scanFailed"), { description: status.failedReason });
           setIsScanning(false);
+          setScanProgress(null);
         } else {
           setTimeout(poll, 2500);
         }
@@ -65,18 +76,27 @@ export default function DuplicatesPage() {
           <h1 className="text-2xl font-bold">{t("pageTitle")}</h1>
           <p className="text-muted-foreground">{t("pageDescription")}</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleRescan}
-          disabled={isScanning}
-        >
-          {isScanning ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
+        <div className="flex items-center gap-3">
+          {isScanning && scanProgress && scanProgress.total > 0 && (
+            <div className="flex items-center gap-2">
+              <Progress
+                value={Math.round((scanProgress.analyzed / scanProgress.total) * 100)}
+                className="w-32 h-2"
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {t("analyzing", { analyzed: scanProgress.analyzed, total: scanProgress.total })}
+              </span>
+            </div>
           )}
-          {t("rescan")}
-        </Button>
+          <Button variant="outline" onClick={handleRescan} disabled={isScanning}>
+            {isScanning ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {t("rescan")}
+          </Button>
+        </div>
       </div>
       <DuplicateResultsTable projectId={projectId} />
     </div>
