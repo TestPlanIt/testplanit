@@ -36,6 +36,9 @@ interface CaseDetails {
     order: number;
   }[];
   tags: { id: number; name: string }[];
+  template?: {
+    caseFields: Array<{ caseFieldId: number; order: number }>;
+  } | null;
   caseFieldValues: {
     id: number;
     value: any;
@@ -113,13 +116,21 @@ function CasePanel({
 
   // Map field values to CustomFieldDisplay format
   // CustomFieldDisplay expects typed value properties, not just raw `value`
+  // Sort field values by template order
+  const templateOrder = new Map(
+    (caseDetails.template?.caseFields ?? []).map((cf) => [cf.caseFieldId, cf.order])
+  );
+  const orderedFieldValues = [...caseDetails.caseFieldValues]
+    .filter((fv) => fv.value != null)
+    .sort((a, b) => (templateOrder.get(a.field.id) ?? 999) - (templateOrder.get(b.field.id) ?? 999));
+
   // Separate long text fields (rendered with TextFromJson) from others (CustomFieldDisplay)
-  const longTextFields = caseDetails.caseFieldValues.filter(
-    (fv) => fv.value != null && (fv.field.type?.type === "Text Long" || fv.field.type?.type === "Steps")
+  const longTextFields = orderedFieldValues.filter(
+    (fv) => fv.field.type?.type === "Text Long" || fv.field.type?.type === "Steps"
   );
 
-  const customFields = caseDetails.caseFieldValues
-    .filter((fv) => fv.value != null && fv.field.type?.type !== "Text Long" && fv.field.type?.type !== "Steps")
+  const customFields = orderedFieldValues
+    .filter((fv) => fv.field.type?.type !== "Text Long" && fv.field.type?.type !== "Steps")
     .map((fv) => {
       const fieldType = fv.field.type?.type ?? "Text String";
       const value = fv.value;

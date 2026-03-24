@@ -25,6 +25,17 @@ async function fetchCaseDetails(caseId: number) {
         select: { id: true, step: true, expectedResult: true, order: true },
       },
       tags: { select: { id: true, name: true } },
+      template: {
+        select: {
+          caseFields: {
+            orderBy: { order: "asc" },
+            select: {
+              caseFieldId: true,
+              order: true,
+            },
+          },
+        },
+      },
       caseFieldValues: {
         select: {
           id: true,
