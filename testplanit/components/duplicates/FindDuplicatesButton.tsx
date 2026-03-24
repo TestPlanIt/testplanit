@@ -47,7 +47,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     queryKey: ["duplicate-scan-pending-count", projectId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/duplicate-scan/candidates?projectId=${projectId}`
+        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return 0;
       const data = await res.json();
@@ -61,7 +61,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     queryKey: ["duplicate-scan-pending-count-refresh", projectId, scanState],
     queryFn: async () => {
       const res = await fetch(
-        `/api/duplicate-scan/candidates?projectId=${projectId}`
+        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return 0;
       const data = await res.json();
