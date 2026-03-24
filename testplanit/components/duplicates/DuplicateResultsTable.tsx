@@ -98,7 +98,7 @@ export function DuplicateResultsTable({
     queryKey: ["duplicate-scan-candidates", projectId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/duplicate-scan/candidates?projectId=${projectId}&limit=1000`
+        `/api/duplicate-scan/candidates?projectId=${projectId}`
       );
       if (!res.ok) return [];
       const data = await res.json();

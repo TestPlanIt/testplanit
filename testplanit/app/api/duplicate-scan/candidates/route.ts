@@ -7,7 +7,7 @@ import { authOptions } from "~/server/auth";
 const querySchema = z.object({
   projectId: z.coerce.number(),
   cursor: z.coerce.number().optional(),
-  limit: z.coerce.number().min(1).max(1000).default(25),
+  limit: z.coerce.number().min(1).default(25),
 });
 
 export async function GET(request: Request) {
