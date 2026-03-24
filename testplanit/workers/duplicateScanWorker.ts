@@ -11,6 +11,9 @@ import {
 import { DUPLICATE_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { getElasticsearchClient } from "../services/elasticsearchService";
 import valkeyConnection from "../lib/valkey";
+import { DuplicateAnalysisService, MAX_PAIRS_PER_SCAN } from "../lib/llm/services/duplicate-detection/duplicate-analysis.service";
+import { LlmManager } from "../lib/llm/services/llm-manager.service";
+import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
 
 // ─── Job data / result types ────────────────────────────────────────────────
 
@@ -140,6 +143,40 @@ export const processor = async (
   // 7. Sort by score descending
   allPairs.sort((a, b) => b.score - a.score);
 
+  // 7b. Optional LLM semantic pass — top MAX_PAIRS_PER_SCAN pairs only
+  //     Gracefully skipped if no LLM integration is configured.
+  let finalPairs: Array<typeof allPairs[0] & { detectionMethod: string }>;
+  try {
+    const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
+    const promptResolver = new PromptResolver(prisma as any);
+    const semanticService = new DuplicateAnalysisService(llmManager, promptResolver);
+
+    // Build case lookup for name+steps enrichment
+    const caseMap = new Map(cases.map((c) => [c.id, c]));
+
+    const topPairs = allPairs.slice(0, MAX_PAIRS_PER_SCAN).map((p) => {
+      const caseA = caseMap.get(p.caseAId);
+      const caseB = caseMap.get(p.caseBId);
+      const formatSteps = (steps: { step: unknown; expectedResult: unknown }[]) =>
+        steps.map((s, i) => `Step ${i + 1}: ${s.step}\nExpected: ${s.expectedResult}`).join("\n");
+      return {
+        ...p,
+        caseAName: caseA?.name ?? "",
+        caseASteps: formatSteps((caseA?.steps ?? []) as any),
+        caseBName: caseB?.name ?? "",
+        caseBSteps: formatSteps((caseB?.steps ?? []) as any),
+      };
+    });
+
+    const analyzedTop = await semanticService.analyzePairs(topPairs as any, job.data.projectId, job.data.userId);
+    const overflow = allPairs.slice(MAX_PAIRS_PER_SCAN).map((p) => ({ ...p, detectionMethod: "fuzzy" }));
+    finalPairs = [...analyzedTop, ...overflow];
+  } catch (err) {
+    // LLM pass failed entirely — log and fall back to fuzzy-only
+    console.warn("[duplicate-scan] LLM semantic pass failed, using fuzzy-only results:", (err as Error).message);
+    finalPairs = allPairs.map((p) => ({ ...p, detectionMethod: "fuzzy" }));
+  }
+
   // 8. Soft-delete old pending results, then insert new ones atomically
   //    Use a longer timeout for large result sets
   await prisma.$transaction(async (tx: any) => {
@@ -148,11 +185,11 @@ export const processor = async (
       data: { isDeleted: true },
     });
 
-    if (allPairs.length > 0) {
+    if (finalPairs.length > 0) {
       // Batch createMany in chunks of 500 to avoid query size limits
       const CHUNK_SIZE = 500;
-      for (let i = 0; i < allPairs.length; i += CHUNK_SIZE) {
-        const chunk = allPairs.slice(i, i + CHUNK_SIZE);
+      for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
+        const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
         await tx.duplicateScanResult.createMany({
           data: chunk.map((p) => ({
             projectId: job.data.projectId,
@@ -160,6 +197,7 @@ export const processor = async (
             caseBId: p.caseBId,
             score: p.score,
             matchedFields: p.matchedFields,
+            detectionMethod: p.detectionMethod,
             scanJobId: job.id,
           })),
           skipDuplicates: true,
@@ -169,7 +207,7 @@ export const processor = async (
   }, { timeout: 30000 });
 
   return {
-    pairsFound: allPairs.length,
+    pairsFound: finalPairs.length,
     casesScanned: total,
     scanJobId: job.id!,
   };
