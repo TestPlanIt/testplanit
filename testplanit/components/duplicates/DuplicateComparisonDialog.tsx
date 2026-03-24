@@ -44,10 +44,12 @@ interface CaseDetails {
       displayName: string;
       type?: { type: string };
       fieldOptions?: Array<{
-        id: number;
-        name: string;
-        icon?: { name: string };
-        iconColor?: { value: string };
+        fieldOption: {
+          id: number;
+          name: string;
+          icon?: { name: string } | null;
+          iconColor?: { value: string } | null;
+        };
       }>;
     };
   }[];
@@ -114,15 +116,17 @@ function CasePanel({
     const fieldType = fv.field.type?.type ?? "Text String";
     const value = fv.value;
 
-    // For dropdown/multi-select, match the selected option(s) from fieldOptions
-    const fieldOptions = fv.field.fieldOptions ?? [];
-    let fieldOption: typeof fieldOptions[0] | undefined;
-    let matchedOptions: typeof fieldOptions | undefined;
+    // Flatten the join table: CaseFieldAssignment[] -> FieldOptions[]
+    const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
+
+    // For dropdown/multi-select, match the selected option(s)
+    let fieldOption: (typeof options)[0] | undefined;
+    let matchedOptions: typeof options | undefined;
 
     if (fieldType === "Dropdown" && value != null) {
-      fieldOption = fieldOptions.find((o) => o.id === Number(value));
+      fieldOption = options.find((o) => o.id === Number(value));
     } else if (fieldType === "Multi-Select" && Array.isArray(value)) {
-      matchedOptions = fieldOptions.filter((o) => (value as number[]).includes(o.id));
+      matchedOptions = options.filter((o) => (value as number[]).includes(o.id));
     }
 
     return {

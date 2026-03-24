@@ -36,10 +36,14 @@ async function fetchCaseDetails(caseId: number) {
               type: { select: { type: true } },
               fieldOptions: {
                 select: {
-                  id: true,
-                  name: true,
-                  icon: { select: { name: true } },
-                  iconColor: { select: { value: true } },
+                  fieldOption: {
+                    select: {
+                      id: true,
+                      name: true,
+                      icon: { select: { name: true } },
+                      iconColor: { select: { value: true } },
+                    },
+                  },
                 },
               },
             },
