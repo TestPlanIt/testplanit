@@ -14,8 +14,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **DET-03**: System uses multi-signal scoring combining name, steps, tags, and field values into a weighted similarity score
 - [x] **DET-04**: System displays similarity confidence as high/medium/low buckets (not raw floats) with which fields matched
 - [x] **DET-05**: Detection is scoped to within a project across all repositories, respecting multi-tenant isolation
-- [ ] **DET-06**: System can optionally use configured LLM to perform semantic analysis of whether two cases test the same functionality
-- [ ] **DET-07**: LLM analysis uses batching (multiple pairs per call) with a configurable maximum pairs cap per scan
+- [x] **DET-06**: System can optionally use configured LLM to perform semantic analysis of whether two cases test the same functionality
+- [x] **DET-07**: LLM analysis uses batching (multiple pairs per call) with a configurable maximum pairs cap per scan
 
 ### Scanning
 
@@ -88,8 +88,8 @@ Deferred to a later release. Tracked but not in current roadmap.
 | DET-03      | Phase 47 | Complete |
 | DET-04      | Phase 47 | Complete |
 | DET-05      | Phase 47 | Complete |
-| DET-06      | Phase 51 | Pending |
-| DET-07      | Phase 51 | Pending |
+| DET-06      | Phase 51 | Complete |
+| DET-07      | Phase 51 | Complete |
 | SCAN-01     | Phase 48 | Complete |
 | SCAN-02     | Phase 48 | Complete |
 | SCAN-03     | Phase 48 | Complete |
