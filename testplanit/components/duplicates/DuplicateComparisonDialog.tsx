@@ -127,10 +127,11 @@ function CasePanel({
           <ol className="list-decimal list-inside space-y-1 text-sm max-h-32 overflow-y-auto">
             {caseDetails.steps.map((step, i) => (
               <li key={step.id ?? i}>
-                <span>{step.title}</span>
-                {step.expectedResult && (
-                  <span className="text-muted-foreground"> → {step.expectedResult}</span>
-                )}
+                <span>
+                  {step.expectedResult
+                    ? t("stepExpectedResult", { step: step.title, result: step.expectedResult })
+                    : step.title}
+                </span>
               </li>
             ))}
           </ol>
@@ -183,7 +184,7 @@ function CasePanel({
           <div>
             <span className="font-medium">{lastRun.testRun.name}</span>
             <span className="text-muted-foreground ml-2">
-              {lastRun.status} — {new Date(lastRun.createdAt).toLocaleDateString()}
+              {t("runStatusDate", { status: lastRun.status, date: new Date(lastRun.createdAt).toLocaleDateString() })}
             </span>
           </div>
         ) : (

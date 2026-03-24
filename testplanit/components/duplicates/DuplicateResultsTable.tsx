@@ -6,7 +6,7 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   type DuplicateCandidateRow,
   getColumns,
@@ -74,8 +74,7 @@ export function DuplicateResultsTable({
     setCurrentPage(1);
   }, []);
 
-  const onCompareRef = useRef<(id: number) => void>(() => {});
-  const columns = useMemo(() => getColumns(t, (id) => onCompareRef.current(id)), [t]);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const { data: allItems, isLoading } = useQuery<DuplicateCandidate[]>({
     queryKey: ["duplicate-scan-candidates", projectId],
@@ -160,7 +159,6 @@ export function DuplicateResultsTable({
     }
   }, [sortedItems]);
 
-  onCompareRef.current = (id: number) => handleRowClick(id);
 
   const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);

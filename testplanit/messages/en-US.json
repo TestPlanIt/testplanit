@@ -663,10 +663,10 @@
       "goToPrevious": "Go to previous page",
       "goToNext": "Go to next page",
       "all": "All Items",
-      "entries": "{count, plural, =1 {item} other {items}}",
+      "entries": "{count, plural, =1 {# item} other {# items}}",
       "pageSize": "Page Size",
       "showing": "Showing",
-      "total": "total {count, plural, =1 {item} other {items}}",
+      "total": "total {count, plural, =1 {# item} other {# items}}",
       "filtered": "filtered from",
       "pageOfPages": "Page {current} of {total}"
     },
@@ -2078,6 +2078,9 @@
       "columnMatchedFields": "Matched Fields",
       "columnScore": "Score",
       "compareButton": "Compare",
+      "confidenceHigh": "HIGH",
+      "confidenceMedium": "MEDIUM",
+      "confidenceLow": "LOW",
       "tableHint": "Click a row or the Compare button to review and resolve a duplicate pair.",
       "comparisonTitle": "{caseA} vs {caseB}",
       "comparisonDescription": "Compare these potential duplicates and choose how to resolve them.",
@@ -2100,6 +2103,8 @@
       "lastRunLabel": "Last Run",
       "noFieldValues": "No field values",
       "noLastRun": "Never run",
+      "stepExpectedResult": "{step} → {result}",
+      "runStatusDate": "{status} — {date}",
       "noFolder": "No folder"
     },
     "generateTestCases": {

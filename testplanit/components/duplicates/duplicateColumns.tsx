@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowRightLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -21,22 +20,27 @@ export interface DuplicateCandidateRow {
   status: string;
 }
 
-function ConfidenceBadge({ score }: { score: number }) {
+function ConfidenceBadge({
+  score,
+  t,
+}: {
+  score: number;
+  t: ReturnType<typeof useTranslations<"repository.duplicates">>;
+}) {
   const confidence: ConfidenceBucket | null = scoreToConfidence(score);
   if (!confidence) return null;
 
   if (confidence === "HIGH") {
-    return <Badge variant="destructive">HIGH</Badge>;
+    return <Badge variant="destructive">{t("confidenceHigh")}</Badge>;
   }
   if (confidence === "MEDIUM") {
-    return <Badge variant="default">MEDIUM</Badge>;
+    return <Badge variant="default">{t("confidenceMedium")}</Badge>;
   }
-  return <Badge variant="secondary">LOW</Badge>;
+  return <Badge variant="secondary">{t("confidenceLow")}</Badge>;
 }
 
 export const getColumns = (
-  t: ReturnType<typeof useTranslations<"repository.duplicates">>,
-  onCompare?: (id: number) => void
+  t: ReturnType<typeof useTranslations<"repository.duplicates">>
 ): ColumnDef<DuplicateCandidateRow>[] => [
   {
     id: "confidence",
@@ -45,7 +49,7 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 120,
-    cell: ({ row }) => <ConfidenceBadge score={row.original.score} />,
+    cell: ({ row }) => <ConfidenceBadge score={row.original.score} t={t} />,
   },
   {
     id: "caseA",
@@ -83,31 +87,24 @@ export const getColumns = (
     size: 100,
     cell: ({ row }) => (
       <span className="text-right block">
-        {(row.original.score * 100).toFixed(0)}%
+        {(row.original.score * 100).toFixed(2)}
+        {"%"}
       </span>
     ),
   },
   {
     id: "actions",
-    header: "",
+    header: t("compareButton"),
     enableSorting: false,
     enableResizing: false,
     enableHiding: false,
-    size: 80,
-    maxSize: 80,
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onCompare?.(row.original.id);
-        }}
-        className="gap-1.5 text-muted-foreground hover:text-foreground"
-      >
+    size: 120,
+    maxSize: 120,
+    cell: () => (
+      <span className="flex items-center gap-1.5 text-muted-foreground">
         <ArrowRightLeft className="h-3.5 w-3.5" />
         <span className="text-xs">{t("compareButton")}</span>
-      </Button>
+      </span>
     ),
   },
 ];
