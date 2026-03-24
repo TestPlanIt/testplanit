@@ -29,7 +29,21 @@ async function fetchCaseDetails(caseId: number) {
         select: {
           id: true,
           value: true,
-          field: { select: { id: true, displayName: true } },
+          field: {
+            select: {
+              id: true,
+              displayName: true,
+              type: { select: { name: true } },
+              fieldOptions: {
+                select: {
+                  id: true,
+                  name: true,
+                  icon: { select: { name: true } },
+                  iconColor: { select: { value: true } },
+                },
+              },
+            },
+          },
         },
       },
       _count: { select: { attachments: true } },

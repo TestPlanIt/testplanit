@@ -29,11 +29,35 @@ interface CaseDetails {
   source: string | null;
   automated: boolean;
   folder: { id: number; name: string } | null;
-  steps: { id: number; step: string; expectedResult: string | null; order: number }[];
+  steps: {
+    id: number;
+    step: string;
+    expectedResult: string | null;
+    order: number;
+  }[];
   tags: { id: number; name: string }[];
-  caseFieldValues: { id: number; value: string; field: { id: number; displayName: string; fieldType?: string } }[];
+  caseFieldValues: {
+    id: number;
+    value: any;
+    field: {
+      id: number;
+      displayName: string;
+      type?: { name: string };
+      fieldOptions?: Array<{
+        id: number;
+        name: string;
+        icon?: { name: string };
+        iconColor?: { value: string };
+      }>;
+    };
+  }[];
   _count: { attachments: number };
-  testRuns: { id: number; status: { id: number; name: string } | null; createdAt: string; testRun: { name: string } | null }[];
+  testRuns: {
+    id: number;
+    status: { id: number; name: string } | null;
+    createdAt: string;
+    testRun: { name: string } | null;
+  }[];
   projectId?: number;
 }
 
@@ -79,18 +103,37 @@ function CasePanel({
 }) {
   const { data: session } = useSession();
   const prefs = session?.user.preferences;
-  const dateTimeFormat = prefs?.dateFormat && prefs?.timeFormat
-    ? `${prefs.dateFormat} ${prefs.timeFormat}`
-    : prefs?.dateFormat;
+  const dateTimeFormat =
+    prefs?.dateFormat && prefs?.timeFormat
+      ? `${prefs.dateFormat} ${prefs.timeFormat}`
+      : prefs?.dateFormat;
   const lastRun = caseDetails.testRuns?.[0];
 
   // Map field values to CustomFieldDisplay format
-  const customFields = caseDetails.caseFieldValues.map((fv) => ({
-    fieldId: fv.field.id,
-    fieldName: fv.field.displayName,
-    fieldType: fv.field.fieldType ?? "Text String",
-    value: fv.value,
-  }));
+  const customFields = caseDetails.caseFieldValues.map((fv) => {
+    const fieldType = fv.field.type?.name ?? "Text String";
+    const value = fv.value;
+
+    // For dropdown/multi-select, match the selected option(s) from fieldOptions
+    const fieldOptions = fv.field.fieldOptions ?? [];
+    let fieldOption: typeof fieldOptions[0] | undefined;
+    let matchedOptions: typeof fieldOptions | undefined;
+
+    if (fieldType === "Dropdown" && value != null) {
+      fieldOption = fieldOptions.find((o) => o.id === Number(value));
+    } else if (fieldType === "Multi-Select" && Array.isArray(value)) {
+      matchedOptions = fieldOptions.filter((o) => (value as number[]).includes(o.id));
+    }
+
+    return {
+      fieldId: fv.field.id,
+      fieldName: fv.field.displayName,
+      fieldType,
+      value,
+      ...(fieldOption && { fieldOption }),
+      ...(matchedOptions && { fieldOptions: matchedOptions }),
+    };
+  });
 
   return (
     <div className="flex flex-col gap-2">
@@ -118,7 +161,11 @@ function CasePanel({
           if (e.key === "Enter" || e.key === " ") onSelect();
         }}
       >
-        <div className="mb-1 text-xs text-muted-foreground">{tCommon("fields.id")}{" "}{caseDetails.id}</div>
+        <div className="mb-1 text-xs text-muted-foreground">
+          {tCommon("fields.id")}
+          {": "}
+          {caseDetails.id}
+        </div>
         <div className="mb-3 flex items-center gap-2">
           <CaseDisplay
             id={caseDetails.id}
@@ -143,29 +190,49 @@ function CasePanel({
         <div className="space-y-1 mb-3 text-sm">
           {caseDetails.source && (
             <div>
-              <span className="font-medium text-muted-foreground">{t("sourceLabel")}{": "}</span>
+              <span className="font-medium text-muted-foreground">
+                {t("sourceLabel")}
+                {": "}
+              </span>
               <span>{caseDetails.source}</span>
             </div>
           )}
           <div>
-            <span className="font-medium text-muted-foreground">{tCommon("fields.folder")}{": "}</span>
+            <span className="font-medium text-muted-foreground">
+              {tCommon("fields.folder")}
+              {": "}
+            </span>
             <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
           </div>
           <div>
-            <span className="font-medium text-muted-foreground">{tCommon("fields.created")}{": "}</span>
-            <DateFormatter date={caseDetails.createdAt} formatString={dateTimeFormat} timezone={prefs?.timezone} />
+            <span className="font-medium text-muted-foreground">
+              {tCommon("fields.created")}
+              {": "}
+            </span>
+            <DateFormatter
+              date={caseDetails.createdAt}
+              formatString={dateTimeFormat}
+              timezone={prefs?.timezone}
+            />
           </div>
         </div>
 
         {/* Steps */}
         <div className="mb-3">
-          <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.steps")}</p>
+          <p className="font-medium text-muted-foreground text-sm mb-1">
+            {tCommon("fields.steps")}
+          </p>
           {caseDetails.steps.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">{tRepo("fields.noSteps")}</p>
+            <p className="text-sm text-muted-foreground italic">
+              {tRepo("fields.noSteps")}
+            </p>
           ) : (
             <div className="max-h-48 overflow-y-auto space-y-2">
               {caseDetails.steps.map((step, i) => (
-                <div key={step.id ?? i} className="text-sm border-l-2 border-muted pl-2">
+                <div
+                  key={step.id ?? i}
+                  className="text-sm border-l-2 border-muted pl-2"
+                >
                   <div className="font-medium">
                     {`${i + 1}. `}
                     <TextFromJson
@@ -189,9 +256,13 @@ function CasePanel({
 
         {/* Tags */}
         <div className="mb-3">
-          <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.tags")}</p>
+          <p className="font-medium text-muted-foreground text-sm mb-1">
+            {tCommon("fields.tags")}
+          </p>
           {caseDetails.tags.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">{tRepo("views.noTags")}</p>
+            <p className="text-sm text-muted-foreground italic">
+              {tRepo("views.noTags")}
+            </p>
           ) : (
             <TagsListDisplay tags={caseDetails.tags} projectId={projectId} />
           )}
@@ -199,9 +270,13 @@ function CasePanel({
 
         {/* Field Values */}
         <div className="mb-3">
-          <p className="font-medium text-muted-foreground text-sm mb-1">{t("fieldValuesLabel")}</p>
+          <p className="font-medium text-muted-foreground text-sm mb-1">
+            {t("fieldValuesLabel")}
+          </p>
           {customFields.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">{t("noFieldValues")}</p>
+            <p className="text-sm text-muted-foreground italic">
+              {t("noFieldValues")}
+            </p>
           ) : (
             <CustomFieldDisplay customFields={customFields} maxItems={10} />
           )}
@@ -209,18 +284,26 @@ function CasePanel({
 
         {/* Attachments */}
         <div className="mb-3 text-sm">
-          <span className="font-medium text-muted-foreground">{tCommon("fields.attachments")}{": "}</span>
+          <span className="font-medium text-muted-foreground">
+            {tCommon("fields.attachments")}
+            {": "}
+          </span>
           <span>{caseDetails._count.attachments}</span>
         </div>
 
         {/* Last Run */}
         <div className="text-sm">
-          <p className="font-medium text-muted-foreground mb-1">{t("lastRunLabel")}</p>
+          <p className="font-medium text-muted-foreground mb-1">
+            {t("lastRunLabel")}
+          </p>
           {lastRun ? (
             <div>
               <span className="font-medium">{lastRun.testRun?.name ?? ""}</span>
               <span className="text-muted-foreground ml-2">
-                {t("runStatusDate", { status: lastRun.status?.name ?? "", date: new Date(lastRun.createdAt).toLocaleDateString() })}
+                {t("runStatusDate", {
+                  status: lastRun.status?.name ?? "",
+                  date: new Date(lastRun.createdAt).toLocaleDateString(),
+                })}
               </span>
             </div>
           ) : (
@@ -243,7 +326,9 @@ export function DuplicateComparisonDialog({
   const tRepo = useTranslations("repository");
   const [primaryId, setPrimaryId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeAction, setActiveAction] = useState<"merge" | "link" | "dismiss" | null>(null);
+  const [activeAction, setActiveAction] = useState<
+    "merge" | "link" | "dismiss" | null
+  >(null);
 
   const { data, isLoading, isError } = useQuery<CaseDetailsResponse>({
     queryKey: ["duplicate-case-details", pair?.caseAId, pair?.caseBId],
@@ -269,12 +354,28 @@ export function DuplicateComparisonDialog({
     try {
       let body: Record<string, unknown>;
       if (action === "merge") {
-        const victimId = primaryId === pair.caseAId ? pair.caseBId : pair.caseAId;
-        body = { action: "merge", survivorId: primaryId, victimId, projectId: pair.projectId };
+        const victimId =
+          primaryId === pair.caseAId ? pair.caseBId : pair.caseAId;
+        body = {
+          action: "merge",
+          survivorId: primaryId,
+          victimId,
+          projectId: pair.projectId,
+        };
       } else if (action === "link") {
-        body = { action: "link", caseAId: pair.caseAId, caseBId: pair.caseBId, projectId: pair.projectId };
+        body = {
+          action: "link",
+          caseAId: pair.caseAId,
+          caseBId: pair.caseBId,
+          projectId: pair.projectId,
+        };
       } else {
-        body = { action: "dismiss", caseAId: pair.caseAId, caseBId: pair.caseBId, projectId: pair.projectId };
+        body = {
+          action: "dismiss",
+          caseAId: pair.caseAId,
+          caseBId: pair.caseBId,
+          projectId: pair.projectId,
+        };
       }
 
       const res = await fetch("/api/duplicate-scan/resolve", {
@@ -314,11 +415,19 @@ export function DuplicateComparisonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="comparison-dialog" className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        data-testid="comparison-dialog"
+        className="max-w-5xl max-h-[85vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 flex-wrap">
             <span>
-              {pair ? t("comparisonTitle", { caseA: pair.caseAName, caseB: pair.caseBName }) : ""}
+              {pair
+                ? t("comparisonTitle", {
+                    caseA: pair.caseAName,
+                    caseB: pair.caseBName,
+                  })
+                : ""}
             </span>
             {confidence && (
               <Badge
@@ -334,9 +443,7 @@ export function DuplicateComparisonDialog({
               </Badge>
             )}
           </DialogTitle>
-          <DialogDescription>
-            {t("comparisonDescription")}
-          </DialogDescription>
+          <DialogDescription>{t("comparisonDescription")}</DialogDescription>
           {pair && pair.matchedFields.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {pair.matchedFields.map((field) => (
@@ -365,7 +472,9 @@ export function DuplicateComparisonDialog({
 
           {!isLoading && !isError && data && (
             <>
-              <p className="text-xs text-muted-foreground mb-3">{t("selectPrimary")}</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                {t("selectPrimary")}
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 <CasePanel
                   caseDetails={data.caseA}
