@@ -86,7 +86,6 @@ export const processor = async (
 
   const total = cases.length;
   const seenPairs = new Set<string>();
-  const matchedCaseIds = new Set<number>(); // Cases already found as part of a pair — skip querying them
   const allPairs: Array<{
     caseAId: number;
     caseBId: number;
@@ -109,35 +108,27 @@ export const processor = async (
 
     const batch = cases.slice(batchStart, batchStart + BATCH_SIZE);
 
-    // Skip cases already found as part of a duplicate pair
-    const casesToQuery = batch.filter((c) => !matchedCaseIds.has(c.id));
-
-    if (casesToQuery.length > 0) {
-      const batchResults = await Promise.all(
-        casesToQuery.map((testCase) =>
-          service.findSimilarCases(
-            {
-              id: testCase.id,
-              name: testCase.name,
-              steps: testCase.steps as { step: string; expectedResult: string }[],
-              tags: testCase.tags as { name: string }[],
-            },
-            job.data.projectId,
-            job.data.tenantId
-          )
+    const batchResults = await Promise.all(
+      batch.map((testCase) =>
+        service.findSimilarCases(
+          {
+            id: testCase.id,
+            name: testCase.name,
+            steps: testCase.steps as { step: string; expectedResult: string }[],
+            tags: testCase.tags as { name: string }[],
+          },
+          job.data.projectId,
+          job.data.tenantId
         )
-      );
+      )
+    );
 
-      for (const pairs of batchResults) {
-        for (const pair of pairs) {
-          const key = `${pair.caseAId}:${pair.caseBId}`;
-          if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
-            seenPairs.add(key);
-            allPairs.push(pair);
-            // Mark both cases as matched so we can skip querying them later
-            matchedCaseIds.add(pair.caseAId);
-            matchedCaseIds.add(pair.caseBId);
-          }
+    for (const pairs of batchResults) {
+      for (const pair of pairs) {
+        const key = `${pair.caseAId}:${pair.caseBId}`;
+        if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
+          seenPairs.add(key);
+          allPairs.push(pair);
         }
       }
     }

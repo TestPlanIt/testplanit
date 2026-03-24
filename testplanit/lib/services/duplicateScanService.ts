@@ -147,6 +147,12 @@ export class DuplicateScanService {
 
       // Per-signal scores
       const nameScore = jaroWinkler(caseData.name, candidate.name);
+
+      // Hard gate: names must be at least 0.75 similar to be considered duplicates.
+      // This prevents cases with different purposes but similar step boilerplate
+      // from being flagged as duplicates.
+      if (nameScore < 0.75) continue;
+
       // ES MLT handles step text similarity — use normalized ES score as the steps signal
       const stepsScore = normalizedEsScore;
       const candidateTags = (candidate.tags ?? []).map((t) => t.name);
@@ -164,7 +170,7 @@ export class DuplicateScanService {
         fields: fieldsScore,
       });
 
-      // Null means below 0.55 threshold — skip
+      // Null means below threshold — skip
       const confidence = scoreToConfidence(combined);
       if (!confidence) continue;
 
