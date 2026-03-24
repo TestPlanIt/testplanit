@@ -2,6 +2,7 @@
 
 import { DateFormatter } from "@/components/DateFormatter";
 import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface CaseDetails {
   name: string;
   createdAt: string;
   source: string | null;
+  automated: boolean;
   folder: { id: number; name: string } | null;
   steps: { id: number; step: string; expectedResult: string | null; order: number }[];
   tags: { id: number; name: string }[];
@@ -113,8 +115,15 @@ function CasePanel({
           if (e.key === "Enter" || e.key === " ") onSelect();
         }}
       >
-        <h3 className="font-bold text-base mb-3 break-words flex items-center gap-2">
-          <span>{caseDetails.name}</span>
+        <div className="mb-3 flex items-center gap-2">
+          <CaseDisplay
+            id={caseDetails.id}
+            name={caseDetails.name}
+            source={caseDetails.source as any}
+            automated={caseDetails.automated}
+            maxLines={2}
+            size="large"
+          />
           <a
             href={`/projects/repository/${projectId}/${caseDetails.id}`}
             target="_blank"
@@ -125,7 +134,7 @@ function CasePanel({
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
-        </h3>
+        </div>
 
         {/* Source + Folder + Created */}
         <div className="space-y-1 mb-3 text-sm">
