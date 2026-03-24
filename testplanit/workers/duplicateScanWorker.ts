@@ -95,8 +95,8 @@ export const processor = async (
       {
         id: testCase.id,
         name: testCase.name,
-        steps: testCase.steps,
-        tags: testCase.tags,
+        steps: testCase.steps as { step: string; expectedResult: string }[],
+        tags: testCase.tags as { name: string }[],
       },
       job.data.projectId,
       job.data.tenantId

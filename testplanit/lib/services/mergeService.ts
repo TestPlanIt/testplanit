@@ -11,6 +11,7 @@
  * FK reroute order follows the "Recommended Transaction Order" in 49-RESEARCH.md.
  */
 
+import { LinkType } from "@prisma/client";
 import { prisma } from "~/lib/prismaBase";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -224,7 +225,7 @@ export async function mergeCases(
     if (victimLinksFrom.length > 0) {
       await tx.repositoryCaseLink.createMany({
         data: victimLinksFrom.map(
-          (link: { caseBId: number; type: string; createdById: string }) => ({
+          (link: { caseBId: number; type: LinkType; createdById: string }) => ({
             caseAId: survivorId,
             caseBId: link.caseBId,
             type: link.type,
@@ -237,7 +238,7 @@ export async function mergeCases(
     if (victimLinksTo.length > 0) {
       await tx.repositoryCaseLink.createMany({
         data: victimLinksTo.map(
-          (link: { caseAId: number; type: string; createdById: string }) => ({
+          (link: { caseAId: number; type: LinkType; createdById: string }) => ({
             caseAId: link.caseAId,
             caseBId: survivorId,
             type: link.type,
