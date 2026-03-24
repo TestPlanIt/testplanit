@@ -3029,6 +3029,42 @@ export class ApiHelper {
   }
 
   /**
+   * Create a DuplicateScanResult record directly in the database.
+   * Used by E2E tests to set up deterministic duplicate pairs without
+   * relying on Elasticsearch indexing and scan timing.
+   */
+  async createDuplicateScanResult(
+    projectId: number,
+    caseAId: number,
+    caseBId: number,
+    score: number = 0.9,
+    matchedFields: string[] = ["name"],
+  ): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/duplicateScanResult/create`,
+      {
+        data: {
+          data: {
+            project: { connect: { id: projectId } },
+            caseA: { connect: { id: caseAId } },
+            caseB: { connect: { id: caseBId } },
+            score,
+            matchedFields,
+            detectionMethod: "e2e-test",
+            scanJobId: `e2e-${Date.now()}`,
+          },
+        },
+      },
+    );
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create DuplicateScanResult: ${error}`);
+    }
+    const data = await response.json();
+    return data.id;
+  }
+
+  /**
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {

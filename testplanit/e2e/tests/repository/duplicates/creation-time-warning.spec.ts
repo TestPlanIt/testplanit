@@ -61,12 +61,12 @@ test.describe("Creation-Time Duplicate Warning", () => {
     await expect(addCaseDialog).toBeVisible({ timeout: 8000 });
 
     // Fill in the case name with a variant of the existing case name
-    const caseNameInput = page.getByTestId("case-name-input");
+    const caseNameInput = addCaseDialog.getByTestId("case-name-input");
     await expect(caseNameInput).toBeVisible({ timeout: 5000 });
     await caseNameInput.fill("Login form submit test variant");
 
     // Submit the case
-    const submitButton = page.getByTestId("case-submit-button");
+    const submitButton = addCaseDialog.getByTestId("case-submit-button");
     await expect(submitButton).toBeVisible({ timeout: 5000 });
     await submitButton.click();
 
@@ -84,10 +84,12 @@ test.describe("Creation-Time Duplicate Warning", () => {
     await expect(toast).toContainText(/similar|duplicate/i);
 
     // Verify the toast contains a clickable link to the matching case
-    const caseLink = toast.locator("a");
+    const caseLink = toast.locator(`a[href*="/${existingCaseId}"]`);
     await expect(caseLink).toBeVisible();
-    const href = await caseLink.getAttribute("href");
-    expect(href).toContain(`/projects/repository/${projectId}/${existingCaseId}`);
+
+    // Verify the Review link to the duplicates page is also present
+    const reviewLink = toast.locator(`a[href*="/duplicates"]`);
+    await expect(reviewLink).toBeVisible();
   });
 
   test("Shows Review link to duplicates page when multiple matches found", async ({
@@ -129,11 +131,11 @@ test.describe("Creation-Time Duplicate Warning", () => {
     const addCaseDialog = page.getByTestId("add-case-dialog");
     await expect(addCaseDialog).toBeVisible({ timeout: 8000 });
 
-    const caseNameInput = page.getByTestId("case-name-input");
+    const caseNameInput = addCaseDialog.getByTestId("case-name-input");
     await expect(caseNameInput).toBeVisible({ timeout: 5000 });
     await caseNameInput.fill("Login test variant");
 
-    const submitButton = page.getByTestId("case-submit-button");
+    const submitButton = addCaseDialog.getByTestId("case-submit-button");
     await expect(submitButton).toBeVisible({ timeout: 5000 });
     await submitButton.click();
 
@@ -194,12 +196,12 @@ test.describe("Creation-Time Duplicate Warning", () => {
     await expect(addCaseDialog).toBeVisible({ timeout: 8000 });
 
     // Fill in a unique case name
-    const caseNameInput = page.getByTestId("case-name-input");
+    const caseNameInput = addCaseDialog.getByTestId("case-name-input");
     await expect(caseNameInput).toBeVisible({ timeout: 5000 });
     await caseNameInput.fill(`Unique Case ${Date.now()}`);
 
     // Submit the case
-    const submitButton = page.getByTestId("case-submit-button");
+    const submitButton = addCaseDialog.getByTestId("case-submit-button");
     await expect(submitButton).toBeVisible({ timeout: 5000 });
     await submitButton.click();
 

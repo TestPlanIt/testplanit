@@ -1,47 +1,22 @@
-import { APIRequestContext, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 
 /**
  * Duplicate Scan Workflow E2E Tests
  *
- * Tests the full duplicate scan workflow:
+ * Tests the duplicate scan UI workflow:
  * - Triggering a scan from the repository page
- * - Viewing duplicate scan results
+ * - Viewing duplicate scan results (seeded directly, not ES-dependent)
  * - Resolving pairs via dismiss and link actions
+ *
+ * Tests that need results on the duplicates page create DuplicateScanResult
+ * records directly via the API, making them deterministic regardless of
+ * Elasticsearch state.
  */
-
-/**
- * Submit a scan and poll until completion. Returns the number of pairs found.
- */
-async function triggerAndWaitForScan(
-  page: Page,
-  request: APIRequestContext,
-  projectId: number,
-  baseURL: string
-): Promise<number> {
-  const res = await request.post(`${baseURL}/api/duplicate-scan/submit`, {
-    data: { projectId },
-  });
-  const { jobId } = await res.json();
-
-  for (let i = 0; i < 15; i++) {
-    await page.waitForTimeout(2000);
-    const statusRes = await request.get(
-      `${baseURL}/api/duplicate-scan/status/${jobId}`
-    );
-    const status = await statusRes.json();
-    if (status.state === "completed") return status.result?.pairsFound ?? 0;
-    if (status.state === "failed") return 0;
-  }
-  return 0; // timeout
-}
 
 test.describe("Duplicate Scan Workflow", () => {
   test("Trigger duplicate scan and see scan in progress", async ({
     api,
     page,
-    request,
-    baseURL,
   }) => {
     const projectId = await api.createProject(
       `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -72,69 +47,45 @@ test.describe("Duplicate Scan Workflow", () => {
   test("View duplicate scan results page", async ({
     api,
     page,
-    request,
-    baseURL,
   }) => {
     const projectId = await api.createProject(
       `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Dup Folder ${Date.now()}`);
-    // Two identically-named cases to maximize the chance of a duplicate match
-    const caseName = `Duplicate Case ${Date.now()}`;
-    await api.createTestCase(projectId, folderId, caseName);
-    await api.createTestCase(projectId, folderId, `${caseName} similar`);
+    const caseAId = await api.createTestCase(projectId, folderId, "Login test A");
+    const caseBId = await api.createTestCase(projectId, folderId, "Login test B");
 
-    // Submit scan via API and poll for completion
-    const pairsFound = await triggerAndWaitForScan(
-      page,
-      request,
-      projectId,
-      baseURL ?? "http://localhost:3000"
-    );
+    // Create a DuplicateScanResult directly — no ES dependency
+    await api.createDuplicateScanResult(projectId, caseAId, caseBId, 0.92, ["name"]);
 
     // Navigate to the duplicates page
     await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
     await page.waitForLoadState("networkidle");
 
-    // The duplicates table container should be visible
+    // The duplicates table should be visible
     const table = page.locator('[data-testid="duplicates-table"]');
     await expect(table).toBeVisible({ timeout: 10000 });
 
-    // If pairs were found, at least one row should be visible
-    if (pairsFound > 0) {
-      const firstRow = page.locator('[data-testid^="case-row-"]').first();
-      await expect(firstRow).toBeVisible({ timeout: 10000 });
-    }
+    // At least one row should be visible
+    const firstRow = page.locator('[data-testid^="case-row-"]').first();
+    await expect(firstRow).toBeVisible({ timeout: 10000 });
   });
 
   test("Dismiss a duplicate pair", async ({
     api,
     page,
-    request,
-    baseURL,
   }) => {
     const projectId = await api.createProject(
       `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Dup Folder ${Date.now()}`);
-    const caseName = `Dismissable Duplicate ${Date.now()}`;
-    await api.createTestCase(projectId, folderId, caseName);
-    await api.createTestCase(projectId, folderId, `${caseName} copy`);
+    const caseAId = await api.createTestCase(projectId, folderId, "Dismissable test A");
+    const caseBId = await api.createTestCase(projectId, folderId, "Dismissable test B");
 
-    const pairsFound = await triggerAndWaitForScan(
-      page,
-      request,
-      projectId,
-      baseURL ?? "http://localhost:3000"
-    );
+    await api.createDuplicateScanResult(projectId, caseAId, caseBId, 0.88, ["name"]);
 
     await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
     await page.waitForLoadState("networkidle");
-
-    if (pairsFound === 0) {
-      test.skip(true, "No pairs found — similarity threshold not met");
-      return;
-    }
 
     // Click the first row to open the comparison dialog
     const firstRow = page.locator('[data-testid^="case-row-"]').first();
@@ -153,7 +104,7 @@ test.describe("Duplicate Scan Workflow", () => {
     // Dialog should close
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
 
-    // Success toast should appear with dismiss-related text
+    // Success toast should appear
     const toast = page.locator('[data-sonner-toast]');
     await expect(toast).toBeVisible({ timeout: 10000 });
   });
@@ -161,31 +112,18 @@ test.describe("Duplicate Scan Workflow", () => {
   test("Link two duplicate cases as related", async ({
     api,
     page,
-    request,
-    baseURL,
   }) => {
     const projectId = await api.createProject(
       `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Dup Folder ${Date.now()}`);
-    const caseName = `Linkable Duplicate ${Date.now()}`;
-    await api.createTestCase(projectId, folderId, caseName);
-    await api.createTestCase(projectId, folderId, `${caseName} related`);
+    const caseAId = await api.createTestCase(projectId, folderId, "Linkable test A");
+    const caseBId = await api.createTestCase(projectId, folderId, "Linkable test B");
 
-    const pairsFound = await triggerAndWaitForScan(
-      page,
-      request,
-      projectId,
-      baseURL ?? "http://localhost:3000"
-    );
+    await api.createDuplicateScanResult(projectId, caseAId, caseBId, 0.85, ["name"]);
 
     await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
     await page.waitForLoadState("networkidle");
-
-    if (pairsFound === 0) {
-      test.skip(true, "No pairs found — similarity threshold not met");
-      return;
-    }
 
     // Click the first row to open the comparison dialog
     const firstRow = page.locator('[data-testid^="case-row-"]').first();
