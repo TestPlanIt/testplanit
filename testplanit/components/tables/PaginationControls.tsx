@@ -5,7 +5,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -39,7 +39,7 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
             <Button variant="link" className="-m-2">
               {totalRows <= 10 || pageSize === totalRows
                 ? t("all")
-                : `${pageSize} ${t("entries", { count: pageSize })}/${t("pageSize")}`}
+                : `${t("entries", { count: pageSize })}/${t("pageSize")}`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -58,10 +58,10 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
         </DropdownMenu>
         {/* <Separator orientation="vertical" className="px-2" /> */}
         <div className=" whitespace-nowrap gap-1" data-testid="pagination-info">
-          {t("showing")} {startIndex}-{endIndex} {tCommon("of")} {totalRows}{" "}
+          {t("showing")} {startIndex}-{endIndex} {tCommon("of")}{" "}
           {t("entries", { count: totalRows })}
           {searchString
-            ? ` ${t("filtered")} ${totalRows} ${t("total", { count: totalRows })}`
+            ? ` ${t("filtered")} ${t("total", { count: totalRows })}`
             : ""}
         </div>
       </div>
