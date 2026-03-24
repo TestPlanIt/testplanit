@@ -122,7 +122,7 @@ export class DuplicateScanService {
           ],
         },
       },
-      size: 200,
+      size: 50,
       min_score: 5.0,
     });
 
@@ -148,10 +148,11 @@ export class DuplicateScanService {
       // Per-signal scores
       const nameScore = jaroWinkler(caseData.name, candidate.name);
 
-      // Hard gate: names must be at least 0.75 similar to be considered duplicates.
-      // This prevents cases with different purposes but similar step boilerplate
-      // from being flagged as duplicates.
-      if (nameScore < 0.75) continue;
+      // Hard gate: names must be very similar to be considered duplicates.
+      // Jaro-Winkler gives high scores to strings sharing common prefixes/patterns
+      // (e.g., "Verify user can login" vs "Verify user can logout" scores ~0.93),
+      // so the threshold must be high to avoid false positives.
+      if (nameScore < 0.90) continue;
 
       // ES MLT handles step text similarity — use normalized ES score as the steps signal
       const stepsScore = normalizedEsScore;
