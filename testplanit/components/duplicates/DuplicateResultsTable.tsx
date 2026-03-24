@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RowSelectionState, Updater } from "@tanstack/react-table";
 import { Link2, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   type DuplicateCandidateRow,
@@ -114,7 +114,49 @@ export function DuplicateResultsTable({
     [lastSelectedIndex, rowSelection]
   );
 
-  const columns = useMemo(() => getColumns(t, tPriority, handleCheckboxClick), [t, tPriority, handleCheckboxClick]);
+  const handleSelectAllClick = useCallback(
+    (event: React.MouseEvent) => {
+      if (event.shiftKey) {
+        // Shift+click: select/deselect ALL items across all pages
+        const allIndices = Array.from({ length: sortedItems.length }, (_, i) => i);
+        const allSelected = allIndices.every((i) => rowSelection[i.toString()]);
+
+        if (allSelected) {
+          setRowSelection({});
+        } else {
+          const allSelection: RowSelectionState = {};
+          for (let i = 0; i < sortedItems.length; i++) {
+            allSelection[i.toString()] = true;
+          }
+          setRowSelection(allSelection);
+        }
+      } else {
+        // Regular click: toggle current page only
+        const pageIndices = Array.from({ length: pageItems.length }, (_, i) => i);
+        const allPageSelected = pageIndices.every((i) => rowSelection[i.toString()]);
+
+        if (allPageSelected) {
+          const newSelection = { ...rowSelection };
+          pageIndices.forEach((i) => {
+            delete newSelection[i.toString()];
+          });
+          setRowSelection(newSelection);
+        } else {
+          const newSelection = { ...rowSelection };
+          pageIndices.forEach((i) => {
+            newSelection[i.toString()] = true;
+          });
+          setRowSelection(newSelection);
+        }
+      }
+    },
+    [sortedItems.length, pageItems.length, rowSelection]
+  );
+
+  const columns = useMemo(
+    () => getColumns(t, tPriority, handleCheckboxClick, handleSelectAllClick),
+    [t, tPriority, handleCheckboxClick, handleSelectAllClick]
+  );
 
   const { data: allItems, isLoading } = useQuery<DuplicateCandidate[]>({
     queryKey: ["duplicate-scan-candidates", projectId],

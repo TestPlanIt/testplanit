@@ -50,7 +50,8 @@ function ConfidenceBadge({
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"repository.duplicates">>,
   tPriority: ReturnType<typeof useTranslations<"common.priority">>,
-  onCheckboxClick?: (rowIndex: number, event: React.MouseEvent) => void
+  onCheckboxClick?: (rowIndex: number, event: React.MouseEvent) => void,
+  onSelectAllClick?: (event: React.MouseEvent) => void
 ): ColumnDef<DuplicateCandidateRow>[] => [
   {
     id: "select",
@@ -60,7 +61,10 @@ export const getColumns = (
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        onCheckedChange={(value) => {
+          if (!onSelectAllClick) table.toggleAllPageRowsSelected(!!value);
+        }}
+        onClick={(e) => onSelectAllClick?.(e)}
         aria-label={t("selectAll")}
       />
     ),
