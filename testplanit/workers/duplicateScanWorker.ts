@@ -73,13 +73,16 @@ export const processor = async (
     },
   });
 
-  // 5b. Load previously dismissed pairs so they are excluded from results
-  const dismissedRows = await prisma.duplicateScanResult.findMany({
-    where: { projectId: job.data.projectId, status: "DISMISSED" },
+  // 5b. Load previously resolved pairs (dismissed, linked, merged) so they are excluded from results
+  const resolvedRows = await prisma.duplicateScanResult.findMany({
+    where: {
+      projectId: job.data.projectId,
+      status: { in: ["DISMISSED", "LINKED", "MERGED"] },
+    },
     select: { caseAId: true, caseBId: true },
   });
-  const dismissedPairs = new Set<string>(
-    dismissedRows.map((r: { caseAId: number; caseBId: number }) => {
+  const resolvedPairs = new Set<string>(
+    resolvedRows.map((r: { caseAId: number; caseBId: number }) => {
       // Normalize to canonical ordering (smaller ID first) to match scan pair keys
       const a = Math.min(r.caseAId, r.caseBId);
       const b = Math.max(r.caseAId, r.caseBId);
@@ -129,7 +132,7 @@ export const processor = async (
     for (const pairs of batchResults) {
       for (const pair of pairs) {
         const key = `${pair.caseAId}:${pair.caseBId}`;
-        if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
+        if (!seenPairs.has(key) && !resolvedPairs.has(key)) {
           seenPairs.add(key);
           allPairs.push(pair);
         }

@@ -309,14 +309,23 @@ export async function linkCases(
   userId: string,
   _projectId: number
 ): Promise<{ linked: true }> {
+  // Use upsert to handle cases where the link already exists (idempotent)
   await prisma.$transaction([
-    prisma.repositoryCaseLink.create({
-      data: {
+    prisma.repositoryCaseLink.upsert({
+      where: {
+        caseAId_caseBId_type: {
+          caseAId,
+          caseBId,
+          type: "SAME_TEST_DIFFERENT_SOURCE",
+        },
+      },
+      create: {
         caseAId,
         caseBId,
         type: "SAME_TEST_DIFFERENT_SOURCE",
         createdById: userId,
       },
+      update: {}, // Already linked — no-op
     }),
     prisma.duplicateScanResult.updateMany({
       where: {
