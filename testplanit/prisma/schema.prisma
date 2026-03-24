@@ -115,6 +115,12 @@ enum DuplicateScanResultStatus {
   DISMISSED
 }
 
+enum StepSequenceMatchStatus {
+  PENDING
+  CONVERTED
+  DISMISSED
+}
+
 enum TestRunType {
   REGULAR
   JUNIT
@@ -492,6 +498,7 @@ model Projects {
   defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
   quickScriptEnabled          Boolean                               @default(false)
   duplicateScanResults        DuplicateScanResult[]
+  stepSequenceMatches         StepSequenceMatch[]
 
   @@index([isDeleted, isCompleted])
   @@index([createdBy])
@@ -950,6 +957,37 @@ model DuplicateScanResult {
   @@index([scanJobId])
 }
 
+model StepSequenceMatch {
+  id          Int                     @id() @default(autoincrement())
+  projectId   Int
+  project     Projects                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fingerprint String
+  stepCount   Int
+  status      StepSequenceMatchStatus @default(PENDING)
+  scanJobId   String?
+  isDeleted   Boolean                 @default(false)
+  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
+  members     StepSequenceMatchCase[]
+
+  @@unique([projectId, fingerprint, scanJobId])
+  @@index([projectId, status, isDeleted])
+  @@index([scanJobId])
+}
+
+model StepSequenceMatchCase {
+  id          Int               @id() @default(autoincrement())
+  matchId     Int
+  match       StepSequenceMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  caseId      Int
+  case        RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  startStepId Int
+  endStepId   Int
+  isDeleted   Boolean           @default(false)
+
+  @@unique([matchId, caseId])
+  @@index([caseId])
+}
+
 model RepositoryCases {
   id                     Int                      @id() @default(autoincrement())
   projectId              Int
@@ -992,6 +1030,7 @@ model RepositoryCases {
   linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
   duplicateScanResultsA  DuplicateScanResult[]    @relation("DuplicateCaseA")
   duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
+  stepSequenceMatchCases StepSequenceMatchCase[]
   comments               Comment[]
 
   @@unique([projectId, name, className, source])

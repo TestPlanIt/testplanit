@@ -48,6 +48,8 @@ export * from './repositories';
 export * from './repository-folders';
 export * from './repository-case-link';
 export * from './duplicate-scan-result';
+export * from './step-sequence-match';
+export * from './step-sequence-match-case';
 export * from './repository-cases';
 export * from './repository-case-versions';
 export * from './case-field-values';

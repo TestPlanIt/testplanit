@@ -380,6 +380,7 @@ model Projects {
     defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled          Boolean                               @default(false)
     duplicateScanResults        DuplicateScanResult[]
+    stepSequenceMatches         StepSequenceMatch[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -1284,6 +1285,111 @@ model DuplicateScanResult {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+enum StepSequenceMatchStatus {
+    PENDING
+    CONVERTED
+    DISMISSED
+}
+
+model StepSequenceMatch {
+    id           Int                       @id @default(autoincrement())
+    projectId    Int
+    project      Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    fingerprint  String
+    stepCount    Int
+    status       StepSequenceMatchStatus   @default(PENDING)
+    scanJobId    String?
+    isDeleted    Boolean                   @default(false)
+    createdAt    DateTime                  @default(now()) @db.Timestamptz(6)
+    members      StepSequenceMatchCase[]
+
+    @@unique([projectId, fingerprint, scanJobId])
+    @@index([projectId, status, isDeleted])
+    @@index([scanJobId])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                 (role.name == 'Project Admin' ||
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model StepSequenceMatchCase {
+    id          Int                 @id @default(autoincrement())
+    matchId     Int
+    match       StepSequenceMatch   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+    caseId      Int
+    case        RepositoryCases     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    startStepId Int
+    endStepId   Int
+    isDeleted   Boolean             @default(false)
+
+    @@unique([matchId, caseId])
+    @@index([caseId])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    @@deny('read', match.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        match.project.creator == auth() ||
+        match.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        match.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        match.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (match.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (match.project.assignedUsers?[user == auth()] &&
+         match.project.defaultAccessType == 'SPECIFIC_ROLE' && match.project.defaultRole != null)
+    )
+
+    @@allow('create,update,delete',
+        match.project.creator == auth() ||
+        match.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                       (role.name == 'Project Admin' ||
+                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        match.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        match.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                        ((accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                         (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
 model RepositoryCases {
     id                     Int                      @id @default(autoincrement())
     projectId              Int
@@ -1326,6 +1432,7 @@ model RepositoryCases {
     linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
     duplicateScanResultsA  DuplicateScanResult[]    @relation("DuplicateCaseA")
     duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
+    stepSequenceMatchCases StepSequenceMatchCase[]
     comments               Comment[]
 
     @@unique([projectId, name, className, source])
