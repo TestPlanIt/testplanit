@@ -70,6 +70,15 @@ export const processor = async (
     },
   });
 
+  // 5b. Load previously dismissed pairs so they are excluded from results
+  const dismissedRows = await prisma.duplicateScanResult.findMany({
+    where: { projectId: job.data.projectId, status: "DISMISSED" },
+    select: { caseAId: true, caseBId: true },
+  });
+  const dismissedPairs = new Set<string>(
+    dismissedRows.map((r: { caseAId: number; caseBId: number }) => `${r.caseAId}:${r.caseBId}`)
+  );
+
   const total = cases.length;
   const seenPairs = new Set<string>();
   const allPairs: Array<{
@@ -104,7 +113,7 @@ export const processor = async (
 
     for (const pair of pairs) {
       const key = `${pair.caseAId}:${pair.caseBId}`;
-      if (!seenPairs.has(key)) {
+      if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
         seenPairs.add(key);
         allPairs.push(pair);
       }
