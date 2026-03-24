@@ -113,8 +113,13 @@ function CasePanel({
 
   // Map field values to CustomFieldDisplay format
   // CustomFieldDisplay expects typed value properties, not just raw `value`
+  // Separate long text fields (rendered with TextFromJson) from others (CustomFieldDisplay)
+  const longTextFields = caseDetails.caseFieldValues.filter(
+    (fv) => fv.value != null && (fv.field.type?.type === "Text Long" || fv.field.type?.type === "Steps")
+  );
+
   const customFields = caseDetails.caseFieldValues
-    .filter((fv) => fv.value != null)
+    .filter((fv) => fv.value != null && fv.field.type?.type !== "Text Long" && fv.field.type?.type !== "Steps")
     .map((fv) => {
       const fieldType = fv.field.type?.type ?? "Text String";
       const value = fv.value;
@@ -295,12 +300,29 @@ function CasePanel({
           <p className="font-medium text-muted-foreground text-sm mb-1">
             {t("fieldValuesLabel")}
           </p>
-          {customFields.length === 0 ? (
+          {customFields.length === 0 && longTextFields.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">
               {t("noFieldValues")}
             </p>
           ) : (
-            <CustomFieldDisplay customFields={customFields} maxItems={10} />
+            <>
+              {customFields.length > 0 && (
+                <CustomFieldDisplay customFields={customFields} maxItems={20} />
+              )}
+              {longTextFields.map((fv) => (
+                <div key={fv.id} className="mt-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {fv.field.displayName}
+                  </span>
+                  <div className="text-sm mt-0.5">
+                    <TextFromJson
+                      jsonString={fv.value}
+                      room={`compare-field-${caseDetails.id}-${fv.id}`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </>
           )}
         </div>
 
