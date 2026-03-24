@@ -7,16 +7,83 @@ import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "~/lib/navigation";
+
+const STORAGE_KEY_PREFIX = "duplicate-scan-job:";
 
 export default function DuplicatesPage() {
   const t = useTranslations("repository.duplicates");
   const { projectId } = useParams<{ projectId: string }>();
   const queryClient = useQueryClient();
+  const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
+
   const [isScanning, setIsScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState<{ analyzed: number; total: number } | null>(null);
+  const [scanProgress, setScanProgress] = useState<{
+    analyzed: number;
+    total: number;
+  } | null>(null);
+  const pollingRef = useRef(false);
+
+  const startPolling = useCallback(
+    (jobId: string) => {
+      if (pollingRef.current) return;
+      pollingRef.current = true;
+      setIsScanning(true);
+
+      const poll = async () => {
+        try {
+          const statusRes = await fetch(
+            `/api/duplicate-scan/status/${jobId}`
+          );
+          const status = await statusRes.json();
+          if (status.progress) {
+            setScanProgress(status.progress);
+          }
+          if (status.state === "completed") {
+            toast.success(
+              t("scanComplete", {
+                count: status.result?.pairsFound ?? 0,
+              })
+            );
+            queryClient.invalidateQueries({
+              queryKey: ["duplicate-scan-candidates", projectId],
+            });
+            sessionStorage.removeItem(storageKey);
+            setIsScanning(false);
+            setScanProgress(null);
+            pollingRef.current = false;
+          } else if (status.state === "failed") {
+            toast.error(t("scanFailed"), {
+              description: status.failedReason,
+            });
+            sessionStorage.removeItem(storageKey);
+            setIsScanning(false);
+            setScanProgress(null);
+            pollingRef.current = false;
+          } else {
+            setTimeout(poll, 2500);
+          }
+        } catch {
+          sessionStorage.removeItem(storageKey);
+          setIsScanning(false);
+          setScanProgress(null);
+          pollingRef.current = false;
+        }
+      };
+      poll();
+    },
+    [projectId, queryClient, storageKey, t]
+  );
+
+  // On mount, check for an active scan in sessionStorage
+  useEffect(() => {
+    const savedJobId = sessionStorage.getItem(storageKey);
+    if (savedJobId) {
+      startPolling(savedJobId);
+    }
+  }, [storageKey, startPolling]);
 
   const handleRescan = async () => {
     setIsScanning(true);
@@ -32,32 +99,8 @@ export default function DuplicatesPage() {
         return;
       }
       const { jobId } = await res.json();
-
-      // Poll for completion
-      const poll = async () => {
-        const statusRes = await fetch(`/api/duplicate-scan/status/${jobId}`);
-        const status = await statusRes.json();
-        if (status.progress) {
-          setScanProgress(status.progress);
-        }
-        if (status.state === "completed") {
-          toast.success(
-            t("scanComplete", { count: status.result?.pairsFound ?? 0 })
-          );
-          queryClient.invalidateQueries({
-            queryKey: ["duplicate-scan-candidates", projectId],
-          });
-          setIsScanning(false);
-          setScanProgress(null);
-        } else if (status.state === "failed") {
-          toast.error(t("scanFailed"), { description: status.failedReason });
-          setIsScanning(false);
-          setScanProgress(null);
-        } else {
-          setTimeout(poll, 2500);
-        }
-      };
-      poll();
+      sessionStorage.setItem(storageKey, jobId);
+      startPolling(jobId);
     } catch {
       toast.error(t("scanFailed"));
       setIsScanning(false);
@@ -80,15 +123,24 @@ export default function DuplicatesPage() {
           {isScanning && scanProgress && scanProgress.total > 0 && (
             <div className="flex items-center gap-2">
               <Progress
-                value={Math.round((scanProgress.analyzed / scanProgress.total) * 100)}
+                value={Math.round(
+                  (scanProgress.analyzed / scanProgress.total) * 100
+                )}
                 className="w-32 h-2"
               />
               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {t("analyzing", { analyzed: scanProgress.analyzed, total: scanProgress.total })}
+                {t("analyzing", {
+                  analyzed: scanProgress.analyzed,
+                  total: scanProgress.total,
+                })}
               </span>
             </div>
           )}
-          <Button variant="outline" onClick={handleRescan} disabled={isScanning}>
+          <Button
+            variant="outline"
+            onClick={handleRescan}
+            disabled={isScanning}
+          >
             {isScanning ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
