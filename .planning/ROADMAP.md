@@ -31,7 +31,7 @@ Phases 28-33: v0.17.0 Copy/Move Test Cases Between Projects (shipped 2026-03-21)
 - [x] **Phase 49: Resolution Engine** - Side-by-side comparison, merge, link, and dismiss (completed 2026-03-23)
 - [x] **Phase 50: Creation-Time and Import Warnings** - Soft non-blocking warnings at creation and import (completed 2026-03-24)
 - [x] **Phase 51: LLM Semantic Tier** - Optional LLM-powered semantic analysis on candidate pairs (completed 2026-03-24)
-- [ ] **Phase 52: Testing, Documentation, and Notification** - Full test coverage, user docs, upgrade notice
+- [x] **Phase 52: Testing, Documentation, and Notification** - Full test coverage, user docs, upgrade notice (completed 2026-03-24)
 
 ## Phase Details
 
@@ -126,7 +126,7 @@ Plans:
   3. E2E tests cover creation-time duplicate warning display after saving a case
   4. User-facing documentation explains the two-tier detection approach (fuzzy + optional LLM) and how to configure and use it
   5. Users upgrading to v0.19.0 see an upgrade notification surfacing the duplicate detection feature
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 
@@ -144,4 +144,4 @@ Plans:
 | 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Creation-Time and Import Warnings | 2/2 | Complete    | 2026-03-24 | - |
 | 51. LLM Semantic Tier | 3/3 | Complete    | 2026-03-24 | - |
-| 52. Testing, Documentation, and Notification | 1/2 | In Progress|  | - |
+| 52. Testing, Documentation, and Notification | 2/2 | Complete   | 2026-03-24 | - |

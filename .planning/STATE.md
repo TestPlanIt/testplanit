@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: Completed 52-02-PLAN.md
-last_updated: "2026-03-24T14:00:03.826Z"
+stopped_at: Completed 52-01-PLAN.md
+last_updated: "2026-03-24T14:01:30.749Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 67
 ---
 
@@ -61,6 +61,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 | Phase 51-llm-semantic-tier P02 | 10 | 1 tasks | 2 files |
 | Phase 51-llm-semantic-tier P03 | 5 | 1 tasks | 1 files |
 | Phase 52 P02 | 10 | 2 tasks | 4 files |
+| Phase 52-testing-documentation-and-notification P01 | 12 | 2 tasks | 4 files |
 
 ### Decisions
 
@@ -99,6 +100,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 51-03]: topPairs cast with 'as any' to satisfy PairWithCaseContent confidence: ConfidenceBucket vs string type mismatch in duplicateScanWorker
 - [Phase 52]: page.route() used to mock check-new endpoint in E2E tests — avoids Elasticsearch dependency
 - [Phase 52]: 0.19.0 upgrade notification added after 0.17.0 entry following semver ordering
+- [Phase 52-01]: DataTable renders case-row- prefix on rows — E2E spec uses case-row- selector instead of duplicate-pair-row-
+- [Phase 52-01]: triggerAndWaitForScan helper polls scan status via API to decouple UI timing from test assertions
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:59:59.333Z
-Stopped at: Completed 52-02-PLAN.md
+Last session: 2026-03-24T14:01:30.747Z
+Stopped at: Completed 52-01-PLAN.md
 Resume file: None

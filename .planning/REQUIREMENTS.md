@@ -44,7 +44,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Testing
 
 - [x] **TEST-01**: Unit tests cover similarity scoring algorithms, merge transaction logic, and scan service
-- [ ] **TEST-02**: E2E tests cover the duplicate scan workflow (trigger scan, view results, resolve duplicates)
+- [x] **TEST-02**: E2E tests cover the duplicate scan workflow (trigger scan, view results, resolve duplicates)
 - [x] **TEST-03**: E2E tests cover creation-time duplicate warning display
 
 ### Documentation
@@ -106,7 +106,7 @@ Deferred to a later release. Tracked but not in current roadmap.
 | RES-06      | Phase 49 | Complete |
 | RES-07      | Phase 49 | Complete |
 | TEST-01     | Phase 52 | Complete |
-| TEST-02     | Phase 52 | Pending |
+| TEST-02     | Phase 52 | Complete |
 | TEST-03     | Phase 52 | Complete |
 | DOC-01      | Phase 52 | Complete |
 | DOC-02      | Phase 52 | Complete |
