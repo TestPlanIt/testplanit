@@ -88,23 +88,23 @@ describe("combineScores", () => {
 });
 
 describe("scoreToConfidence", () => {
-  it("returns HIGH for score >= 0.85", () => {
+  it("returns HIGH for score >= 0.90", () => {
+    expect(scoreToConfidence(0.95)).toBe("HIGH");
     expect(scoreToConfidence(0.90)).toBe("HIGH");
-    expect(scoreToConfidence(0.85)).toBe("HIGH");
   });
 
-  it("returns MEDIUM for score >= 0.70 and < 0.85", () => {
-    expect(scoreToConfidence(0.75)).toBe("MEDIUM");
-    expect(scoreToConfidence(0.70)).toBe("MEDIUM");
+  it("returns MEDIUM for score >= 0.80 and < 0.90", () => {
+    expect(scoreToConfidence(0.85)).toBe("MEDIUM");
+    expect(scoreToConfidence(0.80)).toBe("MEDIUM");
   });
 
-  it("returns LOW for score >= 0.55 and < 0.70", () => {
-    expect(scoreToConfidence(0.60)).toBe("LOW");
-    expect(scoreToConfidence(0.55)).toBe("LOW");
+  it("returns LOW for score >= 0.70 and < 0.80", () => {
+    expect(scoreToConfidence(0.75)).toBe("LOW");
+    expect(scoreToConfidence(0.70)).toBe("LOW");
   });
 
-  it("returns null for score < 0.55", () => {
-    expect(scoreToConfidence(0.50)).toBeNull();
+  it("returns null for score < 0.70", () => {
+    expect(scoreToConfidence(0.65)).toBeNull();
     expect(scoreToConfidence(0.0)).toBeNull();
   });
 });

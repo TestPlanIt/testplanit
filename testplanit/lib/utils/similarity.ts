@@ -125,11 +125,11 @@ export function combineScores(signals: {
 /**
  * Maps a combined score to a confidence bucket.
  *
- * Returns null for scores below 0.55 (not surfaced to users).
+ * Returns null for scores below 0.70 (not surfaced to users).
  */
 export function scoreToConfidence(score: number): ConfidenceBucket | null {
-  if (score >= 0.85) return "HIGH";
-  if (score >= 0.70) return "MEDIUM";
-  if (score >= 0.55) return "LOW";
+  if (score >= 0.90) return "HIGH";
+  if (score >= 0.80) return "MEDIUM";
+  if (score >= 0.70) return "LOW";
   return null;
 }
