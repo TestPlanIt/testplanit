@@ -62,6 +62,7 @@ function CasePanel({
   projectId,
   t,
   tCommon,
+  tRepo,
 }: {
   caseDetails: CaseDetails;
   isSelected: boolean;
