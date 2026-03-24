@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DuplicateResultsTable } from "@/components/duplicates/DuplicateResultsTable";
-import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,11 +25,26 @@ export default function DuplicatesPage() {
     total: number;
   } | null>(null);
   const pollingRef = useRef(false);
+  const jobIdRef = useRef<string | null>(null);
+
+  const handleCancel = useCallback(async () => {
+    const jobId = jobIdRef.current;
+    if (!jobId) return;
+    try {
+      await fetch(`/api/duplicate-scan/cancel/${jobId}`, { method: "POST" });
+    } catch { /* ignore */ }
+    sessionStorage.removeItem(storageKey);
+    setIsScanning(false);
+    setScanProgress(null);
+    pollingRef.current = false;
+    jobIdRef.current = null;
+  }, [storageKey]);
 
   const startPolling = useCallback(
     (jobId: string) => {
       if (pollingRef.current) return;
       pollingRef.current = true;
+      jobIdRef.current = jobId;
       setIsScanning(true);
 
       const poll = async () => {
@@ -136,20 +151,33 @@ export default function DuplicatesPage() {
           <p className="text-muted-foreground">{t("pageDescription")}</p>
         </div>
         <div className="flex items-center gap-3">
-          {isScanning && scanProgress && scanProgress.total > 0 && (
+          {isScanning && (
             <div className="flex items-center gap-2">
-              <Progress
-                value={Math.round(
-                  (scanProgress.analyzed / scanProgress.total) * 100
-                )}
-                className="w-32 h-2"
-              />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {t("analyzing", {
-                  analyzed: scanProgress.analyzed,
-                  total: scanProgress.total,
-                })}
-              </span>
+              {scanProgress && scanProgress.total > 0 && (
+                <>
+                  <Progress
+                    value={Math.round(
+                      (scanProgress.analyzed / scanProgress.total) * 100
+                    )}
+                    className="w-32 h-2"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {t("analyzing", {
+                      analyzed: scanProgress.analyzed,
+                      total: scanProgress.total,
+                    })}
+                  </span>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={handleCancel}
+                title={t("cancelScan")}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
             </div>
           )}
           <Button

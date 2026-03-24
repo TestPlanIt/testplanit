@@ -2068,6 +2068,7 @@
       "pageTitle": "Duplicate Candidates",
       "pageDescription": "Review potential duplicate test cases found during the last scan.",
       "rescan": "Rescan",
+      "cancelScan": "Cancel scan",
       "loading": "Loading duplicate candidates...",
       "noDuplicatesFound": "No duplicates found",
       "noDuplicatesDescription": "Last scan completed with no matching pairs.",
