@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { ScanSearch } from "lucide-react";
+import { Loader2, ScanSearch } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
@@ -133,13 +133,26 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
   const analyzed = statusData?.progress?.analyzed ?? 0;
   const total = statusData?.progress?.total ?? 0;
 
+  const isAiPhase = (statusData?.progress as any)?.phase === "ai";
+
   if (scanState === "active") {
     return (
       <div data-testid="scan-progress" className="flex items-center gap-2">
-        <Progress value={progressPercent} className="w-32 h-2" />
-        <span className="text-xs text-muted-foreground">
-          {t("analyzing", { analyzed, total })}
-        </span>
+        {isAiPhase ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {t("aiAnalyzing")}
+            </span>
+          </>
+        ) : (
+          <>
+            <Progress value={progressPercent} className="w-32 h-2" />
+            <span className="text-xs text-muted-foreground">
+              {t("analyzing", { analyzed, total })}
+            </span>
+          </>
+        )}
       </div>
     );
   }

@@ -154,20 +154,29 @@ export default function DuplicatesPage() {
           {isScanning && (
             <div className="flex items-center gap-2">
               {scanProgress && scanProgress.total > 0 && (
-                <>
-                  <Progress
-                    value={Math.round(
-                      (scanProgress.analyzed / scanProgress.total) * 100
-                    )}
-                    className="w-32 h-2"
-                  />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {t("analyzing", {
-                      analyzed: scanProgress.analyzed,
-                      total: scanProgress.total,
-                    })}
-                  </span>
-                </>
+                (scanProgress as any).phase === "ai" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {t("aiAnalyzing")}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Progress
+                      value={Math.round(
+                        (scanProgress.analyzed / scanProgress.total) * 100
+                      )}
+                      className="w-32 h-2"
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {t("analyzing", {
+                        analyzed: scanProgress.analyzed,
+                        total: scanProgress.total,
+                      })}
+                    </span>
+                  </>
+                )
               )}
               <Button
                 variant="ghost"

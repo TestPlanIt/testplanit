@@ -148,6 +148,7 @@ export const processor = async (
 
   // 7b. Optional LLM semantic pass — top MAX_PAIRS_PER_SCAN pairs only
   //     Gracefully skipped if no LLM integration is configured.
+  await job.updateProgress({ analyzed: total, total, phase: "ai" });
   let finalPairs: Array<typeof allPairs[0] & { detectionMethod: string }>;
   try {
     const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
