@@ -2116,7 +2116,12 @@
       "noFolder": "No folder",
       "duplicateWarning": "Possible duplicates found",
       "duplicateWarningDescription": "{count, plural, one {# existing case} other {# existing cases}} may cover similar functionality:",
-      "duplicateWarningViewCase": "View"
+      "duplicateWarningViewCase": "View",
+      "importWarning": "Possible duplicate",
+      "importWarningTooltip": "This case name is similar to {count, plural, one {# existing case} other {# existing cases}}: {names}",
+      "importIntraWarning": "Duplicate within import",
+      "importIntraWarningTooltip": "Rows {rows} in this import have the same or very similar name",
+      "checkingDuplicates": "Checking for duplicates..."
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",

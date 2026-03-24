@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
 import {
-  AlertCircle, CheckCircle2, ChevronLeft,
+  AlertCircle, AlertTriangle, CheckCircle2, ChevronLeft,
   ChevronRight, Download, Star
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -164,6 +164,8 @@ export function ImportCasesWizard({
 
   // Page 4 state
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [duplicateWarnings, setDuplicateWarnings] = useState<Map<number, { existingSimilar: Array<{ id: number; name: string; confidence: string }>, intraImportRows: number[] }>>(new Map());
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
   // Validation errors state
   const [validationErrors, setValidationErrors] =
@@ -215,6 +217,84 @@ export function ImportCasesWizard({
       setSelectedTemplateId(defaultTemplate.id.toString());
     }
   }, [open, defaultTemplate, selectedTemplateId]);
+
+  // Check for duplicates when reaching page 4 (preview page)
+  useEffect(() => {
+    if (currentPage !== 4 || parsedData.length === 0 || !projectId) return;
+
+    const checkDuplicates = async () => {
+      setIsCheckingDuplicates(true);
+      const warnings = new Map<number, { existingSimilar: Array<{ id: number; name: string; confidence: string }>, intraImportRows: number[] }>();
+
+      // Find the "name" column from field mappings
+      const nameMapping = fieldMappings.find(m => m.templateField === "name");
+      if (!nameMapping) { setIsCheckingDuplicates(false); return; }
+      const nameColumn = nameMapping.csvColumn;
+
+      // Build name-to-row-indices map for intra-import detection
+      const nameToRows = new Map<string, number[]>();
+      parsedData.forEach((row, idx) => {
+        const name = (row[nameColumn] || "").toString().trim().toLowerCase();
+        if (!name) return;
+        const existing = nameToRows.get(name) || [];
+        existing.push(idx);
+        nameToRows.set(name, existing);
+      });
+
+      // Mark intra-import duplicates (same name appears multiple times)
+      for (const [, rows] of nameToRows) {
+        if (rows.length > 1) {
+          for (const rowIdx of rows) {
+            const entry = warnings.get(rowIdx) || { existingSimilar: [], intraImportRows: [] };
+            entry.intraImportRows = rows.filter(r => r !== rowIdx);
+            warnings.set(rowIdx, entry);
+          }
+        }
+      }
+
+      // Check against existing cases via API — batch by unique names, max 50
+      const uniqueNames = [...new Set(parsedData.map(row => (row[nameColumn] || "").toString().trim()).filter(Boolean))].slice(0, 50);
+
+      // Find the "tags" column if mapped
+      const tagsMapping = fieldMappings.find(m => m.templateField === "tags");
+      const tagsColumn = tagsMapping?.csvColumn;
+
+      for (const name of uniqueNames) {
+        try {
+          const tagsValue = tagsColumn ? parsedData.find(r => (r[nameColumn] || "").toString().trim() === name)?.[tagsColumn] : undefined;
+          let tags: string[] | undefined;
+          if (tagsValue) {
+            try { tags = JSON.parse(tagsValue as string); } catch { tags = (tagsValue as string).split(",").map((tag: string) => tag.trim()).filter(Boolean); }
+          }
+
+          const res = await fetch("/api/duplicate-scan/check-new", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ projectId: Number(projectId), name, tags }),
+          });
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data.cases && data.cases.length > 0) {
+            // Apply to all rows with this name
+            parsedData.forEach((row, idx) => {
+              if ((row[nameColumn] || "").toString().trim() === name) {
+                const entry = warnings.get(idx) || { existingSimilar: [], intraImportRows: [] };
+                entry.existingSimilar = data.cases;
+                warnings.set(idx, entry);
+              }
+            });
+          }
+        } catch {
+          // Skip — advisory only
+        }
+      }
+
+      setDuplicateWarnings(warnings);
+      setIsCheckingDuplicates(false);
+    };
+
+    checkDuplicates();
+  }, [currentPage, parsedData, fieldMappings, projectId]);
 
   // Check if project has an active LLM integration (for markdown parsing)
   const { data: projectLlmIntegrations } =
@@ -1434,16 +1514,51 @@ export function ImportCasesWizard({
           </div>
         </div>
 
+        {isCheckingDuplicates && (
+          <p className="text-sm text-muted-foreground animate-pulse">
+            {tGlobal("repository.duplicates.checkingDuplicates")}
+          </p>
+        )}
+
         <ScrollArea className="h-[400px] border rounded-lg">
           <div className="p-4 space-y-4">
             {previewData.map((caseData, index) => (
               <Card key={index}>
                 <CardHeader>
-                  <CardTitle className="text-sm">
-                    {t("importWizard.page4.case", {
-                      number: previewIndex * 25 + index + 1,
-                    })}
-                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm">
+                      {t("importWizard.page4.case", {
+                        number: previewIndex * 25 + index + 1,
+                      })}
+                    </CardTitle>
+                    {(() => {
+                      const globalIndex = previewIndex * 25 + index;
+                      const warning = duplicateWarnings.get(globalIndex);
+                      if (!warning) return null;
+                      return (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-[300px]">
+                              {warning.existingSimilar.length > 0 && (
+                                <p>{tGlobal("repository.duplicates.importWarningTooltip", {
+                                  count: warning.existingSimilar.length,
+                                  names: warning.existingSimilar.map(c => c.name).join(", "),
+                                })}</p>
+                              )}
+                              {warning.intraImportRows.length > 0 && (
+                                <p>{tGlobal("repository.duplicates.importIntraWarningTooltip", {
+                                  rows: warning.intraImportRows.map(r => r + 1).join(", "),
+                                })}</p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
