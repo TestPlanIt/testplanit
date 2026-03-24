@@ -126,7 +126,12 @@ Plans:
   3. E2E tests cover creation-time duplicate warning display after saving a case
   4. User-facing documentation explains the two-tier detection approach (fuzzy + optional LLM) and how to configure and use it
   5. Users upgrading to v0.19.0 see an upgrade notification surfacing the duplicate detection feature
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 52-01-PLAN.md — Add data-testid attributes + E2E tests for scan workflow (trigger, view, dismiss, link)
+- [ ] 52-02-PLAN.md — E2E test for creation-time warning + documentation page + upgrade notification
 
 ## Progress
 
@@ -138,5 +143,5 @@ Plans:
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
 | 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Creation-Time and Import Warnings | 2/2 | Complete    | 2026-03-24 | - |
-| 51. LLM Semantic Tier | 3/3 | Complete   | 2026-03-24 | - |
-| 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
+| 51. LLM Semantic Tier | 3/3 | Complete    | 2026-03-24 | - |
+| 52. Testing, Documentation, and Notification | v0.19.0 | 0/2 | Not started | - |
