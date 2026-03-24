@@ -176,3 +176,72 @@ export function scoreToConfidence(score: number): ConfidenceBucket | null {
   if (score >= 0.70) return "LOW";
   return null;
 }
+
+/**
+ * Compares two test steps for fuzzy equality using levenshteinRatio.
+ *
+ * Uses an asymmetric empty-field rule: if either side has an empty
+ * expectedResult (after trimming), only step text similarity is checked.
+ * When both sides have expectedResult, the average of step text similarity
+ * and expectedResult similarity must meet the threshold.
+ *
+ * Default threshold is 0.85 (locked decision from CONTEXT.md).
+ */
+export function stepsEqual(
+  a: { step: string; expectedResult: string },
+  b: { step: string; expectedResult: string },
+  threshold = 0.85,
+): boolean {
+  const stepSim = levenshteinRatio(a.step, b.step);
+  const aHasER = a.expectedResult.trim().length > 0;
+  const bHasER = b.expectedResult.trim().length > 0;
+  if (!aHasER || !bHasER) {
+    return stepSim >= threshold;
+  }
+  const erSim = levenshteinRatio(a.expectedResult, b.expectedResult);
+  return (stepSim + erSim) / 2 >= threshold;
+}
+
+/**
+ * Generic O(m*n) dynamic programming Longest Common Subsequence.
+ *
+ * Accepts a custom equality predicate so fuzzy matching (e.g. stepsEqual)
+ * can drive sequence identification rather than strict equality.
+ *
+ * Returns matched index pairs from backtracking so callers know exactly
+ * which positions in each array correspond to each other.
+ */
+export function lcs<T>(
+  a: T[],
+  b: T[],
+  eq: (x: T, y: T) => boolean,
+): Array<{ aIdx: number; bIdx: number }> {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0 || n === 0) return [];
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    new Array(n + 1).fill(0),
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = eq(a[i - 1]!, b[j - 1]!)
+        ? dp[i - 1]![j - 1]! + 1
+        : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
+    }
+  }
+  const result: Array<{ aIdx: number; bIdx: number }> = [];
+  let i = m,
+    j = n;
+  while (i > 0 && j > 0) {
+    if (eq(a[i - 1]!, b[j - 1]!)) {
+      result.unshift({ aIdx: i - 1, bIdx: j - 1 });
+      i--;
+      j--;
+    } else if (dp[i - 1]![j]! >= dp[i]![j - 1]!) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return result;
+}

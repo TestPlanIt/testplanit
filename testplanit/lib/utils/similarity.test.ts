@@ -6,6 +6,8 @@ import {
   combineScores,
   scoreToConfidence,
   FIELD_WEIGHTS,
+  lcs,
+  stepsEqual,
 } from "~/lib/utils/similarity";
 
 describe("jaroWinkler", () => {
@@ -161,5 +163,129 @@ describe("FIELD_WEIGHTS", () => {
 
   it("has fields weight of 0.1", () => {
     expect(FIELD_WEIGHTS.fields).toBe(0.1);
+  });
+});
+
+describe("stepsEqual", () => {
+  it("returns true for identical step texts with empty expectedResult", () => {
+    expect(
+      stepsEqual(
+        { step: "Click the login button", expectedResult: "" },
+        { step: "Click the login button", expectedResult: "" },
+      ),
+    ).toBe(true);
+  });
+
+  it("returns true for identical steps with matching expectedResult", () => {
+    expect(
+      stepsEqual(
+        { step: "Click login", expectedResult: "Page loads" },
+        { step: "Click login", expectedResult: "Page loads" },
+      ),
+    ).toBe(true);
+  });
+
+  it("returns true using step text only when one expectedResult is empty", () => {
+    // One side has empty ER, other has text — asymmetric rule: compare step text only
+    expect(
+      stepsEqual(
+        { step: "Click the login button", expectedResult: "" },
+        { step: "Click the login button", expectedResult: "Dashboard visible" },
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false when average of step and expectedResult similarity is below threshold", () => {
+    // step texts identical (ratio 1.0), expectedResults completely different (~0.0)
+    // average ~0.5, below 0.85
+    expect(
+      stepsEqual(
+        { step: "Click login", expectedResult: "Page loads" },
+        { step: "Click login", expectedResult: "Error shown" },
+      ),
+    ).toBe(false);
+  });
+
+  it("returns false for completely different step texts", () => {
+    expect(
+      stepsEqual(
+        { step: "abc", expectedResult: "" },
+        { step: "xyz", expectedResult: "" },
+      ),
+    ).toBe(false);
+  });
+
+  it("respects custom threshold parameter", () => {
+    // levenshteinRatio("abcdef", "abcxyz") = 1 - 3/6 = 0.5 which fails at 0.85 but passes at 0.5
+    expect(
+      stepsEqual(
+        { step: "abcdef", expectedResult: "" },
+        { step: "abcxyz", expectedResult: "" },
+        0.5,
+      ),
+    ).toBe(true);
+    expect(
+      stepsEqual(
+        { step: "abcdef", expectedResult: "" },
+        { step: "abcxyz", expectedResult: "" },
+        0.85,
+      ),
+    ).toBe(false);
+  });
+
+  it("treats whitespace-only expectedResult as empty", () => {
+    // "   " trims to "" — should use step text only
+    expect(
+      stepsEqual(
+        { step: "Click the login button", expectedResult: "   " },
+        { step: "Click the login button", expectedResult: "Dashboard visible" },
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("lcs", () => {
+  it("returns empty array for two empty arrays", () => {
+    expect(lcs([], [], (a: number, b: number) => a === b)).toEqual([]);
+  });
+
+  it("finds all matches for identical arrays", () => {
+    expect(lcs([1, 2, 3], [1, 2, 3], (a, b) => a === b)).toEqual([
+      { aIdx: 0, bIdx: 0 },
+      { aIdx: 1, bIdx: 1 },
+      { aIdx: 2, bIdx: 2 },
+    ]);
+  });
+
+  it("finds subsequence match", () => {
+    expect(lcs([1, 2, 3, 4], [2, 3], (a, b) => a === b)).toEqual([
+      { aIdx: 1, bIdx: 0 },
+      { aIdx: 2, bIdx: 1 },
+    ]);
+  });
+
+  it("finds non-contiguous matches", () => {
+    // [1,3,5,7] vs [2,3,6,7] — 3 matches at aIdx=1,bIdx=1 and 7 matches at aIdx=3,bIdx=3
+    expect(lcs([1, 3, 5, 7], [2, 3, 6, 7], (a, b) => a === b)).toEqual([
+      { aIdx: 1, bIdx: 1 },
+      { aIdx: 3, bIdx: 3 },
+    ]);
+  });
+
+  it("returns empty when no matches", () => {
+    expect(lcs([1, 2, 3], [4, 5, 6], (a, b) => a === b)).toEqual([]);
+  });
+
+  it("returns empty for empty second array", () => {
+    expect(lcs([1, 2, 3], [], (a, b) => a === b)).toEqual([]);
+  });
+
+  it("works with custom fuzzy predicate", () => {
+    // predicate: abs diff <= 1 means 1~2 match, 3~3 match, 5~4 match
+    const result = lcs([1, 3, 5], [2, 3, 4], (a, b) => Math.abs(a - b) <= 1);
+    expect(result.length).toBe(3);
+    expect(result[0]).toEqual({ aIdx: 0, bIdx: 0 });
+    expect(result[1]).toEqual({ aIdx: 1, bIdx: 1 });
+    expect(result[2]).toEqual({ aIdx: 2, bIdx: 2 });
   });
 });
