@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ColumnDef } from "@tanstack/react-table";
+import { RepositoryCaseSource } from "@prisma/client";
 import { ArrowRightLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -13,8 +15,12 @@ export interface DuplicateCandidateRow {
   projectId: number;
   caseAId: number;
   caseAName: string;
+  caseASource: string;
+  caseAAutomated: boolean;
   caseBId: number;
   caseBName: string;
+  caseBSource: string;
+  caseBAutomated: boolean;
   score: number;
   matchedFields: string[];
   status: string;
@@ -50,7 +56,9 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 120,
-    cell: ({ row }) => <ConfidenceBadge score={row.original.score} tPriority={tPriority} />,
+    cell: ({ row }) => (
+      <ConfidenceBadge score={row.original.score} tPriority={tPriority} />
+    ),
   },
   {
     id: "caseA",
@@ -59,7 +67,15 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 300,
-    cell: ({ row }) => row.original.caseAName,
+    cell: ({ row }) => (
+      <CaseDisplay
+        id={row.original.caseAId}
+        name={row.original.caseAName}
+        source={row.original.caseASource as RepositoryCaseSource}
+        automated={row.original.caseAAutomated}
+        maxLines={1}
+      />
+    ),
   },
   {
     id: "caseB",
@@ -68,7 +84,15 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 300,
-    cell: ({ row }) => row.original.caseBName,
+    cell: ({ row }) => (
+      <CaseDisplay
+        id={row.original.caseBId}
+        name={row.original.caseBName}
+        source={row.original.caseBSource as RepositoryCaseSource}
+        automated={row.original.caseBAutomated}
+        maxLines={1}
+      />
+    ),
   },
   {
     id: "matchedFields",
@@ -97,13 +121,13 @@ export const getColumns = (
     id: "actions",
     header: t("compareButton"),
     enableSorting: false,
-    enableResizing: false,
+    enableResizing: true,
     enableHiding: false,
-    size: 120,
+    size: 100,
     maxSize: 120,
     cell: () => (
-      <span className="flex items-center gap-1.5 text-muted-foreground">
-        <ArrowRightLeft className="h-3.5 w-3.5" />
+      <span className="shrink-0 flex items-center gap-1">
+        <ArrowRightLeft className="h-4 w-4" />
         <span className="text-xs">{t("compareButton")}</span>
       </span>
     ),

@@ -40,8 +40,8 @@ export async function GET(request: Request) {
       take,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
-        caseA: { select: { id: true, name: true } },
-        caseB: { select: { id: true, name: true } },
+        caseA: { select: { id: true, name: true, source: true, automated: true } },
+        caseB: { select: { id: true, name: true, source: true, automated: true } },
       },
     });
 
