@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ColumnDef } from "@tanstack/react-table";
 import { RepositoryCaseSource } from "@prisma/client";
@@ -49,6 +50,34 @@ export const getColumns = (
   t: ReturnType<typeof useTranslations<"repository.duplicates">>,
   tPriority: ReturnType<typeof useTranslations<"common.priority">>
 ): ColumnDef<DuplicateCandidateRow>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label={t("selectAll")}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={t("selectRow")}
+      />
+    ),
+    enableSorting: false,
+    enableResizing: false,
+    enableHiding: false,
+    size: 40,
+    maxSize: 40,
+    minSize: 40,
+    meta: { isPinned: "left" },
+  },
   {
     id: "confidence",
     accessorKey: "score",

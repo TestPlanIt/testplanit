@@ -4,9 +4,13 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { RowSelectionState, Updater } from "@tanstack/react-table";
+import { Link2, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   type DuplicateCandidateRow,
   getColumns,
@@ -51,9 +55,12 @@ export function DuplicateResultsTable({
   const [searchString, setSearchString] = useState("");
   const [selectedPair, setSelectedPair] = useState<DuplicateCandidateRow | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const handleResolved = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["duplicate-scan-candidates", projectId] });
+    setRowSelection({});
   }, [queryClient, projectId]);
 
   const handleSortChange = (column: string) => {
@@ -74,6 +81,15 @@ export function DuplicateResultsTable({
     setSearchString(value);
     setCurrentPage(1);
   }, []);
+
+  const handleRowSelectionChange = useCallback(
+    (updater: Updater<RowSelectionState>) => {
+      setRowSelection((prev) =>
+        typeof updater === "function" ? updater(prev) : updater
+      );
+    },
+    []
+  );
 
   const columns = useMemo(() => getColumns(t, tPriority), [t, tPriority]);
 
@@ -108,7 +124,6 @@ export function DuplicateResultsTable({
       status: item.status,
     }));
 
-    // Filter by search string
     if (searchString) {
       const lower = searchString.toLowerCase();
       mapped = mapped.filter(
@@ -119,7 +134,6 @@ export function DuplicateResultsTable({
       );
     }
 
-    // Sort
     if (sortConfig) {
       const { column, direction } = sortConfig;
       const dir = direction === "asc" ? 1 : -1;
@@ -156,6 +170,12 @@ export function DuplicateResultsTable({
     return mapped;
   }, [allItems, sortConfig, searchString]);
 
+  const totalItems = sortedItems.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const pageItems = sortedItems.slice(startIndex, endIndex);
+
   const handleRowClick = useCallback((id: number | string) => {
     const row = sortedItems.find((item) => item.id === id);
     if (row) {
@@ -164,12 +184,60 @@ export function DuplicateResultsTable({
     }
   }, [sortedItems]);
 
+  const getSelectedItems = useCallback(() => {
+    return Object.keys(rowSelection)
+      .filter((key) => rowSelection[key])
+      .map((key) => pageItems[parseInt(key)])
+      .filter(Boolean);
+  }, [rowSelection, pageItems]);
 
-  const totalItems = sortedItems.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalItems);
-  const pageItems = sortedItems.slice(startIndex, endIndex);
+  const handleBulkAction = useCallback(async (action: "dismiss" | "link") => {
+    const items = getSelectedItems();
+    if (items.length === 0) return;
+    setIsBulkProcessing(true);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const item of items) {
+      try {
+        const body = action === "dismiss"
+          ? { action: "dismiss", caseAId: item.caseAId, caseBId: item.caseBId, projectId: Number(projectId) }
+          : { action: "link", caseAId: item.caseAId, caseBId: item.caseBId, projectId: Number(projectId) };
+
+        const res = await fetch("/api/duplicate-scan/resolve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (res.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch {
+        failCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      if (action === "dismiss") {
+        toast.success(t("bulkDismissSuccess", { count: successCount }));
+      } else {
+        toast.success(t("bulkLinkSuccess", { count: successCount }));
+      }
+    }
+    if (failCount > 0) {
+      toast.error(t("bulkError"));
+    }
+
+    setRowSelection({});
+    setIsBulkProcessing(false);
+    handleResolved();
+  }, [getSelectedItems, projectId, t, handleResolved]);
+
+  const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
   if (isLoading) {
     return (
@@ -227,7 +295,45 @@ export function DuplicateResultsTable({
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground mt-4 mb-2">{t("tableHint")}</p>
+      {/* Bulk action bar */}
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-2 mt-4 mb-2 p-2 bg-muted/50 rounded-lg border">
+          <span className="text-sm text-muted-foreground mr-2">
+            {t("selected", { count: selectedCount })}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkAction("dismiss")}
+            disabled={isBulkProcessing}
+          >
+            {isBulkProcessing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <XCircle className="h-4 w-4 mr-1" />
+            )}
+            {t("bulkDismiss", { count: selectedCount })}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkAction("link")}
+            disabled={isBulkProcessing}
+          >
+            {isBulkProcessing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Link2 className="h-4 w-4 mr-1" />
+            )}
+            {t("bulkLink", { count: selectedCount })}
+          </Button>
+        </div>
+      )}
+
+      {selectedCount === 0 && (
+        <p className="text-sm text-muted-foreground mt-4 mb-2">{t("tableHint")}</p>
+      )}
+
       <div>
         <DataTable
           columns={columns}
@@ -239,6 +345,8 @@ export function DuplicateResultsTable({
           isLoading={isLoading}
           pageSize={pageSize}
           onTestCaseClick={handleRowClick}
+          rowSelection={rowSelection}
+          onRowSelectionChange={handleRowSelectionChange}
         />
       </div>
 
