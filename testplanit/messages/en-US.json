@@ -2078,6 +2078,7 @@
       "columnMatchedFields": "Matched Fields",
       "columnScore": "Score",
       "compareButton": "Compare",
+      "viewCaseDetails": "View case details",
       "selectAll": "Select all",
       "selectRow": "Select row",
       "selected": "{count, plural, one {# selected} other {# selected}}",

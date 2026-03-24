@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import TextFromJson from "@/components/TextFromJson";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -113,7 +113,19 @@ function CasePanel({
           if (e.key === "Enter" || e.key === " ") onSelect();
         }}
       >
-        <h3 className="font-bold text-base mb-3 break-words">{caseDetails.name}</h3>
+        <h3 className="font-bold text-base mb-3 break-words flex items-center gap-2">
+          <span>{caseDetails.name}</span>
+          <a
+            href={`/projects/repository/${projectId}/${caseDetails.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-muted-foreground hover:text-foreground shrink-0"
+            title={t("viewCaseDetails")}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </h3>
 
         {/* Source + Folder + Created */}
         <div className="space-y-1 mb-3 text-sm">
