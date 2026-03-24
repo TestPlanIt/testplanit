@@ -2113,7 +2113,10 @@
       "noLastRun": "Never run",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
-      "noFolder": "No folder"
+      "noFolder": "No folder",
+      "duplicateWarning": "Possible duplicates found",
+      "duplicateWarningDescription": "{count, plural, one {# existing case} other {# existing cases}} may cover similar functionality:",
+      "duplicateWarningViewCase": "View"
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",

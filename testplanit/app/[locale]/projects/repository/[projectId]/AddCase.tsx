@@ -41,8 +41,9 @@ import { ApplicationArea, Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Asterisk, ChevronLeft, ChevronRight, CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import parseDuration from "parse-duration";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -263,6 +264,7 @@ interface FormValues {
 
 export function AddCaseModal({ folderId }: AddCaseModalProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const { data: session } = useSession();
   const { projectId } = useParams();
   const numericProjectId = Number(projectId);
@@ -717,6 +719,30 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
     return null;
   }
 
+  const checkForDuplicates = async (caseName: string, caseId: number, tagNames: string[]) => {
+    try {
+      const res = await fetch("/api/duplicate-scan/check-new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: Number(projectId), name: caseName, tags: tagNames }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.cases && data.cases.length > 0) {
+        toast.warning(t("repository.duplicates.duplicateWarning"), {
+          description: t("repository.duplicates.duplicateWarningDescription", { count: data.cases.length }),
+          duration: 10000,
+          action: data.cases.length === 1 ? {
+            label: t("repository.duplicates.duplicateWarningViewCase"),
+            onClick: () => window.open(`/${locale}/projects/repository/${projectId}/${data.cases[0].id}`, "_blank"),
+          } : undefined,
+        });
+      }
+    } catch {
+      // Silently ignore — duplicate check is advisory only
+    }
+  };
+
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
 
@@ -1074,6 +1100,9 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
         setSelectedTags([]);
         setLinkedIssueIds([]);
         setSelectedFiles([]);
+
+        // Fire-and-forget duplicate check — never blocks the save
+        checkForDuplicates(convertedData.name, newCase.id, tagNamesForVersion).catch(() => {});
       }
     } catch (err: any) {
       form.setError("root", {
