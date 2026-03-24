@@ -1,7 +1,6 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
-import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -114,64 +113,13 @@ function CasePanel({
       : prefs?.dateFormat;
   const lastRun = caseDetails.testRuns?.[0];
 
-  // Map field values to CustomFieldDisplay format
-  // CustomFieldDisplay expects typed value properties, not just raw `value`
-  // Sort field values by template order
+  // Sort field values by template order for consistent display
   const templateOrder = new Map(
     (caseDetails.template?.caseFields ?? []).map((cf) => [cf.caseFieldId, cf.order])
   );
   const orderedFieldValues = [...caseDetails.caseFieldValues]
     .filter((fv) => fv.value != null)
     .sort((a, b) => (templateOrder.get(a.field.id) ?? 999) - (templateOrder.get(b.field.id) ?? 999));
-
-  // Separate long text fields (rendered with TextFromJson) from others (CustomFieldDisplay)
-  const longTextFields = orderedFieldValues.filter(
-    (fv) => fv.field.type?.type === "Text Long" || fv.field.type?.type === "Steps"
-  );
-
-  const customFields = orderedFieldValues
-    .filter((fv) => fv.field.type?.type !== "Text Long" && fv.field.type?.type !== "Steps")
-    .map((fv) => {
-      const fieldType = fv.field.type?.type ?? "Text String";
-      const value = fv.value;
-
-      // Flatten the join table: CaseFieldAssignment[] -> FieldOptions[]
-      const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
-
-      const base = {
-        fieldId: fv.field.id,
-        fieldName: fv.field.displayName,
-        fieldType,
-      };
-
-      switch (fieldType) {
-        case "Checkbox":
-          return { ...base, valueBoolean: Boolean(value) };
-        case "Date":
-          return { ...base, valueDate: String(value) };
-        case "Number":
-        case "Integer":
-          return { ...base, valueNumeric: Number(value) };
-        case "Link":
-        case "Text String":
-          return { ...base, valueKeyword: String(value) };
-        case "Dropdown": {
-          const fieldOption = options.find((o) => o.id === Number(value));
-          return { ...base, value, ...(fieldOption && { fieldOption }) };
-        }
-        case "Multi-Select": {
-          const ids = Array.isArray(value) ? value : [];
-          const fieldOptions = options.filter((o) => (ids as number[]).includes(o.id));
-          return {
-            ...base,
-            valueArray: ids.map(String),
-            ...(fieldOptions.length > 0 && { fieldOptions }),
-          };
-        }
-        default:
-          return { ...base, value };
-      }
-    });
 
   return (
     <div className="flex flex-col gap-2">
@@ -306,34 +254,54 @@ function CasePanel({
           )}
         </div>
 
-        {/* Field Values */}
+        {/* Field Values — rendered in template order */}
         <div className="mb-3">
           <p className="font-medium text-muted-foreground text-sm mb-1">
             {t("fieldValuesLabel")}
           </p>
-          {customFields.length === 0 && longTextFields.length === 0 ? (
+          {orderedFieldValues.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">
               {t("noFieldValues")}
             </p>
           ) : (
-            <>
-              {customFields.length > 0 && (
-                <CustomFieldDisplay customFields={customFields} maxItems={20} />
-              )}
-              {longTextFields.map((fv) => (
-                <div key={fv.id} className="mt-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {fv.field.displayName}
-                  </span>
-                  <div className="text-sm mt-0.5">
-                    <TextFromJson
-                      jsonString={fv.value}
-                      room={`compare-field-${caseDetails.id}-${fv.id}`}
-                    />
+            <div className="space-y-2">
+              {orderedFieldValues.map((fv) => {
+                const fieldType = fv.field.type?.type ?? "Text String";
+                const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
+
+                return (
+                  <div key={fv.id} className="text-sm">
+                    <span className="font-medium text-muted-foreground">
+                      {fv.field.displayName}{": "}
+                    </span>
+                    {fieldType === "Text Long" ? (
+                      <TextFromJson
+                        jsonString={fv.value}
+                        room={`compare-field-${caseDetails.id}-${fv.id}`}
+                      />
+                    ) : fieldType === "Checkbox" ? (
+                      <span>{fv.value ? "✓" : "✗"}</span>
+                    ) : fieldType === "Dropdown" ? (
+                      <span>{options.find((o) => o.id === Number(fv.value))?.name ?? String(fv.value)}</span>
+                    ) : fieldType === "Multi-Select" ? (
+                      <span>
+                        {(Array.isArray(fv.value) ? fv.value : [])
+                          .map((id: number) => options.find((o) => o.id === id)?.name ?? String(id))
+                          .join(", ")}
+                      </span>
+                    ) : fieldType === "Link" ? (
+                      <a href={String(fv.value)} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                        {String(fv.value)}
+                      </a>
+                    ) : fieldType === "Date" ? (
+                      <DateFormatter date={String(fv.value)} formatString={dateTimeFormat} timezone={prefs?.timezone} />
+                    ) : (
+                      <span>{String(fv.value)}</span>
+                    )}
                   </div>
-                </div>
-              ))}
-            </>
+                );
+              })}
+            </div>
           )}
         </div>
 
