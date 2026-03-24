@@ -33,7 +33,7 @@ interface CaseDetails {
   tags: { id: number; name: string }[];
   caseFieldValues: { id: number; value: string; field: { id: number; displayName: string; fieldType?: string } }[];
   _count: { attachments: number };
-  testRuns: { id: number; status: { id: number; name: string }; createdAt: string; testRun: { name: string } }[];
+  testRuns: { id: number; status: { id: number; name: string } | null; createdAt: string; testRun: { name: string } | null }[];
   projectId?: number;
 }
 
@@ -217,9 +217,9 @@ function CasePanel({
           <p className="font-medium text-muted-foreground mb-1">{t("lastRunLabel")}</p>
           {lastRun ? (
             <div>
-              <span className="font-medium">{lastRun.testRun.name}</span>
+              <span className="font-medium">{lastRun.testRun?.name ?? ""}</span>
               <span className="text-muted-foreground ml-2">
-                {t("runStatusDate", { status: lastRun.status.name, date: new Date(lastRun.createdAt).toLocaleDateString() })}
+                {t("runStatusDate", { status: lastRun.status?.name ?? "", date: new Date(lastRun.createdAt).toLocaleDateString() })}
               </span>
             </div>
           ) : (
