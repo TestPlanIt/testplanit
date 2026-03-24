@@ -147,13 +147,17 @@ export class DuplicateScanService {
       const normalizedEsScore = Math.min(rawEsScore / MAX_ES_SCORE, 1.0);
 
       // Per-signal scores
-      // Use Levenshtein ratio as the primary name gate — it measures actual edit
-      // distance and doesn't over-score strings with shared prefixes like Jaro-Winkler.
-      // e.g., "Verify user can login" vs "Verify user can logout" = ~0.88 (3 edits/25 chars)
+      // Dual name gate: requires BOTH high character similarity AND high word overlap.
+      // This catches true duplicates (same test, minor wording) while filtering out
+      // cases that follow the same naming convention but test different things.
       const nameLevenshtein = levenshteinRatio(caseData.name, candidate.name);
-
-      // Hard gate: names must be very similar by edit distance
       if (nameLevenshtein < 0.85) continue;
+
+      // Token-level check: split into words and compare overlap
+      const sourceWords = caseData.name.toLowerCase().split(/\s+/).filter(Boolean);
+      const candidateWords = candidate.name.toLowerCase().split(/\s+/).filter(Boolean);
+      const nameTokenJaccard = jaccardSimilarity(sourceWords, candidateWords);
+      if (nameTokenJaccard < 0.80) continue;
 
       // Use Jaro-Winkler as the name signal in the combined score (better gradient)
       const nameScore = jaroWinkler(caseData.name, candidate.name);
