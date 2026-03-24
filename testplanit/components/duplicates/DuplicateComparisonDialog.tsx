@@ -36,7 +36,11 @@ interface CaseDetails {
   }[];
   tags: { id: number; name: string }[];
   template?: {
-    caseFields: Array<{ caseFieldId: number; order: number }>;
+    caseFields: Array<{
+      caseFieldId: number;
+      order: number;
+      caseField: { type: { type: string } };
+    }>;
   } | null;
   caseFieldValues: {
     id: number;
@@ -113,13 +117,6 @@ function CasePanel({
       : prefs?.dateFormat;
   const lastRun = caseDetails.testRuns?.[0];
 
-  // Sort field values by template order for consistent display
-  const templateOrder = new Map(
-    (caseDetails.template?.caseFields ?? []).map((cf) => [cf.caseFieldId, cf.order])
-  );
-  const orderedFieldValues = [...caseDetails.caseFieldValues]
-    .filter((fv) => fv.value != null)
-    .sort((a, b) => (templateOrder.get(a.field.id) ?? 999) - (templateOrder.get(b.field.id) ?? 999));
 
   return (
     <div className="flex flex-col gap-2">
@@ -203,43 +200,6 @@ function CasePanel({
           </div>
         </div>
 
-        {/* Steps */}
-        <div className="mb-3">
-          <p className="font-medium text-muted-foreground text-sm mb-1">
-            {tCommon("fields.steps")}
-          </p>
-          {caseDetails.steps.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">
-              {tRepo("fields.noSteps")}
-            </p>
-          ) : (
-            <div className="max-h-48 overflow-y-auto space-y-2">
-              {caseDetails.steps.map((step, i) => (
-                <div
-                  key={step.id ?? i}
-                  className="text-sm border-l-2 border-muted pl-2"
-                >
-                  <div className="font-medium">
-                    {`${i + 1}. `}
-                    <TextFromJson
-                      jsonString={step.step}
-                      room={`compare-step-${caseDetails.id}-${step.id}`}
-                    />
-                  </div>
-                  {step.expectedResult && (
-                    <div className="text-muted-foreground text-xs mt-0.5">
-                      <TextFromJson
-                        jsonString={step.expectedResult}
-                        room={`compare-er-${caseDetails.id}-${step.id}`}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Tags */}
         <div className="mb-3">
           <p className="font-medium text-muted-foreground text-sm mb-1">
@@ -254,55 +214,89 @@ function CasePanel({
           )}
         </div>
 
-        {/* Field Values — rendered in template order */}
-        <div className="mb-3">
-          <p className="font-medium text-muted-foreground text-sm mb-1">
-            {t("fieldValuesLabel")}
-          </p>
-          {orderedFieldValues.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">
-              {t("noFieldValues")}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {orderedFieldValues.map((fv) => {
-                const fieldType = fv.field.type?.type ?? "Text String";
-                const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
+        {/* All fields in template order (including Steps) */}
+        <div className="mb-3 space-y-3">
+          {(caseDetails.template?.caseFields ?? []).map((templateField) => {
+            const fieldType = templateField.caseField.type.type;
 
-                return (
-                  <div key={fv.id} className="text-sm">
-                    <span className="font-medium text-muted-foreground">
-                      {fv.field.displayName}{": "}
-                    </span>
-                    {fieldType === "Text Long" ? (
-                      <TextFromJson
-                        jsonString={fv.value}
-                        room={`compare-field-${caseDetails.id}-${fv.id}`}
-                      />
-                    ) : fieldType === "Checkbox" ? (
-                      <span>{fv.value ? "✓" : "✗"}</span>
-                    ) : fieldType === "Dropdown" ? (
-                      <span>{options.find((o) => o.id === Number(fv.value))?.name ?? String(fv.value)}</span>
-                    ) : fieldType === "Multi-Select" ? (
-                      <span>
-                        {(Array.isArray(fv.value) ? fv.value : [])
-                          .map((id: number) => options.find((o) => o.id === id)?.name ?? String(id))
-                          .join(", ")}
-                      </span>
-                    ) : fieldType === "Link" ? (
-                      <a href={String(fv.value)} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                        {String(fv.value)}
-                      </a>
-                    ) : fieldType === "Date" ? (
-                      <DateFormatter date={String(fv.value)} formatString={dateTimeFormat} timezone={prefs?.timezone} />
-                    ) : (
-                      <span>{String(fv.value)}</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+            // Steps field — render the case's steps array
+            if (fieldType === "Steps") {
+              return (
+                <div key={`steps-${templateField.caseFieldId}`}>
+                  <p className="font-medium text-muted-foreground text-sm mb-1">
+                    {tCommon("fields.steps")}
+                  </p>
+                  {caseDetails.steps.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      {tRepo("fields.noSteps")}
+                    </p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {caseDetails.steps.map((step, i) => (
+                        <div key={step.id ?? i} className="text-sm border-l-2 border-muted pl-2">
+                          <div className="font-medium">
+                            {`${i + 1}. `}
+                            <TextFromJson
+                              jsonString={step.step}
+                              room={`compare-step-${caseDetails.id}-${step.id}`}
+                            />
+                          </div>
+                          {step.expectedResult && (
+                            <div className="text-muted-foreground text-xs mt-0.5">
+                              <TextFromJson
+                                jsonString={step.expectedResult}
+                                room={`compare-er-${caseDetails.id}-${step.id}`}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Regular field — find the value
+            const fv = caseDetails.caseFieldValues.find(
+              (v) => v.field.id === templateField.caseFieldId
+            );
+            if (!fv || fv.value == null) return null;
+
+            const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
+
+            return (
+              <div key={fv.id} className="text-sm">
+                <span className="font-medium text-muted-foreground">
+                  {fv.field.displayName}{": "}
+                </span>
+                {fieldType === "Text Long" ? (
+                  <TextFromJson
+                    jsonString={fv.value}
+                    room={`compare-field-${caseDetails.id}-${fv.id}`}
+                  />
+                ) : fieldType === "Checkbox" ? (
+                  <span>{fv.value ? "✓" : "✗"}</span>
+                ) : fieldType === "Dropdown" ? (
+                  <span>{options.find((o) => o.id === Number(fv.value))?.name ?? String(fv.value)}</span>
+                ) : fieldType === "Multi-Select" ? (
+                  <span>
+                    {(Array.isArray(fv.value) ? fv.value : [])
+                      .map((id: number) => options.find((o) => o.id === id)?.name ?? String(id))
+                      .join(", ")}
+                  </span>
+                ) : fieldType === "Link" ? (
+                  <a href={String(fv.value)} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    {String(fv.value)}
+                  </a>
+                ) : fieldType === "Date" ? (
+                  <DateFormatter date={String(fv.value)} formatString={dateTimeFormat} timezone={prefs?.timezone} />
+                ) : (
+                  <span>{String(fv.value)}</span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Attachments */}

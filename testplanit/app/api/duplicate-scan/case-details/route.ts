@@ -32,6 +32,11 @@ async function fetchCaseDetails(caseId: number) {
             select: {
               caseFieldId: true,
               order: true,
+              caseField: {
+                select: {
+                  type: { select: { type: true } },
+                },
+              },
             },
           },
         },
