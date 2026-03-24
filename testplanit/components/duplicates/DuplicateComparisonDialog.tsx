@@ -123,7 +123,7 @@ function CasePanel({
           </div>
           <div>
             <span className="font-medium text-muted-foreground">{tCommon("fields.created")}{": "}</span>
-            <DateFormatter date={caseDetails.createdAt} />
+            <DateFormatter date={caseDetails.createdAt} formatString="MM-dd-yyyy HH:mm" />
           </div>
         </div>
 
