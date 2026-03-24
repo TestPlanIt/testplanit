@@ -127,9 +127,8 @@ export const processor = async (
     await job.updateProgress({ analyzed: i + 1, total });
   }
 
-  // 7. Sort by score descending and cap at 100
+  // 7. Sort by score descending
   allPairs.sort((a, b) => b.score - a.score);
-  const top100 = allPairs.slice(0, 100);
 
   // 8. Soft-delete old pending results, then insert new ones atomically
   await prisma.$transaction(async (tx: any) => {
@@ -138,9 +137,9 @@ export const processor = async (
       data: { isDeleted: true },
     });
 
-    if (top100.length > 0) {
+    if (allPairs.length > 0) {
       await tx.duplicateScanResult.createMany({
-        data: top100.map((p) => ({
+        data: allPairs.map((p) => ({
           projectId: job.data.projectId,
           caseAId: p.caseAId,
           caseBId: p.caseBId,
@@ -154,7 +153,7 @@ export const processor = async (
   });
 
   return {
-    pairsFound: top100.length,
+    pairsFound: allPairs.length,
     casesScanned: total,
     scanJobId: job.id!,
   };

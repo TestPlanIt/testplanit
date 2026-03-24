@@ -199,8 +199,8 @@ export class DuplicateScanService {
       });
     }
 
-    // Sort by score descending, cap at 100 pairs
+    // Sort by score descending
     pairs.sort((a, b) => b.score - a.score);
-    return pairs.slice(0, 100);
+    return pairs;
   }
 }
