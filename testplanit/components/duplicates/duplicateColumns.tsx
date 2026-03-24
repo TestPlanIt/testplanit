@@ -1,3 +1,4 @@
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
@@ -48,7 +49,8 @@ function ConfidenceBadge({
 
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"repository.duplicates">>,
-  tPriority: ReturnType<typeof useTranslations<"common.priority">>
+  tPriority: ReturnType<typeof useTranslations<"common.priority">>,
+  onCheckboxClick?: (rowIndex: number, event: React.MouseEvent) => void
 ): ColumnDef<DuplicateCandidateRow>[] => [
   {
     id: "select",
@@ -65,8 +67,13 @@ export const getColumns = (
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        onClick={(e) => e.stopPropagation()}
+        onCheckedChange={(value) => {
+          if (!onCheckboxClick) row.toggleSelected(!!value);
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCheckboxClick?.(row.index, e);
+        }}
         aria-label={t("selectRow")}
       />
     ),

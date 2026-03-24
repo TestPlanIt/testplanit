@@ -56,6 +56,7 @@ export function DuplicateResultsTable({
   const [selectedPair, setSelectedPair] = useState<DuplicateCandidateRow | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const handleResolved = useCallback(() => {
@@ -91,7 +92,29 @@ export function DuplicateResultsTable({
     []
   );
 
-  const columns = useMemo(() => getColumns(t, tPriority), [t, tPriority]);
+  const handleCheckboxClick = useCallback(
+    (rowIndex: number, event: React.MouseEvent) => {
+      if (event.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== rowIndex) {
+        const start = Math.min(lastSelectedIndex, rowIndex);
+        const end = Math.max(lastSelectedIndex, rowIndex);
+        const rangeSelection: RowSelectionState = { ...rowSelection };
+        for (let i = start; i <= end; i++) {
+          rangeSelection[i.toString()] = true;
+        }
+        setRowSelection(rangeSelection);
+      } else {
+        const newSelection = { ...rowSelection };
+        newSelection[rowIndex.toString()] = !newSelection[rowIndex.toString()];
+        setRowSelection(newSelection);
+        if (!rowSelection[rowIndex.toString()]) {
+          setLastSelectedIndex(rowIndex);
+        }
+      }
+    },
+    [lastSelectedIndex, rowSelection]
+  );
+
+  const columns = useMemo(() => getColumns(t, tPriority, handleCheckboxClick), [t, tPriority, handleCheckboxClick]);
 
   const { data: allItems, isLoading } = useQuery<DuplicateCandidate[]>({
     queryKey: ["duplicate-scan-candidates", projectId],
