@@ -11,6 +11,7 @@ const {
   mockFindMany,
   mockUpdateMany,
   mockCreateMany,
+  mockFindManyDuplicateScanResult,
 } = vi.hoisted(() => ({
   mockRedisGet: vi.fn(),
   mockRedisDel: vi.fn(),
@@ -19,6 +20,7 @@ const {
   mockFindMany: vi.fn(),
   mockUpdateMany: vi.fn(),
   mockCreateMany: vi.fn(),
+  mockFindManyDuplicateScanResult: vi.fn(),
 }));
 
 const mockRedisClient = {
@@ -53,6 +55,7 @@ const mockPrisma: any = {
     findMany: (...args: any[]) => mockFindMany(...args),
   },
   duplicateScanResult: {
+    findMany: (...args: any[]) => mockFindManyDuplicateScanResult(...args),
     updateMany: (...args: any[]) => mockUpdateMany(...args),
     createMany: (...args: any[]) => mockCreateMany(...args),
   },
@@ -144,6 +147,8 @@ describe("DuplicateScanWorker", () => {
     mockUpdateProgress.mockResolvedValue(undefined);
     mockUpdateMany.mockResolvedValue({ count: 0 });
     mockCreateMany.mockResolvedValue({ count: 0 });
+    // Default: no dismissed pairs
+    mockFindManyDuplicateScanResult.mockResolvedValue([]);
     // Default: no similar cases
     mockFindSimilarCases.mockResolvedValue([]);
   });
@@ -192,8 +197,8 @@ describe("DuplicateScanWorker", () => {
       expect(result.pairsFound).toBe(1);
     });
 
-    it("Test 3: Results capped at 100 pairs sorted by score descending", async () => {
-      // 60 cases, each returning 5 pairs = 300 unique pairs, should cap at 100
+    it("Test 3: All unique pairs are stored (no artificial cap)", async () => {
+      // 60 cases, each returning 5 pairs = 300 unique pairs
       const manyPairs = Array.from({ length: 60 }, (_, i) => ({ id: i + 1, name: `Case ${i + 1}`, steps: [], tags: [] }));
       mockFindMany.mockResolvedValue(manyPairs);
 
@@ -211,8 +216,8 @@ describe("DuplicateScanWorker", () => {
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-3" }) as Job);
 
-      // Should be capped at 100
-      expect(result.pairsFound).toBe(100);
+      // All 300 unique pairs should be stored
+      expect(result.pairsFound).toBe(300);
     });
 
     it("Test 4: old PENDING results soft-deleted before createMany inserts new results", async () => {
