@@ -118,7 +118,7 @@ function CasePanel({
           if (e.key === "Enter" || e.key === " ") onSelect();
         }}
       >
-        <div className="mb-1 text-xs text-muted-foreground">{"#"}{caseDetails.id}</div>
+        <div className="mb-1 text-xs text-muted-foreground">{tCommon("fields.id")}{" "}{caseDetails.id}</div>
         <div className="mb-3 flex items-center gap-2">
           <CaseDisplay
             id={caseDetails.id}
