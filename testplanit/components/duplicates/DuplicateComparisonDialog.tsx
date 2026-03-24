@@ -19,15 +19,14 @@ import { scoreToConfidence } from "~/lib/utils/similarity";
 interface CaseDetails {
   id: number;
   name: string;
-  description: string | null;
   createdAt: string;
   source: string | null;
   folder: { id: number; name: string } | null;
-  steps: { id: number; title: string; expectedResult: string | null; order: number }[];
+  steps: { id: number; step: string; expectedResult: string | null; order: number }[];
   tags: { id: number; name: string }[];
-  caseFieldValues: { id: number; value: string; caseField: { id: number; name: string } }[];
+  caseFieldValues: { id: number; value: string; field: { id: number; displayName: string } }[];
   _count: { attachments: number };
-  testRuns: { id: number; status: string; createdAt: string; testRun: { name: string } }[];
+  testRuns: { id: number; status: { id: number; name: string }; createdAt: string; testRun: { name: string } }[];
 }
 
 interface CaseDetailsResponse {
@@ -110,13 +109,6 @@ function CasePanel({
         </div>
       </div>
 
-      {/* Description */}
-      <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.description")}</p>
-        <p className="text-sm text-muted-foreground italic line-clamp-3">
-          {caseDetails.description || tCommon("empty.description")}
-        </p>
-      </div>
 
       {/* Steps */}
       <div className="mb-3">
@@ -129,8 +121,8 @@ function CasePanel({
               <li key={step.id ?? i}>
                 <span>
                   {step.expectedResult
-                    ? t("stepExpectedResult", { step: step.title, result: step.expectedResult })
-                    : step.title}
+                    ? t("stepExpectedResult", { step: step.step, result: step.expectedResult })
+                    : step.step}
                 </span>
               </li>
             ))}
@@ -163,7 +155,7 @@ function CasePanel({
           <div className="space-y-1 text-sm">
             {caseDetails.caseFieldValues.map((fv) => (
               <div key={fv.id}>
-                <span className="font-medium">{fv.caseField.name}: </span>
+                <span className="font-medium">{fv.field.displayName}: </span>
                 <span className="text-muted-foreground">{fv.value}</span>
               </div>
             ))}
@@ -184,7 +176,7 @@ function CasePanel({
           <div>
             <span className="font-medium">{lastRun.testRun.name}</span>
             <span className="text-muted-foreground ml-2">
-              {t("runStatusDate", { status: lastRun.status, date: new Date(lastRun.createdAt).toLocaleDateString() })}
+              {t("runStatusDate", { status: lastRun.status.name, date: new Date(lastRun.createdAt).toLocaleDateString() })}
             </span>
           </div>
         ) : (
