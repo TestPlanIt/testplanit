@@ -15,7 +15,7 @@ test.describe("Creation-Time Duplicate Warning", () => {
     repositoryPage = new RepositoryPage(page);
   });
 
-  test("Shows duplicate warning toast after saving a test case with a similar name", async ({
+  test("Shows duplicate warning toast with clickable case link for a single match", async ({
     api,
     page,
   }) => {
@@ -34,8 +34,6 @@ test.describe("Creation-Time Duplicate Warning", () => {
     );
 
     // Mock the check-new endpoint to return the existing case as a duplicate
-    // This must be set up BEFORE navigation so the mock is active when the
-    // form submission triggers the check-new call
     await page.route("**/api/duplicate-scan/check-new", async (route) => {
       await route.fulfill({
         status: 200,
@@ -84,6 +82,79 @@ test.describe("Creation-Time Duplicate Warning", () => {
 
     // Verify the toast contains text indicating a duplicate was found
     await expect(toast).toContainText(/similar|duplicate/i);
+
+    // Verify the toast contains a clickable link to the matching case
+    const caseLink = toast.locator("a");
+    await expect(caseLink).toBeVisible();
+    const href = await caseLink.getAttribute("href");
+    expect(href).toContain(`/projects/repository/${projectId}/${existingCaseId}`);
+  });
+
+  test("Shows Review link to duplicates page when multiple matches found", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await api.createProject(
+      `E2E Multi Duplicate Project ${Date.now()}`
+    );
+    const folderName = `E2E Multi Duplicate Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+
+    const caseAId = await api.createTestCase(projectId, folderId, "Login test A");
+    const caseBId = await api.createTestCase(projectId, folderId, "Login test B");
+
+    // Mock the check-new endpoint to return multiple matches
+    await page.route("**/api/duplicate-scan/check-new", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cases: [
+            { id: caseAId, name: "Login test A" },
+            { id: caseBId, name: "Login test B" },
+          ],
+        }),
+      });
+    });
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Create a new test case
+    const addCaseButton = page.getByTestId("add-case-button");
+    await expect(addCaseButton).toBeVisible({ timeout: 10000 });
+    await addCaseButton.click();
+
+    const addCaseDialog = page.getByTestId("add-case-dialog");
+    await expect(addCaseDialog).toBeVisible({ timeout: 8000 });
+
+    const caseNameInput = page.getByTestId("case-name-input");
+    await expect(caseNameInput).toBeVisible({ timeout: 5000 });
+    await caseNameInput.fill("Login test variant");
+
+    const submitButton = page.getByTestId("case-submit-button");
+    await expect(submitButton).toBeVisible({ timeout: 5000 });
+    await submitButton.click();
+
+    await expect(addCaseDialog).not.toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(1500);
+
+    // Verify the warning toast appears
+    const toast = page.locator("[data-sonner-toast]").first();
+    await expect(toast).toBeVisible({ timeout: 8000 });
+
+    // Verify there are links for each matching case
+    const caseLinks = toast.locator("a");
+    const linkCount = await caseLinks.count();
+    // At least 2 case links + 1 Review link = 3+
+    expect(linkCount).toBeGreaterThanOrEqual(3);
+
+    // Verify the Review link points to the duplicates page
+    const reviewLink = toast.locator(
+      `a[href*="/projects/repository/${projectId}/duplicates"]`
+    );
+    await expect(reviewLink).toBeVisible();
   });
 
   test("No warning shown when check-new finds no duplicates", async ({

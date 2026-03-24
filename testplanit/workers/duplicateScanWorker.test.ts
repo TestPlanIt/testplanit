@@ -241,18 +241,17 @@ describe("DuplicateScanWorker", () => {
       expect(callOrder.indexOf("updateMany")).toBeLessThan(callOrder.indexOf("createMany"));
     });
 
-    it("Test 5: job.updateProgress called with { analyzed: i+1, total } after each case", async () => {
+    it("Test 5: job.updateProgress called once per batch plus AI phase", async () => {
       mockFindMany.mockResolvedValue(mockCases);
       mockFindSimilarCases.mockResolvedValue([]);
 
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-5" }) as Job);
 
-      // Progress called once per case
-      expect(mockUpdateProgress).toHaveBeenCalledTimes(3);
-      expect(mockUpdateProgress).toHaveBeenNthCalledWith(1, { analyzed: 1, total: 3 });
-      expect(mockUpdateProgress).toHaveBeenNthCalledWith(2, { analyzed: 2, total: 3 });
-      expect(mockUpdateProgress).toHaveBeenNthCalledWith(3, { analyzed: 3, total: 3 });
+      // 3 cases with BATCH_SIZE=20 → 1 batch progress + 1 AI phase progress = 2 calls
+      expect(mockUpdateProgress).toHaveBeenCalledTimes(2);
+      expect(mockUpdateProgress).toHaveBeenNthCalledWith(1, { analyzed: 3, total: 3 });
+      expect(mockUpdateProgress).toHaveBeenNthCalledWith(2, { analyzed: 3, total: 3, phase: "ai" });
     });
   });
 
@@ -270,14 +269,18 @@ describe("DuplicateScanWorker", () => {
       expect(mockFindSimilarCases).not.toHaveBeenCalled();
     });
 
-    it("Test 7: Mid-loop cancellation check — if Redis key set during iteration, throws 'Job cancelled by user'", async () => {
-      mockFindMany.mockResolvedValue(mockCases);
+    it("Test 7: Mid-loop cancellation check — if Redis key set between batches, throws 'Job cancelled by user'", async () => {
+      // Need enough cases to span 2 batches (BATCH_SIZE=20)
+      const manyCases = Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1, name: `Case ${i + 1}`, steps: [], tags: [],
+      }));
+      mockFindMany.mockResolvedValue(manyCases);
 
-      // Not cancelled pre-start, but cancelled after processing first case
+      // Not cancelled pre-start, not cancelled for first batch, cancelled for second batch
       mockRedisGet
         .mockResolvedValueOnce(null)     // Pre-start: not cancelled
-        .mockResolvedValueOnce(null)     // First iteration check: not cancelled
-        .mockResolvedValueOnce("1");     // Second iteration check: cancelled!
+        .mockResolvedValueOnce(null)     // First batch check: not cancelled
+        .mockResolvedValueOnce("1");     // Second batch check: cancelled!
 
       mockFindSimilarCases.mockResolvedValue([]);
 
@@ -287,8 +290,8 @@ describe("DuplicateScanWorker", () => {
         processor(makeMockJob({ id: "job-7" }) as Job)
       ).rejects.toThrow("Job cancelled by user");
 
-      // Should not have processed all 3 cases
-      expect(mockFindSimilarCases).toHaveBeenCalledTimes(1);
+      // First batch of 20 should have been processed, second batch cancelled before processing
+      expect(mockFindSimilarCases).toHaveBeenCalledTimes(20);
     });
   });
 

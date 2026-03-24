@@ -48,6 +48,7 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
     }),
     repositoryCaseLink: {
       create: vi.fn(),
+      upsert: vi.fn(),
     },
     duplicateScanResult: {
       updateMany: vi.fn(),
@@ -466,18 +467,25 @@ describe("mergeService", () => {
   // 8. linkCases action
   // ----------------------------------------------------------------
   describe("linkCases", () => {
-    it("creates a RepositoryCaseLink with SAME_TEST_DIFFERENT_SOURCE", async () => {
+    it("upserts a RepositoryCaseLink with SAME_TEST_DIFFERENT_SOURCE", async () => {
       mockPrisma.$transaction.mockImplementation(
         (ops: any[]) => Promise.all(ops)
       );
-      mockPrisma.repositoryCaseLink.create.mockResolvedValue({ id: 1 });
+      mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       await linkCases(1, 2, "user-123", 5);
 
-      expect(mockPrisma.repositoryCaseLink.create).toHaveBeenCalledWith(
+      expect(mockPrisma.repositoryCaseLink.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          where: expect.objectContaining({
+            caseAId_caseBId_type: {
+              caseAId: 1,
+              caseBId: 2,
+              type: "SAME_TEST_DIFFERENT_SOURCE",
+            },
+          }),
+          create: expect.objectContaining({
             caseAId: 1,
             caseBId: 2,
             type: "SAME_TEST_DIFFERENT_SOURCE",
@@ -491,7 +499,7 @@ describe("mergeService", () => {
       mockPrisma.$transaction.mockImplementation(
         (ops: any[]) => Promise.all(ops)
       );
-      mockPrisma.repositoryCaseLink.create.mockResolvedValue({ id: 1 });
+      mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       await linkCases(1, 2, "user-123", 5);
@@ -513,7 +521,7 @@ describe("mergeService", () => {
       mockPrisma.$transaction.mockImplementation(
         (ops: any[]) => Promise.all(ops)
       );
-      mockPrisma.repositoryCaseLink.create.mockResolvedValue({ id: 1 });
+      mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await linkCases(1, 2, "user-123", 5);

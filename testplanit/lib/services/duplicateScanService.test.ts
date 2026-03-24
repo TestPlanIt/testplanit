@@ -158,12 +158,14 @@ describe("DuplicateScanService", () => {
       expect(result[0].confidence).toBe("HIGH");
     });
 
-    it("includes 'name' in matchedFields when jaroWinkler name score >= 0.7", async () => {
+    it("includes 'name' in matchedFields when name passes dual gate (Levenshtein + token Jaccard)", async () => {
+      // "Login with valid credentials" vs "Login with valid credential" — Levenshtein ~0.97, Jaccard 3/4=0.75 → fails Jaccard
+      // Use identical names to guarantee both gates pass
       const esClient = makeMockEsClient([
-        makeHit({ id: 100, name: "Login with credentials", _score: 5.0 }),
+        makeHit({ id: 100, name: "Login with valid credentials", _score: 5.0 }),
       ]);
       const service = new DuplicateScanService(mockPrisma, esClient as any);
-      const input: CaseSearchInput = { id: 1, name: "Login with credential" };
+      const input: CaseSearchInput = { id: 1, name: "Login with valid credentials" };
 
       const result = await service.findSimilarCases(input, 1);
       expect(result.length).toBeGreaterThan(0);
@@ -228,10 +230,10 @@ describe("DuplicateScanService", () => {
       }
     });
 
-    it("returns at most 100 pairs sorted by score descending", async () => {
-      // Create 120 hits with varying scores
+    it("returns all qualifying pairs without an artificial cap", async () => {
+      // Create 120 hits — all should be returned if they pass the name gate
       const hits = Array.from({ length: 120 }, (_, i) => ({
-        _score: Math.random() * 10,
+        _score: 6.0 + Math.random(),
         _source: {
           id: 1000 + i,
           name: "Login test case",
@@ -247,7 +249,8 @@ describe("DuplicateScanService", () => {
       const input: CaseSearchInput = { id: 1, name: "Login test case" };
 
       const result = await service.findSimilarCases(input, 1);
-      expect(result.length).toBeLessThanOrEqual(100);
+      // All 120 hits have identical names so they all pass the name gate
+      expect(result.length).toBe(120);
     });
 
     it("returns pairs sorted by score descending", async () => {
