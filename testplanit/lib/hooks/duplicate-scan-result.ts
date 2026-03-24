@@ -328,7 +328,7 @@ export function useSuspenseCountDuplicateScanResult<TArgs extends Prisma.Duplica
 }
 import type { DuplicateScanResultStatus } from '@prisma/client';
 
-export function useCheckDuplicateScanResult<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; caseAId?: number; caseBId?: number; matchedFields?: string; status?: DuplicateScanResultStatus; scanJobId?: string; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckDuplicateScanResult<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; caseAId?: number; caseBId?: number; matchedFields?: string; detectionMethod?: string; status?: DuplicateScanResultStatus; scanJobId?: string; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('DuplicateScanResult', `${endpoint}/duplicateScanResult/check`, args, options, fetch);
 }

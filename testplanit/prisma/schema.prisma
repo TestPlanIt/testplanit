@@ -930,19 +930,20 @@ model RepositoryCaseLink {
 }
 
 model DuplicateScanResult {
-  id            Int                       @id() @default(autoincrement())
-  projectId     Int
-  project       Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  caseAId       Int
-  caseA         RepositoryCases           @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
-  caseBId       Int
-  caseB         RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
-  score         Float
-  matchedFields String[]
-  status        DuplicateScanResultStatus @default(PENDING)
-  scanJobId     String?
-  isDeleted     Boolean                   @default(false)
-  createdAt     DateTime                  @default(now()) @db.Timestamptz(6)
+  id              Int                       @id() @default(autoincrement())
+  projectId       Int
+  project         Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  caseAId         Int
+  caseA           RepositoryCases           @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
+  caseBId         Int
+  caseB           RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
+  score           Float
+  matchedFields   String[]
+  detectionMethod String                    @default("fuzzy")
+  status          DuplicateScanResultStatus @default(PENDING)
+  scanJobId       String?
+  isDeleted       Boolean                   @default(false)
+  createdAt       DateTime                  @default(now()) @db.Timestamptz(6)
 
   @@unique([caseAId, caseBId, scanJobId])
   @@index([projectId, status, isDeleted])

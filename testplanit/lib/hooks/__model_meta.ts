@@ -2964,6 +2964,10 @@ const metadata: ModelMeta = {
                     name: "matchedFields",
                     type: "String",
                     isArray: true,
+                }, detectionMethod: {
+                    name: "detectionMethod",
+                    type: "String",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": "fuzzy" }] }],
                 }, status: {
                     name: "status",
                     type: "DuplicateScanResultStatus",

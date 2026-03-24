@@ -1223,6 +1223,7 @@
           "caseBId",
           "score",
           "matchedFields",
+          "detectionMethod",
           "status",
           "scanJobId",
           "isDeleted",
@@ -5059,6 +5060,9 @@
               "type": "string"
             }
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -5090,6 +5094,7 @@
           "caseB",
           "score",
           "matchedFields",
+          "detectionMethod",
           "status",
           "isDeleted",
           "createdAt"
@@ -27911,6 +27916,16 @@
           "matchedFields": {
             "$ref": "#/components/schemas/StringNullableListFilter"
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -28006,6 +28021,9 @@
             "$ref": "#/components/schemas/SortOrder"
           },
           "matchedFields": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "detectionMethod": {
             "$ref": "#/components/schemas/SortOrder"
           },
           "status": {
@@ -28121,6 +28139,16 @@
           },
           "matchedFields": {
             "$ref": "#/components/schemas/StringNullableListFilter"
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "status": {
             "oneOf": [
@@ -28285,6 +28313,16 @@
           },
           "matchedFields": {
             "$ref": "#/components/schemas/StringNullableListFilter"
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "status": {
             "oneOf": [
@@ -71187,6 +71225,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -71247,6 +71288,16 @@
                 "items": {
                   "type": "string"
                 }
+              }
+            ]
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
               }
             ]
           },
@@ -71336,6 +71387,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -71387,6 +71441,16 @@
                 "items": {
                   "type": "string"
                 }
+              }
+            ]
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
               }
             ]
           },
@@ -228701,6 +228765,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -228761,6 +228828,9 @@
                 }
               }
             ]
+          },
+          "detectionMethod": {
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
@@ -234741,6 +234811,16 @@
           },
           "matchedFields": {
             "$ref": "#/components/schemas/StringNullableListFilter"
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "status": {
             "oneOf": [
@@ -282982,6 +283062,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -283042,6 +283125,9 @@
                 }
               }
             ]
+          },
+          "detectionMethod": {
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
@@ -283135,6 +283221,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -283195,6 +283284,9 @@
                 }
               }
             ]
+          },
+          "detectionMethod": {
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
@@ -417756,6 +417848,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -427182,6 +427277,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -427290,6 +427395,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -427389,6 +427504,16 @@
                 "items": {
                   "type": "string"
                 }
+              }
+            ]
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
               }
             ]
           },
@@ -448781,6 +448906,9 @@
               }
             ]
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -448835,6 +448963,9 @@
                 }
               }
             ]
+          },
+          "detectionMethod": {
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
@@ -453340,6 +453471,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -453448,6 +453589,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -453550,6 +453701,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -453619,6 +453780,16 @@
                 "items": {
                   "type": "string"
                 }
+              }
+            ]
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
               }
             ]
           },
@@ -453730,6 +453901,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -453829,6 +454010,16 @@
                 "items": {
                   "type": "string"
                 }
+              }
+            ]
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
               }
             ]
           },
@@ -490000,6 +490191,9 @@
           "matchedFields": {
             "type": "boolean"
           },
+          "detectionMethod": {
+            "type": "boolean"
+          },
           "status": {
             "type": "boolean"
           },
@@ -498577,6 +498771,9 @@
           "matchedFields": {
             "type": "boolean"
           },
+          "detectionMethod": {
+            "type": "boolean"
+          },
           "status": {
             "type": "boolean"
           },
@@ -498652,6 +498849,9 @@
           "score": {
             "type": "boolean"
           },
+          "detectionMethod": {
+            "type": "boolean"
+          },
           "status": {
             "type": "boolean"
           },
@@ -498682,6 +498882,9 @@
             "type": "boolean"
           },
           "score": {
+            "type": "boolean"
+          },
+          "detectionMethod": {
             "type": "boolean"
           },
           "status": {
@@ -513337,6 +513540,9 @@
               ]
             }
           },
+          "detectionMethod": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/DuplicateScanResultStatus"
           },
@@ -513414,6 +513620,7 @@
           "caseAId",
           "caseBId",
           "score",
+          "detectionMethod",
           "status",
           "isDeleted",
           "createdAt"
@@ -532835,6 +533042,9 @@
           "matchedFields": {
             "type": "integer"
           },
+          "detectionMethod": {
+            "type": "integer"
+          },
           "status": {
             "type": "integer"
           },
@@ -532858,6 +533068,7 @@
           "caseBId",
           "score",
           "matchedFields",
+          "detectionMethod",
           "status",
           "scanJobId",
           "isDeleted",
@@ -533028,6 +533239,16 @@
               }
             ]
           },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -533121,6 +533342,16 @@
               },
               {
                 "type": "number"
+              }
+            ]
+          },
+          "detectionMethod": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },

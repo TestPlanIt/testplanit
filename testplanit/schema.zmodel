@@ -1238,8 +1238,9 @@ model DuplicateScanResult {
     caseBId       Int
     caseB         RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
     score         Float
-    matchedFields String[]
-    status        DuplicateScanResultStatus @default(PENDING)
+    matchedFields   String[]
+    detectionMethod String                    @default("fuzzy")
+    status          DuplicateScanResultStatus @default(PENDING)
     scanJobId     String?
     isDeleted     Boolean                   @default(false)
     createdAt     DateTime                  @default(now()) @db.Timestamptz(6)
