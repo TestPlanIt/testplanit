@@ -20,11 +20,14 @@ import {
 import { NextRequest } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { auditBulkCreate } from "~/lib/services/auditLog";
+import { DuplicateScanService } from "~/lib/services/duplicateScanService";
+import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import {
   countTotalTestCases, detectFormat, extractClassName, FORMAT_TO_RUN_TYPE,
   FORMAT_TO_SOURCE, getExtendedDataKey, isValidFormat, normalizeStatus, parseExtendedTestCaseData, parseTestResults, TestResultFormat, TEST_RESULT_FORMATS, type ExtendedTestCaseDataMap
 } from "~/lib/services/testResultsParser";
 import { getServerAuthSession } from "~/server/auth";
+import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { progressMessages } from "./progress-messages";
 
 // Helper function to find matching status
@@ -917,18 +920,62 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Advisory duplicate warnings — never blocks import
+        let duplicateWarnings: Array<{ caseName: string; className: string | null; similarTo: Array<{ id: number; name: string; confidence: string }> }> = [];
+        try {
+          const esClient = getElasticsearchClient();
+          if (esClient && result) {
+            const scanService = new DuplicateScanService(prisma, esClient);
+            const tenantId = getCurrentTenantId();
+
+            // Collect unique case names from the import (limit 50)
+            const caseNames = new Set<string>();
+            const caseNameToClassName = new Map<string, string | null>();
+            for (const suite of result.suites || []) {
+              for (const tc of suite.cases || []) {
+                if (caseNames.size >= 50) break;
+                caseNames.add(tc.name);
+                caseNameToClassName.set(tc.name, extractClassName(tc, suite));
+              }
+            }
+
+            for (const name of caseNames) {
+              const similar = await scanService.findSimilarCases({ name }, projectId, tenantId);
+              if (similar.length > 0) {
+                const caseIds = similar.slice(0, 3).map(s => s.caseAId === 0 ? s.caseBId : s.caseAId);
+                const cases = await prisma.repositoryCases.findMany({ where: { id: { in: caseIds } }, select: { id: true, name: true } });
+                duplicateWarnings.push({
+                  caseName: name,
+                  className: caseNameToClassName.get(name) || null,
+                  similarTo: similar.slice(0, 3).map(s => {
+                    const caseId = s.caseAId === 0 ? s.caseBId : s.caseAId;
+                    const found = cases.find(c => c.id === caseId);
+                    return { id: caseId, name: found?.name || `Case #${caseId}`, confidence: s.confidence };
+                  }),
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Duplicate check during test-results import failed (non-blocking):", e);
+        }
+
         sendProgress(100, progressMessages.completed);
 
-        // Include attachment mappings in response for CLI to upload files
+        // Include attachment mappings and duplicate warnings in response for CLI
         const responseData: {
           complete: true;
           testRunId: number;
           attachmentMappings?: typeof attachmentMappings;
+          duplicateWarnings?: typeof duplicateWarnings;
         } = { complete: true, testRunId };
 
         // Only include mappings if there are attachments to upload
         if (attachmentMappings.length > 0) {
           responseData.attachmentMappings = attachmentMappings;
+        }
+        if (duplicateWarnings.length > 0) {
+          responseData.duplicateWarnings = duplicateWarnings;
         }
 
         controller.enqueue(

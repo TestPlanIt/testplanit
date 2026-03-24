@@ -10,10 +10,13 @@ import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { prisma } from "~/lib/prisma";
 import { auditBulkCreate } from "~/lib/services/auditLog";
+import { DuplicateScanService } from "~/lib/services/duplicateScanService";
+import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 function parseTags(value: any): string[] {
@@ -874,8 +877,46 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Send completion
-        sendComplete(importedCount, errors);
+        // Advisory duplicate warnings — never blocks import
+        let duplicateWarnings: Array<{ caseName: string; similarTo: Array<{ id: number; name: string; confidence: string }> }> = [];
+        try {
+          const esClient = getElasticsearchClient();
+          if (esClient) {
+            const scanService = new DuplicateScanService(prisma, esClient);
+            const tenantId = getCurrentTenantId();
+
+            // Check each imported case name (limit to first 50 for performance)
+            const casesToCheck = casesToImport.slice(0, 50);
+            for (const caseData of casesToCheck) {
+              const similar = await scanService.findSimilarCases(
+                { name: caseData.name },
+                body.projectId,
+                tenantId,
+              );
+              if (similar.length > 0) {
+                // Look up case names for top 3 matches
+                const caseIds = similar.slice(0, 3).map(s => s.caseAId === 0 ? s.caseBId : s.caseAId);
+                const cases = await prisma.repositoryCases.findMany({ where: { id: { in: caseIds } }, select: { id: true, name: true } });
+                duplicateWarnings.push({
+                  caseName: caseData.name,
+                  similarTo: similar.slice(0, 3).map(s => {
+                    const caseId = s.caseAId === 0 ? s.caseBId : s.caseAId;
+                    const found = cases.find(c => c.id === caseId);
+                    return { id: caseId, name: found?.name || `Case #${caseId}`, confidence: s.confidence };
+                  }),
+                });
+              }
+            }
+          }
+        } catch (e) {
+          // Silently ignore — duplicate check is advisory
+          console.warn("Duplicate check during import failed (non-blocking):", e);
+        }
+
+        // Send completion (with advisory duplicate warnings)
+        const completeData = { complete: true as const, importedCount, errors, duplicateWarnings };
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(completeData)}\n\n`));
+        controller.close();
       } catch (error) {
         sendError(error instanceof Error ? error.message : "Import failed");
       }
