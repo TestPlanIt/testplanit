@@ -1,5 +1,8 @@
 "use client";
 
+import { DateFormatter } from "@/components/DateFormatter";
+import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
+import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import TextFromJson from "@/components/TextFromJson";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,9 +28,10 @@ interface CaseDetails {
   folder: { id: number; name: string } | null;
   steps: { id: number; step: string; expectedResult: string | null; order: number }[];
   tags: { id: number; name: string }[];
-  caseFieldValues: { id: number; value: string; field: { id: number; displayName: string } }[];
+  caseFieldValues: { id: number; value: string; field: { id: number; displayName: string; fieldType?: string } }[];
   _count: { attachments: number };
   testRuns: { id: number; status: { id: number; name: string }; createdAt: string; testRun: { name: string } }[];
+  projectId?: number;
 }
 
 interface CaseDetailsResponse {
@@ -54,134 +59,143 @@ function CasePanel({
   caseDetails,
   isSelected,
   onSelect,
+  projectId,
   t,
   tCommon,
-  tRepo,
 }: {
   caseDetails: CaseDetails;
   isSelected: boolean;
   onSelect: () => void;
+  projectId: number;
   t: ReturnType<typeof useTranslations<"repository.duplicates">>;
   tCommon: ReturnType<typeof useTranslations<"common">>;
   tRepo: ReturnType<typeof useTranslations<"repository">>;
 }) {
   const lastRun = caseDetails.testRuns?.[0];
 
+  // Map field values to CustomFieldDisplay format
+  const customFields = caseDetails.caseFieldValues.map((fv) => ({
+    fieldId: fv.field.id,
+    fieldName: fv.field.displayName,
+    fieldType: fv.field.fieldType ?? "Text String",
+    value: fv.value,
+  }));
+
   return (
-    <div
-      className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-        isSelected
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-primary/50"
-      }`}
-      onClick={onSelect}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onSelect();
-      }}
-    >
-      {isSelected && (
-        <div className="mb-2">
+    <div className="flex flex-col gap-2">
+      {/* Primary badge outside the card */}
+      <div className="h-6">
+        {isSelected && (
           <Badge variant="default" className="text-xs">
             {t("selectedAsPrimary")}
           </Badge>
-        </div>
-      )}
+        )}
+      </div>
 
-      <h3 className="font-bold text-base mb-3 break-words">{caseDetails.name}</h3>
+      {/* Case card */}
+      <div
+        className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+          isSelected
+            ? "border-primary bg-primary/5"
+            : "border-border hover:border-primary/50"
+        }`}
+        onClick={onSelect}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onSelect();
+        }}
+      >
+        <h3 className="font-bold text-base mb-3 break-words">{caseDetails.name}</h3>
 
-      {/* Source + Folder */}
-      <div className="space-y-1 mb-3 text-sm">
-        {caseDetails.source && (
+        {/* Source + Folder + Created */}
+        <div className="space-y-1 mb-3 text-sm">
+          {caseDetails.source && (
+            <div>
+              <span className="font-medium text-muted-foreground">{t("sourceLabel")}{": "}</span>
+              <span>{caseDetails.source}</span>
+            </div>
+          )}
           <div>
-            <span className="font-medium text-muted-foreground">{t("sourceLabel")}: </span>
-            <span>{caseDetails.source}</span>
+            <span className="font-medium text-muted-foreground">{tCommon("fields.folder")}{": "}</span>
+            <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
           </div>
-        )}
-        <div>
-          <span className="font-medium text-muted-foreground">{tCommon("fields.folder")}: </span>
-          <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
-        </div>
-        <div>
-          <span className="font-medium text-muted-foreground">{tCommon("fields.created")}: </span>
-          <span>{new Date(caseDetails.createdAt).toLocaleDateString()}</span>
-        </div>
-      </div>
-
-
-      {/* Steps */}
-      <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.steps")}</p>
-        {caseDetails.steps.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">{tRepo("fields.noSteps")}</p>
-        ) : (
-          <ol className="list-decimal list-inside space-y-1 text-sm max-h-32 overflow-y-auto">
-            {caseDetails.steps.map((step, i) => (
-              <li key={step.id ?? i}>
-                <span>
-                  {step.expectedResult
-                    ? t("stepExpectedResult", { step: step.step, result: step.expectedResult })
-                    : step.step}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
-
-      {/* Tags */}
-      <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.tags")}</p>
-        {caseDetails.tags.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">{tRepo("views.noTags")}</p>
-        ) : (
-          <div className="flex flex-wrap gap-1">
-            {caseDetails.tags.map((tag) => (
-              <Badge key={tag.id} variant="secondary" className="text-xs">
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Field Values */}
-      <div className="mb-3">
-        <p className="font-medium text-muted-foreground text-sm mb-1">{t("fieldValuesLabel")}</p>
-        {caseDetails.caseFieldValues.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">{t("noFieldValues")}</p>
-        ) : (
-          <div className="space-y-1 text-sm">
-            {caseDetails.caseFieldValues.map((fv) => (
-              <div key={fv.id}>
-                <span className="font-medium">{fv.field.displayName}: </span>
-                <span className="text-muted-foreground">{fv.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Attachments */}
-      <div className="mb-3 text-sm">
-        <span className="font-medium text-muted-foreground">{tCommon("fields.attachments")}: </span>
-        <span>{caseDetails._count.attachments}</span>
-      </div>
-
-      {/* Last Run */}
-      <div className="text-sm">
-        <p className="font-medium text-muted-foreground mb-1">{t("lastRunLabel")}</p>
-        {lastRun ? (
           <div>
-            <span className="font-medium">{lastRun.testRun.name}</span>
-            <span className="text-muted-foreground ml-2">
-              {t("runStatusDate", { status: lastRun.status.name, date: new Date(lastRun.createdAt).toLocaleDateString() })}
-            </span>
+            <span className="font-medium text-muted-foreground">{tCommon("fields.created")}{": "}</span>
+            <DateFormatter dateString={caseDetails.createdAt} />
           </div>
-        ) : (
-          <p className="text-muted-foreground italic">{t("noLastRun")}</p>
-        )}
+        </div>
+
+        {/* Steps */}
+        <div className="mb-3">
+          <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.steps")}</p>
+          {caseDetails.steps.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">{tRepo("fields.noSteps")}</p>
+          ) : (
+            <div className="max-h-48 overflow-y-auto space-y-2">
+              {caseDetails.steps.map((step, i) => (
+                <div key={step.id ?? i} className="text-sm border-l-2 border-muted pl-2">
+                  <div className="font-medium">
+                    {`${i + 1}. `}
+                    <TextFromJson
+                      jsonString={step.step}
+                      room={`compare-step-${caseDetails.id}-${step.id}`}
+                    />
+                  </div>
+                  {step.expectedResult && (
+                    <div className="text-muted-foreground text-xs mt-0.5">
+                      <TextFromJson
+                        jsonString={step.expectedResult}
+                        room={`compare-er-${caseDetails.id}-${step.id}`}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tags */}
+        <div className="mb-3">
+          <p className="font-medium text-muted-foreground text-sm mb-1">{tCommon("fields.tags")}</p>
+          {caseDetails.tags.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">{tRepo("views.noTags")}</p>
+          ) : (
+            <TagsListDisplay tags={caseDetails.tags} projectId={projectId} />
+          )}
+        </div>
+
+        {/* Field Values */}
+        <div className="mb-3">
+          <p className="font-medium text-muted-foreground text-sm mb-1">{t("fieldValuesLabel")}</p>
+          {customFields.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">{t("noFieldValues")}</p>
+          ) : (
+            <CustomFieldDisplay customFields={customFields} maxItems={10} />
+          )}
+        </div>
+
+        {/* Attachments */}
+        <div className="mb-3 text-sm">
+          <span className="font-medium text-muted-foreground">{tCommon("fields.attachments")}{": "}</span>
+          <span>{caseDetails._count.attachments}</span>
+        </div>
+
+        {/* Last Run */}
+        <div className="text-sm">
+          <p className="font-medium text-muted-foreground mb-1">{t("lastRunLabel")}</p>
+          {lastRun ? (
+            <div>
+              <span className="font-medium">{lastRun.testRun.name}</span>
+              <span className="text-muted-foreground ml-2">
+                {t("runStatusDate", { status: lastRun.status.name, date: new Date(lastRun.createdAt).toLocaleDateString() })}
+              </span>
+            </div>
+          ) : (
+            <p className="text-muted-foreground italic">{t("noLastRun")}</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -327,6 +341,7 @@ export function DuplicateComparisonDialog({
                   caseDetails={data.caseA}
                   isSelected={primaryId === data.caseA.id}
                   onSelect={() => setPrimaryId(data.caseA.id)}
+                  projectId={pair!.projectId}
                   t={t}
                   tCommon={tCommon}
                   tRepo={tRepo}
@@ -335,6 +350,7 @@ export function DuplicateComparisonDialog({
                   caseDetails={data.caseB}
                   isSelected={primaryId === data.caseB.id}
                   onSelect={() => setPrimaryId(data.caseB.id)}
+                  projectId={pair!.projectId}
                   t={t}
                   tCommon={tCommon}
                   tRepo={tRepo}
