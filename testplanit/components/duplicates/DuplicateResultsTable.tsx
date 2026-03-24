@@ -37,6 +37,7 @@ export function DuplicateResultsTable({
   projectId,
 }: DuplicateResultsTableProps) {
   const t = useTranslations("repository.duplicates");
+  const tPriority = useTranslations("common.priority");
   const queryClient = useQueryClient();
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -74,7 +75,7 @@ export function DuplicateResultsTable({
     setCurrentPage(1);
   }, []);
 
-  const columns = useMemo(() => getColumns(t), [t]);
+  const columns = useMemo(() => getColumns(t, tPriority), [t, tPriority]);
 
   const { data: allItems, isLoading } = useQuery<DuplicateCandidate[]>({
     queryKey: ["duplicate-scan-candidates", projectId],

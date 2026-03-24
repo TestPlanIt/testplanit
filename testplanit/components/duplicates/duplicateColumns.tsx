@@ -22,25 +22,26 @@ export interface DuplicateCandidateRow {
 
 function ConfidenceBadge({
   score,
-  t,
+  tPriority,
 }: {
   score: number;
-  t: ReturnType<typeof useTranslations<"repository.duplicates">>;
+  tPriority: ReturnType<typeof useTranslations<"common.priority">>;
 }) {
   const confidence: ConfidenceBucket | null = scoreToConfidence(score);
   if (!confidence) return null;
 
   if (confidence === "HIGH") {
-    return <Badge variant="destructive">{t("confidenceHigh")}</Badge>;
+    return <Badge variant="destructive">{tPriority("high")}</Badge>;
   }
   if (confidence === "MEDIUM") {
-    return <Badge variant="default">{t("confidenceMedium")}</Badge>;
+    return <Badge variant="default">{tPriority("medium")}</Badge>;
   }
-  return <Badge variant="secondary">{t("confidenceLow")}</Badge>;
+  return <Badge variant="secondary">{tPriority("low")}</Badge>;
 }
 
 export const getColumns = (
-  t: ReturnType<typeof useTranslations<"repository.duplicates">>
+  t: ReturnType<typeof useTranslations<"repository.duplicates">>,
+  tPriority: ReturnType<typeof useTranslations<"common.priority">>
 ): ColumnDef<DuplicateCandidateRow>[] => [
   {
     id: "confidence",
@@ -49,7 +50,7 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 120,
-    cell: ({ row }) => <ConfidenceBadge score={row.original.score} t={t} />,
+    cell: ({ row }) => <ConfidenceBadge score={row.original.score} tPriority={tPriority} />,
   },
   {
     id: "caseA",
