@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ScanSearch } from "lucide-react";
+import { Loader2, ScanSearch, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
@@ -135,6 +135,16 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
 
   const isAiPhase = (statusData?.progress as any)?.phase === "ai";
 
+  const handleCancel = async () => {
+    if (!scanJobId) return;
+    try {
+      await fetch(`/api/duplicate-scan/cancel/${scanJobId}`, { method: "POST" });
+    } catch { /* ignore */ }
+    sessionStorage.removeItem(storageKey);
+    setScanState("idle");
+    setScanJobId(null);
+  };
+
   if (scanState === "active") {
     return (
       <div data-testid="scan-progress" className="flex items-center gap-2">
@@ -153,6 +163,13 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
             </span>
           </>
         )}
+        <button
+          onClick={handleCancel}
+          className="text-muted-foreground hover:text-foreground"
+          title={t("cancelScan")}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
     );
   }
