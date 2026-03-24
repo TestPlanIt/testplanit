@@ -92,72 +92,6 @@ export function DuplicateResultsTable({
     []
   );
 
-  const handleCheckboxClick = useCallback(
-    (rowIndex: number, event: React.MouseEvent) => {
-      if (event.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== rowIndex) {
-        const start = Math.min(lastSelectedIndex, rowIndex);
-        const end = Math.max(lastSelectedIndex, rowIndex);
-        const rangeSelection: RowSelectionState = { ...rowSelection };
-        for (let i = start; i <= end; i++) {
-          rangeSelection[i.toString()] = true;
-        }
-        setRowSelection(rangeSelection);
-      } else {
-        const newSelection = { ...rowSelection };
-        newSelection[rowIndex.toString()] = !newSelection[rowIndex.toString()];
-        setRowSelection(newSelection);
-        if (!rowSelection[rowIndex.toString()]) {
-          setLastSelectedIndex(rowIndex);
-        }
-      }
-    },
-    [lastSelectedIndex, rowSelection]
-  );
-
-  const handleSelectAllClick = useCallback(
-    (event: React.MouseEvent) => {
-      if (event.shiftKey) {
-        // Shift+click: select/deselect ALL items across all pages
-        const allIndices = Array.from({ length: sortedItems.length }, (_, i) => i);
-        const allSelected = allIndices.every((i) => rowSelection[i.toString()]);
-
-        if (allSelected) {
-          setRowSelection({});
-        } else {
-          const allSelection: RowSelectionState = {};
-          for (let i = 0; i < sortedItems.length; i++) {
-            allSelection[i.toString()] = true;
-          }
-          setRowSelection(allSelection);
-        }
-      } else {
-        // Regular click: toggle current page only
-        const pageIndices = Array.from({ length: pageItems.length }, (_, i) => i);
-        const allPageSelected = pageIndices.every((i) => rowSelection[i.toString()]);
-
-        if (allPageSelected) {
-          const newSelection = { ...rowSelection };
-          pageIndices.forEach((i) => {
-            delete newSelection[i.toString()];
-          });
-          setRowSelection(newSelection);
-        } else {
-          const newSelection = { ...rowSelection };
-          pageIndices.forEach((i) => {
-            newSelection[i.toString()] = true;
-          });
-          setRowSelection(newSelection);
-        }
-      }
-    },
-    [sortedItems.length, pageItems.length, rowSelection]
-  );
-
-  const columns = useMemo(
-    () => getColumns(t, tPriority, handleCheckboxClick, handleSelectAllClick),
-    [t, tPriority, handleCheckboxClick, handleSelectAllClick]
-  );
-
   const { data: allItems, isLoading } = useQuery<DuplicateCandidate[]>({
     queryKey: ["duplicate-scan-candidates", projectId],
     queryFn: async () => {
@@ -240,6 +174,66 @@ export function DuplicateResultsTable({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
   const pageItems = sortedItems.slice(startIndex, endIndex);
+
+  const handleCheckboxClick = useCallback(
+    (rowIndex: number, event: React.MouseEvent) => {
+      if (event.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== rowIndex) {
+        const start = Math.min(lastSelectedIndex, rowIndex);
+        const end = Math.max(lastSelectedIndex, rowIndex);
+        const rangeSelection: RowSelectionState = { ...rowSelection };
+        for (let i = start; i <= end; i++) {
+          rangeSelection[i.toString()] = true;
+        }
+        setRowSelection(rangeSelection);
+      } else {
+        const newSelection = { ...rowSelection };
+        newSelection[rowIndex.toString()] = !newSelection[rowIndex.toString()];
+        setRowSelection(newSelection);
+        if (!rowSelection[rowIndex.toString()]) {
+          setLastSelectedIndex(rowIndex);
+        }
+      }
+    },
+    [lastSelectedIndex, rowSelection]
+  );
+
+  const handleSelectAllClick = useCallback(
+    (event: React.MouseEvent) => {
+      if (event.shiftKey) {
+        const allSelected = sortedItems.every((_, i) => rowSelection[i.toString()]);
+        if (allSelected) {
+          setRowSelection({});
+        } else {
+          const allSelection: RowSelectionState = {};
+          for (let i = 0; i < sortedItems.length; i++) {
+            allSelection[i.toString()] = true;
+          }
+          setRowSelection(allSelection);
+        }
+      } else {
+        const allPageSelected = pageItems.every((_, i) => rowSelection[i.toString()]);
+        if (allPageSelected) {
+          const newSelection = { ...rowSelection };
+          pageItems.forEach((_, i) => {
+            delete newSelection[i.toString()];
+          });
+          setRowSelection(newSelection);
+        } else {
+          const newSelection = { ...rowSelection };
+          pageItems.forEach((_, i) => {
+            newSelection[i.toString()] = true;
+          });
+          setRowSelection(newSelection);
+        }
+      }
+    },
+    [sortedItems, pageItems, rowSelection]
+  );
+
+  const columns = useMemo(
+    () => getColumns(t, tPriority, handleCheckboxClick, handleSelectAllClick),
+    [t, tPriority, handleCheckboxClick, handleSelectAllClick]
+  );
 
   const handleRowClick = useCallback((id: number | string) => {
     const row = sortedItems.find((item) => item.id === id);
