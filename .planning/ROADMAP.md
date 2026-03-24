@@ -94,7 +94,11 @@ Plans:
   2. During CSV or test-result import, each row that resembles an existing case shows a per-row advisory warning in the import preview
   3. An import with duplicate warnings completes fully — no rows are skipped or blocked due to similarity
   4. CLI imports print duplicate warnings to output but exit with success (not an error code)
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 50-01-PLAN.md — Check-new API endpoint + post-save duplicate warning toast in AddCase
+- [ ] 50-02-PLAN.md — Import preview duplicate warnings + import route SSE warnings
 
 ### Phase 51: LLM Semantic Tier
 **Goal**: Projects with a configured LLM integration can optionally run semantic analysis on candidate pairs to reduce false positives
@@ -126,7 +130,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
-| 49. Resolution Engine | 3/3 | Complete   | 2026-03-23 | - |
-| 50. Creation-Time and Import Warnings | v0.19.0 | 0/TBD | Not started | - |
+| 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
+| 50. Creation-Time and Import Warnings | v0.19.0 | 0/2 | Not started | - |
 | 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
