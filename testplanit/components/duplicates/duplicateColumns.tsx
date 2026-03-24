@@ -108,7 +108,10 @@ export const getColumns = (
     enableResizing: true,
     size: 300,
     cell: ({ row, column }) => (
-      <div className="truncate whitespace-nowrap overflow-hidden" style={{ maxWidth: column.getSize() }}>
+      <div
+        className="overflow-hidden min-w-0 [&_*]:min-w-0 [&_span]:truncate [&_span]:whitespace-nowrap [&_span]:overflow-hidden [&_span]:block"
+        style={{ maxWidth: column.getSize() }}
+      >
         <CaseDisplay
           id={row.original.caseAId}
           name={row.original.caseAName}
@@ -127,7 +130,10 @@ export const getColumns = (
     enableResizing: true,
     size: 300,
     cell: ({ row, column }) => (
-      <div className="truncate whitespace-nowrap overflow-hidden" style={{ maxWidth: column.getSize() }}>
+      <div
+        className="overflow-hidden min-w-0 [&_*]:min-w-0 [&_span]:truncate [&_span]:whitespace-nowrap [&_span]:overflow-hidden [&_span]:block"
+        style={{ maxWidth: column.getSize() }}
+      >
         <CaseDisplay
           id={row.original.caseBId}
           name={row.original.caseBName}
