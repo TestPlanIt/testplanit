@@ -75,14 +75,23 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
 
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["duplicate-scan-status", scanJobId],
-    queryFn: () =>
-      fetch(`/api/duplicate-scan/status/${scanJobId}`).then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch(`/api/duplicate-scan/status/${scanJobId}`);
+      if (!r.ok) return { state: "unknown" };
+      return r.json();
+    },
     enabled: !!scanJobId && scanState === "active",
     refetchInterval: 2500,
   });
 
   useEffect(() => {
     if (!statusData) return;
+    if (!statusData.state || statusData.state === "unknown") {
+      // Job disappeared (obliterated/expired)
+      setScanState("idle");
+      sessionStorage.removeItem(storageKey);
+      return;
+    }
     if (statusData.state === "completed") {
       setScanState("complete");
       sessionStorage.removeItem(storageKey);

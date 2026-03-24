@@ -37,7 +37,23 @@ export default function DuplicatesPage() {
           const statusRes = await fetch(
             `/api/duplicate-scan/status/${jobId}`
           );
+          if (!statusRes.ok) {
+            // Job no longer exists (obliterated/expired)
+            sessionStorage.removeItem(storageKey);
+            setIsScanning(false);
+            setScanProgress(null);
+            pollingRef.current = false;
+            return;
+          }
           const status = await statusRes.json();
+          if (!status.state || status.state === "unknown") {
+            // Job disappeared
+            sessionStorage.removeItem(storageKey);
+            setIsScanning(false);
+            setScanProgress(null);
+            pollingRef.current = false;
+            return;
+          }
           if (status.progress) {
             setScanProgress(status.progress);
           }
