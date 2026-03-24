@@ -2,6 +2,7 @@
 
 import { DateFormatter } from "@/components/DateFormatter";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { UserDisplay } from "@/components/search/UserDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface CaseDetails {
   createdAt: string;
   source: string | null;
   automated: boolean;
+  creator: { id: string; name: string | null; image: string | null } | null;
   folder: { id: number; name: string } | null;
   steps: {
     id: number;
@@ -198,6 +200,17 @@ function CasePanel({
               timezone={prefs?.timezone}
             />
           </div>
+          {caseDetails.creator && (
+            <div>
+              <UserDisplay
+                userId={caseDetails.creator.id}
+                userName={caseDetails.creator.name ?? undefined}
+                userImage={caseDetails.creator.image}
+                prefix={tCommon("fields.createdBy")}
+                size="small"
+              />
+            </div>
+          )}
         </div>
 
         {/* Tags */}

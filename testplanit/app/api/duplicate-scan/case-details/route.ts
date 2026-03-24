@@ -18,6 +18,7 @@ async function fetchCaseDetails(caseId: number) {
       createdAt: true,
       source: true,
       automated: true,
+      creator: { select: { id: true, name: true, image: true } },
       folder: { select: { id: true, name: true } },
       steps: {
         where: { isDeleted: false },
