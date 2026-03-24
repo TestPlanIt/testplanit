@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.17
 milestone_name: milestone
 status: executing
-stopped_at: "Checkpoint: 49-03-PLAN.md Task 3 awaiting human verification"
-last_updated: "2026-03-23T23:10:15.601Z"
+stopped_at: Completed 50-01-PLAN.md
+last_updated: "2026-03-24T13:01:36.073Z"
 last_activity: 2026-03-23 — Completed 47-03 DuplicateScanService
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
   percent: 67
 ---
 
@@ -55,6 +55,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 | Phase 48 P02 | 8 | 2 tasks | 4 files |
 | Phase 49 P01 | 5m | 1 tasks | 2 files |
 | Phase 49-resolution-engine P02 | 5m | 2 tasks | 2 files |
+| Phase 50-creation-time-and-import-warnings P01 | 4 | 2 tasks | 3 files |
 
 ### Decisions
 
@@ -81,6 +82,9 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 49]: Steps model uses step (Json) field not title; CaseFieldValues relation is field not caseField with displayName not name
 - [Phase 49-resolution-engine]: onTestCaseClick DataTable prop used for row click in DuplicateResultsTable — avoids modifying duplicateColumns.tsx
 - [Phase 49-resolution-engine]: Merge button disabled until survivor explicitly selected — prevents accidental destructive merge
+- [Phase 50]: getCurrentTenantId() used for tenantId in check-new route — Projects model has no tenant relation
+- [Phase 50]: caseAId=0 convention for new cases — DuplicateScanService sets caseAId=Math.min(0, candidate.id) when sourceId is null
+- [Phase 50]: View action link only shown for single match in duplicate warning toast — multiple matches show count only
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:10:11.598Z
-Stopped at: Checkpoint: 49-03-PLAN.md Task 3 awaiting human verification
+Last session: 2026-03-24T13:01:36.071Z
+Stopped at: Completed 50-01-PLAN.md
 Resume file: None
