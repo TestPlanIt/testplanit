@@ -15,6 +15,7 @@ import {
 import TextFromJson from "@/components/TextFromJson";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -72,6 +73,11 @@ function CasePanel({
   tCommon: ReturnType<typeof useTranslations<"common">>;
   tRepo: ReturnType<typeof useTranslations<"repository">>;
 }) {
+  const { data: session } = useSession();
+  const prefs = session?.user.preferences;
+  const dateTimeFormat = prefs?.dateFormat && prefs?.timeFormat
+    ? `${prefs.dateFormat} ${prefs.timeFormat}`
+    : prefs?.dateFormat;
   const lastRun = caseDetails.testRuns?.[0];
 
   // Map field values to CustomFieldDisplay format
@@ -123,7 +129,7 @@ function CasePanel({
           </div>
           <div>
             <span className="font-medium text-muted-foreground">{tCommon("fields.created")}{": "}</span>
-            <DateFormatter date={caseDetails.createdAt} formatString="MM-dd-yyyy HH:mm" />
+            <DateFormatter date={caseDetails.createdAt} formatString={dateTimeFormat} timezone={prefs?.timezone} />
           </div>
         </div>
 
