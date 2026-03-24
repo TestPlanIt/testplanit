@@ -108,7 +108,7 @@ Plans:
   1. When a project has an LLM integration configured, the scan worker runs a semantic analysis pass on pairs that pass the fuzzy gate
   2. LLM analysis batches multiple pairs per call and respects a configurable maximum pairs cap per scan
   3. When no LLM integration is configured, the scan completes using fuzzy scoring only — no error or degraded behavior
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 
@@ -138,5 +138,5 @@ Plans:
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
 | 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Creation-Time and Import Warnings | 2/2 | Complete    | 2026-03-24 | - |
-| 51. LLM Semantic Tier | 1/3 | In Progress|  | - |
+| 51. LLM Semantic Tier | 2/3 | In Progress|  | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
