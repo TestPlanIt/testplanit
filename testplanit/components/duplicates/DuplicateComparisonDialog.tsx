@@ -42,7 +42,7 @@ interface CaseDetails {
     field: {
       id: number;
       displayName: string;
-      type?: { name: string };
+      type?: { type: string };
       fieldOptions?: Array<{
         id: number;
         name: string;
@@ -111,7 +111,7 @@ function CasePanel({
 
   // Map field values to CustomFieldDisplay format
   const customFields = caseDetails.caseFieldValues.map((fv) => {
-    const fieldType = fv.field.type?.name ?? "Text String";
+    const fieldType = fv.field.type?.type ?? "Text String";
     const value = fv.value;
 
     // For dropdown/multi-select, match the selected option(s) from fieldOptions

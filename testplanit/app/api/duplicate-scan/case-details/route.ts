@@ -33,7 +33,7 @@ async function fetchCaseDetails(caseId: number) {
             select: {
               id: true,
               displayName: true,
-              type: { select: { name: true } },
+              type: { select: { type: true } },
               fieldOptions: {
                 select: {
                   id: true,
