@@ -94,37 +94,47 @@ export const processor = async (
     matchedFields: string[];
   }> = [];
 
-  // 6. For each case, check cancellation, find similar cases, deduplicate
-  for (let i = 0; i < cases.length; i++) {
-    const testCase = cases[i];
+  // 6. Process cases in batches for parallel ES queries
+  const BATCH_SIZE = 10;
+  let analyzed = 0;
 
-    // Mid-loop cancellation check
+  for (let batchStart = 0; batchStart < cases.length; batchStart += BATCH_SIZE) {
+    // Check cancellation once per batch
     const isCancelled = await redis.get(cancelKey(job.id));
     if (isCancelled) {
       await redis.del(cancelKey(job.id));
       throw new Error("Job cancelled by user");
     }
 
-    const pairs = await service.findSimilarCases(
-      {
-        id: testCase.id,
-        name: testCase.name,
-        steps: testCase.steps as { step: string; expectedResult: string }[],
-        tags: testCase.tags as { name: string }[],
-      },
-      job.data.projectId,
-      job.data.tenantId
+    const batch = cases.slice(batchStart, batchStart + BATCH_SIZE);
+
+    const batchResults = await Promise.all(
+      batch.map((testCase) =>
+        service.findSimilarCases(
+          {
+            id: testCase.id,
+            name: testCase.name,
+            steps: testCase.steps as { step: string; expectedResult: string }[],
+            tags: testCase.tags as { name: string }[],
+          },
+          job.data.projectId,
+          job.data.tenantId
+        )
+      )
     );
 
-    for (const pair of pairs) {
-      const key = `${pair.caseAId}:${pair.caseBId}`;
-      if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
-        seenPairs.add(key);
-        allPairs.push(pair);
+    for (const pairs of batchResults) {
+      for (const pair of pairs) {
+        const key = `${pair.caseAId}:${pair.caseBId}`;
+        if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
+          seenPairs.add(key);
+          allPairs.push(pair);
+        }
       }
     }
 
-    await job.updateProgress({ analyzed: i + 1, total });
+    analyzed += batch.length;
+    await job.updateProgress({ analyzed, total });
   }
 
   // 7. Sort by score descending
