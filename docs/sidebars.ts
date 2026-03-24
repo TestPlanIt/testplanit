@@ -155,6 +155,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/import-shared-steps', // Add import-shared-steps.md
                 'import-export', // Add import-export.md
                 'copy-move-test-cases', // Copy/Move test cases between projects
+                'user-guide/projects/duplicate-detection', // Duplicate test case detection
                 'user-guide/projects/quickscript', // QuickScript from repository
               ],
             },
