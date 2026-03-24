@@ -112,32 +112,50 @@ function CasePanel({
   const lastRun = caseDetails.testRuns?.[0];
 
   // Map field values to CustomFieldDisplay format
-  const customFields = caseDetails.caseFieldValues.map((fv) => {
-    const fieldType = fv.field.type?.type ?? "Text String";
-    const value = fv.value;
+  // CustomFieldDisplay expects typed value properties, not just raw `value`
+  const customFields = caseDetails.caseFieldValues
+    .filter((fv) => fv.value != null)
+    .map((fv) => {
+      const fieldType = fv.field.type?.type ?? "Text String";
+      const value = fv.value;
 
-    // Flatten the join table: CaseFieldAssignment[] -> FieldOptions[]
-    const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
+      // Flatten the join table: CaseFieldAssignment[] -> FieldOptions[]
+      const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
 
-    // For dropdown/multi-select, match the selected option(s)
-    let fieldOption: (typeof options)[0] | undefined;
-    let matchedOptions: typeof options | undefined;
+      const base = {
+        fieldId: fv.field.id,
+        fieldName: fv.field.displayName,
+        fieldType,
+      };
 
-    if (fieldType === "Dropdown" && value != null) {
-      fieldOption = options.find((o) => o.id === Number(value));
-    } else if (fieldType === "Multi-Select" && Array.isArray(value)) {
-      matchedOptions = options.filter((o) => (value as number[]).includes(o.id));
-    }
-
-    return {
-      fieldId: fv.field.id,
-      fieldName: fv.field.displayName,
-      fieldType,
-      value,
-      ...(fieldOption && { fieldOption }),
-      ...(matchedOptions && { fieldOptions: matchedOptions }),
-    };
-  });
+      switch (fieldType) {
+        case "Checkbox":
+          return { ...base, valueBoolean: Boolean(value) };
+        case "Date":
+          return { ...base, valueDate: String(value) };
+        case "Number":
+        case "Integer":
+          return { ...base, valueNumeric: Number(value) };
+        case "Link":
+        case "Text String":
+          return { ...base, valueKeyword: String(value) };
+        case "Dropdown": {
+          const fieldOption = options.find((o) => o.id === Number(value));
+          return { ...base, value, ...(fieldOption && { fieldOption }) };
+        }
+        case "Multi-Select": {
+          const ids = Array.isArray(value) ? value : [];
+          const fieldOptions = options.filter((o) => (ids as number[]).includes(o.id));
+          return {
+            ...base,
+            valueArray: ids.map(String),
+            ...(fieldOptions.length > 0 && { fieldOptions }),
+          };
+        }
+        default:
+          return { ...base, value };
+      }
+    });
 
   return (
     <div className="flex flex-col gap-2">
