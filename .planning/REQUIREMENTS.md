@@ -43,18 +43,18 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Testing
 
-- [ ] **TEST-01**: Unit tests cover similarity scoring algorithms, merge transaction logic, and scan service
+- [x] **TEST-01**: Unit tests cover similarity scoring algorithms, merge transaction logic, and scan service
 - [ ] **TEST-02**: E2E tests cover the duplicate scan workflow (trigger scan, view results, resolve duplicates)
-- [ ] **TEST-03**: E2E tests cover creation-time duplicate warning display
+- [x] **TEST-03**: E2E tests cover creation-time duplicate warning display
 
 ### Documentation
 
-- [ ] **DOC-01**: User-facing documentation explains how duplicate detection works and how to resolve duplicates
-- [ ] **DOC-02**: Documentation covers the two-tier detection approach (fuzzy + optional LLM) and how to configure it
+- [x] **DOC-01**: User-facing documentation explains how duplicate detection works and how to resolve duplicates
+- [x] **DOC-02**: Documentation covers the two-tier detection approach (fuzzy + optional LLM) and how to configure it
 
 ### Notification
 
-- [ ] **NOTIF-01**: Upgrade notification informs users about the new duplicate detection feature when they upgrade to v0.19.0
+- [x] **NOTIF-01**: Upgrade notification informs users about the new duplicate detection feature when they upgrade to v0.19.0
 
 ## Future Requirements
 
@@ -105,12 +105,12 @@ Deferred to a later release. Tracked but not in current roadmap.
 | RES-05      | Phase 49 | Complete |
 | RES-06      | Phase 49 | Complete |
 | RES-07      | Phase 49 | Complete |
-| TEST-01     | Phase 52 | Pending |
+| TEST-01     | Phase 52 | Complete |
 | TEST-02     | Phase 52 | Pending |
-| TEST-03     | Phase 52 | Pending |
-| DOC-01      | Phase 52 | Pending |
-| DOC-02      | Phase 52 | Pending |
-| NOTIF-01    | Phase 52 | Pending |
+| TEST-03     | Phase 52 | Complete |
+| DOC-01      | Phase 52 | Complete |
+| DOC-02      | Phase 52 | Complete |
+| NOTIF-01    | Phase 52 | Complete |
 
 **Coverage:**
 - v0.19.0 requirements: 28 total
