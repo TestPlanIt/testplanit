@@ -150,6 +150,7 @@ export const processor = async (
   allPairs.sort((a, b) => b.score - a.score);
 
   // 8. Soft-delete old pending results, then insert new ones atomically
+  //    Use a longer timeout for large result sets
   await prisma.$transaction(async (tx: any) => {
     await tx.duplicateScanResult.updateMany({
       where: { projectId: job.data.projectId, status: "PENDING", isDeleted: false },
@@ -157,19 +158,24 @@ export const processor = async (
     });
 
     if (allPairs.length > 0) {
-      await tx.duplicateScanResult.createMany({
-        data: allPairs.map((p) => ({
-          projectId: job.data.projectId,
-          caseAId: p.caseAId,
-          caseBId: p.caseBId,
-          score: p.score,
-          matchedFields: p.matchedFields,
-          scanJobId: job.id,
-        })),
-        skipDuplicates: true,
-      });
+      // Batch createMany in chunks of 500 to avoid query size limits
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < allPairs.length; i += CHUNK_SIZE) {
+        const chunk = allPairs.slice(i, i + CHUNK_SIZE);
+        await tx.duplicateScanResult.createMany({
+          data: chunk.map((p) => ({
+            projectId: job.data.projectId,
+            caseAId: p.caseAId,
+            caseBId: p.caseBId,
+            score: p.score,
+            matchedFields: p.matchedFields,
+            scanJobId: job.id,
+          })),
+          skipDuplicates: true,
+        });
+      }
     }
-  });
+  }, { timeout: 30000 });
 
   return {
     pairsFound: allPairs.length,
