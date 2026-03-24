@@ -108,7 +108,13 @@ Plans:
   1. When a project has an LLM integration configured, the scan worker runs a semantic analysis pass on pairs that pass the fuzzy gate
   2. LLM analysis batches multiple pairs per call and respects a configurable maximum pairs cap per scan
   3. When no LLM integration is configured, the scan completes using fuzzy scoring only — no error or degraded behavior
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+
+- [ ] 51-01-PLAN.md — DUPLICATE_DETECTION LLM constant + detectionMethod schema field
+- [ ] 51-02-PLAN.md — DuplicateAnalysisService with TDD (batching, fallback, confirm/reject logic)
+- [ ] 51-03-PLAN.md — Wire LLM semantic pass into duplicateScanWorker
 
 ### Phase 52: Testing, Documentation, and Notification
 **Goal**: The feature is fully tested, documented for users, and surfaced via an upgrade notification
@@ -131,6 +137,6 @@ Plans:
 | 47. Detection Foundation | 2/3 | Complete    | 2026-03-23 | - |
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
 | 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
-| 50. Creation-Time and Import Warnings | 2/2 | Complete   | 2026-03-24 | - |
-| 51. LLM Semantic Tier | v0.19.0 | 0/TBD | Not started | - |
+| 50. Creation-Time and Import Warnings | 2/2 | Complete    | 2026-03-24 | - |
+| 51. LLM Semantic Tier | v0.19.0 | 0/3 | Not started | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
