@@ -107,14 +107,16 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 300,
-    cell: ({ row }) => (
-      <CaseDisplay
-        id={row.original.caseAId}
-        name={row.original.caseAName}
-        source={row.original.caseASource as RepositoryCaseSource}
-        automated={row.original.caseAAutomated}
-        maxLines={1}
-      />
+    cell: ({ row, column }) => (
+      <div className="truncate whitespace-nowrap overflow-hidden" style={{ maxWidth: column.getSize() }}>
+        <CaseDisplay
+          id={row.original.caseAId}
+          name={row.original.caseAName}
+          source={row.original.caseASource as RepositoryCaseSource}
+          automated={row.original.caseAAutomated}
+          maxLines={1}
+        />
+      </div>
     ),
   },
   {
@@ -124,14 +126,16 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 300,
-    cell: ({ row }) => (
-      <CaseDisplay
-        id={row.original.caseBId}
-        name={row.original.caseBName}
-        source={row.original.caseBSource as RepositoryCaseSource}
-        automated={row.original.caseBAutomated}
-        maxLines={1}
-      />
+    cell: ({ row, column }) => (
+      <div className="truncate whitespace-nowrap overflow-hidden" style={{ maxWidth: column.getSize() }}>
+        <CaseDisplay
+          id={row.original.caseBId}
+          name={row.original.caseBName}
+          source={row.original.caseBSource as RepositoryCaseSource}
+          automated={row.original.caseBAutomated}
+          maxLines={1}
+        />
+      </div>
     ),
   },
   {
