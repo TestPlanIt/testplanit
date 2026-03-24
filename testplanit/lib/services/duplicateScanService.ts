@@ -122,7 +122,8 @@ export class DuplicateScanService {
           ],
         },
       },
-      size: 10000,
+      size: 500,
+      min_score: 2.0,
     });
 
     const hits = (response.hits?.hits ?? []) as EsHit[];

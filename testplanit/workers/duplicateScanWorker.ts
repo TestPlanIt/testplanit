@@ -86,6 +86,7 @@ export const processor = async (
 
   const total = cases.length;
   const seenPairs = new Set<string>();
+  const matchedCaseIds = new Set<number>(); // Cases already found as part of a pair — skip querying them
   const allPairs: Array<{
     caseAId: number;
     caseBId: number;
@@ -95,7 +96,7 @@ export const processor = async (
   }> = [];
 
   // 6. Process cases in batches for parallel ES queries
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 20;
   let analyzed = 0;
 
   for (let batchStart = 0; batchStart < cases.length; batchStart += BATCH_SIZE) {
@@ -108,27 +109,35 @@ export const processor = async (
 
     const batch = cases.slice(batchStart, batchStart + BATCH_SIZE);
 
-    const batchResults = await Promise.all(
-      batch.map((testCase) =>
-        service.findSimilarCases(
-          {
-            id: testCase.id,
-            name: testCase.name,
-            steps: testCase.steps as { step: string; expectedResult: string }[],
-            tags: testCase.tags as { name: string }[],
-          },
-          job.data.projectId,
-          job.data.tenantId
-        )
-      )
-    );
+    // Skip cases already found as part of a duplicate pair
+    const casesToQuery = batch.filter((c) => !matchedCaseIds.has(c.id));
 
-    for (const pairs of batchResults) {
-      for (const pair of pairs) {
-        const key = `${pair.caseAId}:${pair.caseBId}`;
-        if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
-          seenPairs.add(key);
-          allPairs.push(pair);
+    if (casesToQuery.length > 0) {
+      const batchResults = await Promise.all(
+        casesToQuery.map((testCase) =>
+          service.findSimilarCases(
+            {
+              id: testCase.id,
+              name: testCase.name,
+              steps: testCase.steps as { step: string; expectedResult: string }[],
+              tags: testCase.tags as { name: string }[],
+            },
+            job.data.projectId,
+            job.data.tenantId
+          )
+        )
+      );
+
+      for (const pairs of batchResults) {
+        for (const pair of pairs) {
+          const key = `${pair.caseAId}:${pair.caseBId}`;
+          if (!seenPairs.has(key) && !dismissedPairs.has(key)) {
+            seenPairs.add(key);
+            allPairs.push(pair);
+            // Mark both cases as matched so we can skip querying them later
+            matchedCaseIds.add(pair.caseAId);
+            matchedCaseIds.add(pair.caseBId);
+          }
         }
       }
     }
