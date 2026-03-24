@@ -30,7 +30,7 @@ Phases 28-33: v0.17.0 Copy/Move Test Cases Between Projects (shipped 2026-03-21)
 - [x] **Phase 48: Async Project-Wide Scan** - BullMQ scan worker, API, and results view (completed 2026-03-23)
 - [x] **Phase 49: Resolution Engine** - Side-by-side comparison, merge, link, and dismiss (completed 2026-03-23)
 - [x] **Phase 50: Creation-Time and Import Warnings** - Soft non-blocking warnings at creation and import (completed 2026-03-24)
-- [ ] **Phase 51: LLM Semantic Tier** - Optional LLM-powered semantic analysis on candidate pairs
+- [x] **Phase 51: LLM Semantic Tier** - Optional LLM-powered semantic analysis on candidate pairs (completed 2026-03-24)
 - [ ] **Phase 52: Testing, Documentation, and Notification** - Full test coverage, user docs, upgrade notice
 
 ## Phase Details
@@ -108,7 +108,7 @@ Plans:
   1. When a project has an LLM integration configured, the scan worker runs a semantic analysis pass on pairs that pass the fuzzy gate
   2. LLM analysis batches multiple pairs per call and respects a configurable maximum pairs cap per scan
   3. When no LLM integration is configured, the scan completes using fuzzy scoring only — no error or degraded behavior
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 
@@ -138,5 +138,5 @@ Plans:
 | 48. Async Project-Wide Scan | 3/3 | Complete    | 2026-03-23 | - |
 | 49. Resolution Engine | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Creation-Time and Import Warnings | 2/2 | Complete    | 2026-03-24 | - |
-| 51. LLM Semantic Tier | 2/3 | In Progress|  | - |
+| 51. LLM Semantic Tier | 3/3 | Complete   | 2026-03-24 | - |
 | 52. Testing, Documentation, and Notification | v0.19.0 | 0/TBD | Not started | - |
