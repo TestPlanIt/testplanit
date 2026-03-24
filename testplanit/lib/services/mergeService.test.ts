@@ -162,11 +162,10 @@ describe("mergeService", () => {
       expect(result.survivorId).toBe(1);
     });
 
-    it("returns a summary object with run/step/version counts", async () => {
+    it("returns a summary object with run/version counts", async () => {
       const result = await mergeCases(1, 2, "user-123");
       expect(result.summary).toBeDefined();
       expect(typeof result.summary.runsTransferred).toBe("number");
-      expect(typeof result.summary.stepsAppended).toBe("number");
       expect(typeof result.summary.versionsReparented).toBe("number");
     });
 
@@ -335,60 +334,6 @@ describe("mergeService", () => {
       ]);
       const result = await mergeCases(1, 2, "user-123");
       expect(result.summary.versionsReparented).toBe(2);
-    });
-  });
-
-  // ----------------------------------------------------------------
-  // 4. Steps order offset
-  // ----------------------------------------------------------------
-  describe("mergeCases - steps order offset", () => {
-    it("appends victim steps after survivor max order", async () => {
-      mockTx.steps.findFirst.mockResolvedValue({ order: 5 });
-      mockTx.steps.findMany.mockResolvedValue([
-        { id: 200, order: 0 },
-        { id: 201, order: 1 },
-      ]);
-
-      await mergeCases(1, 2, "user-123");
-
-      // offset = 5 + 1 = 6
-      expect(mockTx.steps.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 200 },
-          data: expect.objectContaining({ testCaseId: 1, order: 6 }),
-        })
-      );
-      expect(mockTx.steps.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 201 },
-          data: expect.objectContaining({ testCaseId: 1, order: 7 }),
-        })
-      );
-    });
-
-    it("uses offset 0 when survivor has no steps", async () => {
-      mockTx.steps.findFirst.mockResolvedValue(null);
-      mockTx.steps.findMany.mockResolvedValue([{ id: 200, order: 0 }]);
-
-      await mergeCases(1, 2, "user-123");
-
-      // offset = (null → -1) + 1 = 0
-      expect(mockTx.steps.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 200 },
-          data: expect.objectContaining({ testCaseId: 1, order: 0 }),
-        })
-      );
-    });
-
-    it("stepsAppended in summary equals victim step count", async () => {
-      mockTx.steps.findMany.mockResolvedValue([
-        { id: 200, order: 0 },
-        { id: 201, order: 1 },
-        { id: 202, order: 2 },
-      ]);
-      const result = await mergeCases(1, 2, "user-123");
-      expect(result.summary.stepsAppended).toBe(3);
     });
   });
 

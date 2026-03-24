@@ -2089,7 +2089,7 @@
       "merging": "Merging...",
       "linking": "Linking...",
       "dismissing": "Dismissing...",
-      "mergeSuccess": "Cases merged successfully. {runsTransferred} test runs transferred, {stepsAppended} steps appended.",
+      "mergeSuccess": "Cases merged successfully. {runsTransferred, plural, =0 {No test runs transferred} one {# test run transferred} other {# test runs transferred}}.",
       "linkSuccess": "Cases linked as related.",
       "dismissSuccess": "Pair dismissed. It will not appear in future scans.",
       "resolveError": "Failed to resolve duplicate pair. Please try again.",

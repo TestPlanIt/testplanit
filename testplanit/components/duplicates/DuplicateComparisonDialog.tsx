@@ -269,7 +269,6 @@ export function DuplicateComparisonDialog({
         toast.success(
           t("mergeSuccess", {
             runsTransferred: result.summary?.runsTransferred ?? 0,
-            stepsAppended: result.summary?.stepsAppended ?? 0,
           })
         );
       } else if (action === "link") {

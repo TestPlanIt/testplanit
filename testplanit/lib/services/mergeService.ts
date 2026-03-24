@@ -24,8 +24,6 @@ export interface MergeResult {
   summary: {
     /** TestRunCases rows transferred from victim to survivor */
     runsTransferred: number;
-    /** Victim steps appended to survivor */
-    stepsAppended: number;
     /** Victim tags added to survivor */
     tagsAdded: number;
     /** Victim RepositoryCaseVersions re-parented to survivor */
@@ -80,34 +78,13 @@ export async function mergeCases(
     });
 
     // -----------------------------------------------------------------------
-    // Step 4: Steps — reroute with order offset (victim appended after survivor)
+    // Step 4: Steps and field values stay with victim (soft-deleted).
+    // The primary case keeps its own steps and custom fields as-is.
     // -----------------------------------------------------------------------
-    const maxSurvivorStep = await tx.steps.findFirst({
-      where: { testCaseId: survivorId, isDeleted: false },
-      orderBy: { order: "desc" },
-      select: { order: true },
-    });
-    const stepOffset = (maxSurvivorStep?.order ?? -1) + 1;
-
-    const victimSteps = await tx.steps.findMany({
-      where: { testCaseId: victimId },
-      select: { id: true, order: true },
-    });
-    for (const step of victimSteps) {
-      await tx.steps.update({
-        where: { id: step.id },
-        data: { testCaseId: survivorId, order: stepOffset + step.order },
-      });
-    }
-    const stepsAppended = victimSteps.length;
 
     // -----------------------------------------------------------------------
-    // Steps 5–7: Simple updateMany reroutes (no unique constraints involved)
+    // Step 5: Reroute result field values (test run result data, not case fields)
     // -----------------------------------------------------------------------
-    await tx.caseFieldValues.updateMany({
-      where: { testCaseId: victimId },
-      data: { testCaseId: survivorId },
-    });
     await tx.resultFieldValues.updateMany({
       where: { testCaseId: victimId },
       data: { testCaseId: survivorId },
@@ -299,7 +276,6 @@ export async function mergeCases(
       survivorId,
       summary: {
         runsTransferred,
-        stepsAppended,
         tagsAdded,
         versionsReparented,
       },
