@@ -422,7 +422,7 @@ export function DuplicateResultsTable({
         </div>
       )}
 
-      <div>
+      <div data-testid="duplicates-table">
         <DataTable
           columns={columns}
           data={pageItems}

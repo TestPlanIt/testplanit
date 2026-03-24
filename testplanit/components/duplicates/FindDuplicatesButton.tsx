@@ -135,7 +135,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
 
   if (scanState === "active") {
     return (
-      <div className="flex items-center gap-2">
+      <div data-testid="scan-progress" className="flex items-center gap-2">
         <Progress value={progressPercent} className="w-32 h-2" />
         <span className="text-xs text-muted-foreground">
           {t("analyzing", { analyzed, total })}
@@ -149,6 +149,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     return (
       <div className="relative">
         <Button
+          data-testid="view-duplicates-button"
           variant={resultsCount > 0 ? "destructive" : "outline"}
           asChild
           className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
@@ -167,6 +168,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
   if (scanState === "failed") {
     return (
       <Button
+        data-testid="retry-scan-button"
         variant="outline"
         onClick={handleScan}
         className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
@@ -199,6 +201,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
 
   return (
     <Button
+      data-testid="find-duplicates-button"
       variant="outline"
       onClick={handleScan}
       className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"

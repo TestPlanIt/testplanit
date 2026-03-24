@@ -66,6 +66,7 @@ function CasePanel({
   t,
   tCommon,
   tRepo,
+  testId,
 }: {
   caseDetails: CaseDetails;
   isSelected: boolean;
@@ -74,6 +75,7 @@ function CasePanel({
   t: ReturnType<typeof useTranslations<"repository.duplicates">>;
   tCommon: ReturnType<typeof useTranslations<"common">>;
   tRepo: ReturnType<typeof useTranslations<"repository">>;
+  testId?: string;
 }) {
   const { data: session } = useSession();
   const prefs = session?.user.preferences;
@@ -103,6 +105,7 @@ function CasePanel({
 
       {/* Case card */}
       <div
+        data-testid={testId}
         className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
           isSelected
             ? "border-primary bg-primary/5"
@@ -310,7 +313,7 @@ export function DuplicateComparisonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent data-testid="comparison-dialog" className="max-w-5xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 flex-wrap">
             <span>
@@ -371,6 +374,7 @@ export function DuplicateComparisonDialog({
                   t={t}
                   tCommon={tCommon}
                   tRepo={tRepo}
+                  testId="case-panel-a"
                 />
                 <CasePanel
                   caseDetails={data.caseB}
@@ -380,6 +384,7 @@ export function DuplicateComparisonDialog({
                   t={t}
                   tCommon={tCommon}
                   tRepo={tRepo}
+                  testId="case-panel-b"
                 />
               </div>
             </>
@@ -389,6 +394,7 @@ export function DuplicateComparisonDialog({
         {/* Footer */}
         <div className="flex justify-between pt-4 border-t mt-4">
           <Button
+            data-testid="dismiss-button"
             variant="outline"
             onClick={() => handleResolve("dismiss")}
             disabled={isSubmitting || isLoading}
@@ -405,6 +411,7 @@ export function DuplicateComparisonDialog({
 
           <div className="flex gap-2">
             <Button
+              data-testid="link-button"
               variant="outline"
               onClick={() => handleResolve("link")}
               disabled={isSubmitting || isLoading}
@@ -419,6 +426,7 @@ export function DuplicateComparisonDialog({
               )}
             </Button>
             <Button
+              data-testid="merge-button"
               variant="destructive"
               onClick={() => handleResolve("merge")}
               disabled={isSubmitting || isLoading || primaryId === null}
