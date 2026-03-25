@@ -97,7 +97,7 @@ export const getColumns = (
       if (integrationMap.size === 0) {
         return (
           <span className="text-sm text-muted-foreground">
-            {t("projectDefaultLabel")}
+            {t("llmIntegrationPlaceholder")}
           </span>
         );
       }

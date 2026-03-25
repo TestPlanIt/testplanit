@@ -1176,7 +1176,7 @@ export function TestmoImportPanel() {
   const uploadProgressLabel = useMemo(() => {
     switch (uploadProgress.state) {
       case "uploading":
-        return t("testmo.uploadProgressUploading");
+        return tCommon("status.uploading");
       case "analyzing":
         return t("testmo.uploadProgressAnalyzing");
       case "complete":

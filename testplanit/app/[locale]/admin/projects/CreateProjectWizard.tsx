@@ -9,9 +9,26 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import {
-  useCreateManyProjectAssignment, useCreateManyProjectStatusAssignment, useCreateManyProjectWorkflowAssignment, useCreateMilestoneTypesAssignment, useCreateProjectIntegration,
-  useCreateProjectLlmIntegration, useCreateProjects, useCreateRepositories, useCreateTemplateProjectAssignment, useFindManyGroups, useFindManyIntegration,
-  useFindManyLlmIntegration, useFindManyMilestoneTypes, useFindManyRoles, useFindManyStatus, useFindManyTemplates, useFindManyUser, useFindManyWorkflows, useUpsertGroupProjectPermission, useUpsertUserProjectPermission
+  useCreateManyProjectAssignment,
+  useCreateManyProjectStatusAssignment,
+  useCreateManyProjectWorkflowAssignment,
+  useCreateMilestoneTypesAssignment,
+  useCreateProjectIntegration,
+  useCreateProjectLlmIntegration,
+  useCreateProjects,
+  useCreateRepositories,
+  useCreateTemplateProjectAssignment,
+  useFindManyGroups,
+  useFindManyIntegration,
+  useFindManyLlmIntegration,
+  useFindManyMilestoneTypes,
+  useFindManyRoles,
+  useFindManyStatus,
+  useFindManyTemplates,
+  useFindManyUser,
+  useFindManyWorkflows,
+  useUpsertGroupProjectPermission,
+  useUpsertUserProjectPermission,
 } from "~/lib/hooks";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 
@@ -23,22 +40,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent, CardDescription, CardHeader,
-  CardTitle
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
-  DialogContent, DialogDescription, DialogFooter,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
-  FormControl, FormDescription, FormField,
+  FormControl,
+  FormDescription,
+  FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -47,8 +70,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
-  SelectItem, SelectSeparator, SelectTrigger,
-  SelectValue
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,22 +81,44 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import UploadProjectIcon from "@/components/UploadProjectIcon";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import {
-  AlertCircle, Asterisk, Bot, Boxes, Building, Check, CheckCircle2, ChevronLeft,
-  ChevronRight, CircleCheckBig, CirclePlus, Compass, ExternalLink, LayoutList, ListChecks, Milestone, PlayCircle, Plug, ScrollText, Shield, Star, Users, Workflow
+  AlertCircle,
+  Asterisk,
+  Bot,
+  Boxes,
+  Building,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CircleCheckBig,
+  CirclePlus,
+  Compass,
+  ExternalLink,
+  LayoutList,
+  ListChecks,
+  Milestone,
+  PlayCircle,
+  Plug,
+  ScrollText,
+  Shield,
+  Star,
+  Users,
+  Workflow,
 } from "lucide-react";
 import { IconName } from "~/types/globals";
 
 import {
-  GroupPermissionFormState, ProjectGroupPermissions
+  GroupPermissionFormState,
+  ProjectGroupPermissions,
 } from "./ProjectGroupPermissions";
 import {
   ProjectUserPermissions,
-  UserPermissionFormState
+  UserPermissionFormState,
 } from "./ProjectUserPermissions";
 
 enum WizardStep {
@@ -431,15 +478,8 @@ export function CreateProjectWizard({
     defaultValues: defaultValues,
   });
 
-  const {
-    watch,
-    setValue,
-    reset,
-    control,
-    handleSubmit,
-    setError,
-    getValues,
-  } = form;
+  const { watch, setValue, reset, control, handleSubmit, setError, getValues } =
+    form;
 
   const isCompleted = watch("isCompleted");
   const defaultAccessType = watch("defaultAccessType");
@@ -1146,7 +1186,7 @@ export function CreateProjectWizard({
                                 {role.isDefault && (
                                   <TooltipProvider delayDuration={300}>
                                     <Tooltip>
-                                      <TooltipTrigger asChild>
+                                      <TooltipTrigger className="ml-1" asChild>
                                         <Badge variant="secondary">
                                           <Star className="h-3 w-3 fill-current text-primary-background" />
                                         </Badge>

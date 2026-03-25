@@ -19,6 +19,7 @@ export interface StepDuplicateRow {
 
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"sharedSteps.stepDuplicates">>,
+  tCommon: ReturnType<typeof useTranslations<"common">>,
   onCheckboxClick?: (rowIndex: number, event: React.MouseEvent) => void,
   onSelectAllClick?: (event: React.MouseEvent) => void
 ): ColumnDef<StepDuplicateRow>[] => [
@@ -61,7 +62,7 @@ export const getColumns = (
   {
     id: "stepCount",
     accessorKey: "stepCount",
-    header: t("columns.stepCount"),
+    header: tCommon("fields.steps"),
     enableSorting: true,
     enableResizing: true,
     size: 80,
@@ -102,7 +103,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: t("columns.actions"),
+    header: tCommon("actions.actionsLabel"),
     enableSorting: false,
     enableResizing: true,
     enableHiding: false,

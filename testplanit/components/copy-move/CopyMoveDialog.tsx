@@ -62,6 +62,7 @@ export function CopyMoveDialog({
   sourceFolderName,
 }: CopyMoveDialogProps) {
   const t = useTranslations("components.copyMove");
+  const tCommon = useTranslations("common");
   const tNav = useTranslations("navigation.projects.dropdown");
   const tRepo = useTranslations("repository.cases.importWizard.page1");
 
@@ -528,7 +529,7 @@ export function CopyMoveDialog({
                           isCreatingFolder ||
                           !targetRepo?.id
                         }
-                        aria-label={t("createFolder")}
+                        aria-label={tCommon("actions.create")}
                       >
                         <FolderPlus className="h-4 w-4" />
                       </Button>
@@ -796,7 +797,7 @@ export function CopyMoveDialog({
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    {t("complete")}
+                    {tCommon("actions.complete")}
                   </div>
                   <p className="text-sm">
                     {t("successCount", {
@@ -877,7 +878,7 @@ export function CopyMoveDialog({
               onClick={handleNext}
               disabled={!targetProjectId || !targetFolderId}
             >
-              {t("next")}
+              {tCommon("actions.next")}
               <ChevronRight className="h-4 w-4" />
             </Button>
           )}
@@ -885,7 +886,7 @@ export function CopyMoveDialog({
             <>
               <Button variant="outline" onClick={handleBack}>
                 <ChevronLeft className="h-4 w-4" />
-                {t("back")}
+                {tCommon("actions.back")}
               </Button>
               <Button onClick={handleGo} disabled={!canGo}>
                 {job.isPrefighting ? (
@@ -898,13 +899,13 @@ export function CopyMoveDialog({
           {step === "progress" &&
             (job.status === "waiting" || job.status === "active") && (
               <Button variant="outline" onClick={() => job.cancel()}>
-                {t("cancel")}
+                {tCommon("cancel")}
               </Button>
             )}
           {step === "progress" &&
             (job.status === "completed" || job.status === "failed") && (
               <Button onClick={() => handleOpenChange(false)}>
-                {t("close")}
+                {tCommon("actions.close")}
               </Button>
             )}
         </DialogFooter>

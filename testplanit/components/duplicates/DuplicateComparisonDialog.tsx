@@ -119,7 +119,6 @@ function CasePanel({
       : prefs?.dateFormat;
   const lastRun = caseDetails.testRuns?.[0];
 
-
   return (
     <div className="flex flex-col gap-2">
       {/* Primary badge outside the card */}
@@ -246,7 +245,10 @@ function CasePanel({
                   ) : (
                     <div className="max-h-48 overflow-y-auto space-y-2">
                       {caseDetails.steps.map((step, i) => (
-                        <div key={step.id ?? i} className="text-sm border-l-2 border-muted pl-2">
+                        <div
+                          key={step.id ?? i}
+                          className="text-sm border-l-2 border-muted pl-2"
+                        >
                           <div className="font-medium">
                             {`${i + 1}. `}
                             <TextFromJson
@@ -276,12 +278,15 @@ function CasePanel({
             );
             if (!fv || fv.value == null) return null;
 
-            const options = (fv.field.fieldOptions ?? []).map((a) => a.fieldOption);
+            const options = (fv.field.fieldOptions ?? []).map(
+              (a) => a.fieldOption
+            );
 
             return (
               <div key={fv.id} className="text-sm">
                 <span className="font-medium text-muted-foreground">
-                  {fv.field.displayName}{": "}
+                  {fv.field.displayName}
+                  {": "}
                 </span>
                 {fieldType === "Text Long" ? (
                   <TextFromJson
@@ -291,19 +296,34 @@ function CasePanel({
                 ) : fieldType === "Checkbox" ? (
                   <span>{fv.value ? "✓" : "✗"}</span>
                 ) : fieldType === "Dropdown" ? (
-                  <span>{options.find((o) => o.id === Number(fv.value))?.name ?? String(fv.value)}</span>
+                  <span>
+                    {options.find((o) => o.id === Number(fv.value))?.name ??
+                      String(fv.value)}
+                  </span>
                 ) : fieldType === "Multi-Select" ? (
                   <span>
                     {(Array.isArray(fv.value) ? fv.value : [])
-                      .map((id: number) => options.find((o) => o.id === id)?.name ?? String(id))
+                      .map(
+                        (id: number) =>
+                          options.find((o) => o.id === id)?.name ?? String(id)
+                      )
                       .join(", ")}
                   </span>
                 ) : fieldType === "Link" ? (
-                  <a href={String(fv.value)} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  <a
+                    href={String(fv.value)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
                     {String(fv.value)}
                   </a>
                 ) : fieldType === "Date" ? (
-                  <DateFormatter date={String(fv.value)} formatString={dateTimeFormat} timezone={prefs?.timezone} />
+                  <DateFormatter
+                    date={String(fv.value)}
+                    formatString={dateTimeFormat}
+                    timezone={prefs?.timezone}
+                  />
                 ) : (
                   <span>{String(fv.value)}</span>
                 )}

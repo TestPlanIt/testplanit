@@ -39,6 +39,7 @@ export function EditShareLinkDialog({
   onSuccess,
 }: EditShareLinkDialogProps) {
   const t = useTranslations("reports.shareDialog");
+  const tCommon = useTranslations("common");
 
   // Form state
   const [mode, setMode] = useState<ShareLinkMode>(shareLink.mode);
@@ -146,7 +147,7 @@ export function EditShareLinkDialog({
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="edit-title">{t("title.label")}</Label>
+            <Label htmlFor="edit-title">{tCommon("fields.title")}</Label>
             <Input
               id="edit-title"
               value={title}
@@ -157,7 +158,7 @@ export function EditShareLinkDialog({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="edit-description">{t("description.label")}</Label>
+            <Label htmlFor="edit-description">{tCommon("fields.description")}</Label>
             <Textarea
               id="edit-description"
               value={description}
@@ -260,7 +261,7 @@ export function EditShareLinkDialog({
               {password && (
                 <div className="space-y-2">
                   <Label htmlFor="edit-confirm-password-input" className="flex items-center">
-                    {t("editDialog.confirmPassword")}
+                    {tCommon("fields.confirmPassword")}
                     <sup>
                       <Asterisk className="w-3 h-3 text-destructive" />
                     </sup>
@@ -314,7 +315,7 @@ export function EditShareLinkDialog({
                       onClick={() => setExpiresAt(undefined)}
                       className="w-full"
                     >
-                      {t("expiration.clear")}
+                      {tCommon("actions.clear")}
                     </Button>
                   </div>
                 )}
@@ -345,16 +346,16 @@ export function EditShareLinkDialog({
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {t("editDialog.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button onClick={handleSave} disabled={isUpdating}>
               {isUpdating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("editDialog.saving")}
+                  {tCommon("actions.saving")}
                 </>
               ) : (
-                t("editDialog.save")
+                tCommon("actions.saveChanges")
               )}
             </Button>
           </div>

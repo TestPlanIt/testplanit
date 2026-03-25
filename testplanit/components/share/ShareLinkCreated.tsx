@@ -24,6 +24,7 @@ export function ShareLinkCreated({
   const [copied, setCopied] = useState(false);
 
   const t = useTranslations("reports.shareDialog.created");
+  const tCommon = useTranslations("common");
   const tToast = useTranslations("reports.shareDialog.shareList.toast");
 
   const handleCopy = async () => {
@@ -81,7 +82,7 @@ export function ShareLinkCreated({
               {copied ? (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  {t("copied")}
+                  {tCommon("actions.copied")}
                 </>
               ) : (
                 <>
@@ -117,9 +118,9 @@ export function ShareLinkCreated({
             </div>
           )}
           <div>
-            <p className="text-xs text-muted-foreground mb-1">{t("metadata.notifications")}</p>
+            <p className="text-xs text-muted-foreground mb-1">{tCommon("fields.notificationMode")}</p>
             <p className="text-sm font-medium">
-              {shareData.notifyOnView ? t("metadata.enabled") : t("metadata.disabled")}
+              {shareData.notifyOnView ? tCommon("fields.enabled") : tCommon("status.disabled")}
             </p>
           </div>
           <div>
@@ -153,7 +154,7 @@ export function ShareLinkCreated({
         <Button variant="outline" onClick={onCreateAnother}>
           {t("actions.createAnother")}
         </Button>
-        <Button onClick={onClose}>{t("actions.done")}</Button>
+        <Button onClick={onClose}>{tCommon("actions.done")}</Button>
       </div>
     </div>
   );

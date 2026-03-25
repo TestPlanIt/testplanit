@@ -851,7 +851,7 @@ export function EditLlmIntegration({
                               ) : (
                                 <RotateCcw className="h-3 w-3" />
                               )}
-                              {tBudgetAlert("resetSpend")}
+                              {tCommon("actions.reset")}
                             </Button>
                           </div>
                         </div>

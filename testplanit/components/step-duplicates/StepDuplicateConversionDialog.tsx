@@ -228,7 +228,7 @@ export function StepDuplicateConversionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-5xl max-h-[85vh] overflow-y-auto"
+        className="max-w-5xl overflow-y-auto"
         data-testid="step-conversion-dialog"
       >
         <DialogHeader>
@@ -361,7 +361,7 @@ export function StepDuplicateConversionDialog({
                 {t("converting")}
               </>
             ) : (
-              t("convert")
+              t("title")
             )}
           </Button>
         </DialogFooter>

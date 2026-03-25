@@ -378,7 +378,7 @@ export function EditQuickScriptTemplateModal({
                 name="language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("fields.language")}</FormLabel>
+                    <FormLabel>{tCommon("fields.locale")}</FormLabel>
                     <FormControl>
                       <ComboboxInput
                         options={languageOptions}

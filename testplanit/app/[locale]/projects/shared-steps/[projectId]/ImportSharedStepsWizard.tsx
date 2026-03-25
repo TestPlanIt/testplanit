@@ -468,7 +468,7 @@ export function ImportSharedStepsWizard({
     <div className="space-y-6">
       <div>
         <RequiredLabel required error={validationErrors.selectedFile}>
-          {t("importWizard.page1.uploadFile")}
+          {tCommon("editor.uploadFile")}
         </RequiredLabel>
         <div className="mt-2">
           <div

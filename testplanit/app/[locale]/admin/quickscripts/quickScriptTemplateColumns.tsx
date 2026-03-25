@@ -48,7 +48,7 @@ export const getColumns = (
     {
       id: "language",
       accessorKey: "language",
-      header: t("fields.language"),
+      header: tCommon("fields.locale"),
       enableSorting: true,
       enableResizing: true,
       size: 120,

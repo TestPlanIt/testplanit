@@ -1,12 +1,16 @@
 "use client";
 
 import {
-  Groups as PrismaGroups, ProjectAccessType, Roles
+  Groups as PrismaGroups,
+  ProjectAccessType,
+  Roles,
 } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import {
-  Control, UseFormGetValues, UseFormSetValue,
-  UseFormWatch
+  Control,
+  UseFormGetValues,
+  UseFormSetValue,
+  UseFormWatch,
 } from "react-hook-form";
 import { EditProjectFormData } from "./EditProject"; // Removed GroupPermissionFormState import
 
@@ -19,15 +23,17 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectItem, SelectSeparator, SelectTrigger,
-  SelectValue
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
 
@@ -226,7 +232,7 @@ export function ProjectGroupPermissions({
                               {role.isDefault && (
                                 <TooltipProvider delayDuration={300}>
                                   <Tooltip>
-                                    <TooltipTrigger asChild>
+                                    <TooltipTrigger className="ml-1" asChild>
                                       <Badge variant="secondary">
                                         <Star className="h-3 w-3 fill-current text-primary-background" />
                                       </Badge>
@@ -255,7 +261,8 @@ export function ProjectGroupPermissions({
                           currentRoleId !== "NONE" && (
                             <RoleNameCell roleId={currentRoleId} />
                           )}
-                        {currentAccessType === ProjectAccessType.GLOBAL_ROLE && (
+                        {currentAccessType ===
+                          ProjectAccessType.GLOBAL_ROLE && (
                           <span className="italic text-muted-foreground ml-1">
                             {tGlobal("common.labels.access.usersGlobalRole")}
                           </span>

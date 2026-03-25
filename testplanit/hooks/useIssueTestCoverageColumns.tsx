@@ -394,7 +394,7 @@ export function useIssueTestCoverageSummaryColumns(
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {t("reports.ui.issueTestCoverage.untested")}
+                    {tCommon("labels.untested")}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

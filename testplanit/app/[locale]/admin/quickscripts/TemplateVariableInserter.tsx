@@ -51,6 +51,7 @@ export function TemplateVariableInserter({
   currentValue,
 }: TemplateVariableInserterProps) {
   const t = useTranslations("admin.exportTemplates.variableInserter");
+  const tCommon = useTranslations("common");
   const [selectKey, setSelectKey] = useState(0);
 
   const cursorPosRef = useRef(0);
@@ -119,7 +120,7 @@ export function TemplateVariableInserter({
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>{t("groups.caseFields")}</SelectLabel>
+          <SelectLabel>{tCommon("fields.caseFields")}</SelectLabel>
           {CASE_VARIABLES.map((v) => (
             <SelectItem key={v.value} value={v.value} className="pl-6">
               {v.label}
@@ -130,7 +131,7 @@ export function TemplateVariableInserter({
           ))}
         </SelectGroup>
         <SelectGroup>
-          <SelectLabel>{t("groups.steps")}</SelectLabel>
+          <SelectLabel>{tCommon("fields.steps")}</SelectLabel>
           {STEP_VARIABLES.map((v) => (
             <SelectItem key={v.value} value={v.value} className="pl-6">
               {v.isBlock ? t("stepsBlock") : v.label}

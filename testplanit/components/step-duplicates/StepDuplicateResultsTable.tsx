@@ -54,8 +54,11 @@ export function StepDuplicateResultsTable({
   onRowClick,
 }: StepDuplicateResultsTableProps) {
   const t = useTranslations("sharedSteps.stepDuplicates");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
-  const [selectedMatch, setSelectedMatch] = useState<MatchWithMembers | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<MatchWithMembers | null>(
+    null
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -94,7 +97,12 @@ export function StepDuplicateResultsTable({
               steps: {
                 where: { isDeleted: false },
                 orderBy: { order: "asc" },
-                select: { id: true, step: true, expectedResult: true, order: true },
+                select: {
+                  id: true,
+                  step: true,
+                  expectedResult: true,
+                  order: true,
+                },
               },
             },
           },
@@ -144,7 +152,11 @@ export function StepDuplicateResultsTable({
       let matchedStepsPreview = "";
       const firstMember = members[0];
       if (firstMember?.case?.steps) {
-        const steps = firstMember.case.steps as Array<{ id: number; step: unknown; order: number }>;
+        const steps = firstMember.case.steps as Array<{
+          id: number;
+          step: unknown;
+          order: number;
+        }>;
         const startId = firstMember.startStepId;
         const endId = firstMember.endStepId;
         const startIdx = steps.findIndex((s: any) => s.id === startId);
@@ -163,7 +175,8 @@ export function StepDuplicateResultsTable({
         name: caseNames.join(" / "),
         stepCount: match.stepCount,
         fingerprint: match.fingerprint,
-        matchedStepsPreview: matchedStepsPreview || `${match.stepCount} matched steps`,
+        matchedStepsPreview:
+          matchedStepsPreview || `${match.stepCount} matched steps`,
         casesCount: members.length,
         caseNames,
         status: match.status,
@@ -274,8 +287,8 @@ export function StepDuplicateResultsTable({
   );
 
   const columns = useMemo(
-    () => getColumns(t, handleCheckboxClick, handleSelectAllClick),
-    [t, handleCheckboxClick, handleSelectAllClick]
+    () => getColumns(t, tCommon, handleCheckboxClick, handleSelectAllClick),
+    [t, tCommon, handleCheckboxClick, handleSelectAllClick]
   );
 
   const handleTableRowClick = useCallback(
@@ -298,7 +311,12 @@ export function StepDuplicateResultsTable({
     queryClient.invalidateQueries({
       predicate: (q) => {
         const key = q.queryKey as string[];
-        return key.some?.((k: unknown) => typeof k === "string" && k.includes("StepSequenceMatch")) ?? false;
+        return (
+          key.some?.(
+            (k: unknown) =>
+              typeof k === "string" && k.includes("StepSequenceMatch")
+          ) ?? false
+        );
       },
     });
     setRowSelection({});
@@ -341,10 +359,17 @@ export function StepDuplicateResultsTable({
 
       setRowSelection({});
       setIsBulkProcessing(false);
-      queryClient.invalidateQueries({ predicate: (q) => {
-        const key = q.queryKey as string[];
-        return key.some?.((k: unknown) => typeof k === "string" && k.includes("StepSequenceMatch")) ?? false;
-      }});
+      queryClient.invalidateQueries({
+        predicate: (q) => {
+          const key = q.queryKey as string[];
+          return (
+            key.some?.(
+              (k: unknown) =>
+                typeof k === "string" && k.includes("StepSequenceMatch")
+            ) ?? false
+          );
+        },
+      });
     },
     [getSelectedItems, t, updateMatch, queryClient]
   );
@@ -427,7 +452,7 @@ export function StepDuplicateResultsTable({
         </div>
       )}
 
-      <div data-testid="step-duplicates-table">
+      <div data-testid="step-duplicates-table w-full">
         <DataTable
           columns={columns}
           data={pageItems}

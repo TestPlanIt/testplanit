@@ -67,6 +67,7 @@ export function FeatureOverrides({
   promptConfigId,
 }: FeatureOverridesProps) {
   const t = useTranslations("projects.settings.aiModels.featureOverrides");
+  const tCommon = useTranslations("common");
 
   const { data: featureConfigs } = useFindManyLlmFeatureConfig({
     where: { projectId },
@@ -183,7 +184,7 @@ export function FeatureOverrides({
       case "projectDefault":
         return (
           <Badge variant="outline" className="text-muted-foreground">
-            {t("projectDefault")}
+            {tCommon("labels.access.projectDefault")}
           </Badge>
         );
       case "noLlmConfigured":
@@ -253,7 +254,7 @@ export function FeatureOverrides({
                           size="icon"
                           className="h-8 w-8 shrink-0"
                           onClick={() => handleClearOverride(feature)}
-                          title={t("clearOverride")}
+                          title={tCommon("actions.clear")}
                         >
                           <X className="h-4 w-4" />
                         </Button>

@@ -87,7 +87,7 @@ export const getColumns = (
             timezone={userPreferences.user.preferences?.timezone || "Etc/UTC"}
           />
         ) : (
-          <span className="text-muted-foreground/50">{t("lastUsedNever")}</span>
+          <span className="text-muted-foreground/50">{tCommon("never")}</span>
         )}
       </div>
     ),

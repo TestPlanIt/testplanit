@@ -75,7 +75,7 @@ export function useDrillDownColumns({
       testCase: tLinkedCases("testCase"),
       milestoneStatusNotStarted: tMilestones("statusLabels.NOT_STARTED"),
       milestoneStatusInProgress: tMilestones("statusLabels.IN_PROGRESS"),
-      milestoneStatusCompleted: tMilestones("statusLabels.completed"),
+      milestoneStatusCompleted: tCommon("fields.completed"),
     }),
     [tCommon, tLinkedCases, tMilestones]
   );

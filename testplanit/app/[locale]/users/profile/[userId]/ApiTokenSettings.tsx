@@ -229,7 +229,7 @@ export function ApiTokenSettings({
                       />
                     ) : (
                       <span className="text-muted-foreground/50">
-                        {tGlobal("admin.apiTokens.lastUsedNever")}
+                        {tGlobal("common.never")}
                       </span>
                     )}
                   </TableCell>
@@ -250,7 +250,7 @@ export function ApiTokenSettings({
                       </Badge>
                     ) : (
                       <Badge variant="outline">
-                        {tGlobal("admin.apiTokens.lastUsedNever")}
+                        {tGlobal("common.never")}
                       </Badge>
                     )}
                   </TableCell>

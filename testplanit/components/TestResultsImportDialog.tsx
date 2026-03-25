@@ -8,27 +8,32 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Form, FormControl, FormField,
+  Form,
+  FormControl,
+  FormField,
   FormItem,
-  FormLabel, FormMessage
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Asterisk, Star, Upload } from "lucide-react";
@@ -41,13 +46,11 @@ import {
   useFindManyMilestones,
   useFindManyTags,
   useFindManyTemplates,
-  useFindManyWorkflows
+  useFindManyWorkflows,
 } from "~/lib/hooks";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { IconName } from "~/types/globals";
-import {
-  ConfigurationSelect
-} from "./forms/ConfigurationSelect";
+import { ConfigurationSelect } from "./forms/ConfigurationSelect";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
 import { MilestoneSelect, transformMilestones } from "./forms/MilestoneSelect";
 import { ManageTags } from "./ManageTags";
@@ -301,9 +304,7 @@ export default function TestResultsImportDialog({
                   setImportStatus(t("progress.completed"));
                 }
               } catch (e) {
-                if (
-                  e instanceof SyntaxError
-                ) {
+                if (e instanceof SyntaxError) {
                   // JSON parse error on SSE data — log and continue
                   console.error("Error parsing SSE data:", e);
                 } else {
@@ -365,7 +366,7 @@ export default function TestResultsImportDialog({
       <DialogTrigger asChild>
         <Button variant="outline">
           <Upload className="h-4 w-4" />
-          {t("trigger")}
+          {t("title")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
@@ -454,7 +455,9 @@ export default function TestResultsImportDialog({
                             {
                               value: NEW_FOLDER_SENTINEL,
                               label: watchedName
-                                ? t("createNewFolderNamed", { name: watchedName })
+                                ? t("createNewFolderNamed", {
+                                    name: watchedName,
+                                  })
                                 : t("createNewFolder"),
                               parentId: null,
                             },
@@ -589,7 +592,10 @@ export default function TestResultsImportDialog({
                                   {template.isDefault && (
                                     <TooltipProvider delayDuration={300}>
                                       <Tooltip>
-                                        <TooltipTrigger asChild>
+                                        <TooltipTrigger
+                                          className="ml-1"
+                                          asChild
+                                        >
                                           <Badge variant="secondary">
                                             <Star className="h-3 w-3 fill-current text-primary-background" />
                                           </Badge>

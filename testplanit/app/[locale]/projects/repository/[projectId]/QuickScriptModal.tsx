@@ -7,11 +7,11 @@ import {
   checkAiExportAvailable,
   generateAiExport,
   generateAiExportBatch,
-  type AiExportResult
+  type AiExportResult,
 } from "~/app/actions/aiExportActions";
 import {
   fetchCasesForQuickScript,
-  type QuickScriptCaseData
+  type QuickScriptCaseData,
 } from "~/app/actions/quickScriptActions";
 import {
   useFindManyCaseExportTemplate,
@@ -28,7 +28,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from "@/components/ui/command";
 import {
   Dialog,
@@ -36,13 +36,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
@@ -50,7 +50,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Check, ChevronsUpDown, Loader2, Sparkles, Star } from "lucide-react";
 import { cn } from "~/utils";
@@ -237,9 +237,7 @@ export function QuickScriptModal({
 
   // Determine whether the project has any template assignments at all
   const hasAssignments =
-    assignments !== undefined &&
-    assignments !== null &&
-    assignments.length > 0;
+    assignments !== undefined && assignments !== null && assignments.length > 0;
 
   // Build the filtered template list:
   // - No assignments exist → show all enabled templates (backward compatible, EXPORT-03)
@@ -248,9 +246,7 @@ export function QuickScriptModal({
     if (!hasAssignments) {
       return templates ?? [];
     }
-    const assignedTemplateIds = new Set(
-      assignments!.map((a) => a.templateId)
-    );
+    const assignedTemplateIds = new Set(assignments!.map((a) => a.templateId));
     return (templates ?? []).filter((t) => assignedTemplateIds.has(t.id));
   }, [hasAssignments, assignments, templates]);
 
@@ -809,7 +805,7 @@ export function QuickScriptModal({
                           {selectedTemplate?.isDefault && (
                             <TooltipProvider delayDuration={300}>
                               <Tooltip>
-                                <TooltipTrigger asChild>
+                                <TooltipTrigger className="ml-1" asChild>
                                   <Badge variant="secondary">
                                     <Star className="h-3 w-3 fill-current text-primary-background" />
                                   </Badge>
@@ -857,7 +853,10 @@ export function QuickScriptModal({
                                     {tmpl.isDefault && (
                                       <TooltipProvider delayDuration={300}>
                                         <Tooltip>
-                                          <TooltipTrigger asChild>
+                                          <TooltipTrigger
+                                            className="ml-1"
+                                            asChild
+                                          >
                                             <Badge variant="secondary">
                                               <Star className="h-3 w-3 fill-current text-primary-background" />
                                             </Badge>
@@ -898,8 +897,7 @@ export function QuickScriptModal({
                     <Label
                       htmlFor="individual"
                       className={cn(
-                        selectedCaseIds.length === 1 &&
-                          "text-muted-foreground"
+                        selectedCaseIds.length === 1 && "text-muted-foreground"
                       )}
                     >
                       {t("outputModeIndividual", {
@@ -962,7 +960,11 @@ export function QuickScriptModal({
               <Button
                 type="button"
                 onClick={handleExport}
-                disabled={isExporting || !effectiveTemplateId || assignmentsExistButEmpty}
+                disabled={
+                  isExporting ||
+                  !effectiveTemplateId ||
+                  assignmentsExistButEmpty
+                }
                 data-testid="quickscript-button"
               >
                 {isExporting ? (

@@ -2,7 +2,7 @@
 
 import {
   FolderSelect,
-  transformFolders
+  transformFolders,
 } from "@/components/forms/FolderSelect";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -17,7 +17,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -27,19 +27,24 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
 import {
-  AlertCircle, AlertTriangle, CheckCircle2, ChevronLeft,
-  ChevronRight, Download, Star
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Star,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -47,9 +52,15 @@ import Papa from "papaparse";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import { useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates } from "~/lib/hooks";
 import {
-  convertMarkdownCasesToImportData, parseMarkdownTestCases, type ParsedMarkdownCase
+  useFindManyProjectLlmIntegration,
+  useFindManyRepositoryFolders,
+  useFindManyTemplates,
+} from "~/lib/hooks";
+import {
+  convertMarkdownCasesToImportData,
+  parseMarkdownTestCases,
+  type ParsedMarkdownCase,
 } from "~/utils/markdownTestCaseParser";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
@@ -164,7 +175,19 @@ export function ImportCasesWizard({
 
   // Page 4 state
   const [previewIndex, setPreviewIndex] = useState(0);
-  const [duplicateWarnings, setDuplicateWarnings] = useState<Map<number, { existingSimilar: Array<{ id: number; name: string; confidence: string }>, intraImportRows: number[] }>>(new Map());
+  const [duplicateWarnings, setDuplicateWarnings] = useState<
+    Map<
+      number,
+      {
+        existingSimilar: Array<{
+          id: number;
+          name: string;
+          confidence: string;
+        }>;
+        intraImportRows: number[];
+      }
+    >
+  >(new Map());
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
   // Validation errors state
@@ -224,11 +247,24 @@ export function ImportCasesWizard({
 
     const checkDuplicates = async () => {
       setIsCheckingDuplicates(true);
-      const warnings = new Map<number, { existingSimilar: Array<{ id: number; name: string; confidence: string }>, intraImportRows: number[] }>();
+      const warnings = new Map<
+        number,
+        {
+          existingSimilar: Array<{
+            id: number;
+            name: string;
+            confidence: string;
+          }>;
+          intraImportRows: number[];
+        }
+      >();
 
       // Find the "name" column from field mappings
-      const nameMapping = fieldMappings.find(m => m.templateField === "name");
-      if (!nameMapping) { setIsCheckingDuplicates(false); return; }
+      const nameMapping = fieldMappings.find((m) => m.templateField === "name");
+      if (!nameMapping) {
+        setIsCheckingDuplicates(false);
+        return;
+      }
       const nameColumn = nameMapping.csvColumn;
 
       // Build name-to-row-indices map for intra-import detection
@@ -245,26 +281,46 @@ export function ImportCasesWizard({
       for (const [, rows] of nameToRows) {
         if (rows.length > 1) {
           for (const rowIdx of rows) {
-            const entry = warnings.get(rowIdx) || { existingSimilar: [], intraImportRows: [] };
-            entry.intraImportRows = rows.filter(r => r !== rowIdx);
+            const entry = warnings.get(rowIdx) || {
+              existingSimilar: [],
+              intraImportRows: [],
+            };
+            entry.intraImportRows = rows.filter((r) => r !== rowIdx);
             warnings.set(rowIdx, entry);
           }
         }
       }
 
       // Check against existing cases via API — batch by unique names, max 50
-      const uniqueNames = [...new Set(parsedData.map(row => (row[nameColumn] || "").toString().trim()).filter(Boolean))].slice(0, 50);
+      const uniqueNames = [
+        ...new Set(
+          parsedData
+            .map((row) => (row[nameColumn] || "").toString().trim())
+            .filter(Boolean)
+        ),
+      ].slice(0, 50);
 
       // Find the "tags" column if mapped
-      const tagsMapping = fieldMappings.find(m => m.templateField === "tags");
+      const tagsMapping = fieldMappings.find((m) => m.templateField === "tags");
       const tagsColumn = tagsMapping?.csvColumn;
 
       for (const name of uniqueNames) {
         try {
-          const tagsValue = tagsColumn ? parsedData.find(r => (r[nameColumn] || "").toString().trim() === name)?.[tagsColumn] : undefined;
+          const tagsValue = tagsColumn
+            ? parsedData.find(
+                (r) => (r[nameColumn] || "").toString().trim() === name
+              )?.[tagsColumn]
+            : undefined;
           let tags: string[] | undefined;
           if (tagsValue) {
-            try { tags = JSON.parse(tagsValue as string); } catch { tags = (tagsValue as string).split(",").map((tag: string) => tag.trim()).filter(Boolean); }
+            try {
+              tags = JSON.parse(tagsValue as string);
+            } catch {
+              tags = (tagsValue as string)
+                .split(",")
+                .map((tag: string) => tag.trim())
+                .filter(Boolean);
+            }
           }
 
           const res = await fetch("/api/duplicate-scan/check-new", {
@@ -278,7 +334,10 @@ export function ImportCasesWizard({
             // Apply to all rows with this name
             parsedData.forEach((row, idx) => {
               if ((row[nameColumn] || "").toString().trim() === name) {
-                const entry = warnings.get(idx) || { existingSimilar: [], intraImportRows: [] };
+                const entry = warnings.get(idx) || {
+                  existingSimilar: [],
+                  intraImportRows: [],
+                };
                 entry.existingSimilar = data.cases;
                 warnings.set(idx, entry);
               }
@@ -297,10 +356,9 @@ export function ImportCasesWizard({
   }, [currentPage, parsedData, fieldMappings, projectId]);
 
   // Check if project has an active LLM integration (for markdown parsing)
-  const { data: projectLlmIntegrations } =
-    useFindManyProjectLlmIntegration({
-      where: { projectId, isActive: true },
-    });
+  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration({
+    where: { projectId, isActive: true },
+  });
   const hasLlmIntegration =
     projectLlmIntegrations && projectLlmIntegrations.length > 0;
 
@@ -535,13 +593,9 @@ export function ImportCasesWizard({
           const partialMatch = templateFields.find(
             (field) =>
               !usedFields.has(field.id) &&
-              (normalizedColName.includes(
-                field.displayName.toLowerCase()
-              ) ||
+              (normalizedColName.includes(field.displayName.toLowerCase()) ||
                 normalizedColName.includes(field.id.toLowerCase()) ||
-                field.displayName
-                  .toLowerCase()
-                  .includes(normalizedColName) ||
+                field.displayName.toLowerCase().includes(normalizedColName) ||
                 field.id.toLowerCase().includes(normalizedColName))
           );
 
@@ -679,9 +733,7 @@ export function ImportCasesWizard({
   };
 
   // Helper to detect columns from LLM-parsed cases
-  const detectColumnsFromLlmCases = (
-    cases: ParsedMarkdownCase[]
-  ): string[] => {
+  const detectColumnsFromLlmCases = (cases: ParsedMarkdownCase[]): string[] => {
     const columns = new Set<string>();
     columns.add("name");
     for (const c of cases) {
@@ -850,16 +902,17 @@ export function ImportCasesWizard({
               if (data.error) {
                 // Handle error
                 if (data.errors && data.errors.length > 0) {
-                  toast.error(tGlobal(
-                      "sharedSteps.importWizard.errors.validationFailed"
-                    ), {
-                    description: tGlobal(
-                      "sharedSteps.importWizard.errors.validationDescription",
-                      {
-                        count: data.errors.length,
-                      }
-                    ),
-                  });
+                  toast.error(
+                    tGlobal("sharedSteps.importWizard.errors.validationFailed"),
+                    {
+                      description: tGlobal(
+                        "sharedSteps.importWizard.errors.validationDescription",
+                        {
+                          count: data.errors.length,
+                        }
+                      ),
+                    }
+                  );
                 } else {
                   throw new Error(
                     data.error ||
@@ -927,7 +980,7 @@ export function ImportCasesWizard({
     <div className="space-y-6">
       <div>
         <RequiredLabel required error={validationErrors.selectedFile}>
-          {tGlobal("sharedSteps.importWizard.page1.uploadFile")}
+          {tGlobal("common.editor.uploadFile")}
         </RequiredLabel>
         <div className="mt-2">
           <div
@@ -955,7 +1008,6 @@ export function ImportCasesWizard({
               initialFiles={initialFile ? [initialFile] : undefined}
             />
           </div>
-
         </div>
       </div>
 
@@ -1130,7 +1182,7 @@ export function ImportCasesWizard({
                 {template.isDefault && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
-                      <TooltipTrigger asChild>
+                      <TooltipTrigger className="ml-1" asChild>
                         <Badge variant="secondary">
                           <Star className="h-3 w-3 fill-current text-primary-background" />
                         </Badge>
@@ -1168,10 +1220,7 @@ export function ImportCasesWizard({
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="multi" id="row_multi" />
-              <Label
-                htmlFor="row_multi"
-                className="font-normal cursor-pointer"
-              >
+              <Label htmlFor="row_multi" className="font-normal cursor-pointer">
                 {t("importWizard.page1.rowMode.multi")}
               </Label>
             </div>
@@ -1541,17 +1590,34 @@ export function ImportCasesWizard({
                             <TooltipTrigger asChild>
                               <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
                             </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-[300px]">
+                            <TooltipContent
+                              side="right"
+                              className="max-w-[300px]"
+                            >
                               {warning.existingSimilar.length > 0 && (
-                                <p>{tGlobal("repository.duplicates.importWarningTooltip", {
-                                  count: warning.existingSimilar.length,
-                                  names: warning.existingSimilar.map(c => c.name).join(", "),
-                                })}</p>
+                                <p>
+                                  {tGlobal(
+                                    "repository.duplicates.importWarningTooltip",
+                                    {
+                                      count: warning.existingSimilar.length,
+                                      names: warning.existingSimilar
+                                        .map((c) => c.name)
+                                        .join(", "),
+                                    }
+                                  )}
+                                </p>
                               )}
                               {warning.intraImportRows.length > 0 && (
-                                <p>{tGlobal("repository.duplicates.importIntraWarningTooltip", {
-                                  rows: warning.intraImportRows.map(r => r + 1).join(", "),
-                                })}</p>
+                                <p>
+                                  {tGlobal(
+                                    "repository.duplicates.importIntraWarningTooltip",
+                                    {
+                                      rows: warning.intraImportRows
+                                        .map((r) => r + 1)
+                                        .join(", "),
+                                    }
+                                  )}
+                                </p>
                               )}
                             </TooltipContent>
                           </Tooltip>
@@ -1568,7 +1634,9 @@ export function ImportCasesWizard({
                       );
                       const value = caseData[mapping.csvColumn];
                       const isExpandedField =
-                        field?.id === "steps" || field?.id === "tags" || field?.type === "Text Long";
+                        field?.id === "steps" ||
+                        field?.id === "tags" ||
+                        field?.type === "Text Long";
 
                       return (
                         <div
@@ -1626,7 +1694,10 @@ export function ImportCasesWizard({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
+        <Button
+          variant="outline"
+          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        >
           <Download className="h-4 w-4 shrink-0" />
           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
             {t("importWizard.title")}

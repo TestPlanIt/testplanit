@@ -319,7 +319,7 @@ export default function QuickScriptTemplates() {
                                 {t("fields.fileExtension")}
                               </th>
                               <th className="px-4 py-2 text-left font-medium">
-                                {t("fields.language")}
+                                {tCommon("fields.locale")}
                               </th>
                               <th className="px-4 py-2 text-center font-medium">
                                 {tCommon("fields.enabled")}

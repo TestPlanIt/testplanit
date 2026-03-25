@@ -126,7 +126,7 @@ export const getColumns = (
       if (!lastSyncAt) {
         return (
           <span className="text-sm text-muted-foreground">
-            {tApiTokens("lastUsedNever")}
+            {tCommon("never")}
           </span>
         );
       }

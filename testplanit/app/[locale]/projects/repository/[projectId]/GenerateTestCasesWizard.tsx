@@ -12,7 +12,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,7 +21,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,13 +38,28 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "@prisma/client";
 import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle, Bot, CheckCircle2, ChevronLeft, ChevronRight, Download, ExternalLink, Eye, FileText, Info, ListChecks, Search,
-  Settings, Sparkles, SquarePen, Star, Tag
+  AlertTriangle,
+  Bot,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Info,
+  ListChecks,
+  Search,
+  Settings,
+  Sparkles,
+  SquarePen,
+  Star,
+  Tag,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -55,13 +70,23 @@ import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateRepositoryCases, useCreateRepositoryCaseVersions, useCreateSteps, useFindFirstProjects, useFindFirstWorkflows, useFindManyRepositoryCases, useFindManyTemplates, useUpdateRepositoryCases,
-  useUpsertIssue, useUpsertTags
+  useCreateCaseFieldValues,
+  useCreateCaseFieldVersionValues,
+  useCreateRepositoryCases,
+  useCreateRepositoryCaseVersions,
+  useCreateSteps,
+  useFindFirstProjects,
+  useFindFirstWorkflows,
+  useFindManyRepositoryCases,
+  useFindManyTemplates,
+  useUpdateRepositoryCases,
+  useUpsertIssue,
+  useUpsertTags,
 } from "~/lib/hooks";
 import {
   convertHtmlToTipTapJSON,
   ensureTipTapJSON,
-  serializeTipTapJSON
+  serializeTipTapJSON,
 } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
@@ -2459,7 +2484,10 @@ export function GenerateTestCasesWizard({
         }}
       >
         <DialogTrigger asChild>
-          <Button variant="outline" className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
+          <Button
+            variant="outline"
+            className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+          >
             <Sparkles className="w-4 h-4 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
               {t("generateTestCases.buttonText")}
@@ -2863,7 +2891,7 @@ export function GenerateTestCasesWizard({
                               {template.isDefault && (
                                 <TooltipProvider delayDuration={300}>
                                   <Tooltip>
-                                    <TooltipTrigger asChild>
+                                    <TooltipTrigger className="ml-1" asChild>
                                       <Badge variant="secondary">
                                         <Star className="h-3 w-3 fill-current text-primary-background" />
                                       </Badge>

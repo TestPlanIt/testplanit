@@ -3,8 +3,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
-  useCreateManyGroupAssignment, useCreateManyProjectAssignment, useCreateUser,
-  useCreateUserPreferences, useFindFirstRegistrationSettings, useFindManyGroups, useFindManyProjects, useFindManyRoles
+  useCreateManyGroupAssignment,
+  useCreateManyProjectAssignment,
+  useCreateUser,
+  useCreateUserPreferences,
+  useFindFirstRegistrationSettings,
+  useFindManyGroups,
+  useFindManyProjects,
+  useFindManyRoles,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,15 +22,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CirclePlus, Star } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -37,7 +45,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {
@@ -47,7 +55,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
@@ -123,14 +131,12 @@ export function AddUserModal() {
           {role.isDefault && (
             <TooltipProvider delayDuration={300}>
               <Tooltip>
-                <TooltipTrigger asChild>
+                <TooltipTrigger className="ml-1" asChild>
                   <Badge variant="secondary">
                     <Star className="h-3 w-3 fill-current text-primary-background" />
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {tCommon("defaultOption")}
-                </TooltipContent>
+                <TooltipContent>{tCommon("defaultOption")}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
@@ -230,15 +236,18 @@ export function AddUserModal() {
   }, []);
 
   // Function to restore deleted user
-  async function handleRestoreUser(userId: string, formData: z.infer<typeof AddUserFormValidationSchema>) {
+  async function handleRestoreUser(
+    userId: string,
+    formData: z.infer<typeof AddUserFormValidationSchema>
+  ) {
     try {
       setIsSubmitting(true);
 
       // Restore the user by marking isDeleted as false
       // Note: We only restore the user, not update their info. Admin can edit after restoration.
       const response = await fetch(`/api/users/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           isDeleted: false,
         }),
@@ -246,7 +255,7 @@ export function AddUserModal() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to restore user');
+        throw new Error(errorData.error || "Failed to restore user");
       }
 
       // Handle project and group assignments
@@ -289,7 +298,9 @@ export function AddUserModal() {
     try {
       // Check if email verification is required
       // Email verification is automatically disabled if no email server is configured
-      const requireEmailVerification = isEmailServerConfigured && (registrationSettings?.requireEmailVerification ?? true);
+      const requireEmailVerification =
+        isEmailServerConfigured &&
+        (registrationSettings?.requireEmailVerification ?? true);
 
       // Construct payload matching UserCreateInput for the API
       const apiPayload = {
@@ -350,13 +361,18 @@ export function AddUserModal() {
       if (err.info?.prisma && err.info?.code === "P2002") {
         // Check if there's a soft-deleted user with this email using the API endpoint
         try {
-          const response = await fetch(`/api/model/user/findFirst?q=${encodeURIComponent(JSON.stringify({
-            where: { email: data.email, isDeleted: true },
-            select: { id: true, email: true, name: true }
-          }))}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
+          const response = await fetch(
+            `/api/model/user/findFirst?q=${encodeURIComponent(
+              JSON.stringify({
+                where: { email: data.email, isDeleted: true },
+                select: { id: true, email: true, name: true },
+              })
+            )}`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
 
           if (response.ok) {
             const result = await response.json();
@@ -399,391 +415,404 @@ export function AddUserModal() {
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>{t("title")}</DialogTitle>
-              <DialogDescription className="sr-only">
-                {t("title")}
-              </DialogDescription>
-            </DialogHeader>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("name")}
-                    <HelpPopover helpKey="user.name" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder={tCommon("name")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.email")}
-                    <HelpPopover helpKey="user.email" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={tCommon("fields.email")}
-                      className="resize-none"
-                      maxLength={256}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.password")}
-                    <HelpPopover helpKey="user.password" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder={tCommon("fields.password")}
-                      className="resize-none"
-                      maxLength={256}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.confirmPassword")}
-                    <HelpPopover helpKey="user.confirmPassword" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder={tCommon("fields.confirmPassword")}
-                      className="resize-none"
-                      maxLength={256}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.isActive")}
-                    <HelpPopover helpKey="user.active" />
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="access"
-              render={({ field: _field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormLabel className="flex whitespace-nowrap items-center">
-                    {tCommon("fields.access")}
-                    <HelpPopover helpKey="user.access" />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <DialogHeader>
+                <DialogTitle>{t("title")}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  {t("title")}
+                </DialogDescription>
+              </DialogHeader>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {tCommon("name")}
+                      <HelpPopover helpKey="user.name" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder={tCommon("name")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.email")}
+                      <HelpPopover helpKey="user.email" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={tCommon("fields.email")}
+                        className="resize-none"
+                        maxLength={256}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.password")}
+                      <HelpPopover helpKey="user.password" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder={tCommon("fields.password")}
+                        className="resize-none"
+                        maxLength={256}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.confirmPassword")}
+                      <HelpPopover helpKey="user.confirmPassword" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder={tCommon("fields.confirmPassword")}
+                        className="resize-none"
+                        maxLength={256}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.isActive")}
+                      <HelpPopover helpKey="user.active" />
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="access"
+                render={({ field: _field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormLabel className="flex whitespace-nowrap items-center">
+                      {tCommon("fields.access")}
+                      <HelpPopover helpKey="user.access" />
+                      <FormControl>
+                        <Controller
+                          control={control}
+                          name="access"
+                          render={({ field: { onChange, value } }) => (
+                            <Select
+                              onValueChange={(newValue) => {
+                                onChange(newValue);
+                                // Auto-enable isApi for ADMIN users
+                                if (newValue === "ADMIN") {
+                                  setValue("isApi", true);
+                                }
+                              }}
+                              value={value}
+                            >
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={tCommon("fields.access")}
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectItem value="ADMIN">
+                                    {tCommon("access.admin")}
+                                  </SelectItem>
+                                  <SelectItem value="PROJECTADMIN">
+                                    {tCommon("access.projectAdmin")}
+                                  </SelectItem>
+                                  <SelectItem value="USER">
+                                    {tCommon("access.user")}
+                                  </SelectItem>
+                                  <SelectItem value="NONE">
+                                    {tCommon("access.none")}
+                                  </SelectItem>
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </FormControl>
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="roleId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.role")}
+                      <HelpPopover helpKey="user.role" />
+                    </FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={tCommon("fields.role_placeholder")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {roleOptions.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="groups"
+                render={({ field: _field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {tCommon("fields.groups")}
+                        <HelpPopover helpKey="user.groups" />
+                      </div>
+                      <div
+                        onClick={selectAllGroups}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {tCommon("actions.selectAll")}
+                      </div>
+                    </FormLabel>
                     <FormControl>
                       <Controller
                         control={control}
-                        name="access"
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            onValueChange={(newValue) => {
-                              onChange(newValue);
-                              // Auto-enable isApi for ADMIN users
-                              if (newValue === "ADMIN") {
-                                setValue("isApi", true);
-                              }
+                        name="groups"
+                        render={({ field }) => (
+                          <MultiSelect
+                            {...field}
+                            isMulti
+                            maxMenuHeight={300}
+                            className="w-[445px] sm:w-[550px] lg:w-[950px]"
+                            classNamePrefix="select"
+                            styles={customStyles}
+                            options={groupOptions}
+                            onChange={(selected: any) => {
+                              // Convert selected options to the format expected by react-hook-form (an array of values)
+                              const value = selected
+                                ? selected.map((option: any) => option.value)
+                                : [];
+                              field.onChange(value);
                             }}
-                            value={value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={tCommon("fields.access")}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="ADMIN">
-                                  {tCommon("access.admin")}
-                                </SelectItem>
-                                <SelectItem value="PROJECTADMIN">
-                                  {tCommon("access.projectAdmin")}
-                                </SelectItem>
-                                <SelectItem value="USER">
-                                  {tCommon("access.user")}
-                                </SelectItem>
-                                <SelectItem value="NONE">
-                                  {tCommon("access.none")}
-                                </SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
+                            // Dynamically set the value based on the form's current state
+                            value={groupOptions.filter((option) =>
+                              field.value?.includes(option.value)
+                            )}
+                          />
                         )}
                       />
                     </FormControl>
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="roleId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.role")}
-                    <HelpPopover helpKey="user.role" />
-                  </FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={tCommon("fields.role_placeholder")}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {roleOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="projects"
+                render={({ field: _field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {tCommon("fields.projects")}
+                        <HelpPopover helpKey="user.projects" />
+                      </div>
+                      <div
+                        onClick={selectAllProjects}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {tCommon("actions.selectAll")}
+                      </div>
+                    </FormLabel>
+                    <FormControl>
+                      <Controller
+                        control={control}
+                        name="projects"
+                        render={({ field }) => (
+                          <MultiSelect
+                            {...field}
+                            isMulti
+                            maxMenuHeight={300}
+                            className="w-[445px] sm:w-[550px] lg:w-[950px]"
+                            classNamePrefix="select"
+                            styles={customStyles}
+                            options={projectOptions}
+                            onChange={(selected: any) => {
+                              // Convert selected options to the format expected by react-hook-form (an array of values)
+                              const value = selected
+                                ? selected.map((option: any) => option.value)
+                                : [];
+                              field.onChange(value);
+                            }}
+                            // Dynamically set the value based on the form's current state
+                            value={projectOptions.filter((option) =>
+                              field.value?.includes(option.value)
+                            )}
+                          />
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="groups"
-              render={({ field: _field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {tCommon("fields.groups")}
-                      <HelpPopover helpKey="user.groups" />
-                    </div>
-                    <div
-                      onClick={selectAllGroups}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>
-                  <FormControl>
-                    <Controller
-                      control={control}
-                      name="groups"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={groupOptions}
-                          onChange={(selected: any) => {
-                            // Convert selected options to the format expected by react-hook-form (an array of values)
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          // Dynamically set the value based on the form's current state
-                          value={groupOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
+              <FormField
+                control={form.control}
+                name="isApi"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={accessValue === "ADMIN"}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.apiAccess")}
+                      {accessValue === "ADMIN" && (
+                        <span className="text-muted-foreground text-xs ml-2">
+                          {"("}
+                          {tCommon("fields.requiredForAdmin")}
+                          {")"}
+                        </span>
                       )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <HelpPopover helpKey="user.api" />
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="projects"
-              render={({ field: _field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="user.projects" />
-                    </div>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>
-                  <FormControl>
-                    <Controller
-                      control={control}
-                      name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            // Convert selected options to the format expected by react-hook-form (an array of values)
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          // Dynamically set the value based on the form's current state
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <DialogFooter>
+                {errors.root && (
+                  <div
+                    className="bg-destructive text-destructive-foreground text-sm p-2"
+                    role="alert"
+                  >
+                    {errors.root.message}
+                  </div>
+                )}
+                <Button variant="outline" type="button" onClick={handleCancel}>
+                  {tCommon("cancel")}
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? tCommon("actions.submitting")
+                    : tCommon("actions.submit")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-            <FormField
-              control={form.control}
-              name="isApi"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={accessValue === "ADMIN"}
-                    />
-                  </FormControl>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.apiAccess")}
-                    {accessValue === "ADMIN" && (
-                      <span className="text-muted-foreground text-xs ml-2">
-                        {"("}
-                        {tCommon("fields.requiredForAdmin")}
-                        {")"}
-                      </span>
-                    )}
-                    <HelpPopover helpKey="user.api" />
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              {errors.root && (
-                <div
-                  className="bg-destructive text-destructive-foreground text-sm p-2"
-                  role="alert"
-                >
-                  {errors.root.message}
-                </div>
-              )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("cancel")}
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting
-                  ? tCommon("actions.submitting")
-                  : tCommon("actions.submit")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-
-    {/* Restore Deleted User Dialog */}
-    <Dialog open={showRestoreDialog} onOpenChange={(isOpen) => {
-      setShowRestoreDialog(isOpen);
-      if (!isOpen) {
-        setDeletedUser(null);
-      }
-    }}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{tGlobal("admin.users.restore.title")}</DialogTitle>
-          <DialogDescription>
-            {tGlobal("admin.users.restore.description", { email: deletedUser?.email })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => {
-              setShowRestoreDialog(false);
-              setDeletedUser(null);
-              setIsSubmitting(false);
-            }}
-            disabled={isSubmitting}
-          >
-            {tCommon("cancel")}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              const formData = form.getValues();
-              handleRestoreUser(deletedUser.id, formData);
-            }}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? tCommon("actions.submitting") : tGlobal("admin.users.restore.confirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* Restore Deleted User Dialog */}
+      <Dialog
+        open={showRestoreDialog}
+        onOpenChange={(isOpen) => {
+          setShowRestoreDialog(isOpen);
+          if (!isOpen) {
+            setDeletedUser(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{tGlobal("admin.users.restore.title")}</DialogTitle>
+            <DialogDescription>
+              {tGlobal("admin.users.restore.description", {
+                email: deletedUser?.email,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setShowRestoreDialog(false);
+                setDeletedUser(null);
+                setIsSubmitting(false);
+              }}
+              disabled={isSubmitting}
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                const formData = form.getValues();
+                handleRestoreUser(deletedUser.id, formData);
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? tCommon("actions.submitting")
+                : tGlobal("admin.users.restore.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -345,7 +345,7 @@ function TestRunDetail({ entityId }: { entityId: number }) {
 
       {docs && (
         <div className="space-y-1.5">
-          <SectionLabel>{tDetail("documentation")}</SectionLabel>
+          <SectionLabel>{t("fields.documentation")}</SectionLabel>
           <p className="whitespace-pre-wrap text-xs">{docs}</p>
         </div>
       )}

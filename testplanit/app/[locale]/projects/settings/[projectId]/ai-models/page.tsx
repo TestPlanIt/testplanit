@@ -8,20 +8,20 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -30,8 +30,10 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
-  useFindFirstProjects, useFindManyLlmIntegration,
-  useFindManyProjectLlmIntegration, useUpdateProjects
+  useFindFirstProjects,
+  useFindManyLlmIntegration,
+  useFindManyProjectLlmIntegration,
+  useUpdateProjects,
 } from "~/lib/hooks";
 import { useFindManyPromptConfig } from "~/lib/hooks/prompt-config";
 import { FeatureOverrides } from "./feature-overrides";
@@ -250,7 +252,7 @@ export default function ProjectAiModelsPage() {
                       {config.isDefault && (
                         <TooltipProvider delayDuration={300}>
                           <Tooltip>
-                            <TooltipTrigger asChild>
+                            <TooltipTrigger className="ml-1" asChild>
                               <Badge variant="secondary">
                                 <Star className="h-3 w-3 fill-current text-primary-background" />
                               </Badge>

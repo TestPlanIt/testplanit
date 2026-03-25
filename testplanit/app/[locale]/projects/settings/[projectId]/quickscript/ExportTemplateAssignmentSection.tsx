@@ -40,6 +40,7 @@ export function ExportTemplateAssignmentSection({
   currentDefaultId,
 }: ExportTemplateAssignmentSectionProps) {
   const t = useTranslations("projects.settings.quickScript");
+  const tCommon = useTranslations("common");
 
   type TemplateOption = {
     id: number;
@@ -264,7 +265,7 @@ export function ExportTemplateAssignmentSection({
               <Button onClick={handleSave} disabled={!isDirty || isSaving}>
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isSaving
-                  ? t("exportTemplates.saving")
+                  ? tCommon("actions.saving")
                   : t("exportTemplates.save")}
               </Button>
             </div>

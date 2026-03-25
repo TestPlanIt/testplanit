@@ -55,6 +55,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useResponsiveSVG(containerRef);
   const t = useTranslations("reports.ui.issueTestCoverage");
+  const tCommon = useTranslations("common");
 
   // Aggregate data by issue (since data is now flat with duplicates)
   const aggregatedData = useMemo(() => {
@@ -507,7 +508,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
             className="w-3 h-3 rounded"
             style={{ backgroundColor: statusColors.untested }}
           />
-          <span className="text-muted-foreground">{t("untested")}</span>
+          <span className="text-muted-foreground">{tCommon("labels.untested")}</span>
         </div>
       </div>
 

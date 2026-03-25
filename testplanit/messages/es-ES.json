@@ -116,7 +116,6 @@
       "junit": {
         "details": "Detalles de los resultados de las pruebas automatizadas",
         "import": {
-          "trigger": "Importar resultados de pruebas",
           "title": "Importar resultados de pruebas",
           "description": "Suba los archivos de resultados de las pruebas para importarlos en una nueva ejecución de pruebas. Compatible con los formatos JUnit, TestNG, xUnit, NUnit, MSTest, Mocha y Cucumber.",
           "testRun": {
@@ -146,7 +145,6 @@
           },
           "error": {
             "title": "Error al importar",
-            "missingFields": "Complete todos los campos obligatorios y cargue los archivos de resultados de la prueba.",
             "importFailed": "No se pudieron importar los resultados de la prueba. Inténtelo de nuevo."
           },
           "success": {
@@ -158,33 +156,14 @@
       },
       "testResults": {
         "import": {
-          "title": "Importar resultados de pruebas",
-          "description": "Suba los archivos de resultados de las pruebas para importarlos en una nueva ejecución de pruebas. Compatible con los formatos JUnit, TestNG, xUnit, NUnit, MSTest, Mocha y Cucumber.",
           "format": {
             "label": "Formato de resultados",
             "placeholder": "Seleccionar formato"
-          },
-          "file": {
-            "label": "Archivos de resultados de pruebas"
-          },
-          "progress": {
-            "parsing": "Analizando {format} resultados...",
-            "parseWarnings": "Analizado con {count, plural, one {# advertencia} other {# advertencias}}",
-            "errorParsing": "Error al analizar archivos: {error}"
-          },
-          "error": {
-            "missingFields": "Complete todos los campos obligatorios y cargue los archivos de resultados de la prueba.",
-            "importFailed": "No se pudieron importar los resultados de la prueba. Verifique el formato del archivo y vuelva a intentarlo."
-          },
-          "success": {
-            "description": "Los resultados de la prueba se han importado correctamente."
-          },
-          "fileRequired": "Cargue al menos un archivo con resultados de prueba."
+          }
         }
       },
       "confirmRestoreTitle": "Confirmar restauración",
       "confirmPurgeTitle": "Confirmar purga",
-      "view": "Ver",
       "remove": "Eliminar"
     },
     "permissions": {
@@ -673,9 +652,6 @@
     "upload": {
       "title": "Subir nueva foto de perfil",
       "description": "Arrastre y suelte su imagen o haga clic en el botón de abajo para seleccionar un archivo.",
-      "errors": {
-        "unknown": "Se ha producido un error desconocido"
-      },
       "attachments": {
         "title": "Subir adjuntos",
         "description": "Arrastre y suelte sus archivos o haga clic en el botón de abajo para seleccionar archivos.",
@@ -703,11 +679,6 @@
       "setColor": "Establecer color",
       "enterUrl": "Introducir URL incluyendo https://",
       "uploadFile": "Subir archivo",
-      "paragraph": "Párrafo",
-      "heading1": "Encabezado 1",
-      "heading2": "Encabezado 2",
-      "heading3": "Encabezado 3",
-      "codeBlock": "Bloque de código",
       "video": {
         "controls": "Controles del reproductor de vídeo"
       },
@@ -1164,10 +1135,8 @@
           "noOverride": "Sin anulación",
           "projectOverride": "Anulación del proyecto",
           "promptConfig": "Configuración de solicitud",
-          "projectDefault": "Proyecto predeterminado",
           "noLlmConfigured": "No se ha configurado ningún LLM",
           "selectIntegration": "Seleccionar integración...",
-          "clearOverride": "Claro",
           "overrideSaved": "Anulación de función guardada",
           "overrideCleared": "Anulación de función borrada",
           "overrideError": "No se pudo guardar la anulación de la función."
@@ -1193,7 +1162,6 @@
         "repository": {
           "title": "Repositorio de código",
           "description": "Seleccione el repositorio de código que se utilizará para el contexto de IA",
-          "label": "Repositorio de código",
           "placeholder": "Seleccione un repositorio de código...",
           "branchLabel": "Rama",
           "branchPlaceholder": "Déjelo en blanco para usar la rama predeterminada del repositorio"
@@ -1228,10 +1196,7 @@
           "listingFiles": "Listado de archivos…",
           "cachingFiles": "Almacenamiento en caché de {count} archivos…",
           "statusNeverFetched": "Nunca recuperado",
-          "statusSuccess": "Éxito",
-          "statusError": "Error",
           "statusPending": "Refrescante...",
-          "statusLabel": "Estado",
           "lastFetched": "Última obtención",
           "filesCached": "Archivos en caché",
           "totalSize": "Tamaño total"
@@ -1260,7 +1225,6 @@
           "defaultPlaceholder": "Ninguno (usar la configuración predeterminada global)",
           "assigned": "Asignado",
           "save": "Guardar asignaciones de plantillas",
-          "saving": "Ahorro...",
           "saved": "Asignaciones de plantillas guardadas",
           "saveError": "No se pudieron guardar las asignaciones de plantillas."
         },
@@ -1758,8 +1722,7 @@
     "folderActions": {
       "edit": "Editar carpeta",
       "delete": "Eliminar carpeta",
-      "rename": "Renombrar carpeta",
-      "copyMove": "Copiar / Mover al proyecto"
+      "rename": "Renombrar carpeta"
     },
     "cases": {
       "filter": "Filtrar casos...",
@@ -2046,9 +2009,6 @@
       "copySuccess": "Copiado al portapapeles",
       "fallbackBadge": "Generado usando plantilla (IA no disponible)",
       "retryButton": "Reintentar la generación de IA",
-      "downloadButton": "Descargar",
-      "copyButton": "Copiar al portapapeles",
-      "backButton": "Atrás",
       "aiGenerated": "Generado por IA",
       "templateGenerated": "Plantilla generada",
       "truncatedWarning": "La salida se truncó: el modelo alcanzó su límite de tokens. Intente reducir el tamaño del lote o aumentar el número máximo de tokens de salida en la configuración del símbolo del sistema.",
@@ -2117,7 +2077,6 @@
       "noFolder": "No hay carpeta",
       "duplicateWarning": "Se encontraron posibles duplicados",
       "duplicateWarningDescription": "{count, plural, one {# caso existente} other {# casos existentes}} puede cubrir una funcionalidad similar",
-      "duplicateWarningViewCase": "Vista",
       "duplicateWarningReview": "Revisar",
       "importWarning": "Posible duplicado",
       "importWarningTooltip": "Este nombre de caso es similar a {count, plural, one {# caso existente} other {# casos existentes}}: {names}",
@@ -2209,7 +2168,6 @@
       "errors": {
         "generateFailed": "Error al generar casos de prueba. Vuelve a intentarlo.",
         "importFailed": "Error al importar casos de prueba. Vuelve a intentarlo.",
-        "noTestCasesSelected": "Por favor, seleccione al menos un caso de prueba para importar.",
         "noTestCasesGenerated": "No se han generado casos de prueba. Por favor, inténtalo de nuevo con entradas diferentes.",
         "noAiModel": "No hay ningún modelo de IA configurado para este proyecto. Configure un modelo de IA en la configuración del proyecto.",
         "noIssueSelected": "Seleccione un problema para generar casos de prueba.",
@@ -2479,7 +2437,6 @@
       "issues": "Asuntos",
       "appConfig": "Configuración de la aplicación",
       "notifications": "Notificaciones",
-      "systemHeader": "Sistema",
       "imports": "Importaciones de datos",
       "integrations": "Integraciones del problema",
       "llm": "AI Models",
@@ -2625,7 +2582,6 @@
         "previousImportsNoFilename": "Archivo desconocido",
         "jobHistoryLoadFailed": "No pudimos cargar trabajos importados previamente.",
         "jobLoadFailed": "No pudimos cargar ese trabajo de importación.",
-        "uploadProgressUploading": "Subiendo...",
         "uploadProgressAnalyzing": "Subida completa. Analizando archivo…",
         "uploadProgressComplete": "Subida finalizada",
         "etaLabel": "Hora estimada de llegada: {time}",
@@ -2725,7 +2681,6 @@
           "templateFieldDuplicateTargetWarning": "El objetivo seleccionado ya está asignado a otro campo de Testmo. Elija un objetivo diferente.",
           "templateFieldTargetAlreadyUsed": "Ya mapeado",
           "templateFieldMappedSummary": "Asignado a {name} ({type})",
-          "templateFieldIssueBadge": "Necesita atención",
           "templateFieldIssueMissingTarget": "Seleccione un campo de destino.",
           "templateFieldIssueMissingDetails": "Proporcione el nombre para mostrar, el nombre del sistema y el tipo de campo antes de continuar.",
           "noTemplatesAvailable": "No hay plantillas disponibles",
@@ -3238,7 +3193,6 @@
         "category": "Categoría",
         "framework": "Estructura",
         "fileExtension": "Extensión de archivo",
-        "language": "Idioma",
         "headerBody": "Plantilla de encabezado",
         "templateBody": "Cuerpo de la plantilla",
         "footerBody": "Plantilla de pie de página",
@@ -3291,8 +3245,6 @@
       "variableInserter": {
         "placeholder": "Insertar variable...",
         "groups": {
-          "caseFields": "Campos de caso",
-          "steps": "Pasos",
           "customFields": "Campos personalizados"
         },
         "stepsBlock": "Bloque de pasos"
@@ -3334,7 +3286,6 @@
         "revoked": "Revocado",
         "expired": "Venció"
       },
-      "lastUsedNever": "Nunca",
       "noExpiry": "Sin vencimiento",
       "revokeToken": "Revocar token",
       "revokeConfirmTitle": "Revocar token de API",
@@ -3370,11 +3321,6 @@
     },
     "workflows": {
       "description": "Administrar flujos de trabajo de casos de prueba",
-      "types": {
-        "NOT_STARTED": "No iniciado",
-        "IN_PROGRESS": "En curso",
-        "DONE": "Hecho"
-      },
       "add": {
         "button": "Añadir flujo de trabajo",
         "title": "Añadir nuevo flujo de trabajo",
@@ -4021,7 +3967,6 @@
         "spendOfBudget": "{currentSpend} de {budgetLimit}",
         "overBudget": "Por encima del presupuesto",
         "budgetPercentage": "{percentage}% del presupuesto utilizado",
-        "resetSpend": "Reiniciar",
         "spendReset": "El gasto del mes actual se ha restablecido"
       }
     },
@@ -4059,7 +4004,6 @@
         "warning": "Esta acción no se puede deshacer. Todos los proyectos que utilicen esta configuración volverán a la configuración de solicitud predeterminada."
       },
       "llmColumn": "Máster en Derecho",
-      "projectDefaultLabel": "Proyecto predeterminado",
       "mixedLlms": "{count} LLMs",
       "cannotDeleteDefault": "No se puede eliminar la configuración predeterminada del mensaje. Primero, configure otra como predeterminada.",
       "defaultChanged": "La configuración del mensaje predeterminado se actualizó correctamente.",
@@ -4368,8 +4312,6 @@
       "completed": "(Completo)",
       "targetFolder": "Carpeta de destino",
       "newFolderPlaceholder": "Nuevo nombre de carpeta...",
-      "createFolder": "Crear",
-      "next": "Próximo",
       "operation": "Operación",
       "operationCopy": "Copiar",
       "operationCopyDesc": "Crea una copia del/los caso(s) seleccionado(s) en el proyecto de destino. Los originales permanecen sin cambios.",
@@ -4391,18 +4333,14 @@
       "sharedStepGroupReuseDesc": "Los casos harán referencia al grupo de pasos compartidos existente.",
       "sharedStepGroupCreateNew": "Crear nuevo",
       "sharedStepGroupCreateNewDesc": "Se creará un nuevo grupo de pasos compartidos.",
-      "back": "Atrás",
       "go": "Ir",
       "processing": "Tratamiento...",
       "progressText": "{processed} de {total} casos procesados",
-      "cancel": "Cancelar",
-      "complete": "Completo",
       "successCount": "{count} caso(s) {operation}d exitoso",
       "skipped": "Omitido: {count}",
       "droppedLinks": "Se eliminaron los enlaces entre proyectos: {count}",
       "errorCount": "{count} caso(s) fallido(s)",
       "viewInTargetProject": "Ver en el proyecto de destino",
-      "close": "Cerca",
       "failed": "Fallido",
       "folderMode": "Carpeta \"{folderName}\" — {caseCount, plural, one {# caso} other {# casos}}"
     }
@@ -5399,7 +5337,6 @@
         "passRate": "Tasa de aprobación",
         "passed": "Aprobado",
         "failed": "Fallido",
-        "untested": "No probado",
         "lastStatus": "Último estado",
         "lastExecuted": "Último ejecutado",
         "notTested": "No probado",
@@ -5576,20 +5513,17 @@
       "expiration": {
         "label": "Vencimiento",
         "noExpiration": "Sin vencimiento",
-        "expiresAtMidnight": "El enlace expirará al final del día seleccionado (su hora local)",
-        "clear": "Claro"
+        "expiresAtMidnight": "El enlace expirará al final del día seleccionado (su hora local)"
       },
       "notifyOnView": {
         "label": "Notificarme cuando alguien vea este enlace",
         "description": "Recibirás una notificación cuando se acceda al enlace para compartir, según tus preferencias de notificación."
       },
       "title": {
-        "label": "Título",
         "placeholder": "p. ej., Informe de ejecución de pruebas",
         "leaveEmptyToUse": "Déjelo vacío para utilizar:"
       },
       "description": {
-        "label": "Descripción",
         "placeholder": "Agregue una descripción para este informe compartido..."
       },
       "actions": {
@@ -5622,22 +5556,13 @@
       },
       "shareList": {
         "columns": {
-          "title": "Título",
-          "project": "Proyecto",
           "mode": "Modo",
           "views": "Vistas",
-          "notifications": "Notificaciones",
-          "created": "Creado",
-          "expires": "Caduca",
-          "status": "Estado"
+          "expires": "Caduca"
         },
         "status": {
-          "active": "Activo",
           "revoked": "Revocado",
           "expired": "Venció"
-        },
-        "expires": {
-          "never": "Nunca"
         },
         "notifications": {
           "enabled": "En",
@@ -5650,26 +5575,19 @@
         "defaultTitle": "{entityType} compartir",
         "noProject": "Proyecto cruzado",
         "actions": {
-          "label": "Comportamiento",
           "copyLink": "Copiar enlace",
-          "copied": "Copiado!",
-          "edit": "Editar",
-          "revoke": "Revocar",
-          "delete": "Borrar"
+          "revoke": "Revocar"
         },
         "revokeDialog": {
           "title": "¿Revocar enlace para compartir?",
           "description": "Esto revocará inmediatamente el enlace para compartir. Cualquiera que intente acceder verá un mensaje de error. Esta acción no se puede deshacer.",
-          "cancel": "Cancelar",
           "confirm": "Revocar enlace",
           "revoking": "Revocando..."
         },
         "deleteDialog": {
           "title": "¿Borrar enlace para compartir?",
           "description": "Esto eliminará permanentemente el enlace para compartir. Si el enlace está activo, caducará inmediatamente y dejará de ser accesible. Esta acción no se puede deshacer.",
-          "cancel": "Cancelar",
-          "confirm": "Eliminar enlace",
-          "deleting": "Borrando..."
+          "confirm": "Eliminar enlace"
         },
         "toast": {
           "linkCopied": "¡Enlace copiado!",
@@ -5697,15 +5615,11 @@
         "description": "Tu enlace para compartir está listo. Cópialo y compártelo.",
         "shareLink": "Compartir enlace",
         "copy": "Copiar",
-        "copied": "Copiado!",
         "openInNewTab": "Abrir en nueva pestaña",
         "metadata": {
           "mode": "Modo",
           "expires": "Caduca",
-          "notifications": "Notificaciones",
-          "views": "Vistas",
-          "enabled": "Activado",
-          "disabled": "Desactivado"
+          "views": "Vistas"
         },
         "warnings": {
           "publicLink": "Enlace público:",
@@ -5713,19 +5627,14 @@
           "expiresSoon": "Este enlace expirará al final de"
         },
         "actions": {
-          "createAnother": "Crea otro",
-          "done": "Hecho"
+          "createAnother": "Crea otro"
         }
       },
       "editDialog": {
         "title": "Editar enlace para compartir",
         "description": "Actualice la configuración de este enlace para compartir.",
         "passwordExists": "Este enlace para compartir ya tiene contraseña. Deje el campo de contraseña vacío para conservar la contraseña actual.",
-        "passwordPlaceholder": "Déjelo en blanco para conservar la contraseña existente",
-        "confirmPassword": "confirmar Contraseña",
-        "cancel": "Cancelar",
-        "saving": "Ahorro...",
-        "save": "Guardar cambios"
+        "passwordPlaceholder": "Déjelo en blanco para conservar la contraseña existente"
       }
     },
     "passwordDialog": {
@@ -5802,7 +5711,6 @@
       },
       "page1": {
         "title": "Subir archivo y configuración",
-        "uploadFile": "Subir archivo",
         "selectedFile": "Archivo seleccionado",
         "delimiter": "Delimitador de campos",
         "delimiters": {
@@ -5832,7 +5740,6 @@
     "manualEntry": {
       "buttonLabel": "Agregar manualmente",
       "description": "Crear un nuevo grupo de pasos compartidos con entrada manual",
-      "groupNameLabel": "Nombre del grupo",
       "groupNamePlaceholder": "Introduzca un nombre para este grupo de pasos compartidos",
       "success": "Pasos compartidos creados exitosamente",
       "errors": {
@@ -5844,7 +5751,6 @@
     "stepDuplicates": {
       "pageTitle": "Duplicados de secuencia de pasos",
       "pageDescription": "Revise las secuencias de pasos coincidentes en todos los casos de prueba. Convierta las coincidencias en grupos de pasos compartidos o descarte los falsos positivos.",
-      "loading": "Cargando resultados...",
       "noResultsFound": "No se encontraron duplicados en la secuencia de pasos.",
       "noResultsDescription": "Ejecuta un escaneo para detectar secuencias de pasos repetidas en tus casos de prueba.",
       "filterPlaceholder": "Filtrar por nombre del caso...",
@@ -5854,29 +5760,19 @@
       "bulkError": "Algunas operaciones fallaron. Inténtalo de nuevo.",
       "tableHint": "Haz clic en una fila para previsualizar los pasos coincidentes. Selecciona las filas con casillas de verificación para acciones masivas.",
       "columns": {
-        "stepCount": "Pasos",
         "matchedSteps": "Pasos coincidentes",
         "casesCount": "Casos",
-        "actions": "Comportamiento"
+        "review": "Revisar"
       },
       "scanning": "Exploración...",
       "scanComplete": "{count, plural, one {# coincidencia encontrada} other {# coincidencias encontradas}}",
       "scanFailed": "El escaneo falló.",
       "scanFailedDescription": "Se ha producido un error durante el escaneo. Inténtelo de nuevo.",
-      "analyzing": "Analizando {analyzed}/{total}",
       "cancelScan": "Cancelar escaneo",
       "findStepDuplicates": "Buscar pasos duplicados",
-      "rescan": "Volver a escanear",
-      "convertToSharedStep": "Convertir",
-      "dismiss": "Despedir",
+      "rescan": "Escanear",
       "viewResults": "Ver resultados ({count})",
       "retryScan": "Reintentar escaneo",
-      "settingsTitle": "Configuración de escaneo",
-      "scopeLabel": "Alcance",
-      "scopeProject": "Proyecto completo",
-      "scopeFolder": "Carpeta específica",
-      "thresholdLabel": "Pasos mínimos de coincidencia",
-      "startScan": "Iniciar escaneo",
       "dialog": {
         "title": "Convertir a pasos compartidos",
         "previewTitle": "Secuencia de pasos coincidentes",
@@ -5884,7 +5780,6 @@
         "casesDescription": "Desmarque los casos que desee excluir de la conversión.",
         "nameLabel": "Nombre del grupo de pasos compartido",
         "namePlaceholder": "Introduce un nombre para el grupo de pasos compartido...",
-        "convert": "Convertir a pasos compartidos",
         "converting": "Mudado...",
         "dismissMatch": "Descartar partido",
         "dismissing": "Despidiendo...",
@@ -5894,14 +5789,8 @@
         "dismissError": "No se pudo cerrar la solicitud. Inténtelo de nuevo.",
         "viewSharedStep": "Ver grupo de pasos compartido",
         "skippedWarning": "{count, plural, one {# caso omitido} other {# casos omitidos}} (obsoleto o ya convertido).",
-        "stepHeader": "Paso",
-        "expectedResultHeader": "Resultado esperado",
         "noCasesSelected": "Seleccione al menos un caso para convertir.",
-        "viewCase": "Ver detalles del caso",
-        "doneEditing": "Hecho",
-        "addStep": "Agregar paso",
-        "insertStepAbove": "Insertar paso superior",
-        "deleteStep": "Paso de eliminación"
+        "selectAll": "Seleccionar todo"
       }
     },
     "findStepDuplicates": "Buscar duplicados"
@@ -6075,7 +5964,6 @@
     "sheetTitle": "Comparte tu opinión",
     "sheetDescription": "Ayúdanos a mejorar TestPlanIt compartiendo tu experiencia.",
     "bannerMessage": "¿Cómo va tu juicio? Nos encantaría saber tu opinión.",
-    "takeSurvey": "Compartir comentarios",
     "menuItem": "Compartir comentarios"
   },
   "autoTag": {
@@ -6139,7 +6027,6 @@
     },
     "entityDetail": {
       "customFields": "Campos personalizados",
-      "documentation": "Documentación",
       "noDetails": "No hay detalles adicionales disponibles.",
       "openInNewTab": "Abrir en nueva pestaña"
     }

@@ -119,7 +119,7 @@ export function FeedbackBanner({
         {t("feedback.bannerMessage")}
       </span>
       <Button variant="secondary" size="sm" onClick={handleOpenSurvey}>
-        {t("feedback.takeSurvey")}
+        {t("feedback.menuItem")}
       </Button>
       <button
         onClick={handleDismiss}

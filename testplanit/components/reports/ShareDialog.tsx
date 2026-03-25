@@ -338,7 +338,7 @@ export function ShareDialog({
                         onClick={() => setExpiresAt(undefined)}
                         className="w-full"
                       >
-                        {t("expiration.clear")}
+                        {tCommon("actions.clear")}
                       </Button>
                     </div>
                   )}
@@ -369,7 +369,7 @@ export function ShareDialog({
 
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">{t("title.label")}</Label>
+              <Label htmlFor="title">{tCommon("fields.title")}</Label>
               <Input
                 data-testid="share-title-input"
                 id="title"
@@ -384,7 +384,7 @@ export function ShareDialog({
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">{t("description.label")}</Label>
+              <Label htmlFor="description">{tCommon("fields.description")}</Label>
               <Textarea
                 data-testid="share-description-input"
                 id="description"

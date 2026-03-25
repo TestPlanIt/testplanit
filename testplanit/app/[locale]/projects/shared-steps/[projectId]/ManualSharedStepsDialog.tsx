@@ -174,7 +174,7 @@ export function ManualSharedStepsDialog({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="group-name">
-              {t("manualEntry.groupNameLabel")}
+              {tCommon("fields.groupName")}
             </Label>
             <Input
               id="group-name"

@@ -391,7 +391,7 @@ export function ExportPreviewPane({
       {!isGenerating && (
         <div className="flex items-center justify-between pt-2">
           <Button variant="outline" size="sm" onClick={onClose}>
-            {t("backButton")}
+            {tCommon("actions.back")}
           </Button>
           <div className="flex items-center gap-2">
             {results.length <= 1 && (
@@ -401,12 +401,12 @@ export function ExportPreviewPane({
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
-                {t("copyButton")}
+                {tCommon("editor.contentMenu.copyToClipboard")}
               </Button>
             )}
             <Button size="sm" onClick={onDownload}>
               <Download className="h-4 w-4" />
-              {t("downloadButton")}
+              {tCommon("actions.download")}
             </Button>
           </div>
         </div>

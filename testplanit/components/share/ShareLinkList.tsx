@@ -45,6 +45,7 @@ interface ShareLinkListProps {
 
 export function ShareLinkList({ projectId, entityType, showProjectColumn = false }: ShareLinkListProps) {
   const t = useTranslations("reports.shareDialog.shareList");
+  const tCommon = useTranslations("common");
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedShareId, setSelectedShareId] = useState<string | null>(null);
@@ -190,14 +191,14 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
         <Table>
           <TableHeader>
             <TableRow>
-              {showProjectColumn && <TableHead>{t("columns.project")}</TableHead>}
-              <TableHead>{t("columns.title")}</TableHead>
+              {showProjectColumn && <TableHead>{tCommon("fields.project")}</TableHead>}
+              <TableHead>{tCommon("fields.title")}</TableHead>
               <TableHead>{t("columns.mode")}</TableHead>
               <TableHead className="text-right">{t("columns.views")}</TableHead>
-              <TableHead>{t("columns.notifications")}</TableHead>
-              <TableHead>{t("columns.created")}</TableHead>
+              <TableHead>{tCommon("fields.notificationMode")}</TableHead>
+              <TableHead>{tCommon("fields.created")}</TableHead>
               <TableHead>{t("columns.expires")}</TableHead>
-              <TableHead>{t("columns.status")}</TableHead>
+              <TableHead>{tCommon("actions.status")}</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -271,7 +272,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                         {format(new Date(share.expiresAt), "MMM d, yyyy")}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">{t("expires.never")}</span>
+                      <span className="text-muted-foreground">{tCommon("never")}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -281,7 +282,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                       <Badge variant="secondary">{t("status.expired")}</Badge>
                     ) : (
                       <Badge variant="default" className="bg-success">
-                        {t("status.active")}
+                        {tCommon("fields.isActive")}
                       </Badge>
                     )}
                   </TableCell>
@@ -295,7 +296,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                           className="h-8 w-8 p-0"
                         >
                           <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">{t("actions.label")}</span>
+                          <span className="sr-only">{tCommon("actions.actionsLabel")}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -306,7 +307,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                           {copiedId === share.id ? (
                             <>
                               <CheckCircle2 className="h-4 w-4" />
-                              {t("actions.copied")}
+                              {tCommon("actions.copied")}
                             </>
                           ) : (
                             <>
@@ -325,7 +326,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                               }}
                             >
                               <Pencil className="mr-1 h-4 w-4" />
-                              {t("actions.edit")}
+                              {tCommon("actions.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               data-testid={`share-revoke-${share.id}`}
@@ -347,7 +348,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                               className="text-destructive"
                             >
                               <Trash2 className="mr-1 h-4 w-4" />
-                              {t("actions.delete")}
+                              {tCommon("actions.delete")}
                             </DropdownMenuItem>
                           </>
                         ) : (
@@ -360,7 +361,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                             className="text-destructive"
                           >
                             <Trash2 className="mr-1 h-4 w-4" />
-                            {t("actions.delete")}
+                            {tCommon("actions.delete")}
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
@@ -383,7 +384,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("revokeDialog.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRevoke}
               disabled={isRevoking}
@@ -412,7 +413,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isRevoking}
@@ -421,7 +422,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
               {isRevoking ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("deleteDialog.deleting")}
+                  {tCommon("actions.deleting")}
                 </>
               ) : (
                 t("deleteDialog.confirm")

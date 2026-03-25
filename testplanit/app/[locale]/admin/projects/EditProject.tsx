@@ -2,13 +2,26 @@
 /* eslint-disable react-hooks/incompatible-library */
 import type { Prisma } from "@prisma/client";
 import {
-  GroupProjectPermission, ProjectAccessType,
-  UserProjectPermission
+  GroupProjectPermission,
+  ProjectAccessType,
+  UserProjectPermission,
 } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
-  useCreateManyProjectAssignment, useDeleteManyGroupProjectPermission, useDeleteManyProjectAssignment, useDeleteManyUserProjectPermission, useFindManyGroupProjectPermission, useFindManyGroups, useFindManyProjectAssignment, useFindManyRoles, useFindManyUser, useFindManyUserProjectPermission, useUpdateProjects, useUpsertGroupProjectPermission, useUpsertUserProjectPermission
+  useCreateManyProjectAssignment,
+  useDeleteManyGroupProjectPermission,
+  useDeleteManyProjectAssignment,
+  useDeleteManyUserProjectPermission,
+  useFindManyGroupProjectPermission,
+  useFindManyGroups,
+  useFindManyProjectAssignment,
+  useFindManyRoles,
+  useFindManyUser,
+  useFindManyUserProjectPermission,
+  useUpdateProjects,
+  useUpsertGroupProjectPermission,
+  useUpsertUserProjectPermission,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +37,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 
 import { SquarePen, Star } from "lucide-react";
@@ -36,7 +49,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import { DatePickerField } from "@/components/forms/DatePickerField";
@@ -47,13 +60,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
-  SelectItem, SelectSeparator, SelectTrigger,
-  SelectValue
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -148,14 +163,13 @@ export function EditProjectModal({
       },
       { enabled: isOpen }
     );
-  const { data: groupPermissionsData } =
-    useFindManyGroupProjectPermission(
-      {
-        where: { projectId: project.id },
-        include: { group: true, role: true },
-      },
-      { enabled: isOpen }
-    );
+  const { data: groupPermissionsData } = useFindManyGroupProjectPermission(
+    {
+      where: { projectId: project.id },
+      include: { group: true, role: true },
+    },
+    { enabled: isOpen }
+  );
 
   const { data: projectAssignments, isLoading: assignmentsLoading } =
     useFindManyProjectAssignment(
@@ -949,7 +963,10 @@ export function EditProjectModal({
                                   {role.isDefault && (
                                     <TooltipProvider delayDuration={300}>
                                       <Tooltip>
-                                        <TooltipTrigger asChild>
+                                        <TooltipTrigger
+                                          className="ml-1"
+                                          asChild
+                                        >
                                           <Badge variant="secondary">
                                             <Star className="h-3 w-3 fill-current text-primary-background" />
                                           </Badge>

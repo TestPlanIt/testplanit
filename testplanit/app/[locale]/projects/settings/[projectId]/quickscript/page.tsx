@@ -628,7 +628,7 @@ export default function QuickScriptPage() {
                     name="repositoryId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("repository.label")}</FormLabel>
+                        <FormLabel>{t("repository.title")}</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -924,7 +924,7 @@ export default function QuickScriptPage() {
                             <div className="grid grid-cols-2 gap-3 text-sm">
                               <div>
                                 <span className="text-muted-foreground">
-                                  {t("cache.statusLabel")}
+                                  {tCommon("actions.status")}
                                 </span>
                                 <div className="mt-1 flex items-center gap-2">
                                   {!configData.cacheStatus && (
@@ -936,7 +936,7 @@ export default function QuickScriptPage() {
                                     <>
                                       <CheckCircle className="h-4 w-4 text-success" />
                                       <Badge variant="default">
-                                        {t("cache.statusSuccess")}
+                                        {tCommon("fields.success")}
                                       </Badge>
                                     </>
                                   )}
@@ -944,7 +944,7 @@ export default function QuickScriptPage() {
                                     <>
                                       <XCircle className="h-4 w-4 text-destructive" />
                                       <Badge variant="destructive">
-                                        {t("cache.statusError")}
+                                        {tCommon("errors.error")}
                                       </Badge>
                                     </>
                                   )}

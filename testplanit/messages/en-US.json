@@ -116,7 +116,6 @@
       "junit": {
         "details": "Automated Test Result Details",
         "import": {
-          "trigger": "Import Test Results",
           "title": "Import Test Results",
           "description": "Upload test result files to import into a new test run. Supports JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, and Cucumber formats.",
           "testRun": {
@@ -146,7 +145,6 @@
           },
           "error": {
             "title": "Import Error",
-            "missingFields": "Please fill in all required fields and upload test result files.",
             "importFailed": "Failed to import test results. Please try again."
           },
           "success": {
@@ -158,33 +156,14 @@
       },
       "testResults": {
         "import": {
-          "title": "Import Test Results",
-          "description": "Upload test result files to import into a new test run. Supports JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, and Cucumber formats.",
           "format": {
             "label": "Result Format",
             "placeholder": "Select format"
-          },
-          "file": {
-            "label": "Test Result Files"
-          },
-          "progress": {
-            "parsing": "Parsing {format} results...",
-            "parseWarnings": "Parsed with {count, plural, one {# warning} other {# warnings}}",
-            "errorParsing": "Error parsing files: {error}"
-          },
-          "error": {
-            "missingFields": "Please fill in all required fields and upload test result files.",
-            "importFailed": "Failed to import test results. Please check the file format and try again."
-          },
-          "success": {
-            "description": "Test results have been successfully imported."
-          },
-          "fileRequired": "Please upload at least one test result file."
+          }
         }
       },
       "confirmRestoreTitle": "Confirm Restore",
       "confirmPurgeTitle": "Confirm Purge",
-      "view": "View",
       "remove": "Remove"
     },
     "permissions": {
@@ -673,9 +652,6 @@
     "upload": {
       "title": "Upload New Profile Picture",
       "description": "Drag and drop your image or click the button below to select a file.",
-      "errors": {
-        "unknown": "An unknown error occurred"
-      },
       "attachments": {
         "title": "Upload Attachments",
         "description": "Drag and drop your files or click the button below to select files.",
@@ -703,11 +679,6 @@
       "setColor": "Set Color",
       "enterUrl": "Enter URL including https://",
       "uploadFile": "Upload File",
-      "paragraph": "Paragraph",
-      "heading1": "Heading 1",
-      "heading2": "Heading 2",
-      "heading3": "Heading 3",
-      "codeBlock": "Code Block",
       "video": {
         "controls": "Video player controls"
       },
@@ -1164,10 +1135,8 @@
           "noOverride": "No override",
           "projectOverride": "Project Override",
           "promptConfig": "Prompt Config",
-          "projectDefault": "Project Default",
           "noLlmConfigured": "No LLM configured",
           "selectIntegration": "Select integration...",
-          "clearOverride": "Clear",
           "overrideSaved": "Feature override saved",
           "overrideCleared": "Feature override cleared",
           "overrideError": "Failed to save feature override"
@@ -1193,7 +1162,6 @@
         "repository": {
           "title": "Code Repository",
           "description": "Select the code repository to use for AI context",
-          "label": "Code Repository",
           "placeholder": "Select a code repository...",
           "branchLabel": "Branch",
           "branchPlaceholder": "Leave blank to use repository default branch"
@@ -1228,10 +1196,7 @@
           "listingFiles": "Listing files…",
           "cachingFiles": "Caching {count} files…",
           "statusNeverFetched": "Never fetched",
-          "statusSuccess": "Success",
-          "statusError": "Error",
           "statusPending": "Refreshing...",
-          "statusLabel": "Status",
           "lastFetched": "Last Fetched",
           "filesCached": "Files Cached",
           "totalSize": "Total Size"
@@ -1260,7 +1225,6 @@
           "defaultPlaceholder": "None (use global default)",
           "assigned": "Assigned",
           "save": "Save Template Assignments",
-          "saving": "Saving...",
           "saved": "Template assignments saved",
           "saveError": "Failed to save template assignments"
         },
@@ -1758,8 +1722,7 @@
     "folderActions": {
       "edit": "Edit Folder",
       "delete": "Delete Folder",
-      "rename": "Rename Folder",
-      "copyMove": "Copy / Move to Project"
+      "rename": "Rename Folder"
     },
     "cases": {
       "filter": "Filter cases...",
@@ -2046,9 +2009,6 @@
       "copySuccess": "Copied to clipboard",
       "fallbackBadge": "Generated using template (AI unavailable)",
       "retryButton": "Retry AI generation",
-      "downloadButton": "Download",
-      "copyButton": "Copy to clipboard",
-      "backButton": "Back",
       "aiGenerated": "AI Generated",
       "templateGenerated": "Template Generated",
       "truncatedWarning": "Output was truncated — the model reached its token limit. Try reducing the batch size or increasing Max Output Tokens in your Prompt Config.",
@@ -2117,7 +2077,6 @@
       "noFolder": "No folder",
       "duplicateWarning": "Possible duplicates found",
       "duplicateWarningDescription": "{count, plural, one {# existing case} other {# existing cases}} may cover similar functionality",
-      "duplicateWarningViewCase": "View",
       "duplicateWarningReview": "Review",
       "importWarning": "Possible duplicate",
       "importWarningTooltip": "This case name is similar to {count, plural, one {# existing case} other {# existing cases}}: {names}",
@@ -2209,7 +2168,6 @@
       "errors": {
         "generateFailed": "Failed to generate test cases. Please try again.",
         "importFailed": "Failed to import test cases. Please try again.",
-        "noTestCasesSelected": "Please select at least one test case to import.",
         "noTestCasesGenerated": "No test cases were generated. Please try again with different inputs.",
         "noAiModel": "No AI model is configured for this project. Please configure an AI model in project settings.",
         "noIssueSelected": "Please select an issue to generate test cases from.",
@@ -2479,7 +2437,6 @@
       "issues": "Issues",
       "appConfig": "Application Configuration",
       "notifications": "Notifications",
-      "systemHeader": "System",
       "imports": "Data Imports",
       "integrations": "Issue Integrations",
       "llm": "AI Models",
@@ -2625,7 +2582,6 @@
         "previousImportsNoFilename": "Unknown file",
         "jobHistoryLoadFailed": "We couldn't load previously imported jobs.",
         "jobLoadFailed": "We couldn't load that import job.",
-        "uploadProgressUploading": "Uploading...",
         "uploadProgressAnalyzing": "Upload complete. Analyzing file…",
         "uploadProgressComplete": "Upload finished",
         "etaLabel": "ETA: {time}",
@@ -2725,7 +2681,6 @@
           "templateFieldDuplicateTargetWarning": "Selected target is already mapped to another Testmo field. Choose a different target.",
           "templateFieldTargetAlreadyUsed": "Already mapped",
           "templateFieldMappedSummary": "Mapped to {name} ({type})",
-          "templateFieldIssueBadge": "Needs attention",
           "templateFieldIssueMissingTarget": "Select a target field.",
           "templateFieldIssueMissingDetails": "Provide the display name, system name, and field type before continuing.",
           "noTemplatesAvailable": "No templates available.",
@@ -3238,7 +3193,6 @@
         "category": "Category",
         "framework": "Framework",
         "fileExtension": "File Extension",
-        "language": "Language",
         "headerBody": "Header Template",
         "templateBody": "Template Body",
         "footerBody": "Footer Template",
@@ -3291,8 +3245,6 @@
       "variableInserter": {
         "placeholder": "Insert variable...",
         "groups": {
-          "caseFields": "Case Fields",
-          "steps": "Steps",
           "customFields": "Custom Fields"
         },
         "stepsBlock": "Steps block"
@@ -3334,7 +3286,6 @@
         "revoked": "Revoked",
         "expired": "Expired"
       },
-      "lastUsedNever": "Never",
       "noExpiry": "No Expiry",
       "revokeToken": "Revoke Token",
       "revokeConfirmTitle": "Revoke API Token",
@@ -3370,11 +3321,6 @@
     },
     "workflows": {
       "description": "Manage test case workflows",
-      "types": {
-        "NOT_STARTED": "Not Started",
-        "IN_PROGRESS": "In Progress",
-        "DONE": "Done"
-      },
       "add": {
         "button": "Add Workflow",
         "title": "Add New Workflow",
@@ -4021,7 +3967,6 @@
         "spendOfBudget": "{currentSpend} of {budgetLimit}",
         "overBudget": "Over budget",
         "budgetPercentage": "{percentage}% of budget used",
-        "resetSpend": "Reset",
         "spendReset": "Current month spend has been reset"
       }
     },
@@ -4059,7 +4004,6 @@
         "warning": "This action cannot be undone. All projects using this configuration will revert to the default prompt configuration."
       },
       "llmColumn": "LLM",
-      "projectDefaultLabel": "Project Default",
       "mixedLlms": "{count} LLMs",
       "cannotDeleteDefault": "Cannot delete the default prompt configuration. Set another as default first.",
       "defaultChanged": "Default prompt configuration updated successfully.",
@@ -4368,8 +4312,6 @@
       "completed": "(Complete)",
       "targetFolder": "Target Folder",
       "newFolderPlaceholder": "New folder name...",
-      "createFolder": "Create",
-      "next": "Next",
       "operation": "Operation",
       "operationCopy": "Copy",
       "operationCopyDesc": "Creates a copy of the selected case(s) in the target project. Originals remain unchanged.",
@@ -4391,18 +4333,14 @@
       "sharedStepGroupReuseDesc": "Cases will reference the existing shared step group.",
       "sharedStepGroupCreateNew": "Create new",
       "sharedStepGroupCreateNewDesc": "A new shared step group will be created.",
-      "back": "Back",
       "go": "Go",
       "processing": "Processing...",
       "progressText": "{processed} of {total} cases processed",
-      "cancel": "Cancel",
-      "complete": "Complete",
       "successCount": "{count} case(s) {operation}d successfully",
       "skipped": "Skipped: {count}",
       "droppedLinks": "Cross-project links dropped: {count}",
       "errorCount": "{count} case(s) failed",
       "viewInTargetProject": "View in target project",
-      "close": "Close",
       "failed": "Failed",
       "folderMode": "Folder \"{folderName}\" — {caseCount, plural, one {# case} other {# cases}}"
     }
@@ -5399,7 +5337,6 @@
         "passRate": "Pass Rate",
         "passed": "Passed",
         "failed": "Failed",
-        "untested": "Untested",
         "lastStatus": "Last Status",
         "lastExecuted": "Last Executed",
         "notTested": "Not Tested",
@@ -5576,20 +5513,17 @@
       "expiration": {
         "label": "Expiration",
         "noExpiration": "No expiration",
-        "expiresAtMidnight": "Link will expire at the end of the selected day (your local time)",
-        "clear": "Clear"
+        "expiresAtMidnight": "Link will expire at the end of the selected day (your local time)"
       },
       "notifyOnView": {
         "label": "Notify me when someone views this link",
         "description": "You'll receive a notification when the share link is accessed, according to your notification preferences."
       },
       "title": {
-        "label": "Title",
         "placeholder": "e.g., Test Execution Report",
         "leaveEmptyToUse": "Leave empty to use:"
       },
       "description": {
-        "label": "Description",
         "placeholder": "Add a description for this shared report..."
       },
       "actions": {
@@ -5622,22 +5556,13 @@
       },
       "shareList": {
         "columns": {
-          "title": "Title",
-          "project": "Project",
           "mode": "Mode",
           "views": "Views",
-          "notifications": "Notifications",
-          "created": "Created",
-          "expires": "Expires",
-          "status": "Status"
+          "expires": "Expires"
         },
         "status": {
-          "active": "Active",
           "revoked": "Revoked",
           "expired": "Expired"
-        },
-        "expires": {
-          "never": "Never"
         },
         "notifications": {
           "enabled": "On",
@@ -5650,26 +5575,19 @@
         "defaultTitle": "{entityType} share",
         "noProject": "Cross-project",
         "actions": {
-          "label": "Actions",
           "copyLink": "Copy Link",
-          "copied": "Copied!",
-          "edit": "Edit",
-          "revoke": "Revoke",
-          "delete": "Delete"
+          "revoke": "Revoke"
         },
         "revokeDialog": {
           "title": "Revoke share link?",
           "description": "This will immediately revoke the share link. Anyone attempting to access it will see an error message. This action cannot be undone.",
-          "cancel": "Cancel",
           "confirm": "Revoke Link",
           "revoking": "Revoking..."
         },
         "deleteDialog": {
           "title": "Delete share link?",
           "description": "This will permanently delete the share link. If the link is currently active, it will be immediately expired and no longer accessible. This action cannot be undone.",
-          "cancel": "Cancel",
-          "confirm": "Delete Link",
-          "deleting": "Deleting..."
+          "confirm": "Delete Link"
         },
         "toast": {
           "linkCopied": "Link copied!",
@@ -5697,15 +5615,11 @@
         "description": "Your share link is ready to use. Copy and share it with others.",
         "shareLink": "Share Link",
         "copy": "Copy",
-        "copied": "Copied!",
         "openInNewTab": "Open in new tab",
         "metadata": {
           "mode": "Mode",
           "expires": "Expires",
-          "notifications": "Notifications",
-          "views": "Views",
-          "enabled": "Enabled",
-          "disabled": "Disabled"
+          "views": "Views"
         },
         "warnings": {
           "publicLink": "Public link:",
@@ -5713,19 +5627,14 @@
           "expiresSoon": "This link will expire at the end of"
         },
         "actions": {
-          "createAnother": "Create Another",
-          "done": "Done"
+          "createAnother": "Create Another"
         }
       },
       "editDialog": {
         "title": "Edit Share Link",
         "description": "Update the settings for this share link.",
         "passwordExists": "This share link already has a password. Leave the password field empty to keep the existing password.",
-        "passwordPlaceholder": "Leave empty to keep existing password",
-        "confirmPassword": "Confirm Password",
-        "cancel": "Cancel",
-        "saving": "Saving...",
-        "save": "Save Changes"
+        "passwordPlaceholder": "Leave empty to keep existing password"
       }
     },
     "passwordDialog": {
@@ -5802,7 +5711,6 @@
       },
       "page1": {
         "title": "Upload File and Configuration",
-        "uploadFile": "Upload File",
         "selectedFile": "Selected file",
         "delimiter": "Field Delimiter",
         "delimiters": {
@@ -5832,7 +5740,6 @@
     "manualEntry": {
       "buttonLabel": "Add Manually",
       "description": "Create a new shared step group with manual entry",
-      "groupNameLabel": "Group Name",
       "groupNamePlaceholder": "Enter a name for this shared step group",
       "success": "Shared steps created successfully",
       "errors": {
@@ -5844,7 +5751,6 @@
     "stepDuplicates": {
       "pageTitle": "Step Sequence Duplicates",
       "pageDescription": "Review matched step sequences across test cases. Convert matches to Shared Step groups or dismiss false positives.",
-      "loading": "Loading results...",
       "noResultsFound": "No step sequence duplicates found",
       "noResultsDescription": "Run a scan to detect repeated step sequences across your test cases.",
       "filterPlaceholder": "Filter by case name...",
@@ -5854,30 +5760,19 @@
       "bulkError": "Some operations failed. Please try again.",
       "tableHint": "Click a row to preview matched steps. Select rows with checkboxes for bulk actions.",
       "columns": {
-        "stepCount": "Steps",
         "matchedSteps": "Matched Steps",
         "casesCount": "Cases",
-        "actions": "Actions",
         "review": "Review"
       },
       "scanning": "Scanning...",
       "scanComplete": "{count, plural, one {# match found} other {# matches found}}",
       "scanFailed": "Scan failed",
       "scanFailedDescription": "An error occurred during the scan. Please try again.",
-      "analyzing": "Analyzing {analyzed}/{total}",
       "cancelScan": "Cancel scan",
       "findStepDuplicates": "Find Step Duplicates",
       "rescan": "Scan",
-      "convertToSharedStep": "Convert",
-      "dismiss": "Dismiss",
       "viewResults": "View Results ({count})",
       "retryScan": "Retry Scan",
-      "settingsTitle": "Scan Settings",
-      "scopeLabel": "Scope",
-      "scopeProject": "Entire project",
-      "scopeFolder": "Specific folder",
-      "thresholdLabel": "Minimum matching steps",
-      "startScan": "Start Scan",
       "dialog": {
         "title": "Convert to Shared Steps",
         "previewTitle": "Matched Step Sequence",
@@ -5885,7 +5780,6 @@
         "casesDescription": "Uncheck cases you want to exclude from conversion.",
         "nameLabel": "Shared Step Group Name",
         "namePlaceholder": "Enter a name for the shared step group...",
-        "convert": "Convert to Shared Steps",
         "converting": "Converting...",
         "dismissMatch": "Dismiss Match",
         "dismissing": "Dismissing...",
@@ -5895,15 +5789,8 @@
         "dismissError": "Failed to dismiss. Please try again.",
         "viewSharedStep": "View Shared Step Group",
         "skippedWarning": "{count, plural, one {# case was skipped} other {# cases were skipped}} (stale or already converted).",
-        "stepHeader": "Step",
-        "expectedResultHeader": "Expected Result",
         "noCasesSelected": "Select at least one case to convert.",
-        "selectAll": "Select all",
-        "viewCase": "View case details",
-        "doneEditing": "Done",
-        "addStep": "Add Step",
-        "insertStepAbove": "Insert step above",
-        "deleteStep": "Delete step"
+        "selectAll": "Select all"
       }
     },
     "findStepDuplicates": "Find Duplicates"
@@ -6077,7 +5964,6 @@
     "sheetTitle": "Share Your Feedback",
     "sheetDescription": "Help us improve TestPlanIt by sharing your experience.",
     "bannerMessage": "How's your trial going? We'd love to hear your thoughts.",
-    "takeSurvey": "Share Feedback",
     "menuItem": "Share Feedback"
   },
   "autoTag": {
@@ -6141,7 +6027,6 @@
     },
     "entityDetail": {
       "customFields": "Custom Fields",
-      "documentation": "Documentation",
       "noDetails": "No additional details available.",
       "openInNewTab": "Open in new tab"
     }
