@@ -513,7 +513,9 @@ async function captureAuditEvent(event) {
     context,
     queuedAt: (/* @__PURE__ */ new Date()).toISOString(),
     // Include tenantId for multi-tenant support
-    ...isMultiTenantMode() ? { tenantId: getCurrentTenantId() } : {}
+    // Always include when available - web app sets INSTANCE_TENANT_ID,
+    // shared worker uses MULTI_TENANT_MODE to validate it
+    tenantId: getCurrentTenantId()
   };
   try {
     await queue.add("audit-event", jobData, {

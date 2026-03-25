@@ -1,3 +1,14 @@
+## [0.17.1](https://github.com/TestPlanIt/testplanit/compare/v0.17.0...v0.17.1) (2026-03-24)
+
+### Bug Fixes
+
+* **auditLog:** simplify tenantId inclusion in audit events ([#148](https://github.com/TestPlanIt/testplanit/issues/148)) ([e0e2f5a](https://github.com/TestPlanIt/testplanit/commit/e0e2f5a5ee42e55af3aad4a590a966db9a4f9360))
+* **docs:** update links in LLM integrations and prompt configurations documentation ([97844d9](https://github.com/TestPlanIt/testplanit/commit/97844d9590359f6aafcbdefb8c67249ba5681c1f))
+
+### Enhancements
+
+* **docs:** add Google Ads script to Docusaurus configuration ([c855d57](https://github.com/TestPlanIt/testplanit/commit/c855d579cb22ed471932bb2c032034de312703b0))
+
 ## [0.17.0](https://github.com/TestPlanIt/testplanit/compare/v0.16.28...v0.17.0) (2026-03-22)
 
 ### Features

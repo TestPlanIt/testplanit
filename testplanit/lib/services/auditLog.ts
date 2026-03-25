@@ -1,7 +1,7 @@
 import type { AuditAction } from "@prisma/client";
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
 import type { MultiTenantJobData } from "~/lib/multiTenantPrisma";
-import { getCurrentTenantId, isMultiTenantMode } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getAuditLogQueue } from "~/lib/queues";
 
 /**
@@ -214,7 +214,9 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
     context,
     queuedAt: new Date().toISOString(),
     // Include tenantId for multi-tenant support
-    ...(isMultiTenantMode() ? { tenantId: getCurrentTenantId() } : {}),
+    // Always include when available - web app sets INSTANCE_TENANT_ID,
+    // shared worker uses MULTI_TENANT_MODE to validate it
+    tenantId: getCurrentTenantId(),
   };
 
   try {
