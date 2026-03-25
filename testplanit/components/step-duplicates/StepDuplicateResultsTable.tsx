@@ -16,6 +16,29 @@ import {
   useUpdateStepSequenceMatch,
 } from "~/lib/hooks/step-sequence-match";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
+import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
+
+interface MatchMember {
+  id: number;
+  caseId: number;
+  startStepId: number;
+  endStepId: number;
+  case: {
+    id: number;
+    name: string;
+    source: string | null;
+    automated: boolean;
+  };
+}
+
+interface MatchWithMembers {
+  id: number;
+  projectId: number;
+  fingerprint: string;
+  stepCount: number;
+  status: string;
+  members: MatchMember[];
+}
 
 interface StepDuplicateResultsTableProps {
   projectId: string;
@@ -30,6 +53,8 @@ export function StepDuplicateResultsTable({
 }: StepDuplicateResultsTableProps) {
   const t = useTranslations("sharedSteps.stepDuplicates");
   const queryClient = useQueryClient();
+  const [selectedMatch, setSelectedMatch] = useState<MatchWithMembers | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -228,9 +253,25 @@ export function StepDuplicateResultsTable({
       if (row && onRowClick) {
         onRowClick(row);
       }
+      // Open the conversion dialog for the clicked row
+      const match = (allMatches ?? []).find((m) => m.id === Number(id));
+      if (match) {
+        setSelectedMatch(match as unknown as MatchWithMembers);
+        setDialogOpen(true);
+      }
     },
-    [sortedItems, onRowClick]
+    [sortedItems, onRowClick, allMatches]
   );
+
+  const handleResolved = useCallback(() => {
+    queryClient.invalidateQueries({
+      predicate: (q) => {
+        const key = q.queryKey as string[];
+        return key[0]?.includes?.("stepSequenceMatch") ?? false;
+      },
+    });
+    setRowSelection({});
+  }, [queryClient]);
 
   const getSelectedItems = useCallback(() => {
     return Object.keys(rowSelection)
@@ -378,6 +419,13 @@ export function StepDuplicateResultsTable({
           onRowSelectionChange={handleRowSelectionChange}
         />
       </div>
+
+      <StepDuplicateConversionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        match={selectedMatch}
+        onResolved={handleResolved}
+      />
     </div>
   );
 }

@@ -14,9 +14,10 @@ import {
   Popover, PopoverContent, PopoverTrigger
 } from "@/components/ui/popover";
 import { ApplicationArea } from "@prisma/client";
-import { CircleSlash2, Edit, Layers, Save, Trash2 } from "lucide-react";
+import { CircleSlash2, Edit, Layers, Save, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
+import { Link } from "~/lib/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -330,6 +331,14 @@ export default function SharedStepsPage() {
             />
           </div>
         )}
+        <div className="mb-2">
+          <Button variant="outline" asChild className="w-full">
+            <Link href={`/projects/shared-steps/${projectId}/step-duplicates`}>
+              <Search className="w-4 h-4" />
+              {t("findStepDuplicates")}
+            </Link>
+          </Button>
+        </div>
         <div className="mb-4">
           <Filter
             placeholder={t("filterPlaceholder")}
