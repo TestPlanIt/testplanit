@@ -430,7 +430,7 @@ describe("CopyMoveDialog", () => {
 
     // Complete state shows success icon area
     await waitFor(() => {
-      expect(screen.getByText("complete")).toBeInTheDocument();
+      expect(screen.getByText("actions.complete")).toBeInTheDocument();
     });
 
     // Success count message

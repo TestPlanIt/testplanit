@@ -162,7 +162,7 @@ describe("ExportPreviewPane", () => {
       />
     );
 
-    const downloadBtn = screen.getByText("downloadButton");
+    const downloadBtn = screen.getByText("actions.download");
     await user.click(downloadBtn);
 
     expect(onDownload).toHaveBeenCalledTimes(1);
@@ -181,7 +181,7 @@ describe("ExportPreviewPane", () => {
       />
     );
 
-    const closeBtn = screen.getByText("backButton");
+    const closeBtn = screen.getByText("actions.back");
     await user.click(closeBtn);
 
     expect(onClose).toHaveBeenCalledTimes(1);
