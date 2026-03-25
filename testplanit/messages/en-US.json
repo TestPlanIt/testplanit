@@ -5840,6 +5840,43 @@
         "stepsRequired": "At least one step is required",
         "saveFailed": "Failed to save shared steps"
       }
+    },
+    "stepDuplicates": {
+      "pageTitle": "Step Sequence Duplicates",
+      "pageDescription": "Review matched step sequences across test cases. Convert matches to Shared Step groups or dismiss false positives.",
+      "loading": "Loading results...",
+      "noResultsFound": "No step sequence duplicates found",
+      "noResultsDescription": "Run a scan to detect repeated step sequences across your test cases.",
+      "filterPlaceholder": "Filter by case name...",
+      "selected": "{count, plural, one {# selected} other {# selected}}",
+      "bulkDismiss": "Dismiss ({count})",
+      "bulkDismissSuccess": "{count, plural, one {# match dismissed} other {# matches dismissed}}",
+      "bulkError": "Some operations failed. Please try again.",
+      "tableHint": "Click a row to preview matched steps. Select rows with checkboxes for bulk actions.",
+      "columns": {
+        "stepCount": "Steps",
+        "matchedSteps": "Matched Steps",
+        "casesCount": "Cases",
+        "actions": "Actions"
+      },
+      "scanning": "Scanning...",
+      "scanComplete": "{count, plural, one {# match found} other {# matches found}}",
+      "scanFailed": "Scan failed",
+      "scanFailedDescription": "An error occurred during the scan. Please try again.",
+      "analyzing": "Analyzing {analyzed}/{total}",
+      "cancelScan": "Cancel scan",
+      "findStepDuplicates": "Find Step Duplicates",
+      "rescan": "Re-scan",
+      "convertToSharedStep": "Convert",
+      "dismiss": "Dismiss",
+      "viewResults": "View Results ({count})",
+      "retryScan": "Retry Scan",
+      "settingsTitle": "Scan Settings",
+      "scopeLabel": "Scope",
+      "scopeProject": "Entire project",
+      "scopeFolder": "Specific folder",
+      "thresholdLabel": "Minimum matching steps",
+      "startScan": "Start Scan"
     }
   },
   "search": {
