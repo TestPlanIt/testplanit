@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 export interface StepDuplicateRow {
   id: number;
+  name: string;
   stepCount: number;
   fingerprint: string;
   matchedStepsPreview: string;
