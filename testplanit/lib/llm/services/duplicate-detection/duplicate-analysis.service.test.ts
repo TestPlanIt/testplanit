@@ -45,7 +45,7 @@ function makePairs(count: number): PairWithCaseContent[] {
   return Array.from({ length: count }, (_, i) => makePair(i + 1, i + 100));
 }
 
-function makeYesResponse(count: number): string {
+function _makeYesResponse(count: number): string {
   const results = Array.from({ length: count }, (_, i) => ({
     pairIndex: i,
     verdict: "YES",
@@ -53,7 +53,7 @@ function makeYesResponse(count: number): string {
   return JSON.stringify({ results });
 }
 
-function makeNoResponse(count: number): string {
+function _makeNoResponse(count: number): string {
   const results = Array.from({ length: count }, (_, i) => ({
     pairIndex: i,
     verdict: "NO",

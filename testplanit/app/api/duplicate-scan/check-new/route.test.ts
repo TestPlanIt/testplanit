@@ -89,7 +89,7 @@ describe("POST /api/duplicate-scan/check-new", () => {
   it("returns 401 when not authenticated", async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const { GET, POST } = await import("./route");
+    const { POST } = await import("./route");
     const res = await POST(makeRequest({ projectId: 1, name: "Test" }));
     const data = await res.json();
 

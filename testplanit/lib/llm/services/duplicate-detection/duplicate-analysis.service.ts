@@ -232,7 +232,6 @@ export class DuplicateAnalysisService {
   private stripContentFields(
     pair: PairWithCaseContent & { detectionMethod: string },
   ): AnnotatedPair {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { caseAName: _a, caseASteps: _b, caseBName: _c, caseBSteps: _d, ...rest } = pair;
     return rest;
   }

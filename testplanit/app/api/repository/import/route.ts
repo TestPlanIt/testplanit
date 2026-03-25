@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
       };
 
-      const sendComplete = (importedCount: number, errors: ImportError[]) => {
+      const _sendComplete = (importedCount: number, errors: ImportError[]) => {
         const data = JSON.stringify({ complete: true, importedCount, errors });
         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
         controller.close();

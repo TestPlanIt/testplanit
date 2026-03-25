@@ -41,7 +41,7 @@ export const getColumns = (
   handleTestConnection: (integration: Integration) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   t: ReturnType<typeof useTranslations<"admin.integrations">>,
-  tApiTokens: ReturnType<typeof useTranslations<"admin.apiTokens">>
+  _tApiTokens: ReturnType<typeof useTranslations<"admin.apiTokens">>
 ): ColumnDef<ExtendedIntegration>[] => [
   {
     id: "provider",
