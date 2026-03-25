@@ -15,8 +15,10 @@ import {
   useFindManyStepSequenceMatch,
   useUpdateStepSequenceMatch,
 } from "~/lib/hooks/step-sequence-match";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
+import type { RepositoryCaseSource } from "@prisma/client";
 
 interface MatchMember {
   id: number;
@@ -26,7 +28,7 @@ interface MatchMember {
   case: {
     id: number;
     name: string;
-    source: string | null;
+    source: RepositoryCaseSource;
     automated: boolean;
   };
 }
@@ -81,9 +83,20 @@ export function StepDuplicateResultsTable({
     },
     include: {
       members: {
+        where: { case: { isDeleted: false } },
         include: {
           case: {
-            select: { id: true, name: true, source: true, automated: true },
+            select: {
+              id: true,
+              name: true,
+              source: true,
+              automated: true,
+              steps: {
+                where: { isDeleted: false },
+                orderBy: { order: "asc" },
+                select: { id: true, step: true, expectedResult: true, order: true },
+              },
+            },
           },
         },
       },
@@ -127,12 +140,30 @@ export function StepDuplicateResultsTable({
         .map((m: any) => m.case?.name ?? "")
         .filter(Boolean);
 
+      // Build step preview from the first member's actual steps
+      let matchedStepsPreview = "";
+      const firstMember = members[0];
+      if (firstMember?.case?.steps) {
+        const steps = firstMember.case.steps as Array<{ id: number; step: unknown; order: number }>;
+        const startId = firstMember.startStepId;
+        const endId = firstMember.endStepId;
+        const startIdx = steps.findIndex((s: any) => s.id === startId);
+        const endIdx = steps.findIndex((s: any) => s.id === endId);
+        if (startIdx >= 0 && endIdx >= 0) {
+          const matchedSteps = steps.slice(startIdx, endIdx + 1);
+          matchedStepsPreview = matchedSteps
+            .map((s: any) => extractTextFromNode(s.step))
+            .filter(Boolean)
+            .join(" → ");
+        }
+      }
+
       return {
         id: match.id,
         name: caseNames.join(" / "),
         stepCount: match.stepCount,
         fingerprint: match.fingerprint,
-        matchedStepsPreview: match.fingerprint,
+        matchedStepsPreview: matchedStepsPreview || `${match.stepCount} matched steps`,
         casesCount: members.length,
         caseNames,
         status: match.status,
@@ -267,7 +298,7 @@ export function StepDuplicateResultsTable({
     queryClient.invalidateQueries({
       predicate: (q) => {
         const key = q.queryKey as string[];
-        return key[0]?.includes?.("stepSequenceMatch") ?? false;
+        return key.some?.((k: unknown) => typeof k === "string" && k.includes("StepSequenceMatch")) ?? false;
       },
     });
     setRowSelection({});
@@ -281,7 +312,7 @@ export function StepDuplicateResultsTable({
   }, [rowSelection, sortedItems]);
 
   const handleBulkAction = useCallback(
-    async (action: "dismiss") => {
+    async (_action: "dismiss") => {
       const items = getSelectedItems();
       if (items.length === 0) return;
       setIsBulkProcessing(true);
@@ -312,7 +343,7 @@ export function StepDuplicateResultsTable({
       setIsBulkProcessing(false);
       queryClient.invalidateQueries({ predicate: (q) => {
         const key = q.queryKey as string[];
-        return key[0]?.includes?.("stepSequenceMatch") ?? false;
+        return key.some?.((k: unknown) => typeof k === "string" && k.includes("StepSequenceMatch")) ?? false;
       }});
     },
     [getSelectedItems, t, updateMatch, queryClient]
@@ -320,15 +351,7 @@ export function StepDuplicateResultsTable({
 
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
-  if (isLoading) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p className="text-sm">{t("loading")}</p>
-      </div>
-    );
-  }
-
-  if ((allMatches ?? []).length === 0) {
+  if (!isLoading && (allMatches ?? []).length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <p className="text-lg font-medium">{t("noResultsFound")}</p>

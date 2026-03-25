@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "@prisma/client";
-import { LinkIcon } from "lucide-react";
+import { ExternalLink, LinkIcon } from "lucide-react";
 import React from "react";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
@@ -20,6 +20,7 @@ interface Case {
   automated?: boolean;
   isDeleted?: boolean;
   link?: string;
+  linkTarget?: "_blank" | "_self";
   size?: CaseDisplaySize;
   className?: ClassValue;
   maxLines?: number;
@@ -33,6 +34,7 @@ export const CaseDisplay: React.FC<Case> = ({
   source,
   automated,
   isDeleted,
+  linkTarget,
   className,
   maxLines,
 }) => {
@@ -76,13 +78,21 @@ export const CaseDisplay: React.FC<Case> = ({
   const iconSizeClass = size === "xl" ? "w-5 h-5" : "w-4 h-4";
 
   const content = link ? (
-    <Link href={link} className={`flex items-start max-w-full w-full group`}>
+    <Link
+      href={link}
+      target={linkTarget}
+      className={`flex items-center max-w-full w-full group`}
+    >
       {nameDisplay}
-      {isLargeOrXl && (
+      {linkTarget === "_blank" ? (
+        <ExternalLink
+          className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+        />
+      ) : isLargeOrXl ? (
         <LinkIcon
           className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
         />
-      )}
+      ) : null}
     </Link>
   ) : (
     <div

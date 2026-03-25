@@ -89,9 +89,15 @@ export async function processStepScan(
   // 4. Resolve shared step placeholders BEFORE scanning (prevents false-positive matches)
   const resolvedCases = await resolveSharedSteps(cases as any[]);
 
-  // 5. Run the step sequence scan
+  // 5. Report initial progress so the UI shows a progress bar immediately
+  const totalPairs = (resolvedCases.length * (resolvedCases.length - 1)) / 2;
+  await job.updateProgress({ analyzed: 0, total: totalPairs });
+
+  // 6. Run the step sequence scan
   const service = new StepSequenceScanService();
-  const groups = service.findSharedSequences(resolvedCases, job.data.minSteps);
+  const groups = await service.findSharedSequences(resolvedCases, job.data.minSteps, async (compared, total) => {
+    await job.updateProgress({ analyzed: compared, total });
+  });
 
   // 6. Soft-delete old matches for this project+scanJobId
   await prisma.stepSequenceMatch.updateMany({

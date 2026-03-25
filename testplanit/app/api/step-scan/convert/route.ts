@@ -8,10 +8,16 @@ import { convertMatch } from "~/lib/services/stepSequenceConversionService";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 
+const editedStepSchema = z.object({
+  step: z.string().nullable(),
+  expectedResult: z.string().nullable(),
+});
+
 const convertSchema = z.object({
   matchId: z.number().int().positive(),
   sharedStepGroupName: z.string().min(1).max(255).trim(),
   affectedCaseIds: z.array(z.number().int().positive()).min(1).max(500),
+  editedSteps: z.array(editedStepSchema).optional(),
 });
 
 export async function POST(request: Request) {
@@ -44,8 +50,7 @@ export async function POST(request: Request) {
       include: { role: { include: { rolePermissions: true } } },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _tenantId = getCurrentTenantId();
+    getCurrentTenantId();
     const enhancedDb = enhance(db, { user: user ?? undefined });
 
     // 4. Load match via enhanced DB (ZenStack policy enforces read access)
@@ -91,6 +96,7 @@ export async function POST(request: Request) {
       body.sharedStepGroupName,
       body.affectedCaseIds,
       session.user.id,
+      body.editedSteps,
     );
 
     // 8. Return result with sharedStepGroupId for UI linking (CONV-05)

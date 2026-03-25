@@ -13,6 +13,7 @@
  * with three members rather than three separate pairs.
  */
 
+import { createHash } from "crypto";
 import { lcs, stepsEqual } from "~/lib/utils/similarity";
 import { extractStepText } from "~/services/helpers/extractStepText";
 
@@ -74,13 +75,20 @@ export class StepSequenceScanService {
    *
    * @param cases - Array of pre-resolved cases with their steps
    * @param minSteps - Minimum sequence length to report (default 3)
+   * @param onProgress - Optional callback reporting comparison progress (compared, total)
    * @returns Groups of cases sharing the same contiguous step sequence
    */
-  findSharedSequences(cases: CaseInput[], minSteps = 3): StepSequenceGroup[] {
+  async findSharedSequences(
+    cases: CaseInput[],
+    minSteps = 3,
+    onProgress?: (compared: number, total: number) => Promise<void> | void,
+  ): Promise<StepSequenceGroup[]> {
     if (cases.length < 2) return [];
 
     // 1. Extract plain text for all steps in all cases, sorted by order
+    //    Also build a set of normalized step text tokens per case for fast overlap check
     const extracted = new Map<number, ExtractedStep[]>();
+    const stepTokens = new Map<number, Set<string>>();
     for (const c of cases) {
       const steps = [...c.steps]
         .sort((a, b) => a.order - b.order)
@@ -91,18 +99,47 @@ export class StepSequenceScanService {
           order: s.order,
         }));
       extracted.set(c.id, steps);
+
+      // Build token set: lowercase trimmed step text for fast overlap detection
+      const tokens = new Set<string>();
+      for (const s of steps) {
+        const normalized = s.step.toLowerCase().trim();
+        if (normalized) tokens.add(normalized);
+      }
+      stepTokens.set(c.id, tokens);
     }
 
-    // 2. Pairwise LCS comparison — for each unique pair (i < j)
-    const fingerprintToGroup = new Map<string, StepSequenceGroup>();
-    const caseIds = Array.from(extracted.keys());
+    // 2. Pre-filter: only keep cases with >= minSteps steps (others can't produce a match)
+    const eligibleCaseIds = Array.from(extracted.keys()).filter(
+      (id) => (extracted.get(id)?.length ?? 0) >= minSteps,
+    );
 
-    for (let i = 0; i < caseIds.length; i++) {
-      for (let j = i + 1; j < caseIds.length; j++) {
-        const aId = caseIds[i]!;
-        const bId = caseIds[j]!;
+    // 3. Pairwise LCS comparison — for each unique pair (i < j)
+    const fingerprintToGroup = new Map<string, StepSequenceGroup>();
+    const totalPairs = (eligibleCaseIds.length * (eligibleCaseIds.length - 1)) / 2;
+    let comparedPairs = 0;
+
+    for (let i = 0; i < eligibleCaseIds.length; i++) {
+      for (let j = i + 1; j < eligibleCaseIds.length; j++) {
+        const aId = eligibleCaseIds[i]!;
+        const bId = eligibleCaseIds[j]!;
         const aSteps = extracted.get(aId)!;
         const bSteps = extracted.get(bId)!;
+
+        // Fast skip: if the two cases share zero step text tokens, LCS can't find a match
+        const aTokens = stepTokens.get(aId)!;
+        const bTokens = stepTokens.get(bId)!;
+        let hasOverlap = false;
+        for (const t of aTokens) {
+          if (bTokens.has(t)) { hasOverlap = true; break; }
+        }
+        if (!hasOverlap) {
+          comparedPairs++;
+          if (onProgress && comparedPairs % 100 === 0) {
+            await onProgress(comparedPairs, totalPairs);
+          }
+          continue;
+        }
 
         // Run LCS with stepsEqual predicate (levenshteinRatio >= 0.85)
         const matchedPairs = lcs(aSteps, bSteps, (x, y) => stepsEqual(x, y));
@@ -111,14 +148,14 @@ export class StepSequenceScanService {
         const runs = extractContiguousRuns(matchedPairs, minSteps);
 
         for (const run of runs) {
-          // Compute fingerprint from the step texts in the run (using a's steps)
-          // The join separator \n---\n is unlikely to appear in step content
-          const fingerprint = run
+          // Compute fingerprint as MD5 hash of step texts (avoids PostgreSQL index size limit)
+          const rawFingerprint = run
             .map((p) => {
               const s = aSteps[p.aIdx]!;
               return s.step + "\n" + s.expectedResult;
             })
             .join("\n---\n");
+          const fingerprint = createHash("md5").update(rawFingerprint).digest("hex");
 
           const existing = fingerprintToGroup.get(fingerprint);
           if (existing) {
@@ -156,7 +193,17 @@ export class StepSequenceScanService {
             });
           }
         }
+
+        comparedPairs++;
+        if (onProgress && comparedPairs % 10 === 0) {
+          await onProgress(comparedPairs, totalPairs);
+        }
       }
+    }
+
+    // Report final progress
+    if (onProgress && totalPairs > 0) {
+      await onProgress(totalPairs, totalPairs);
     }
 
     // 3. Return only groups that have >= 2 members (sanity check — all should)

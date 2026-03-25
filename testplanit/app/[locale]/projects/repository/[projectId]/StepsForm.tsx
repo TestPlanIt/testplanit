@@ -128,6 +128,7 @@ interface StepItemProps {
   isSelected: boolean;
   onToggleSelection: (index: number) => void;
   projectId: number;
+  hideCheckboxes?: boolean;
 }
 
 const StepItem: React.FC<StepItemProps> = ({
@@ -142,6 +143,7 @@ const StepItem: React.FC<StepItemProps> = ({
   isSelected,
   onToggleSelection,
   projectId,
+  hideCheckboxes,
 }) => {
   const t = useTranslations("repository.steps");
   const tCommon = useTranslations("common");
@@ -364,7 +366,7 @@ const StepItem: React.FC<StepItemProps> = ({
         >
           <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
             <div className="flex items-center">
-              {!readOnly && (
+              {!readOnly && !hideCheckboxes && (
                 <Checkbox
                   id={`select-step-${index}`}
                   checked={isSelected}
@@ -859,6 +861,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                   isSelected={selectedStepIndices.includes(index)}
                   onToggleSelection={toggleStepSelection}
                   projectId={projectId}
+                  hideCheckboxes={hideSharedStepsButtons}
                 />
               </div>
             );

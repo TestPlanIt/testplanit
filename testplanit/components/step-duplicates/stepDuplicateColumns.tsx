@@ -75,13 +75,15 @@ export const getColumns = (
     header: t("columns.matchedSteps"),
     enableSorting: false,
     enableResizing: true,
-    size: 400,
-    maxSize: 800,
-    cell: ({ row }) => (
-      <span className="text-muted-foreground text-sm truncate block max-w-sm">
-        {row.original.matchedStepsPreview.length > 120
-          ? row.original.matchedStepsPreview.slice(0, 120) + "…"
-          : row.original.matchedStepsPreview}
+    minSize: 200,
+    size: 600,
+    maxSize: 1200,
+    cell: ({ row, column }) => (
+      <span
+        className="text-muted-foreground text-sm truncate block"
+        style={{ maxWidth: column.getSize() }}
+      >
+        {row.original.matchedStepsPreview}
       </span>
     ),
   },

@@ -81,7 +81,7 @@ export default function StepDuplicatesPage() {
             queryClient.invalidateQueries({
               predicate: (q) => {
                 const key = q.queryKey as string[];
-                return key[0]?.includes?.("stepSequenceMatch") ?? false;
+                return key.some?.((k: unknown) => typeof k === "string" && k.includes("StepSequenceMatch")) ?? false;
               },
             });
             sessionStorage.removeItem(storageKey);
@@ -108,7 +108,7 @@ export default function StepDuplicatesPage() {
       };
       poll();
     },
-    [projectId, queryClient, storageKey, t]
+    [queryClient, storageKey, t]
   );
 
   // On mount, check for an active scan in sessionStorage
@@ -168,10 +168,7 @@ export default function StepDuplicatesPage() {
                     className="w-32 h-2"
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {t("analyzing", {
-                      analyzed: scanProgress.analyzed,
-                      total: scanProgress.total,
-                    })}
+                    {`${Math.round((scanProgress.analyzed / scanProgress.total) * 100)}%`}
                   </span>
                 </>
               ) : (

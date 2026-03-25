@@ -10,15 +10,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import TextFromJson from "@/components/TextFromJson";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { useUpdateStepSequenceMatch } from "~/lib/hooks/step-sequence-match";
 import { useFindManySteps } from "~/lib/hooks/steps";
+import type { RepositoryCaseSource } from "@prisma/client";
+import type { StepFormField } from "@/[locale]/projects/repository/[projectId]/StepsForm";
+import StepsForm from "@/[locale]/projects/repository/[projectId]/StepsForm";
+import { emptyEditorContent } from "~/app/constants";
 
 interface MatchMember {
   id: number;
@@ -28,7 +34,7 @@ interface MatchMember {
   case: {
     id: number;
     name: string;
-    source: string | null;
+    source: RepositoryCaseSource;
     automated: boolean;
   };
 }
@@ -46,6 +52,22 @@ interface StepDuplicateConversionDialogProps {
   onResolved: () => void;
 }
 
+function parseTipTapJson(value: unknown): object {
+  if (typeof value === "object" && value !== null) return value as object;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return emptyEditorContent;
+    }
+  }
+  return emptyEditorContent;
+}
+
+interface StepsFormValues {
+  steps: StepFormField[];
+}
+
 export function StepDuplicateConversionDialog({
   open,
   onOpenChange,
@@ -54,22 +76,20 @@ export function StepDuplicateConversionDialog({
 }: StepDuplicateConversionDialogProps) {
   const t = useTranslations("sharedSteps.stepDuplicates.dialog");
 
-  const autoName = useMemo(() => {
-    if (!match) return "";
-    return match.fingerprint.split("\n")[0].substring(0, 50);
-  }, [match]);
-
-  const [name, setName] = useState(autoName);
+  const [name, setName] = useState("");
   const [checkedCaseIds, setCheckedCaseIds] = useState<Set<number>>(new Set());
   const [isConverting, setIsConverting] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
+
+  const form = useForm<StepsFormValues>({
+    defaultValues: { steps: [] },
+  });
 
   const updateMatch = useUpdateStepSequenceMatch();
 
   // Initialize state when match changes
   useEffect(() => {
     if (match) {
-      setName(match.fingerprint.split("\n")[0].substring(0, 50));
       setCheckedCaseIds(new Set(match.members.map((m) => m.caseId)));
     }
   }, [match]);
@@ -90,6 +110,25 @@ export function StepDuplicateConversionDialog({
       : undefined,
     { enabled: open && !!firstMember }
   );
+
+  // Initialize form steps from fetched data
+  useEffect(() => {
+    if (stepsData && stepsData.length > 0) {
+      const formSteps: StepFormField[] = stepsData.map((s: any) => ({
+        step: parseTipTapJson(s.step),
+        expectedResult: parseTipTapJson(s.expectedResult),
+      }));
+      form.reset({ steps: formSteps });
+
+      // Auto-suggest name from first step's text
+      if (!name) {
+        const firstText = extractTextFromNode(stepsData[0].step) || "";
+        if (firstText) {
+          setName(firstText.substring(0, 50));
+        }
+      }
+    }
+  }, [stepsData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCaseToggle = (caseId: number, checked: boolean) => {
     setCheckedCaseIds((prev) => {
@@ -127,6 +166,18 @@ export function StepDuplicateConversionDialog({
 
     setIsConverting(true);
     try {
+      // Read current steps from the form
+      const currentSteps = form.getValues("steps");
+
+      // Always send the full step set as TipTap JSON — the user may have
+      // edited, added, or deleted steps via the StepsForm editor.
+      const editedStepsPayload = currentSteps.map((s) => ({
+        step: s.step ? JSON.stringify(s.step) : null,
+        expectedResult: s.expectedResult
+          ? JSON.stringify(s.expectedResult)
+          : null,
+      }));
+
       const res = await fetch("/api/step-scan/convert", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -134,6 +185,7 @@ export function StepDuplicateConversionDialog({
           matchId: match.id,
           sharedStepGroupName: name.trim(),
           affectedCaseIds: Array.from(checkedCaseIds),
+          editedSteps: editedStepsPayload,
         }),
       });
 
@@ -175,66 +227,28 @@ export function StepDuplicateConversionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
 
-        {/* Step preview section */}
+        {/* Step editor section — reuses the existing StepsForm */}
         <div>
           <h3 className="font-semibold text-sm mb-2">{t("previewTitle")}</h3>
           {stepsLoading ? (
             <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
-          ) : stepsData && stepsData.length > 0 ? (
-            <div className="border rounded-md overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b">
-                    <th className="text-left px-3 py-2 w-8 font-medium text-muted-foreground">
-                      #
-                    </th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">
-                      {t("stepHeader")}
-                    </th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">
-                      {t("expectedResultHeader")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stepsData.map((step, i) => (
-                    <tr key={step.id} className="border-b last:border-0">
-                      <td className="px-3 py-2 text-muted-foreground font-medium">
-                        {i + 1}
-                      </td>
-                      <td className="px-3 py-2">
-                        {step.step ? (
-                          <TextFromJson
-                            jsonString={step.step as string}
-                            room={`conv-step-${step.id}`}
-                          />
-                        ) : (
-                          <span className="text-muted-foreground italic">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {step.expectedResult ? (
-                          <TextFromJson
-                            jsonString={step.expectedResult as string}
-                            room={`conv-er-${step.id}`}
-                          />
-                        ) : (
-                          <span className="italic">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
+          ) : (
+            <Form {...form}>
+              <StepsForm
+                control={form.control}
+                name="steps"
+                projectId={match?.projectId ?? 0}
+                hideSharedStepsButtons
+              />
+            </Form>
+          )}
         </div>
 
         {/* Affected cases section */}
@@ -245,9 +259,9 @@ export function StepDuplicateConversionDialog({
           </p>
           <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
             {match?.members.map((member) => (
-              <label
+              <div
                 key={member.id}
-                className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5"
+                className="flex items-center gap-2 hover:bg-muted/50 rounded px-1 py-0.5"
               >
                 <Checkbox
                   checked={checkedCaseIds.has(member.caseId)}
@@ -258,10 +272,13 @@ export function StepDuplicateConversionDialog({
                 <CaseDisplay
                   id={member.case.id}
                   name={member.case.name}
-                  source={member.case.source as any}
+                  source={member.case.source}
                   automated={member.case.automated}
+                  link={`/projects/repository/${match.projectId}/${member.caseId}`}
+                  linkTarget="_blank"
+                  maxLines={2}
                 />
-              </label>
+              </div>
             ))}
           </div>
           {checkedCaseIds.size === 0 && (

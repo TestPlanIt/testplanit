@@ -3,15 +3,23 @@
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { Filter } from "@/components/tables/Filter";
 import {
-  AlertDialog, AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Popover, PopoverContent, PopoverTrigger
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ApplicationArea } from "@prisma/client";
 import { CircleSlash2, Edit, Layers, Save, Search, Trash2 } from "lucide-react";
@@ -29,12 +37,13 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCases } from "~/lib/hooks";
 import {
   useFindManySharedStepGroup,
-  useUpdateSharedStepGroup
+  useUpdateSharedStepGroup,
 } from "~/lib/hooks/shared-step-group";
 import {
   useCreateSharedStepItem,
-  useDeleteSharedStepItem, useFindManySharedStepItem,
-  useUpdateSharedStepItem
+  useDeleteSharedStepItem,
+  useFindManySharedStepItem,
+  useUpdateSharedStepItem,
 } from "~/lib/hooks/shared-step-item";
 import { ImportSharedStepsWizard } from "./ImportSharedStepsWizard";
 import { ManualSharedStepsDialog } from "./ManualSharedStepsDialog";
@@ -142,16 +151,15 @@ export default function SharedStepsPage() {
     groups.find((g: any) => g.id === selectedGroupId) || null;
 
   // Fetch items for selected group
-  const { data: items = [] } =
-    useFindManySharedStepItem(
-      selectedGroupId
-        ? {
-            where: { sharedStepGroupId: selectedGroupId },
-            orderBy: { order: "asc" },
-          }
-        : { where: { sharedStepGroupId: -1 }, orderBy: { order: "asc" } },
-      { enabled: !!selectedGroupId }
-    );
+  const { data: items = [] } = useFindManySharedStepItem(
+    selectedGroupId
+      ? {
+          where: { sharedStepGroupId: selectedGroupId },
+          orderBy: { order: "asc" },
+        }
+      : { where: { sharedStepGroupId: -1 }, orderBy: { order: "asc" } },
+    { enabled: !!selectedGroupId }
+  );
 
   // Update group name
   const updateGroupMutation = useUpdateSharedStepGroup();
@@ -332,7 +340,7 @@ export default function SharedStepsPage() {
           </div>
         )}
         <div className="mb-2">
-          <Button variant="outline" asChild className="w-full">
+          <Button variant="ghost" asChild className="w-full">
             <Link href={`/projects/shared-steps/${projectId}/step-duplicates`}>
               <Search className="w-4 h-4" />
               {t("findStepDuplicates")}

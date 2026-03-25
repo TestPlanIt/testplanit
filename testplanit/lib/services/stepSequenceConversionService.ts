@@ -39,7 +39,8 @@ export async function convertMatch(
   matchId: number,
   sharedStepGroupName: string,
   requestedCaseIds: number[],
-  userId: string
+  userId: string,
+  editedSteps?: Array<{ step: string | null; expectedResult: string | null }>,
 ): Promise<ConversionResult> {
   const result = await prisma.$transaction(
     async (tx) => {
@@ -111,46 +112,53 @@ export async function convertMatch(
         orderBy: { order: "asc" },
       });
 
-      // Determine the order range from the canonical case's matched steps
-      if (canonicalSteps.length >= 2) {
-        const startOrder = Math.min(...canonicalSteps.map((s: { order: number }) => s.order));
-        const endOrder = Math.max(...canonicalSteps.map((s: { order: number }) => s.order));
+      // If editedSteps is a full replacement set (user added/deleted steps),
+      // use it directly. Otherwise merge per-index with canonical steps.
+      const isFullReplacement = editedSteps && editedSteps.every((s) => s.step !== null);
 
-        // Get all steps in the matched range for canonical case
-        const canonicalMatchedSteps = await tx.steps.findMany({
-          where: {
-            testCaseId: canonicalCase.caseId,
-            order: { gte: startOrder, lte: endOrder },
-            isDeleted: false,
-          },
-          orderBy: { order: "asc" },
-        });
-
-        for (let idx = 0; idx < canonicalMatchedSteps.length; idx++) {
-          const step = canonicalMatchedSteps[idx];
+      if (isFullReplacement) {
+        // User-defined step set — ignore canonical steps entirely
+        for (let idx = 0; idx < editedSteps.length; idx++) {
+          const edited = editedSteps[idx]!;
           await tx.sharedStepItem.create({
             data: {
               sharedStepGroupId: newGroup.id,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              step: (step.step ?? emptyEditorContent) as any,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              expectedResult: (step.expectedResult ?? emptyEditorContent) as any,
+              step: (edited.step ?? emptyEditorContent) as any,
+              expectedResult: (edited.expectedResult ?? emptyEditorContent) as any,
               order: idx,
             },
           });
         }
-      } else if (canonicalSteps.length === 1) {
-        // Single step match
-        await tx.sharedStepItem.create({
-          data: {
-            sharedStepGroupId: newGroup.id,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            step: (canonicalSteps[0].step ?? emptyEditorContent) as any,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expectedResult: (canonicalSteps[0].expectedResult ?? emptyEditorContent) as any,
-            order: 0,
-          },
-        });
+      } else if (canonicalSteps.length >= 1) {
+        // Merge edits with canonical steps
+        const startOrder = Math.min(...canonicalSteps.map((s: { order: number }) => s.order));
+        const endOrder = Math.max(...canonicalSteps.map((s: { order: number }) => s.order));
+
+        const canonicalMatchedSteps = canonicalSteps.length >= 2
+          ? await tx.steps.findMany({
+              where: {
+                testCaseId: canonicalCase.caseId,
+                order: { gte: startOrder, lte: endOrder },
+                isDeleted: false,
+              },
+              orderBy: { order: "asc" },
+            })
+          : canonicalSteps;
+
+        for (let idx = 0; idx < canonicalMatchedSteps.length; idx++) {
+          const step = canonicalMatchedSteps[idx];
+          const edited = editedSteps?.[idx];
+          const stepContent = edited?.step ?? step.step ?? emptyEditorContent;
+          const erContent = edited?.expectedResult ?? step.expectedResult ?? emptyEditorContent;
+          await tx.sharedStepItem.create({
+            data: {
+              sharedStepGroupId: newGroup.id,
+              step: stepContent as any,
+              expectedResult: erContent as any,
+              order: idx,
+            },
+          });
+        }
       }
 
       // -----------------------------------------------------------------------

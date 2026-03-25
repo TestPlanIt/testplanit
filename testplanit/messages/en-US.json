@@ -5896,7 +5896,12 @@
         "skippedWarning": "{count, plural, one {# case was skipped} other {# cases were skipped}} (stale or already converted).",
         "stepHeader": "Step",
         "expectedResultHeader": "Expected Result",
-        "noCasesSelected": "Select at least one case to convert."
+        "noCasesSelected": "Select at least one case to convert.",
+        "viewCase": "View case details",
+        "doneEditing": "Done",
+        "addStep": "Add Step",
+        "insertStepAbove": "Insert step above",
+        "deleteStep": "Delete step"
       }
     },
     "findStepDuplicates": "Find Duplicates"
