@@ -93,17 +93,25 @@ export async function processStepScan(
   const totalPairs = (resolvedCases.length * (resolvedCases.length - 1)) / 2;
   await job.updateProgress({ analyzed: 0, total: totalPairs });
 
-  // 6. Run the step sequence scan
+  // 6. Run the step sequence scan (check cancel key periodically during processing)
   const service = new StepSequenceScanService();
   const groups = await service.findSharedSequences(resolvedCases, job.data.minSteps, async (compared, total) => {
     await job.updateProgress({ analyzed: compared, total });
+    // Check for mid-scan cancellation every 100 progress updates
+    if (compared % 100 === 0) {
+      const cancelled = await redis.get(cancelKey(job.id));
+      if (cancelled) {
+        await redis.del(cancelKey(job.id));
+        throw new Error("Job cancelled by user");
+      }
+    }
   });
 
-  // 6. Soft-delete old matches for this project+scanJobId
+  // 6. Soft-delete old PENDING matches for this project (all prior scans)
   await prisma.stepSequenceMatch.updateMany({
     where: {
       projectId: job.data.projectId,
-      scanJobId: job.id,
+      status: "PENDING",
       isDeleted: false,
     },
     data: { isDeleted: true },

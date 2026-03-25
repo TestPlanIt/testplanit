@@ -233,7 +233,7 @@ describe("StepSequenceScanWorker", () => {
         expect.objectContaining({
           where: expect.objectContaining({
             projectId: baseJobData.projectId,
-            scanJobId: "job-2",
+            status: "PENDING",
             isDeleted: false,
           }),
           data: { isDeleted: true },
