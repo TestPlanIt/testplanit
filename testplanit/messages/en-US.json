@@ -5876,8 +5876,30 @@
       "scopeProject": "Entire project",
       "scopeFolder": "Specific folder",
       "thresholdLabel": "Minimum matching steps",
-      "startScan": "Start Scan"
-    }
+      "startScan": "Start Scan",
+      "dialog": {
+        "title": "Convert to Shared Steps",
+        "previewTitle": "Matched Step Sequence",
+        "casesTitle": "Affected Test Cases",
+        "casesDescription": "Uncheck cases you want to exclude from conversion.",
+        "nameLabel": "Shared Step Group Name",
+        "namePlaceholder": "Enter a name for the shared step group...",
+        "convert": "Convert to Shared Steps",
+        "converting": "Converting...",
+        "dismissMatch": "Dismiss Match",
+        "dismissing": "Dismissing...",
+        "convertSuccess": "Shared step group created successfully!",
+        "convertError": "Failed to convert. Please try again.",
+        "dismissSuccess": "Match dismissed.",
+        "dismissError": "Failed to dismiss. Please try again.",
+        "viewSharedStep": "View Shared Step Group",
+        "skippedWarning": "{count, plural, one {# case was skipped} other {# cases were skipped}} (stale or already converted).",
+        "stepHeader": "Step",
+        "expectedResultHeader": "Expected Result",
+        "noCasesSelected": "Select at least one case to convert."
+      }
+    },
+    "findStepDuplicates": "Find Duplicates"
   },
   "search": {
     "title": "Search",
