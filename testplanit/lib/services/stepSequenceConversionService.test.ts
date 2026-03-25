@@ -4,7 +4,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Use vi.hoisted() so that mock objects are available before vi.mock() factories run
 // (vi.mock is hoisted to the top of the file by Vitest).
 
-const { mockTx, mockPrisma } = vi.hoisted(() => {
+const {
+  mockTx,
+  mockPrisma,
+  mockCreateTestCaseVersionInTransaction,
+  mockSyncRepositoryCaseToElasticsearch,
+  mockSyncSharedStepToElasticsearch,
+} = vi.hoisted(() => {
+  const mockCreateTestCaseVersionInTransaction = vi.fn();
+  const mockSyncRepositoryCaseToElasticsearch = vi.fn().mockResolvedValue(undefined);
+  const mockSyncSharedStepToElasticsearch = vi.fn().mockResolvedValue(undefined);
+
   const mockTx = {
     stepSequenceMatch: {
       findUnique: vi.fn(),
@@ -33,22 +43,23 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
     }),
   };
 
-  return { mockTx, mockPrisma };
+  return {
+    mockTx,
+    mockPrisma,
+    mockCreateTestCaseVersionInTransaction,
+    mockSyncRepositoryCaseToElasticsearch,
+    mockSyncSharedStepToElasticsearch,
+  };
 });
 
 vi.mock("~/lib/prismaBase", () => ({
   prisma: mockPrisma,
 }));
 
-// Mock testCaseVersionService
-const mockCreateTestCaseVersionInTransaction = vi.fn();
 vi.mock("~/lib/services/testCaseVersionService", () => ({
   createTestCaseVersionInTransaction: mockCreateTestCaseVersionInTransaction,
 }));
 
-// Mock elasticsearch sync functions (fire-and-forget best-effort)
-const mockSyncRepositoryCaseToElasticsearch = vi.fn().mockResolvedValue(undefined);
-const mockSyncSharedStepToElasticsearch = vi.fn().mockResolvedValue(undefined);
 vi.mock("~/services/repositoryCaseSync", () => ({
   syncRepositoryCaseToElasticsearch: mockSyncRepositoryCaseToElasticsearch,
 }));
@@ -87,7 +98,7 @@ function makeMatch(overrides: Partial<{
   isDeleted: boolean;
   fingerprint: string;
   stepCount: number;
-  cases: Array<{ matchId: number; caseId: number; startStepId: number; endStepId: number }>;
+  members: Array<{ id: number; matchId: number; caseId: number; startStepId: number; endStepId: number; isDeleted: boolean }>;
 }> = {}) {
   return {
     id: 1,
@@ -96,9 +107,9 @@ function makeMatch(overrides: Partial<{
     isDeleted: false,
     fingerprint: "step-text-hash",
     stepCount: 2,
-    cases: [
-      { matchId: 1, caseId: 1, startStepId: 11, endStepId: 12 },
-      { matchId: 1, caseId: 2, startStepId: 21, endStepId: 22 },
+    members: [
+      { id: 1, matchId: 1, caseId: 1, startStepId: 11, endStepId: 12, isDeleted: false },
+      { id: 2, matchId: 1, caseId: 2, startStepId: 21, endStepId: 22, isDeleted: false },
     ],
     ...overrides,
   };
