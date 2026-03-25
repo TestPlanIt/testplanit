@@ -100,9 +100,6 @@ export function FindStepDuplicatesButton({
         )
       : 0;
 
-  const analyzed = statusData?.progress?.analyzed ?? 0;
-  const total = statusData?.progress?.total ?? 0;
-
   const handleCancel = async () => {
     if (!scanJobId) return;
     try {
@@ -122,7 +119,7 @@ export function FindStepDuplicatesButton({
       <div data-testid="step-scan-progress" className="flex items-center gap-2">
         <Progress value={progressPercent} className="w-32 h-2" />
         <span className="text-xs text-muted-foreground">
-          {t("analyzing", { analyzed, total })}
+          {`${progressPercent}%`}
         </span>
         <button
           onClick={handleCancel}
