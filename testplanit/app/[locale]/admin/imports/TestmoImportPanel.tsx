@@ -801,7 +801,6 @@ export function TestmoImportPanel() {
     [analysis, selectedDataset]
   );
 
-
   const canStartImport = useMemo(() => {
     if (!currentJob || currentJob.status !== "READY") {
       return false;
@@ -1184,7 +1183,7 @@ export function TestmoImportPanel() {
       default:
         return "";
     }
-  }, [uploadProgress, t]);
+  }, [uploadProgress, t, tCommon]);
 
   const translatedError = useMemo(() => {
     if (!errorKey) {
