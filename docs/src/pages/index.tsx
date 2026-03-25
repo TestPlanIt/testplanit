@@ -19,6 +19,7 @@ import {
   ScrollText,
   Tags,
 } from 'lucide-react';
+import { AdUnit } from '../components/AdUnit';
 
 import styles from './index.module.css';
 
@@ -290,6 +291,14 @@ function HomepageFeaturesSection() {
               </div>
             );
           })}
+          <div className={styles.featureCard}>
+            <AdUnit
+              adSlot="2349563487"
+              adFormat="auto"
+              fullWidthResponsive={true}
+              style={{ minHeight: '250px' }}
+            />
+          </div>
         </div>
       </div>
     </section>
