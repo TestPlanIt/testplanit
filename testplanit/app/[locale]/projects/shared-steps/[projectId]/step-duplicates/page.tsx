@@ -3,13 +3,15 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StepDuplicateResultsTable } from "@/components/step-duplicates/StepDuplicateResultsTable";
+import { ApplicationArea } from "@prisma/client";
 import { ArrowLeft, GitCompare, Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "~/lib/navigation";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { Link, useRouter } from "~/lib/navigation";
 
 const STORAGE_KEY_PREFIX = "step-scan-job:";
 
@@ -17,7 +19,14 @@ export default function StepDuplicatesPage() {
   const t = useTranslations("sharedSteps.stepDuplicates");
   const { projectId } = useParams<{ projectId: string }>();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
+
+  const { permissions, isLoading: permissionsLoading } = useProjectPermissions(
+    projectId,
+    ApplicationArea.SharedSteps
+  );
+  const canEdit = permissions?.canAddEdit;
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState<{
@@ -116,6 +125,13 @@ export default function StepDuplicatesPage() {
     [queryClient, storageKey, t]
   );
 
+  // Redirect if user doesn't have shared steps access
+  useEffect(() => {
+    if (!permissionsLoading && !canEdit) {
+      router.replace(`/projects/shared-steps/${projectId}`);
+    }
+  }, [permissionsLoading, canEdit, projectId, router]);
+
   // On mount, check for an active scan in sessionStorage
   useEffect(() => {
     const savedJobId = sessionStorage.getItem(storageKey);
@@ -145,6 +161,10 @@ export default function StepDuplicatesPage() {
       setIsScanning(false);
     }
   };
+
+  if (permissionsLoading || !canEdit) {
+    return null;
+  }
 
   return (
     <div className="py-6 px-2">
@@ -195,18 +215,15 @@ export default function StepDuplicatesPage() {
               </Button>
             </div>
           )}
-          <Button
-            variant="outline"
-            onClick={handleRescan}
-            disabled={isScanning}
-          >
-            {isScanning ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+          {!isScanning && (
+            <Button
+              variant="outline"
+              onClick={handleRescan}
+            >
               <RefreshCw className="h-4 w-4" />
-            )}
-            {t("rescan")}
-          </Button>
+              {t("rescan")}
+            </Button>
+          )}
         </div>
       </div>
       <StepDuplicateResultsTable projectId={projectId} />
