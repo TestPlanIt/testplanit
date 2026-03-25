@@ -227,7 +227,7 @@ export function StepDuplicateConversionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto" data-testid="step-conversion-dialog">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
@@ -297,6 +297,7 @@ export function StepDuplicateConversionDialog({
           <Input
             id="shared-step-name"
             className="mt-1"
+            data-testid="shared-step-name-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("namePlaceholder")}
@@ -308,6 +309,7 @@ export function StepDuplicateConversionDialog({
             variant="outline"
             onClick={handleDismiss}
             disabled={isProcessing}
+            data-testid="step-dismiss-button"
           >
             {isDismissing ? (
               <>
@@ -322,6 +324,7 @@ export function StepDuplicateConversionDialog({
             variant="default"
             onClick={handleConvert}
             disabled={isProcessing || !canConvert}
+            data-testid="step-convert-button"
           >
             {isConverting ? (
               <>
