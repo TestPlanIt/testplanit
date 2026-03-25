@@ -227,7 +227,10 @@ export function StepDuplicateConversionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto" data-testid="step-conversion-dialog">
+      <DialogContent
+        className="max-w-5xl max-h-[85vh] overflow-y-auto"
+        data-testid="step-conversion-dialog"
+      >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
@@ -258,6 +261,32 @@ export function StepDuplicateConversionDialog({
             {t("casesDescription")}
           </p>
           <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
+            {match && match.members.length > 1 && (
+              <Label className="flex items-center gap-2 px-1 py-0.5 border-b pb-2 mb-1 cursor-pointer w-fit">
+                <Checkbox
+                  id="select-all-cases"
+                  checked={
+                    checkedCaseIds.size === match.members.length
+                      ? true
+                      : checkedCaseIds.size > 0
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setCheckedCaseIds(
+                        new Set(match.members.map((m) => m.caseId))
+                      );
+                    } else {
+                      setCheckedCaseIds(new Set());
+                    }
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {t("selectAll")}
+                </span>
+              </Label>
+            )}
             {match?.members.map((member) => (
               <div
                 key={member.id}

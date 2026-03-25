@@ -1,7 +1,9 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface StepDuplicateRow {
@@ -106,6 +108,11 @@ export const getColumns = (
     enableHiding: false,
     size: 100,
     maxSize: 120,
-    cell: () => <div />,
+    cell: () => (
+      <Button variant="ghost" size="sm" data-testid="review-step-match-button">
+        <Eye className="h-4 w-4" />
+        {t("columns.review")}
+      </Button>
+    ),
   },
 ];

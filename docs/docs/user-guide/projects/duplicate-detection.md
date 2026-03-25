@@ -63,15 +63,15 @@ The comparison dialog offers three resolution options.
 
 ### Merge
 
-Merge combines the two cases into one. You select which case **survives** — the other (the victim) is soft-deleted. The survivor inherits:
+Merge combines the two cases into one. You select which case is the **primary** — the other is soft-deleted. The primary case inherits:
 
 - All version history from both cases
-- All steps, custom fields, tags, issue links, and attachments from the victim (if not already present)
+- All tags, issue links, and attachments from the other case (if not already present)
 
-The merge runs as a single atomic transaction — either everything succeeds or nothing changes.
+The primary case keeps its own steps and custom fields unchanged. The merge runs as a single atomic transaction — either everything succeeds or nothing changes.
 
 :::note
-You must explicitly select the survivor before the **Merge** button becomes active. This prevents accidental data loss.
+You must explicitly select the primary case before the **Merge** button becomes active. This prevents accidental data loss.
 :::
 
 ### Link as Related
@@ -98,11 +98,11 @@ Import warnings are **advisory only** — they never block the import. You can r
 
 Semantic analysis requires an LLM integration to be configured in **Project Settings → AI Models**. When configured, the duplicate scan worker automatically runs a semantic pass on pairs that pass the fuzzy gate.
 
-See [AI Models](../llm-integrations) for instructions on setting up an LLM integration.
+See [AI Models](../llm-integrations.md) for instructions on setting up an LLM integration.
 
 ## Limitations
 
 - Detection is scoped to within a single project. Cross-project duplicate detection is not supported.
 - Creation-time and import warnings check name similarity only — they do not run a full fuzzy + semantic scan.
-- Bulk resolution of multiple pairs at once is not yet supported. Each pair must be resolved individually.
+- Bulk **Dismiss** and **Link as Related** are supported via the checkbox selection on the results page. Bulk merge is not supported — each merge must be resolved individually.
 - Warnings appear after a case is saved or on import preview, not on every keystroke while typing a case name.

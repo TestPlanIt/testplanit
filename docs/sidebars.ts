@@ -152,6 +152,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/projects/repository-case-details', // Add Test Case Details page
                 'user-guide/projects/repository-case-versions', // Add Test Case Versions page
                 'user-guide/shared-steps', // Add shared-steps.md
+                'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
                 'user-guide/import-shared-steps', // Add import-shared-steps.md
                 'import-export', // Add import-export.md
                 'copy-move-test-cases', // Copy/Move test cases between projects

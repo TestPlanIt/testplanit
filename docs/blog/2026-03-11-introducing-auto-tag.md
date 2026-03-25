@@ -48,7 +48,7 @@ Auto Tag doesn't apply anything automatically. You see the proposed tags for eac
 
 This is the right default. AI suggestions are good, not perfect. Reviewing them takes seconds, and it builds trust that what ends up in your repository reflects real decisions, not unreviewed output.
 
-If the suggestions aren't quite right for your team — too broad, too specific, or not matching your taxonomy style — you can tune the prompt. Auto Tag uses TestPlanIt's [configurable AI prompt system](/docs/user-guide/llm-integrations#prompt-configurations): administrators can edit the system prompt and user prompt template under **Admin → Prompt Configs** to steer the AI toward your conventions. Tell it to prefer feature-area tags over implementation-detail tags, to always include a priority label, or to match your existing naming patterns. The content analysis stays the same; you're just giving the model better instructions for your context.
+If the suggestions aren't quite right for your team — too broad, too specific, or not matching your taxonomy style — you can tune the prompt. Auto Tag uses TestPlanIt's [configurable AI prompt system](/docs/user-guide/prompt-configurations): administrators can edit the system prompt and user prompt template under **Admin → Prompt Configs** to steer the AI toward your conventions. Tell it to prefer feature-area tags over implementation-detail tags, to always include a priority label, or to match your existing naming patterns. The content analysis stays the same; you're just giving the model better instructions for your context.
 
 ## Three Entry Points
 

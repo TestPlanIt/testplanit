@@ -81,7 +81,12 @@ export default function StepDuplicatesPage() {
             queryClient.invalidateQueries({
               predicate: (q) => {
                 const key = q.queryKey as string[];
-                return key.some?.((k: unknown) => typeof k === "string" && k.includes("StepSequenceMatch")) ?? false;
+                return (
+                  key.some?.(
+                    (k: unknown) =>
+                      typeof k === "string" && k.includes("StepSequenceMatch")
+                  ) ?? false
+                );
               },
             });
             sessionStorage.removeItem(storageKey);
@@ -150,7 +155,7 @@ export default function StepDuplicatesPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold flex gap-1">
+          <h1 className="text-2xl font-bold flex gap-1 items-center">
             <GitCompare className="w-6 h-6 shrink-0" />
             {t("pageTitle")}
           </h1>

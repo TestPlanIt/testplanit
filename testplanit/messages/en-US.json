@@ -5857,7 +5857,8 @@
         "stepCount": "Steps",
         "matchedSteps": "Matched Steps",
         "casesCount": "Cases",
-        "actions": "Actions"
+        "actions": "Actions",
+        "review": "Review"
       },
       "scanning": "Scanning...",
       "scanComplete": "{count, plural, one {# match found} other {# matches found}}",
@@ -5866,7 +5867,7 @@
       "analyzing": "Analyzing {analyzed}/{total}",
       "cancelScan": "Cancel scan",
       "findStepDuplicates": "Find Step Duplicates",
-      "rescan": "Re-scan",
+      "rescan": "Scan",
       "convertToSharedStep": "Convert",
       "dismiss": "Dismiss",
       "viewResults": "View Results ({count})",
@@ -5897,6 +5898,7 @@
         "stepHeader": "Step",
         "expectedResultHeader": "Expected Result",
         "noCasesSelected": "Select at least one case to convert.",
+        "selectAll": "Select all",
         "viewCase": "View case details",
         "doneEditing": "Done",
         "addStep": "Add Step",
