@@ -924,7 +924,7 @@ export async function POST(request: NextRequest) {
         let duplicateWarnings: Array<{ caseName: string; className: string | null; similarTo: Array<{ id: number; name: string; confidence: string }> }> = [];
         try {
           const esClient = getElasticsearchClient();
-          if (esClient && result) {
+          if (esClient) {
             const scanService = new DuplicateScanService(prisma, esClient);
             const tenantId = getCurrentTenantId();
 
