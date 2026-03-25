@@ -11,3 +11,4 @@ export const AUTO_TAG_QUEUE_NAME = "auto-tag";
 export const REPO_CACHE_QUEUE_NAME = "repo-cache";
 export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
+export const STEP_SCAN_QUEUE_NAME = "step-scan";

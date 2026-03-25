@@ -1,7 +1,7 @@
 import { Queue } from "bullmq";
 import {
   AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, COPY_MOVE_QUEUE_NAME, DUPLICATE_SCAN_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
-  NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, SYNC_QUEUE_NAME,
+  NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, STEP_SCAN_QUEUE_NAME, SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME
 } from "./queueNames";
 import valkeyConnection from "./valkey";
@@ -20,6 +20,7 @@ export {
   REPO_CACHE_QUEUE_NAME,
   COPY_MOVE_QUEUE_NAME,
   DUPLICATE_SCAN_QUEUE_NAME,
+  STEP_SCAN_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -35,6 +36,7 @@ let _autoTagQueue: Queue | null = null;
 let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
+let _stepScanQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -482,6 +484,35 @@ export function getDuplicateScanQueue(): Queue | null {
 }
 
 /**
+ * Get the step-scan queue instance (lazy initialization)
+ * Used for background step sequence scan jobs.
+ * attempts: 1 — no retry; user retries from UI.
+ * concurrency: 1 — enforced at the worker level to prevent ZenStack v3 deadlocks.
+ */
+export function getStepScanQueue(): Queue | null {
+  if (_stepScanQueue) return _stepScanQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${STEP_SCAN_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _stepScanQueue = new Queue(STEP_SCAN_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 1, // LOCKED: no retry — user retries from UI
+      removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
+      removeOnFail: { age: 3600 * 24 * 14 },
+    },
+  });
+  console.log(`Queue "${STEP_SCAN_QUEUE_NAME}" initialized.`);
+  _stepScanQueue.on("error", (error) => {
+    console.error(`Queue ${STEP_SCAN_QUEUE_NAME} error:`, error);
+  });
+  return _stepScanQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -499,5 +530,6 @@ export function getAllQueues() {
     repoCacheQueue: getRepoCacheQueue(),
     copyMoveQueue: getCopyMoveQueue(),
     duplicateScanQueue: getDuplicateScanQueue(),
+    stepScanQueue: getStepScanQueue(),
   };
 }
