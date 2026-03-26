@@ -164,11 +164,10 @@ describe("DuplicateAnalysisService", () => {
     }
   });
 
-  // ── Test 5: Token-based batching creates multiple LLM calls ──────────────
+  // ── Test 5: Token-based batching — fewer batches with larger budget ───────
 
-  it("splits pairs into multiple batches based on token budget", async () => {
-    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
-    mockLlmManager.chat.mockImplementation((_id: number, req: any) => {
+  it("creates fewer batches with larger maxTokensPerRequest (BATCH-01)", async () => {
+    const chatImpl = (_id: number, req: any) => {
       const userContent: string = req.messages[1].content;
       const pairCount = (userContent.match(/Pair \d+:/g) ?? []).length;
       const results = Array.from({ length: pairCount }, (_, i) => ({
@@ -178,16 +177,27 @@ describe("DuplicateAnalysisService", () => {
       return Promise.resolve({
         content: JSON.stringify({ results }),
         totalTokens: 50,
+        finishReason: "stop",
       });
-    });
+    };
 
-    // Use TINY_TOKEN_BUDGET (50) — with system prompt ~20 tokens and each pair ~5 tokens,
-    // expect multiple batches for 5 pairs
-    const pairs = makePairs(5);
+    const pairs = makePairs(10);
+
+    // Small budget — more batches
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+    mockLlmManager.chat.mockImplementation(chatImpl);
     await service.analyzePairs(pairs, 1, "user-1", TINY_TOKEN_BUDGET);
+    const smallBudgetCalls = mockLlmManager.chat.mock.calls.length;
 
-    // With tiny budget, expect more than 1 LLM call
-    expect(mockLlmManager.chat.mock.calls.length).toBeGreaterThanOrEqual(1);
+    vi.clearAllMocks();
+
+    // Large budget — fewer batches (all 10 pairs fit in one batch)
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+    mockLlmManager.chat.mockImplementation(chatImpl);
+    await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const largeBudgetCalls = mockLlmManager.chat.mock.calls.length;
+
+    expect(largeBudgetCalls).toBeLessThan(smallBudgetCalls);
   });
 
   // ── Test 6: LLM error for one batch — keep that batch as fuzzy ────────────
@@ -334,5 +344,112 @@ describe("DuplicateAnalysisService", () => {
     expect(result.every((r) => r.detectionMethod === "semantic")).toBe(true);
     // More than 1 chat call due to split
     expect(callCount).toBeGreaterThan(1);
+  });
+
+  // ── Timeout triggers split-in-half retry (RETRY-06) ──────────────────────
+
+  it("splits batch in half and retries when LLM call times out (RETRY-06)", async () => {
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+
+    let callCount = 0;
+    mockLlmManager.chat.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // First call: timeout error for the full batch
+        const err = new Error("Request timeout");
+        (err as any).code = "TIMEOUT";
+        return Promise.reject(err);
+      }
+      // Subsequent calls (split sub-batches): succeed
+      return Promise.resolve({
+        content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+        totalTokens: 50,
+        finishReason: "stop",
+      });
+    });
+
+    // 4 pairs all fit in one batch with large budget
+    const pairs = makePairs(4);
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+
+    // First call timed out → split into 2 sub-batches → 2 more calls = 3 total
+    expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  // ── Parse failure on multi-pair batch triggers split-in-half retry ────────
+
+  it("splits multi-pair batch and retries when LLM response JSON is unparseable (RETRY-06)", async () => {
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+
+    let callCount = 0;
+    mockLlmManager.chat.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // First call: broken JSON for the full batch
+        return Promise.resolve({
+          content: "not valid json {{{",
+          totalTokens: 10,
+          finishReason: "stop",
+        });
+      }
+      // Subsequent calls (split sub-batches): succeed
+      return Promise.resolve({
+        content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+        totalTokens: 50,
+        finishReason: "stop",
+      });
+    });
+
+    // 4 pairs all fit in one batch with large budget
+    const pairs = makePairs(4);
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+
+    // First call parse failed → split → 2 retry calls = 3 total
+    expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  // ── Depth cap prevents infinite recursion (RETRY-06) ─────────────────────
+
+  it("stops recursion and falls back to fuzzy when depth cap reached (RETRY-06)", async () => {
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+
+    // Always return truncated response — forces repeated splits
+    mockLlmManager.chat.mockResolvedValue({
+      content: JSON.stringify({ results: [] }),
+      totalTokens: 10,
+      finishReason: "length",
+    });
+
+    // 2 pairs: depth 0 → truncated → split to 1+1 at depth 1
+    // Each single-pair call returns truncated but size=1 so no further split → fuzzy fallback
+    const pairs = [makePair(1, 101), makePair(2, 102)];
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+
+    // 1 call for batch of 2, then 2 calls for single pairs = 3 total
+    expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);
+    // All pairs fall back to fuzzy since single-pair batches can't split further
+    expect(result).toHaveLength(2);
+    for (const item of result) {
+      expect(item.detectionMethod).toBe("fuzzy");
+    }
+  });
+
+  // ── Undefined retryOptions passed through when not provided (RETRY-01) ────
+
+  it("passes undefined retryOptions to manager.chat when not provided (RETRY-01)", async () => {
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+    mockLlmManager.chat.mockResolvedValue({
+      content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+      totalTokens: 50,
+      finishReason: "stop",
+    });
+
+    const pairs = [makePair(1, 101)];
+    await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+
+    const chatCall = mockLlmManager.chat.mock.calls[0]!;
+    expect(chatCall[2]).toBeUndefined();
   });
 });
