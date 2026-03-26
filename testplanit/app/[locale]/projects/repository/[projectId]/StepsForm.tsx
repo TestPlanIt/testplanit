@@ -39,7 +39,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Control, useFieldArray, useFormContext } from "react-hook-form";
+import { Control, FieldPath, FieldValues, useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
 import {
@@ -74,9 +74,9 @@ export type StepFormField = {
   placeholderId?: string; // for optimistic updates while image uploads
 };
 
-interface StepsFormProps {
-  control: Control<any>;
-  name: string;
+interface StepsFormProps<T extends FieldValues = FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
   steps?: EnrichedStep[] | StepFormField[];
   readOnly?: boolean;
   projectId: number;
@@ -89,12 +89,11 @@ interface _EditorUpdateEvent {
 }
 
 const TipTapEditorWrapper: React.FC<{
-  control: Control<any>;
   name: string;
   initialContent?: object;
   readOnly?: boolean;
   projectId: number;
-}> = ({ control: _control, name, initialContent, readOnly = false, projectId }) => {
+}> = ({ name, initialContent, readOnly = false, projectId }) => {
   const { setValue } = useFormContext();
 
   const handleEditorUpdate = (content: any) => {
@@ -119,7 +118,6 @@ const TipTapEditorWrapper: React.FC<{
 interface StepItemProps {
   field: any;
   index: number;
-  control: Control<any>;
   namePrefix: string; // e.g., "steps"
   readOnly: boolean;
   openPopovers: boolean[];
@@ -134,7 +132,6 @@ interface StepItemProps {
 const StepItem: React.FC<StepItemProps> = ({
   field,
   index,
-  control,
   namePrefix,
   readOnly,
   openPopovers,
@@ -447,7 +444,6 @@ const StepItem: React.FC<StepItemProps> = ({
           <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground rounded-b-none">
             <FormControl>
               <TipTapEditorWrapper
-                control={control}
                 name={`${namePrefix}.${index}.step`}
                 initialContent={memoizedStepContent}
                 readOnly={readOnly}
@@ -462,7 +458,6 @@ const StepItem: React.FC<StepItemProps> = ({
             </FormLabel>
             <FormControl>
               <TipTapEditorWrapper
-                control={control}
                 name={`${namePrefix}.${index}.expectedResult`}
                 initialContent={memoizedExpectedResultContent}
                 readOnly={readOnly}
@@ -477,7 +472,7 @@ const StepItem: React.FC<StepItemProps> = ({
   );
 };
 
-const StepsForm: React.FC<StepsFormProps> = ({
+function StepsForm<T extends FieldValues = FieldValues>({
   control,
   name,
   steps,
@@ -485,13 +480,13 @@ const StepsForm: React.FC<StepsFormProps> = ({
   projectId,
   onSharedStepCreated,
   hideSharedStepsButtons = false,
-}) => {
+}: StepsFormProps<T>) {
   const tCommon = useTranslations("common");
   const tRepoSteps = useTranslations("repository.steps");
   const { data: session } = useSession();
   const { fields, append, remove, move, update: _update, replace } = useFieldArray({
-    control,
-    name: name,
+    control: control as Control<FieldValues>,
+    name: name as string,
   });
 
   const createSharedStepGroupMutation = useCreateSharedStepGroup();
@@ -569,7 +564,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
       }
     }
     // Check if data is an object and then if it has the required TipTap properties
-    if (typeof data === "object" && data !== null) {
+    if (typeof data === "object") {
       const potentialTipTap = data as { type?: unknown; content?: unknown }; // Type assertion for property access
       if (
         potentialTipTap.type === "doc" &&
@@ -852,7 +847,6 @@ const StepsForm: React.FC<StepsFormProps> = ({
                 <StepItem
                   field={stepField}
                   index={index}
-                  control={control}
                   namePrefix={name}
                   readOnly={readOnly}
                   openPopovers={openPopovers}

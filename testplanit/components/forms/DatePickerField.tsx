@@ -17,13 +17,13 @@ import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import { Control } from "react-hook-form";
+import { Control, FieldPath, FieldValues } from "react-hook-form";
 import { cn, type ClassValue } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 
-interface DatePickerFieldProps {
-  control: Control<any>;
-  name: string;
+interface DatePickerFieldProps<T extends FieldValues = FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
   label?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -33,7 +33,7 @@ interface DatePickerFieldProps {
   helpKey?: string;
 }
 
-export function DatePickerField({
+export function DatePickerField<T extends FieldValues = FieldValues>({
   control,
   name,
   label,
@@ -43,7 +43,7 @@ export function DatePickerField({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
-}: DatePickerFieldProps) {
+}: DatePickerFieldProps<T>) {
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const [popoverOpen, setPopoverOpen] = useState(false);
