@@ -1,8 +1,29 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { hash } from "bcrypt";
-import type { Adapter, AdapterUser } from "next-auth/adapters";
+import type { Adapter, AdapterAccount, AdapterUser } from "next-auth/adapters";
 import { NotificationService } from "~/lib/services/notificationService";
+
+function sanitizeAccountData(account: AdapterAccount): Prisma.AccountUncheckedCreateInput {
+  if (!account.userId || !account.type || !account.provider || !account.providerAccountId) {
+    throw new Error("Missing required account fields for OAuth account linking");
+  }
+
+  return {
+    userId: account.userId,
+    type: account.type,
+    provider: account.provider,
+    providerAccountId: account.providerAccountId,
+    refresh_token: account.refresh_token ?? null,
+    access_token: account.access_token ?? null,
+    expires_at: account.expires_at ?? null,
+    token_type: account.token_type ?? null,
+    scope: account.scope ?? null,
+    id_token: account.id_token ?? null,
+    session_state:
+      typeof account.session_state === "string" ? account.session_state : null,
+  };
+}
 
 /**
  * Custom Prisma adapter that ensures UserPreferences are created
@@ -13,6 +34,11 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
 
   return {
     ...baseAdapter,
+    async linkAccount(account: AdapterAccount) {
+      return prisma.account.create({
+        data: sanitizeAccountData(account),
+      }) as unknown as AdapterAccount;
+    },
     // Override createVerificationToken to add timing protection
     async createVerificationToken(data: { identifier: string; expires: Date; token: string }) {
       // Always create the token (for both existing and non-existing users)
