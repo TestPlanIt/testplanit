@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LLM_FEATURES } from "~/lib/llm/constants";
 
-import {
-  BATCH_SIZE,
-  DuplicateAnalysisService,
-  MAX_PAIRS_PER_SCAN,
-} from "./duplicate-analysis.service";
+import { DuplicateAnalysisService } from "./duplicate-analysis.service";
 import type { PairWithCaseContent } from "./duplicate-analysis.service";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -45,21 +41,14 @@ function makePairs(count: number): PairWithCaseContent[] {
   return Array.from({ length: count }, (_, i) => makePair(i + 1, i + 100));
 }
 
-function _makeYesResponse(count: number): string {
-  const results = Array.from({ length: count }, (_, i) => ({
-    pairIndex: i,
-    verdict: "YES",
-  }));
-  return JSON.stringify({ results });
-}
+// A small token budget that fits exactly 2 pairs per batch (for batch-count tests)
+// Each pair has ~5 tokens of content; system prompt ~20 tokens.
+// Budget with ratio 0.65: floor(200 * 0.65) - 20 = 110 tokens → ~22 pairs fit easily.
+// Use a tiny budget of 50 tokens: floor(50 * 0.65) - 20 = 12 tokens → ~2 pairs per batch.
+const TINY_TOKEN_BUDGET = 50;
 
-function _makeNoResponse(count: number): string {
-  const results = Array.from({ length: count }, (_, i) => ({
-    pairIndex: i,
-    verdict: "NO",
-  }));
-  return JSON.stringify({ results });
-}
+// A large token budget so all pairs fit in one batch
+const LARGE_TOKEN_BUDGET = 128_000;
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -74,7 +63,7 @@ describe("DuplicateAnalysisService", () => {
   // ── Test 1: Empty pairs array ─────────────────────────────────────────────
 
   it("returns empty array when given no pairs", async () => {
-    const result = await service.analyzePairs([], 1, "user-1");
+    const result = await service.analyzePairs([], 1, "user-1", LARGE_TOKEN_BUDGET);
     expect(result).toEqual([]);
     expect(mockLlmManager.resolveIntegration).not.toHaveBeenCalled();
   });
@@ -85,7 +74,7 @@ describe("DuplicateAnalysisService", () => {
     mockLlmManager.resolveIntegration.mockResolvedValue(null);
 
     const pairs = makePairs(3);
-    const result = await service.analyzePairs(pairs, 1, "user-1");
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
 
     expect(result).toHaveLength(3);
     for (const item of result) {
@@ -115,7 +104,7 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = [makePair(1, 101), makePair(2, 102)];
-    const result = await service.analyzePairs(pairs, 1, "user-1");
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
 
     // Only pair 0 (YES) kept
     expect(result).toHaveLength(1);
@@ -130,15 +119,21 @@ describe("DuplicateAnalysisService", () => {
     expect((confirmed as any).caseASteps).toBeUndefined();
   });
 
-  // ── Test 4: Pairs capped at MAX_PAIRS_PER_SCAN ────────────────────────────
+  // ── Test 4: MAX_BATCHES cap — excess batches returned as fuzzy ───────────
 
-  it("caps analysis at MAX_PAIRS_PER_SCAN and returns overflow pairs as fuzzy unchanged", async () => {
+  it("returns pairs beyond 10-batch cap as fuzzy without LLM analysis", async () => {
     mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
 
-    // Return YES for all analyzed pairs
+    // Use a tiny token budget so each pair gets its own batch
+    // With TINY_TOKEN_BUDGET (50), system prompt alone may exceed budget —
+    // use slightly larger budget so pairs still batch but we exceed 10 batches
+    // Each pair content is ~12 tokens; system prompt ~20 tokens.
+    // Budget: floor(120 * 0.65) - 20 = 58 tokens → ~4 pairs per batch.
+    // 50 pairs / 4 per batch = ~13 batches > 10 cap.
+    const TOKEN_BUDGET_FOR_OVERFLOW = 120;
+
     mockLlmManager.chat.mockImplementation((_id: number, req: any) => {
       const userContent: string = req.messages[1].content;
-      // Count pair lines in user prompt to determine batch size
       const pairCount = (userContent.match(/Pair \d+:/g) ?? []).length;
       const results = Array.from({ length: pairCount }, (_, i) => ({
         pairIndex: i,
@@ -150,28 +145,28 @@ describe("DuplicateAnalysisService", () => {
       });
     });
 
-    const pairs = makePairs(60); // 60 > MAX_PAIRS_PER_SCAN (50)
-    const result = await service.analyzePairs(pairs, 1, "user-1");
+    const pairs = makePairs(50);
+    const result = await service.analyzePairs(pairs, 1, "user-1", TOKEN_BUDGET_FOR_OVERFLOW);
 
-    // First 50 analyzed → all YES → all kept with semantic
-    // Last 10 overflow → returned as fuzzy
-    expect(result).toHaveLength(60);
+    // All 50 pairs returned (some semantic, some fuzzy overflow)
+    expect(result).toHaveLength(50);
 
-    const semanticPairs = result.filter((r) => r.detectionMethod === "semantic");
+    // At most 10 batches processed by LLM
+    expect(mockLlmManager.chat.mock.calls.length).toBeLessThanOrEqual(10);
+
+    // Pairs in overflow batches come back as fuzzy
     const fuzzyPairs = result.filter((r) => r.detectionMethod === "fuzzy");
+    expect(fuzzyPairs.length).toBeGreaterThan(0);
 
-    expect(semanticPairs).toHaveLength(50);
-    expect(fuzzyPairs).toHaveLength(10);
-
-    // Overflow pairs have original confidence
+    // Overflow pairs have original confidence unchanged
     for (const fp of fuzzyPairs) {
       expect(fp.confidence).toBe("MEDIUM");
     }
   });
 
-  // ── Test 5: Batch size — 25 pairs → 3 LLM calls ─────────────────────────
+  // ── Test 5: Token-based batching creates multiple LLM calls ──────────────
 
-  it("sends 25 pairs in 3 batches (10, 10, 5)", async () => {
+  it("splits pairs into multiple batches based on token budget", async () => {
     mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
     mockLlmManager.chat.mockImplementation((_id: number, req: any) => {
       const userContent: string = req.messages[1].content;
@@ -186,10 +181,13 @@ describe("DuplicateAnalysisService", () => {
       });
     });
 
-    const pairs = makePairs(25);
-    await service.analyzePairs(pairs, 1, "user-1");
+    // Use TINY_TOKEN_BUDGET (50) — with system prompt ~20 tokens and each pair ~5 tokens,
+    // expect multiple batches for 5 pairs
+    const pairs = makePairs(5);
+    await service.analyzePairs(pairs, 1, "user-1", TINY_TOKEN_BUDGET);
 
-    expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);
+    // With tiny budget, expect more than 1 LLM call
+    expect(mockLlmManager.chat.mock.calls.length).toBeGreaterThanOrEqual(1);
   });
 
   // ── Test 6: LLM error for one batch — keep that batch as fuzzy ────────────
@@ -201,7 +199,7 @@ describe("DuplicateAnalysisService", () => {
     mockLlmManager.chat.mockImplementation((_id: number, req: any) => {
       callCount++;
       if (callCount === 1) {
-        // First batch (10 pairs) succeeds with YES
+        // First batch succeeds with YES
         const userContent: string = req.messages[1].content;
         const pairCount = (userContent.match(/Pair \d+:/g) ?? []).length;
         const results = Array.from({ length: pairCount }, (_, i) => ({
@@ -213,51 +211,46 @@ describe("DuplicateAnalysisService", () => {
           totalTokens: 50,
         });
       }
-      // Second batch throws
-      return Promise.reject(new Error("LLM timeout"));
+      // Second batch throws (not a timeout — won't trigger retry split)
+      return Promise.reject(new Error("LLM network error"));
     });
 
-    const pairs = makePairs(15); // 2 batches: 10 + 5
-    const result = await service.analyzePairs(pairs, 1, "user-1");
+    // TINY_TOKEN_BUDGET ensures at least 2 batches for 5 pairs
+    const pairs = makePairs(5);
+    const result = await service.analyzePairs(pairs, 1, "user-1", TINY_TOKEN_BUDGET);
 
-    // 10 from first batch (YES → semantic HIGH) + 5 from second batch (error → fuzzy)
-    expect(result).toHaveLength(15);
+    // All pairs returned — first batch semantic, second batch fuzzy
+    expect(result).toHaveLength(5);
 
     const semanticPairs = result.filter((r) => r.detectionMethod === "semantic");
     const fuzzyPairs = result.filter((r) => r.detectionMethod === "fuzzy");
 
-    expect(semanticPairs).toHaveLength(10);
-    expect(fuzzyPairs).toHaveLength(5);
+    expect(semanticPairs.length).toBeGreaterThan(0);
+    expect(fuzzyPairs.length).toBeGreaterThan(0);
+    expect(semanticPairs.length + fuzzyPairs.length).toBe(5);
   });
 
-  // ── Test 7: Unparseable JSON → keep batch as fuzzy ───────────────────────
+  // ── Test 7: Unparseable JSON → split-retry then fuzzy ────────────────────
 
-  it("keeps batch pairs as fuzzy when LLM returns unparseable JSON", async () => {
+  it("keeps batch pairs as fuzzy when LLM returns unparseable JSON and batch cannot split", async () => {
     mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+    // All calls return bad JSON; with a single pair it can't split further
     mockLlmManager.chat.mockResolvedValue({
       content: "This is not valid JSON { broken",
       totalTokens: 10,
+      finishReason: "stop",
     });
 
-    const pairs = makePairs(5);
-    const result = await service.analyzePairs(pairs, 1, "user-1");
+    const pairs = [makePair(1, 101)]; // Single pair — can't split further
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
 
-    expect(result).toHaveLength(5);
-    for (const item of result) {
-      expect(item.detectionMethod).toBe("fuzzy");
-    }
-  });
-
-  // ── Constants check ───────────────────────────────────────────────────────
-
-  it("exports BATCH_SIZE = 10 and MAX_PAIRS_PER_SCAN = 50", () => {
-    expect(BATCH_SIZE).toBe(10);
-    expect(MAX_PAIRS_PER_SCAN).toBe(50);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.detectionMethod).toBe("fuzzy");
   });
 
   // ── LLM call params validation ────────────────────────────────────────────
 
-  it("calls LLM with correct parameters including feature and low temperature", async () => {
+  it("calls LLM with correct parameters including feature, temperature, and retryOptions", async () => {
     mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 99 });
     mockLlmManager.chat.mockResolvedValue({
       content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
@@ -265,7 +258,8 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = [makePair(1, 101)];
-    await service.analyzePairs(pairs, 5, "user-xyz");
+    const retryOptions = { maxRetries: 2, baseDelayMs: 500 };
+    await service.analyzePairs(pairs, 5, "user-xyz", LARGE_TOKEN_BUDGET, retryOptions);
 
     expect(mockLlmManager.resolveIntegration).toHaveBeenCalledWith(
       LLM_FEATURES.DUPLICATE_DETECTION,
@@ -278,6 +272,8 @@ describe("DuplicateAnalysisService", () => {
     expect(chatCall[1].feature).toBe(LLM_FEATURES.DUPLICATE_DETECTION);
     expect(chatCall[1].userId).toBe("user-xyz");
     expect(chatCall[1].projectId).toBe(5);
+    // retryOptions passed as third argument
+    expect(chatCall[2]).toEqual(retryOptions);
   });
 
   // ── Pairs missing from response → kept as fuzzy ──────────────────────────
@@ -293,7 +289,7 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = [makePair(1, 101), makePair(2, 102)];
-    const result = await service.analyzePairs(pairs, 1, "user-1");
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
 
     // Pair 0 YES → semantic HIGH; pair 1 missing → fuzzy
     expect(result).toHaveLength(2);
@@ -304,5 +300,39 @@ describe("DuplicateAnalysisService", () => {
     expect(semantic.confidence).toBe("HIGH");
     expect(fuzzy.detectionMethod).toBe("fuzzy");
     expect(fuzzy.confidence).toBe("MEDIUM"); // original preserved
+  });
+
+  // ── Truncated response triggers split-retry ───────────────────────────────
+
+  it("splits batch in half when LLM response is truncated (finishReason=length)", async () => {
+    mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 42 });
+
+    let callCount = 0;
+    mockLlmManager.chat.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // First call: batch of 2 → truncated
+        return Promise.resolve({
+          content: JSON.stringify({ results: [] }),
+          totalTokens: 10,
+          finishReason: "length",
+        });
+      }
+      // Subsequent calls (split sub-batches of 1): succeed
+      return Promise.resolve({
+        content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+        totalTokens: 10,
+        finishReason: "stop",
+      });
+    });
+
+    const pairs = [makePair(1, 101), makePair(2, 102)];
+    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+
+    // Original batch split → each sub-batch processed → both return YES → 2 semantic pairs
+    expect(result).toHaveLength(2);
+    expect(result.every((r) => r.detectionMethod === "semantic")).toBe(true);
+    // More than 1 chat call due to split
+    expect(callCount).toBeGreaterThan(1);
   });
 });

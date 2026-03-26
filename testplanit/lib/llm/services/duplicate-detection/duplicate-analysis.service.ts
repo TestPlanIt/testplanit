@@ -2,9 +2,7 @@ import { LLM_FEATURES } from "~/lib/llm/constants";
 import type { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import type { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
 import type { SimilarCasePair } from "~/lib/services/duplicateScanService";
-
-export const BATCH_SIZE = 10;
-export const MAX_PAIRS_PER_SCAN = 50;
+import { createBatches, executeBatches } from "~/lib/llm/services/batch-processor";
 
 /**
  * Input type: SimilarCasePair enriched with case content for LLM prompt building.
@@ -24,6 +22,15 @@ export interface PairWithCaseContent extends SimilarCasePair {
 export type AnnotatedPair = SimilarCasePair & { detectionMethod: string };
 
 /**
+ * Internal batchable item — PairWithCaseContent plus id and estimatedTokens
+ * required by the shared batch-processor infrastructure.
+ */
+interface PairBatchableItem extends PairWithCaseContent {
+  id: number;
+  estimatedTokens: number;
+}
+
+/**
  * LLM response shape for duplicate detection.
  */
 interface LlmDuplicateResponse {
@@ -39,6 +46,10 @@ interface LlmDuplicateResponse {
  * - LLM-confirmed (YES) pairs: confidence upgraded to HIGH, method "semantic"
  * - LLM-rejected (NO) pairs: removed from results
  * - Failed batch pairs: kept unchanged with method "fuzzy"
+ *
+ * Batch sizes are driven by maxTokensPerRequest (from the provider config)
+ * rather than hardcoded constants. Truncated responses, timeouts, and parse
+ * failures trigger a recursive split-in-half retry up to depth 3.
  */
 export class DuplicateAnalysisService {
   constructor(
@@ -52,12 +63,16 @@ export class DuplicateAnalysisService {
    * @param pairs - Candidate pairs with case content for LLM prompt building
    * @param projectId - Project scope (used for integration resolution)
    * @param userId - User ID for LLM call tracking
+   * @param maxTokensPerRequest - Provider context window size (from LlmProviderConfig)
+   * @param retryOptions - Optional retry settings passed through to manager.chat()
    * @returns Annotated pairs (input-only content fields stripped)
    */
   async analyzePairs(
     pairs: PairWithCaseContent[],
     projectId: number,
     userId: string,
+    maxTokensPerRequest: number,
+    retryOptions?: { maxRetries?: number; baseDelayMs?: number },
   ): Promise<AnnotatedPair[]> {
     // 1. Empty input fast path
     if (pairs.length === 0) {
@@ -76,90 +91,183 @@ export class DuplicateAnalysisService {
 
     const integrationId = resolved.integrationId;
 
-    // 3. Cap at MAX_PAIRS_PER_SCAN; overflow returns as fuzzy unchanged
-    const capped = pairs.slice(0, MAX_PAIRS_PER_SCAN);
-    const overflow = pairs.slice(MAX_PAIRS_PER_SCAN);
+    // 3. Assign id + estimatedTokens to each pair for the batch processor
+    const pairsWithTokens: PairBatchableItem[] = pairs.map((p, index) => ({
+      ...p,
+      id: index,
+      estimatedTokens: Math.ceil(
+        (p.caseAName + p.caseASteps + p.caseBName + p.caseBSteps).length / 4,
+      ),
+    }));
 
-    // 4. Build batches of BATCH_SIZE
-    const batches: PairWithCaseContent[][] = [];
-    for (let i = 0; i < capped.length; i += BATCH_SIZE) {
-      batches.push(capped.slice(i, i + BATCH_SIZE));
-    }
+    // 4. Estimate system prompt overhead
+    const systemPromptTokens = Math.ceil(this.buildSystemPrompt().length / 4);
 
-    // 5. Process each batch
+    // 5. Create token-aware batches
+    const batches = createBatches(
+      pairsWithTokens,
+      {
+        maxTokensPerRequest,
+        contentBudgetRatio: 0.65,
+        systemPromptTokens,
+      },
+      // Truncate oversized items: shorten steps to fit within budget
+      (item, maxChars) => {
+        const halfChars = Math.floor(maxChars / 2);
+        return {
+          ...item,
+          caseASteps: item.caseASteps.slice(0, halfChars),
+          caseBSteps: item.caseBSteps.slice(0, halfChars),
+          estimatedTokens: Math.ceil(
+            (
+              item.caseAName +
+              item.caseASteps.slice(0, halfChars) +
+              item.caseBName +
+              item.caseBSteps.slice(0, halfChars)
+            ).length / 4,
+          ),
+        };
+      },
+    );
+
+    // 6. Cap at MAX_BATCHES; overflow returned as fuzzy without LLM analysis
+    const MAX_BATCHES = 10;
+    const cappedBatches = batches.slice(0, MAX_BATCHES);
+    const overflowBatches = batches.slice(MAX_BATCHES);
+
+    // 7. Accumulate results via side-effect inside processWithRetry
     const processedPairs: AnnotatedPair[] = [];
 
-    for (const batch of batches) {
-      let batchResults: AnnotatedPair[];
-
+    /**
+     * Process a batch of pairs, retrying with split-in-half sub-batches when:
+     *   - The LLM call times out
+     *   - The response is truncated (finishReason === "length")
+     *   - The response JSON cannot be parsed
+     * Maximum recursion depth is 3 to prevent runaway splitting.
+     */
+    const processWithRetry = async (
+      batch: PairBatchableItem[],
+      depth: number = 0,
+    ): Promise<void> => {
+      let response;
       try {
         const systemPrompt = this.buildSystemPrompt();
         const userPrompt = this.buildUserPrompt(batch);
-
-        const response = await this.llmManager.chat(integrationId, {
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          temperature: 0.1,
-          maxTokens: 512,
-          userId,
-          projectId,
-          feature: LLM_FEATURES.DUPLICATE_DETECTION,
-        } as any);
-
-        const verdicts = this.parseResponse(response.content);
-
-        if (!verdicts) {
-          // Parse failure — keep all batch pairs as fuzzy
-          batchResults = batch.map((p) =>
-            this.stripContentFields({ ...p, detectionMethod: "fuzzy" }),
-          );
-        } else {
-          // Build lookup from pairIndex → verdict
-          const verdictMap = new Map<number, string>(
-            verdicts.map((v) => [v.pairIndex, v.verdict]),
-          );
-
-          batchResults = [];
-          for (let i = 0; i < batch.length; i++) {
-            const pair = batch[i]!;
-            const verdict = verdictMap.get(i);
-
-            if (verdict === "YES") {
-              // Confirmed duplicate: upgrade confidence and mark semantic
-              batchResults.push(
-                this.stripContentFields({
-                  ...pair,
-                  confidence: "HIGH",
-                  detectionMethod: "semantic",
-                }),
-              );
-            } else if (verdict === "NO") {
-              // Rejected: exclude from results
-              continue;
-            } else {
-              // Missing from response: conservative fuzzy fallback
-              batchResults.push(
-                this.stripContentFields({ ...pair, detectionMethod: "fuzzy" }),
-              );
-            }
-          }
-        }
-      } catch {
-        // LLM call error — keep all batch pairs as fuzzy
-        batchResults = batch.map((p) =>
-          this.stripContentFields({ ...p, detectionMethod: "fuzzy" }),
+        response = await this.llmManager.chat(
+          integrationId,
+          {
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            temperature: 0.1,
+            maxTokens: 512,
+            userId,
+            projectId,
+            feature: LLM_FEATURES.DUPLICATE_DETECTION,
+          } as any,
+          retryOptions,
         );
+      } catch (error: any) {
+        // Timeout: split and retry if batch > 1 and depth < 3
+        const isTimeout =
+          error?.code === "TIMEOUT" ||
+          error?.message?.includes("timeout") ||
+          error?.message?.includes("Timeout");
+        if (isTimeout && batch.length > 1 && depth < 3) {
+          const mid = Math.ceil(batch.length / 2);
+          console.warn(
+            `[duplicate-detection] Timeout for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`,
+          );
+          await processWithRetry(batch.slice(0, mid), depth + 1);
+          await processWithRetry(batch.slice(mid), depth + 1);
+          return;
+        }
+        // Not retryable — let executeBatches catch it and record failed IDs
+        throw error;
       }
 
-      processedPairs.push(...batchResults);
+      // Check for truncated response
+      if (response.finishReason === "length" && batch.length > 1 && depth < 3) {
+        const mid = Math.ceil(batch.length / 2);
+        console.warn(
+          `[duplicate-detection] Truncated response for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`,
+        );
+        await processWithRetry(batch.slice(0, mid), depth + 1);
+        await processWithRetry(batch.slice(mid), depth + 1);
+        return;
+      }
+
+      // Parse response
+      const verdicts = this.parseResponse(response.content);
+
+      if (!verdicts) {
+        // Parse failure: split and retry if batch > 1 and depth < 3
+        if (batch.length > 1 && depth < 3) {
+          const mid = Math.ceil(batch.length / 2);
+          console.warn(
+            `[duplicate-detection] Parse failed for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`,
+          );
+          await processWithRetry(batch.slice(0, mid), depth + 1);
+          await processWithRetry(batch.slice(mid), depth + 1);
+          return;
+        }
+        // Can't split further — fall back to fuzzy for remaining pairs
+        processedPairs.push(
+          ...batch.map((p) => this.stripContentFields({ ...p, detectionMethod: "fuzzy" })),
+        );
+        return;
+      }
+
+      // Build verdict map and annotate pairs
+      const verdictMap = new Map<number, string>(
+        verdicts.map((v) => [v.pairIndex, v.verdict]),
+      );
+
+      for (let i = 0; i < batch.length; i++) {
+        const pair = batch[i]!;
+        const verdict = verdictMap.get(i);
+
+        if (verdict === "YES") {
+          processedPairs.push(
+            this.stripContentFields({ ...pair, confidence: "HIGH", detectionMethod: "semantic" }),
+          );
+        } else if (verdict === "NO") {
+          // Rejected — exclude from results
+          continue;
+        } else {
+          // Missing from response — conservative fuzzy fallback
+          processedPairs.push(
+            this.stripContentFields({ ...pair, detectionMethod: "fuzzy" }),
+          );
+        }
+      }
+    };
+
+    // 8. Execute all capped batches with per-batch error isolation
+    const batchResult = await executeBatches({
+      batches: cappedBatches,
+      processBatch: async (batch) => {
+        await processWithRetry(batch);
+      },
+    });
+
+    // 9. For batches that failed entirely, fall back failed pairs to fuzzy
+    if (batchResult.failedItemIds.length > 0) {
+      const failedPairSet = new Set(batchResult.failedItemIds);
+      for (const p of pairsWithTokens) {
+        if (failedPairSet.has(p.id)) {
+          processedPairs.push(
+            this.stripContentFields({ ...p, detectionMethod: "fuzzy" }),
+          );
+        }
+      }
     }
 
-    // 6. Concat processed results + overflow pairs
-    const overflowPairs = overflow.map((p) =>
-      this.stripContentFields({ ...p, detectionMethod: "fuzzy" }),
-    );
+    // 10. Overflow batches beyond MAX_BATCHES cap — returned as fuzzy
+    const overflowPairs: AnnotatedPair[] = overflowBatches
+      .flat()
+      .map((p) => this.stripContentFields({ ...p, detectionMethod: "fuzzy" }));
 
     return [...processedPairs, ...overflowPairs];
   }
