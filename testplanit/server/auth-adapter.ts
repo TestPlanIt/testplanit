@@ -4,25 +4,35 @@ import { hash } from "bcrypt";
 import type { Adapter, AdapterAccount, AdapterUser } from "next-auth/adapters";
 import { NotificationService } from "~/lib/services/notificationService";
 
+const ACCOUNT_FIELDS: Record<keyof Prisma.AccountUncheckedCreateInput, true> = {
+  id: true,
+  userId: true,
+  type: true,
+  provider: true,
+  providerAccountId: true,
+  refresh_token: true,
+  access_token: true,
+  expires_at: true,
+  token_type: true,
+  scope: true,
+  id_token: true,
+  session_state: true,
+};
+
 function sanitizeAccountData(account: AdapterAccount): Prisma.AccountUncheckedCreateInput {
-  if (!account.userId || !account.type || !account.provider || !account.providerAccountId) {
-    throw new Error("Missing required account fields for OAuth account linking");
+  const result: Record<string, unknown> = {};
+
+  for (const key of Object.keys(ACCOUNT_FIELDS)) {
+    if (key in account) {
+      result[key] = account[key as keyof AdapterAccount];
+    }
   }
 
-  return {
-    userId: account.userId,
-    type: account.type,
-    provider: account.provider,
-    providerAccountId: account.providerAccountId,
-    refresh_token: account.refresh_token ?? null,
-    access_token: account.access_token ?? null,
-    expires_at: account.expires_at ?? null,
-    token_type: account.token_type ?? null,
-    scope: account.scope ?? null,
-    id_token: account.id_token ?? null,
-    session_state:
-      typeof account.session_state === "string" ? account.session_state : null,
-  };
+  if (result.session_state && typeof result.session_state !== "string") {
+    result.session_state = null;
+  }
+
+  return result as Prisma.AccountUncheckedCreateInput;
 }
 
 /**
