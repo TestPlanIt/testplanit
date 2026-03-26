@@ -59,6 +59,9 @@ const mockPrisma: any = {
     updateMany: (...args: any[]) => mockUpdateMany(...args),
     createMany: (...args: any[]) => mockCreateMany(...args),
   },
+  llmProviderConfig: {
+    findFirst: vi.fn().mockResolvedValue(null),
+  },
   $transaction: vi.fn(async (fn: (tx: any) => Promise<any>) => fn(mockPrisma)),
   $disconnect: vi.fn(),
 };
