@@ -95,4 +95,5 @@ test.describe("Page Titles", () => {
       expect(title).not.toBe("TestPlanIt - Modern Test Management Platform");
     });
   });
+
 });
