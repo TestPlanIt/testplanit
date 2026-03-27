@@ -342,6 +342,8 @@
       "provider": "Fournisseur",
       "updatedAt": "Mise à jour le",
       "tools": "Outils",
+      "codeRepository": "Dépôt de code",
+      "aiModels": "LLM par défaut",
       "configKeys": {
         "edit_results_duration": "Durée de modification des résultats",
         "project_docs_default": "Documentation du projet par défaut",

@@ -36,7 +36,7 @@ import {
 } from "~/lib/hooks/llm-feature-config";
 import { useFindManyPromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
 import { LLM_FEATURE_LABELS, LLM_FEATURES } from "~/lib/llm/constants";
-import { getProviderColor, getProviderIcon } from "~/lib/llm/provider-styles";
+import { getProviderIcon, LlmProviderBadge } from "~/lib/llm/provider-styles";
 
 type LlmIntegrationWithConfig = LlmIntegration & {
   llmProviderConfig: LlmProviderConfig | null;
@@ -267,12 +267,10 @@ export function FeatureOverrides({
                         {getProviderIcon(effectiveIntegration.provider)}
                         <span>{effectiveIntegration.name}</span>
                         {effectiveIntegration.llmProviderConfig && (
-                          <Badge
-                            variant="secondary"
-                            className={`text-xs ${getProviderColor(effectiveIntegration.provider)}`}
-                          >
-                            {effectiveIntegration.provider.replace("_", " ")}
-                          </Badge>
+                          <LlmProviderBadge
+                            provider={effectiveIntegration.provider}
+                            className="text-xs"
+                          />
                         )}
                       </div>
                     ) : (

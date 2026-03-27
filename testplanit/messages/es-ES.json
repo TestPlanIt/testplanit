@@ -342,6 +342,8 @@
       "provider": "Proveedor",
       "updatedAt": "Actualizado el",
       "tools": "Herramientas",
+      "codeRepository": "Repositorio de código",
+      "aiModels": "LLM predeterminado",
       "configKeys": {
         "edit_results_duration": "Editar Duración de Resultados",
         "project_docs_default": "Projektdokument",

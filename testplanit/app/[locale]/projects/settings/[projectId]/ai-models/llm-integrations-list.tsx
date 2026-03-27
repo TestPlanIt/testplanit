@@ -33,7 +33,7 @@ import {
   useDeleteProjectLlmIntegration,
   useUpdateProjectLlmIntegration,
 } from "~/lib/hooks";
-import { getProviderColor, getProviderIcon } from "~/lib/llm/provider-styles";
+import { getProviderIcon, LlmProviderBadge } from "~/lib/llm/provider-styles";
 
 type LlmIntegrationWithConfig = LlmIntegration & {
   llmProviderConfig: LlmProviderConfig | null;
@@ -168,12 +168,10 @@ export function LlmIntegrationsList({
                       {integration.name}
                     </CardTitle>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className={`w-fit ${getProviderColor(integration.provider)}`}
-                  >
-                    {integration.provider.replace("_", " ")}
-                  </Badge>
+                  <LlmProviderBadge
+                    provider={integration.provider}
+                    className="w-fit"
+                  />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
