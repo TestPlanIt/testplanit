@@ -626,7 +626,6 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     // Explicitly add the member as GLOBAL_ROLE user on this project.
     // This ensures the userPermissions-based policy path in ZenStack evaluation succeeds,
     // avoiding issues with the defaultAccessType-only path for deeply nested models.
-    const baseURL = api["baseURL"];
     await api["request"].post(
       `${baseURL}/api/model/userProjectPermission/create`,
       {
