@@ -36,15 +36,18 @@ Magic Select helps you:
 3. **Click Magic Select**: The button appears alongside the "Selected Test Cases" button
 
 4. **Configure Analysis** (for large repositories):
-   - **Batch Size**: Choose how many test cases to analyze per AI request
    - **Clarification**: Add additional context to help the AI understand what you need
 
-5. **Review Suggestions**: The AI presents:
+5. **Wait for Analysis**: Magic Select runs in the background, showing real-time progress:
+   - **Batch progress**: "Analyzing batch X of Y" as the AI processes test cases
+   - **Partial results warning**: If any batch was truncated by the AI provider, a warning is shown so you know some analysis may be incomplete
+
+6. **Review Suggestions**: The AI presents:
    - Number of suggested test cases
    - Reasoning for the selection
    - Option to view and modify the suggestions
 
-6. **Accept or Refine**:
+7. **Accept or Refine**:
    - **Accept**: Merge suggestions with any existing selection
    - **Refine**: Add clarification and re-run the analysis
    - **Cancel**: Keep your existing selection unchanged
@@ -293,13 +296,40 @@ Add specific guidance when needed:
 
 ## API Reference
 
-### Endpoint
+Magic Select uses a submit/poll pattern backed by a background worker. See [Background Processes](../background-processes) for worker setup.
+
+### Count Only (synchronous)
+
+Returns the number of test cases that would be analyzed, without making any LLM calls.
 
 ```http
 POST /api/llm/magic-select-cases
 ```
 
-### Request Body
+```json
+{
+  "projectId": 123,
+  "testRunMetadata": {
+    "name": "User Authentication Tests",
+    "description": "Testing login and registration flows",
+    "docs": null,
+    "linkedIssueIds": [456, 789]
+  },
+  "countOnly": true
+}
+```
+
+**Note:** Non-`countOnly` requests to this endpoint return **410 Gone** and should use the submit endpoint below instead.
+
+### Submit Job
+
+Enqueues a Magic Select background job and returns a job ID for polling.
+
+```http
+POST /api/llm/magic-select-cases/submit
+```
+
+#### Request Body
 
 ```json
 {
@@ -312,34 +342,48 @@ POST /api/llm/magic-select-cases
     "tags": ["authentication", "security"]
   },
   "clarification": "Focus on security test cases",
-  "excludeCaseIds": [101, 102],
-  "batchSize": 100,
-  "batchIndex": 0,
-  "countOnly": false
+  "excludeCaseIds": [101, 102]
 }
 ```
 
-### Response
+#### Response
 
 ```json
 {
-  "success": true,
-  "suggestedCaseIds": [1, 2, 3, 4, 5],
-  "reasoning": [
-    "Selected login-related test cases based on authentication context",
-    "Included security validation tests matching linked issue requirements"
-  ],
-  "metadata": {
-    "totalCasesAnalyzed": 150,
-    "suggestedCount": 5,
-    "directlySelected": 3,
-    "linkedCasesAdded": 2,
-    "model": "gpt-4-turbo",
-    "tokens": {
-      "prompt": 2500,
-      "completion": 150,
-      "total": 2650
+  "jobId": "abc-123"
+}
+```
+
+### Poll Job Status
+
+Returns the current state, progress, and (when complete) results of a Magic Select job.
+
+```http
+GET /api/llm/magic-select-cases/status/{jobId}
+```
+
+#### Response (completed)
+
+```json
+{
+  "jobId": "abc-123",
+  "state": "completed",
+  "progress": { "phase": "ai", "current": 3, "total": 3 },
+  "result": {
+    "suggestedCaseIds": [1, 2, 3, 4, 5],
+    "truncatedBatches": [],
+    "reasoning": "Selected login-related test cases based on authentication context",
+    "metadata": {
+      "totalCasesAnalyzed": 150,
+      "suggestedCount": 5,
+      "directlySelected": 3,
+      "linkedCasesAdded": 2,
+      "model": "gpt-4-turbo",
+      "tokens": { "prompt": 2500, "completion": 150, "total": 2650 },
+      "batchCount": 3,
+      "failedBatchCount": 0
     }
-  }
+  },
+  "failedReason": null
 }
 ```

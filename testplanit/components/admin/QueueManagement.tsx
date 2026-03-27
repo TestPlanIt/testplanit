@@ -170,6 +170,7 @@ export function QueueManagement() {
       "repo-cache": t("queueNames.repo-cache"),
       "copy-move": t("queueNames.copy-move"),
       "duplicate-scan": t("queueNames.duplicate-scan"),
+      "magic-select": t("queueNames.magic-select"),
       "step-scan": t("queueNames.step-scan"),
     };
     return queueNames[name] || name;

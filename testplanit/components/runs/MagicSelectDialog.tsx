@@ -329,6 +329,14 @@ export function MagicSelectDialog({
           abortControllerRef.current.abort();
           abortControllerRef.current = null;
         }
+        // Cancel the background job if one is active
+        if (state.jobId && state.status === "loading") {
+          fetch(`/api/llm/magic-select-cases/cancel/${state.jobId}`, {
+            method: "POST",
+          }).catch(() => {
+            // Best-effort cancel — ignore errors
+          });
+        }
         // Reset state when closing
         setState({
           status: "idle",
@@ -351,7 +359,7 @@ export function MagicSelectDialog({
       }
       onOpenChange(newOpen);
     },
-    [onOpenChange]
+    [onOpenChange, state.jobId, state.status]
   );
 
   const handleAccept = useCallback(() => {

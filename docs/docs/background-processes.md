@@ -20,7 +20,8 @@ The application uses the following background processes:
 8. **Audit Log Worker** - Persists audit log entries for user and system actions
 9. **Budget Alert Worker** - Checks and sends alerts for AI model budget thresholds
 10. **Repo Cache Worker** - Automatically refreshes expired code repository caches for QuickScript
-11. **Scheduler** - Sets up recurring jobs (cron jobs)
+11. **Magic Select Worker** - Processes AI-powered test case selection jobs for test runs
+12. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -101,6 +102,14 @@ The application uses the following background processes:
 - Only refreshes caches that have actually expired — configs with valid caches are skipped
 - Default concurrency: 1 (serial processing to avoid hammering git provider APIs)
 - Location: `workers/repoCacheWorker.ts`
+
+### Magic Select Worker
+
+- Processes AI-powered test case selection (Magic Select) jobs in the background
+- Analyzes test cases against test run metadata using LLM batching
+- Reports batch progress and tracks truncated responses per batch
+- Default concurrency: 1 (each job involves multiple LLM batch calls)
+- Location: `workers/magicSelectWorker.ts`
 
 ### Scheduler
 

@@ -4106,6 +4106,7 @@
         "repo-cache": "Repository Cache",
         "copy-move": "Copy & Move",
         "duplicate-scan": "Duplicate Scan",
+        "magic-select": "Magic Select",
         "step-scan": "Step Sequence Scan"
       },
       "status": {

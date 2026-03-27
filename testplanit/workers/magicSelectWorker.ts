@@ -436,6 +436,12 @@ function _cancelKey(jobId: string | undefined): string {
   return `magic-select:cancel:${jobId}`;
 }
 
+// ─── Redis cancellation key helper ──────────────────────────────────────────
+
+function cancelKey(jobId: string | undefined): string {
+  return `magic-select:cancel:${jobId}`;
+}
+
 // ─── Processor ──────────────────────────────────────────────────────────────
 
 export const processor = async (
@@ -454,10 +460,18 @@ export const processor = async (
   // 1. Validate multi-tenant context
   validateMultiTenantJobData(job.data);
 
-  // 2. Get tenant-specific Prisma client
+  // 2. Check for pre-start cancellation
+  const redis = await worker!.client;
+  const cancelled = await redis.get(cancelKey(job.id));
+  if (cancelled) {
+    await redis.del(cancelKey(job.id));
+    throw new Error("Job cancelled by user");
+  }
+
+  // 3. Get tenant-specific Prisma client
   const prisma = getPrismaClientForJob(job.data);
 
-  // 3. Create worker-safe LlmManager (fresh instance per job, not singleton)
+  // 4. Create worker-safe LlmManager (fresh instance per job, not singleton)
   const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
   const promptResolver = new PromptResolver(prisma as any);
 
@@ -760,6 +774,13 @@ export const processor = async (
   const batchResult = await executeBatches({
     batches,
     processBatch: async (batch, batchIndex) => {
+      // Check cancellation before each batch
+      const isCancelled = await redis.get(cancelKey(job.id));
+      if (isCancelled) {
+        await redis.del(cancelKey(job.id));
+        throw new Error("Job cancelled by user");
+      }
+
       const batchCases: CompressedTestCase[] = batch;
       const userPrompt = buildUserPrompt(testRunMetadata, issues, batchCases, clarification);
 

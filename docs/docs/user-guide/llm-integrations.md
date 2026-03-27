@@ -174,13 +174,15 @@ Project admins can override which LLM integration is used for specific AI featur
    - **Effective LLM** — The LLM integration that will actually be used when this feature is invoked
    - **Source** — A color-coded badge showing where the effective LLM comes from (see below)
 3. For any feature row, select an LLM integration from the **Override** dropdown to assign that integration for this feature in this project
-4. To remove an override, click the **X** button next to the dropdown — the feature will fall back to the next level in the resolution chain
+4. To explicitly disable a feature for this project, select **No LLM (disabled)** from the dropdown — the feature will be unavailable regardless of project default or prompt config settings
+5. To remove an override, click the **X** button next to the dropdown — the feature will fall back to the next level in the resolution chain
 
 ### Source Badges
 
 | Badge | Color | Meaning |
 |-------|-------|---------|
 | Project Override | Blue | A per-feature override is set on this project |
+| Disabled (Override) | Orange | The feature is explicitly disabled for this project via override |
 | Prompt Config | Gray | The prompt configuration has a per-prompt LLM assignment |
 | Project Default | Outline | The project's default LLM integration is being used |
 | No LLM configured | Red | No integration is available at any level |
@@ -203,8 +205,8 @@ When an AI feature is invoked, TestPlanIt resolves which LLM integration to use 
 Feature invoked
   |
   v
-Project Feature Override set? --> YES --> Use override integration
-  |
+Project Feature Override set? --> YES (integration) --> Use override integration
+  |                           \-> YES (disabled)    --> Feature unavailable
   NO
   v
 Prompt has per-prompt LLM assigned? --> YES --> Use prompt's integration (+ model override if set)

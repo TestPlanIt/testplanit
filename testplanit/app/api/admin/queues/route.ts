@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       'repo-cache': 2,
       'copy-move': 1,
       'duplicate-scan': 1,
+      'magic-select': 1,
       'step-scan': 1
     };
 
@@ -74,6 +75,7 @@ export async function GET(request: NextRequest) {
       'repo-cache': parseInt(process.env.REPO_CACHE_CONCURRENCY || String(defaultConcurrency['repo-cache']), 10),
       'copy-move': parseInt(process.env.COPY_MOVE_CONCURRENCY || String(defaultConcurrency['copy-move']), 10),
       'duplicate-scan': parseInt(process.env.DUPLICATE_SCAN_CONCURRENCY || String(defaultConcurrency['duplicate-scan']), 10),
+      'magic-select': parseInt(process.env.MAGIC_SELECT_CONCURRENCY || String(defaultConcurrency['magic-select']), 10),
       'step-scan': parseInt(process.env.STEP_SCAN_CONCURRENCY || String(defaultConcurrency['step-scan']), 10)
     };
 
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest) {
       { name: 'repo-cache', queue: allQueues.repoCacheQueue },
       { name: 'copy-move', queue: allQueues.copyMoveQueue },
       { name: 'duplicate-scan', queue: allQueues.duplicateScanQueue },
+      { name: 'magic-select', queue: allQueues["magic-select"] },
       { name: 'step-scan', queue: allQueues.stepScanQueue }
     ];
 
