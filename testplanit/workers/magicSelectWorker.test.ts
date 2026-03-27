@@ -105,7 +105,10 @@ const mockResolver = {
 };
 
 vi.mock("../lib/llm/services/prompt-resolver.service", () => ({
-  PromptResolver: vi.fn(() => mockResolver),
+  PromptResolver: class MockPromptResolver {
+    resolve = (...args: any[]) => mockResolve(...args);
+    constructor() {}
+  },
 }));
 
 // ─── Mock elasticsearchService ───────────────────────────────────────────────
@@ -270,10 +273,11 @@ describe("MagicSelectWorker", () => {
       );
 
       // LLM request should use default maxTokens=2000
+      // 3rd arg is undefined since retryOptions is not set when config is null
       expect(mockChat).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ maxTokens: 2000 }),
-        expect.anything()
+        undefined
       );
     });
   });
