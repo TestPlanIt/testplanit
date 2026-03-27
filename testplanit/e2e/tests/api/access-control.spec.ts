@@ -680,7 +680,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           data: {
             testCaseId: caseId,
-            step: {
+            step: JSON.stringify({
               type: "doc",
               content: [
                 {
@@ -688,8 +688,8 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Test step" }],
                 },
               ],
-            },
-            expectedResult: {
+            }),
+            expectedResult: JSON.stringify({
               type: "doc",
               content: [
                 {
@@ -697,7 +697,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Expected result" }],
                 },
               ],
-            },
+            }),
             order: 0,
             isDeleted: false,
           },
@@ -723,7 +723,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           data: {
             testCaseId: caseId,
-            step: {
+            step: JSON.stringify({
               type: "doc",
               content: [
                 {
@@ -731,8 +731,8 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Original step" }],
                 },
               ],
-            },
-            expectedResult: {
+            }),
+            expectedResult: JSON.stringify({
               type: "doc",
               content: [
                 {
@@ -740,7 +740,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Original result" }],
                 },
               ],
-            },
+            }),
             order: 1,
             isDeleted: false,
           },
@@ -759,7 +759,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           where: { id: stepId },
           data: {
-            step: {
+            step: JSON.stringify({
               type: "doc",
               content: [
                 {
@@ -767,7 +767,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Updated step" }],
                 },
               ],
-            },
+            }),
           },
         },
       }
@@ -784,7 +784,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           data: {
             testCaseId: caseId,
-            step: {
+            step: JSON.stringify({
               type: "doc",
               content: [
                 {
@@ -792,7 +792,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Step to delete" }],
                 },
               ],
-            },
+            }),
             order: 2,
             isDeleted: false,
           },

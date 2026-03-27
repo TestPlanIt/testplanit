@@ -72,8 +72,8 @@ test.describe("Project Settings Pages", () => {
     const mainContent = page.locator("main");
     await expect(mainContent).toBeVisible({ timeout: 15000 });
 
-    // The available models card should be visible
-    const modelsCard = page.getByText(/available models/i);
+    // The available models card should be visible (translation key "availableModels" = "Project Default")
+    const modelsCard = page.getByText(/project default/i);
     await expect(modelsCard.first()).toBeVisible({ timeout: 10000 });
   });
 

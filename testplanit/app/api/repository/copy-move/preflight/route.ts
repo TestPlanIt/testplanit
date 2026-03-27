@@ -232,7 +232,7 @@ export async function POST(request: Request) {
             isDeleted: false,
             OR: sourceForCollision.map((n) => ({
               name: n.name,
-              className: n.className,
+              className: n.className === null ? { equals: null as any } : n.className,
               source: n.source,
             })),
           },

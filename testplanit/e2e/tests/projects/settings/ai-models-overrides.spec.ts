@@ -56,7 +56,6 @@ test.describe("Project AI Models - Assign Per-Feature Override", () => {
     await page.waitForLoadState("networkidle");
 
     // Find the Feature Overrides table — it's the last table on the page
-    // (above is the LLM integrations list table)
     const lastTable = page.locator("table").last();
 
     // Find the row for "Test Case Generation"
@@ -81,18 +80,9 @@ test.describe("Project AI Models - Assign Per-Feature Override", () => {
     await expect(row).toContainText(llmName);
 
     // Verify the "Source" column shows "Project Override" badge text
-    // The badge text is from translation key projects.settings.aiModels.featureOverrides.projectOverride
-    await expect(row.locator("text=Project Override")).toBeVisible({
+    await expect(row.getByText("Project Override")).toBeVisible({
       timeout: 5000,
     });
-
-    // Verify the clear (X) button appeared next to the Select
-    const clearButton = row
-      .locator("button")
-      .filter({
-        has: page.locator("svg[class*='lucide-x'], [class*='lucide-x']"),
-      });
-    await expect(clearButton).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -145,29 +135,26 @@ test.describe("Project AI Models - Clear Per-Feature Override", () => {
       .filter({ hasText: "Test Case Generation" });
 
     // Verify the row shows "Project Override" badge (the override is set)
-    await expect(row.locator("text=Project Override")).toBeVisible({
+    await expect(row.getByText("Project Override")).toBeVisible({
       timeout: 10000,
     });
 
-    // Click the X button to clear the override
-    const clearButton = row
-      .locator("button")
-      .filter({
-        has: page.locator("svg[class*='lucide-x'], [class*='lucide-x']"),
-      });
-    await clearButton.scrollIntoViewIfNeeded();
-    await clearButton.click();
+    // Click the Select to open the dropdown and choose "No override" to clear
+    const selectTrigger = row.locator('button[role="combobox"]');
+    await selectTrigger.scrollIntoViewIfNeeded();
+    await selectTrigger.click();
+
+    // Select "No override" to clear the override
+    const noOverrideOption = page.getByRole("option", { name: "No override" });
+    await noOverrideOption.click();
 
     // Wait for mutation to complete
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1000);
 
     // Verify the "Project Override" badge is gone from the Source column
-    await expect(row.locator("text=Project Override")).not.toBeVisible({
+    await expect(row.getByText("Project Override")).not.toBeVisible({
       timeout: 5000,
     });
-
-    // Verify the X button is no longer visible (override cleared)
-    await expect(clearButton).not.toBeVisible({ timeout: 5000 });
   });
 });
