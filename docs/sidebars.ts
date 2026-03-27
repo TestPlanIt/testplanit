@@ -70,6 +70,7 @@ const sidebars: SidebarsConfig = {
             'user-guide/users', // Corresponds to users.md
             'user-guide/groups', // Corresponds to groups.md
             'user-guide/roles', // Corresponds to roles.md
+            'user-guide/permissions-guide', // Permissions guide
             'user-guide/tags', // Corresponds to tags.md
             'user-guide/reporting', // Add reporting.md
             'user-guide/share-links', // Share Links documentation
