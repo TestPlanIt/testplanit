@@ -492,7 +492,7 @@ export async function POST(request: NextRequest) {
       autoGenerateTags,
       systemPromptBase
     );
-    const userPrompt = buildUserPrompt(issue, context, userPromptBase);
+    let userPrompt = buildUserPrompt(issue, context, userPromptBase);
 
     // TOKEN-02: Read provider config from the resolved integration (not projectLlmIntegrations[0])
     let maxTokensPerRequest = 4096;
@@ -504,6 +504,54 @@ export async function POST(request: NextRequest) {
     if (providerConfig) {
       maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
       maxTokens = providerConfig.defaultMaxTokens ?? resolvedPrompt.maxOutputTokens ?? 4096;
+    }
+
+    // TOKEN-05: Pre-call prompt budget estimation and content truncation
+    const CONTENT_BUDGET_RATIO = 0.65;
+    const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
+    const contentBudget = Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) - systemPromptTokens;
+
+    let wasTruncated = false;
+    let estimatedUserTokens = Math.ceil(userPrompt.length / 4);
+
+    if (estimatedUserTokens > contentBudget) {
+      // Deep-clone context and issue to avoid mutating originals
+      const truncatedContext = { ...context };
+      const truncatedIssue = { ...issue };
+
+      // Phase 1: Truncate existing test cases from the end
+      if (truncatedContext.existingTestCases && truncatedContext.existingTestCases.length > 0) {
+        let cases = [...truncatedContext.existingTestCases];
+        while (cases.length > 0) {
+          cases = cases.slice(0, -1);
+          truncatedContext.existingTestCases = cases;
+          userPrompt = buildUserPrompt(truncatedIssue, truncatedContext, userPromptBase);
+          estimatedUserTokens = Math.ceil(userPrompt.length / 4);
+          if (estimatedUserTokens <= contentBudget) break;
+        }
+        wasTruncated = true;
+      }
+
+      // Phase 2: Truncate comments from the end if still over budget
+      if (estimatedUserTokens > contentBudget && truncatedIssue.comments && truncatedIssue.comments.length > 0) {
+        let comments = [...truncatedIssue.comments];
+        while (comments.length > 0) {
+          comments = comments.slice(0, -1);
+          truncatedIssue.comments = comments;
+          userPrompt = buildUserPrompt(truncatedIssue, truncatedContext, userPromptBase);
+          estimatedUserTokens = Math.ceil(userPrompt.length / 4);
+          if (estimatedUserTokens <= contentBudget) break;
+        }
+        wasTruncated = true;
+      }
+
+      if (wasTruncated) {
+        console.warn(
+          `[test-case-gen] Prompt over budget (${estimatedUserTokens} est. tokens vs ${contentBudget} budget). ` +
+          `Truncated existing cases from ${context.existingTestCases?.length ?? 0} to ${truncatedContext.existingTestCases?.length ?? 0}, ` +
+          `comments from ${issue.comments?.length ?? 0} to ${truncatedIssue.comments?.length ?? 0}.`
+        );
+      }
     }
 
     const llmRequest: LlmRequest = {
@@ -896,6 +944,10 @@ export async function POST(request: NextRequest) {
           completion: response.completionTokens,
           total: response.totalTokens,
         },
+        truncated: wasTruncated,
+        ...(wasTruncated && {
+          truncationNote: "Existing test cases and/or comments were trimmed to fit token budget",
+        }),
       },
     });
   } catch (error) {
