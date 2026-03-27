@@ -1,4 +1,4 @@
-import { LLM_FEATURES } from "@/lib/llm/constants";
+import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
@@ -136,12 +136,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Keep activeLlmIntegration for provider config token limits lookup
-    const activeLlmIntegration = project.projectLlmIntegrations[0];
-    const configuredMaxTokens =
-      activeLlmIntegration?.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
-      resolvedPrompt.maxOutputTokens;
-    const maxTokens = Math.max(configuredMaxTokens, 4000);
+    // TOKEN-03: Read provider config from resolved integration (not projectLlmIntegrations[0])
+    let maxTokensPerRequest = 4096;
+    let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
+
+    const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
+      where: { llmIntegrationId: resolved.integrationId },
+    });
+    if (providerConfig) {
+      maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
+      maxTokens = providerConfig.defaultMaxTokens ?? resolvedPrompt.maxOutputTokens ?? 4096;
+    }
+
+    // TOKEN-06: Validate input document size before calling LLM
+    const CONTENT_BUDGET_RATIO = 0.65;
+    const systemPromptTokens = Math.ceil(resolvedPrompt.systemPrompt.length / 4);
+    const contentBudget = Math.max(
+      Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) - systemPromptTokens,
+      0
+    );
+    const estimatedDocumentTokens = Math.ceil(markdown.length / 4);
+    if (estimatedDocumentTokens > contentBudget) {
+      return NextResponse.json(
+        {
+          error: `Document exceeds context window (est. ${estimatedDocumentTokens} tokens, budget ${contentBudget} tokens). Reduce document size.`,
+        },
+        { status: 422 }
+      );
+    }
 
     const llmRequest: LlmRequest = {
       messages: [
@@ -163,10 +185,29 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
     const response = await manager.chat(
       resolved.integrationId,
-      llmRequest
+      llmRequest,
+      { maxRetries, baseDelayMs }
     );
+
+    // RETRY-04: Check truncation BEFORE JSON parse
+    if (response.finishReason === "length") {
+      return NextResponse.json(
+        {
+          error: `Response was truncated (used ${response.totalTokens ?? 0}/${maxTokens} tokens). Try reducing input size or increasing token limit.`,
+          truncated: true,
+          tokens: {
+            used: response.totalTokens ?? 0,
+            limit: maxTokens,
+            prompt: response.promptTokens ?? 0,
+            completion: response.completionTokens ?? 0,
+          },
+        },
+        { status: 422 }
+      );
+    }
 
     // Parse the LLM response
     let parsedResponse: { testCases: ParsedTestCase[] } = { testCases: [] };
