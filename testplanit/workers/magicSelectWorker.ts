@@ -432,7 +432,7 @@ function expandLinkedCases(
 
 // ─── Cancellation key helper ─────────────────────────────────────────────────
 
-function cancelKey(jobId: string | undefined): string {
+function _cancelKey(jobId: string | undefined): string {
   return `magic-select:cancel:${jobId}`;
 }
 
@@ -447,6 +447,9 @@ export const processor = async (
   );
 
   const { projectId, testRunMetadata, clarification, excludeCaseIds } = job.data;
+
+  // Report initial setup phase
+  await job.updateProgress({ phase: "setup", message: "resolving_integration" });
 
   // 1. Validate multi-tenant context
   validateMultiTenantJobData(job.data);
@@ -490,6 +493,8 @@ export const processor = async (
     resolvedPrompt.source !== "fallback"
       ? resolvedPrompt.systemPrompt
       : buildSystemPrompt();
+
+  await job.updateProgress({ phase: "setup", message: "fetching_cases" });
 
   // 7. Fetch linked issue details
   let issues: IssueData[] = [];
@@ -552,9 +557,9 @@ export const processor = async (
                 bool: {
                   should: [
                     { match_phrase: { name: { query: testRunMetadata.name, boost: 20 } } },
-                    { match: { name: { query: nameQuery, operator: "or" as const, minimum_should_match: "2", boost: 10 } } },
-                    { match: { searchableContent: { query: nameQuery, operator: "or" as const, minimum_should_match: "2", boost: 5 } } },
-                    { match: { searchableContent: { query: searchKeywords, operator: "or" as const, minimum_should_match: "3", boost: 1 } } },
+                    { match: { name: { query: nameQuery, operator: "or" as const, minimum_should_match: "1", boost: 10 } } },
+                    { match: { searchableContent: { query: nameQuery, operator: "or" as const, minimum_should_match: "1", boost: 5 } } },
+                    { match: { searchableContent: { query: searchKeywords, operator: "or" as const, minimum_should_match: "1", boost: 1 } } },
                   ],
                   minimum_should_match: 1,
                 },
@@ -735,14 +740,22 @@ export const processor = async (
 
   console.log(`[magic-select] job ${job.id} — ${compressedCases.length} cases, ${batches.length} batches`);
 
+  await job.updateProgress({
+    phase: "ai",
+    message: "waiting_for_ai",
+    analyzed: 0,
+    total: compressedCases.length,
+    batchesCompleted: 0,
+    batchesTotal: batches.length,
+    selectedSoFar: 0,
+  });
+
   // 14. RETRY-05 — Execute batches with truncation tracking
   const truncatedBatches: number[] = [];
   const allSuggestedIds: number[] = [];
   const allReasonings: string[] = [];
   let totalTokens = { prompt: 0, completion: 0, total: 0 };
   let model = "";
-
-  await job.updateProgress({ analyzed: 0, total: compressedCases.length, phase: "ai" });
 
   const batchResult = await executeBatches({
     batches,
@@ -813,7 +826,15 @@ export const processor = async (
       }
     },
     onBatchComplete: async (processed, total) => {
-      await job.updateProgress({ analyzed: processed, total, phase: "ai" });
+      await job.updateProgress({
+        phase: "ai",
+        message: "analyzing",
+        analyzed: processed,
+        total,
+        batchesCompleted: Math.min(processed, batches.length),
+        batchesTotal: batches.length,
+        selectedSoFar: allSuggestedIds.length,
+      });
     },
   });
 

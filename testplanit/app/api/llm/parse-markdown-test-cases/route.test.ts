@@ -60,7 +60,7 @@ const VALID_BODY = {
   markdown: "# Test\n\nA short doc",
 };
 
-function makeRequest(body: Record<string, unknown> = VALID_BODY): Request {
+function makeRequest(body: Record<string, unknown> = VALID_BODY) {
   return new Request(
     "http://localhost:3000/api/llm/parse-markdown-test-cases",
     {
@@ -68,7 +68,7 @@ function makeRequest(body: Record<string, unknown> = VALID_BODY): Request {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }
-  );
+  ) as unknown as import("next/server").NextRequest;
 }
 
 const VALID_MARKDOWN_RESPONSE = JSON.stringify({

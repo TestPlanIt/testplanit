@@ -28,7 +28,7 @@ describe("toHumanReadable", () => {
   });
 
   it("should not round when round is false", () => {
-    expect(toHumanReadable(4999, { round: false })).toBe("4.999 seconds");
+    expect(toHumanReadable(4999, { round: false })).toBe("4.99 seconds");
   });
 
   it("should round seconds by default when result is near an hour", () => {
@@ -37,7 +37,7 @@ describe("toHumanReadable", () => {
 
   it("should not round seconds when round is false and isSeconds is true", () => {
     expect(toHumanReadable(3600001, { round: false })).toBe(
-      "1 hour, 0.001 seconds"
+      "1 hour, 0 seconds"
     );
   });
 

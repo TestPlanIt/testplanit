@@ -34,7 +34,7 @@ export function toHumanReadable(
     locale = "en",
     units,
     largest = 3,
-    maxDecimalPoints,
+    maxDecimalPoints = 2,
   } = options;
 
   const milliseconds = isSeconds ? duration * 1000 : duration;

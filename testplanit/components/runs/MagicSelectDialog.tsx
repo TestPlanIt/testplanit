@@ -14,13 +14,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertCircle,
   CheckCircle2,
   Info,
   RefreshCw,
-  Settings2,
+  ListTree,
   Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -55,7 +56,15 @@ interface MagicSelectState {
   noSearchMatches: boolean; // True if search was performed but found no matches
   jobId: string | null; // Track active job ID for polling
   truncatedBatches: number[]; // Batch indices with incomplete results (RETRY-05)
-  progress: { analyzed: number; total: number } | null; // Polling progress
+  progress: {
+    phase: string;
+    message: string;
+    analyzed: number;
+    total: number;
+    batchesCompleted: number;
+    batchesTotal: number;
+    selectedSoFar: number;
+  } | null;
   metadata: {
     totalCasesAnalyzed: number;
     suggestedCount: number;
@@ -195,9 +204,11 @@ export function MagicSelectDialog({
       const submitData = await submitResponse.json();
 
       if (!submitResponse.ok) {
-        throw new Error(
-          submitData.details || submitData.error || "Failed to submit magic select job"
-        );
+        const errorMessage =
+          typeof submitData.details === "string"
+            ? submitData.details
+            : submitData.error || "Failed to submit magic select job";
+        throw new Error(errorMessage);
       }
 
       const jobId = submitData.jobId;
@@ -227,8 +238,13 @@ export function MagicSelectDialog({
           setState((prev) => ({
             ...prev,
             progress: {
+              phase: statusData.progress.phase ?? "setup",
+              message: statusData.progress.message ?? "",
               analyzed: statusData.progress.analyzed ?? 0,
               total: statusData.progress.total ?? 0,
+              batchesCompleted: statusData.progress.batchesCompleted ?? 0,
+              batchesTotal: statusData.progress.batchesTotal ?? 0,
+              selectedSoFar: statusData.progress.selectedSoFar ?? 0,
             },
           }));
         }
@@ -383,8 +399,10 @@ export function MagicSelectDialog({
           {state.status === "configuring" && (
             <div className="space-y-4">
               <Alert>
-                <Settings2 className="h-4 w-4" />
-                <AlertTitle>{t("configure.title")}</AlertTitle>
+                <div className="flex gap-1">
+                  <ListTree className="h-4 w-4" />
+                  <AlertTitle>{t("configure.title")}</AlertTitle>
+                </div>
                 <AlertDescription>
                   {state.searchPreFiltered ? (
                     <>
@@ -442,14 +460,57 @@ export function MagicSelectDialog({
           {/* Loading State */}
           {state.status === "loading" && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
-              <LoadingSpinner className="h-8 w-8" />
-              <p className="text-xs text-muted-foreground">
-                {t("loading.analyzing")}
-              </p>
-              {state.progress && state.progress.total > 0 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  {`Analyzing batch ${state.progress.analyzed} of ${state.progress.total}...`}
-                </p>
+              {state.progress?.phase === "ai" && state.progress.total > 0 ? (
+                <div className="w-full max-w-xs space-y-3">
+                  {state.progress.analyzed > 0 ? (
+                    <Progress
+                      value={Math.round(
+                        (state.progress.analyzed / state.progress.total) * 100
+                      )}
+                    />
+                  ) : (
+                    <Progress className="animate-pulse" />
+                  )}
+                  <div className="text-center space-y-1">
+                    {state.progress.analyzed > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t("loading.progress", {
+                          analyzed: state.progress.analyzed,
+                          total: state.progress.total,
+                        })}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t("loading.analyzing")}
+                      </p>
+                    )}
+                    {state.progress.selectedSoFar > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("loading.selectedSoFar", {
+                          count: state.progress.selectedSoFar,
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : state.progress?.phase === "setup" ? (
+                <div className="w-full max-w-xs space-y-3">
+                  <Progress className="animate-pulse" />
+                  <p className="text-sm text-muted-foreground text-center">
+                    {state.progress.message === "resolving_integration"
+                      ? t("loading.resolving_integration")
+                      : state.progress.message === "fetching_cases"
+                        ? t("loading.fetching_cases")
+                        : t("loading.analyzing")}
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full max-w-xs space-y-3">
+                  <Progress className="animate-pulse" />
+                  <p className="text-sm text-muted-foreground text-center">
+                    {t("loading.analyzing")}
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -539,11 +600,11 @@ export function MagicSelectDialog({
               {state.truncatedBatches.length > 0 && (
                 <Alert variant="default" className="mt-3">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Partial results</AlertTitle>
+                  <AlertTitle>{t("success.truncationWarningTitle")}</AlertTitle>
                   <AlertDescription>
-                    {state.truncatedBatches.length === 1
-                      ? "1 batch was truncated by the AI model — some test cases may not have been evaluated."
-                      : `${state.truncatedBatches.length} batches were truncated by the AI model — some test cases may not have been evaluated.`}
+                    {t("success.truncationWarning", {
+                      count: state.truncatedBatches.length,
+                    })}
                   </AlertDescription>
                 </Alert>
               )}

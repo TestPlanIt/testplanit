@@ -2090,6 +2090,10 @@
       "buttonText": "Generate Test Cases",
       "title": "Generate Test Cases with AI",
       "description": "Use AI to automatically generate comprehensive test cases from external issues or documents.",
+      "generatingPreparing": "Preparing request...",
+      "generatingCallingAi": "Waiting for AI to generate test cases...",
+      "generatingProcessing": "Processing generated test cases...",
+      "generatingHint": "This may take a minute depending on the complexity of your source material.",
       "steps": {
         "selectIssue": "Select Source",
         "selectTemplate": "Choose Template",
@@ -2154,7 +2158,7 @@
         "templateFields": "Template Fields:",
         "moreFields": "... and {count, plural, one {# more field} other {# more fields}}"
       },
-      "generating": "Generating test cases with AI...",
+      "generatingLegacy": "Generating test cases with AI...",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
       "importing": "{count, plural, =0 {Importing Test Cases...} =1 {Importing 1 Test Case...} other {Importing # Test Cases...}}",
       "openInExternalSystem": "Open in {provider}",
@@ -2307,7 +2311,7 @@
       "tokenUsage": "{total} tokens used",
       "noLlmIntegration": "AI features require an LLM integration. Configure one in project settings.",
       "configure": {
-        "title": "Configure Selection",
+        "title": "Test Case Scope",
         "description": "Found {count, plural, =1 {# test case} other {# test cases}} in the repository",
         "descriptionFiltered": "Found {count, plural, =1 {# possibly relevant test case} other {# possibly relevant test cases}} from {total, plural, =1 {# total} other {# total}} in the repository",
         "noMatchesTitle": "No Matching Test Cases Found",
@@ -2322,12 +2326,19 @@
       },
       "loading": {
         "batch": "Processing batch {current} of {total}",
-        "analyzing": "Analyzing test cases..."
+        "analyzing": "Analyzing test cases...",
+        "progress": "Analyzed {analyzed} of {total} test cases...",
+        "waitingForAi": "Waiting for AI response (batch {batch} of {total})...",
+        "selectedSoFar": "{count, plural, =1 {# test case selected so far} other {# test cases selected so far}}",
+        "resolving_integration": "Resolving AI integration...",
+        "fetching_cases": "Fetching test cases..."
       },
       "success": {
         "title": "Suggested Test Cases",
         "description": "{count, plural, =1 {# test case selected} other {# test cases selected}} based on your test run context",
-        "linkedCasesAdded": "{count, plural, =1 {# linked case automatically included} other {# linked cases automatically included}}"
+        "linkedCasesAdded": "{count, plural, =1 {# linked case automatically included} other {# linked cases automatically included}}",
+        "truncationWarningTitle": "Partial results",
+        "truncationWarning": "{count, plural, =1 {# batch was truncated} other {# batches were truncated}} by the AI model — some test cases may not have been evaluated."
       },
       "noSuggestions": {
         "title": "No Matching Test Cases",

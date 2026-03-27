@@ -89,23 +89,56 @@ function mockFetchCount(overrides: Record<string, any> = {}) {
   } as any);
 }
 
-function _mockFetchSelectSuccess(overrides: Record<string, any> = {}) {
-  global.fetch = vi.fn().mockResolvedValueOnce({
-    ok: true,
-    json: async () => ({
-      suggestedCaseIds: [1, 2, 3],
-      reasoning: "These tests cover the login flow",
-      metadata: {
-        totalCasesAnalyzed: 25,
-        suggestedCount: 3,
-        directlySelected: 2,
-        linkedCasesAdded: 1,
-        model: "gpt-4o",
-        tokens: { prompt: 1000, completion: 200, total: 1200 },
-      },
-      ...overrides,
-    }),
-  } as any);
+/**
+ * Mock the full submit/poll flow:
+ *  1. countOnly fetch (GET-like, returns case counts)
+ *  2. submit fetch (POST to /submit, returns jobId)
+ *  3. status poll fetch (GET /status/{jobId}, returns completed result)
+ */
+function mockFetchSubmitPollSuccess(
+  countOverrides: Record<string, any> = {},
+  resultOverrides: Record<string, any> = {}
+) {
+  global.fetch = vi
+    .fn()
+    // 1. countOnly
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        totalCaseCount: 10,
+        repositoryTotalCount: 10,
+        searchPreFiltered: false,
+        hitMaxSearchResults: false,
+        noSearchMatches: false,
+        ...countOverrides,
+      }),
+    } as any)
+    // 2. submit
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jobId: "test-job-1" }),
+    } as any)
+    // 3. status poll — completed
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        state: "completed",
+        result: {
+          suggestedCaseIds: [1, 2, 3],
+          reasoning: "These tests cover the login flow",
+          truncatedBatches: [],
+          metadata: {
+            totalCasesAnalyzed: 10,
+            suggestedCount: 3,
+            directlySelected: 3,
+            linkedCasesAdded: 0,
+            model: "gpt-4o",
+            tokens: { prompt: 500, completion: 100, total: 600 },
+          },
+          ...resultOverrides,
+        },
+      }),
+    } as any);
 }
 
 function mockFetchError(message = "Server error") {
@@ -169,7 +202,7 @@ describe("MagicSelectDialog", () => {
   it("transitions to loading state when analyze is clicked", async () => {
     const user = userEvent.setup();
 
-    // First call: count, second call: select (never resolves)
+    // First call: count, second call: submit (never resolves — stays in loading)
     global.fetch = vi
       .fn()
       .mockResolvedValueOnce({
@@ -182,7 +215,7 @@ describe("MagicSelectDialog", () => {
           noSearchMatches: false,
         }),
       })
-      .mockReturnValueOnce(new Promise(() => {})); // Select never resolves
+      .mockReturnValueOnce(new Promise(() => {})); // Submit never resolves
 
     renderWithQueryClient(<MagicSelectDialog {...defaultProps} />);
 
@@ -193,43 +226,18 @@ describe("MagicSelectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
 
-    // Should show loading
+    // Should show loading with progress bar and analyzing text
     await waitFor(() => {
-      expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+      expect(screen.getByRole("progressbar")).toBeInTheDocument();
       expect(screen.getByText("loading.analyzing")).toBeInTheDocument();
     });
   });
 
   it("renders success state with reasoning, case count badge, and accept button", async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          totalCaseCount: 10,
-          repositoryTotalCount: 10,
-          searchPreFiltered: false,
-          hitMaxSearchResults: false,
-          noSearchMatches: false,
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          suggestedCaseIds: [1, 2, 3],
-          reasoning: "These tests cover the login flow",
-          metadata: {
-            totalCasesAnalyzed: 10,
-            suggestedCount: 3,
-            directlySelected: 3,
-            linkedCasesAdded: 0,
-            model: "gpt-4o",
-            tokens: { prompt: 500, completion: 100, total: 600 },
-          },
-        }),
-      });
+    mockFetchSubmitPollSuccess();
 
     renderWithQueryClient(<MagicSelectDialog {...defaultProps} />);
 
@@ -239,6 +247,9 @@ describe("MagicSelectDialog", () => {
     });
 
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
+
+    // Advance past the poll interval (2s)
+    await vi.advanceTimersByTimeAsync(2500);
 
     // Wait for success state
     await waitFor(() => {
@@ -257,6 +268,8 @@ describe("MagicSelectDialog", () => {
 
     // Token usage metadata
     expect(screen.getByText(/tokenUsage/)).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   it("renders error state with error message and retry button", async () => {
@@ -277,36 +290,11 @@ describe("MagicSelectDialog", () => {
   });
 
   it("calls onAccept with suggestedCaseIds when accept button clicked", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const onAccept = vi.fn();
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          totalCaseCount: 10,
-          repositoryTotalCount: 10,
-          searchPreFiltered: false,
-          hitMaxSearchResults: false,
-          noSearchMatches: false,
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          suggestedCaseIds: [7, 8, 9],
-          reasoning: "Selected for login coverage",
-          metadata: {
-            totalCasesAnalyzed: 10,
-            suggestedCount: 3,
-            directlySelected: 3,
-            linkedCasesAdded: 0,
-            model: "gpt-4o",
-            tokens: { prompt: 400, completion: 80, total: 480 },
-          },
-        }),
-      });
+    mockFetchSubmitPollSuccess({}, { suggestedCaseIds: [7, 8, 9], reasoning: "Selected for login coverage" });
 
     renderWithQueryClient(
       <MagicSelectDialog {...defaultProps} onAccept={onAccept} />
@@ -317,12 +305,16 @@ describe("MagicSelectDialog", () => {
     });
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
 
+    await vi.advanceTimersByTimeAsync(2500);
+
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /actions\.accept/i })).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.accept/i }));
 
     expect(onAccept).toHaveBeenCalledWith([7, 8, 9]);
+
+    vi.useRealTimers();
   });
 
   it("calls onOpenChange(false) when cancel button is clicked", async () => {
@@ -341,28 +333,13 @@ describe("MagicSelectDialog", () => {
   });
 
   it("shows SelectedTestCasesDrawer in success state for reviewing suggestions", async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          totalCaseCount: 5,
-          repositoryTotalCount: 5,
-          searchPreFiltered: false,
-          hitMaxSearchResults: false,
-          noSearchMatches: false,
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          suggestedCaseIds: [1, 2],
-          reasoning: "Test reasoning",
-          metadata: null,
-        }),
-      });
+    mockFetchSubmitPollSuccess(
+      { totalCaseCount: 5, repositoryTotalCount: 5 },
+      { suggestedCaseIds: [1, 2], reasoning: "Test reasoning", metadata: null }
+    );
 
     renderWithQueryClient(<MagicSelectDialog {...defaultProps} />);
 
@@ -370,37 +347,26 @@ describe("MagicSelectDialog", () => {
       expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
+
+    await vi.advanceTimersByTimeAsync(2500);
 
     await waitFor(() => {
       expect(screen.getByTestId("selected-cases-drawer")).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("drawer-count")).toHaveTextContent("2");
+
+    vi.useRealTimers();
   });
 
   it("shows refine button in success state allowing re-run", async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          totalCaseCount: 5,
-          repositoryTotalCount: 5,
-          searchPreFiltered: false,
-          hitMaxSearchResults: false,
-          noSearchMatches: false,
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          suggestedCaseIds: [1],
-          reasoning: "Single case",
-          metadata: null,
-        }),
-      });
+    mockFetchSubmitPollSuccess(
+      { totalCaseCount: 5, repositoryTotalCount: 5 },
+      { suggestedCaseIds: [1], reasoning: "Single case", metadata: null }
+    );
 
     renderWithQueryClient(<MagicSelectDialog {...defaultProps} />);
 
@@ -408,6 +374,8 @@ describe("MagicSelectDialog", () => {
       expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
+
+    await vi.advanceTimersByTimeAsync(2500);
 
     await waitFor(() => {
       expect(screen.getByText("success.title")).toBeInTheDocument();
@@ -417,6 +385,8 @@ describe("MagicSelectDialog", () => {
     expect(
       screen.getByRole("button", { name: /clarification\.refine/i })
     ).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   it("does not render when open is false", () => {

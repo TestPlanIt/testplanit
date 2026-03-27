@@ -14,7 +14,7 @@ interface OpenAIChatRequest {
   model: string;
   messages: OpenAIMessage[];
   temperature?: number;
-  max_tokens?: number;
+  max_completion_tokens?: number;
   stream?: boolean;
   top_p?: number;
   frequency_penalty?: number;
@@ -81,7 +81,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       model: request.model || this.getDefaultModel(),
       messages: request.messages,
       temperature: request.temperature ?? this.config.config.defaultTemperature,
-      max_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
+      max_completion_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream: false,
     };
 
@@ -126,7 +126,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       model: request.model || this.getDefaultModel(),
       messages: request.messages,
       temperature: request.temperature ?? this.config.config.defaultTemperature,
-      max_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
+      max_completion_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream: true,
     };
 
@@ -356,6 +356,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
         inputCostPer1k: 0.0005,
         outputCostPer1k: 0.0015,
         capabilities: ["text", "code"],
+        deprecated: true,
       },
       "gpt-4o": {
         name: "GPT-4o",
@@ -399,7 +400,6 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       "gpt-4o-mini",
       "gpt-4-turbo-preview",
       "gpt-4",
-      "gpt-3.5-turbo",
     ].map((id) => this.mapModelInfo(id));
   }
 }

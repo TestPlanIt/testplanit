@@ -73,12 +73,12 @@ const VALID_BODY = {
   },
 };
 
-function makeRequest(body: Record<string, unknown> = VALID_BODY): Request {
+function makeRequest(body: Record<string, unknown> = VALID_BODY) {
   return new Request("http://localhost:3000/api/llm/generate-test-cases", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
+  }) as unknown as import("next/server").NextRequest;
 }
 
 const VALID_TEST_CASES_RESPONSE = JSON.stringify({

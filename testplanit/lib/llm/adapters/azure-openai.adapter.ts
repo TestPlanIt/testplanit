@@ -15,7 +15,7 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
     const azureEndpoint = config.baseUrl || "";
     const settings = config.integration.settings as AzureOpenAISettings | null;
     const deploymentName = settings?.deploymentName || "";
-    const apiVersion = settings?.apiVersion || "2024-02-01";
+    const apiVersion = settings?.apiVersion || "2024-10-21";
 
     if (!azureEndpoint || !deploymentName) {
       throw new Error("Azure endpoint and deployment name are required");
@@ -117,6 +117,7 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
         inputCostPer1k: 0.0005,
         outputCostPer1k: 0.0015,
         capabilities: ["text", "code"],
+        deprecated: true,
       },
       "gpt-3.5-turbo-16k": {
         name: "GPT-3.5 Turbo 16K (Azure)",
@@ -125,6 +126,7 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
         inputCostPer1k: 0.003,
         outputCostPer1k: 0.004,
         capabilities: ["text", "code"],
+        deprecated: true,
       },
     };
 
@@ -179,7 +181,7 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify({
           messages: [{ role: "user", content: "test" }],
-          max_tokens: 1,
+          max_completion_tokens: 1,
         }),
         signal: AbortSignal.timeout(5000),
       });

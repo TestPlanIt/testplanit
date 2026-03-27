@@ -91,7 +91,7 @@ ADDITIONAL FIELDS (include ALL of these in fieldValues):
 {{OPTIONAL_FIELDS_LIST}}
 
 REQUIREMENTS:
-- Generate {{QUANTITY_GUIDANCE}} test cases that are SPECIFIC to the provided issue
+- Generate {{QUANTITY_GUIDANCE}} that are SPECIFIC to the provided issue
 - Each test case name should reference the actual feature/functionality being tested
 {{STEPS_INSTRUCTION}}
 {{PRIORITY_INSTRUCTION}}

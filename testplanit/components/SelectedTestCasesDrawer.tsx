@@ -157,11 +157,11 @@ export function SelectedTestCasesDrawer({
     return (
       <div
         key={testCase.id}
-        className={`w-full hover:bg-accent hover:text-accent-foreground rounded-md pb-2 group ${
+        className={`w-full rounded-md pb-2 ${
           useCheckboxes && !isSelected ? "opacity-50" : ""
         }`}
       >
-        <div className="flex items-center w-full px-2 pt-1 group">
+        <div className="flex items-center w-full px-2 pt-1">
           {/* Checkbox column (when using checkboxes) */}
           {isEditMode && useCheckboxes && (
             <div className="shrink-0 w-8 flex items-center justify-center pt-1">
@@ -174,7 +174,7 @@ export function SelectedTestCasesDrawer({
           )}
           {/* Index column (when not using checkboxes) */}
           {!useCheckboxes && (
-            <div className="shrink-0 w-8 text-right text-muted-foreground group-hover:text-accent-foreground text-sm">
+            <div className="shrink-0 w-8 text-right text-muted-foreground text-sm">
               {globalIndex}
             </div>
           )}
@@ -185,7 +185,9 @@ export function SelectedTestCasesDrawer({
               name={testCase.name}
               source={testCase.source || RepositoryCaseSource.MANUAL}
               automated={testCase.automated}
-              maxLines={2}
+              size="large"
+              link={`/projects/repository/${projectId}/${testCase.id}`}
+              linkTarget="_blank"
             />
           </div>
           {/* Workflow state column */}
@@ -237,7 +239,7 @@ export function SelectedTestCasesDrawer({
             testCase.forecastManual === null ||
             typeof testCase.forecastAutomated === "number" ||
             testCase.forecastAutomated === null) && (
-            <div className="w-full pl-10 pb-1 text-xs text-muted-foreground group-hover:text-accent-foreground flex flex-row items-center justify-end group divide-x divide-current">
+            <div className="w-full pl-10 pb-1 text-xs text-muted-foreground flex flex-row items-center justify-end divide-x divide-current">
               {(() => {
                 const elements = [];
                 if (typeof testCase.estimate === "number") {
@@ -277,7 +279,7 @@ export function SelectedTestCasesDrawer({
                       <span>
                         {toHumanReadable(testCase.forecastAutomated, {
                           isSeconds: true,
-                          round: false,
+                          maxDecimalPoints: 2,
                         })}
                       </span>
                     </span>

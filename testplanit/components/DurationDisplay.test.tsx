@@ -83,7 +83,7 @@ describe("DurationDisplay (component)", () => {
 
   it("should respect the round prop (false)", () => {
     render(<DurationDisplay seconds={301.456} round={false} />);
-    expect(screen.getByText("5 minutes, 1.456 seconds")).toBeInTheDocument();
+    expect(screen.getByText("5 minutes, 1.45 seconds")).toBeInTheDocument();
   });
 
   it("should respect the round prop (true - default)", () => {

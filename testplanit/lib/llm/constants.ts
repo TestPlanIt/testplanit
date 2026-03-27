@@ -49,7 +49,7 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     { name: "EXAMPLE_STRUCTURE", description: "JSON structure example based on template fields" },
     { name: "REQUIRED_FIELDS_LIST", description: "List of required template fields" },
     { name: "OPTIONAL_FIELDS_LIST", description: "List of optional template fields" },
-    { name: "QUANTITY_GUIDANCE", description: "Number range of test cases to generate" },
+    { name: "QUANTITY_GUIDANCE", description: "Quantity of test cases to generate (e.g. '4-6 test cases' or 'as many test cases as needed for comprehensive coverage')" },
     { name: "STEPS_INSTRUCTION", description: "Instructions for test steps" },
     { name: "PRIORITY_INSTRUCTION", description: "Instructions for priority field values" },
     { name: "TAG_INSTRUCTIONS", description: "Instructions for auto-generating tags" },

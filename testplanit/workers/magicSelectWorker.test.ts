@@ -100,7 +100,7 @@ vi.mock("../lib/llm/services/llm-manager.service", () => ({
 
 // ─── Mock PromptResolver ──────────────────────────────────────────────────────
 
-const mockResolver = {
+const _mockResolver = {
   resolve: (...args: any[]) => mockResolve(...args),
 };
 

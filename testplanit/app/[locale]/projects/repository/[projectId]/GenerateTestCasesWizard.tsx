@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -213,6 +214,7 @@ export function GenerateTestCasesWizard({
     new Set()
   );
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingStatus, setGeneratingStatus] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -683,6 +685,10 @@ export function GenerateTestCasesWizard({
     setLlmError(null);
     setShowErrorDetails(false);
     setIsGenerating(true);
+    setGeneratingStatus("preparing");
+    setGeneratedTestCases([]);
+    setSelectedTestCases(new Set());
+    setCurrentStep(WizardStep.REVIEW_GENERATED);
     try {
       const template = templates?.find((t) => t.id === selectedTemplateId);
 
@@ -710,6 +716,7 @@ export function GenerateTestCasesWizard({
         throw new Error(t("generateTestCases.errors.invalidSourceConfig"));
       }
 
+      setGeneratingStatus("calling_ai");
       const response = await fetch("/api/llm/generate-test-cases", {
         method: "POST",
         headers: {
@@ -841,6 +848,7 @@ export function GenerateTestCasesWizard({
         throw new Error(JSON.stringify(errorObj));
       }
 
+      setGeneratingStatus("processing");
       const result = await response.json();
 
       // Convert option names to option IDs for dropdown/multiselect fields
@@ -896,7 +904,7 @@ export function GenerateTestCasesWizard({
           testCasesWithConvertedValues.map((tc: GeneratedTestCase) => tc.id)
         )
       );
-      setCurrentStep(WizardStep.REVIEW_GENERATED);
+      setGeneratingStatus("");
     } catch (error) {
       console.error("Error generating test cases:", error);
 
@@ -2748,7 +2756,7 @@ export function GenerateTestCasesWizard({
                                       <Label className="text-xs font-medium text-muted-foreground mb-1">
                                         {tCommon("fields.description")}
                                       </Label>
-                                      <div className="text-sm text-muted-foreground">
+                                      <div className="text-sm text-foreground">
                                         <IssueDescriptionText
                                           description={
                                             selectedIssue.description
@@ -3192,11 +3200,23 @@ export function GenerateTestCasesWizard({
                   </CardHeader>
                   <CardContent>
                     {isGenerating ? (
-                      <div className="flex flex-col items-center justify-center py-12">
-                        <Sparkles className="w-8 h-8 animate-spin mb-4 shrink-0" />
-                        <span className="select-none hidden md:inline">
-                          {t("generateTestCases.buttonText")}
-                        </span>
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <Sparkles className="w-8 h-8 text-primary shrink-0" />
+                        <div className="w-full max-w-xs space-y-3">
+                          <Progress className="animate-pulse" />
+                          <p className="text-sm text-muted-foreground text-center">
+                            {generatingStatus === "preparing"
+                              ? t("generateTestCases.generatingPreparing")
+                              : generatingStatus === "calling_ai"
+                                ? t("generateTestCases.generatingCallingAi")
+                                : generatingStatus === "processing"
+                                  ? t("generateTestCases.generatingProcessing")
+                                  : t("generateTestCases.buttonText")}
+                          </p>
+                          <p className="text-xs text-muted-foreground text-center">
+                            {t("generateTestCases.generatingHint")}
+                          </p>
+                        </div>
                       </div>
                     ) : generatedTestCases.length === 0 ? (
                       <Alert>

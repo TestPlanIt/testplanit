@@ -46,7 +46,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -147,7 +147,7 @@ const BasicInfoDialog = React.memo(
         name: form.getValues("name"),
         configIds: form.getValues("configIds"),
         milestoneId: parentMilestoneId,
-        stateId: defaultWorkflow?.id || form.getValues("stateId"),
+        stateId: form.getValues("stateId") || defaultWorkflow?.id,
         note: form.getValues("note"),
         docs: form.getValues("docs"),
         attachments: form.getValues("attachments"),
@@ -157,13 +157,15 @@ const BasicInfoDialog = React.memo(
 
     useEffect(() => {
       basicInfoForm.setValue("milestoneId", parentMilestoneId);
-    }, [basicInfoForm, parentMilestoneId]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [parentMilestoneId]);
 
     useEffect(() => {
-      if (defaultWorkflow) {
+      if (defaultWorkflow && !basicInfoForm.getValues("stateId")) {
         basicInfoForm.setValue("stateId", defaultWorkflow.id);
       }
-    }, [defaultWorkflow, basicInfoForm]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [defaultWorkflow]);
 
     useEffect(() => {
       const mainFormMilestoneId = form.getValues("milestoneId");
@@ -173,7 +175,8 @@ const BasicInfoDialog = React.memo(
           basicInfoForm.trigger("milestoneId");
         }, 10);
       }
-    }, [form, basicInfoForm]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleNextStep = async () => {
       const result = await basicInfoForm.trigger([
@@ -380,6 +383,12 @@ const BasicInfoDialog = React.memo(
                       try {
                         editorContent = JSON.parse(field.value);
                       } catch {}
+                    } else if (
+                      typeof field.value === "object" &&
+                      field.value &&
+                      field.value.type === "doc"
+                    ) {
+                      editorContent = field.value;
                     }
                     return (
                       <FormItem>
@@ -821,6 +830,7 @@ export default function AddTestRunModal({
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const onOpenChange = controlledOnOpenChange ?? setInternalOpen;
+  const formInitializedRef = useRef(false);
   const [step, setStep] = useState(0);
   const [selectedCaseIds, setSelectedCaseIds] = useState<number[]>(
     initialSelectedCaseIds || []
@@ -1002,7 +1012,15 @@ export default function AddTestRunModal({
   } = form;
 
   // Merged useEffect for form initialization and reset
+  // Only runs once per dialog open to prevent wiping user-entered data on re-renders
   useEffect(() => {
+    if (!open) {
+      formInitializedRef.current = false;
+      return;
+    }
+    if (formInitializedRef.current) return;
+    formInitializedRef.current = true;
+
     if (open && duplicationPreset && defaultWorkflow) {
       let parsedNote = emptyEditorContent;
       if (duplicationPreset.originalNote) {
@@ -1184,7 +1202,9 @@ export default function AddTestRunModal({
   const handleNext = () => {
     if (step === 1) {
       setValue("testCases", selectedCaseIds); // Ensure selectedCaseIds from state is used
-      handleSubmit(onSubmit)();
+      handleSubmit(onSubmit, (errors) => {
+        console.error("Form validation errors:", errors);
+      })();
     } else {
       setStep((prev) => prev + 1);
     }

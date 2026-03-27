@@ -432,7 +432,7 @@ export async function POST(request: NextRequest) {
                           name: {
                             query: nameQuery,
                             operator: "or" as const,
-                            minimum_should_match: "2", // At least 2 words must match
+                            minimum_should_match: "1",
                             boost: 10,
                           },
                         },
@@ -443,7 +443,7 @@ export async function POST(request: NextRequest) {
                           searchableContent: {
                             query: nameQuery,
                             operator: "or" as const,
-                            minimum_should_match: "2",
+                            minimum_should_match: "1",
                             boost: 5,
                           },
                         },
@@ -454,7 +454,7 @@ export async function POST(request: NextRequest) {
                           searchableContent: {
                             query: searchKeywords,
                             operator: "or" as const,
-                            minimum_should_match: "3", // At least 3 keywords must match
+                            minimum_should_match: "1",
                             boost: 1,
                           },
                         },

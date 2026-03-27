@@ -248,7 +248,7 @@ ADDITIONAL FIELDS (include ALL of these in fieldValues):
 ${optionalFieldsList}
 
 REQUIREMENTS:
-- Generate ${quantityGuidance} test cases that are SPECIFIC to the provided issue
+- Generate ${quantityGuidance} that are SPECIFIC to the provided issue
 - Each test case name should reference the actual feature/functionality being tested${stepsInstruction}${priorityInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields in fieldValues, especially text fields like Description, Preconditions, and Post Conditions
@@ -337,21 +337,21 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
 
 function getQuantityGuidance(quantity: string): string {
   switch (quantity.toLowerCase()) {
-    case "few":
-      return "2-3";
-    case "several":
-      return "4-6";
-    case "many":
-      return "7-10";
     case "just_one":
-      return "1";
+      return "1 test case";
     case "couple":
-      return "2";
+      return "2 test cases";
+    case "few":
+      return "2-3 test cases";
+    case "several":
+      return "4-6 test cases";
+    case "many":
+      return "7-10 test cases";
     case "all":
     case "maximum":
-      return "10-15";
+      return "as many test cases as needed for comprehensive coverage — the user wants full coverage including edge cases, error scenarios, and boundary conditions";
     default:
-      return "3-5"; // default
+      return "3-5 test cases";
   }
 }
 

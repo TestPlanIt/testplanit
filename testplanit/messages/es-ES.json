@@ -2090,6 +2090,10 @@
       "buttonText": "Generar Casos de Prueba",
       "title": "Generar casos de prueba con IA",
       "description": "Utilice IA para generar automáticamente casos de prueba completos a partir de problemas o documentos externos.",
+      "generatingPreparing": "Preparando solicitud...",
+      "generatingCallingAi": "Esperando a que la IA genere los casos de prueba...",
+      "generatingProcessing": "Procesando los casos de prueba generados...",
+      "generatingHint": "Esto puede tardar un minuto, dependiendo de la complejidad del material de origen.",
       "steps": {
         "selectIssue": "Seleccionar fuente",
         "selectTemplate": "Elegir plantilla",
@@ -2154,7 +2158,7 @@
         "templateFields": "Campos de Plantilla:",
         "moreFields": "... y {count, plural, one {# más campos} other {# más campos}}"
       },
-      "generating": "Generando casos de prueba con AI...",
+      "generatingLegacy": "Generación de casos de prueba con IA...",
       "import": "{count, plural, =0 {Importar casos de prueba} =1 {Importar 1 caso de prueba} other {Importar # casos de prueba}}",
       "importing": "{count, plural, =0 {Importando casos de prueba...} =1 {Importando 1 caso de prueba...} other {Importando # casos de prueba...}}",
       "openInExternalSystem": "Abrir en {provider}",
@@ -2307,7 +2311,7 @@
       "tokenUsage": "{total} tokens utilizados",
       "noLlmIntegration": "Las funciones de IA requieren una integración LLM. Configúrela en la configuración del proyecto.",
       "configure": {
-        "title": "Configurar selección",
+        "title": "Alcance del caso de prueba",
         "description": "Se encontraron {count, plural, =1 {# caso de prueba} other {# casos de prueba}} en el repositorio",
         "descriptionFiltered": "Se encontraron {count, plural, =1 {# casos de prueba posiblemente relevantes} other {# casos de prueba posiblemente relevantes}} de {total, plural, =1 {# total} other {# total}} en el repositorio",
         "noMatchesTitle": "No se encontraron casos de prueba coincidentes",
@@ -2322,12 +2326,19 @@
       },
       "loading": {
         "batch": "Procesando lote {current} de {total}",
-        "analyzing": "Analizando casos de prueba..."
+        "analyzing": "Analizando casos de prueba...",
+        "progress": "Se analizaron {analyzed} de {total} casos de prueba...",
+        "waitingForAi": "Esperando respuesta de la IA (lote {batch} de {total})...",
+        "selectedSoFar": "{count, plural, =1 {# Caso de prueba seleccionado hasta ahora} other {# Casos de prueba seleccionados hasta ahora}}",
+        "resolving_integration": "Resolviendo la integración de la IA...",
+        "fetching_cases": "Obteniendo casos de prueba..."
       },
       "success": {
         "title": "Casos de prueba sugeridos",
         "description": "{count, plural, =1 {# caso de prueba seleccionado} other {# casos de prueba seleccionados}} según el contexto de ejecución de la prueba",
-        "linkedCasesAdded": "{count, plural, =1 {# caso vinculado incluido automáticamente} other {# casos vinculados incluidos automáticamente}}"
+        "linkedCasesAdded": "{count, plural, =1 {# caso vinculado incluido automáticamente} other {# casos vinculados incluidos automáticamente}}",
+        "truncationWarningTitle": "Resultados parciales",
+        "truncationWarning": "{count, plural, =1 {# el lote fue truncado} other {# los lotes fueron truncados}} por el modelo de IA: es posible que algunos casos de prueba no hayan sido evaluados."
       },
       "noSuggestions": {
         "title": "No hay casos de prueba coincidentes",

@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Bot, CloudSunRain } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -59,6 +59,7 @@ export const ForecastDisplay: React.FC<ForecastDisplayProps> = ({
             {toHumanReadable(seconds, {
               isSeconds: true,
               locale,
+              round,
             })}
           </div>
         </TooltipContent>
