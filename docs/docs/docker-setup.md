@@ -208,16 +208,22 @@ The Docker Compose setup starts these containerized services:
     **First startup takes 2-5 minutes** as images are built and services initialize.
 
 6. **Access TestPlanIt:**
-    - **Development**: [http://localhost:3000](http://localhost:3000)
-    - **Production**: [http://localhost:30000](http://localhost:30000)
+    - **Development** (`dev`): [http://localhost:3000](http://localhost:3000)
+      - Override with `DOCKER_DEV_APP_PORT`
+    - **Production** (`prod`): [http://localhost:30000](http://localhost:30000)
+      - Override with `DOCKER_PROD_APP_PORT`
     - **Default login**: `admin@example.com` / `admin` (change in production!)
     - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Start Demo Project Tour** for a guided walkthrough.
 
 7. **Access Additional Services (if enabled):**
     - **MinIO Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
+      - Override with `DOCKER_MINIO_CONSOLE_PORT`
     - **Elasticsearch** (`with-elasticsearch`): [http://localhost:9200](http://localhost:9200)
-    - **PostgreSQL** (`with-postgres`): `localhost:<DOCKER_POSTGRES_PORT>` (default `5432`; user: `user` / password: `password`)
-    - **Valkey** (`with-valkey`): `localhost:<DOCKER_VALKEY_PORT>` (default `6379`)
+      - Override with `DOCKER_ELASTICSEARCH_HTTP_PORT`
+    - **PostgreSQL** (`with-postgres`): `localhost:5432` (user: `user` / password: `password`)
+      - Override with `DOCKER_POSTGRES_PORT`
+    - **Valkey** (`with-valkey`): `localhost:6379`
+      - Override with `DOCKER_VALKEY_PORT`
 
 ## Environment Management
 
