@@ -253,3 +253,249 @@ describe("POST /api/llm/generate-test-cases", () => {
     expect(data.testCases.length).toBeGreaterThan(0);
   });
 });
+
+// ─── TOKEN-05 helpers ─────────────────────────────────────────────────────────
+
+function makeLargeExistingCases(count: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    name: `Existing Test Case ${i + 1} with a very long name to consume tokens`,
+    template: "Default",
+    description:
+      "This is a very long description that is designed to consume many tokens in the LLM prompt. ".repeat(
+        20
+      ),
+    steps: Array.from({ length: 5 }, (__, j) => ({
+      step: `Step ${j + 1}: Perform a detailed action that has a verbose description to increase token count substantially`,
+      expectedResult: `Expected result ${j + 1}: The system should respond in a very specific way that requires detailed explanation`,
+    })),
+  }));
+}
+
+function makeLargeComments(count: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    author: `author${i + 1}`,
+    body: "This comment body is approximately 300 characters long and contains relevant information about the issue that was reported by users during testing. The content is important for understanding the context. ".substring(
+      0,
+      300
+    ),
+    created: "2024-01-01",
+  }));
+}
+
+// ─── TOKEN-05 tests ───────────────────────────────────────────────────────────
+
+describe("TOKEN-05: prompt budget estimation and truncation", () => {
+  let mockManager: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockManager = {
+      resolveIntegration: mockResolveIntegration,
+      chat: mockChat,
+    };
+
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "ADMIN" },
+    });
+
+    mockLlmManagerGetInstance.mockReturnValue(mockManager);
+
+    mockPrismaProjectsFindFirst.mockResolvedValue({
+      id: 1,
+      projectLlmIntegrations: [],
+    });
+
+    mockResolveIntegration.mockResolvedValue({ integrationId: 42 });
+
+    mockPromptResolverResolve.mockResolvedValue({
+      systemPrompt: "System prompt",
+      userPrompt: null,
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+      source: "default",
+    });
+
+    mockChat.mockResolvedValue({
+      content: VALID_TEST_CASES_RESPONSE,
+      model: "gpt-4",
+      promptTokens: 100,
+      completionTokens: 200,
+      totalTokens: 300,
+      finishReason: "stop",
+    });
+  });
+
+  // ── TOKEN-05-a: existing cases truncated first ────────────────────────────
+
+  it("TOKEN-05-a: removes existing test cases when prompt exceeds contentBudget", async () => {
+    // maxTokensPerRequest=500, contentBudget = floor(500*0.65) - systemPromptTokens (~3 tokens)
+    // contentBudget ≈ 322; 10 large cases each ~2000 chars = ~500 tokens >> budget
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 500,
+      defaultMaxTokens: 256,
+    });
+
+    const body = {
+      ...VALID_BODY,
+      context: {
+        folderContext: 0,
+        existingTestCases: makeLargeExistingCases(10),
+      },
+    };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    // Check the userPrompt that was sent to manager.chat
+    const chatCall = mockChat.mock.calls[0]!;
+    const userPromptSent: string = chatCall[1].messages[1].content;
+
+    // Count how many existing case references appear in the prompt
+    const caseMatches = userPromptSent.match(/Existing Test Case \d+/g) ?? [];
+    // Should have fewer than 10 existing cases (truncation must have occurred)
+    expect(caseMatches.length).toBeLessThan(10);
+  });
+
+  // ── TOKEN-05-b: comments truncated after removing all existing cases ──────
+
+  it("TOKEN-05-b: removes comments when over budget after no existing cases remain", async () => {
+    // Very tiny budget so even 3 large comments push over
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 300,
+      defaultMaxTokens: 256,
+    });
+
+    const body = {
+      ...VALID_BODY,
+      issue: {
+        ...VALID_BODY.issue,
+        comments: makeLargeComments(3),
+      },
+      context: {
+        folderContext: 0,
+        // No existing test cases — so only comments can be truncated
+      },
+    };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const chatCall = mockChat.mock.calls[0]!;
+    const userPromptSent: string = chatCall[1].messages[1].content;
+
+    // Count comment author references in the prompt
+    const commentMatches = userPromptSent.match(/author\d/g) ?? [];
+    // Should have fewer than 3 comments (truncation must have occurred)
+    expect(commentMatches.length).toBeLessThan(3);
+  });
+
+  // ── TOKEN-05-c: core content never truncated ──────────────────────────────
+
+  it("TOKEN-05-c: issue key, title, description, and userNotes always appear in prompt", async () => {
+    // Very small budget — only essential issue content should survive
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 200,
+      defaultMaxTokens: 256,
+    });
+
+    const body = {
+      ...VALID_BODY,
+      issue: {
+        key: "CORE-999",
+        title: "Unique Title CORE999",
+        description: "Unique description text CORE999",
+        status: "Open",
+        priority: "High",
+      },
+      context: {
+        folderContext: 0,
+        userNotes: "Unique user notes CORE999",
+        existingTestCases: makeLargeExistingCases(5),
+      },
+    };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const chatCall = mockChat.mock.calls[0]!;
+    const userPromptSent: string = chatCall[1].messages[1].content;
+
+    // Core content must always appear regardless of truncation
+    expect(userPromptSent).toContain("CORE-999");
+    expect(userPromptSent).toContain("Unique Title CORE999");
+    expect(userPromptSent).toContain("Unique description text CORE999");
+    expect(userPromptSent).toContain("Unique user notes CORE999");
+  });
+
+  // ── TOKEN-05-d: truncation reported in response metadata ─────────────────
+
+  it("TOKEN-05-d: response metadata includes truncated=true and truncationNote when truncation occurs", async () => {
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 500,
+      defaultMaxTokens: 256,
+    });
+
+    const body = {
+      ...VALID_BODY,
+      context: {
+        folderContext: 0,
+        existingTestCases: makeLargeExistingCases(10),
+      },
+    };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.metadata.truncated).toBe(true);
+    expect(typeof data.metadata.truncationNote).toBe("string");
+    expect(data.metadata.truncationNote.length).toBeGreaterThan(0);
+  });
+
+  // ── TOKEN-05-e: no truncation when within budget ──────────────────────────
+
+  it("TOKEN-05-e: no truncation when prompt fits within budget", async () => {
+    // Very large budget — no truncation needed
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    const body = {
+      ...VALID_BODY,
+      issue: {
+        key: "PROJ-1",
+        title: "Small issue",
+        description: "Short description",
+        status: "Open",
+      },
+      context: {
+        folderContext: 0,
+      },
+    };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // truncated should be false or undefined when no truncation occurs
+    expect(data.metadata.truncated === false || data.metadata.truncated === undefined).toBe(true);
+    expect(data.metadata.truncationNote).toBeUndefined();
+  });
+});
