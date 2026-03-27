@@ -375,6 +375,7 @@ export class LlmManager {
         projectId_feature: { projectId, feature },
       },
       select: {
+        enabled: true,
         llmIntegrationId: true,
         model: true,
         llmIntegration: {
@@ -382,6 +383,11 @@ export class LlmManager {
         },
       },
     });
+
+    // Explicit "No LLM" override — disabled with no integration
+    if (featureConfig && !featureConfig.enabled && !featureConfig.llmIntegrationId) {
+      return null;
+    }
 
     if (
       featureConfig?.llmIntegrationId &&

@@ -718,6 +718,58 @@ describe("LlmManager", () => {
       expect(result).toEqual({ integrationId: 5 });
     });
 
+    // Level 1 — explicit "No LLM" override (enabled: false, no integration)
+    it("Level 1 — returns null when feature config is explicitly disabled", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        enabled: false,
+        llmIntegrationId: null,
+        model: null,
+        llmIntegration: null,
+      });
+      // Level 3 would return an integration, but the disabled override should block it
+      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+        llmIntegrationId: 5,
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toBeNull();
+    });
+
+    it("Level 1 — disabled override blocks Level 2 per-prompt fallback", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        enabled: false,
+        llmIntegrationId: null,
+        model: null,
+        llmIntegration: null,
+      });
+      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+        isDeleted: false,
+        status: "ACTIVE",
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1,
+        { llmIntegrationId: 7, modelOverride: "claude-3-haiku" }
+      );
+      expect(result).toBeNull();
+    });
+
+    it("Level 1 — enabled override with integration still resolves normally", async () => {
+      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+        enabled: true,
+        llmIntegrationId: 10,
+        model: "gpt-4o",
+        llmIntegration: { isDeleted: false, status: "ACTIVE" },
+      });
+      const result = await resolveManager.resolveIntegration(
+        "test_case_generation",
+        1
+      );
+      expect(result).toEqual({ integrationId: 10, model: "gpt-4o" });
+    });
+
     // Level 2 — per-prompt assignment
     it("Level 2 — returns per-prompt integration when Level 1 is empty", async () => {
       resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);

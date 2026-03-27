@@ -235,7 +235,7 @@ export function LlmIntegrationsList({
                       {isAssigning === -1 ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        tCommon("actions.remove")
+                        t("clearDefault")
                       )}
                     </Button>
                   ) : (
@@ -253,7 +253,7 @@ export function LlmIntegrationsList({
                       ) : (
                         <Check className="h-4 w-4" />
                       )}
-                      {tCommon("actions.assign")}
+                      {t("setAsDefault")}
                     </Button>
                   )}
                 </div>
