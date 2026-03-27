@@ -24,7 +24,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface MagicSelectDialogProps {
   open: boolean;
@@ -53,6 +53,9 @@ interface MagicSelectState {
   searchKeywords?: string;
   hitMaxSearchResults: boolean; // True if search results were capped at max
   noSearchMatches: boolean; // True if search was performed but found no matches
+  jobId: string | null; // Track active job ID for polling
+  truncatedBatches: number[]; // Batch indices with incomplete results (RETRY-05)
+  progress: { analyzed: number; total: number } | null; // Polling progress
   metadata: {
     totalCasesAnalyzed: number;
     suggestedCount: number;
@@ -87,8 +90,13 @@ export function MagicSelectDialog({
     searchKeywords: undefined,
     hitMaxSearchResults: false,
     noSearchMatches: false,
+    jobId: null,
+    truncatedBatches: [],
+    progress: null,
     metadata: null,
   });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const [clarification, setClarification] = useState("");
 
@@ -151,7 +159,7 @@ export function MagicSelectDialog({
     }
   }, [projectId, t, testRunMetadata]);
 
-  // Run magic select (single request — server handles batching internally)
+  // Run magic select (submit job then poll for completion)
   const runMagicSelect = useCallback(async () => {
     setState((prev) => ({
       ...prev,
@@ -160,10 +168,18 @@ export function MagicSelectDialog({
       suggestedCaseIds: [],
       originalSuggestedCaseIds: [],
       reasoning: "",
+      jobId: null,
+      truncatedBatches: [],
+      progress: null,
     }));
 
+    // Create AbortController for cleanup on dialog close
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const response = await fetch("/api/llm/magic-select-cases", {
+      // Phase 1: Submit job
+      const submitResponse = await fetch("/api/llm/magic-select-cases/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -173,44 +189,97 @@ export function MagicSelectDialog({
           excludeCaseIds:
             currentSelection.length > 0 ? currentSelection : undefined,
         }),
+        signal: controller.signal,
       });
 
-      const data = await response.json();
+      const submitData = await submitResponse.json();
 
-      if (!response.ok) {
+      if (!submitResponse.ok) {
         throw new Error(
-          data.details || data.error || "Failed to select test cases"
+          submitData.details || submitData.error || "Failed to submit magic select job"
         );
       }
 
-      const suggestedIds = data.suggestedCaseIds ?? [];
+      const jobId = submitData.jobId;
+      setState((prev) => ({ ...prev, jobId }));
 
-      setState((prev) => ({
-        ...prev,
-        status: "success",
-        suggestedCaseIds: suggestedIds,
-        originalSuggestedCaseIds: suggestedIds,
-        reasoning: data.reasoning || "",
-        errorMessage: null,
-        metadata: data.metadata
-          ? {
-              totalCasesAnalyzed: data.metadata.totalCasesAnalyzed,
-              suggestedCount: data.metadata.suggestedCount,
-              directlySelected: data.metadata.directlySelected || 0,
-              linkedCasesAdded: data.metadata.linkedCasesAdded || 0,
-              model: data.metadata.model || "",
-              tokens: data.metadata.tokens || {
-                prompt: 0,
-                completion: 0,
-                total: 0,
-              },
-            }
-          : null,
-      }));
+      // Phase 2: Poll for completion
+      const POLL_INTERVAL_MS = 2000;
+      const MAX_POLL_ATTEMPTS = 300; // 10 minutes max (300 * 2s)
+      let attempts = 0;
+
+      while (attempts < MAX_POLL_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        attempts++;
+
+        const statusResponse = await fetch(
+          `/api/llm/magic-select-cases/status/${jobId}`,
+          { signal: controller.signal }
+        );
+        const statusData = await statusResponse.json();
+
+        if (!statusResponse.ok) {
+          throw new Error(statusData.error || "Failed to check job status");
+        }
+
+        // Update progress if available
+        if (statusData.progress) {
+          setState((prev) => ({
+            ...prev,
+            progress: {
+              analyzed: statusData.progress.analyzed ?? 0,
+              total: statusData.progress.total ?? 0,
+            },
+          }));
+        }
+
+        if (statusData.state === "completed" && statusData.result) {
+          const result = statusData.result;
+          const suggestedIds = result.suggestedCaseIds ?? [];
+
+          setState((prev) => ({
+            ...prev,
+            status: "success",
+            suggestedCaseIds: suggestedIds,
+            originalSuggestedCaseIds: suggestedIds,
+            reasoning: result.reasoning || "",
+            truncatedBatches: result.truncatedBatches ?? [],
+            errorMessage: null,
+            progress: null,
+            metadata: result.metadata
+              ? {
+                  totalCasesAnalyzed: result.metadata.totalCasesAnalyzed,
+                  suggestedCount: result.metadata.suggestedCount,
+                  directlySelected: result.metadata.directlySelected || 0,
+                  linkedCasesAdded: result.metadata.linkedCasesAdded || 0,
+                  model: result.metadata.model || "",
+                  tokens: result.metadata.tokens || {
+                    prompt: 0,
+                    completion: 0,
+                    total: 0,
+                  },
+                }
+              : null,
+          }));
+          return; // Done
+        }
+
+        if (statusData.state === "failed") {
+          throw new Error(statusData.failedReason || "Magic select job failed");
+        }
+      }
+
+      // Timed out
+      throw new Error("Magic select job timed out after 10 minutes");
     } catch (error) {
+      // Ignore abort errors from dialog close
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
       setState((prev) => ({
         ...prev,
         status: "error",
+        progress: null,
         errorMessage:
           error instanceof Error
             ? error.message
@@ -227,9 +296,23 @@ export function MagicSelectDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Cleanup: abort any in-flight polling when component unmounts
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       if (!newOpen) {
+        // Abort any active polling when dialog closes
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
         // Reset state when closing
         setState({
           status: "idle",
@@ -243,6 +326,9 @@ export function MagicSelectDialog({
           searchKeywords: undefined,
           hitMaxSearchResults: false,
           noSearchMatches: false,
+          jobId: null,
+          truncatedBatches: [],
+          progress: null,
           metadata: null,
         });
         setClarification("");
@@ -360,6 +446,11 @@ export function MagicSelectDialog({
               <p className="text-xs text-muted-foreground">
                 {t("loading.analyzing")}
               </p>
+              {state.progress && state.progress.total > 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {`Analyzing batch ${state.progress.analyzed} of ${state.progress.total}...`}
+                </p>
+              )}
             </div>
           )}
 
@@ -440,6 +531,19 @@ export function MagicSelectDialog({
                   <AlertTitle>{t("noSuggestions.title")}</AlertTitle>
                   <AlertDescription>
                     {t("noSuggestions.description")}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Truncation warning */}
+              {state.truncatedBatches.length > 0 && (
+                <Alert variant="default" className="mt-3">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Partial results</AlertTitle>
+                  <AlertDescription>
+                    {state.truncatedBatches.length === 1
+                      ? "1 batch was truncated by the AI model — some test cases may not have been evaluated."
+                      : `${state.truncatedBatches.length} batches were truncated by the AI model — some test cases may not have been evaluated.`}
                   </AlertDescription>
                 </Alert>
               )}
