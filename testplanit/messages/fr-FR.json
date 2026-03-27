@@ -4106,6 +4106,7 @@
         "repo-cache": "Cache du dépôt",
         "copy-move": "Copier et déplacer",
         "duplicate-scan": "Analyse en double",
+        "magic-select": "Magic Select",
         "step-scan": "Analyse de la séquence d'étapes"
       },
       "status": {

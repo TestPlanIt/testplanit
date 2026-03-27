@@ -168,7 +168,9 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
               userPrompt: promptData.userPrompt || "",
               temperature: promptData.temperature,
               maxOutputTokens: promptData.maxOutputTokens,
-              llmIntegrationId: promptData.llmIntegrationId || null,
+              ...(promptData.llmIntegrationId
+                ? { llmIntegration: { connect: { id: promptData.llmIntegrationId } } }
+                : { llmIntegration: { disconnect: true } }),
               modelOverride: promptData.modelOverride || null,
             },
           });

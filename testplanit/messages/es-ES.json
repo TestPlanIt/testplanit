@@ -4106,6 +4106,7 @@
         "repo-cache": "Caché del repositorio",
         "copy-move": "Copiar y mover",
         "duplicate-scan": "Escaneo duplicado",
+        "magic-select": "Selección mágica",
         "step-scan": "Escaneo de secuencia de pasos"
       },
       "status": {

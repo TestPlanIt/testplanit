@@ -6,12 +6,10 @@ const {
   mockGetServerSession,
   mockEnhance,
   mockPrismaUserFindUnique,
-  mockPrismaRepositoryCasesFindMany,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
   mockPrismaUserFindUnique: vi.fn(),
-  mockPrismaRepositoryCasesFindMany: vi.fn(),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -32,9 +30,6 @@ vi.mock("~/lib/prisma", () => ({
   prisma: {
     user: {
       findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
-    },
-    repositoryCases: {
-      findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
     },
   },
 }));
@@ -124,7 +119,8 @@ function setupDefaultMocks() {
     .mockResolvedValueOnce({ id: 20 }); // target
 
   mockEnhancedDb.repositoryCases.findMany
-    .mockResolvedValue(baseSourceCases); // source cases (collisions use raw prisma)
+    .mockResolvedValueOnce(baseSourceCases) // source cases
+    .mockResolvedValueOnce([]); // collision check (no collisions by default)
 
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
     baseTargetTemplateAssignments,
@@ -139,9 +135,6 @@ function setupDefaultMocks() {
   );
 
   mockEnhancedDb.templates.findMany.mockResolvedValue([]);
-
-  // Raw prisma collision check (not enhanced)
-  mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -332,15 +325,19 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 13
   it("returns collisions array when target has cases with matching name/className/source", async () => {
     setupDefaultMocks();
-    // Override raw prisma collision check to return a collision
-    mockPrismaRepositoryCasesFindMany.mockResolvedValue([
-      {
-        id: 99,
-        name: "Test Case 1",
-        className: null,
-        source: "MANUAL",
-      },
-    ]);
+    // Override enhanced DB collision check to return a collision
+    // repositoryCases.findMany is called twice: first for source cases, then for collision check
+    mockEnhancedDb.repositoryCases.findMany
+      .mockReset()
+      .mockResolvedValueOnce(baseSourceCases) // source cases
+      .mockResolvedValueOnce([
+        {
+          id: 99,
+          name: "Test Case 1",
+          className: null,
+          source: "MANUAL",
+        },
+      ]); // collision check
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
