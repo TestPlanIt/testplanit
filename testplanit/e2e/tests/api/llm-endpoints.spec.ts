@@ -259,7 +259,7 @@ test.describe("LLM API Endpoints", () => {
       expect(body.error).toBe("Project not found or access denied");
     });
 
-    test("returns 400 when no active LLM integration exists for project", async ({
+    test("returns 410 when full analysis requested (moved to background processing)", async ({
       request,
       baseURL,
       api,
@@ -283,9 +283,9 @@ test.describe("LLM API Endpoints", () => {
         }
       );
 
-      expect(response.status()).toBe(400);
+      expect(response.status()).toBe(410);
       const body = await response.json();
-      expect(body.error).toBe("No active LLM integration found for this project");
+      expect(body.error).toContain("background processing");
     });
 
     test("returns countOnly response shape for countOnly=true", async ({

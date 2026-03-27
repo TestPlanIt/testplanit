@@ -166,6 +166,7 @@ test.describe("Prompt Configurations - Edit Operations", () => {
     const features = [
       "markdown_parsing", "test_case_generation", "magic_select_cases",
       "editor_assistant", "llm_test", "export_code_generation", "auto_tag",
+      "duplicate_detection",
     ];
 
     const response = await api["request"].post(

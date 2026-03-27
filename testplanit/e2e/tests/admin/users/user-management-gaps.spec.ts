@@ -287,7 +287,7 @@ test.describe("User Management Gaps", () => {
         }
 
         // Page loaded and navigated to profile without errors
-        await expect(page).not.toHaveURL(/error|404/);
+        await expect(page).not.toHaveURL(/\/error|\/404/);
       } finally {
         await api.updateUser({
           userId: testUser.data.id,

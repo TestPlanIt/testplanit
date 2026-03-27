@@ -215,8 +215,13 @@ test.describe("Test Case Management", () => {
     const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
     await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
-    // Find the delete button in the row (Trash2 icon, destructive variant)
-    const deleteButton = testCaseRow.locator('button:has(svg.lucide-trash-2)').first();
+    // Open the actions dropdown menu (three-dot button) to access the delete option
+    const actionsButton = testCaseRow.locator(`[data-testid="actions-menu-${testCaseId}"]`);
+    await expect(actionsButton).toBeVisible({ timeout: 5000 });
+    await actionsButton.click();
+
+    // Click the delete option from the dropdown menu
+    const deleteButton = page.locator('[role="menuitem"]').filter({ hasText: /Delete/i }).first();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
 

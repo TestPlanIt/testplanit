@@ -1,5 +1,4 @@
 import { enhance } from "@zenstackhq/runtime";
-import { RepositoryCaseSource } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
@@ -213,26 +212,33 @@ export async function POST(request: Request) {
 
     // ─── Collision detection ──────────────────────────────────────────────────
 
-    const sourceNames = sourceCases.map(
-      (c: any) => ({
-        name: c.name as string,
-        className: c.className as string | null,
-        source: c.source as RepositoryCaseSource,
-      }),
-    );
-
-    const collisionCases = await enhancedDb.repositoryCases.findMany({
+    // Use raw prisma for collision check to bypass ZenStack policy evaluation,
+    // which can have issues with null equality in OR clauses.
+    // Access has already been verified above (user can read both source and target projects).
+    // Re-fetch source cases with raw prisma to ensure we get className/source values.
+    const sourceForCollision = await prisma.repositoryCases.findMany({
       where: {
-        projectId: body.targetProjectId,
+        id: { in: body.caseIds },
+        projectId: body.sourceProjectId,
         isDeleted: false,
-        OR: sourceNames.map((n) => ({
-          name: n.name,
-          className: n.className === null ? { equals: null as any } : n.className,
-          source: n.source,
-        })),
       },
-      select: { id: true, name: true, className: true, source: true },
+      select: { name: true, className: true, source: true },
     });
+
+    const collisionCases = sourceForCollision.length > 0
+      ? await prisma.repositoryCases.findMany({
+          where: {
+            projectId: body.targetProjectId,
+            isDeleted: false,
+            OR: sourceForCollision.map((n) => ({
+              name: n.name,
+              className: n.className,
+              source: n.source,
+            })),
+          },
+          select: { id: true, name: true, className: true, source: true },
+        })
+      : [];
 
     const collisions: PreflightResponse["collisions"] = collisionCases.map(
       (c: {

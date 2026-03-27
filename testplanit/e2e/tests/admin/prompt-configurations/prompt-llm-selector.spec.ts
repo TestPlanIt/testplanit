@@ -18,10 +18,11 @@ const features = [
   "llm_test",
   "export_code_generation",
   "auto_tag",
+  "duplicate_detection",
 ];
 
 /**
- * Creates a prompt config with all 7 features via the API.
+ * Creates a prompt config with all features via the API.
  * Returns the config name.
  */
 async function createPromptConfigViaApi(

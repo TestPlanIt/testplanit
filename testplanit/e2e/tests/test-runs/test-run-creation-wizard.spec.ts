@@ -255,7 +255,7 @@ test.describe("Test Run Creation Wizard", () => {
     // Click Next to go to step 2
     const nextBtnSteps = dialog.getByTestId("run-next-button");
     await expect(nextBtnSteps).toBeVisible({ timeout: 5000 });
-    await nextBtnSteps.dispatchEvent("click");
+    await nextBtnSteps.click();
 
     // Step 2 should show the test case repository
     await expect(dialog.getByTestId("run-save-button")).toBeVisible({

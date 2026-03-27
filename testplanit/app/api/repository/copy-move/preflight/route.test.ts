@@ -2,12 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Stable mock refs via vi.hoisted() ───────────────────────────────────────
 
-const { mockGetServerSession, mockEnhance, mockPrismaUserFindUnique } =
-  vi.hoisted(() => ({
-    mockGetServerSession: vi.fn(),
-    mockEnhance: vi.fn(),
-    mockPrismaUserFindUnique: vi.fn(),
-  }));
+const {
+  mockGetServerSession,
+  mockEnhance,
+  mockPrismaUserFindUnique,
+  mockPrismaRepositoryCasesFindMany,
+} = vi.hoisted(() => ({
+  mockGetServerSession: vi.fn(),
+  mockEnhance: vi.fn(),
+  mockPrismaUserFindUnique: vi.fn(),
+  mockPrismaRepositoryCasesFindMany: vi.fn(),
+}));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
 
@@ -27,6 +32,9 @@ vi.mock("~/lib/prisma", () => ({
   prisma: {
     user: {
       findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
+    },
+    repositoryCases: {
+      findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
     },
   },
 }));
@@ -116,8 +124,7 @@ function setupDefaultMocks() {
     .mockResolvedValueOnce({ id: 20 }); // target
 
   mockEnhancedDb.repositoryCases.findMany
-    .mockResolvedValueOnce(baseSourceCases) // source cases
-    .mockResolvedValueOnce([]); // collisions
+    .mockResolvedValue(baseSourceCases); // source cases (collisions use raw prisma)
 
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
     baseTargetTemplateAssignments,
@@ -132,6 +139,9 @@ function setupDefaultMocks() {
   );
 
   mockEnhancedDb.templates.findMany.mockResolvedValue([]);
+
+  // Raw prisma collision check (not enhanced)
+  mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -195,10 +205,9 @@ describe("POST /api/repository/copy-move/preflight", () => {
     // Override: source case uses templateId 99 which is not in target assignments
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValueOnce([
+      .mockResolvedValue([
         { ...baseSourceCases[0], templateId: 99 },
-      ])
-      .mockResolvedValueOnce([]);
+      ]);
     mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue([
       { templateId: 10, template: { id: 10, name: "Default Template" } },
     ]);
@@ -280,10 +289,9 @@ describe("POST /api/repository/copy-move/preflight", () => {
     // Source case has a state "Custom State" (id=999) not in target workflow
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValueOnce([
+      .mockResolvedValue([
         { ...baseSourceCases[0], stateId: 999 },
-      ])
-      .mockResolvedValueOnce([]);
+      ]);
 
     // We need to also mock to return workflow state name for source
     // The route fetches source workflow states separately — let's provide that info
@@ -308,10 +316,9 @@ describe("POST /api/repository/copy-move/preflight", () => {
     setupDefaultMocks();
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValueOnce([
+      .mockResolvedValue([
         { ...baseSourceCases[0], stateId: 999 },
-      ])
-      .mockResolvedValueOnce([]);
+      ]);
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
@@ -325,18 +332,15 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 13
   it("returns collisions array when target has cases with matching name/className/source", async () => {
     setupDefaultMocks();
-    // Override second findMany call (collisions check) to return a collision
-    mockEnhancedDb.repositoryCases.findMany
-      .mockReset()
-      .mockResolvedValueOnce(baseSourceCases)
-      .mockResolvedValueOnce([
-        {
-          id: 99,
-          name: "Test Case 1",
-          className: null,
-          source: "MANUAL",
-        },
-      ]);
+    // Override raw prisma collision check to return a collision
+    mockPrismaRepositoryCasesFindMany.mockResolvedValue([
+      {
+        id: 99,
+        name: "Test Case 1",
+        className: null,
+        source: "MANUAL",
+      },
+    ]);
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));

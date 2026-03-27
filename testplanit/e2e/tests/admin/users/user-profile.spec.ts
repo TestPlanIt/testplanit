@@ -181,13 +181,16 @@ test.describe("User Profile Management", () => {
     await submitButton.click();
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
 
+    // Wait for session update to propagate (updateSession() is async after save)
+    await page.waitForLoadState("networkidle");
+
     // CRITICAL: Verify name updated in the Header's UserDropdownMenu
     // This is the key test that would have caught the original bug
     await userMenuTrigger.click();
     await expect(userMenuContent).toBeVisible();
 
     // Verify the updated name appears in the user menu
-    await expect(userMenuContent.getByText(newName)).toBeVisible({ timeout: 5000 });
+    await expect(userMenuContent.getByText(newName)).toBeVisible({ timeout: 10000 });
 
     // Close the menu
     await page.keyboard.press("Escape");

@@ -452,7 +452,7 @@ export function StepDuplicateResultsTable({
         </div>
       )}
 
-      <div data-testid="step-duplicates-table w-full">
+      <div data-testid="step-duplicates-table" className="w-full">
         <DataTable
           columns={columns}
           data={pageItems}

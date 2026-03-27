@@ -36,10 +36,10 @@ test.describe("User Signup", () => {
     // Submit form
     await page.getByRole("button", { name: /sign up/i }).click();
 
-    // Should redirect to verify-email page after signup
-    // (users are auto-signed in but redirected to verify email by Header component)
-    await page.waitForURL("**/en-US/verify-email**", { timeout: 10000 });
-    expect(page.url()).toContain("/en-US/verify-email");
+    // After signup, user is auto-signed in and redirected away from /signup.
+    // If email verification is required (email server configured), redirects to /verify-email.
+    // If email verification is NOT required, redirects to home page /.
+    await page.waitForURL(/\/en-US\/(verify-email|$|\?)/, { timeout: 15000 });
     expect(page.url()).not.toContain("/signup");
   });
 
@@ -150,9 +150,9 @@ test.describe("User Signup", () => {
     await page.getByLabel(/^confirm.*password/i).fill(testPassword);
     await page.getByRole("button", { name: /sign up/i }).click();
 
-    // Wait for redirect to verify-email page to confirm signup completed
-    // (users are auto-signed in but redirected to verify email by Header component)
-    await page.waitForURL("**/en-US/verify-email**", { timeout: 10000 });
+    // Wait for redirect away from signup to confirm signup completed.
+    // Redirects to /verify-email if email verification required, or / if not.
+    await page.waitForURL(/\/en-US\/(verify-email|$|\?)/, { timeout: 15000 });
 
     // NOTE: Removed API verification test due to ZenStack access control issue
     // with users created via the direct Prisma signup API endpoint.

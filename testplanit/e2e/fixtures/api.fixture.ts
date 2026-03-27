@@ -874,18 +874,30 @@ export class ApiHelper {
    * Get the current authenticated user ID
    */
   async getCurrentUserId(): Promise<string> {
-    const response = await this.request.get(`${this.baseURL}/api/auth/session`);
+    // Retry on transient connection errors (ECONNRESET)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await this.request.get(`${this.baseURL}/api/auth/session`);
 
-    if (!response.ok()) {
-      throw new Error("Failed to get current user session");
+        if (!response.ok()) {
+          throw new Error("Failed to get current user session");
+        }
+
+        const session = await response.json();
+        if (!session?.user?.id) {
+          throw new Error("No authenticated user found in session");
+        }
+
+        return session.user.id;
+      } catch (error: any) {
+        if (attempt < 2 && error.message?.includes("ECONNRESET")) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        throw error;
+      }
     }
-
-    const session = await response.json();
-    if (!session?.user?.id) {
-      throw new Error("No authenticated user found in session");
-    }
-
-    return session.user.id;
+    throw new Error("Failed to get current user session after retries");
   }
 
   /**
@@ -1089,11 +1101,11 @@ export class ApiHelper {
 
     // Assign all milestone types to project (required for milestones)
     const milestoneTypesResponse = await this.request.get(
-      `${this.baseURL}/api/model/milestoneType/findMany`,
+      `${this.baseURL}/api/model/milestoneTypes/findMany`,
       {
         params: {
           q: JSON.stringify({
-            where: { isDeleted: false, isEnabled: true },
+            where: { isDeleted: false },
           }),
         },
       }
@@ -1110,7 +1122,7 @@ export class ApiHelper {
         }));
 
         const milestoneTypeAssignResponse = await this.request.post(
-          `${this.baseURL}/api/model/projectMilestoneTypeAssignment/createMany`,
+          `${this.baseURL}/api/model/milestoneTypesAssignment/createMany`,
           {
             data: {
               data: milestoneTypeAssignments,

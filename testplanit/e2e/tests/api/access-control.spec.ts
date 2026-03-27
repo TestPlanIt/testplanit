@@ -623,6 +623,23 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     // Create a project (defaults to GLOBAL_ROLE access type — any USER with a role can access)
     projectId = await api.createProject(`ACL-06 Steps Project ${Date.now()}`);
 
+    // Explicitly add the member as GLOBAL_ROLE user on this project.
+    // This ensures the userPermissions-based policy path in ZenStack evaluation succeeds,
+    // avoiding issues with the defaultAccessType-only path for deeply nested models.
+    const baseURL = api["baseURL"];
+    await api["request"].post(
+      `${baseURL}/api/model/userProjectPermission/create`,
+      {
+        data: {
+          data: {
+            userId: memberUserId,
+            projectId: projectId,
+            accessType: "GLOBAL_ROLE",
+          },
+        },
+      }
+    );
+
     // Create a test case via admin for the member to add steps to
     const rootFolderId = await api.getRootFolderId(projectId);
     caseId = await api.createTestCase(
@@ -664,7 +681,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           data: {
             testCaseId: caseId,
-            step: JSON.stringify({
+            step: {
               type: "doc",
               content: [
                 {
@@ -672,8 +689,8 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Test step" }],
                 },
               ],
-            }),
-            expectedResult: JSON.stringify({
+            },
+            expectedResult: {
               type: "doc",
               content: [
                 {
@@ -681,7 +698,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Expected result" }],
                 },
               ],
-            }),
+            },
             order: 0,
             isDeleted: false,
           },
@@ -689,6 +706,10 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       }
     );
 
+    if (response.status() !== 201) {
+      const errorBody = await response.json().catch(() => null);
+      console.error("Step create failed:", response.status(), JSON.stringify(errorBody));
+    }
     expect(response.status()).toBe(201);
     const result = await response.json();
     expect(result.data.id).toBeGreaterThan(0);
@@ -703,7 +724,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           data: {
             testCaseId: caseId,
-            step: JSON.stringify({
+            step: {
               type: "doc",
               content: [
                 {
@@ -711,8 +732,8 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Original step" }],
                 },
               ],
-            }),
-            expectedResult: JSON.stringify({
+            },
+            expectedResult: {
               type: "doc",
               content: [
                 {
@@ -720,7 +741,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Original result" }],
                 },
               ],
-            }),
+            },
             order: 1,
             isDeleted: false,
           },
@@ -739,7 +760,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           where: { id: stepId },
           data: {
-            step: JSON.stringify({
+            step: {
               type: "doc",
               content: [
                 {
@@ -747,7 +768,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Updated step" }],
                 },
               ],
-            }),
+            },
           },
         },
       }
@@ -764,7 +785,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         data: {
           data: {
             testCaseId: caseId,
-            step: JSON.stringify({
+            step: {
               type: "doc",
               content: [
                 {
@@ -772,7 +793,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
                   content: [{ type: "text", text: "Step to delete" }],
                 },
               ],
-            }),
+            },
             order: 2,
             isDeleted: false,
           },

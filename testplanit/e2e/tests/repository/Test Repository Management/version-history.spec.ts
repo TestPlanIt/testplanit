@@ -314,8 +314,9 @@ test.describe("Version History", () => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
-    // Click on the version selector to open dropdown (it's a combobox)
-    const versionSelector = page.locator('button[role="combobox"]').filter({ hasText: /v\d+/ }).first();
+    // Click on the version selector to open dropdown (it's a combobox).
+    // Use last() to avoid matching the project selector combobox in the sidebar.
+    const versionSelector = page.locator('button[role="combobox"]').filter({ hasText: /v\d+/ }).last();
     await expect(versionSelector).toBeVisible({ timeout: 10000 });
     await versionSelector.click();
 

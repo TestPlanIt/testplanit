@@ -628,7 +628,8 @@ test.describe("Sorting", () => {
     await waitForTableStable(page);
 
     const table = page.locator("table").first();
-    const rows = table.locator("tbody tr");
+    // Use [data-row-id] to count only data rows, excluding expanded sub-rows
+    const rows = table.locator("tbody tr[data-row-id]");
 
     // Initial count
     const initialCount = await rows.count();

@@ -139,7 +139,7 @@ const BasicInfoDialog = React.memo(
     canCreateTags = false,
   }: any) => {
     const tCommon = useTranslations("common");
-    const parentMilestoneId = form.getValues("milestoneId");
+    const parentMilestoneId = form.getValues("milestoneId") ?? null;
 
     const basicInfoForm = useForm<z.infer<typeof BasicInfoFormSchema>>({
       resolver: zodResolver(BasicInfoFormSchema),
