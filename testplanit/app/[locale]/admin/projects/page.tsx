@@ -243,6 +243,7 @@ function ProjectAdmin() {
           groupPermissions: {
             // Group permissions link for the project
             select: {
+              groupId: true, // Expose groupId for GroupListDisplay column
               accessType: true, // Include accessType to filter later if needed
               // Select only the group relation from the permission
               group: {
@@ -262,6 +263,22 @@ function ProjectAdmin() {
                     select: { userId: true }, // Select the userId from the filtered assignments
                   },
                 },
+              },
+            },
+          },
+          codeRepositoryConfig: {
+            select: {
+              id: true,
+              repository: {
+                select: { name: true },
+              },
+            },
+          },
+          projectLlmIntegrations: {
+            select: {
+              isActive: true,
+              llmIntegration: {
+                select: { name: true, provider: true },
               },
             },
           },

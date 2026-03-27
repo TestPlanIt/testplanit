@@ -4,7 +4,7 @@ import { authOptions } from "~/server/auth";
 import { ShareLayoutContent } from "./ShareLayoutContent";
 
 export const metadata: Metadata = {
-  title: "Shared Content | TestPlanIt",
+  title: "Shared Content",
   description: "View shared content from TestPlanIt",
 };
 

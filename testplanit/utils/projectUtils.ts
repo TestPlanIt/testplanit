@@ -9,7 +9,6 @@ type ProjectWithAdminDataInput = Prisma.ProjectsGetPayload<{
   include: {
     // Includes from admin/projects/page.tsx
     creator: true;
-    icon: true;
     milestones: {
       include: { milestoneType: { include: { icon: true } } };
     };
@@ -20,9 +19,16 @@ type ProjectWithAdminDataInput = Prisma.ProjectsGetPayload<{
     assignedUsers: { select: { userId: true; projectId: true } }; // Keep projectId if needed
     groupPermissions: {
       select: {
+        groupId: true;
         accessType: true;
         group: { select: { assignedUsers: { select: { userId: true } } } };
       };
+    };
+    codeRepositoryConfig: {
+      select: { id: true; repository: { select: { name: true } } };
+    };
+    projectLlmIntegrations: {
+      select: { isActive: true; llmIntegration: { select: { name: true; provider: true } } };
     };
     _count: {
       select: {

@@ -342,6 +342,8 @@
       "provider": "Proveedor",
       "updatedAt": "Actualizado el",
       "tools": "Herramientas",
+      "codeRepository": "Repositorio de código",
+      "aiModels": "LLM predeterminado",
       "configKeys": {
         "edit_results_duration": "Editar Duración de Resultados",
         "project_docs_default": "Projektdokument",
@@ -1505,7 +1507,7 @@
     }
   },
   "users": {
-    "description": "Administrar usuarios, grupos y roles",
+    "description": "Gestiona las cuentas de usuario, establece los niveles de acceso al sistema y asigna roles globales.",
     "filter": "Filtrar usuarios...",
     "profile": {
       "title": "Perfil de usuario",
@@ -3349,7 +3351,7 @@
       }
     },
     "roles": {
-      "description": "Administrar roles de usuario",
+      "description": "Defina qué acciones pueden realizar los usuarios activando o desactivando los permisos para cada área de la aplicación.",
       "filterPlaceholder": "Filtrar roles...",
       "add": {
         "button": "Añadir rol",
@@ -3489,7 +3491,7 @@
     },
     "groups": {
       "description": {
-        "groupInfo": "Organizar usuarios en Grupos para facilitar la administración de permisos."
+        "groupInfo": "Organice a los usuarios en grupos para asignarles acceso y roles a los proyectos de forma masiva."
       },
       "filterPlaceholder": "Filtrar grupos...",
       "add": {

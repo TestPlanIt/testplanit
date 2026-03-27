@@ -1,3 +1,15 @@
+## [0.18.8](https://github.com/TestPlanIt/testplanit/compare/v0.18.7...v0.18.8) (2026-03-27)
+
+### Bug Fixes
+
+* **permissions:** Fix ACLs on Steps table ([#156](https://github.com/TestPlanIt/testplanit/issues/156)) ([c75ee1f](https://github.com/TestPlanIt/testplanit/commit/c75ee1fd2a3f6e07404f14db57eec9d63b83b3ed))
+
+## [0.18.7](https://github.com/TestPlanIt/testplanit/compare/v0.18.6...v0.18.7) (2026-03-26)
+
+### Enhancements
+
+* **page titles:** Enhancement/page routing improvements ([#154](https://github.com/TestPlanIt/testplanit/issues/154)) ([6470b7e](https://github.com/TestPlanIt/testplanit/commit/6470b7e8e94f2dbb490bc4ea2a8d6b426122a5ed))
+
 ## [0.18.6](https://github.com/TestPlanIt/testplanit/compare/v0.18.5...v0.18.6) (2026-03-26)
 
 ### Bug Fixes

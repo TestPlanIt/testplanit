@@ -1,3 +1,4 @@
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { UserListDisplay } from "@/components/tables/UserListDisplay";
 import { Groups } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -9,6 +10,9 @@ import { EditGroupModal } from "./EditGroup";
 export interface ExtendedGroups extends Groups {
   assignedUsers: {
     userId: string;
+  }[];
+  projectPermissions: {
+    projectId: number;
   }[];
 }
 
@@ -38,6 +42,22 @@ export const getColumns = (
     cell: ({ row }) => (
       <div className="text-center">
         <UserListDisplay users={row.original.assignedUsers} />
+      </div>
+    ),
+  },
+  {
+    id: "projects",
+    accessorKey: "projects",
+    accessorFn: (row) => row.projectPermissions,
+    header: t("fields.projects"),
+    enableSorting: false,
+    enableResizing: true,
+    size: 100,
+    cell: ({ row }) => (
+      <div className="text-center">
+        <ProjectListDisplay
+          projects={row.original.projectPermissions}
+        />
       </div>
     ),
   },

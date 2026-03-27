@@ -1,8 +1,10 @@
+import { Badge } from "@/components/ui/badge";
 import { Brain, Sparkles, Zap } from "lucide-react";
+import { cn } from "~/utils";
 
 /**
  * Shared LLM provider badge colors and icons.
- * Used in admin LLM table and project settings LLM cards.
+ * Used in admin LLM table, project settings LLM cards, and admin projects table.
  */
 
 export const LLM_PROVIDER_COLORS: Record<string, string> = {
@@ -47,4 +49,32 @@ export function getProviderIcon(
     default:
       return <Sparkles className={`${className} text-gray-600`} />;
   }
+}
+
+interface LlmProviderBadgeProps {
+  provider: string;
+  name?: string;
+  showIcon?: boolean;
+  iconSize?: string;
+  className?: string;
+}
+
+export function LlmProviderBadge({
+  provider,
+  name,
+  showIcon = false,
+  iconSize = "h-3 w-3",
+  className,
+}: LlmProviderBadgeProps) {
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(getProviderColor(provider), className)}
+    >
+      {showIcon && (
+        <span className="mr-1 shrink-0">{getProviderIcon(provider, iconSize)}</span>
+      )}
+      {name ?? provider.replace("_", " ")}
+    </Badge>
+  );
 }

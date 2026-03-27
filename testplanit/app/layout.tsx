@@ -4,7 +4,10 @@ import Script from "next/script";
 import "~/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "TestPlanIt - Modern Test Management Platform",
+  title: {
+    template: "%s | TestPlanIt",
+    default: "TestPlanIt - Modern Test Management Platform",
+  },
   description:
     "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
   icons: {
@@ -21,9 +24,9 @@ export const metadata: Metadata = {
     siteName: "TestPlanIt",
     images: [
       {
-        url: "/tpi_logo_square.png",
-        width: 1041,
-        height: 1041,
+        url: "/tpi_logo_og.png",
+        width: 1200,
+        height: 630,
         alt: "TestPlanIt Logo",
       },
     ],
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
     title: "TestPlanIt - Modern Test Management Platform",
     description:
       "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
-    images: ["/tpi_logo_square.png"],
+    images: ["/tpi_logo_og.png"],
   },
 };
 

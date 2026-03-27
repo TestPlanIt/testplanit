@@ -9,11 +9,12 @@ TestPlanIt uses a sophisticated multi-level permission system that combines syst
 
 ## Overview
 
-TestPlan It's permission model has three layers:
+TestPlanIt's permission model has four layers:
 
-1. **System Access Levels** - Global access tiers for all users
-2. **Project Access Control** - Project-specific permission management
-3. **Role-Based Permissions** - Granular control over features and actions
+1. **System Access Levels** - Global access tiers for all users (`ADMIN`, `PROJECTADMIN`, `USER`, `NONE`)
+2. **Roles** - Named sets of permissions across application areas (e.g., can add/edit test cases, can delete test runs)
+3. **Groups** - Collections of users that can be assigned project-level access in bulk
+4. **Project Access Control** - Per-user or per-group overrides that determine which role applies in each project
 
 These layers work together to provide flexible, secure access control across the entire application.
 
@@ -200,8 +201,8 @@ Projects can be configured with different access models to control who can view 
 
 - User cannot access the project
 - Overrides all other permissions
-- Even ADMIN users respect NO_ACCESS (except system admins)
-- Highest priority denial
+- Overrides group and default access
+- System Administrators (access level `ADMIN`) are **not** affected by NO_ACCESS — they always have full access
 
 ### Configuring Project Access
 
@@ -230,18 +231,25 @@ Roles define what actions users can perform within projects. TestPlanIt uses app
 
 ### Application Areas
 
-Permissions are granted per application area:
+Permissions are granted per application area. The complete list of areas is:
 
-- **Repository** - Test case management
-- **TestRuns** - Test execution and results
-- **Sessions** - Exploratory testing sessions
-- **Milestones** - Project milestones
-- **Issues** - Issue tracking
-- **ProjectManagement** - Project configuration
-- **Documentation** - Project documentation
-- **Shared Steps** - Shared test step groups
-- **Configurations** - Test configurations
-- **Forecasting** - Time forecasting
+- **Documentation** - Creating and editing project documentation
+- **Milestones** - Creating, editing, and deleting project milestones
+- **TestCaseRepository** - Creating, editing, deleting, and organizing test case folders and test cases (including test steps)
+- **TestCaseRestrictedFields** - Editing restricted field values on test cases
+- **TestRuns** - Creating, editing, and deleting active test runs
+- **ClosedTestRuns** - Deleting completed or archived test runs
+- **TestRunResults** - Recording and managing results for test cases within a run
+- **TestRunResultRestrictedFields** - Recording restricted field values on test run results
+- **Sessions** - Creating and managing active test sessions
+- **SessionsRestrictedFields** - Recording restricted field values on test sessions
+- **ClosedSessions** - Deleting completed or archived test sessions
+- **SessionResults** - Recording and managing results for test cases within a session
+- **Tags** - Creating new tags
+- **SharedSteps** - Managing shared test step groups
+- **Issues** - Issue tracking and management
+- **IssueIntegration** - Managing external issue tracker integrations
+- **Forecasting** - Time and effort forecasting
 - **Reporting** - Reports and analytics
 - **Settings** - Project settings
 
@@ -306,19 +314,21 @@ TestPlanIt includes several pre-configured roles:
 
 ### Role Assignment
 
-Roles can be assigned:
+Roles can be assigned at multiple levels:
 
-1. **Globally** - User's system-wide default role
-2. **Per-Project** - Override global role for specific projects
-3. **Via Groups** - Inherit role from group membership
+1. **Globally** - Every user has a system-wide default role (set in **Administration > Users**)
+2. **Per-Project (User)** - A user can be given a specific role for a project (set in **Project Settings > Members**)
+3. **Per-Project (Group)** - A group can be given a specific role for a project (set in **Project Settings > Members**)
 
-**Assignment Priority**:
+**Effective Role Resolution** (highest to lowest priority):
 
-1. Explicit user permission (highest priority)
-2. Group permission
-3. Project default role
-4. User's global role
-5. System defaults (lowest priority)
+1. System `ADMIN` or `PROJECTADMIN` access level → full permissions, role is irrelevant
+2. Explicit user-project permission with `SPECIFIC_ROLE` → uses the assigned project role
+3. Explicit user-project permission with `GLOBAL_ROLE` → uses the user's global role
+4. Group-project permission with `SPECIFIC_ROLE` → uses the group's assigned project role
+5. Project default access with `SPECIFIC_ROLE` → uses the project's default role
+6. Project default access with `GLOBAL_ROLE` → uses the user's global role
+7. No match → access denied
 
 ## Group-Based Permissions
 
@@ -347,9 +357,15 @@ Groups provide an efficient way to manage permissions for teams.
 ### Group Permission Behavior
 
 - **All group members inherit** the group's project permissions
-- **Individual permissions override** group permissions
-- **Multiple groups** - User gets highest permissions
-- **NO_ACCESS denial** overrides group permissions
+- **Individual user permissions override** group permissions (if a user has an explicit project permission, it takes precedence)
+- **Multiple groups** - If a user belongs to multiple groups with access to the same project, the first group with a `SPECIFIC_ROLE` assignment is used
+- **NO_ACCESS denial** on a user overrides group permissions
+- **Groups with GLOBAL_ROLE** - Each group member uses their own global role for permissions in that project
+- **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project
+
+:::note
+Group permissions are assigned **per project** in **Project Settings > Members**, not globally in the Admin > Groups page. The Admin > Groups page only manages group membership (which users belong to which group).
+:::
 
 ### Use Cases
 
@@ -404,7 +420,7 @@ Understanding how TestPlanIt resolves permissions when multiple rules apply:
 
 5. **Group Permission**
    - Check if user is in groups with project access
-   - Multiple groups → highest permissions win
+   - If multiple groups have access, the first group with a `SPECIFIC_ROLE` assignment is used
 
 6. **Project Default Access**
    - Apply project's default access type
@@ -458,12 +474,17 @@ Result: Jane cannot access, despite being a PROJECTADMIN
 
 ```text
 User: Alex
-Group 1: "Testers" → Tester role
-Group 2: "Managers" → Manager role
+Group 1: "Testers" → SPECIFIC_ROLE with Tester role
+Group 2: "Managers" → SPECIFIC_ROLE with Manager role
 Project: Both groups assigned
 
-Result: Alex gets Manager permissions (highest)
+Result: Alex gets the role from whichever group permission is evaluated first
+(the system does not automatically pick the most permissive role)
 ```
+
+:::tip
+To ensure predictable results, avoid assigning a user to multiple groups with different `SPECIFIC_ROLE` assignments on the same project. Instead, assign the user an explicit project-level permission to override group access.
+:::
 
 ## Common Permission Scenarios
 
@@ -628,8 +649,7 @@ Result: Alex gets Manager permissions (highest)
 1. **Functional Groups** - Organize by department or function
 2. **Project Groups** - Create project-specific teams when needed
 3. **Temporary Groups** - Use for short-term projects
-4. **Group Hierarchies** - Consider nested group structure
-5. **Naming Conventions** - Use consistent group naming
+4. **Naming Conventions** - Use consistent group naming
 
 ### Security
 
@@ -693,22 +713,16 @@ Result: Alex gets Manager permissions (highest)
 
 Permission information is accessible via API:
 
-**Get User Permissions**:
+**Get User Permissions for a Project**:
 
 ```http
-GET /api/users/{userId}/permissions
+GET /api/get-user-permissions?userId={userId}&projectId={projectId}
 ```
 
-**Get Project Members**:
+**Update User Project Permission** (via ZenStack REST API):
 
 ```http
-GET /api/projects/{projectId}/members
-```
-
-**Update User Project Permission**:
-
-```http
-PUT /api/model/UserProjectPermission/update
+PUT /api/model/userProjectPermission/update
 Content-Type: application/json
 
 {

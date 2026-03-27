@@ -39,9 +39,7 @@ export async function fetchPageMetadata(
     }
 
     const data: MetadataResponse = await response.json();
-    const title = data.title
-      ? `${data.title} | TestPlanIt`
-      : `${DEFAULT_TITLE}`;
+    const title = data.title || DEFAULT_TITLE;
     const description = data.description || DEFAULT_DESCRIPTION;
 
     return {

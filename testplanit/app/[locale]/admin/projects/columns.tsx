@@ -1,5 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
 import {
   MilestoneListDisplay, MilestonesWithTypes
 } from "@/components/tables/MilestoneListDisplay";
@@ -14,8 +16,9 @@ import {
   User
 } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Bug, SquarePen } from "lucide-react";
+import { Bug, GitBranchIcon, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { LlmProviderBadge } from "~/lib/llm/provider-styles";
 import { DeleteProjectModal } from "./DeleteProject";
 
 export interface ExtendedProjects extends Projects {
@@ -29,6 +32,17 @@ export interface ExtendedProjects extends Projects {
   projectIntegrations?: (ProjectIntegration & {
     integration: Integration;
   })[];
+  groupPermissions: {
+    groupId: number;
+  }[];
+  codeRepositoryConfig: {
+    id: number;
+    repository: { name: string };
+  } | null;
+  projectLlmIntegrations: {
+    isActive: boolean;
+    llmIntegration: { name: string; provider: string };
+  }[];
   effectiveUserIds: string[];
 }
 
@@ -74,6 +88,20 @@ export const getColumns = (
           <UserListDisplay
             users={row.original.effectiveUserIds.map((id) => ({ userId: id }))}
           />
+        </div>
+      ),
+    },
+    {
+      id: "groups",
+      accessorKey: "groups",
+      accessorFn: (row) => row.groupPermissions,
+      header: tCommon("fields.groups"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 100,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <GroupListDisplay groups={row.original.groupPermissions} />
         </div>
       ),
     },
@@ -130,23 +158,81 @@ export const getColumns = (
       },
     },
     {
+      id: "codeRepository",
+      accessorKey: "codeRepositoryConfig",
+      header: tCommon("fields.codeRepository"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 150,
+      cell: ({ row }) => {
+        const config = row.original.codeRepositoryConfig;
+        return (
+          <div
+            className="flex items-center gap-1"
+            data-testid="code-repo-indicator"
+            data-active={!!config}
+          >
+            <GitBranchIcon
+              className={`h-4 w-4 shrink-0 ${config ? "text-primary" : "opacity-25"}`}
+            />
+            <span className="truncate whitespace-nowrap">
+              {config
+                ? config.repository.name
+                : tCommon("status.notApplicable")}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "aiModels",
+      accessorKey: "projectLlmIntegrations",
+      accessorFn: (row) => row.projectLlmIntegrations,
+      header: tCommon("fields.aiModels"),
+      enableSorting: false,
+      enableResizing: true,
+      size: 150,
+      cell: ({ row }) => {
+        const activeModels = row.original.projectLlmIntegrations?.filter(
+          (i) => i.isActive
+        );
+        const hasActive = activeModels && activeModels.length > 0;
+        if (!hasActive) {
+          return (
+            <span className="text-muted-foreground text-sm" data-testid="ai-model-indicator" data-active={false}>
+              {tCommon("status.notApplicable")}
+            </span>
+          );
+        }
+        return (
+          <div className="flex flex-wrap gap-1" data-testid="ai-model-indicator" data-active={true}>
+            {activeModels.map((m) => (
+              <LlmProviderBadge
+                key={m.llmIntegration.name}
+                provider={m.llmIntegration.provider}
+                name={m.llmIntegration.name}
+                showIcon
+              />
+            ))}
+          </div>
+        );
+      },
+    },
+    {
       id: "createdAt",
       accessorKey: "createdAt",
-      header: tCommon("fields.createdAt"),
+      header: tCommon("fields.created"),
       enableSorting: true,
       enableResizing: true,
       size: 100,
-      cell: ({ getValue }) => (
-        <div className="whitespace-nowrap">
-          <DateFormatter
-            date={getValue() as Date | string}
-            formatString={
-              userPreferences.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
-            }
-            timezone={userPreferences.user.preferences?.timezone || "Etc/UTC"}
-          />
-        </div>
-      ),
+      cell: ({ getValue }) => {
+        const date = getValue() as Date | string;
+        return date ? (
+          <div className="whitespace-nowrap">
+            <RelativeTimeTooltip date={date} />
+          </div>
+        ) : null;
+      },
     },
     {
       id: "isCompleted",

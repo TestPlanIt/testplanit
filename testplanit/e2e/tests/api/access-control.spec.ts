@@ -601,3 +601,200 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     expect(response.status()).toBe(422);
   });
 });
+
+test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
+  let memberCtx: BrowserContext;
+  let projectId: number;
+  let caseId: number;
+  let memberEmail: string;
+  let memberUserId: string;
+
+  test.beforeAll(async ({ browser, baseURL, api }) => {
+    // Create a regular USER-access member (gets default global role with canAddEdit: true)
+    memberEmail = `acl-steps-${Date.now()}@example.com`;
+    const memberResult = await api.createUser({
+      name: "ACL Steps Member",
+      email: memberEmail,
+      password: "password123",
+      access: "USER",
+    });
+    memberUserId = memberResult.data.id;
+
+    // Create a project (defaults to GLOBAL_ROLE access type — any USER with a role can access)
+    projectId = await api.createProject(`ACL-06 Steps Project ${Date.now()}`);
+
+    // Create a test case via admin for the member to add steps to
+    const rootFolderId = await api.getRootFolderId(projectId);
+    caseId = await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `ACL-06 Case ${Date.now()}`
+    );
+
+    // Sign in as the member user
+    memberCtx = await browser.newContext({
+      storageState: undefined,
+      extraHTTPHeaders: {
+        "Sec-Fetch-Site": "same-origin",
+      },
+    });
+    const memberPage = await memberCtx.newPage();
+    await memberPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
+    await memberPage.getByTestId("email-input").fill(memberEmail);
+    await memberPage.getByTestId("password-input").fill("password123");
+    await memberPage.locator('button[type="submit"]').first().click();
+    await memberPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+    await memberPage.close();
+  });
+
+  test.afterAll(async ({ api }) => {
+    await api.deleteProject(projectId);
+    await api.deleteUser(memberUserId);
+    await memberCtx.close();
+  });
+
+  test("GLOBAL_ROLE member can create a Step on a RepositoryCase", async ({
+    baseURL,
+  }) => {
+    // This tests the fix: GLOBAL_ROLE users could create RepositoryCases
+    // but were denied creating Steps due to missing permission paths
+    const response = await memberCtx.request.post(
+      `${baseURL}/api/model/steps/create`,
+      {
+        data: {
+          data: {
+            testCaseId: caseId,
+            step: JSON.stringify({
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Test step" }],
+                },
+              ],
+            }),
+            expectedResult: JSON.stringify({
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Expected result" }],
+                },
+              ],
+            }),
+            order: 0,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    expect(response.status()).toBe(201);
+    const result = await response.json();
+    expect(result.data.id).toBeGreaterThan(0);
+    expect(result.data.testCaseId).toBe(caseId);
+  });
+
+  test("GLOBAL_ROLE member can update a Step", async ({ baseURL }) => {
+    // First create a step
+    const createResponse = await memberCtx.request.post(
+      `${baseURL}/api/model/steps/create`,
+      {
+        data: {
+          data: {
+            testCaseId: caseId,
+            step: JSON.stringify({
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Original step" }],
+                },
+              ],
+            }),
+            expectedResult: JSON.stringify({
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Original result" }],
+                },
+              ],
+            }),
+            order: 1,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    const stepId = created.data.id;
+
+    // Now update the step
+    const updateResponse = await memberCtx.request.patch(
+      `${baseURL}/api/model/steps/update`,
+      {
+        data: {
+          where: { id: stepId },
+          data: {
+            step: JSON.stringify({
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Updated step" }],
+                },
+              ],
+            }),
+          },
+        },
+      }
+    );
+
+    expect(updateResponse.status()).toBe(200);
+  });
+
+  test("GLOBAL_ROLE member can soft-delete a Step", async ({ baseURL }) => {
+    // Create a step to delete
+    const createResponse = await memberCtx.request.post(
+      `${baseURL}/api/model/steps/create`,
+      {
+        data: {
+          data: {
+            testCaseId: caseId,
+            step: JSON.stringify({
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Step to delete" }],
+                },
+              ],
+            }),
+            order: 2,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    const stepId = created.data.id;
+
+    // Soft-delete the step
+    const deleteResponse = await memberCtx.request.patch(
+      `${baseURL}/api/model/steps/update`,
+      {
+        data: {
+          where: { id: stepId },
+          data: { isDeleted: true },
+        },
+      }
+    );
+
+    expect(deleteResponse.status()).toBe(200);
+  });
+});

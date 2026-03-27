@@ -126,6 +126,16 @@ function GroupList() {
             },
           },
         },
+        projectPermissions: {
+          select: {
+            projectId: true,
+          },
+          where: {
+            project: {
+              isDeleted: false,
+            },
+          },
+        },
       },
     },
     {

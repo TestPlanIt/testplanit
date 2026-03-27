@@ -7,7 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CheckCircle, Sparkles, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type MutableRefObject } from "react";
-import { getProviderColor } from "~/lib/llm/provider-styles";
+import { LlmProviderBadge } from "~/lib/llm/provider-styles";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
 import { EditLlmIntegration } from "./EditLlmIntegration";
 import { TestLlmIntegration } from "./TestLlmIntegration";
@@ -57,9 +57,7 @@ export const getColumns = (
     enableResizing: true,
     size: 150,
     cell: ({ row }) => (
-      <Badge className={getProviderColor(row.original.provider)}>
-        {row.original.provider.replace("_", " ")}
-      </Badge>
+      <LlmProviderBadge provider={row.original.provider} />
     ),
   },
   {

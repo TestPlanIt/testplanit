@@ -30,13 +30,13 @@ import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
-import { Control } from "react-hook-form";
+import { Control, FieldPath, FieldValues } from "react-hook-form";
 import { cn, type ClassValue } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 
-interface DateRangePickerFieldProps {
-  control: Control<any>;
-  name: string;
+interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
   label?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -56,7 +56,7 @@ interface RangeCategory {
   ranges: Record<string, PredefinedRange>;
 }
 
-export function DateRangePickerField({
+export function DateRangePickerField<T extends FieldValues = FieldValues>({
   control,
   name,
   label,
@@ -66,7 +66,7 @@ export function DateRangePickerField({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
-}: DateRangePickerFieldProps) {
+}: DateRangePickerFieldProps<T>) {
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const tReports = useTranslations("reports.ui");
