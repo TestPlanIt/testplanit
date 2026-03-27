@@ -8,7 +8,7 @@ services:
     env_file:
       - .env.production
     ports:
-      - "30000:3000"
+      - "${DOCKER_PROD_APP_PORT:-30000}:3000"
     networks:
       - testplanit-net
     restart: unless-stopped
@@ -81,7 +81,7 @@ services:
     volumes:
       - ./docker-data/postgres:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DOCKER_POSTGRES_PORT:-5432}:5432"
     networks:
       - testplanit-net
     restart: unless-stopped
@@ -97,7 +97,7 @@ services:
     container_name: testplanit-valkey
     image: valkey/valkey:8-alpine
     ports:
-      - "6379:6379"
+      - "${DOCKER_VALKEY_PORT:-6379}:6379"
     networks:
       - testplanit-net
     restart: unless-stopped
@@ -134,8 +134,8 @@ services:
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "${DOCKER_ELASTICSEARCH_HTTP_PORT:-9200}:9200"
+      - "${DOCKER_ELASTICSEARCH_TRANSPORT_PORT:-9300}:9300"
     networks:
       - testplanit-net
     restart: unless-stopped
@@ -162,8 +162,8 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin123
       MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://localhost:9000}
     ports:
-      - "9000:9000"  # MinIO API (for external access)
-      - "9001:9001"  # MinIO Console (direct access for admin)
+      - "${DOCKER_MINIO_API_PORT:-9000}:9000"  # MinIO API (for external access)
+      - "${DOCKER_MINIO_CONSOLE_PORT:-9001}:9001"  # MinIO Console (direct access for admin)
     networks:
       - testplanit-net
     restart: unless-stopped
@@ -182,7 +182,7 @@ services:
     container_name: testplanit-nginx
     image: nginx:alpine
     ports:
-      - "80:80"   # HTTP port (your external reverse proxy should point here)
+      - "${DOCKER_NGINX_HTTP_PORT:-80}:80"   # HTTP port (your external reverse proxy should point here)
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./maintenance.html:/etc/nginx/maintenance.html:ro

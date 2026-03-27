@@ -14,7 +14,7 @@ services:
       - /app/node_modules # Prevent host node_modules from overwriting container's
       - /app/.next # Prevent host .next from overwriting container's
     ports:
-      - "3000:3000"
+      - "${DOCKER_DEV_APP_PORT:-3000}:3000"
     # Use wait script, then execute next dev directly from node_modules
     entrypoint: ["/usr/local/bin/wait-for-postgres.sh", "postgres", "5432", "./node_modules/.bin/next", "dev"]
     networks:
@@ -78,7 +78,7 @@ services:
     volumes:
       - ./docker-data/postgres:/var/lib/postgresql/data
     ports:
-      - "5432:5432" # Expose port 5432 for potential external access/debugging
+      - "${DOCKER_POSTGRES_PORT:-5432}:5432" # Expose Postgres on configurable host port
     networks:
       - testplanit-net
     healthcheck:
@@ -91,7 +91,7 @@ services:
     container_name: testplanit-valkey
     image: valkey/valkey:8-alpine
     ports:
-      - "6379:6379"
+      - "${DOCKER_VALKEY_PORT:-6379}:6379"
     networks:
       - testplanit-net
     healthcheck:

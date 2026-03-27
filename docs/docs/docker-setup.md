@@ -110,6 +110,34 @@ The Docker Compose setup starts these containerized services:
 
     **Important:** The `.env.production` file contains many other variables (database, Valkey, Elasticsearch, MinIO connections) that are already configured correctly for Docker. Only modify the variables shown above unless you're using external services.
 
+    ### Optional: Change External Docker Ports
+
+    You can override host-exposed ports with `DOCKER_*_PORT` variables (for example `DOCKER_POSTGRES_PORT=5732`).
+
+    Compose files use fallback syntax such as `${DOCKER_POSTGRES_PORT:-5432}:5432`, which means:
+
+    - use `DOCKER_POSTGRES_PORT` when set
+    - otherwise fall back to `5432`
+
+    Important behavior:
+
+    - `env_file:` in `docker-compose*.yml` sets runtime variables inside containers
+    - it does **not** control Compose interpolation for published ports
+
+    If you changed port values in `.env.development` or `.env.production`, run Compose with `--env-file`:
+
+    ```bash
+    # Development
+    docker compose --env-file .env.development -f docker-compose.dev.yml up -d --build
+
+    # Production
+    docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+    ```
+
+    Alternatively, place the `DOCKER_*_PORT` values in a local `.env` file (auto-loaded by Compose).
+
+    Note: this only changes external host bindings. Internal service ports stay the same (for example PostgreSQL remains `postgres:5432` inside the Docker network).
+
 4. **Choose Your Services:**
 
     TestPlanIt uses Docker Compose profiles to make services optional:
@@ -188,8 +216,8 @@ The Docker Compose setup starts these containerized services:
 7. **Access Additional Services (if enabled):**
     - **MinIO Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
     - **Elasticsearch** (`with-elasticsearch`): [http://localhost:9200](http://localhost:9200)
-    - **PostgreSQL** (`with-postgres`): `localhost:5432` (user: `user` / password: `password`)
-    - **Valkey** (`with-valkey`): `localhost:6379`
+    - **PostgreSQL** (`with-postgres`): `localhost:<DOCKER_POSTGRES_PORT>` (default `5432`; user: `user` / password: `password`)
+    - **Valkey** (`with-valkey`): `localhost:<DOCKER_VALKEY_PORT>` (default `6379`)
 
 ## Environment Management
 
