@@ -1,12 +1,3 @@
-import { LLM_FEATURES } from "@/lib/llm/constants";
-import type { BatchableItem } from "@/lib/llm/services/batch-processor";
-import {
-  createBatches,
-  executeBatches
-} from "@/lib/llm/services/batch-processor";
-import { LlmManager } from "@/lib/llm/services/llm-manager.service";
-import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
-import type { LlmRequest } from "@/lib/llm/types";
 import { prisma } from "@/lib/prisma";
 import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
@@ -17,9 +8,6 @@ import {
   getElasticsearchClient,
   getRepositoryCaseIndexName
 } from "~/services/elasticsearchService";
-
-// Allow up to 5 minutes for LLM requests with large test case repositories
-export const maxDuration = 300;
 
 // Request validation schema
 // Note: description and docs can be TipTap JSON objects or strings
@@ -38,17 +26,6 @@ const MagicSelectRequestSchema = z.object({
   countOnly: z.boolean().optional(),
 });
 
-// Compressed test case structure for LLM context
-interface CompressedTestCase {
-  id: number;
-  name: string;
-  folderPath: string;
-  tags: string[];
-  fields: Record<string, string>;
-  linksTo: number[];
-  linksFrom: number[];
-}
-
 // Helper to parse env var as number with fallback
 const parseEnvInt = (envVar: string | undefined, defaultValue: number): number => {
   if (!envVar) return defaultValue;
@@ -62,14 +39,6 @@ const parseEnvFloat = (envVar: string | undefined, defaultValue: number): number
   return isNaN(parsed) ? defaultValue : parsed;
 };
 
-// Truncation limits for token optimization (configurable via env vars)
-const TRUNCATION_LIMITS = {
-  testCaseName: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_CASE_NAME, 80),
-  textLongField: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_TEXT_LONG, 100),
-  otherField: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_OTHER_FIELD, 100),
-  issueDescription: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_ISSUE_DESC, 250),
-};
-
 // Search configuration for pre-filtering test cases (configurable via env vars)
 const SEARCH_CONFIG = {
   searchPreFilterThreshold: parseEnvInt(process.env.MAGIC_SELECT_SEARCH_THRESHOLD, 250),
@@ -77,6 +46,46 @@ const SEARCH_CONFIG = {
   minSearchScore: parseEnvFloat(process.env.MAGIC_SELECT_MIN_SEARCH_SCORE, 50.0),
   maxSearchResults: parseEnvInt(process.env.MAGIC_SELECT_MAX_SEARCH_RESULTS, 2000),
 };
+
+// Issue data structure
+interface IssueData {
+  id: number;
+  name: string;
+  title: string;
+  description: string | null;
+  status: string | null;
+  priority: string | null;
+  externalKey: string | null;
+  externalUrl: string | null;
+}
+
+// Extract text content from TipTap JSON
+function extractTextFromTipTap(content: unknown): string {
+  if (!content) return "";
+
+  if (typeof content === "string") {
+    try {
+      const parsed = JSON.parse(content);
+      return extractTextFromTipTap(parsed);
+    } catch {
+      return content;
+    }
+  }
+
+  if (typeof content !== "object") return "";
+
+  const obj = content as Record<string, unknown>;
+
+  if (obj.type === "text" && typeof obj.text === "string") {
+    return obj.text;
+  }
+
+  if (Array.isArray(obj.content)) {
+    return obj.content.map((child) => extractTextFromTipTap(child)).join(" ");
+  }
+
+  return "";
+}
 
 // Extract keywords from test run metadata for search pre-filtering
 function extractSearchKeywords(
@@ -238,273 +247,6 @@ function extractSearchKeywords(
   return uniqueKeywords.join(" ");
 }
 
-// Truncate string to specified length with ellipsis
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + "...";
-}
-
-// Process field value based on field type
-function processFieldValue(
-  value: unknown,
-  fieldType: string | undefined,
-  fieldOptions: Array<{ fieldOption: { id: number; name: string } }> | undefined
-): string | null {
-  if (value === null || value === undefined || value === "") return null;
-
-  // Handle Select/Dropdown - resolve ID to name
-  if (fieldType === "Select" || fieldType === "Dropdown") {
-    if (typeof value === "number" && fieldOptions) {
-      const option = fieldOptions.find((fo) => fo.fieldOption.id === value);
-      return option?.fieldOption.name || null;
-    }
-    return null;
-  }
-
-  // Handle Multi-Select - resolve IDs to names
-  if (fieldType === "Multi-Select") {
-    let ids: number[] = [];
-    if (Array.isArray(value)) {
-      ids = value;
-    } else if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) ids = parsed;
-      } catch {
-        return null;
-      }
-    }
-    if (ids.length > 0 && fieldOptions) {
-      const names = ids
-        .map(
-          (id) =>
-            fieldOptions.find((fo) => fo.fieldOption.id === id)?.fieldOption
-              .name
-        )
-        .filter(Boolean);
-      return names.length > 0 ? names.join(", ") : null;
-    }
-    return null;
-  }
-
-  // Handle Text Long (TipTap JSON) - extract plain text and truncate
-  if (fieldType === "Text Long") {
-    const textContent = extractTextFromTipTap(value);
-    return textContent
-      ? truncateText(textContent, TRUNCATION_LIMITS.textLongField)
-      : null;
-  }
-
-  // Handle other types - return as string (truncated for brevity)
-  const strValue = String(value);
-  return truncateText(strValue, TRUNCATION_LIMITS.otherField);
-}
-
-// Issue data structure
-interface IssueData {
-  id: number;
-  name: string;
-  title: string;
-  description: string | null;
-  status: string | null;
-  priority: string | null;
-  externalKey: string | null;
-  externalUrl: string | null;
-}
-
-// Build folder path from folder hierarchy
-function buildFolderPath(
-  folder: {
-    name: string;
-    parent?: { name: string; parent?: { name: string } | null } | null;
-  } | null
-): string {
-  if (!folder) return "/";
-
-  const parts: string[] = [];
-  let current: typeof folder | null = folder;
-
-  while (current) {
-    parts.unshift(current.name);
-    current = current.parent ?? null;
-  }
-
-  return "/" + parts.join("/");
-}
-
-// Extract text content from TipTap JSON
-function extractTextFromTipTap(content: unknown): string {
-  if (!content) return "";
-
-  if (typeof content === "string") {
-    try {
-      const parsed = JSON.parse(content);
-      return extractTextFromTipTap(parsed);
-    } catch {
-      return content;
-    }
-  }
-
-  if (typeof content !== "object") return "";
-
-  const obj = content as Record<string, unknown>;
-
-  if (obj.type === "text" && typeof obj.text === "string") {
-    return obj.text;
-  }
-
-  if (Array.isArray(obj.content)) {
-    return obj.content.map((child) => extractTextFromTipTap(child)).join(" ");
-  }
-
-  return "";
-}
-
-// Build system prompt for magic select
-function buildSystemPrompt(): string {
-  return `You are an expert QA engineer selecting test cases for a test run.
-Your task is to analyze the test run context and select the most relevant test cases from the repository.
-
-CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
-
-JSON structure (EXACT format required):
-{
-  "caseIds": [1, 2, 3],
-  "reasoning": "Brief explanation of why these test cases were selected"
-}
-
-SELECTION CRITERIA:
-- Match test cases to the test run name, description, documentation, linked issues, and tags
-- Include all test scenarios that may need to be executed to validate the test run's purpose
-- Consider test case tags and folder organization for relevance
-- Prioritize test cases that directly relate to the functionality being tested
-- Include both positive and negative test scenarios when applicable
-- ONLY return IDs from the provided repository - never invent case IDs
-
-IMPORTANT:
-- If no test cases match the criteria, return an empty array: {"caseIds": [], "reasoning": "No matching test cases found"}
-- Be thorough but selective - include cases that are truly relevant, not just tangentially related
-- Consider the folder structure as context for what area of functionality a test case covers
-
-Return ONLY the JSON.`;
-}
-
-// Build user prompt with test run context and repository cases
-function buildUserPrompt(
-  testRunMetadata: {
-    name: string;
-    description: unknown;
-    docs: unknown;
-    linkedIssueIds: number[];
-    tags?: string[];
-  },
-  issues: IssueData[],
-  testCases: CompressedTestCase[],
-  clarification?: string
-): string {
-  let prompt = `TEST RUN TO CREATE:
-Name: ${testRunMetadata.name}`;
-
-  const descriptionText = extractTextFromTipTap(testRunMetadata.description);
-  if (descriptionText) {
-    prompt += `\n\nDescription:\n${descriptionText}`;
-  }
-
-  const docsText = extractTextFromTipTap(testRunMetadata.docs);
-  if (docsText) {
-    prompt += `\n\nDocumentation:\n${docsText}`;
-  }
-
-  if (testRunMetadata.tags && testRunMetadata.tags.length > 0) {
-    prompt += `\n\nTags: ${testRunMetadata.tags.join(", ")}`;
-  }
-
-  if (issues.length > 0) {
-    prompt += `\n\nLINKED ISSUES:`;
-    issues.forEach((issue, i) => {
-      prompt += `\n${i + 1}. ${issue.externalKey || issue.name}: ${issue.title}`;
-      if (issue.description) {
-        const issueDesc = extractTextFromTipTap(issue.description);
-        if (issueDesc) {
-          prompt += `\n   Description: ${truncateText(issueDesc, TRUNCATION_LIMITS.issueDescription)}`;
-        }
-      }
-      if (issue.status) {
-        prompt += `\n   Status: ${issue.status}`;
-      }
-      if (issue.priority) {
-        prompt += ` | Priority: ${issue.priority}`;
-      }
-    });
-  }
-
-  if (clarification) {
-    prompt += `\n\nADDITIONAL CONTEXT FROM USER:\n${clarification}`;
-  }
-
-  // Compress test case data to reduce token usage
-  // Format: [id, name, folder?, tags[]?, fields?, linkedTo[]?, linkedFrom[]?]
-  const compressedCaseData = testCases.map((tc) => {
-    const result: (
-      | number
-      | string
-      | string[]
-      | number[]
-      | Record<string, string>
-      | null
-    )[] = [tc.id, tc.name];
-    // Only include non-empty optional fields
-    if (tc.folderPath !== "/") result.push(tc.folderPath);
-    else result.push(null);
-
-    if (tc.tags.length > 0) result.push(tc.tags);
-    else result.push(null);
-
-    if (Object.keys(tc.fields).length > 0) result.push(tc.fields);
-    else result.push(null);
-
-    if (tc.linksTo.length > 0) result.push(tc.linksTo);
-    else result.push(null);
-
-    if (tc.linksFrom.length > 0) result.push(tc.linksFrom);
-    else result.push(null);
-
-    // Trim trailing nulls
-    while (result.length > 2 && result[result.length - 1] === null) {
-      result.pop();
-    }
-    return result;
-  });
-
-  prompt += `\n\nAVAILABLE TEST CASES (${testCases.length} cases):
-Format: [id, name, folder?, tags[]?, fields?, linkedTo[]?, linkedFrom[]?]
-${JSON.stringify(compressedCaseData)}
-
-Select all relevant test cases by their IDs. Consider names, folders, tags, custom fields, and linked cases.`;
-
-  return prompt;
-}
-
-// Expand linked cases - add any cases linked to/from selected cases
-function expandLinkedCases(
-  selectedIds: number[],
-  allCases: CompressedTestCase[]
-): number[] {
-  const expandedSet = new Set(selectedIds);
-  const caseMap = new Map(allCases.map((tc) => [tc.id, tc]));
-
-  // For each selected case, add its linked cases
-  for (const caseId of selectedIds) {
-    const testCase = caseMap.get(caseId);
-    if (testCase) {
-      testCase.linksTo.forEach((linkedId) => expandedSet.add(linkedId));
-      testCase.linksFrom.forEach((linkedId) => expandedSet.add(linkedId));
-    }
-  }
-
-  return Array.from(expandedSet);
-}
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -535,7 +277,6 @@ export async function POST(request: NextRequest) {
       projectId,
       testRunMetadata,
       clarification,
-      excludeCaseIds,
       countOnly,
     } = parseResult.data;
 
@@ -590,18 +331,6 @@ export async function POST(request: NextRequest) {
 
     const project = await prisma.projects.findFirst({
       where: projectAccessWhere,
-      include: {
-        projectLlmIntegrations: {
-          where: { isActive: true },
-          include: {
-            llmIntegration: {
-              include: {
-                llmProviderConfig: true,
-              },
-            },
-          },
-        },
-      },
     });
 
     if (!project) {
@@ -610,9 +339,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Keep activeLlmIntegration for provider config token limits lookup (used later)
-    const activeLlmIntegration = project.projectLlmIntegrations[0];
 
     // Get total count of active test cases in repository
     const repositoryTotalCount = await prisma.repositoryCases.count({
@@ -843,419 +569,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build the where clause for test cases
-    const testCaseWhere: {
-      projectId: number;
-      isArchived: boolean;
-      isDeleted: boolean;
-      id?: { in: number[] };
-    } = {
-      projectId,
-      isArchived: false,
-      isDeleted: false,
-    };
-
-    // If we have search results, filter to only those IDs
-    // Otherwise, if the total is too large, limit the query
-    if (searchResultIds) {
-      testCaseWhere.id = { in: searchResultIds };
-    }
-
-    // Fetch test cases (either search-filtered or all)
-    const repositoryCases = await prisma.repositoryCases.findMany({
-      where: testCaseWhere,
-      include: {
-        folder: {
-          select: {
-            name: true,
-            parent: {
-              select: {
-                name: true,
-                parent: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        tags: {
-          select: {
-            name: true,
-          },
-        },
-        caseFieldValues: {
-          include: {
-            field: {
-              select: {
-                displayName: true,
-                systemName: true,
-                type: {
-                  select: {
-                    type: true,
-                  },
-                },
-                fieldOptions: {
-                  select: {
-                    fieldOption: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        linksFrom: {
-          where: { isDeleted: false },
-          select: {
-            caseBId: true,
-          },
-        },
-        linksTo: {
-          where: { isDeleted: false },
-          select: {
-            caseAId: true,
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-
-    if (repositoryCases.length === 0) {
-      return NextResponse.json({
-        success: true,
-        suggestedCaseIds: [],
-        reasoning: "No test cases found in the repository",
-        metadata: {
-          totalCasesAnalyzed: 0,
-          suggestedCount: 0,
-          model: "",
-          tokens: { prompt: 0, completion: 0, total: 0 },
-        },
-      });
-    }
-
-    // Compress test cases for LLM context
-    const compressedCases: CompressedTestCase[] = repositoryCases.map((tc) => {
-      // Process field values - resolve IDs to names, convert TipTap to text
-      const fields: Record<string, string> = {};
-      for (const cfv of tc.caseFieldValues) {
-        const fieldName = cfv.field?.displayName || cfv.field?.systemName;
-        if (!fieldName) continue;
-
-        const fieldType = cfv.field?.type?.type;
-        const fieldOptions = cfv.field?.fieldOptions;
-        const processedValue = processFieldValue(
-          cfv.value,
-          fieldType,
-          fieldOptions
-        );
-
-        if (processedValue) {
-          fields[fieldName] = processedValue;
-        }
-      }
-
-      return {
-        id: tc.id,
-        name: truncateText(tc.name, TRUNCATION_LIMITS.testCaseName),
-        folderPath: buildFolderPath(tc.folder),
-        tags: tc.tags.map((t) => t.name),
-        fields,
-        linksTo: tc.linksFrom.map((l) => l.caseBId),
-        linksFrom: tc.linksTo.map((l) => l.caseAId),
-      };
-    });
-
-    const manager = LlmManager.getInstance(prisma);
-
-    // Resolve prompt from database (falls back to hard-coded default)
-    const resolver = new PromptResolver(prisma);
-    const resolvedPrompt = await resolver.resolve(
-      LLM_FEATURES.MAGIC_SELECT_CASES,
-      projectId
+    // Full analysis has moved to the background worker.
+    // Use POST /api/llm/magic-select-cases/submit to start a job.
+    return NextResponse.json(
+      { error: "Full analysis has been moved to background processing. Use /api/llm/magic-select-cases/submit to start a job." },
+      { status: 410 }
     );
-
-    // Resolve LLM integration via 3-tier chain
-    const resolved = await manager.resolveIntegration(
-      LLM_FEATURES.MAGIC_SELECT_CASES,
-      projectId,
-      resolvedPrompt
-    );
-    if (!resolved) {
-      return NextResponse.json(
-        { error: "No active LLM integration found for this project" },
-        { status: 400 }
-      );
-    }
-
-    // Use resolved system prompt if from DB, otherwise use built-in
-    const systemPrompt = resolvedPrompt.source !== "fallback"
-      ? resolvedPrompt.systemPrompt
-      : buildSystemPrompt();
-
-    // Use configured max tokens (still use activeLlmIntegration for provider config)
-    const configuredMaxTokens =
-      activeLlmIntegration?.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
-      resolvedPrompt.maxOutputTokens;
-    const maxTokens = Math.max(configuredMaxTokens, 2000);
-    const maxTokensPerRequest =
-      activeLlmIntegration?.llmIntegration.llmProviderConfig?.maxTokensPerRequest ?? 4096;
-
-    // Estimate tokens for the fixed parts of the prompt (system + test run context)
-    const testRunContext = buildUserPrompt(testRunMetadata, issues, [], clarification);
-    const systemPromptTokens =
-      Math.ceil(systemPrompt.length / 4) +
-      Math.ceil(testRunContext.length / 4);
-
-    // Convert compressed cases to batchable items with token estimates
-    const batchableItems: (CompressedTestCase & BatchableItem)[] = compressedCases.map((tc) => {
-      const serialized = JSON.stringify([
-        tc.id,
-        tc.name,
-        tc.folderPath !== "/" ? tc.folderPath : null,
-        tc.tags.length > 0 ? tc.tags : null,
-        Object.keys(tc.fields).length > 0 ? tc.fields : null,
-        tc.linksTo.length > 0 ? tc.linksTo : null,
-        tc.linksFrom.length > 0 ? tc.linksFrom : null,
-      ]);
-      return {
-        ...tc,
-        estimatedTokens: Math.ceil(serialized.length / 4),
-      };
-    });
-
-    // Create batches using the shared token-aware batch processor
-    const batches = createBatches(batchableItems, {
-      maxTokensPerRequest,
-      systemPromptTokens,
-    });
-
-    console.log("=== Magic Select LLM Request ===");
-    console.log("Project ID:", projectId);
-    console.log("Test Run Name:", testRunMetadata.name);
-    console.log("Total Cases:", compressedCases.length);
-    console.log("Batches:", batches.length);
-    console.log("Linked Issues:", issues.length);
-    console.log("Prompt Source:", resolvedPrompt.source);
-    console.log("=== End Magic Select LLM Request ===\n");
-
-    // Process batches with the shared executor (retry/backoff handled by LlmManager.chat)
-    const allSuggestedIds: number[] = [];
-    const allReasonings: string[] = [];
-    let totalTokens = { prompt: 0, completion: 0, total: 0 };
-    let model = "";
-
-    const batchResult = await executeBatches({
-      batches,
-      processBatch: async (batch) => {
-        // Build prompt for just this batch of cases
-        const batchCases: CompressedTestCase[] = batch;
-        const userPrompt = buildUserPrompt(
-          testRunMetadata,
-          issues,
-          batchCases,
-          clarification
-        );
-
-        const llmRequest: LlmRequest = {
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          temperature: resolvedPrompt.temperature,
-          maxTokens,
-          userId: session.user.id,
-          feature: "magic_select_cases",
-          ...(resolved.model ? { model: resolved.model } : {}),
-          metadata: {
-            projectId,
-            testRunName: testRunMetadata.name,
-            totalCases: batchCases.length,
-            linkedIssues: testRunMetadata.linkedIssueIds.length,
-            timestamp: new Date().toISOString(),
-          },
-          timeout: 240000,
-        };
-
-        const response = await manager.chat(
-          resolved.integrationId,
-          llmRequest,
-        );
-
-        totalTokens.prompt += response.promptTokens;
-        totalTokens.completion += response.completionTokens;
-        totalTokens.total += response.totalTokens;
-        model = response.model || model;
-
-        // Parse the LLM response
-        const cleanContent = response.content.trim();
-        let jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
-
-        if (!jsonMatch) {
-          const codeBlockMatch = cleanContent.match(
-            /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
-          );
-          if (codeBlockMatch) {
-            jsonMatch = [codeBlockMatch[1]];
-          }
-        }
-
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          const validIds = new Set(batchCases.map((tc) => tc.id));
-
-          if (Array.isArray(parsed.caseIds)) {
-            const validSuggestions = parsed.caseIds.filter(
-              (id: unknown) => typeof id === "number" && validIds.has(id)
-            );
-            allSuggestedIds.push(...validSuggestions);
-          }
-
-          if (typeof parsed.reasoning === "string") {
-            allReasonings.push(parsed.reasoning);
-          }
-        }
-      },
-    });
-
-    if (batchResult.failedBatchCount > 0 && allSuggestedIds.length === 0) {
-      // All batches failed — return the error from the last batch
-      return NextResponse.json(
-        {
-          error: "Failed to parse AI response",
-          details: batchResult.errors[batchResult.errors.length - 1] ||
-            "The AI response was not in the expected format. Please try again.",
-        },
-        { status: 500 }
-      );
-    }
-
-    // Deduplicate
-    const uniqueSuggestedIds = [...new Set(allSuggestedIds)];
-
-    // Expand linked cases
-    const expandedCaseIds = expandLinkedCases(
-      uniqueSuggestedIds,
-      compressedCases
-    );
-
-    // Filter out any excluded cases
-    const finalCaseIds = excludeCaseIds
-      ? expandedCaseIds.filter((id) => !excludeCaseIds.includes(id))
-      : expandedCaseIds;
-
-    const reasoning = allReasonings.length === 1
-      ? allReasonings[0]
-      : allReasonings.map((r, i) => `Batch ${i + 1}: ${r}`).join("\n");
-
-    return NextResponse.json({
-      success: true,
-      suggestedCaseIds: finalCaseIds,
-      reasoning,
-      metadata: {
-        totalCasesAnalyzed: compressedCases.length,
-        repositoryTotalCount,
-        effectiveCaseCount,
-        suggestedCount: finalCaseIds.length,
-        directlySelected: uniqueSuggestedIds.length,
-        linkedCasesAdded: finalCaseIds.length - uniqueSuggestedIds.length,
-        searchPreFiltered,
-        searchKeywords: searchPreFiltered ? searchKeywords : undefined,
-        model,
-        tokens: totalTokens,
-        batchCount: batchResult.batchCount,
-        failedBatchCount: batchResult.failedBatchCount,
-      },
-    });
   } catch (error) {
     console.error("Magic select error:", error);
-
-    // Extract error details for better user feedback
-    const llmError = error as {
-      code?: string;
-      statusCode?: number;
-      message?: string;
-      retryable?: boolean;
-    };
-
-    // Determine appropriate status code and user-friendly message
-    let statusCode = 500;
-    let userMessage = "Failed to select test cases";
-    let details = error instanceof Error ? error.message : "Unknown error";
-
-    if (llmError.code) {
-      switch (llmError.code) {
-        case "RATE_LIMIT_EXCEEDED":
-          statusCode = 429;
-          userMessage = "Rate limit exceeded";
-          details =
-            "The AI service has reached its rate limit. Please wait a moment and try again.";
-          break;
-        case "AUTHENTICATION_ERROR":
-          statusCode = 401;
-          userMessage = "Authentication failed";
-          details =
-            "The AI service API key is invalid or expired. Please check your LLM integration settings.";
-          break;
-        case "PERMISSION_DENIED":
-          statusCode = 403;
-          userMessage = "Permission denied";
-          details =
-            "Access to the AI service was denied. Please verify your API key has the required permissions.";
-          break;
-        case "CONTENT_BLOCKED":
-          statusCode = 400;
-          userMessage = "Content filtered";
-          details =
-            "The request was blocked by safety filters. Try modifying the test run name or description.";
-          break;
-        case "MAX_TOKENS":
-        case "MAX_TOKENS_EXCEEDED":
-          statusCode = 400;
-          userMessage = "Response too long";
-          details =
-            "The AI response was truncated. Try reducing the number of test cases or increase token limits in LLM settings.";
-          break;
-        case "TIMEOUT":
-          statusCode = 408;
-          userMessage = "Request timed out";
-          details =
-            "The AI service took too long to respond. This may happen with large test case repositories. Please try again.";
-          break;
-        case "SERVER_ERROR":
-          statusCode = 502;
-          userMessage = "AI service unavailable";
-          details =
-            "The AI service is temporarily unavailable. Please try again in a few minutes.";
-          break;
-        case "API_ERROR":
-          // Generic API error - use the original message which often has useful details
-          statusCode = llmError.statusCode || 500;
-          userMessage = "AI service error";
-          // Keep the original detailed message
-          break;
-        default:
-          // Keep original message for unknown errors
-          break;
-      }
-    }
-
     return NextResponse.json(
-      {
-        error: userMessage,
-        details,
-        code: llmError.code,
-        retryable: llmError.retryable ?? false,
-      },
-      { status: statusCode }
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
 }
+
