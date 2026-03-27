@@ -1,4 +1,4 @@
-import { LLM_FEATURES } from "@/lib/llm/constants";
+import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
@@ -481,9 +481,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Keep projectLlmIntegrations for provider config max tokens lookup
-    const activeLlmIntegration = project.projectLlmIntegrations[0];
-
     // Build the prompts using resolved template as base (or fall back to hard-coded)
     const systemPromptBase = resolvedPrompt.source !== "fallback" ? resolvedPrompt.systemPrompt : undefined;
     const userPromptBase = resolvedPrompt.source !== "fallback" ? resolvedPrompt.userPrompt || undefined : undefined;
@@ -497,11 +494,17 @@ export async function POST(request: NextRequest) {
     );
     const userPrompt = buildUserPrompt(issue, context, userPromptBase);
 
-    // Use the configured max tokens from the LLM provider, but ensure it's at least 6000
-    const configuredMaxTokens =
-      activeLlmIntegration.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
-      resolvedPrompt.maxOutputTokens;
-    const maxTokens = Math.max(configuredMaxTokens, 6000);
+    // TOKEN-02: Read provider config from the resolved integration (not projectLlmIntegrations[0])
+    let maxTokensPerRequest = 4096;
+    let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
+
+    const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
+      where: { llmIntegrationId: resolved.integrationId },
+    });
+    if (providerConfig) {
+      maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
+      maxTokens = providerConfig.defaultMaxTokens ?? resolvedPrompt.maxOutputTokens ?? 4096;
+    }
 
     const llmRequest: LlmRequest = {
       messages: [
@@ -515,7 +518,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       temperature: resolvedPrompt.temperature,
-      maxTokens, // Use the higher of configured or minimum required
+      maxTokens, // from provider config defaultMaxTokens (TOKEN-02)
       userId: session.user.id,
       feature: "test_case_generation",
       ...(resolved.model ? { model: resolved.model } : {}),
@@ -527,10 +530,29 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
     const response = await manager.chat(
       resolved.integrationId,
-      llmRequest
+      llmRequest,
+      { maxRetries, baseDelayMs },
     );
+
+    // RETRY-03: Check truncation BEFORE JSON parse
+    if (response.finishReason === "length") {
+      return NextResponse.json(
+        {
+          error: `Response was truncated (used ${response.totalTokens ?? 0}/${maxTokens} tokens). Try reducing input size or increasing token limit.`,
+          truncated: true,
+          tokens: {
+            used: response.totalTokens ?? 0,
+            limit: maxTokens,
+            prompt: response.promptTokens ?? 0,
+            completion: response.completionTokens ?? 0,
+          },
+        },
+        { status: 422 },
+      );
+    }
 
     // Parse the LLM response
     let parsedResponse: { testCases: GeneratedTestCase[] } = { testCases: [] };
