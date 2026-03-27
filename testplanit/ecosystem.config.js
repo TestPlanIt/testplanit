@@ -173,6 +173,19 @@ module.exports = {
       }
     },
     {
+      name: 'magic-select-worker',
+      script: isDev ? 'tsx' : 'node',
+      args: isDev ? 'workers/magicSelectWorker.ts' : 'dist/workers/magicSelectWorker.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
+      env: {
+        NODE_ENV: 'production'
+      }
+    },
+    {
       name: 'step-scan-worker',
       script: isDev ? 'tsx' : 'node',
       args: isDev ? 'workers/stepSequenceScanWorker.ts' : 'dist/workers/stepSequenceScanWorker.js',

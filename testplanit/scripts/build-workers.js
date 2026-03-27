@@ -30,6 +30,7 @@ const entryPoints = [
   'workers/repoCacheWorker.ts',
   'workers/copyMoveWorker.ts',
   'workers/duplicateScanWorker.ts',
+  'workers/magicSelectWorker.ts',
   'workers/stepSequenceScanWorker.ts',
   'scheduler.ts',
 ];

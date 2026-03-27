@@ -1,7 +1,7 @@
 import { Queue } from "bullmq";
 import {
   AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, COPY_MOVE_QUEUE_NAME, DUPLICATE_SCAN_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
-  NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, STEP_SCAN_QUEUE_NAME, SYNC_QUEUE_NAME,
+  MAGIC_SELECT_QUEUE_NAME, NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, STEP_SCAN_QUEUE_NAME, SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME
 } from "./queueNames";
 import valkeyConnection from "./valkey";
@@ -21,6 +21,7 @@ export {
   COPY_MOVE_QUEUE_NAME,
   DUPLICATE_SCAN_QUEUE_NAME,
   STEP_SCAN_QUEUE_NAME,
+  MAGIC_SELECT_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -37,6 +38,7 @@ let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
 let _stepScanQueue: Queue | null = null;
+let _magicSelectQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -513,6 +515,31 @@ export function getStepScanQueue(): Queue | null {
 }
 
 /**
+ * Get the magic select queue instance (lazy initialization)
+ * Used for background Magic Select LLM processing jobs
+ */
+export function getMagicSelectQueue(): Queue | null {
+  if (_magicSelectQueue) return _magicSelectQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${MAGIC_SELECT_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+  _magicSelectQueue = new Queue(MAGIC_SELECT_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 1,
+      removeOnComplete: { age: 3600 * 24, count: 100 },
+      removeOnFail: { age: 3600 * 24 * 7 },
+    },
+  });
+  console.log(`Queue "${MAGIC_SELECT_QUEUE_NAME}" initialized.`);
+  _magicSelectQueue.on("error", (error) => {
+    console.error(`Queue ${MAGIC_SELECT_QUEUE_NAME} error:`, error);
+  });
+  return _magicSelectQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -531,5 +558,6 @@ export function getAllQueues() {
     copyMoveQueue: getCopyMoveQueue(),
     duplicateScanQueue: getDuplicateScanQueue(),
     stepScanQueue: getStepScanQueue(),
+    "magic-select": getMagicSelectQueue(),
   };
 }
