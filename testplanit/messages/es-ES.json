@@ -6012,6 +6012,7 @@
       "footerSummary": "{assignCount, plural, one {# etiqueta} other {# etiquetas}} serán asignadas, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} serán creadas",
       "footerAssignCount": "{assignCount, plural, one {# etiqueta} other {# etiquetas}} se asignarán",
       "footerNewCount": "{newCount, plural, one {# nueva etiqueta} other {# se crearán nuevas etiquetas}}",
+      "newTagsPopoverTitle": "Nuevas etiquetas para crear",
       "applying": "Aplicando...",
       "applySuccess": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}",
       "applySuccessNewTags": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} creadas",
@@ -6047,7 +6048,7 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Iniciar análisis",
       "untaggedOnly": "Analizar únicamente registros sin etiquetas existentes",
-      "allowNewTags": "Permitir crear etiquetas nuevas",
+      "allowNewTags": "Permitir la creación de nuevas etiquetas",
       "noLlmConfigured": "(No hay LLM configurado)",
       "analyzingDescription": "La IA está analizando tus entidades y generando sugerencias de etiquetas. Esto puede tardar un momento."
     },

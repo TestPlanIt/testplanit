@@ -4,7 +4,6 @@ import { useDebounce } from "@/components/Debounce";
 import { DataTable } from "@/components/tables/DataTable";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,11 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
@@ -36,7 +30,6 @@ import {
   PlayCircle,
   Search,
   Sparkles,
-  Tag,
   Tags,
   XCircle,
 } from "lucide-react";
@@ -433,16 +426,14 @@ export function AutoTagWizardDialog({
 
   const totalSelected = mergedSummary.assignCount;
 
-  // Compute list of new tag names that will be created
-  const newTagNames = useMemo(() => {
+  // All new tag names from suggestions (regardless of selection state)
+  const allNewTagNames = useMemo(() => {
     const names = new Set<string>();
     for (const job of allJobs) {
       if (!job.suggestions) continue;
       for (const entity of job.suggestions) {
-        const accepted = job.selections.get(entity.entityId);
-        if (!accepted) continue;
         for (const tag of entity.tags) {
-          if (accepted.has(tag.tagName) && !tag.isExisting) {
+          if (!tag.isExisting) {
             names.add(tag.tagName);
           }
         }
@@ -451,12 +442,54 @@ export function AutoTagWizardDialog({
     return Array.from(names).sort();
   }, [allJobs]);
 
+  // Check whether a new tag is currently selected for any entity across all jobs
+  const isNewTagEnabled = useCallback(
+    (tagName: string) => {
+      for (const job of allJobs) {
+        if (!job.suggestions) continue;
+        for (const entity of job.suggestions) {
+          if (!entity.tags.some((t) => t.tagName === tagName && !t.isExisting))
+            continue;
+          if (job.selections.get(entity.entityId)?.has(tagName)) return true;
+        }
+      }
+      return false;
+    },
+    [allJobs]
+  );
+
+  // Toggle a new tag across all jobs
+  const handleToggleNewTag = useCallback(
+    (tagName: string) => {
+      const enabled = isNewTagEnabled(tagName);
+      for (const job of allJobs) {
+        job.setTagForAll(tagName, !enabled);
+      }
+    },
+    [allJobs, isNewTagEnabled]
+  );
+
+  // Rename a new tag across all jobs/entities
+  const handleEditNewTag = useCallback(
+    (oldName: string, newName: string) => {
+      for (const job of allJobs) {
+        if (!job.suggestions) continue;
+        for (const entity of job.suggestions) {
+          if (entity.tags.some((t) => t.tagName === oldName)) {
+            job.editTag(entity.entityId, oldName, newName);
+          }
+        }
+      }
+    },
+    [allJobs],
+  );
+
   // Find which job owns a given entity for toggle/edit/apply
   const findJobForEntity = useCallback(
     (entityType: EntityType, entityId: number) => {
       return allJobs.find((j) =>
         j.suggestions?.some(
-          (s) => s.entityId === entityId && s.entityType === entityType,
+          (s) => s.entityId === entityId && s.entityType === entityType
         )
       );
     },
@@ -475,16 +508,24 @@ export function AutoTagWizardDialog({
       entityType: EntityType,
       entityId: number,
       oldName: string,
-      newName: string,
+      newName: string
     ) => {
       findJobForEntity(entityType, entityId)?.editTag(
         entityId,
         oldName,
-        newName,
+        newName
       );
     },
     [findJobForEntity]
   );
+
+  // Stable refs so reviewColumns doesn't recompute on every toggle
+  const mergedSelectionsRef = useRef(mergedSelections);
+  mergedSelectionsRef.current = mergedSelections;
+  const handleToggleRef = useRef(handleToggle);
+  handleToggleRef.current = handleToggle;
+  const handleEditRef = useRef(handleEdit);
+  handleEditRef.current = handleEdit;
 
   // ── Review filters & pagination ─────────────────────────────────
 
@@ -513,8 +554,11 @@ export function AutoTagWizardDialog({
   );
 
   // Reset filters when entering review step
+  const prevStepRef = useRef(step);
   useEffect(() => {
-    if (step === "review") {
+    const enteringReview = step === "review" && prevStepRef.current !== "review";
+    prevStepRef.current = step;
+    if (enteringReview) {
       setReviewSearch("");
       setShowFailed(true);
       setReviewPage(1);
@@ -674,8 +718,8 @@ export function AutoTagWizardDialog({
         enableResizing: true,
         cell: ({ row }) => {
           const entity = row.original;
-          const entitySelections = mergedSelections.get(
-            getEntityKey(entity.entityType, entity.entityId),
+          const entitySelections = mergedSelectionsRef.current.get(
+            getEntityKey(entity.entityType, entity.entityId)
           );
           if (entity.failed || entity.errorMessage) {
             return (
@@ -707,14 +751,18 @@ export function AutoTagWizardDialog({
                   isExisting={tag.isExisting}
                   isAccepted={entitySelections?.has(tag.tagName) ?? false}
                   onToggle={() =>
-                    handleToggle(entity.entityType, entity.entityId, tag.tagName)
+                    handleToggleRef.current(
+                      entity.entityType,
+                      entity.entityId,
+                      tag.tagName
+                    )
                   }
                   onEdit={(newName) =>
-                    handleEdit(
+                    handleEditRef.current(
                       entity.entityType,
                       entity.entityId,
                       tag.tagName,
-                      newName,
+                      newName
                     )
                   }
                 />
@@ -724,7 +772,7 @@ export function AutoTagWizardDialog({
         },
       },
     ],
-    [tCommon, t, mergedSelections, handleToggle, handleEdit, projectId]
+    [tCommon, t, projectId]
   );
 
   const [isApplying, setIsApplying] = useState(false);
@@ -747,7 +795,7 @@ export function AutoTagWizardDialog({
           .filter(
             (e) =>
               (mergedSelections.get(getEntityKey(e.entityType, e.entityId))
-                ?.size ?? 0) > 0,
+                ?.size ?? 0) > 0
           )
           .map((e) => getEntityKey(e.entityType, e.entityId))
       ).size;
@@ -787,7 +835,7 @@ export function AutoTagWizardDialog({
       <DialogContent
         className={
           step === "review"
-            ? "flex h-[80vh] max-h-[700px] max-w-[900px] flex-col"
+            ? "flex h-[90vh] max-h-[900px] max-w-[900px] flex-col"
             : "max-w-[500px]"
         }
       >
@@ -1165,60 +1213,29 @@ export function AutoTagWizardDialog({
                       : tCommon("actions.apply")}
                   </Button>
                 </div>
+                {allNewTagNames.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 py-2">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("review.newTagsPopoverTitle")}
+                    </span>
+                    {allNewTagNames.map((name) => (
+                      <TagChip
+                        key={name}
+                        tagName={name}
+                        isExisting={false}
+                        isAccepted={isNewTagEnabled(name)}
+                        onToggle={() => handleToggleNewTag(name)}
+                        onEdit={(newName) => handleEditNewTag(name, newName)}
+                      />
+                    ))}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  {totalSelected > 0 ? (
-                    <>
-                      {t("review.footerAssignCount", {
+                  {totalSelected > 0
+                    ? t("review.footerAssignCount", {
                         assignCount: mergedSummary.assignCount,
-                      })}
-                      {mergedSummary.newCount > 0 && (
-                        <>
-                          {", "}
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button
-                                type="button"
-                                className="cursor-pointer underline decoration-dotted underline-offset-4"
-                              >
-                                {t("review.footerNewCount", {
-                                  newCount: mergedSummary.newCount,
-                                })}
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              side="top"
-                              className="w-auto max-w-80 p-3"
-                            >
-                              <p className="mb-2 text-xs font-medium">
-                                {t("review.footerNewCount", {
-                                  newCount: mergedSummary.newCount,
-                                })}
-                              </p>
-                              <div
-                                className="max-h-96 overflow-y-auto p-1"
-                                onWheel={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex flex-wrap gap-2">
-                                  {newTagNames.map((name) => (
-                                    <Badge
-                                      key={name}
-                                      variant="outline"
-                                      className="outline-2 outline-offset-1 outline-primary/50"
-                                    >
-                                      <Tag className="mr-1 h-3 w-3 shrink-0" />
-                                      {name}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    t("review.noTagsSelected")
-                  )}
+                      })
+                    : t("review.noTagsSelected")}
                 </p>
               </div>
             </DialogFooter>

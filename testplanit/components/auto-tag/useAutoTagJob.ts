@@ -257,6 +257,31 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
     [],
   );
 
+  // ── Toggle tag for all entities ──────────────────────────────────────────
+
+  const setTagForAll = useCallback(
+    (tagName: string, selected: boolean) => {
+      if (!suggestions) return;
+      setSelections((prev) => {
+        const next = new Map(prev);
+        for (const entity of suggestions) {
+          const hasSuggestion = entity.tags.some((t) => t.tagName === tagName);
+          if (!hasSuggestion) continue;
+
+          const entitySet = new Set(next.get(entity.entityId) ?? []);
+          if (selected) {
+            entitySet.add(tagName);
+          } else {
+            entitySet.delete(tagName);
+          }
+          next.set(entity.entityId, entitySet);
+        }
+        return next;
+      });
+    },
+    [suggestions],
+  );
+
   // ── Edit tag name ───────────────────────────────────────────────────────
 
   const editTag = useCallback(
@@ -453,6 +478,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       edits,
       submit,
       toggleTag,
+      setTagForAll,
       editTag,
       apply,
       cancel,
@@ -471,6 +497,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       edits,
       submit,
       toggleTag,
+      setTagForAll,
       editTag,
       apply,
       cancel,

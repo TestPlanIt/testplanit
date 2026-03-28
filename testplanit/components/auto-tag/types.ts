@@ -59,6 +59,7 @@ export interface UseAutoTagJobReturn {
     options?: { allowNewTags?: boolean }
   ) => Promise<void>;
   toggleTag: (entityId: number, tagName: string) => void;
+  setTagForAll: (tagName: string, selected: boolean) => void;
   editTag: (entityId: number, oldName: string, newName: string) => void;
   apply: () => Promise<void>;
   cancel: () => Promise<void>;

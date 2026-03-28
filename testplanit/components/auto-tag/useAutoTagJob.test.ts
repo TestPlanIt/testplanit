@@ -78,6 +78,7 @@ describe("useAutoTagJob", () => {
     expect(typeof result.current.cancel).toBe("function");
     expect(typeof result.current.reset).toBe("function");
     expect(typeof result.current.toggleTag).toBe("function");
+    expect(typeof result.current.setTagForAll).toBe("function");
     expect(typeof result.current.editTag).toBe("function");
     expect(typeof result.current.apply).toBe("function");
     expect(result.current.selections).toBeInstanceOf(Map);

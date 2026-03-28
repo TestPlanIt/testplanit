@@ -6012,6 +6012,7 @@
       "footerSummary": "{assignCount, plural, one {# étiquette} other {# étiquettes}} seront attribuées, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} seront créées",
       "footerAssignCount": "{assignCount, plural, one {# étiquette} other {# étiquettes}} sera attribuée",
       "footerNewCount": "{newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} seront créées",
+      "newTagsPopoverTitle": "Nouvelles étiquettes à créer",
       "applying": "Candidature...",
       "applySuccess": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}",
       "applySuccessNewTags": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} créées",
