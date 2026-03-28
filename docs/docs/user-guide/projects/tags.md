@@ -42,11 +42,15 @@ The **AI Tag** button in the toolbar opens the Auto Tag wizard, which uses AI to
 1. Click the **AI Tag** button in the toolbar
 2. Select which entity types to analyze (test cases, test runs, sessions)
 3. Optionally toggle **Untagged Only** to focus on items that have no tags yet
-4. Click **Start Tagging** — the AI will analyze your items in batches
-5. Review the suggestions: click tags to toggle them on/off, double-click to edit names
-6. Click **Apply** to save the selected tags
+4. Optionally disable **Allow creating new tags** to restrict suggestions to existing tags only
+5. Click **Start Analysis** — the AI will analyze your items in batches
+6. Review the suggestions: click tags to toggle them on/off, double-click to edit names
+7. Click **Apply** to save the selected tags
 
-The AI will match suggestions against your existing project tags when possible, and create new tags only when no suitable match exists.
+The AI will match suggestions against your existing project tags when possible.
+
+- If **Allow creating new tags** is enabled (default), Auto Tag can also propose and create new tags.
+- If **Allow creating new tags** is disabled, Auto Tag only suggests tags that already exist in your project.
 
 :::tip
 Running Auto Tag with **Untagged Only** enabled is a great way to quickly organize items that were added without tags.

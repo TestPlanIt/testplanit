@@ -13,7 +13,7 @@ Auto Tag helps you:
 - **Organize at scale**: Tag hundreds of items in minutes instead of manually tagging each one
 - **Maintain consistency**: AI suggests existing tags when appropriate, reducing duplicate or inconsistent tags
 - **Discover gaps**: Find untagged items and quickly bring them into your tagging taxonomy
-- **Create new tags**: The AI can suggest new tags when existing ones don't fit
+- **Control tag creation**: Allow new tags when needed, or restrict suggestions to existing project tags only
 
 ## Prerequisites
 
@@ -34,8 +34,9 @@ Choose what to analyze:
 
 - **Entity Types**: Select which types of items to tag — test cases, test runs, and/or sessions. At least one type must be selected.
 - **Untagged Only**: Toggle this option to limit analysis to items that currently have no tags. This is useful for catching items that were missed during manual tagging.
+- **Allow creating new tags**: Keep this enabled to let AI suggest brand-new tags when no good match exists. Disable it to restrict suggestions to existing project tags only.
 
-Click **Start Tagging** to begin the analysis.
+Click **Start Analysis** to begin.
 
 ### From the Project Repository
 
@@ -82,8 +83,8 @@ When you're satisfied with the selections:
 
 1. Review the summary showing how many tags will be applied
 2. Click **Apply** to save the selected tags to their respective items
-3. New tags are automatically created in your project
-4. Existing tags are connected to the items
+3. Existing tags are connected to the items
+4. New tags are created only when **Allow creating new tags** is enabled
 
 :::tip Selective Application
 You don't have to apply all suggestions at once. Toggle off any tags you don't want, and only the selected ones will be applied. You can also remove entire items from the selection.
@@ -164,6 +165,10 @@ While the AI suggestions are generally relevant, always review them before apply
 
 If you already have a well-defined set of tags, the AI will preferentially match against them. Adding your standard tags before running Auto Tag leads to more consistent results.
 
+### Use Existing-Only Mode for Strict Taxonomies
+
+If your team enforces a fixed tag vocabulary, disable **Allow creating new tags** in the wizard. This ensures Auto Tag only proposes tags that already exist in your project and prevents accidental taxonomy drift.
+
 ### Run Incrementally
 
 For large projects, consider running Auto Tag on one entity type at a time. This makes the review process more manageable and lets you refine your approach between runs.
@@ -188,6 +193,7 @@ For large projects, consider running Auto Tag on one entity type at a time. This
 
 - Items have very little content (empty descriptions, no steps)
 - All items already have comprehensive tags (when not using "Untagged Only")
+- **Allow creating new tags** is disabled and no existing tags fit the analyzed content
 
 **Solutions:**
 
