@@ -68,7 +68,13 @@ const mockSessionsJob = vi.hoisted(() => ({
     | "failed",
   progress: null as { analyzed: number; total: number; finalizing?: boolean } | null,
   error: null as string | null,
-  suggestions: null as null,
+  suggestions: null as Array<{
+    entityId: number;
+    entityType: "session";
+    entityName: string;
+    currentTags: string[];
+    tags: Array<{ tagName: string; isExisting: boolean }>;
+  }> | null,
   selections: new Map() as Map<number, Set<string>>,
   edits: new Map() as Map<string, string>,
   submit: mockSessionsSubmit,
@@ -92,7 +98,13 @@ const mockRunsJob = vi.hoisted(() => ({
     | "failed",
   progress: null as { analyzed: number; total: number; finalizing?: boolean } | null,
   error: null as string | null,
-  suggestions: null as null,
+  suggestions: null as Array<{
+    entityId: number;
+    entityType: "testRun";
+    entityName: string;
+    currentTags: string[];
+    tags: Array<{ tagName: string; isExisting: boolean }>;
+  }> | null,
   selections: new Map() as Map<number, Set<string>>,
   edits: new Map() as Map<string, string>,
   submit: mockRunsSubmit,
@@ -109,6 +121,8 @@ const mockRunsJob = vi.hoisted(() => ({
 const mockInvalidateModelQueries = vi.hoisted(() =>
   vi.fn().mockResolvedValue(undefined)
 );
+const mockToastSuccess = vi.hoisted(() => vi.fn());
+const mockToastError = vi.hoisted(() => vi.fn());
 
 // --- Mocks ---
 
@@ -154,8 +168,8 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
 
 vi.mock("sonner", () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mockToastSuccess,
+    error: mockToastError,
   },
 }));
 
@@ -757,6 +771,45 @@ describe("AutoTagWizardDialog", () => {
       await userEvent.click(applyBtn);
 
       expect(mockCasesApply).toHaveBeenCalled();
+    });
+
+    it("counts selected entities per type when IDs overlap", async () => {
+      mockCasesJob.status = "completed";
+      mockCasesJob.suggestions = [
+        {
+          entityId: 1,
+          entityType: "repositoryCase" as const,
+          entityName: "Case #1",
+          currentTags: [],
+          tags: [{ tagName: "auth", isExisting: true }],
+        },
+      ];
+      mockCasesJob.selections = new Map([[1, new Set(["auth"])]]);
+      mockCasesJob.summary = { assignCount: 1, newCount: 0 };
+
+      mockSessionsJob.status = "completed";
+      mockSessionsJob.suggestions = [
+        {
+          entityId: 1,
+          entityType: "session" as const,
+          entityName: "Session #1",
+          currentTags: [],
+          tags: [{ tagName: "exploratory", isExisting: true }],
+        },
+      ];
+      mockSessionsJob.selections = new Map([[1, new Set(["exploratory"])]]);
+      mockSessionsJob.summary = { assignCount: 1, newCount: 0 };
+
+      renderWithQueryClient(<AutoTagWizardDialog {...defaultProps} />);
+
+      const applyBtn = screen.getByRole("button", {
+        name: /actions\.apply/i,
+      });
+      await userEvent.click(applyBtn);
+
+      expect(mockToastSuccess).toHaveBeenCalledWith(
+        "review.applySuccess(tagCount=2, entityCount=2)",
+      );
     });
 
     it("shows noSuggestions text in review step when suggestions list is empty", () => {

@@ -108,20 +108,27 @@ describe("useAutoTagJob", () => {
     const { result } = renderHook(() => useAutoTagJob());
 
     await act(async () => {
-      await result.current.submit([1, 2, 3], "repositoryCase" as EntityType, 10);
+      await result.current.submit(
+        [1, 2, 3],
+        "repositoryCase" as EntityType,
+        10
+      );
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/auto-tag/submit",
       expect.objectContaining({
         method: "POST",
-        headers: expect.objectContaining({ "Content-Type": "application/json" }),
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify({
           entityIds: [1, 2, 3],
+
           entityType: "repositoryCase",
           projectId: 10,
         }),
-      }),
+      })
     );
     expect(result.current.jobId).toBe("job-abc-123");
     expect(result.current.isSubmitting).toBe(false);
@@ -137,18 +144,16 @@ describe("useAutoTagJob", () => {
         ok: true,
         status: 200,
         json: () => Promise.resolve({ jobId: "job-xyz" }),
-      })),
+      }))
     );
 
     const { result } = renderHook(() => useAutoTagJob());
 
     let submitDone = false;
     act(() => {
-      result.current
-        .submit([5], "repositoryCase" as EntityType, 1)
-        .then(() => {
-          submitDone = true;
-        });
+      result.current.submit([5], "repositoryCase" as EntityType, 1).then(() => {
+        submitDone = true;
+      });
     });
 
     // isSubmitting should be true while the submit is in flight
@@ -245,20 +250,30 @@ describe("useAutoTagJob", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({ state: "waiting", progress: { analyzed: 0, total: 5 } }),
+          Promise.resolve({
+            state: "waiting",
+            progress: { analyzed: 0, total: 5 },
+          }),
       })
       // second poll (after 2s interval): active with progress
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({ state: "active", progress: { analyzed: 2, total: 5 } }),
+          Promise.resolve({
+            state: "active",
+            progress: { analyzed: 2, total: 5 },
+          }),
       });
 
     const { result } = renderHook(() => useAutoTagJob());
 
     await act(async () => {
-      await result.current.submit([1, 2, 3, 4, 5], "repositoryCase" as EntityType, 1);
+      await result.current.submit(
+        [1, 2, 3, 4, 5],
+        "repositoryCase" as EntityType,
+        1
+      );
     });
 
     // Advance past poll interval to trigger second poll
@@ -342,7 +357,10 @@ describe("useAutoTagJob", () => {
             state: "completed",
             result: {
               suggestions: [],
-              errors: ["Batch 1 failed: LLM timeout", "Batch 2 failed: parsing error"],
+              errors: [
+                "Batch 1 failed: LLM timeout",
+                "Batch 2 failed: parsing error",
+              ],
             },
           }),
       });
@@ -409,7 +427,11 @@ describe("useAutoTagJob", () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ state: "active", progress: { analyzed: 1, total: 3 } }),
+        json: () =>
+          Promise.resolve({
+            state: "active",
+            progress: { analyzed: 1, total: 3 },
+          }),
       })
       // cancel endpoint
       .mockResolvedValueOnce({
@@ -429,7 +451,7 @@ describe("useAutoTagJob", () => {
     });
 
     const cancelCall = fetchMock.mock.calls.find(([url]: any) =>
-      url.includes("/api/auto-tag/cancel/"),
+      url.includes("/api/auto-tag/cancel/")
     );
     expect(cancelCall).toBeDefined();
     expect(cancelCall![0]).toBe("/api/auto-tag/cancel/job-cancel-1");
@@ -446,7 +468,11 @@ describe("useAutoTagJob", () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ state: "active", progress: { analyzed: 1, total: 2 } }),
+        json: () =>
+          Promise.resolve({
+            state: "active",
+            progress: { analyzed: 1, total: 2 },
+          }),
       })
       .mockResolvedValueOnce(okResponse({ cancelled: true }));
 
@@ -615,7 +641,11 @@ describe("useAutoTagJob", () => {
       .mockResolvedValue({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ state: "active", progress: { analyzed: 1, total: 5 } }),
+        json: () =>
+          Promise.resolve({
+            state: "active",
+            progress: { analyzed: 1, total: 5 },
+          }),
       });
 
     const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
@@ -623,7 +653,11 @@ describe("useAutoTagJob", () => {
     const { result, unmount } = renderHook(() => useAutoTagJob());
 
     await act(async () => {
-      await result.current.submit([1, 2, 3, 4, 5], "repositoryCase" as EntityType, 1);
+      await result.current.submit(
+        [1, 2, 3, 4, 5],
+        "repositoryCase" as EntityType,
+        1
+      );
     });
 
     // Polling is active at this point
@@ -668,7 +702,10 @@ describe("useAutoTagJob", () => {
       await result.current.submit([1], "repositoryCase" as EntityType, 1);
     });
 
-    expect(setItemSpy).toHaveBeenCalledWith("test-persist-key", "job-persist-1");
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "test-persist-key",
+      "job-persist-1"
+    );
   });
 
   it("restores persisted jobId from localStorage on mount", async () => {
@@ -678,7 +715,11 @@ describe("useAutoTagJob", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: () => Promise.resolve({ state: "active", progress: { analyzed: 2, total: 4 } }),
+      json: () =>
+        Promise.resolve({
+          state: "active",
+          progress: { analyzed: 2, total: 4 },
+        }),
     });
 
     const { result } = renderHook(() => useAutoTagJob("test-restore-key"));
