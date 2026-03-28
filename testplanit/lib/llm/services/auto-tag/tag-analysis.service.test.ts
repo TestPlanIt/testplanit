@@ -443,4 +443,41 @@ describe("TagAnalysisService", () => {
     );
     expect(newSugg?.isExisting).toBe(false);
   });
+
+  it("filters out new tags when allowNewTags is false", async () => {
+    setupDefaults();
+
+    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      {
+        id: 1,
+        name: "Login test",
+        steps: [],
+        caseFieldValues: [],
+        tags: [],
+        folder: null,
+      },
+    ]);
+
+    mockLlmManager.chat.mockResolvedValue({
+      content: JSON.stringify({
+        suggestions: [{ entityId: 1, tags: ["login", "new-feature"] }],
+      }),
+      model: "gpt-4",
+      promptTokens: 100,
+      completionTokens: 50,
+      totalTokens: 150,
+    });
+
+    const result = await service.analyzeTags({
+      entityIds: [1],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+      allowNewTags: false,
+    });
+
+    expect(result.suggestions).toHaveLength(1);
+    expect(result.suggestions[0]?.matchedExistingTag).toBe("login");
+    expect(result.suggestions[0]?.isExisting).toBe(true);
+  });
 });

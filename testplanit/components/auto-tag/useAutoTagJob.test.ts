@@ -164,6 +164,40 @@ describe("useAutoTagJob", () => {
     expect(submitDone || result.current.isSubmitting === false).toBe(true);
   });
 
+  it("submit includes allowNewTags option when provided", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ jobId: "job-allow-new-tags" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ state: "waiting", progress: null }),
+      });
+
+    const { result } = renderHook(() => useAutoTagJob());
+
+    await act(async () => {
+      await result.current.submit([1, 2], "repositoryCase" as EntityType, 9, {
+        allowNewTags: false,
+      });
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auto-tag/submit",
+      expect.objectContaining({
+        body: JSON.stringify({
+          entityIds: [1, 2],
+          entityType: "repositoryCase",
+          projectId: 9,
+          allowNewTags: false,
+        }),
+      })
+    );
+  });
+
   it("submit sets error state on HTTP failure", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,

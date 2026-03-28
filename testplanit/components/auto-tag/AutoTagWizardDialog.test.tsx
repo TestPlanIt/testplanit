@@ -539,14 +539,14 @@ describe("AutoTagWizardDialog", () => {
 
       // Three checkboxes for entity types
       const checkboxes = screen.getAllByRole("checkbox");
-      // 3 entity checkboxes + 1 switch for untagged-only
+      // 3 entity checkboxes + 2 switches (untagged-only, allow-new-tags)
       expect(checkboxes.length).toBeGreaterThanOrEqual(3);
     });
 
     it("shows untagged-only switch in configure step", () => {
       renderWithQueryClient(<AutoTagWizardDialog {...defaultProps} />);
 
-      expect(screen.getAllByRole("switch")).toHaveLength(1);
+      expect(screen.getAllByRole("switch")).toHaveLength(2);
     });
 
     it("start button is enabled when entity IDs are provided", () => {
@@ -600,10 +600,34 @@ describe("AutoTagWizardDialog", () => {
       expect(mockCasesSubmit).toHaveBeenCalledWith(
         [1, 2, 3],
         "repositoryCase",
-        42
+        42,
+        { allowNewTags: true }
       );
-      expect(mockSessionsSubmit).toHaveBeenCalledWith([10, 11], "session", 42);
-      expect(mockRunsSubmit).toHaveBeenCalledWith([20, 21, 22], "testRun", 42);
+      expect(mockSessionsSubmit).toHaveBeenCalledWith([10, 11], "session", 42, {
+        allowNewTags: true,
+      });
+      expect(mockRunsSubmit).toHaveBeenCalledWith([20, 21, 22], "testRun", 42, {
+        allowNewTags: true,
+      });
+    });
+
+    it("passes allowNewTags=false to submit when new-tag creation is disabled", async () => {
+      renderWithQueryClient(<AutoTagWizardDialog {...defaultProps} />);
+
+      const switches = screen.getAllByRole("switch");
+      await userEvent.click(switches[1]!);
+
+      const startBtn = screen.getByRole("button", {
+        name: /wizard\.startAnalysis/i,
+      });
+      await userEvent.click(startBtn);
+
+      expect(mockCasesSubmit).toHaveBeenCalledWith(
+        [1, 2, 3],
+        "repositoryCase",
+        42,
+        { allowNewTags: false }
+      );
     });
   });
 
