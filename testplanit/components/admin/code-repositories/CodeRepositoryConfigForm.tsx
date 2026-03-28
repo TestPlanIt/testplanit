@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { ShieldAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 
 interface FieldConfig {
@@ -16,6 +18,7 @@ interface FieldConfig {
   type?: string; // "password" for sensitive fields
   isCredential: boolean; // true = goes in credentials object; false = goes in settings
   helpKey?: string;
+  isUrl?: boolean; // true = show HTTP plaintext warning when value starts with http://
 }
 
 // Field definitions per provider -- mirrors IntegrationConfigForm.tsx providerFields pattern
@@ -66,6 +69,7 @@ const providerFields: Record<string, FieldConfig[]> = {
       placeholder: "https://gitlab.com",
       isCredential: false,
       helpKey: "codeRepository.baseUrl",
+      isUrl: true,
     },
   ],
   BITBUCKET: [
@@ -114,6 +118,7 @@ const providerFields: Record<string, FieldConfig[]> = {
       placeholder: "https://dev.azure.com/myorg",
       isCredential: false,
       helpKey: "codeRepository.organizationUrl",
+      isUrl: true,
     },
     {
       name: "project",
@@ -130,6 +135,38 @@ const providerFields: Record<string, FieldConfig[]> = {
       helpKey: "codeRepository.azureRepoId",
     },
   ],
+  GITEA: [
+    {
+      name: "personalAccessToken",
+      label: "Personal Access Token",
+      type: "password",
+      isCredential: true,
+      placeholder: "...",
+      helpKey: "codeRepository.giteaToken",
+    },
+    {
+      name: "baseUrl",
+      label: "Server URL",
+      placeholder: "https://gitea.example.com",
+      isCredential: false,
+      helpKey: "codeRepository.giteaBaseUrl",
+      isUrl: true,
+    },
+    {
+      name: "owner",
+      label: "Owner",
+      placeholder: "myorg",
+      isCredential: false,
+      helpKey: "codeRepository.giteaOwner",
+    },
+    {
+      name: "repo",
+      label: "Repository",
+      placeholder: "my-repo",
+      isCredential: false,
+      helpKey: "codeRepository.giteaRepo",
+    },
+  ],
 };
 
 interface CodeRepositoryConfigFormProps {
@@ -142,6 +179,7 @@ export function CodeRepositoryConfigForm({
   form,
 }: CodeRepositoryConfigFormProps) {
   const fields = providerFields[provider] ?? [];
+  const t = useTranslations("admin.codeRepositories");
 
   return (
     <div className="space-y-4">
@@ -155,26 +193,39 @@ export function CodeRepositoryConfigForm({
             key={field.name}
             control={form.control}
             name={formFieldName}
-            render={({ field: formField }) => (
-              <FormItem>
-                <FormLabel className="flex items-center">
-                  {field.label}
-                  <HelpPopover helpKey={field.helpKey ?? ""} />
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...formField}
-                    value={formField.value ?? ""}
-                    type={field.type ?? "text"}
-                    placeholder={field.placeholder}
-                    autoComplete={
-                      field.type === "password" ? "new-password" : undefined
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field: formField }) => {
+              const showHttpWarning =
+                field.isUrl &&
+                typeof formField.value === "string" &&
+                formField.value.startsWith("http://");
+
+              return (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    {field.label}
+                    <HelpPopover helpKey={field.helpKey ?? ""} />
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...formField}
+                      value={formField.value ?? ""}
+                      type={field.type ?? "text"}
+                      placeholder={field.placeholder}
+                      autoComplete={
+                        field.type === "password" ? "new-password" : undefined
+                      }
+                    />
+                  </FormControl>
+                  {showHttpWarning && (
+                    <p className="flex items-center gap-1.5 text-sm text-warning">
+                      <ShieldAlert className="h-4 w-4 shrink-0" />
+                      {t("httpWarning")}
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         );
       })}

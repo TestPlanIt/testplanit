@@ -3199,7 +3199,8 @@
       "repositoryCreated": "Dépôt créé",
       "saveFailed": "Échec de l'enregistrement du dépôt",
       "namePlaceholder": "Mon dépôt",
-      "selectProvider": "Sélectionner le fournisseur"
+      "selectProvider": "Sélectionner le fournisseur",
+      "httpWarning": "Cette URL utilise le protocole HTTP. Vos identifiants seront envoyés en clair. Utilisez HTTPS pour une connexion sécurisée."
     },
     "exportTemplates": {
       "title": "Modèles QuickScript",
@@ -4854,7 +4855,7 @@
     },
     "codeRepository": {
       "name": "## Nom du dépôt\nNom convivial pour cette connexion au dépôt.\n\n- Utilisé pour l'identifier dans les paramètres contextuels du code du projet.\n- Ne doit pas nécessairement correspondre au nom du dépôt chez le fournisseur.",
-      "provider": "## Fournisseur Git\nLa plateforme hébergeant ce dépôt.\n\n- **GitHub** — github.com (cloud ou Enterprise)\n- **GitLab** — gitlab.com ou auto-hébergé\n- **Bitbucket Cloud** — bitbucket.org (cloud uniquement)\n- **Azure DevOps** — dev.azure.com",
+      "provider": "## Fournisseur Git\nLa plateforme hébergeant ce dépôt.\n\n- **GitHub** — github.com (cloud ou Enterprise)\n- **GitLab** — gitlab.com ou auto-hébergé\n- **Bitbucket Cloud** — bitbucket.org (cloud uniquement)\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — Serveurs Git auto-hébergés avec API compatibles",
       "githubToken": "## Jeton d'accès personnel\nUn jeton GitHub avec l'autorisation **Contenu : Lecture**.\n\nGénérez-en un ici : GitHub → Paramètres du profil → Paramètres développeur → Jetons d'accès personnels → Jetons à granularité fine.",
       "owner": "## Propriétaire\nL'organisation GitHub ou le compte utilisateur propriétaire du dépôt.\n\n- Exemple : `myorg` ou `myusername`\n- Il s'agit du premier segment du chemin d'accès dans l'URL de votre dépôt sur github.com",
       "repo": "## Dépôt\nLe nom du dépôt, sans le préfixe du propriétaire.\n\n- Exemple : `my-repo` (et non `myorg/my-repo`)\n- Il s'agit du deuxième segment du chemin dans l'URL de votre dépôt sur github.com",
@@ -4868,7 +4869,11 @@
       "azureToken": "## Jeton d'accès personnel\nUn jeton d'accès personnel Azure DevOps avec l'autorisation **Lecture du code**.\n\nCréez-en un à l'adresse : Azure DevOps → Paramètres utilisateur → Jetons d'accès personnels.",
       "organizationUrl": "## URL de l'organisation\nURL de votre organisation Azure DevOps.\n\n- Exemple : `https://dev.azure.com/myorg`",
       "project": "## Nom du projet\nLe nom du projet Azure DevOps contenant le dépôt.\n\n- Se trouve comme troisième segment de chemin dans votre URL Azure DevOps après le nom de l'organisation.",
-      "azureRepoId": "## Nom ou ID du dépôt\nLe nom ou le GUID du dépôt dans le projet Azure DevOps.\n\n- Exemple : `my-repo`"
+      "azureRepoId": "## Nom ou ID du dépôt\nLe nom ou le GUID du dépôt dans le projet Azure DevOps.\n\n- Exemple : `my-repo`",
+      "giteaToken": "## Jeton d'accès personnel\nJeton disposant des autorisations de lecture du dépôt.\n\nGénérez-en un dans : Administration du site → Applications ou Paramètres utilisateur → Applications.\n\n- Compatible avec Gitea, Forgejo, Gogs et tout serveur exposant une API compatible.",
+      "giteaBaseUrl": "## URL du serveur\nL'URL de base de votre serveur Git auto-hébergé.\n\n- Exemple : `https://gitea.example.com`\n- Doit inclure le protocole (https:// recommandé)\n- Fonctionne avec Gitea, Forgejo, Gogs et autres serveurs disposant d'une API REST `/api/v1/` compatible avec Gitea",
+      "giteaOwner": "## Propriétaire\nL'organisation ou le compte utilisateur propriétaire du dépôt.\n\n- Exemple : `myorg` ou `myusername`\n- Premier segment du chemin d'accès dans l'URL de votre dépôt",
+      "giteaRepo": "## Dépôt\nLe nom du dépôt, sans le préfixe du propriétaire.\n\n- Exemple : `my-repo` (et non `myorg/my-repo`)"
     },
     "promptConfig": {
       "name": "## Nom de la configuration\nUn nom unique et descriptif pour cette configuration d'invite.\n\n- Utilisé pour identifier la configuration lors de son attribution à un projet (par exemple « Invites GPT-4o », « Invites conservatrices »).",

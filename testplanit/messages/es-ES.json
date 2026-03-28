@@ -3199,7 +3199,8 @@
       "repositoryCreated": "Repositorio creado",
       "saveFailed": "No se pudo guardar el repositorio",
       "namePlaceholder": "Mi repositorio",
-      "selectProvider": "Seleccionar proveedor"
+      "selectProvider": "Seleccionar proveedor",
+      "httpWarning": "Esta URL utiliza HTTP. Las credenciales se enviarán en texto plano. Utilice HTTPS para conexiones seguras."
     },
     "exportTemplates": {
       "title": "Plantillas de QuickScript",
@@ -4854,7 +4855,7 @@
     },
     "codeRepository": {
       "name": "## Nombre del repositorio\nUn nombre para mostrar descriptivo para esta conexión de repositorio.\n\n- Se utiliza para identificarlo en la configuración del contexto del código del proyecto.\n- No necesita coincidir con el nombre del repositorio en el proveedor.",
-      "provider": "## Proveedor de Git\nLa plataforma que aloja este repositorio.\n\n- **GitHub** — github.com (nube o Enterprise)\n- **GitLab** — gitlab.com o autoalojado\n- **Bitbucket Cloud** — bitbucket.org (solo en la nube)\n- **Azure DevOps** — dev.azure.com",
+      "provider": "## Proveedor de Git\nLa plataforma que aloja este repositorio.\n\n- **GitHub** — github.com (cloud o Enterprise)\n- **GitLab** — gitlab.com o autoalojado\n- **Bitbucket Cloud** — bitbucket.org (solo en la nube)\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — servidores Git autoalojados con API compatibles",
       "githubToken": "## Token de acceso personal\nUn token de GitHub con permiso de **Contenido: Lectura**.\n\nGenere uno en: GitHub → Configuración de perfil → Configuración de desarrollador → Tokens de acceso personal → Tokens de grano fino.",
       "owner": "## Propietario\nLa organización de GitHub o la cuenta de usuario que posee el repositorio.\n\n- Ejemplo: `myorg` o `myusername`\n- Este es el primer segmento de ruta en la URL de su repositorio en github.com",
       "repo": "## Repositorio\nEl nombre del repositorio, sin el prefijo del propietario.\n\n- Ejemplo: `my-repo` (no `myorg/my-repo`)\n- Este es el segundo segmento de ruta en la URL de su repositorio en github.com",
@@ -4868,7 +4869,11 @@
       "azureToken": "## Token de acceso personal\nUn PAT de Azure DevOps con permiso **Código (lectura)**.\n\nCree uno en: Azure DevOps → Configuración de usuario → Tokens de acceso personal.",
       "organizationUrl": "## URL de la organización\nLa URL de su organización de Azure DevOps.\n\n- Ejemplo: `https://dev.azure.com/myorg`",
       "project": "## Nombre del proyecto\nEl nombre del proyecto de Azure DevOps que contiene el repositorio.\n\n- Se encuentra como el tercer segmento de ruta en la URL de Azure DevOps después del nombre de la organización",
-      "azureRepoId": "## Nombre o ID del repositorio\nEl nombre del repositorio o GUID dentro del proyecto de Azure DevOps.\n\n- Ejemplo: `my-repo`"
+      "azureRepoId": "## Nombre o ID del repositorio\nEl nombre del repositorio o GUID dentro del proyecto de Azure DevOps.\n\n- Ejemplo: `my-repo`",
+      "giteaToken": "## Token de acceso personal\nUn token con permisos de lectura de repositorio.\n\nGenere uno en: Administración del sitio → Aplicaciones, o Configuración de usuario → Aplicaciones.\n\n- Funciona con Gitea, Forgejo, Gogs y cualquier servidor que exponga una API compatible.",
+      "giteaBaseUrl": "## URL del servidor\nLa URL base de tu servidor Git autohospedado.\n\n- Ejemplo: `https://gitea.example.com`\n- Debe incluir el protocolo (https:// recomendado)\n- Funciona con Gitea, Forgejo, Gogs y otros servidores con una API REST `/api/v1/` compatible con Gitea",
+      "giteaOwner": "## Propietario\nLa organización o cuenta de usuario propietaria del repositorio.\n\n- Ejemplo: `myorg` o `myusername`\n- Este es el primer segmento de ruta en la URL de su repositorio.",
+      "giteaRepo": "## Repositorio\nEl nombre del repositorio, sin el prefijo del propietario.\n\n- Ejemplo: `my-repo` (no `myorg/my-repo`)"
     },
     "promptConfig": {
       "name": "## Nombre de configuración\nUn nombre descriptivo único para esta configuración de solicitud.\n\n- Se utiliza para identificar la configuración al asignarla a un proyecto (por ejemplo, \"Solicitantes GPT-4o\", \"Solicitantes conservadores\").",

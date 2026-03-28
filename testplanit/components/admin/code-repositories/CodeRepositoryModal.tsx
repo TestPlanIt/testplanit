@@ -38,11 +38,12 @@ const PROVIDERS = [
   { value: "GITLAB", label: "GitLab" },
   { value: "BITBUCKET", label: "Bitbucket Cloud" },
   { value: "AZURE_DEVOPS", label: "Azure DevOps" },
+  { value: "GITEA", label: "Gitea / Forgejo / Gogs" },
 ] as const;
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  provider: z.enum(["GITHUB", "GITLAB", "BITBUCKET", "AZURE_DEVOPS"]),
+  provider: z.enum(["GITHUB", "GITLAB", "BITBUCKET", "AZURE_DEVOPS", "GITEA"]),
   credentials: z.record(z.string(), z.string()).optional(),
   settings: z.record(z.string(), z.string()).optional(),
   isActive: z.boolean().optional(),

@@ -25,6 +25,7 @@ const providerLabel: Record<string, string> = {
   GITLAB: "GitLab",
   BITBUCKET: "Bitbucket",
   AZURE_DEVOPS: "Azure DevOps",
+  GITEA: "Gitea / Forgejo / Gogs",
 };
 
 interface ColumnActions {

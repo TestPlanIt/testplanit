@@ -166,6 +166,7 @@ enum CodeRepositoryProvider {
   GITLAB
   BITBUCKET
   AZURE_DEVOPS
+  GITEA
 }
 
 enum ApplicationArea {

@@ -1244,20 +1244,20 @@ enum DuplicateScanResultStatus {
 }
 
 model DuplicateScanResult {
-    id            Int                       @id @default(autoincrement())
-    projectId     Int
-    project       Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    caseAId       Int
-    caseA         RepositoryCases           @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
-    caseBId       Int
-    caseB         RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
-    score         Float
+    id              Int                       @id @default(autoincrement())
+    projectId       Int
+    project         Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    caseAId         Int
+    caseA           RepositoryCases           @relation("DuplicateCaseA", fields: [caseAId], references: [id], onDelete: Cascade)
+    caseBId         Int
+    caseB           RepositoryCases           @relation("DuplicateCaseB", fields: [caseBId], references: [id], onDelete: Cascade)
+    score           Float
     matchedFields   String[]
     detectionMethod String                    @default("fuzzy")
     status          DuplicateScanResultStatus @default(PENDING)
-    scanJobId     String?
-    isDeleted     Boolean                   @default(false)
-    createdAt     DateTime                  @default(now()) @db.Timestamptz(6)
+    scanJobId       String?
+    isDeleted       Boolean                   @default(false)
+    createdAt       DateTime                  @default(now()) @db.Timestamptz(6)
 
     @@unique([caseAId, caseBId, scanJobId])
     @@index([projectId, status, isDeleted])
@@ -1318,16 +1318,16 @@ enum StepSequenceMatchStatus {
 }
 
 model StepSequenceMatch {
-    id           Int                       @id @default(autoincrement())
-    projectId    Int
-    project      Projects                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    fingerprint  String
-    stepCount    Int
-    status       StepSequenceMatchStatus   @default(PENDING)
-    scanJobId    String?
-    isDeleted    Boolean                   @default(false)
-    createdAt    DateTime                  @default(now()) @db.Timestamptz(6)
-    members      StepSequenceMatchCase[]
+    id          Int                     @id @default(autoincrement())
+    projectId   Int
+    project     Projects                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    fingerprint String
+    stepCount   Int
+    status      StepSequenceMatchStatus @default(PENDING)
+    scanJobId   String?
+    isDeleted   Boolean                 @default(false)
+    createdAt   DateTime                @default(now()) @db.Timestamptz(6)
+    members     StepSequenceMatchCase[]
 
     @@unique([projectId, fingerprint, scanJobId])
     @@index([projectId, status, isDeleted])
@@ -1369,14 +1369,14 @@ model StepSequenceMatch {
 }
 
 model StepSequenceMatchCase {
-    id          Int                 @id @default(autoincrement())
+    id          Int               @id @default(autoincrement())
     matchId     Int
-    match       StepSequenceMatch   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+    match       StepSequenceMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
     caseId      Int
-    case        RepositoryCases     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    case        RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
     startStepId Int
     endStepId   Int
-    isDeleted   Boolean             @default(false)
+    isDeleted   Boolean           @default(false)
 
     @@unique([matchId, caseId])
     @@index([caseId])
@@ -2545,6 +2545,7 @@ enum CodeRepositoryProvider {
     GITLAB
     BITBUCKET
     AZURE_DEVOPS
+    GITEA
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

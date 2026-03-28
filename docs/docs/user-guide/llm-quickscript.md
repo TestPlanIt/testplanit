@@ -27,7 +27,15 @@ Connecting a code repository gives the AI access to your actual source files, en
 
 ### 1. Add a Code Repository
 
-Navigate to **Administration > Code Repositories** and add a connection to your repository (GitHub, GitLab, Bitbucket, or Azure DevOps). You'll need to provide credentials with read access to the repository.
+Navigate to **Administration > Code Repositories** and add a connection to your repository. Supported providers:
+
+- **GitHub** — github.com or GitHub Enterprise
+- **GitLab** — gitlab.com or self-hosted
+- **Bitbucket Cloud** — bitbucket.org
+- **Azure DevOps** — dev.azure.com
+- **Gitea / Forgejo / Gogs** — self-hosted Git servers with a compatible `/api/v1/` REST API
+
+You'll need to provide credentials with read access to the repository.
 
 ### 2. Configure QuickScript Settings
 

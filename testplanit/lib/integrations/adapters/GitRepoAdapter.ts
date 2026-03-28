@@ -4,7 +4,7 @@
  * Does NOT extend BaseAdapter (which is for issue tracking, not git file fetching).
  */
 
-import { isSsrfSafe } from "~/utils/ssrf";
+import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
 
 export interface RepoFileEntry {
   path: string;
@@ -99,21 +99,25 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
+        // Resolve DNS and verify the IP is not private (closes DNS rebinding)
+        await assertSsrfSafeResolved(safeUrl);
 
         const response = await fetch(safeUrl, {
           ...options,
           signal: controller.signal,
+          redirect: "manual", // prevent redirect-based SSRF bypass
         });
 
+        // If the server redirects, validate the target before following
+        if (response.status >= 300 && response.status < 400) {
+          return this.followSafeRedirect<T>(response, options, controller.signal, "json");
+        }
+
         // Track rate limit state from response headers for adaptive throttling
+        this.trackRateLimitHeaders(response);
         const remaining = response.headers.get("X-RateLimit-Remaining");
         const reset = response.headers.get("X-RateLimit-Reset");
         const retryAfter = response.headers.get("Retry-After");
-        if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
-        if (reset !== null) this.rateLimitResetAt = parseInt(reset);
-        // Retry-After (secondary rate limits) overrides the reset time
-        if (retryAfter !== null)
-          this.rateLimitResetAt = Math.floor(Date.now() / 1000) + parseInt(retryAfter);
 
         if (!response.ok) {
           // Handle rate limiting: 429 is always a rate limit; 403 with
@@ -183,19 +187,22 @@ export abstract class GitRepoAdapter {
 
       try {
         const safeUrl = this.sanitizeUrl(url);
+        await assertSsrfSafeResolved(safeUrl);
+
         const response = await fetch(safeUrl, {
           ...options,
           signal: controller.signal,
+          redirect: "manual",
         });
 
+        if (response.status >= 300 && response.status < 400) {
+          return this.followSafeRedirect<string>(response, options, controller.signal, "text");
+        }
+
         // Track rate limit state from response headers
+        this.trackRateLimitHeaders(response);
         const remaining = response.headers.get("X-RateLimit-Remaining");
-        const reset = response.headers.get("X-RateLimit-Reset");
         const retryAfter = response.headers.get("Retry-After");
-        if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
-        if (reset !== null) this.rateLimitResetAt = parseInt(reset);
-        if (retryAfter !== null)
-          this.rateLimitResetAt = Math.floor(Date.now() / 1000) + parseInt(retryAfter);
 
         if (!response.ok) {
           const isRateLimited =
@@ -243,6 +250,63 @@ export abstract class GitRepoAdapter {
       result = result.slice(0, -1);
     }
     return result;
+  }
+
+  /**
+   * Follow a single redirect after validating the Location URL against SSRF rules.
+   * Only one hop is allowed — a second redirect throws.
+   */
+  private async followSafeRedirect<T>(
+    response: Response,
+    options: RequestInit,
+    signal: AbortSignal,
+    mode: "json" | "text"
+  ): Promise<T> {
+    const location = response.headers.get("Location");
+    if (!location) {
+      throw new Error(
+        `Redirect (${response.status}) with no Location header`
+      );
+    }
+
+    // Resolve relative redirects against the original request URL
+    const redirectUrl = this.sanitizeUrl(
+      new URL(location, response.url).href
+    );
+    await assertSsrfSafeResolved(redirectUrl);
+
+    const redirectResponse = await fetch(redirectUrl, {
+      ...options,
+      signal,
+      redirect: "error", // no further redirects
+    });
+
+    this.trackRateLimitHeaders(redirectResponse);
+
+    if (!redirectResponse.ok) {
+      const errorText = await redirectResponse.text().catch(() => "");
+      throw new Error(
+        `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
+      );
+    }
+
+    return mode === "json"
+      ? (await redirectResponse.json()) as T
+      : (await redirectResponse.text()) as T;
+  }
+
+  /**
+   * Extract rate-limit headers from a response and update internal state.
+   */
+  private trackRateLimitHeaders(response: Response): void {
+    const remaining = response.headers.get("X-RateLimit-Remaining");
+    const reset = response.headers.get("X-RateLimit-Reset");
+    const retryAfter = response.headers.get("Retry-After");
+    if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
+    if (reset !== null) this.rateLimitResetAt = parseInt(reset);
+    if (retryAfter !== null)
+      this.rateLimitResetAt =
+        Math.floor(Date.now() / 1000) + parseInt(retryAfter);
   }
 
   protected async applyRateLimit(): Promise<void> {
@@ -330,6 +394,10 @@ export function createGitRepoAdapter(
     case "AZURE_DEVOPS": {
       const { AzureDevOpsRepoAdapter } = require("./AzureDevOpsRepoAdapter");
       return new AzureDevOpsRepoAdapter(credentials, settings);
+    }
+    case "GITEA": {
+      const { GiteaRepoAdapter } = require("./GiteaRepoAdapter");
+      return new GiteaRepoAdapter(credentials, settings);
     }
     default:
       throw new Error(`Unknown git provider: ${provider}`);

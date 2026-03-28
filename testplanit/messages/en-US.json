@@ -3199,7 +3199,8 @@
       "repositoryCreated": "Repository created",
       "saveFailed": "Failed to save repository",
       "namePlaceholder": "My Repository",
-      "selectProvider": "Select provider"
+      "selectProvider": "Select provider",
+      "httpWarning": "This URL uses HTTP. Credentials will be sent in plaintext. Use HTTPS for secure connections."
     },
     "exportTemplates": {
       "title": "QuickScript Templates",
@@ -4854,7 +4855,7 @@
     },
     "codeRepository": {
       "name": "## Repository Name\nA friendly display name for this repository connection.\n\n- Used to identify it in project code context settings.\n- Does not need to match the repository name on the provider.",
-      "provider": "## Git Provider\nThe platform hosting this repository.\n\n- **GitHub** — github.com (cloud or Enterprise)\n- **GitLab** — gitlab.com or self-hosted\n- **Bitbucket Cloud** — bitbucket.org (cloud only)\n- **Azure DevOps** — dev.azure.com",
+      "provider": "## Git Provider\nThe platform hosting this repository.\n\n- **GitHub** — github.com (cloud or Enterprise)\n- **GitLab** — gitlab.com or self-hosted\n- **Bitbucket Cloud** — bitbucket.org (cloud only)\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — self-hosted Git servers with compatible APIs",
       "githubToken": "## Personal Access Token\nA GitHub token with **Contents: Read** permission.\n\nGenerate one at: GitHub → Profile Settings → Developer settings → Personal access tokens → Fine-grained tokens.",
       "owner": "## Owner\nThe GitHub organization or user account that owns the repository.\n\n- Example: `myorg` or `myusername`\n- This is the first path segment in your repository URL on github.com",
       "repo": "## Repository\nThe repository name, without the owner prefix.\n\n- Example: `my-repo` (not `myorg/my-repo`)\n- This is the second path segment in your repository URL on github.com",
@@ -4868,7 +4869,11 @@
       "azureToken": "## Personal Access Token\nAn Azure DevOps PAT with **Code (Read)** permission.\n\nCreate one at: Azure DevOps → User settings → Personal access tokens.",
       "organizationUrl": "## Organization URL\nYour Azure DevOps organization URL.\n\n- Example: `https://dev.azure.com/myorg`",
       "project": "## Project Name\nThe name of the Azure DevOps project containing the repository.\n\n- Found as the third path segment in your Azure DevOps URL after the organization name",
-      "azureRepoId": "## Repository Name or ID\nThe repository name or GUID within the Azure DevOps project.\n\n- Example: `my-repo`"
+      "azureRepoId": "## Repository Name or ID\nThe repository name or GUID within the Azure DevOps project.\n\n- Example: `my-repo`",
+      "giteaToken": "## Personal Access Token\nA token with repository read permissions.\n\nGenerate one at: Site Administration → Applications, or User Settings → Applications.\n\n- Works with Gitea, Forgejo, Gogs, and any server exposing a compatible API.",
+      "giteaBaseUrl": "## Server URL\nThe base URL of your self-hosted Git server.\n\n- Example: `https://gitea.example.com`\n- Must include the protocol (https:// recommended)\n- Works with Gitea, Forgejo, Gogs, and other servers with a Gitea-compatible `/api/v1/` REST API",
+      "giteaOwner": "## Owner\nThe organization or user account that owns the repository.\n\n- Example: `myorg` or `myusername`\n- This is the first path segment in your repository URL",
+      "giteaRepo": "## Repository\nThe repository name, without the owner prefix.\n\n- Example: `my-repo` (not `myorg/my-repo`)"
     },
     "promptConfig": {
       "name": "## Configuration Name\nA unique, descriptive name for this prompt configuration.\n\n- Used to identify the configuration when assigning it to a project (e.g. \"GPT-4o Prompts\", \"Conservative Prompts\").",

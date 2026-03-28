@@ -598,7 +598,8 @@
           "GITHUB",
           "GITLAB",
           "BITBUCKET",
-          "AZURE_DEVOPS"
+          "AZURE_DEVOPS",
+          "GITEA"
         ]
       },
       "LlmProvider": {
