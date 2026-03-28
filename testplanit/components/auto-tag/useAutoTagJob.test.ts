@@ -629,6 +629,181 @@ describe("useAutoTagJob", () => {
     expect(result.current.selections.get(7)!.has("critical")).toBe(true);
   });
 
+  // ── setTagForAll ────────────────────────────────────────────────────────
+
+  it("setTagForAll deselects a tag across all entities that have it", async () => {
+    const suggestions = [
+      {
+        entityId: 1,
+        entityType: "repositoryCase",
+        entityName: "Case A",
+        currentTags: [],
+        tags: [
+          { tagName: "login", isExisting: false },
+          { tagName: "auth", isExisting: true },
+        ],
+      },
+      {
+        entityId: 2,
+        entityType: "repositoryCase",
+        entityName: "Case B",
+        currentTags: [],
+        tags: [
+          { tagName: "login", isExisting: false },
+          { tagName: "signup", isExisting: true },
+        ],
+      },
+      {
+        entityId: 3,
+        entityType: "repositoryCase",
+        entityName: "Case C",
+        currentTags: [],
+        tags: [{ tagName: "signup", isExisting: true }],
+      },
+    ];
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ jobId: "job-setall-1" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ state: "completed", result: { suggestions } }),
+      });
+
+    const { result } = renderHook(() => useAutoTagJob());
+
+    await act(async () => {
+      await result.current.submit([1, 2, 3], "repositoryCase" as EntityType, 1);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // All tags start selected
+    expect(result.current.selections.get(1)!.has("login")).toBe(true);
+    expect(result.current.selections.get(2)!.has("login")).toBe(true);
+
+    // Deselect "login" across all entities
+    act(() => {
+      result.current.setTagForAll("login", false);
+    });
+
+    // "login" removed from entities 1 and 2
+    expect(result.current.selections.get(1)!.has("login")).toBe(false);
+    expect(result.current.selections.get(2)!.has("login")).toBe(false);
+    // Entity 3 doesn't have "login" — unaffected
+    expect(result.current.selections.get(3)!.has("signup")).toBe(true);
+    // Other tags on entities 1 and 2 are unaffected
+    expect(result.current.selections.get(1)!.has("auth")).toBe(true);
+    expect(result.current.selections.get(2)!.has("signup")).toBe(true);
+  });
+
+  it("setTagForAll re-selects a tag across all entities that have it", async () => {
+    const suggestions = [
+      {
+        entityId: 1,
+        entityType: "repositoryCase",
+        entityName: "Case A",
+        currentTags: [],
+        tags: [{ tagName: "new-tag", isExisting: false }],
+      },
+      {
+        entityId: 2,
+        entityType: "repositoryCase",
+        entityName: "Case B",
+        currentTags: [],
+        tags: [{ tagName: "new-tag", isExisting: false }],
+      },
+    ];
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ jobId: "job-setall-2" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ state: "completed", result: { suggestions } }),
+      });
+
+    const { result } = renderHook(() => useAutoTagJob());
+
+    await act(async () => {
+      await result.current.submit([1, 2], "repositoryCase" as EntityType, 1);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Deselect, then re-select
+    act(() => {
+      result.current.setTagForAll("new-tag", false);
+    });
+    expect(result.current.selections.get(1)!.has("new-tag")).toBe(false);
+    expect(result.current.selections.get(2)!.has("new-tag")).toBe(false);
+
+    act(() => {
+      result.current.setTagForAll("new-tag", true);
+    });
+    expect(result.current.selections.get(1)!.has("new-tag")).toBe(true);
+    expect(result.current.selections.get(2)!.has("new-tag")).toBe(true);
+  });
+
+  it("setTagForAll updates summary counts correctly", async () => {
+    const suggestions = [
+      {
+        entityId: 1,
+        entityType: "repositoryCase",
+        entityName: "Case A",
+        currentTags: [],
+        tags: [
+          { tagName: "new-tag", isExisting: false },
+          { tagName: "existing", isExisting: true },
+        ],
+      },
+    ];
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ jobId: "job-setall-3" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ state: "completed", result: { suggestions } }),
+      });
+
+    const { result } = renderHook(() => useAutoTagJob());
+
+    await act(async () => {
+      await result.current.submit([1], "repositoryCase" as EntityType, 1);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Initially: 2 tags assigned, 1 new
+    expect(result.current.summary).toMatchObject({ assignCount: 2, newCount: 1 });
+
+    act(() => {
+      result.current.setTagForAll("new-tag", false);
+    });
+
+    // After disabling: 1 tag assigned, 0 new
+    expect(result.current.summary).toMatchObject({ assignCount: 1, newCount: 0 });
+  });
+
   // ── Cleanup on unmount ──────────────────────────────────────────────────
 
   it("stops polling interval on unmount", async () => {
