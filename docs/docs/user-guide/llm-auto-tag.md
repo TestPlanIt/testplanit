@@ -54,28 +54,35 @@ The AI processes your items in batches. A progress bar shows the current status 
 
 Once analysis is complete, the review screen shows all suggested tags organized by entity:
 
-#### Entity List
+#### Review Table
 
-The left sidebar displays all analyzed items grouped by type. Each item shows:
+All analyzed items are displayed in a table with columns for entity type, name, and suggested tags. You can:
 
-- The item name
-- Number of suggested tags
-- A search box to filter items by name
+- **Search** items by name using the filter bar
+- **Filter by entity type** using the toggle buttons (shown when results include multiple types)
+- **Sort** by name or entity type by clicking column headers
+- **Show/hide failed items** using the toggle (shown when some items failed analysis)
+- **Paginate** through results with configurable page sizes
 
-Click an item to see its detailed suggestions on the right.
+Click an item's name to view its full content (description, test steps, custom fields, and documentation) to help evaluate the suggestions.
 
 #### Tag Suggestions
 
 For each item, the AI suggests tags displayed as chips:
 
 - **Existing tags** are shown in a distinct style, indicating the tag already exists in your project
-- **New tags** are shown differently, indicating they would be created when applied
+- **New tags** are highlighted with an outline, indicating they would be created when applied
 - Click a tag chip to toggle it on or off (all suggestions are accepted by default)
 - Double-click a tag chip to edit its name before applying
 
-#### Entity Detail
+#### New Tag Management
 
-Click the detail icon on any item to view its full content (name, description, test steps, custom fields, and documentation) to help you evaluate the suggestions.
+When suggestions include new tags (tags that don't yet exist in your project), they appear in the footer area below the table. From here you can:
+
+- **Click** a new tag to toggle it on or off across all entities at once
+- **Double-click** a new tag to rename it — the rename applies everywhere the tag was suggested
+
+This is useful for quickly excluding an unwanted new tag from all entities, or standardizing a tag name before applying.
 
 #### Applying Tags
 
@@ -87,7 +94,7 @@ When you're satisfied with the selections:
 4. New tags are created only when **Allow creating new tags** is enabled
 
 :::tip Selective Application
-You don't have to apply all suggestions at once. Toggle off any tags you don't want, and only the selected ones will be applied. You can also remove entire items from the selection.
+You don't have to apply all suggestions at once. Toggle off any tags you don't want, and only the selected ones will be applied.
 :::
 
 ## How It Works
