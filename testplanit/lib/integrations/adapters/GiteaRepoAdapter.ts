@@ -48,6 +48,7 @@ export class GiteaRepoAdapter extends GitRepoAdapter {
       { headers: this.authHeaders }
     );
     const treeSha: string = branchData.commit?.commit?.tree?.sha
+      ?? branchData.commit?.id
       ?? branchData.commit?.sha;
 
     if (!treeSha) {
