@@ -6045,6 +6045,7 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Iniciar análisis",
       "untaggedOnly": "Analizar únicamente registros sin etiquetas existentes",
+      "allowNewTags": "Permitir crear etiquetas nuevas",
       "noLlmConfigured": "(No hay LLM configurado)",
       "analyzingDescription": "La IA está analizando tus entidades y generando sugerencias de etiquetas. Esto puede tardar un momento."
     },

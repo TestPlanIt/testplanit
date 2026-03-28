@@ -9,6 +9,7 @@ const submitSchema = z.object({
   entityIds: z.array(z.number()).min(1),
   entityType: z.enum(["repositoryCase", "testRun", "session"]),
   projectId: z.number(),
+  allowNewTags: z.boolean().optional().default(true),
 });
 
 export async function POST(request: Request) {

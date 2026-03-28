@@ -6045,6 +6045,7 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Start Analysis",
       "untaggedOnly": "Only analyze records without existing tags",
+      "allowNewTags": "Allow creating new tags",
       "noLlmConfigured": "(No LLM configured)",
       "analyzingDescription": "AI is analyzing your entities and generating tag suggestions. This may take a moment."
     },

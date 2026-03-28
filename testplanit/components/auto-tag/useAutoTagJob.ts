@@ -71,6 +71,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       entityIds: number[],
       entityType: EntityType,
       projectId: number,
+      options?: { allowNewTags?: boolean },
     ) => {
       setIsSubmitting(true);
       setStatus("waiting");
@@ -84,10 +85,21 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       submitAbortRef.current = abortController;
 
       try {
+        const payload: {
+          entityIds: number[];
+          entityType: EntityType;
+          projectId: number;
+          allowNewTags?: boolean;
+        } = { entityIds, entityType, projectId };
+
+        if (options?.allowNewTags !== undefined) {
+          payload.allowNewTags = options.allowNewTags;
+        }
+
         const res = await fetch("/api/auto-tag/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ entityIds, entityType, projectId }),
+          body: JSON.stringify(payload),
           signal: abortController.signal,
         });
 

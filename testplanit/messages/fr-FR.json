@@ -6045,6 +6045,7 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Lancer l'analyse",
       "untaggedOnly": "Analyser uniquement les enregistrements sans balises existantes",
+      "allowNewTags": "Autoriser la création de nouvelles balises",
       "noLlmConfigured": "(Aucun LLM configuré)",
       "analyzingDescription": "L'IA analyse vos entités et génère des suggestions de balises. Cela peut prendre quelques instants."
     },

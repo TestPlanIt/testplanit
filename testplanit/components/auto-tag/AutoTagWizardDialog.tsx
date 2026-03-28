@@ -220,6 +220,7 @@ export function AutoTagWizardDialog({
   const [includeRuns, setIncludeRuns] = useState(true);
   const [includeSessions, setIncludeSessions] = useState(true);
   const [untaggedOnly, setUntaggedOnly] = useState(false);
+  const [allowNewTags, setAllowNewTags] = useState(true);
 
   // Reset toggles when dialog opens
   useEffect(() => {
@@ -228,6 +229,7 @@ export function AutoTagWizardDialog({
       setIncludeRuns(true);
       setIncludeSessions(true);
       setUntaggedOnly(false);
+      setAllowNewTags(true);
     }
   }, [open]);
 
@@ -330,17 +332,23 @@ export function AutoTagWizardDialog({
     const promises: Promise<void>[] = [];
     if (includeCases && effectiveCaseIds.length > 0) {
       promises.push(
-        autoTagCases.submit(effectiveCaseIds, "repositoryCase", projectIdNum)
+        autoTagCases.submit(effectiveCaseIds, "repositoryCase", projectIdNum, {
+          allowNewTags,
+        })
       );
     }
     if (includeSessions && effectiveSessionIds.length > 0) {
       promises.push(
-        autoTagSessions.submit(effectiveSessionIds, "session", projectIdNum)
+        autoTagSessions.submit(effectiveSessionIds, "session", projectIdNum, {
+          allowNewTags,
+        })
       );
     }
     if (includeRuns && effectiveRunIds.length > 0) {
       promises.push(
-        autoTagRuns.submit(effectiveRunIds, "testRun", projectIdNum)
+        autoTagRuns.submit(effectiveRunIds, "testRun", projectIdNum, {
+          allowNewTags,
+        })
       );
     }
     await Promise.all(promises);
@@ -352,6 +360,7 @@ export function AutoTagWizardDialog({
     includeCases,
     includeRuns,
     includeSessions,
+    allowNewTags,
     autoTagCases,
     autoTagSessions,
     autoTagRuns,
@@ -821,6 +830,14 @@ export function AutoTagWizardDialog({
                   onCheckedChange={setUntaggedOnly}
                 />
                 <span className="text-sm">{t("wizard.untaggedOnly")}</span>
+              </label>
+
+              <label className="flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition-colors hover:bg-accent/50">
+                <Switch
+                  checked={allowNewTags}
+                  onCheckedChange={setAllowNewTags}
+                />
+                <span className="text-sm">{t("wizard.allowNewTags")}</span>
               </label>
             </div>
 

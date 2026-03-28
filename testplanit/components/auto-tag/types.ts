@@ -56,6 +56,7 @@ export interface UseAutoTagJobReturn {
     entityIds: number[],
     entityType: EntityType,
     projectId: number,
+    options?: { allowNewTags?: boolean },
   ) => Promise<void>;
   toggleTag: (entityId: number, tagName: string) => void;
   editTag: (entityId: number, oldName: string, newName: string) => void;

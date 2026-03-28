@@ -21,6 +21,7 @@ export interface AutoTagJobData extends MultiTenantJobData {
   entityType: EntityType;
   projectId: number;
   userId: string;
+  allowNewTags?: boolean;
 }
 
 export interface AutoTagJobResult {
@@ -98,6 +99,7 @@ const processor = async (
       // Report progress to BullMQ
       await job.updateProgress({ analyzed: processed, total });
     },
+    allowNewTags: job.data.allowNewTags ?? true,
     isCancelled: async () => {
       const flag = await redis.get(cancelKey(job.id));
       if (flag) {
