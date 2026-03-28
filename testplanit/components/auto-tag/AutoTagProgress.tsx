@@ -8,7 +8,7 @@ import type { AutoTagJobState } from "./types";
 
 interface AutoTagProgressProps {
   status: AutoTagJobState;
-  progress: { analyzed: number; total: number } | null;
+  progress: { analyzed: number; total: number; streaming?: boolean; sizing?: number } | null;
   error: string | null;
   onReview: () => void;
   onCancel: () => void;
@@ -40,10 +40,17 @@ export function AutoTagProgress({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm">
             {hasProgress
-              ? t("analyzed", {
-                  analyzed: progress.analyzed,
-                  total: progress.total,
-                })
+              ? progress.sizing
+                ? t("sizing", { size: progress.sizing })
+                : progress.streaming
+                  ? t("streaming", {
+                      analyzed: progress.analyzed,
+                      total: progress.total,
+                    })
+                  : t("analyzed", {
+                      analyzed: progress.analyzed,
+                      total: progress.total,
+                    })
               : t("starting")}
           </p>
           <Progress

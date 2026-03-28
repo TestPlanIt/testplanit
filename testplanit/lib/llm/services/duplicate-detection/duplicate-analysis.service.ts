@@ -73,6 +73,7 @@ export class DuplicateAnalysisService {
     userId: string,
     maxTokensPerRequest: number,
     retryOptions?: { maxRetries?: number; baseDelayMs?: number },
+    onProgress?: (analyzed: number, total: number) => Promise<void>,
   ): Promise<AnnotatedPair[]> {
     // 1. Empty input fast path
     if (pairs.length === 0) {
@@ -137,6 +138,8 @@ export class DuplicateAnalysisService {
 
     // 7. Accumulate results via side-effect inside processWithRetry
     const processedPairs: AnnotatedPair[] = [];
+    let pairsAnalyzed = 0;
+    const totalPairsForLlm = cappedBatches.reduce((s, b) => s + b.length, 0);
 
     /**
      * Process a batch of pairs, retrying with split-in-half sub-batches when:
@@ -144,11 +147,27 @@ export class DuplicateAnalysisService {
      *   - The response is truncated (finishReason === "length")
      *   - The response JSON cannot be parsed
      * Maximum recursion depth is 3 to prevent runaway splitting.
+     *
+     * `maxWorkingBatchSize` remembers the largest batch size that succeeded
+     * so subsequent batches are pre-split without re-discovering timeouts.
      */
+    let maxWorkingBatchSize = Infinity;
+
     const processWithRetry = async (
       batch: PairBatchableItem[],
       depth: number = 0,
     ): Promise<void> => {
+      // Pre-split if we already know a smaller size works
+      if (batch.length > maxWorkingBatchSize) {
+        const chunks: PairBatchableItem[][] = [];
+        for (let i = 0; i < batch.length; i += maxWorkingBatchSize) {
+          chunks.push(batch.slice(i, i + maxWorkingBatchSize));
+        }
+        for (const chunk of chunks) {
+          await processWithRetry(chunk, depth);
+        }
+        return;
+      }
       let response;
       try {
         const systemPrompt = this.buildSystemPrompt();
@@ -176,8 +195,9 @@ export class DuplicateAnalysisService {
           error?.message?.includes("Timeout");
         if (isTimeout && batch.length > 1 && depth < 3) {
           const mid = Math.ceil(batch.length / 2);
+          maxWorkingBatchSize = Math.min(maxWorkingBatchSize, mid);
           console.warn(
-            `[duplicate-detection] Timeout for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`,
+            `[duplicate-detection] Timeout for batch of ${batch.length}, retrying as 2 sub-batches of ${mid} (maxWorkingBatchSize now ${maxWorkingBatchSize})`,
           );
           await processWithRetry(batch.slice(0, mid), depth + 1);
           await processWithRetry(batch.slice(mid), depth + 1);
@@ -241,6 +261,12 @@ export class DuplicateAnalysisService {
             this.stripContentFields({ ...pair, detectionMethod: "fuzzy" }),
           );
         }
+      }
+
+      // Report sub-batch progress
+      pairsAnalyzed += batch.length;
+      if (onProgress) {
+        await onProgress(pairsAnalyzed, totalPairsForLlm);
       }
     };
 

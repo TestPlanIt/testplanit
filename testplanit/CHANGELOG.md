@@ -1,3 +1,9 @@
+## [0.18.11](https://github.com/TestPlanIt/testplanit/compare/v0.18.10...v0.18.11) (2026-03-28)
+
+### Enhancements
+
+* Enhance GenerateTestCasesWizard with streaming support and progress tracking ([3405f95](https://github.com/TestPlanIt/testplanit/commit/3405f95ae8560dfd6ba5b8bc4b00bb6f44331594))
+
 ## [0.18.10](https://github.com/TestPlanIt/testplanit/compare/v0.18.9...v0.18.10) (2026-03-27)
 
 ### Bug Fixes

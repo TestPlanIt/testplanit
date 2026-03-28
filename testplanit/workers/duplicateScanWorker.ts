@@ -193,6 +193,15 @@ export const processor = async (
       job.data.userId,
       maxTokensPerRequest,
       retryOptions,
+      async (pairsAnalyzed, totalPairs) => {
+        await job.updateProgress({
+          analyzed: total,
+          total,
+          phase: "ai",
+          aiProgress: pairsAnalyzed,
+          aiTotal: totalPairs,
+        });
+      },
     );
     finalPairs = analyzedPairs;
   } catch (err) {

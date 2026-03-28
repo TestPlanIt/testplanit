@@ -2096,6 +2096,7 @@
       "description": "Utilice IA para generar automáticamente casos de prueba completos a partir de problemas o documentos externos.",
       "generatingPreparing": "Preparando solicitud...",
       "generatingCallingAi": "Esperando a que la IA genere los casos de prueba...",
+      "generatingStreaming": "La IA está generando el caso de prueba {count}...",
       "generatingProcessing": "Procesando los casos de prueba generados...",
       "generatingHint": "Esto puede tardar un minuto, dependiendo de la complejidad del material de origen.",
       "steps": {
@@ -2106,8 +2107,7 @@
       "selectSource": {
         "title": "Seleccionar Fuente de Requisitos",
         "description": "Elija si desea generar casos de prueba a partir de un problema o de un documento de requisitos.",
-        "folderContextTip": "{count, plural, =0 {No hay casos de prueba en la carpeta \"{folderName}\". Asegúrese de haber seleccionado la carpeta correcta antes de continuar.} =1 {1 caso de prueba en la carpeta \"{folderName}\" se usará como contexto al generar nuevos casos de prueba. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.} other {# casos de prueba en la carpeta \"{folderName}\" se usarán como contexto al generar nuevos casos de prueba. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.}}",
-        "folderContextTipMax": "Los casos de prueba {count} de la carpeta \"{folderName}\" se usarán como contexto al generar nuevos casos de prueba. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.",
+        "folderContextTip": "Los casos de prueba existentes de \"{folderName}\" y sus carpetas padre/hijo se utilizarán como contexto para evitar duplicados. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.",
         "currentFolder": "carpeta actual",
         "fromIssue": "De la emisión",
         "fromDocument": "Desde documento",
@@ -6035,6 +6035,8 @@
     "progress": {
       "starting": "Comenzando el análisis...",
       "analyzed": "Entidades analizadas {analyzed}/{total}",
+      "sizing": "Encontrar el tamaño de lote óptimo (probando entidades {size})...",
+      "streaming": "Recibiendo respuesta de IA (entidades{analyzed}/{total} completadas)...",
       "finalizing": "Preparando resultados...",
       "complete": "Análisis completo",
       "reviewSuggestions": "Sugerencias de revisión",

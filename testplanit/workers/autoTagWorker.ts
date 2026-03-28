@@ -96,7 +96,6 @@ const processor = async (
     projectId: job.data.projectId,
     userId: job.data.userId,
     onBatchComplete: async (processed: number, total: number) => {
-      // Report progress to BullMQ
       await job.updateProgress({ analyzed: processed, total });
     },
     allowNewTags: job.data.allowNewTags ?? true,

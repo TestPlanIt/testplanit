@@ -6,7 +6,7 @@ import type {
   AutoTagJobState, AutoTagSelection, AutoTagSuggestionEntity, UseAutoTagJobReturn
 } from "./types";
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 1000;
 
 // ── localStorage helpers (SSR-safe) ──────────────────────────────────────
 
@@ -46,6 +46,8 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
     analyzed: number;
     total: number;
     finalizing?: boolean;
+    streaming?: boolean;
+    sizing?: number;
   } | null>(null);
   const [suggestions, setSuggestions] = useState<
     AutoTagSuggestionEntity[] | null
@@ -165,7 +167,9 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
               prev &&
               prev.analyzed === data.progress.analyzed &&
               prev.total === data.progress.total &&
-              prev.finalizing === data.progress.finalizing
+              prev.finalizing === data.progress.finalizing &&
+              prev.streaming === data.progress.streaming &&
+              prev.sizing === data.progress.sizing
             ) {
               return prev; // same reference → no re-render
             }

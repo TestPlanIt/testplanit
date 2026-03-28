@@ -10,6 +10,8 @@ const {
   mockPromptResolverResolve,
   mockPrismaProjectsFindFirst,
   mockPrismaLlmProviderConfigFindFirst,
+  mockPrismaRepositoryFoldersFindMany,
+  mockPrismaRepositoryCasesFindMany,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockLlmManagerGetInstance: vi.fn(),
@@ -18,6 +20,8 @@ const {
   mockPromptResolverResolve: vi.fn(),
   mockPrismaProjectsFindFirst: vi.fn(),
   mockPrismaLlmProviderConfigFindFirst: vi.fn(),
+  mockPrismaRepositoryFoldersFindMany: vi.fn(),
+  mockPrismaRepositoryCasesFindMany: vi.fn(),
 }));
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -49,6 +53,12 @@ vi.mock("@/lib/prisma", () => ({
     },
     llmProviderConfig: {
       findFirst: (...args: any[]) => mockPrismaLlmProviderConfigFindFirst(...args),
+    },
+    repositoryFolders: {
+      findMany: (...args: any[]) => mockPrismaRepositoryFoldersFindMany(...args),
+    },
+    repositoryCases: {
+      findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
     },
   },
 }));
@@ -134,6 +144,9 @@ describe("POST /api/llm/generate-test-cases", () => {
       retryAttempts: 3,
       timeout: 30000,
     });
+
+    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
 
     mockChat.mockResolvedValue({
       content: VALID_TEST_CASES_RESPONSE,
@@ -316,6 +329,9 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
       source: "default",
     });
 
+    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
+
     mockChat.mockResolvedValue({
       content: VALID_TEST_CASES_RESPONSE,
       model: "gpt-4",
@@ -440,18 +456,26 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
   // ── TOKEN-05-d: truncation reported in response metadata ─────────────────
 
   it("TOKEN-05-d: response metadata includes truncated=true and truncationNote when truncation occurs", async () => {
+    // Use a very small token budget so that comments push the prompt over budget.
+    // The beforeEach sets systemPrompt to "System prompt" (very short), so the
+    // content budget is roughly floor(200*0.65) - ceil(13/4) ≈ 126 tokens.
+    // The base user prompt is ~63 tokens; 3 large comments add ~170 tokens total,
+    // exceeding the budget and triggering truncation.
     mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
-      maxTokensPerRequest: 500,
+      maxTokensPerRequest: 200,
       defaultMaxTokens: 256,
     });
 
     const body = {
       ...VALID_BODY,
+      issue: {
+        ...VALID_BODY.issue,
+        comments: makeLargeComments(3),
+      },
       context: {
         folderContext: 0,
-        existingTestCases: makeLargeExistingCases(10),
       },
     };
 

@@ -215,6 +215,10 @@ export function GenerateTestCasesWizard({
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState("");
+  // AbortController for cancelling the streaming fetch
+  const abortControllerRef = useRef<AbortController | null>(null);
+  // Ref on the wizard's scrollable content area
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -300,55 +304,6 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch existing test cases in current folder for context
-  const { data: existingTestCases } = useFindManyRepositoryCases(
-    {
-      where: {
-        projectId: projectId,
-        folderId: { equals: folderId },
-        isDeleted: false,
-        isArchived: false,
-      },
-      select: {
-        name: true,
-        order: true,
-        template: {
-          select: {
-            templateName: true,
-          },
-        },
-        caseFieldValues: {
-          select: {
-            value: true,
-            field: {
-              select: {
-                displayName: true,
-                type: {
-                  select: {
-                    type: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        steps: {
-          select: {
-            step: true,
-            expectedResult: true,
-            order: true,
-          },
-          orderBy: {
-            order: "asc",
-          },
-        },
-      },
-      take: 50, // Limit for context
-    },
-    {
-      enabled: open && folderId > 0,
-    }
-  );
-
   // Fetch the maximum order value separately for accurate ordering
   const { data: maxOrderData } = useFindManyRepositoryCases({
     where: {
@@ -434,6 +389,17 @@ export function GenerateTestCasesWizard({
       }
     }
   }, [selectedTemplateId, templates]);
+
+  // Auto-scroll to bottom when new cards stream in.
+  // requestAnimationFrame ensures the new card is laid out before we read scrollHeight.
+  useEffect(() => {
+    if (!isGenerating || generatedTestCases.length === 0) return;
+    const frame = requestAnimationFrame(() => {
+      const el = scrollContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isGenerating, generatedTestCases.length]);
 
   const toggleFieldSelection = (fieldId: number, isRequired: boolean) => {
     if (isRequired) {
@@ -686,9 +652,14 @@ export function GenerateTestCasesWizard({
     setShowErrorDetails(false);
     setIsGenerating(true);
     setGeneratingStatus("preparing");
+
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
     setCurrentStep(WizardStep.REVIEW_GENERATED);
+    // Cancel any in-flight generation
+    abortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
     try {
       const template = templates?.find((t) => t.id === selectedTemplateId);
 
@@ -717,100 +688,43 @@ export function GenerateTestCasesWizard({
       }
 
       setGeneratingStatus("calling_ai");
-      const response = await fetch("/api/llm/generate-test-cases", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+
+      // Build the request payload
+      const requestBody = {
+        projectId,
+        issue: issueData,
+        template: {
+          id: template?.id,
+          name: template?.templateName,
+          fields: template?.caseFields
+            .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
+            .sort((a, b) => a.order - b.order)
+            .map((cf) => ({
+              id: cf.caseField.id,
+              name: cf.caseField.displayName,
+              type: cf.caseField.type.type,
+              required: cf.caseField.isRequired,
+              options:
+                cf.caseField.fieldOptions &&
+                cf.caseField.fieldOptions.length > 0
+                  ? cf.caseField.fieldOptions.map((fo) => fo.fieldOption.name)
+                  : undefined,
+            })),
         },
-        body: JSON.stringify({
-          projectId,
-          issue: issueData,
-          template: {
-            id: template?.id,
-            name: template?.templateName,
-            fields: template?.caseFields
-              .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
-              .sort((a, b) => a.order - b.order)
-              .map((cf) => ({
-                id: cf.caseField.id,
-                name: cf.caseField.displayName,
-                type: cf.caseField.type.type,
-                required: cf.caseField.isRequired,
-                // Only include options for fields that actually have options (Dropdown, Multi-Select)
-                options:
-                  cf.caseField.fieldOptions &&
-                  cf.caseField.fieldOptions.length > 0
-                    ? cf.caseField.fieldOptions.map((fo) => fo.fieldOption.name)
-                    : undefined,
-              })),
-          },
-          context: {
-            userNotes,
-            existingTestCases:
-              existingTestCases?.map((tc) => {
-                // Extract text from the first text/long text field for context
-                // Helper to extract plain text from TipTap JSON
-                const extractPlainText = (value: any): string => {
-                  if (!value) return "";
-                  if (typeof value === "string") {
-                    // Try to parse as TipTap JSON
-                    try {
-                      const parsed = JSON.parse(value);
-                      if (parsed?.type === "doc" && parsed?.content) {
-                        return extractPlainText(parsed);
-                      }
-                    } catch {
-                      // Not JSON, return as-is
-                      return value;
-                    }
-                    return value;
-                  }
-                  if (typeof value === "object" && value?.content) {
-                    // TipTap JSON structure - recursively extract text
-                    return value.content
-                      .map((node: any) => {
-                        if (node.type === "text") return node.text || "";
-                        if (node.content) return extractPlainText(node);
-                        return "";
-                      })
-                      .join(" ")
-                      .trim();
-                  }
-                  return "";
-                };
+        context: {
+          userNotes,
+          folderContext: folderId,
+        },
+        quantity,
+        autoGenerateTags,
+      };
 
-                // Find first text field with content (Text Long or Text String types)
-                const textField = tc.caseFieldValues?.find((cfv: any) => {
-                  const fieldType = cfv.field?.type?.type?.toLowerCase();
-                  return (
-                    (fieldType === "text long" ||
-                      fieldType === "text string") &&
-                    cfv.value
-                  );
-                });
-
-                const description = textField?.value
-                  ? extractPlainText(textField.value).substring(0, 200)
-                  : undefined;
-
-                return {
-                  name: tc.name,
-                  template: tc.template?.templateName,
-                  description,
-                  steps:
-                    tc.steps && tc.steps.length > 0
-                      ? tc.steps.map((s: any) => ({
-                          step: extractPlainText(s.step),
-                          expectedResult: extractPlainText(s.expectedResult),
-                        }))
-                      : undefined,
-                };
-              }) || [],
-            folderContext: folderId,
-          },
-          quantity,
-          autoGenerateTags,
-        }),
+      // Use SSE streaming endpoint for real-time feedback
+      const response = await fetch("/api/llm/generate-test-cases/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+        signal: abortController.signal,
       });
 
       if (!response.ok) {
@@ -826,7 +740,6 @@ export function GenerateTestCasesWizard({
             errorMessage = parsedError.message;
           }
         } catch {
-          // Check if response is HTML (network/routing issue)
           if (
             errorData.includes("<!DOCTYPE html>") ||
             errorData.includes("<html>") ||
@@ -840,7 +753,6 @@ export function GenerateTestCasesWizard({
           }
         }
 
-        // Create error with enhanced data if available
         const errorObj = {
           message: errorMessage,
           ...(parsedError && { enhancedError: parsedError }),
@@ -848,62 +760,178 @@ export function GenerateTestCasesWizard({
         throw new Error(JSON.stringify(errorObj));
       }
 
-      setGeneratingStatus("processing");
-      const result = await response.json();
+      // Helper: convert option names → IDs for a single test case
+      const convertFieldOptionIds = (
+        tc: GeneratedTestCase
+      ): GeneratedTestCase => {
+        if (!template) return tc;
+        const converted: Record<string, any> = { ...tc.fieldValues };
+        template.caseFields.forEach((cf: any) => {
+          const name = cf.caseField.displayName;
+          const type = cf.caseField.type.type;
+          const val = converted[name];
+          if (!val) return;
+          if (type === "Dropdown" && typeof val === "string") {
+            const opt = cf.caseField.fieldOptions?.find(
+              (fo: any) => fo.fieldOption.name === val
+            );
+            if (opt) converted[name] = opt.fieldOption.id;
+          } else if (type === "Multi-Select" && Array.isArray(val)) {
+            converted[name] = val
+              .map((n: string) => {
+                const opt = cf.caseField.fieldOptions?.find(
+                  (fo: any) => fo.fieldOption.name === n
+                );
+                return opt?.fieldOption.id;
+              })
+              .filter((id: number | undefined) => id !== undefined);
+          }
+        });
+        return { ...tc, fieldValues: converted };
+      };
 
-      // Convert option names to option IDs for dropdown/multiselect fields
-      const testCasesWithConvertedValues = (result.testCases || []).map(
-        (tc: GeneratedTestCase) => {
-          const convertedFieldValues: Record<string, any> = {
-            ...tc.fieldValues,
-          };
+      // Build template fields descriptor once for parsing
+      const templateFields =
+        template?.caseFields
+          .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
+          .map((cf) => ({
+            id: cf.caseField.id,
+            name: cf.caseField.displayName,
+            type: cf.caseField.type.type,
+            required: cf.caseField.isRequired,
+            options:
+              cf.caseField.fieldOptions && cf.caseField.fieldOptions.length > 0
+                ? cf.caseField.fieldOptions.map((fo) => fo.fieldOption.name)
+                : undefined,
+          })) ?? [];
 
-          if (!template) return tc;
+      const templateForParsing = {
+        id: template?.id ?? 0,
+        name: template?.templateName ?? "",
+        fields: templateFields,
+      };
 
-          template.caseFields.forEach((cf: any) => {
-            const fieldDisplayName = cf.caseField.displayName;
-            const fieldType = cf.caseField.type.type;
-            const fieldValue = convertedFieldValues[fieldDisplayName];
+      const issueForParsing = {
+        key: issueData.key ?? "",
+        title: issueData.title,
+        description: issueData.description,
+        status: issueData.status ?? "",
+        priority: issueData.priority,
+        comments: issueData.comments,
+      };
 
-            if (!fieldValue) return;
+      // Lazy-import the shared parsers once
+      const { extractStreamedTestCases, parseAndValidateTestCases } =
+        await import("~/app/api/llm/generate-test-cases/shared");
 
-            if (fieldType === "Dropdown" && typeof fieldValue === "string") {
-              // Convert option name to option ID
-              const option = cf.caseField.fieldOptions?.find(
-                (fo: any) => fo.fieldOption.name === fieldValue
-              );
-              if (option) {
-                convertedFieldValues[fieldDisplayName] = option.fieldOption.id;
+      // Consume the SSE stream, rendering each test case as it completes
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+      let streamDone = false;
+      let streamError: string | undefined;
+      let yieldedCount = 0; // how many test cases we've already rendered
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "stage") {
+              if (data.stage === "calling_ai") {
+                setGeneratingStatus("calling_ai");
+              } else if (data.stage === "resolving") {
+                setGeneratingStatus("preparing");
+              } else if (data.stage === "validating") {
+                setGeneratingStatus("preparing");
               }
-            } else if (
-              fieldType === "Multi-Select" &&
-              Array.isArray(fieldValue)
-            ) {
-              // Convert array of option names to array of option IDs
-              convertedFieldValues[fieldDisplayName] = fieldValue
-                .map((name: string) => {
-                  const option = cf.caseField.fieldOptions?.find(
-                    (fo: any) => fo.fieldOption.name === name
-                  );
-                  return option?.fieldOption.id;
-                })
-                .filter((id: number | undefined) => id !== undefined);
+            } else if (data.type === "chunk") {
+              accumulated += data.delta;
+              setGeneratingStatus("streaming");
+
+              // Extract only fully-closed test case objects from the stream
+              const newCases = extractStreamedTestCases(
+                accumulated,
+                templateForParsing,
+                yieldedCount
+              );
+
+              if (newCases.length > 0) {
+                const converted = newCases.map(convertFieldOptionIds);
+                yieldedCount += newCases.length;
+
+                setGeneratedTestCases((prev) => [...prev, ...converted]);
+                setSelectedTestCases((prev) => {
+                  const next = new Set(prev);
+                  converted.forEach((tc) => next.add(tc.id));
+                  return next;
+                });
+              }
+            } else if (data.type === "done") {
+              streamDone = true;
+            } else if (data.type === "error") {
+              streamError = data.message;
             }
-          });
-
-          return {
-            ...tc,
-            fieldValues: convertedFieldValues,
-          };
+          } catch (e) {
+            if (e instanceof SyntaxError) continue;
+            throw e;
+          }
         }
-      );
+      }
 
-      setGeneratedTestCases(testCasesWithConvertedValues);
-      setSelectedTestCases(
-        new Set(
-          testCasesWithConvertedValues.map((tc: GeneratedTestCase) => tc.id)
-        )
-      );
+      if (streamError) {
+        throw new Error(JSON.stringify({ message: streamError }));
+      }
+
+      if (!accumulated && !streamDone) {
+        throw new Error(
+          JSON.stringify({
+            message: t("generateTestCases.errors.generateFailed"),
+          })
+        );
+      }
+
+      // Final parse with full recovery logic for any trailing content
+      setGeneratingStatus("processing");
+      const { testCases: finalTestCases, parseError } =
+        parseAndValidateTestCases(
+          accumulated,
+          templateForParsing,
+          issueForParsing,
+          autoGenerateTags,
+          quantity
+        );
+
+      if (parseError && yieldedCount === 0) {
+        throw new Error(
+          JSON.stringify({
+            message: parseError.userError,
+            enhancedError: {
+              error: parseError.userError,
+              suggestions: parseError.userSuggestions,
+              details: parseError.errorMessage,
+            },
+          })
+        );
+      }
+
+      // Replace all incrementally-yielded cases with the final validated set
+      // (the final parse may recover a truncated last case that the stream
+      // parser skipped, and also normalises IDs consistently)
+      if (finalTestCases.length > 0) {
+        const allConverted = finalTestCases.map(convertFieldOptionIds);
+        setGeneratedTestCases(allConverted);
+        setSelectedTestCases(new Set(allConverted.map((tc) => tc.id)));
+      }
       setGeneratingStatus("");
     } catch (error) {
       console.error("Error generating test cases:", error);
@@ -1109,7 +1137,13 @@ export function GenerateTestCasesWizard({
       });
     } finally {
       setIsGenerating(false);
+
+      abortControllerRef.current = null;
     }
+  };
+
+  const handleCancelGeneration = () => {
+    abortControllerRef.current?.abort();
   };
 
   const handleRetryGeneration = () => {
@@ -1201,9 +1235,6 @@ export function GenerateTestCasesWizard({
 
       if (maxOrderData && maxOrderData.length > 0) {
         maxOrder = maxOrderData[0].order || 0;
-      } else if (existingTestCases && existingTestCases.length > 0) {
-        // Fallback to the limited dataset if maxOrderData is not available
-        maxOrder = Math.max(...existingTestCases.map((c: any) => c.order));
       }
 
       let importedCount = 0;
@@ -1896,6 +1927,7 @@ export function GenerateTestCasesWizard({
     onCancelEdit: () => void;
     onSave: (updated: GeneratedTestCase) => void;
     autoGenerateTags: boolean;
+    disabled?: boolean;
     t: any;
     tCommon: any;
     session: any;
@@ -1915,6 +1947,7 @@ export function GenerateTestCasesWizard({
     onCancelEdit,
     onSave,
     autoGenerateTags,
+    disabled,
     t: _t,
     tCommon,
     session,
@@ -2424,7 +2457,12 @@ export function GenerateTestCasesWizard({
                 <h4 className="font-medium wrap-break-word">{testCase.name}</h4>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={onStartEdit}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onStartEdit}
+                  disabled={disabled}
+                >
                   <SquarePen className="w-4 h-4 mr-1" />
                   {tCommon("actions.edit")}
                 </Button>
@@ -2515,19 +2553,11 @@ export function GenerateTestCasesWizard({
               <AlertDescription>
                 <div className="flex items-center gap-2 text-xs text-left">
                   <Info className="w-4 h-4 text-muted-foreground shrink-0" />
-                  {(existingTestCases?.length ?? 0) >= 50
-                    ? t("generateTestCases.selectSource.folderContextTipMax", {
-                        count: existingTestCases?.length ?? 0,
-                        folderName:
-                          folderName ??
-                          t("generateTestCases.selectSource.currentFolder"),
-                      })
-                    : t("generateTestCases.selectSource.folderContextTip", {
-                        count: existingTestCases?.length ?? 0,
-                        folderName:
-                          folderName ??
-                          t("generateTestCases.selectSource.currentFolder"),
-                      })}
+                  {t("generateTestCases.selectSource.folderContextTip", {
+                    folderName:
+                      folderName ??
+                      t("generateTestCases.selectSource.currentFolder"),
+                  })}
                 </div>
               </AlertDescription>
             </Alert>
@@ -2543,7 +2573,10 @@ export function GenerateTestCasesWizard({
             />
           </div>
 
-          <div className="flex-1 min-h-0 px-4 overflow-y-auto">
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 min-h-0 px-4 overflow-y-auto"
+          >
             <div className="space-y-6 pb-4">
               {isImporting && (
                 <LoadingSpinnerAlert
@@ -3199,7 +3232,8 @@ export function GenerateTestCasesWizard({
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {isGenerating ? (
+                    {isGenerating && generatedTestCases.length === 0 ? (
+                      // No cards yet — show stage indicator / spinner
                       <div className="flex flex-col items-center justify-center py-12 space-y-4">
                         <Sparkles className="w-8 h-8 text-primary shrink-0" />
                         <div className="w-full max-w-xs space-y-3">
@@ -3209,16 +3243,31 @@ export function GenerateTestCasesWizard({
                               ? t("generateTestCases.generatingPreparing")
                               : generatingStatus === "calling_ai"
                                 ? t("generateTestCases.generatingCallingAi")
-                                : generatingStatus === "processing"
-                                  ? t("generateTestCases.generatingProcessing")
-                                  : t("generateTestCases.buttonText")}
+                                : generatingStatus === "streaming"
+                                  ? t("generateTestCases.generatingStreaming", {
+                                      count: generatedTestCases.length + 1,
+                                    })
+                                  : generatingStatus === "processing"
+                                    ? t(
+                                        "generateTestCases.generatingProcessing"
+                                      )
+                                    : t("generateTestCases.buttonText")}
                           </p>
                           <p className="text-xs text-muted-foreground text-center">
                             {t("generateTestCases.generatingHint")}
                           </p>
+                          <div className="flex justify-center pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelGeneration}
+                            >
+                              {tCommon("cancel")}
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    ) : generatedTestCases.length === 0 ? (
+                    ) : !isGenerating && generatedTestCases.length === 0 ? (
                       <Alert>
                         <AlertTriangle className="h-4 w-4" />
                         <AlertDescription>
@@ -3226,7 +3275,7 @@ export function GenerateTestCasesWizard({
                         </AlertDescription>
                       </Alert>
                     ) : (
-                      <div className="space-y-4">
+                      <div className={`space-y-4 transition-opacity duration-300 ${isGenerating ? "opacity-60" : "opacity-100"}`}>
                         {generatedTestCases.map((testCase, index) => {
                           const template = templates?.find(
                             (t) => t.id === selectedTemplateId
@@ -3254,6 +3303,7 @@ export function GenerateTestCasesWizard({
                               }
                               onSave={handleSaveEditedTestCase}
                               autoGenerateTags={autoGenerateTags}
+                              disabled={isGenerating}
                               t={t}
                               tCommon={tCommon}
                               session={session}
@@ -3263,6 +3313,26 @@ export function GenerateTestCasesWizard({
                             />
                           );
                         })}
+                        {/* "Still generating" indicator below rendered cards */}
+                        {isGenerating && (
+                          <div className="flex items-center justify-between rounded-lg border border-dashed p-4">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <Sparkles className="w-4 h-4 animate-pulse text-primary shrink-0" />
+                              <span>
+                                {t("generateTestCases.generatingStreaming", {
+                                  count: generatedTestCases.length + 1,
+                                })}
+                              </span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelGeneration}
+                            >
+                              {tCommon("cancel")}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -3298,7 +3368,9 @@ export function GenerateTestCasesWizard({
               {isLastStep ? (
                 <Button
                   onClick={handleImportClick}
-                  disabled={selectedTestCases.size === 0 || isImporting}
+                  disabled={
+                    selectedTestCases.size === 0 || isImporting || isGenerating
+                  }
                 >
                   {isImporting ? (
                     <Sparkles className="w-4 h-4 animate-spin shrink-0" />
@@ -3513,7 +3585,7 @@ function IssueDescriptionText({ description }: { description: string }) {
 
     return (
       <div
-        className="prose prose-sm dark:prose-invert max-w-none"
+        className="prose prose-sm dark:prose-invert max-w-none [&_*]:!text-inherit"
         dangerouslySetInnerHTML={{ __html: htmlOutput }}
       />
     );
