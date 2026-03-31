@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +21,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -81,7 +81,7 @@ export function CreateIssueJiraForm({
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [fields, setFields] = useState<JiraField[]>([]);
-  const [fieldsLoading, setFieldsLoading] = useState(true);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issueTypes, setIssueTypes] = useState<
     Array<{ id: string; name: string }>
@@ -450,7 +450,15 @@ export function CreateIssueJiraForm({
           </DialogDescription>
         </DialogHeader>
 
-        {fieldsLoading ? (
+        {!selectedProjectKey && !projectsLoading && projects.length === 0 ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("issues.integrationNotConfigured")}</AlertTitle>
+            <AlertDescription>
+              {t("issues.integrationNotConfiguredDescription")}
+            </AlertDescription>
+          </Alert>
+        ) : fieldsLoading || projectsLoading ? (
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>

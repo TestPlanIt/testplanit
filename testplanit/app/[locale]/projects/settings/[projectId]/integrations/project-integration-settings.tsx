@@ -22,7 +22,7 @@ import {
 import { Integration, ProjectIntegration } from "@prisma/client";
 import { AlertCircle, Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useUpdateProjectIntegration } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
@@ -118,6 +118,13 @@ export function ProjectIntegrationSettings({
     }
   }, [checkAuthAndLoadProjects, integration.provider]);
 
+  const canSave = useMemo(() => {
+    if (integration.provider === "SIMPLE_URL") return true;
+    if (!config.externalProjectId) return false;
+    if (integration.provider === "JIRA" && !config.defaultIssueType) return false;
+    return true;
+  }, [config.externalProjectId, config.defaultIssueType, integration.provider]);
+
   const handleSaveSettings = async () => {
     setIsSaving(true);
 
@@ -202,6 +209,7 @@ export function ProjectIntegrationSettings({
             <div className="flex items-center">
               <Label htmlFor="externalProject">
                 {tGlobal("issues.externalProject")}
+                <span className="text-destructive ml-1">{"*"}</span>
               </Label>
               <HelpPopover helpKey="projects.settings.integrations.externalProjectHelp" />
             </div>
@@ -252,6 +260,7 @@ export function ProjectIntegrationSettings({
             <div className="flex items-center">
               <Label htmlFor="defaultIssueType" className="block">
                 {t("integration.defaultIssueType")}
+                <span className="text-destructive ml-1">{"*"}</span>
               </Label>
               <HelpPopover helpKey="projects.settings.integrations.defaultIssueTypeHelp" />
             </div>
@@ -336,15 +345,32 @@ export function ProjectIntegrationSettings({
 
         {/* Only show save button if there are settings to save */}
         {integration.provider !== "SIMPLE_URL" && (
-          <div className="flex justify-end">
-            <Button onClick={handleSaveSettings} disabled={isSaving}>
-              {isSaving ? (
-                <Loader2 className=" h-4 w-4 animate-spin" />
-              ) : (
-                <Save className=" h-4 w-4" />
+          <div className="space-y-2">
+            {!config.externalProjectId && (
+              <p className="text-sm text-destructive">
+                {t("integration.externalProjectRequired")}
+              </p>
+            )}
+            {integration.provider === "JIRA" &&
+              config.externalProjectId &&
+              !config.defaultIssueType && (
+                <p className="text-sm text-destructive">
+                  {t("integration.defaultIssueTypeRequired")}
+                </p>
               )}
-              {tGlobal("admin.notifications.save")}
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveSettings}
+                disabled={isSaving || !canSave}
+              >
+                {isSaving ? (
+                  <Loader2 className=" h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className=" h-4 w-4" />
+                )}
+                {tGlobal("admin.notifications.save")}
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

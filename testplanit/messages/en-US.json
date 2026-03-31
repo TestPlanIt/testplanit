@@ -1065,6 +1065,8 @@
           "simpleUrlDescription": "This issue integration uses a simple URL pattern to link to external issues. Issues will be opened in a new tab using the configured URL pattern.",
           "externalProjectHelp": "This sets the default project for creating new issues from TestPlanIt. You can still link and sync issues from other external projects - each issue tracks its own source project.",
           "defaultIssueTypeHelp": "When creating new issues from TestPlanIt, this issue type will be automatically selected. This saves time if you typically create the same type of issues.",
+          "externalProjectRequired": "An external project must be selected before saving",
+          "defaultIssueTypeRequired": "A default issue type must be selected before saving",
           "automaticSyncHelp": "When enabled, issues will automatically sync when changes are detected in the external system (via webhooks). Manual sync is always available.",
           "removeWarningTitle": "Removing this issue integration will:",
           "removeWarning1": "Disconnect all linked issues from this issue integration (issues remain in database)",
