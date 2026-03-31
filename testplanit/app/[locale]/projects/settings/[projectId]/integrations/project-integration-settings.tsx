@@ -345,32 +345,18 @@ export function ProjectIntegrationSettings({
 
         {/* Only show save button if there are settings to save */}
         {integration.provider !== "SIMPLE_URL" && (
-          <div className="space-y-2">
-            {!config.externalProjectId && (
-              <p className="text-sm text-destructive">
-                {t("integration.externalProjectRequired")}
-              </p>
-            )}
-            {integration.provider === "JIRA" &&
-              config.externalProjectId &&
-              !config.defaultIssueType && (
-                <p className="text-sm text-destructive">
-                  {t("integration.defaultIssueTypeRequired")}
-                </p>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveSettings}
+              disabled={isSaving || !canSave}
+            >
+              {isSaving ? (
+                <Loader2 className=" h-4 w-4 animate-spin" />
+              ) : (
+                <Save className=" h-4 w-4" />
               )}
-            <div className="flex justify-end">
-              <Button
-                onClick={handleSaveSettings}
-                disabled={isSaving || !canSave}
-              >
-                {isSaving ? (
-                  <Loader2 className=" h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className=" h-4 w-4" />
-                )}
-                {tGlobal("admin.notifications.save")}
-              </Button>
-            </div>
+              {tGlobal("admin.notifications.save")}
+            </Button>
           </div>
         )}
       </CardContent>
