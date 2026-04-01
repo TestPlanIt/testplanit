@@ -721,6 +721,48 @@ export class ApiHelper {
     }
   }
 
+  async addTagToSession(sessionId: number, tagId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/sessions/update`,
+      {
+        data: {
+          where: { id: sessionId },
+          data: {
+            tags: {
+              connect: [{ id: tagId }],
+            },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to add tag to session: ${error}`);
+    }
+  }
+
+  async addTagToTestRun(testRunId: number, tagId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/testRuns/update`,
+      {
+        data: {
+          where: { id: testRunId },
+          data: {
+            tags: {
+              connect: [{ id: tagId }],
+            },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to add tag to test run: ${error}`);
+    }
+  }
+
   /**
    * Delete a tag via API (soft delete)
    * Waits for completion to ensure the tag is deleted before continuing
@@ -1535,6 +1577,31 @@ export class ApiHelper {
     if (!response.ok()) {
       const error = await response.text();
       throw new Error(`Failed to complete test run case: ${error}`);
+    }
+  }
+
+  async updateTestRun(
+    testRunId: number,
+    data: { isCompleted?: boolean; name?: string }
+  ): Promise<void> {
+    const updateData: Record<string, unknown> = { ...data };
+    if (data.isCompleted) {
+      updateData.completedAt = new Date().toISOString();
+    }
+
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/testRuns/update`,
+      {
+        data: {
+          where: { id: testRunId },
+          data: updateData,
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to update test run: ${error}`);
     }
   }
 
