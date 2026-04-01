@@ -81,6 +81,7 @@ interface ConfigurationOption {
 export interface SessionDuplicationPreset {
   originalName: string;
   originalConfigId: number | null;
+  originalConfigName: string | null;
   originalMilestoneId: number | null;
   originalStateId: number | null;
   originalAssignedToId: string | null;
@@ -396,7 +397,11 @@ export function AddSessionModal({
         setMissionContent(null);
       }
       setSelectedTags(duplicationPreset?.originalTagIds || []);
-      setSelectedConfigs([]);
+      setSelectedConfigs(
+        duplicationPreset?.originalConfigId && duplicationPreset?.originalConfigName
+          ? [{ id: duplicationPreset.originalConfigId, name: duplicationPreset.originalConfigName }]
+          : []
+      );
       setSelectedFiles([]);
     }
   }, [

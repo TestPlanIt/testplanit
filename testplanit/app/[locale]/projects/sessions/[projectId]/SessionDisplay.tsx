@@ -229,6 +229,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
           estimate: true,
           note: true,
           mission: true,
+          configuration: { select: { id: true, name: true } },
           tags: { select: { id: true } },
           issues: { select: { id: true } },
         },
@@ -250,6 +251,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       const preset: SessionDuplicationPreset = {
         originalName: duplicateSessionData.name || duplicateSource.name,
         originalConfigId: duplicateSessionData.configId,
+        originalConfigName: (duplicateSessionData as any).configuration?.name || null,
         originalMilestoneId: duplicateSessionData.milestoneId,
         originalStateId: duplicateSessionData.stateId,
         originalAssignedToId: duplicateSessionData.assignedToId,

@@ -124,7 +124,7 @@ test.describe("Session Duplication", () => {
     await nameInput.fill(newName);
 
     // Submit the form
-    const submitButton = dialog.getByRole("button", { name: /submit/i });
+    const submitButton = dialog.locator('button[type="submit"]');
     await expect(submitButton).toBeVisible();
     await submitButton.click();
 

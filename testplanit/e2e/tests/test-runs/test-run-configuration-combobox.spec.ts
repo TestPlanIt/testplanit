@@ -173,11 +173,9 @@ test.describe("Test Run Configuration Combobox", () => {
     });
 
     // Click the X button on the badge to remove it
-    // The remove button is a span[role="button"] inside the badge, next to the config name
-    const removeButton = configCombobox
-      .locator(`text="${configName}"`)
-      .locator("..")
-      .locator('[role="button"]');
+    // The badge contains the config name and has a [role="button"] span with the X icon
+    const badge = configCombobox.locator(`div:has-text("${configName}")`).first();
+    const removeButton = badge.locator('[role="button"]');
     await removeButton.click({ force: true });
 
     // Verify config is no longer in combobox trigger

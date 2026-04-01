@@ -137,12 +137,15 @@ var init_db = __esm({
 });
 
 // utils/ssrf.ts
+function isPrivateIp(ip) {
+  return PRIVATE_RANGES.some((r) => r.test(ip));
+}
 function isSsrfSafe(url) {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
     if (hostname === "localhost") return false;
-    if (PRIVATE_RANGES.some((r) => r.test(hostname))) return false;
+    if (isPrivateIp(hostname)) return false;
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return false;
     }
@@ -151,10 +154,29 @@ function isSsrfSafe(url) {
     return false;
   }
 }
-var PRIVATE_RANGES;
+async function assertSsrfSafeResolved(url) {
+  const parsed = new URL(url);
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":")) {
+    return;
+  }
+  try {
+    const { address } = await (0, import_promises.lookup)(hostname);
+    if (isPrivateIp(address)) {
+      throw new Error(
+        "Request blocked: hostname resolves to a private or internal address"
+      );
+    }
+  } catch (err) {
+    if (err.message?.includes("Request blocked")) throw err;
+    throw new Error(`DNS resolution failed for ${hostname}: ${err.message}`);
+  }
+}
+var import_promises, PRIVATE_RANGES;
 var init_ssrf = __esm({
   "utils/ssrf.ts"() {
     "use strict";
+    import_promises = require("node:dns/promises");
     PRIVATE_RANGES = [
       // IPv4 loopback
       /^127\./,
@@ -170,7 +192,9 @@ var init_ssrf = __esm({
       /^::1$/,
       // IPv6 unique local
       /^fc/i,
-      /^fd/i
+      /^fd/i,
+      // IPv6 link-local
+      /^fe80:/i
     ];
   }
 });
@@ -521,6 +545,99 @@ var init_AzureDevOpsRepoAdapter = __esm({
   }
 });
 
+// lib/integrations/adapters/GiteaRepoAdapter.ts
+var GiteaRepoAdapter_exports = {};
+__export(GiteaRepoAdapter_exports, {
+  GiteaRepoAdapter: () => GiteaRepoAdapter
+});
+var MAX_FILES3, GiteaRepoAdapter;
+var init_GiteaRepoAdapter = __esm({
+  "lib/integrations/adapters/GiteaRepoAdapter.ts"() {
+    "use strict";
+    init_GitRepoAdapter();
+    MAX_FILES3 = 1e4;
+    GiteaRepoAdapter = class extends GitRepoAdapter {
+      personalAccessToken;
+      owner;
+      repo;
+      baseUrl;
+      constructor(credentials, settings) {
+        super();
+        this.personalAccessToken = credentials.personalAccessToken;
+        this.owner = settings?.owner ?? "";
+        this.repo = settings?.repo ?? "";
+        this.baseUrl = (settings?.baseUrl ?? "").replace(/\/$/, "");
+        this.baseUrl = this.sanitizeUrl(this.baseUrl);
+      }
+      get authHeaders() {
+        return {
+          Authorization: `token ${this.personalAccessToken}`,
+          Accept: "application/json"
+        };
+      }
+      async getDefaultBranch() {
+        const data = await this.makeRequest(
+          `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}`,
+          { headers: this.authHeaders }
+        );
+        return data.default_branch;
+      }
+      async listAllFiles(branch) {
+        const branchData = await this.makeRequest(
+          `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/branches/${encodeURIComponent(branch)}`,
+          { headers: this.authHeaders }
+        );
+        const treeSha = branchData.commit?.commit?.tree?.sha ?? branchData.commit?.id ?? branchData.commit?.sha;
+        if (!treeSha) {
+          throw new Error("Could not resolve branch to a tree SHA");
+        }
+        const files = [];
+        let page = 1;
+        let truncated = false;
+        while (files.length < MAX_FILES3) {
+          const treeData = await this.makeRequest(
+            `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/git/trees/${treeSha}?recursive=true&per_page=100&page=${page}`,
+            { headers: this.authHeaders }
+          );
+          if (treeData.truncated) {
+            truncated = true;
+          }
+          const entries = treeData.tree ?? [];
+          if (entries.length === 0) break;
+          const fileEntries = entries.filter((item) => item.type === "blob").map((item) => ({
+            path: item.path,
+            size: item.size ?? 0,
+            type: "file"
+          }));
+          files.push(...fileEntries);
+          const totalCount = treeData.total_count;
+          if (totalCount !== void 0 && files.length >= totalCount) break;
+          if (entries.length < 100) break;
+          page++;
+        }
+        return { files: files.slice(0, MAX_FILES3), truncated };
+      }
+      async getFileContent(path, branch) {
+        return this.makeTextRequest(
+          `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/raw/${path}?ref=${encodeURIComponent(branch)}`,
+          { headers: this.authHeaders }
+        );
+      }
+      async testConnection() {
+        try {
+          const data = await this.makeRequest(
+            `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}`,
+            { headers: this.authHeaders }
+          );
+          return { success: true, defaultBranch: data.default_branch };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      }
+    };
+  }
+});
+
 // lib/integrations/adapters/GitRepoAdapter.ts
 function createGitRepoAdapter(provider, credentials, settings) {
   switch (provider) {
@@ -539,6 +656,10 @@ function createGitRepoAdapter(provider, credentials, settings) {
     case "AZURE_DEVOPS": {
       const { AzureDevOpsRepoAdapter: AzureDevOpsRepoAdapter2 } = (init_AzureDevOpsRepoAdapter(), __toCommonJS(AzureDevOpsRepoAdapter_exports));
       return new AzureDevOpsRepoAdapter2(credentials, settings);
+    }
+    case "GITEA": {
+      const { GiteaRepoAdapter: GiteaRepoAdapter2 } = (init_GiteaRepoAdapter(), __toCommonJS(GiteaRepoAdapter_exports));
+      return new GiteaRepoAdapter2(credentials, settings);
     }
     default:
       throw new Error(`Unknown git provider: ${provider}`);
@@ -591,17 +712,20 @@ var init_GitRepoAdapter = __esm({
           );
           try {
             const safeUrl = this.sanitizeUrl(url);
+            await assertSsrfSafeResolved(safeUrl);
             const response = await fetch(safeUrl, {
               ...options,
-              signal: controller.signal
+              signal: controller.signal,
+              redirect: "manual"
+              // prevent redirect-based SSRF bypass
             });
+            if (response.status >= 300 && response.status < 400) {
+              return this.followSafeRedirect(response, options, controller.signal, "json");
+            }
+            this.trackRateLimitHeaders(response);
             const remaining = response.headers.get("X-RateLimit-Remaining");
             const reset = response.headers.get("X-RateLimit-Reset");
             const retryAfter = response.headers.get("Retry-After");
-            if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
-            if (reset !== null) this.rateLimitResetAt = parseInt(reset);
-            if (retryAfter !== null)
-              this.rateLimitResetAt = Math.floor(Date.now() / 1e3) + parseInt(retryAfter);
             if (!response.ok) {
               const isRateLimited = response.status === 429 || response.status === 403 && (remaining === "0" || retryAfter !== null);
               if (isRateLimited) {
@@ -649,17 +773,18 @@ var init_GitRepoAdapter = __esm({
           );
           try {
             const safeUrl = this.sanitizeUrl(url);
+            await assertSsrfSafeResolved(safeUrl);
             const response = await fetch(safeUrl, {
               ...options,
-              signal: controller.signal
+              signal: controller.signal,
+              redirect: "manual"
             });
+            if (response.status >= 300 && response.status < 400) {
+              return this.followSafeRedirect(response, options, controller.signal, "text");
+            }
+            this.trackRateLimitHeaders(response);
             const remaining = response.headers.get("X-RateLimit-Remaining");
-            const reset = response.headers.get("X-RateLimit-Reset");
             const retryAfter = response.headers.get("Retry-After");
-            if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
-            if (reset !== null) this.rateLimitResetAt = parseInt(reset);
-            if (retryAfter !== null)
-              this.rateLimitResetAt = Math.floor(Date.now() / 1e3) + parseInt(retryAfter);
             if (!response.ok) {
               const isRateLimited = response.status === 429 || response.status === 403 && (remaining === "0" || retryAfter !== null);
               if (isRateLimited) {
@@ -697,6 +822,48 @@ var init_GitRepoAdapter = __esm({
           result = result.slice(0, -1);
         }
         return result;
+      }
+      /**
+       * Follow a single redirect after validating the Location URL against SSRF rules.
+       * Only one hop is allowed — a second redirect throws.
+       */
+      async followSafeRedirect(response, options, signal, mode) {
+        const location = response.headers.get("Location");
+        if (!location) {
+          throw new Error(
+            `Redirect (${response.status}) with no Location header`
+          );
+        }
+        const redirectUrl = this.sanitizeUrl(
+          new URL(location, response.url).href
+        );
+        await assertSsrfSafeResolved(redirectUrl);
+        const redirectResponse = await fetch(redirectUrl, {
+          ...options,
+          signal,
+          redirect: "error"
+          // no further redirects
+        });
+        this.trackRateLimitHeaders(redirectResponse);
+        if (!redirectResponse.ok) {
+          const errorText = await redirectResponse.text().catch(() => "");
+          throw new Error(
+            `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
+          );
+        }
+        return mode === "json" ? await redirectResponse.json() : await redirectResponse.text();
+      }
+      /**
+       * Extract rate-limit headers from a response and update internal state.
+       */
+      trackRateLimitHeaders(response) {
+        const remaining = response.headers.get("X-RateLimit-Remaining");
+        const reset = response.headers.get("X-RateLimit-Reset");
+        const retryAfter = response.headers.get("Retry-After");
+        if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
+        if (reset !== null) this.rateLimitResetAt = parseInt(reset);
+        if (retryAfter !== null)
+          this.rateLimitResetAt = Math.floor(Date.now() / 1e3) + parseInt(retryAfter);
       }
       async applyRateLimit() {
         const now = Date.now();

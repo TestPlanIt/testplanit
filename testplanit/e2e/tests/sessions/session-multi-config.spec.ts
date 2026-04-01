@@ -88,15 +88,18 @@ test.describe("Session Multi-Configuration Creation", () => {
     await configCombobox.click();
 
     // Select first config
-    await page
-      .locator(`[role="option"]:has-text("${config1Name}")`)
-      .click();
+    const option1 = page.locator(`[role="option"]:has-text("${config1Name}")`);
+    await expect(option1).toBeVisible({ timeout: 10000 });
+    await option1.click({ force: true });
+
+    // Wait for the combobox to settle after selection
+    await page.waitForTimeout(500);
 
     // Re-open and select second config
     await configCombobox.click();
-    await page
-      .locator(`[role="option"]:has-text("${config2Name}")`)
-      .click();
+    const option2 = page.locator(`[role="option"]:has-text("${config2Name}")`);
+    await expect(option2).toBeVisible({ timeout: 10000 });
+    await option2.click({ force: true });
 
     // Close the popover
     await page.keyboard.press("Escape");
@@ -141,17 +144,18 @@ test.describe("Session Multi-Configuration Creation", () => {
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
-    await page
-      .locator(`[role="option"]:has-text("${config1Name}")`)
-      .click();
+    const opt1 = page.locator(`[role="option"]:has-text("${config1Name}")`);
+    await expect(opt1).toBeVisible({ timeout: 10000 });
+    await opt1.click({ force: true });
+    await page.waitForTimeout(500);
     await configCombobox.click();
-    await page
-      .locator(`[role="option"]:has-text("${config2Name}")`)
-      .click();
+    const opt2 = page.locator(`[role="option"]:has-text("${config2Name}")`);
+    await expect(opt2).toBeVisible({ timeout: 10000 });
+    await opt2.click({ force: true });
     await page.keyboard.press("Escape");
 
     // Submit the form
-    const submitButton = dialog.getByRole("button", { name: /submit/i });
+    const submitButton = dialog.locator('button[type="submit"]');
     await submitButton.click();
 
     // Dialog should close

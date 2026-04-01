@@ -246,7 +246,7 @@ test.describe("Session Configuration Combobox", () => {
     await expect(configCombobox).toContainText(configName, { timeout: 5000 });
 
     // Submit the form
-    const submitButton = dialog.getByRole("button", { name: /create/i });
+    const submitButton = dialog.locator('button[type="submit"]');
     await expect(submitButton).toBeVisible();
     await submitButton.click();
 

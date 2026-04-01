@@ -35,7 +35,7 @@ test.describe("Session Lifecycle", () => {
     await nameInput.fill(sessionName);
 
     // Submit the form
-    const submitButton = dialog.getByRole("button", { name: /submit/i });
+    const submitButton = dialog.locator('button[type="submit"]');
     await expect(submitButton).toBeVisible();
     await submitButton.click();
 
@@ -89,11 +89,11 @@ test.describe("Session Lifecycle", () => {
     await expect(nameInput).toBeVisible({ timeout: 5000 });
     await nameInput.fill(sessionName);
 
-    // Select configuration via AsyncCombobox
-    // The right panel order: templateId (Select), stateId (Select), configId (AsyncCombobox), milestoneId, assignedToId (AsyncCombobox)
-    // button[role="combobox"] order: templateId(0), stateId(1), configId(2), assignedToId(3)
-    // Use the XPath pattern from Phase 12 learnings for reliable targeting
-    const configCombobox = dialog.locator('button[role="combobox"]').nth(2);
+    // Select configuration via MultiAsyncCombobox (now in left column)
+    const configLabel = dialog.locator('label:has-text("Configurations")');
+    const configCombobox = configLabel
+      .locator("..")
+      .locator('button[role="combobox"]');
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
     await configCombobox.click();
 
@@ -103,15 +103,16 @@ test.describe("Session Lifecycle", () => {
     );
     await expect(configOption).toBeVisible({ timeout: 10000 });
     await configOption.click();
+    await page.keyboard.press("Escape");
 
-    // Verify configuration is selected
+    // Verify configuration is selected (badge visible)
     await expect(configCombobox).toContainText(configName, { timeout: 5000 });
 
-    // MilestoneSelect uses Radix Select (role="combobox") for milestone
-    // MilestoneSelect is a custom Select, its trigger has role="combobox"
-    // It's the 4th role=combobox in dialog: template(0), state(1), config-async(2), milestone(3)
-    // But wait — MilestoneSelect may render differently. Check for a select with "None" placeholder
-    const milestoneSelect = dialog.locator('[role="combobox"]').nth(3);
+    // MilestoneSelect is in the right column
+    const milestoneLabel = dialog.locator('label:has-text("Milestone")');
+    const milestoneSelect = milestoneLabel
+      .locator("..")
+      .locator('[role="combobox"]');
     await expect(milestoneSelect).toBeVisible({ timeout: 5000 });
     await milestoneSelect.click();
 
@@ -123,7 +124,7 @@ test.describe("Session Lifecycle", () => {
     await milestoneOption.click();
 
     // Submit the form
-    const submitButton = dialog.getByRole("button", { name: /submit/i });
+    const submitButton = dialog.locator('button[type="submit"]');
     await submitButton.click();
 
     // Dialog should close after successful creation
