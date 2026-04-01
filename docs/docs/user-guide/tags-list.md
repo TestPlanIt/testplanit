@@ -37,7 +37,16 @@ For full details on using Auto Tag, see the [Auto Tag documentation](./llm-auto-
 Clicking on a tag's name in the **Name** column navigates you to a dedicated page for that tag (`/tags/[tagId]`). This detail page shows:
 
 - The tag name prominently displayed.
-- A filter bar to search within the associated items.
-- Separate tables listing:
-  - All **active Test Cases** linked to this tag, including the Test Case name (linked to its repository page) and the Project it belongs to (linked to the project overview).
-  - All **active Sessions** linked to this tag, including the Session name (linked to its session page) and the Project it belongs to (linked to the project overview).
+- A search input to filter items by name.
+- A **filter bar** with controls to narrow displayed items:
+  - **Case type** dropdown: Show All, Manual only, or Automated only test cases.
+  - **Hide completed Sessions**: Toggle to exclude completed sessions.
+  - **Hide completed Test Runs**: Toggle to exclude completed test runs.
+  - An active filter count badge with a click-to-clear-all button.
+  - Filter state persists per tag across page visits.
+- Tabbed tables listing associated items:
+  - **Test Cases**: Name (linked to repository page), Type (Manual/Automated badge), and Project.
+  - **Test Runs**: Name (linked to test run page), Status (Completed/In Progress badge), and Project.
+  - **Sessions**: Name (linked to session page), Status (Completed/In Progress badge), and Project.
+
+When filters exclude all items in a tab, an empty state message is shown.

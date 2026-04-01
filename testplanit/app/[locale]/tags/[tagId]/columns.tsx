@@ -2,6 +2,7 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { SessionTableDisplay } from "@/components/tables/SessionTableDisplay";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -9,12 +10,37 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { PlayCircle } from "lucide-react";
+import { CheckCircle2, PlayCircle } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
+const ProjectCell: React.FC<{
+  projectName: string;
+  projectId: number;
+  iconUrl: string | null;
+  noProject: string;
+}> = ({ projectName, projectId, iconUrl, noProject }) => {
+  return (
+    <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+      <span className="shrink-0">
+        <ProjectIcon iconUrl={iconUrl} width={20} height={20} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <ProjectNameCell
+          value={projectName || noProject}
+          projectId={projectId}
+          size="sm"
+        />
+      </div>
+    </div>
+  );
+};
+
 export const getCaseColumns = (translations: {
   testCases: string;
+  type: string;
+  manual: string;
+  automated: string;
   project: string;
   noProject: string;
 }): ColumnDef<{
@@ -30,9 +56,9 @@ export const getCaseColumns = (translations: {
     {
       id: "testCase",
       header: translations.testCases,
-      size: 400,
+      size: 500,
       minSize: 200,
-      maxSize: 800,
+      maxSize: 1200,
       enableResizing: true,
       meta: { isPinned: "left" },
       cell: ({ row }) => {
@@ -51,6 +77,22 @@ export const getCaseColumns = (translations: {
       },
     },
     {
+      id: "type",
+      header: translations.type,
+      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      enableResizing: true,
+      cell: ({ row }) => {
+        const isAutomated = row.original.automated;
+        return (
+          <Badge variant={isAutomated ? "default" : "secondary"}>
+            {isAutomated ? translations.automated : translations.manual}
+          </Badge>
+        );
+      },
+    },
+    {
       id: "project",
       header: translations.project,
       enableSorting: false,
@@ -59,31 +101,23 @@ export const getCaseColumns = (translations: {
       size: 150,
       minSize: 150,
       maxSize: 500,
-      cell: ({ row }) => {
-        const projectName = row.original.projectName || translations.noProject;
-        const projectId = row.original.projectId || 0;
-        const iconUrl = row.original.iconUrl || null;
-        return (
-          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-            <span className="shrink-0">
-              <ProjectIcon iconUrl={iconUrl} width={20} height={20} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <ProjectNameCell
-                value={projectName}
-                projectId={projectId}
-                size="sm"
-              />
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <ProjectCell
+          projectName={row.original.projectName || translations.noProject}
+          projectId={row.original.projectId || 0}
+          iconUrl={row.original.iconUrl || null}
+          noProject={translations.noProject}
+        />
+      ),
     },
   ];
 };
 
 export const getSessionColumns = (translations: {
   sessions: string;
+  status: string;
+  completed: string;
+  inProgress: string;
   project: string;
   noProject: string;
 }): ColumnDef<{
@@ -98,9 +132,9 @@ export const getSessionColumns = (translations: {
     {
       id: "session",
       header: translations.sessions,
-      size: 400,
+      size: 500,
       minSize: 200,
-      maxSize: 800,
+      maxSize: 1200,
       enableResizing: true,
       meta: { isPinned: "left" },
       cell: ({ row }) => (
@@ -116,6 +150,29 @@ export const getSessionColumns = (translations: {
       ),
     },
     {
+      id: "status",
+      header: translations.status,
+      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      enableResizing: true,
+      cell: ({ row }) => {
+        const isCompleted = row.original.isCompleted;
+        return (
+          <Badge
+            variant={isCompleted ? "outline" : "default"}
+            className={cn(
+              "gap-1",
+              isCompleted && "text-muted-foreground"
+            )}
+          >
+            {isCompleted && <CheckCircle2 className="h-3 w-3" />}
+            {isCompleted ? translations.completed : translations.inProgress}
+          </Badge>
+        );
+      },
+    },
+    {
       id: "project",
       header: translations.project,
       enableSorting: false,
@@ -124,25 +181,14 @@ export const getSessionColumns = (translations: {
       size: 250,
       minSize: 150,
       maxSize: 500,
-      cell: ({ row }) => {
-        const projectName = row.original.projectName || translations.noProject;
-        const projectId = row.original.projectId || 0;
-        const iconUrl = row.original.iconUrl || null;
-        return (
-          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-            <span className="shrink-0">
-              <ProjectIcon iconUrl={iconUrl} width={20} height={20} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <ProjectNameCell
-                value={projectName}
-                projectId={projectId}
-                size="sm"
-              />
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <ProjectCell
+          projectName={row.original.projectName || translations.noProject}
+          projectId={row.original.projectId || 0}
+          iconUrl={row.original.iconUrl || null}
+          noProject={translations.noProject}
+        />
+      ),
     },
   ];
 };
@@ -196,6 +242,9 @@ const TestRunLinkDisplay: React.FC<{
 
 export const getTestRunColumns = (translations: {
   testRuns: string;
+  status: string;
+  completed: string;
+  inProgress: string;
   project: string;
   noProject: string;
 }): ColumnDef<{
@@ -210,9 +259,9 @@ export const getTestRunColumns = (translations: {
     {
       id: "testRun",
       header: translations.testRuns,
-      size: 400,
+      size: 500,
       minSize: 200,
-      maxSize: 800,
+      maxSize: 1200,
       enableResizing: true,
       meta: { isPinned: "left" },
       cell: ({ row }) => (
@@ -228,6 +277,29 @@ export const getTestRunColumns = (translations: {
       ),
     },
     {
+      id: "status",
+      header: translations.status,
+      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      enableResizing: true,
+      cell: ({ row }) => {
+        const isCompleted = row.original.isCompleted;
+        return (
+          <Badge
+            variant={isCompleted ? "outline" : "default"}
+            className={cn(
+              "gap-1",
+              isCompleted && "text-muted-foreground"
+            )}
+          >
+            {isCompleted && <CheckCircle2 className="h-3 w-3" />}
+            {isCompleted ? translations.completed : translations.inProgress}
+          </Badge>
+        );
+      },
+    },
+    {
       id: "project",
       header: translations.project,
       enableSorting: false,
@@ -236,25 +308,14 @@ export const getTestRunColumns = (translations: {
       size: 250,
       minSize: 150,
       maxSize: 500,
-      cell: ({ row }) => {
-        const projectName = row.original.projectName || translations.noProject;
-        const projectId = row.original.projectId || 0;
-        const iconUrl = row.original.iconUrl || null;
-        return (
-          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-            <span className="shrink-0">
-              <ProjectIcon iconUrl={iconUrl} width={20} height={20} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <ProjectNameCell
-                value={projectName}
-                projectId={projectId}
-                size="sm"
-              />
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <ProjectCell
+          projectName={row.original.projectName || translations.noProject}
+          projectId={row.original.projectId || 0}
+          iconUrl={row.original.iconUrl || null}
+          noProject={translations.noProject}
+        />
+      ),
     },
   ];
 };

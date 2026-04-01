@@ -524,23 +524,6 @@ function TagDetail() {
 
               <div className="flex items-center gap-2">
                 <Switch
-                  id="hide-completed-sessions"
-                  checked={filters.hideCompletedSessions}
-                  onCheckedChange={(checked) =>
-                    updateFilters({ hideCompletedSessions: checked })
-                  }
-                  data-testid="hide-completed-sessions-switch"
-                />
-                <Label
-                  htmlFor="hide-completed-sessions"
-                  className="text-sm cursor-pointer"
-                >
-                  {t("tags.detail.filters.hideCompletedSessions")}
-                </Label>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Switch
                   id="hide-completed-runs"
                   checked={filters.hideCompletedTestRuns}
                   onCheckedChange={(checked) =>
@@ -555,6 +538,23 @@ function TagDetail() {
                   {t("tags.detail.filters.hideCompletedTestRuns")}
                 </Label>
               </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="hide-completed-sessions"
+                  checked={filters.hideCompletedSessions}
+                  onCheckedChange={(checked) =>
+                    updateFilters({ hideCompletedSessions: checked })
+                  }
+                  data-testid="hide-completed-sessions-switch"
+                />
+                <Label
+                  htmlFor="hide-completed-sessions"
+                  className="text-sm cursor-pointer"
+                >
+                  {t("tags.detail.filters.hideCompletedSessions")}
+                </Label>
+              </div>
             </div>
           </div>
 
@@ -566,11 +566,11 @@ function TagDetail() {
               <TabsTrigger value="cases">
                 {t("common.fields.testCases")} {`(${casesCount ?? 0})`}
               </TabsTrigger>
-              <TabsTrigger value="sessions">
-                {t("common.fields.sessions")} {`(${sessionsCount ?? 0})`}
-              </TabsTrigger>
               <TabsTrigger value="testRuns">
                 {t("common.fields.testRuns")} {`(${testRunsCount ?? 0})`}
+              </TabsTrigger>
+              <TabsTrigger value="sessions">
+                {t("common.fields.sessions")} {`(${sessionsCount ?? 0})`}
               </TabsTrigger>
             </TabsList>
 
@@ -612,44 +612,6 @@ function TagDetail() {
               )}
             </TabsContent>
 
-            <TabsContent value="sessions">
-              {(sessionsCount ?? 0) > 0 && (
-                <div className="mb-4 flex justify-end items-center gap-4">
-                  <PaginationInfo
-                    startIndex={sessionsStartIndex}
-                    endIndex={sessionsEndIndex}
-                    totalRows={sessionsCount ?? 0}
-                    searchString={searchString}
-                    pageSize={sessionsPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
-                    handlePageSizeChange={setSessionsPageSize}
-                  />
-                  <PaginationComponent
-                    currentPage={sessionsPage}
-                    totalPages={sessionsTotalPages}
-                    onPageChange={setSessionsPage}
-                  />
-                </div>
-              )}
-              <DataTable
-                columns={sessionColumns}
-                data={mappedSessions}
-                onSortChange={() => {}}
-                sortConfig={{ column: "name", direction: "asc" }}
-                columnVisibility={{}}
-                onColumnVisibilityChange={() => {}}
-                isLoading={isLoadingSessions}
-                pageSize={effectiveSessionsPageSize}
-              />
-              {(sessionsCount ?? 0) === 0 && !isLoadingSessions && (
-                <div className="text-center text-muted-foreground py-8">
-                  {filters.hideCompletedSessions
-                    ? t("tags.detail.noFilterResults")
-                    : t("tags.detail.noResults")}
-                </div>
-              )}
-            </TabsContent>
-
             <TabsContent value="testRuns">
               {(testRunsCount ?? 0) > 0 && (
                 <div className="mb-4 flex justify-end items-center gap-4">
@@ -682,6 +644,44 @@ function TagDetail() {
               {(testRunsCount ?? 0) === 0 && !isLoadingTestRuns && (
                 <div className="text-center text-muted-foreground py-8">
                   {filters.hideCompletedTestRuns
+                    ? t("tags.detail.noFilterResults")
+                    : t("tags.detail.noResults")}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="sessions">
+              {(sessionsCount ?? 0) > 0 && (
+                <div className="mb-4 flex justify-end items-center gap-4">
+                  <PaginationInfo
+                    startIndex={sessionsStartIndex}
+                    endIndex={sessionsEndIndex}
+                    totalRows={sessionsCount ?? 0}
+                    searchString={searchString}
+                    pageSize={sessionsPageSize}
+                    pageSizeOptions={defaultPageSizeOptions}
+                    handlePageSizeChange={setSessionsPageSize}
+                  />
+                  <PaginationComponent
+                    currentPage={sessionsPage}
+                    totalPages={sessionsTotalPages}
+                    onPageChange={setSessionsPage}
+                  />
+                </div>
+              )}
+              <DataTable
+                columns={sessionColumns}
+                data={mappedSessions}
+                onSortChange={() => {}}
+                sortConfig={{ column: "name", direction: "asc" }}
+                columnVisibility={{}}
+                onColumnVisibilityChange={() => {}}
+                isLoading={isLoadingSessions}
+                pageSize={effectiveSessionsPageSize}
+              />
+              {(sessionsCount ?? 0) === 0 && !isLoadingSessions && (
+                <div className="text-center text-muted-foreground py-8">
+                  {filters.hideCompletedSessions
                     ? t("tags.detail.noFilterResults")
                     : t("tags.detail.noResults")}
                 </div>
