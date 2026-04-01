@@ -300,9 +300,14 @@ test.describe("Project Member Management", () => {
   }) => {
     const dialog = await openEditDialog(page);
 
-    // Details tab is active by default — submit the form
+    // Details tab is active by default — wait for form to fully load
+    // The Members tab data (user/group permissions) must load before Save works
     const saveButton = dialog.getByRole("button", { name: /save/i });
     await expect(saveButton).toBeVisible({ timeout: 10000 });
+
+    // Wait for async data to load (permissions queries)
+    await page.waitForTimeout(2000);
+
     await saveButton.click();
 
     // Dialog should close on success (toast fires and dialog closes)

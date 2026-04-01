@@ -674,7 +674,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       {
         data: {
           data: {
-            testCase: { connect: { id: caseId } },
+            testCaseId: caseId,
             step: JSON.stringify({
               type: "doc",
               content: [
@@ -703,6 +703,10 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     if (response.status() !== 201) {
       const errorBody = await response.json().catch(() => null);
       console.error("Step create failed:", response.status(), JSON.stringify(errorBody));
+      console.error("Step create caseId:", caseId, "memberUserId:", memberUserId);
+      // Log member's auth status
+      const whoami = await memberCtx.request.get(`${baseURL}/api/auth/session`);
+      console.error("Member session:", await whoami.text());
     }
     expect(response.status()).toBe(201);
     const result = await response.json();
@@ -717,7 +721,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       {
         data: {
           data: {
-            testCase: { connect: { id: caseId } },
+            testCaseId: caseId,
             step: JSON.stringify({
               type: "doc",
               content: [

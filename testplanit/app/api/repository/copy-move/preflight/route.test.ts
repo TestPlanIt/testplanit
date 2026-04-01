@@ -6,10 +6,12 @@ const {
   mockGetServerSession,
   mockEnhance,
   mockPrismaUserFindUnique,
+  mockPrismaRepositoryCasesFindMany,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
   mockPrismaUserFindUnique: vi.fn(),
+  mockPrismaRepositoryCasesFindMany: vi.fn(),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -30,6 +32,9 @@ vi.mock("~/lib/prisma", () => ({
   prisma: {
     user: {
       findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
+    },
+    repositoryCases: {
+      findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
     },
   },
 }));
@@ -119,8 +124,10 @@ function setupDefaultMocks() {
     .mockResolvedValueOnce({ id: 20 }); // target
 
   mockEnhancedDb.repositoryCases.findMany
-    .mockResolvedValueOnce(baseSourceCases) // source cases
-    .mockResolvedValueOnce([]); // collision check (no collisions by default)
+    .mockResolvedValueOnce(baseSourceCases); // source cases (via enhancedDb)
+
+  mockPrismaRepositoryCasesFindMany
+    .mockResolvedValueOnce([]); // collision check (via prisma, no collisions by default)
 
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
     baseTargetTemplateAssignments,
@@ -325,11 +332,12 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 13
   it("returns collisions array when target has cases with matching name/className/source", async () => {
     setupDefaultMocks();
-    // Override enhanced DB collision check to return a collision
-    // repositoryCases.findMany is called twice: first for source cases, then for collision check
+    // Override: source cases via enhancedDb, collision check via prisma
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValueOnce(baseSourceCases) // source cases
+      .mockResolvedValueOnce(baseSourceCases); // source cases
+    mockPrismaRepositoryCasesFindMany
+      .mockReset()
       .mockResolvedValueOnce([
         {
           id: 99,
