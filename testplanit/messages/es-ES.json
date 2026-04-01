@@ -2281,7 +2281,14 @@
     "detail": {
       "title": "Detalles de la etiqueta",
       "filterPlaceholder": "Filtrar elementos...",
-      "noResults": "No hay elementos"
+      "noResults": "No hay elementos",
+      "noFilterResults": "No hay elementos que coincidan con los filtros actuales.",
+      "filters": {
+        "hideCompletedSessions": "Ocultar sesiones completadas",
+        "hideCompletedTestRuns": "Ocultar las pruebas completadas",
+        "caseTypeLabel": "Tipo de caso",
+        "allCases": "Todo"
+      }
     },
     "manageTags": {
       "searchPlaceholder": "Buscar etiquetas...",

@@ -2281,7 +2281,14 @@
     "detail": {
       "title": "Tag Details",
       "filterPlaceholder": "Filter items...",
-      "noResults": "No items found"
+      "noResults": "No items found",
+      "noFilterResults": "No items match the current filters",
+      "filters": {
+        "hideCompletedSessions": "Hide completed Sessions",
+        "hideCompletedTestRuns": "Hide completed Test Runs",
+        "caseTypeLabel": "Case type",
+        "allCases": "All"
+      }
     },
     "manageTags": {
       "searchPlaceholder": "Search tags...",

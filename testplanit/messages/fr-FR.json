@@ -2281,7 +2281,14 @@
     "detail": {
       "title": "Détails de l'étiquette",
       "filterPlaceholder": "Filtrer les éléments...",
-      "noResults": "Aucun article trouvé"
+      "noResults": "Aucun article trouvé",
+      "noFilterResults": "Aucun élément ne correspond aux filtres actuels",
+      "filters": {
+        "hideCompletedSessions": "Masquer les sessions terminées",
+        "hideCompletedTestRuns": "Masquer les tests terminés",
+        "caseTypeLabel": "Type de cas",
+        "allCases": "Tous"
+      }
     },
     "manageTags": {
       "searchPlaceholder": "Mots clés de recherche...",

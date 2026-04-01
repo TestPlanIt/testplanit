@@ -6,27 +6,83 @@ import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Filter as FilterIcon, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import {
   useCountRepositoryCases,
   useCountSessions,
-  useCountTestRuns, useFindManyRepositoryCases,
-  useFindManySessions, useFindManyTags, useFindManyTestRuns
+  useCountTestRuns,
+  useFindManyRepositoryCases,
+  useFindManySessions,
+  useFindManyTags,
+  useFindManyTestRuns,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   getCaseColumns,
   getSessionColumns,
-  getTestRunColumns
+  getTestRunColumns,
 } from "./columns";
 
 type TabType = "cases" | "sessions" | "testRuns";
+type CaseTypeFilter = "all" | "manual" | "automated";
+
+interface TagDetailFilters {
+  hideCompletedSessions: boolean;
+  hideCompletedTestRuns: boolean;
+  caseType: CaseTypeFilter;
+}
+
+const FILTER_STORAGE_KEY = "testplanit-tag-detail-filters";
+
+function loadFilters(projectId: string, tagId: string): TagDetailFilters {
+  try {
+    const stored = localStorage.getItem(
+      `${FILTER_STORAGE_KEY}-${projectId}-${tagId}`
+    );
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {
+    hideCompletedSessions: false,
+    hideCompletedTestRuns: false,
+    caseType: "all",
+  };
+}
+
+function saveFilters(
+  projectId: string,
+  tagId: string,
+  filters: TagDetailFilters
+) {
+  try {
+    localStorage.setItem(
+      `${FILTER_STORAGE_KEY}-${projectId}-${tagId}`,
+      JSON.stringify(filters)
+    );
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export default function TagDetailPage() {
   return <TagDetail />;
@@ -43,6 +99,32 @@ function TagDetail() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [activeTab, setActiveTab] = useState<TabType>("cases");
+
+  // Filter state - loaded from localStorage
+  const [filters, setFilters] = useState<TagDetailFilters>(() =>
+    loadFilters(projectId, tagId)
+  );
+
+  // Persist filters to localStorage on change
+  const updateFilters = useCallback(
+    (update: Partial<TagDetailFilters>) => {
+      setFilters((prev) => {
+        const next = { ...prev, ...update };
+        saveFilters(projectId, tagId, next);
+        return next;
+      });
+    },
+    [projectId, tagId]
+  );
+
+  // Count active filters for indicator
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.hideCompletedSessions) count++;
+    if (filters.hideCompletedTestRuns) count++;
+    if (filters.caseType !== "all") count++;
+    return count;
+  }, [filters]);
 
   // Pagination state for each tab
   const [casesPage, setCasesPage] = useState(1);
@@ -87,14 +169,19 @@ function TagDetail() {
     };
   }, [projectId, tagId]);
 
-  // Add search filter
+  // Add search + filter for cases
   const casesWhere = useMemo(() => {
-    if (!debouncedSearchString.trim()) {
-      return baseWhere;
+    const where: any = { ...baseWhere };
+
+    // Case type filter
+    if (filters.caseType === "manual") {
+      where.automated = false;
+    } else if (filters.caseType === "automated") {
+      where.automated = true;
     }
-    return {
-      ...baseWhere,
-      OR: [
+
+    if (debouncedSearchString.trim()) {
+      where.OR = [
         {
           name: {
             contains: debouncedSearchString.trim(),
@@ -107,35 +194,44 @@ function TagDetail() {
             mode: "insensitive" as const,
           },
         },
-      ],
-    };
-  }, [baseWhere, debouncedSearchString]);
+      ];
+    }
+    return where;
+  }, [baseWhere, debouncedSearchString, filters.caseType]);
 
+  // Add search + filter for sessions
   const sessionsWhere = useMemo(() => {
-    if (!debouncedSearchString.trim()) {
-      return baseWhere;
-    }
-    return {
-      ...baseWhere,
-      name: {
-        contains: debouncedSearchString.trim(),
-        mode: "insensitive" as const,
-      },
-    };
-  }, [baseWhere, debouncedSearchString]);
+    const where: any = { ...baseWhere };
 
-  const testRunsWhere = useMemo(() => {
-    if (!debouncedSearchString.trim()) {
-      return baseWhere;
+    if (filters.hideCompletedSessions) {
+      where.isCompleted = false;
     }
-    return {
-      ...baseWhere,
-      name: {
+
+    if (debouncedSearchString.trim()) {
+      where.name = {
         contains: debouncedSearchString.trim(),
         mode: "insensitive" as const,
-      },
-    };
-  }, [baseWhere, debouncedSearchString]);
+      };
+    }
+    return where;
+  }, [baseWhere, debouncedSearchString, filters.hideCompletedSessions]);
+
+  // Add search + filter for test runs
+  const testRunsWhere = useMemo(() => {
+    const where: any = { ...baseWhere };
+
+    if (filters.hideCompletedTestRuns) {
+      where.isCompleted = false;
+    }
+
+    if (debouncedSearchString.trim()) {
+      where.name = {
+        contains: debouncedSearchString.trim(),
+        mode: "insensitive" as const,
+      };
+    }
+    return where;
+  }, [baseWhere, debouncedSearchString, filters.hideCompletedTestRuns]);
 
   // Fetch paginated test cases
   const { data: repositoryCases, isLoading: isLoadingCases } =
@@ -229,6 +325,7 @@ function TagDetail() {
         id: testCase.id,
         name: testCase.name,
         source: testCase.source,
+        automated: testCase.automated,
         projectId: Number(projectId),
       })) || []
     );
@@ -261,6 +358,9 @@ function TagDetail() {
     () =>
       getCaseColumns({
         testCases: t("common.fields.testCases"),
+        type: t("common.fields.type"),
+        manual: t("common.fields.manual"),
+        automated: t("common.fields.automated"),
       }),
     [t]
   );
@@ -269,6 +369,9 @@ function TagDetail() {
     () =>
       getSessionColumns({
         sessions: t("common.fields.sessions"),
+        status: t("common.actions.status"),
+        completed: t("common.fields.completed"),
+        inProgress: t("milestones.statusLabels.IN_PROGRESS"),
       }),
     [t]
   );
@@ -277,6 +380,9 @@ function TagDetail() {
     () =>
       getTestRunColumns({
         testRuns: t("common.fields.testRuns"),
+        status: t("common.actions.status"),
+        completed: t("common.fields.completed"),
+        inProgress: t("milestones.statusLabels.IN_PROGRESS"),
       }),
     [t]
   );
@@ -308,12 +414,12 @@ function TagDetail() {
     testRunsCount ?? 0
   );
 
-  // Reset page when search changes
+  // Reset page when search or filters change
   useEffect(() => {
     setCasesPage(1);
     setSessionsPage(1);
     setTestRunsPage(1);
-  }, [debouncedSearchString]);
+  }, [debouncedSearchString, filters]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -347,14 +453,108 @@ function TagDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start mb-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <Filter
-                key="tag-filter"
-                placeholder={t("tags.detail.filterPlaceholder")}
-                initialSearchString={searchString}
-                onSearchChange={setSearchString}
-              />
+          {/* Search and Filters */}
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-row items-start">
+              <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+                <Filter
+                  key="tag-filter"
+                  placeholder={t("tags.detail.filterPlaceholder")}
+                  initialSearchString={searchString}
+                  onSearchChange={setSearchString}
+                />
+              </div>
+            </div>
+
+            {/* Filter controls */}
+            <div className="flex flex-wrap items-center gap-6 rounded-md border p-3 bg-muted/30">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <FilterIcon className="h-4 w-4" />
+                {t("common.ui.search.filters")}
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={() =>
+                      updateFilters({
+                        hideCompletedSessions: false,
+                        hideCompletedTestRuns: false,
+                        caseType: "all",
+                      })
+                    }
+                    className="inline-flex items-center gap-1 cursor-pointer"
+                    data-testid="clear-all-filters"
+                  >
+                    <Badge variant="secondary" className="h-5 min-w-5 px-1.5 gap-1">
+                      {activeFilterCount}
+                      <X className="h-3 w-3" />
+                    </Badge>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label htmlFor="case-type-filter" className="text-sm">
+                  {t("tags.detail.filters.caseTypeLabel")}
+                </Label>
+                <Select
+                  value={filters.caseType}
+                  onValueChange={(value: CaseTypeFilter) =>
+                    updateFilters({ caseType: value })
+                  }
+                >
+                  <SelectTrigger
+                    id="case-type-filter"
+                    className="w-[140px] h-8"
+                    data-testid="case-type-filter-select"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t("tags.detail.filters.allCases")}
+                    </SelectItem>
+                    <SelectItem value="manual">
+                      {t("common.fields.manual")}
+                    </SelectItem>
+                    <SelectItem value="automated">
+                      {t("common.fields.automated")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="hide-completed-sessions"
+                  checked={filters.hideCompletedSessions}
+                  onCheckedChange={(checked) =>
+                    updateFilters({ hideCompletedSessions: checked })
+                  }
+                  data-testid="hide-completed-sessions-switch"
+                />
+                <Label
+                  htmlFor="hide-completed-sessions"
+                  className="text-sm cursor-pointer"
+                >
+                  {t("tags.detail.filters.hideCompletedSessions")}
+                </Label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="hide-completed-runs"
+                  checked={filters.hideCompletedTestRuns}
+                  onCheckedChange={(checked) =>
+                    updateFilters({ hideCompletedTestRuns: checked })
+                  }
+                  data-testid="hide-completed-runs-switch"
+                />
+                <Label
+                  htmlFor="hide-completed-runs"
+                  className="text-sm cursor-pointer"
+                >
+                  {t("tags.detail.filters.hideCompletedTestRuns")}
+                </Label>
+              </div>
             </div>
           </div>
 
@@ -405,7 +605,9 @@ function TagDetail() {
               />
               {(casesCount ?? 0) === 0 && !isLoadingCases && (
                 <div className="text-center text-muted-foreground py-8">
-                  {t("tags.detail.noResults")}
+                  {filters.caseType !== "all"
+                    ? t("tags.detail.noFilterResults")
+                    : t("tags.detail.noResults")}
                 </div>
               )}
             </TabsContent>
@@ -441,7 +643,9 @@ function TagDetail() {
               />
               {(sessionsCount ?? 0) === 0 && !isLoadingSessions && (
                 <div className="text-center text-muted-foreground py-8">
-                  {t("tags.detail.noResults")}
+                  {filters.hideCompletedSessions
+                    ? t("tags.detail.noFilterResults")
+                    : t("tags.detail.noResults")}
                 </div>
               )}
             </TabsContent>
@@ -477,7 +681,9 @@ function TagDetail() {
               />
               {(testRunsCount ?? 0) === 0 && !isLoadingTestRuns && (
                 <div className="text-center text-muted-foreground py-8">
-                  {t("tags.detail.noResults")}
+                  {filters.hideCompletedTestRuns
+                    ? t("tags.detail.noFilterResults")
+                    : t("tags.detail.noResults")}
                 </div>
               )}
             </TabsContent>

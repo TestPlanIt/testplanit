@@ -1,5 +1,6 @@
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { SessionTableDisplay } from "@/components/tables/SessionTableDisplay";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -7,12 +8,15 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { PlayCircle } from "lucide-react";
+import { CheckCircle2, PlayCircle } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
 export const getCaseColumns = (translations: {
   testCases: string;
+  type: string;
+  manual: string;
+  automated: string;
 }): ColumnDef<{
   id: number;
   name: string;
@@ -24,9 +28,9 @@ export const getCaseColumns = (translations: {
     {
       id: "testCase",
       header: translations.testCases,
-      size: 400,
+      size: 600,
       minSize: 200,
-      maxSize: 800,
+      maxSize: 1200,
       enableResizing: true,
       meta: { isPinned: "left" },
       cell: ({ row }) => {
@@ -44,11 +48,30 @@ export const getCaseColumns = (translations: {
         );
       },
     },
+    {
+      id: "type",
+      header: translations.type,
+      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      enableResizing: true,
+      cell: ({ row }) => {
+        const isAutomated = row.original.automated;
+        return (
+          <Badge variant={isAutomated ? "default" : "secondary"}>
+            {isAutomated ? translations.automated : translations.manual}
+          </Badge>
+        );
+      },
+    },
   ];
 };
 
 export const getSessionColumns = (translations: {
   sessions: string;
+  status: string;
+  completed: string;
+  inProgress: string;
 }): ColumnDef<{
   id: number;
   name: string;
@@ -59,9 +82,9 @@ export const getSessionColumns = (translations: {
     {
       id: "session",
       header: translations.sessions,
-      size: 400,
+      size: 600,
       minSize: 200,
-      maxSize: 800,
+      maxSize: 1200,
       enableResizing: true,
       meta: { isPinned: "left" },
       cell: ({ row }) => (
@@ -75,6 +98,29 @@ export const getSessionColumns = (translations: {
           />
         </div>
       ),
+    },
+    {
+      id: "status",
+      header: translations.status,
+      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      enableResizing: true,
+      cell: ({ row }) => {
+        const isCompleted = row.original.isCompleted;
+        return (
+          <Badge
+            variant={isCompleted ? "outline" : "default"}
+            className={cn(
+              "gap-1",
+              isCompleted && "text-muted-foreground"
+            )}
+          >
+            {isCompleted && <CheckCircle2 className="h-3 w-3" />}
+            {isCompleted ? translations.completed : translations.inProgress}
+          </Badge>
+        );
+      },
     },
   ];
 };
@@ -128,6 +174,9 @@ const TestRunLinkDisplay: React.FC<{
 
 export const getTestRunColumns = (translations: {
   testRuns: string;
+  status: string;
+  completed: string;
+  inProgress: string;
 }): ColumnDef<{
   id: number;
   name: string;
@@ -138,9 +187,9 @@ export const getTestRunColumns = (translations: {
     {
       id: "testRun",
       header: translations.testRuns,
-      size: 400,
+      size: 600,
       minSize: 200,
-      maxSize: 800,
+      maxSize: 1200,
       enableResizing: true,
       meta: { isPinned: "left" },
       cell: ({ row }) => (
@@ -154,6 +203,29 @@ export const getTestRunColumns = (translations: {
           />
         </div>
       ),
+    },
+    {
+      id: "status",
+      header: translations.status,
+      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      enableResizing: true,
+      cell: ({ row }) => {
+        const isCompleted = row.original.isCompleted;
+        return (
+          <Badge
+            variant={isCompleted ? "outline" : "default"}
+            className={cn(
+              "gap-1",
+              isCompleted && "text-muted-foreground"
+            )}
+          >
+            {isCompleted && <CheckCircle2 className="h-3 w-3" />}
+            {isCompleted ? translations.completed : translations.inProgress}
+          </Badge>
+        );
+      },
     },
   ];
 };
