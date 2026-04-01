@@ -13,7 +13,7 @@ It's accessed by clicking on a session's name from the main [Sessions page](./se
 
 The page uses a resizable two-panel layout:
 
-1. **Left Panel**: Contains the session's description and mission, followed by the area for adding and viewing session results (notes, issues, questions).
+1. **Left Panel**: Contains the session's description and mission, the multi-configuration selector (when applicable), and the area for adding and viewing session results (notes, issues, questions).
 2. **Right Panel**: Displays metadata (Template, State, Configuration, Milestone, Assigned To, Estimate, Tags, Attachments, Creator) and controls.
 
 ## Header
