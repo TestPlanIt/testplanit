@@ -327,7 +327,7 @@ export function useSuspenseCountSessions<TArgs extends Prisma.SessionsCountArgs,
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('Sessions', `${endpoint}/sessions/count`, args, options, fetch);
 }
 
-export function useCheckSessions<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; templateId?: number; name?: string; configId?: number; milestoneId?: number; stateId?: number; assignedToId?: string; estimate?: number; forecastManual?: number; elapsed?: number; isCompleted?: boolean; isDeleted?: boolean; createdById?: string; currentVersion?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckSessions<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; templateId?: number; name?: string; configId?: number; milestoneId?: number; stateId?: number; assignedToId?: string; estimate?: number; forecastManual?: number; elapsed?: number; isCompleted?: boolean; isDeleted?: boolean; createdById?: string; currentVersion?: number; configurationGroupId?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('Sessions', `${endpoint}/sessions/check`, args, options, fetch);
 }

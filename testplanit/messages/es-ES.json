@@ -584,7 +584,7 @@
       "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
       "noOptions": "No hay opciones disponibles",
-      "multiConfiguration": "Parte de una prueba de configuración múltiple",
+      "multiConfiguration": "Parte de un grupo de configuración múltiple",
       "otherConfigurations": "Otras configuraciones",
       "selected": "Seleccionado: {count}",
       "defaultProjectAccess": "Acceso al proyecto por defecto",
@@ -1366,13 +1366,21 @@
       "noWorkflowsConfigured": "No hay flujos de trabajo de finalización configurados para este proyecto. Configure los flujos de trabajo en la configuración de administrador para habilitar la finalización de la sesión."
     },
     "messages": {
-      "createSuccess": "Sesión creada con éxito"
+      "createSuccess": "Sesión creada con éxito",
+      "createSuccessMultiple": "{count} Sesiones creadas correctamente",
+      "duplicateSuccess": "Sesión duplicada correctamente",
+      "duplicateSuccessMultiple": "{count} Sesiones duplicadas correctamente"
+    },
+    "duplicateDialog": {
+      "title": "Sesión duplicada",
+      "description": "Crea una copia de la sesión <nameStyle>{name}</nameStyle> con todos los metadatos pero sin resultados."
     },
     "errors": {
       "failedToCreate": "Error al crear una nueva sesión",
       "failedToCreateVersion": "Error al crear la versión de sesión",
       "nameAlreadyExists": "El nombre de la sesión ya existe. Por favor, elija un nuevo nombre",
-      "createFailed": "Error al crear la sesión"
+      "createFailed": "Error al crear la sesión",
+      "duplicateFailed": "No se pudo duplicar la sesión."
     },
     "validation": {
       "nameMinLength": "El nombre debe tener al menos 2 caracteres.",

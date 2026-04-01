@@ -2820,6 +2820,8 @@ export class ApiHelper {
     options?: {
       stateId?: number;
       milestoneId?: number;
+      configId?: number;
+      configurationGroupId?: string;
       isCompleted?: boolean;
       completedAt?: Date;
     }
@@ -2842,6 +2844,14 @@ export class ApiHelper {
 
     if (options?.milestoneId) {
       data.milestone = { connect: { id: options.milestoneId } };
+    }
+
+    if (options?.configId) {
+      data.configuration = { connect: { id: options.configId } };
+    }
+
+    if (options?.configurationGroupId) {
+      data.configurationGroupId = options.configurationGroupId;
     }
 
     if (options?.completedAt) {

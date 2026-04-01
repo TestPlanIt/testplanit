@@ -45,3 +45,11 @@ This tab displays a flat list of all sessions that have been marked as completed
 - **Sorting**: Completed sessions are sorted by their **completion date**, with the most recently completed sessions appearing first.
 - **Session Items**: Each completed session is displayed using the [Session Item](./sessions-item.md) component, showing key details.
 - **Empty State**: If there are no completed sessions, a message indicating this is shown.
+
+## Multi-Configuration Sessions
+
+Sessions support selecting multiple configurations when creating or duplicating. When multiple configurations are selected, one session is created per configuration, all sharing the same metadata (name, template, state, milestone, tags, etc.) and linked via a shared configuration group ID. This is useful for testing across multiple environments (e.g., Chrome, Firefox, Safari) without manually creating separate sessions. See [Add Session - Multi-Configuration Support](./sessions-add.md#multi-configuration-support) for details.
+
+## Session Duplication
+
+Any session can be duplicated from its context menu (three-dot menu on the session item). Duplicating opens the Add Session dialog pre-populated with the original session's metadata, allowing you to quickly re-test scenarios for regression cycles or new milestones. Results are not copied — the new session starts fresh. See [Add Session - Session Duplication](./sessions-add.md#session-duplication) for details.

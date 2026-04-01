@@ -584,7 +584,7 @@
       "testRuns": "{count, plural, =0 {No Test Runs} =1 {1 Test Run} other {# Test Runs}}",
       "sessions": "{count, plural, =0 {No Sessions} =1 {1 Session} other {# Sessions}}",
       "noOptions": "No options available",
-      "multiConfiguration": "Part of multi-configuration test run",
+      "multiConfiguration": "Part of a multi-configuration group",
       "otherConfigurations": "Other configurations",
       "selected": "Selected: {count}",
       "defaultProjectAccess": "Default Project Access",
@@ -1366,13 +1366,21 @@
       "noWorkflowsConfigured": "No completion workflows are configured for this project. Please configure workflows in the admin settings to enable session completion."
     },
     "messages": {
-      "createSuccess": "Session created successfully"
+      "createSuccess": "Session created successfully",
+      "createSuccessMultiple": "{count} Sessions created successfully",
+      "duplicateSuccess": "Session duplicated successfully",
+      "duplicateSuccessMultiple": "{count} Sessions duplicated successfully"
+    },
+    "duplicateDialog": {
+      "title": "Duplicate Session",
+      "description": "Create a copy of session <nameStyle>{name}</nameStyle> with all metadata but no results."
     },
     "errors": {
       "failedToCreate": "Failed to create new session",
       "failedToCreateVersion": "Failed to create session version",
       "nameAlreadyExists": "Session name already exists. Please choose a new name",
-      "createFailed": "Failed to create session"
+      "createFailed": "Failed to create session",
+      "duplicateFailed": "Failed to duplicate session"
     },
     "validation": {
       "nameMinLength": "Name must be at least 2 characters.",

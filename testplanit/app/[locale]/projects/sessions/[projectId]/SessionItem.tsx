@@ -9,11 +9,24 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea } from "@prisma/client";
-import { CheckCircle, LinkIcon, MoreVertical, Pencil } from "lucide-react";
+import {
+  CheckCircle,
+  Combine,
+  Copy,
+  LinkIcon,
+  MoreVertical,
+  Pencil,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import React from "react";
@@ -28,8 +41,10 @@ interface SessionItemProps {
   testSession: SessionsWithDetails;
   isCompleted: boolean;
   onComplete: (testSession: SessionsWithDetails) => void;
+  onDuplicate?: (session: { id: number; name: string }) => void;
   canComplete: boolean;
   canEdit?: boolean;
+  canDuplicate?: boolean;
   isNew?: boolean;
   showMilestone?: boolean;
 }
@@ -38,8 +53,10 @@ const SessionItem: React.FC<SessionItemProps> = ({
   testSession,
   isCompleted,
   onComplete,
+  onDuplicate,
   canComplete,
   canEdit,
+  canDuplicate,
   isNew,
   showMilestone = true,
 }) => {
@@ -57,7 +74,8 @@ const SessionItem: React.FC<SessionItemProps> = ({
   const showEditItem =
     canEditSession && !testSession.isCompleted && !isLoadingPermissions;
   const showCompleteItem = !testSession.isCompleted && canComplete;
-  const showMoreMenu = showEditItem || showCompleteItem;
+  const showDuplicateItem = canDuplicate ?? canEditSession;
+  const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
 
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
@@ -90,7 +108,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
 
   // Using consistent grid layout for all items
   const gridLayout =
-    "grid-cols-[minmax(0,1.5fr)_minmax(auto,1fr)_minmax(auto,1fr)_minmax(0,0.75fr)]";
+    "grid-cols-[minmax(0,1.5fr)_minmax(auto,0.75fr)_minmax(auto,0.75fr)_minmax(auto,1fr)_minmax(0,1fr)]";
 
   return (
     <div
@@ -123,6 +141,28 @@ const SessionItem: React.FC<SessionItemProps> = ({
                 <span className="truncate inline-block">
                   {testSession.name}
                 </span>
+                {testSession.configurationGroupId && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="shrink-0">
+                          <Combine className="w-4 h-4 text-muted-foreground" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-background/50">
+                          {t("common.labels.multiConfiguration")}
+                        </p>
+                        {testSession.configuration && (
+                          <p className="flex text-xs text-background">
+                            <Combine className="w-4 h-4 shrink-0 mr-1" />
+                            {testSession.configuration.name}
+                          </p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </h3>
             </Link>
@@ -140,7 +180,33 @@ const SessionItem: React.FC<SessionItemProps> = ({
         </div>
       </div>
 
-      {/* Middle Column 1 - Status */}
+      {/* Configuration Column */}
+      <div className="flex items-center min-w-0">
+        {testSession.configuration ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground truncate cursor-default">
+                  <Combine className="w-4 h-4 shrink-0" />
+                  <span className="truncate">
+                    {testSession.configuration.name}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="flex">
+                  <Combine className="w-4 h-4 shrink-0 mr-1" />
+                  {testSession.configuration.name}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <span className="text-sm text-muted-foreground">{"—"}</span>
+        )}
+      </div>
+
+      {/* Status */}
       <div className="flex min-w-28 whitespace-nowrap justify-start">
         <WorkflowStateDisplay {...workflowState} />
       </div>
@@ -152,9 +218,11 @@ const SessionItem: React.FC<SessionItemProps> = ({
 
       {/* Right Column - MemberList & Actions */}
       <div className="flex items-center justify-end space-x-2 min-w-0">
-        <div className="flex flex-col items-end gap-1.5 w-full">
+        <div className="flex flex-col items-end gap-1.5 w-full min-w-0">
           {showMilestone && testSession.milestone && (
-            <MilestoneIconAndName milestone={testSession.milestone} />
+            <div className="max-w-full min-w-0 overflow-hidden">
+              <MilestoneIconAndName milestone={testSession.milestone} />
+            </div>
           )}
           {isCompleted && testSession.completedAt && (
             <DateTextDisplay
@@ -190,6 +258,22 @@ const SessionItem: React.FC<SessionItemProps> = ({
                   >
                     <Pencil className="mr-2 h-4 w-4" />
                     {t("common.actions.edit")}
+                  </DropdownMenuItem>
+                )}
+
+                {showDuplicateItem && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      onDuplicate &&
+                      onDuplicate({
+                        id: testSession.id,
+                        name: testSession.name,
+                      })
+                    }
+                    data-testid={`session-duplicate-${testSession.id}`}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    {t("common.actions.duplicate")}
                   </DropdownMenuItem>
                 )}
 

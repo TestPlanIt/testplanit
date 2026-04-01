@@ -1,6 +1,5 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import DynamicIcon from "@/components/DynamicIcon";
-import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
   MilestoneSelect,
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
   SelectContent,
@@ -43,7 +43,7 @@ import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
-import { AlertTriangle, Asterisk, CirclePlus, LayoutList } from "lucide-react";
+import { AlertTriangle, Asterisk, CirclePlus, Combine, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -51,8 +51,10 @@ import parseDuration from "parse-duration";
 import React, { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
+import { searchConfigurations } from "~/app/actions/searchConfigurations";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -71,14 +73,40 @@ import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 
+interface ConfigurationOption {
+  id: number;
+  name: string;
+}
+
+export interface SessionDuplicationPreset {
+  originalName: string;
+  originalConfigId: number | null;
+  originalMilestoneId: number | null;
+  originalStateId: number | null;
+  originalAssignedToId: string | null;
+  originalTemplateId: number;
+  originalEstimate: number | null;
+  originalNote?: any;
+  originalMission?: any;
+  originalTagIds: number[];
+  originalIssueIds: number[];
+  originalFieldValues: { fieldId: number; value: any }[];
+}
+
 interface AddSessionModalProps {
   defaultMilestoneId?: number;
   trigger?: React.ReactNode; // Optional custom trigger
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  duplicationPreset?: SessionDuplicationPreset | null;
 }
 
 export function AddSessionModal({
   defaultMilestoneId,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  duplicationPreset,
 }: AddSessionModalProps) {
   const { data: session } = useSession();
   const { projectId } = useParams();
@@ -86,7 +114,9 @@ export function AddSessionModal({
   const t = useTranslations();
   const locale = useLocale();
 
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createSessions } = useCreateSessions();
   const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
@@ -220,7 +250,7 @@ export function AddSessionModal({
       message: t("common.validation.nameMinLength"),
     }),
     templateId: z.number(),
-    configId: z.number().nullable(),
+    configIds: z.array(z.number()),
     milestoneId: z.number().nullable(),
     stateId: z.number(),
     assignedToId: z.string().optional(),
@@ -263,17 +293,21 @@ export function AddSessionModal({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      name: "",
-      templateId: defaultTemplate?.id || 0,
-      configId: null,
-      milestoneId: defaultMilestoneId || null,
-      stateId: defaultWorkflow?.id || 0,
-      assignedToId: "",
+      name: duplicationPreset
+        ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
+        : "",
+      templateId: duplicationPreset?.originalTemplateId || defaultTemplate?.id || 0,
+      configIds: duplicationPreset?.originalConfigId
+        ? [duplicationPreset.originalConfigId]
+        : [],
+      milestoneId: duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+      stateId: duplicationPreset?.originalStateId || defaultWorkflow?.id || 0,
+      assignedToId: duplicationPreset?.originalAssignedToId || "",
       estimate: "",
       note: null,
       mission: null,
       attachments: [],
-      issueIds: [],
+      issueIds: duplicationPreset?.originalIssueIds || [],
     },
   });
 
@@ -287,11 +321,11 @@ export function AddSessionModal({
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
   useEffect(() => {
-    if (defaultTemplate && defaultWorkflow) {
+    if (defaultTemplate && defaultWorkflow && !duplicationPreset) {
       reset({
         name: "",
         templateId: defaultTemplate.id,
-        configId: null,
+        configIds: [],
         stateId: defaultWorkflow.id,
         assignedToId: "",
         estimate: "",
@@ -305,34 +339,64 @@ export function AddSessionModal({
       setMissionContent(null);
       setNoteContent({});
       setSelectedTags([]);
+      setSelectedConfigs([]);
       setSelectedFiles([]);
     }
-  }, [defaultTemplate, defaultWorkflow, reset, defaultMilestoneId]);
+  }, [defaultTemplate, defaultWorkflow, reset, defaultMilestoneId, duplicationPreset]);
 
   useEffect(() => {
     if (open) {
       const initialTemplateId =
+        duplicationPreset?.originalTemplateId ||
         defaultTemplate?.id || (templates && templates[0]?.id) || 0;
       const initialWorkflowId =
+        duplicationPreset?.originalStateId ||
         defaultWorkflow?.id || (workflows && workflows[0]?.id) || 0;
 
       reset({
-        name: "",
+        name: duplicationPreset
+          ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
+          : "",
         templateId: initialTemplateId,
-        configId: null,
+        configIds: duplicationPreset?.originalConfigId
+          ? [duplicationPreset.originalConfigId]
+          : [],
         stateId: initialWorkflowId,
-        assignedToId: "",
+        assignedToId: duplicationPreset?.originalAssignedToId || "",
         estimate: "",
         note: null,
         mission: null,
-        milestoneId: defaultMilestoneId ?? null,
+        milestoneId: duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
         attachments: [],
-        issueIds: [],
+        issueIds: duplicationPreset?.originalIssueIds || [],
       });
-      setLinkedIssueIds([]);
-      setMissionContent(null);
-      setNoteContent({});
-      setSelectedTags([]);
+      setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
+      if (duplicationPreset?.originalNote) {
+        try {
+          const parsed = typeof duplicationPreset.originalNote === "string"
+            ? JSON.parse(duplicationPreset.originalNote)
+            : duplicationPreset.originalNote;
+          setNoteContent(parsed);
+        } catch {
+          setNoteContent({});
+        }
+      } else {
+        setNoteContent({});
+      }
+      if (duplicationPreset?.originalMission) {
+        try {
+          const parsed = typeof duplicationPreset.originalMission === "string"
+            ? JSON.parse(duplicationPreset.originalMission)
+            : duplicationPreset.originalMission;
+          setMissionContent(parsed);
+        } catch {
+          setMissionContent(null);
+        }
+      } else {
+        setMissionContent(null);
+      }
+      setSelectedTags(duplicationPreset?.originalTagIds || []);
+      setSelectedConfigs([]);
       setSelectedFiles([]);
     }
   }, [
@@ -343,9 +407,12 @@ export function AddSessionModal({
     defaultMilestoneId,
     templates,
     workflows,
+    duplicationPreset,
+    t,
   ]);
 
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [selectedConfigs, setSelectedConfigs] = useState<ConfigurationOption[]>([]);
 
   const userName = session?.user?.name || t("common.labels.unknownUser");
 
@@ -446,54 +513,9 @@ export function AddSessionModal({
         ? Math.round(parseDuration(data.estimate) || 0) / 1000
         : null;
 
-      const newSession = await createSessions({
-        data: {
-          project: {
-            connect: { id: Number(projectId) },
-          },
-          template: {
-            connect: { id: data.templateId || defaultTemplate?.id },
-          },
-          name: data.name,
-          currentVersion: 1,
-          configuration: data.configId
-            ? { connect: { id: data.configId } }
-            : undefined,
-          milestone: data.milestoneId
-            ? { connect: { id: data.milestoneId } }
-            : undefined,
-          state: {
-            connect: { id: data.stateId },
-          },
-          assignedTo: data.assignedToId
-            ? { connect: { id: data.assignedToId } }
-            : undefined,
-          estimate: estimateInSeconds,
-          note: noteContent
-            ? JSON.stringify(noteContent)
-            : JSON.stringify(emptyEditorContent),
-          mission: data.mission
-            ? JSON.stringify(data.mission)
-            : JSON.stringify(emptyEditorContent),
-          createdAt: new Date(),
-          createdBy: {
-            connect: { id: session.user.id },
-          },
-          tags: {
-            connect: selectedTags.map((tagId) => ({ id: tagId })),
-          },
-          issues: linkedIssueIds?.length
-            ? {
-                connect: linkedIssueIds.map((id) => ({ id })),
-              }
-            : undefined,
-        },
-      });
-
-      if (!newSession) throw new Error(t("sessions.errors.failedToCreate"));
-
-      const uploadedAttachments =
-        selectedFiles.length > 0 ? await uploadFiles(newSession.id) : [];
+      // Determine configs to create sessions for
+      const configsToCreate = data.configIds.length > 0 ? data.configIds : [null];
+      const configurationGroupId = configsToCreate.length > 1 ? uuidv4() : null;
 
       const issuesDataForVersion = (linkedIssueIds || [])
         .map((issueId: number) => {
@@ -504,73 +526,159 @@ export function AddSessionModal({
         })
         .filter(Boolean);
 
-      const newSessionVersion = await createSessionVersions({
-        data: {
-          session: {
-            connect: { id: newSession.id },
-          },
-          name: data.name,
-          staticProjectId: Number(projectId),
-          staticProjectName: project?.name || t("common.labels.unknownProject"),
-          project: {
-            connect: { id: Number(projectId!) },
-          },
-          templateId: data.templateId,
-          templateName:
-            templates?.find((template) => template.id === data.templateId)
-              ?.templateName || "",
-          configId: data.configId || null,
-          configurationName: null,
-          milestoneId: data.milestoneId || null,
-          milestoneName:
-            milestones?.find((m) => m.id === data.milestoneId)?.name || null,
-          stateId: data.stateId,
-          stateName:
-            workflows?.find((workflow) => workflow.id === data.stateId)?.name ||
-            "",
-          assignedToId: data.assignedToId || null,
-          assignedToName: null,
-          createdById: session.user.id,
-          createdByName: userName,
-          estimate: estimateInSeconds,
-          forecastManual: null,
-          forecastAutomated: null,
-          note: noteContent
-            ? JSON.stringify(noteContent)
-            : JSON.stringify(emptyEditorContent),
-          mission: missionContent
-            ? JSON.stringify(missionContent)
-            : JSON.stringify(emptyEditorContent),
-          isCompleted: false,
-          completedAt: null,
-          version: 1,
-          tags: JSON.stringify(
-            selectedTags.map((tagId) => ({
-              id: tagId,
-              name:
-                tags?.find((tag) => tag.id === tagId)?.name ||
-                t("common.labels.unknownTag"),
-            })) || []
-          ),
-          attachments: JSON.stringify(uploadedAttachments),
-          issues: JSON.stringify(issuesDataForVersion),
-        },
-      });
+      const createdSessions: any[] = [];
 
-      if (!newSessionVersion)
-        throw new Error(t("sessions.errors.failedToCreateVersion"));
+      for (const configId of configsToCreate) {
+        const newSession = await createSessions({
+          data: {
+            project: {
+              connect: { id: Number(projectId) },
+            },
+            template: {
+              connect: { id: data.templateId || defaultTemplate?.id },
+            },
+            name: data.name,
+            currentVersion: 1,
+            configurationGroupId,
+            configuration: configId
+              ? { connect: { id: configId } }
+              : undefined,
+            milestone: data.milestoneId
+              ? { connect: { id: data.milestoneId } }
+              : undefined,
+            state: {
+              connect: { id: data.stateId },
+            },
+            assignedTo: data.assignedToId
+              ? { connect: { id: data.assignedToId } }
+              : undefined,
+            estimate: estimateInSeconds,
+            note: noteContent
+              ? JSON.stringify(noteContent)
+              : JSON.stringify(emptyEditorContent),
+            mission: missionContent
+              ? JSON.stringify(missionContent)
+              : JSON.stringify(emptyEditorContent),
+            createdAt: new Date(),
+            createdBy: {
+              connect: { id: session.user.id },
+            },
+            tags: {
+              connect: selectedTags.map((tagId) => ({ id: tagId })),
+            },
+            issues: linkedIssueIds?.length
+              ? {
+                  connect: linkedIssueIds.map((id) => ({ id })),
+                }
+              : undefined,
+          },
+        });
 
-      // Send notification if session was assigned during creation
-      if (data.assignedToId) {
-        await notifySessionAssignment(newSession.id, data.assignedToId, null);
+        if (!newSession) throw new Error(t("sessions.errors.failedToCreate"));
+
+        // Only upload files to the first session
+        const uploadedAttachments =
+          createdSessions.length === 0 && selectedFiles.length > 0
+            ? await uploadFiles(newSession.id)
+            : [];
+
+        const newSessionVersion = await createSessionVersions({
+          data: {
+            session: {
+              connect: { id: newSession.id },
+            },
+            name: data.name,
+            staticProjectId: Number(projectId),
+            staticProjectName: project?.name || t("common.labels.unknownProject"),
+            project: {
+              connect: { id: Number(projectId!) },
+            },
+            templateId: data.templateId,
+            templateName:
+              templates?.find((template) => template.id === data.templateId)
+                ?.templateName || "",
+            configId: configId || null,
+            configurationName: null,
+            milestoneId: data.milestoneId || null,
+            milestoneName:
+              milestones?.find((m) => m.id === data.milestoneId)?.name || null,
+            stateId: data.stateId,
+            stateName:
+              workflows?.find((workflow) => workflow.id === data.stateId)?.name ||
+              "",
+            assignedToId: data.assignedToId || null,
+            assignedToName: null,
+            createdById: session.user.id,
+            createdByName: userName,
+            estimate: estimateInSeconds,
+            forecastManual: null,
+            forecastAutomated: null,
+            note: noteContent
+              ? JSON.stringify(noteContent)
+              : JSON.stringify(emptyEditorContent),
+            mission: missionContent
+              ? JSON.stringify(missionContent)
+              : JSON.stringify(emptyEditorContent),
+            isCompleted: false,
+            completedAt: null,
+            version: 1,
+            tags: JSON.stringify(
+              selectedTags.map((tagId) => ({
+                id: tagId,
+                name:
+                  tags?.find((tag) => tag.id === tagId)?.name ||
+                  t("common.labels.unknownTag"),
+              })) || []
+            ),
+            attachments: JSON.stringify(uploadedAttachments),
+            issues: JSON.stringify(issuesDataForVersion),
+          },
+        });
+
+        if (!newSessionVersion)
+          throw new Error(t("sessions.errors.failedToCreateVersion"));
+
+        // Copy custom field values from duplication preset
+        if (duplicationPreset?.originalFieldValues?.length) {
+          for (const fv of duplicationPreset.originalFieldValues) {
+            try {
+              await fetch(`/api/model/sessionFieldValues`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  data: {
+                    session: { connect: { id: newSession.id } },
+                    field: { connect: { id: fv.fieldId } },
+                    value: fv.value,
+                  },
+                }),
+              });
+            } catch {
+              // Non-critical: continue if field value copy fails
+            }
+          }
+        }
+
+        // Send notification if session was assigned during creation
+        if (data.assignedToId) {
+          await notifySessionAssignment(newSession.id, data.assignedToId, null);
+        }
+
+        createdSessions.push(newSession);
       }
 
       setOpen(false);
       setIsSubmitting(false);
-      toast.success(t("sessions.messages.createSuccess"));
+      const sessionsCreated = createdSessions.length;
+      if (sessionsCreated > 1) {
+        toast.success(t("sessions.messages.createSuccessMultiple", { count: sessionsCreated }));
+      } else {
+        toast.success(t("sessions.messages.createSuccess"));
+      }
       if (typeof window !== "undefined") {
+        // Fire event for the first created session (scroll into view)
         const event = new CustomEvent("sessionCreated", {
-          detail: newSession.id,
+          detail: createdSessions[0]?.id,
         });
         window.dispatchEvent(event);
       }
@@ -596,7 +704,7 @@ export function AddSessionModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {trigger ? (
+      {!controlledOpen && (trigger ? (
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : (
         <DialogTrigger asChild>
@@ -604,7 +712,7 @@ export function AddSessionModal({
             <CirclePlus className="h-5 w-5" />
           </Button>
         </DialogTrigger>
-      )}
+      ))}
       {selectedAttachmentIndex !== null && (
         <AttachmentsCarousel
           attachments={selectedAttachments}
@@ -617,9 +725,15 @@ export function AddSessionModal({
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("sessions.actions.add")}</DialogTitle>
+              <DialogTitle>
+                {duplicationPreset
+                  ? t("sessions.duplicateDialog.title")
+                  : t("sessions.actions.add")}
+              </DialogTitle>
               <DialogDescription className="sr-only">
-                {t("sessions.actions.add")}
+                {duplicationPreset
+                  ? t("sessions.duplicateDialog.title")
+                  : t("sessions.actions.add")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-[60%_5%_35%] gap-x-4">
@@ -654,8 +768,8 @@ export function AddSessionModal({
                       </FormLabel>
                       <FormControl>
                         <TipTapEditor
-                          key="editing-note"
-                          content={emptyEditorContent}
+                          key={`editing-note-${duplicationPreset ? "dup" : "new"}`}
+                          content={noteContent && Object.keys(noteContent).length > 0 ? noteContent : emptyEditorContent}
                           onUpdate={(newContent) => {
                             setNoteContent(newContent);
                           }}
@@ -696,6 +810,70 @@ export function AddSessionModal({
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+                <FormField
+                  control={control}
+                  name="configIds"
+                  render={({ field }) => {
+                    const clearAllConfigurations = () => {
+                      field.onChange([]);
+                      setSelectedConfigs([]);
+                    };
+
+                    return (
+                      <FormItem>
+                        <FormLabel className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            {t("common.fields.configurations")}
+                            {selectedConfigs.length > 0 && (
+                              <span className="ml-1 text-muted-foreground">
+                                {"("}
+                                {selectedConfigs.length}
+                                {")"}
+                              </span>
+                            )}
+                            <HelpPopover helpKey="session.configuration" />
+                          </div>
+                          {selectedConfigs.length > 0 && (
+                            <span
+                              onClick={clearAllConfigurations}
+                              className="cursor-pointer text-sm text-muted-foreground hover:underline"
+                            >
+                              {t("common.actions.clearAll")}
+                            </span>
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <MultiAsyncCombobox<ConfigurationOption>
+                            value={selectedConfigs}
+                            hideSelected={true}
+                            onValueChange={(configs) => {
+                              setSelectedConfigs(configs);
+                              field.onChange(configs.map((c) => c.id));
+                            }}
+                            fetchOptions={searchConfigurations}
+                            renderOption={(config) => (
+                              <div className="flex items-center gap-2">
+                                <Combine className="w-4 h-4" />
+                                {config.name}
+                              </div>
+                            )}
+                            renderSelectedOption={(config) => (
+                              <span className="flex items-center gap-1 min-w-0">
+                                <Combine className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{config.name}</span>
+                              </span>
+                            )}
+                            getOptionValue={(config) => config.id}
+                            getOptionLabel={(config) => config.name}
+                            placeholder={t("common.placeholders.selectConfigurations")}
+                            showTotal
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                 <FormField
                   control={control}
@@ -826,31 +1004,6 @@ export function AddSessionModal({
                                 </SelectGroup>
                               </SelectContent>
                             </Select>
-                          )}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="configId"
-                  render={({ field: _field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center">
-                        {t("common.fields.configuration")}
-                        <HelpPopover helpKey="session.configuration" />
-                      </FormLabel>
-                      <FormControl>
-                        <Controller
-                          control={control}
-                          name="configId"
-                          render={({ field: { onChange, value } }) => (
-                            <ConfigurationSelect
-                              value={value}
-                              onChange={(val) => onChange(val)}
-                            />
                           )}
                         />
                       </FormControl>
@@ -1007,7 +1160,9 @@ export function AddSessionModal({
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
                   ? t("common.actions.submitting")
-                  : t("common.actions.submit")}
+                  : selectedConfigs.length > 1
+                    ? `${t("common.actions.create")} (${selectedConfigs.length})`
+                    : t("common.actions.create")}
               </Button>
             </DialogFooter>
           </form>

@@ -1161,46 +1161,48 @@ model Steps {
 }
 
 model Sessions {
-  id                 Int                  @id() @default(autoincrement())
-  projectId          Int
-  project            Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  templateId         Int
-  template           Templates            @relation(fields: [templateId], references: [id])
-  name               String
-  note               Json?
-  mission            Json?
-  configId           Int?
-  configuration      Configurations?      @relation(fields: [configId], references: [id], onDelete: SetNull)
-  milestoneId        Int?
-  milestone          Milestones?          @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-  stateId            Int
-  state              Workflows            @relation(fields: [stateId], references: [id])
-  assignedToId       String?
-  assignedTo         User?                @relation("SessionAssignedTo", fields: [assignedToId], references: [id])
-  estimate           Int?
-  forecastManual     Int?
-  forecastAutomated  Float?
-  elapsed            Int?
-  isCompleted        Boolean              @default(false)
-  isDeleted          Boolean              @default(false)
-  completedAt        DateTime?
-  createdAt          DateTime             @default(now()) @db.Timestamptz(6)
-  createdById        String
-  createdBy          User                 @relation("SessionCreatedBy", fields: [createdById], references: [id])
-  currentVersion     Int                  @default(1)
-  sessionResults     SessionResults[]
-  sessionFieldValues SessionFieldValues[]
-  versions           SessionVersions[]
-  attachments        Attachments[]
-  tags               Tags[]
-  issues             Issue[]
-  comments           Comment[]
+  id                   Int                  @id() @default(autoincrement())
+  projectId            Int
+  project              Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId           Int
+  template             Templates            @relation(fields: [templateId], references: [id])
+  name                 String
+  note                 Json?
+  mission              Json?
+  configId             Int?
+  configuration        Configurations?      @relation(fields: [configId], references: [id], onDelete: SetNull)
+  milestoneId          Int?
+  milestone            Milestones?          @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  stateId              Int
+  state                Workflows            @relation(fields: [stateId], references: [id])
+  assignedToId         String?
+  assignedTo           User?                @relation("SessionAssignedTo", fields: [assignedToId], references: [id])
+  estimate             Int?
+  forecastManual       Int?
+  forecastAutomated    Float?
+  elapsed              Int?
+  isCompleted          Boolean              @default(false)
+  isDeleted            Boolean              @default(false)
+  completedAt          DateTime?
+  createdAt            DateTime             @default(now()) @db.Timestamptz(6)
+  createdById          String
+  createdBy            User                 @relation("SessionCreatedBy", fields: [createdById], references: [id])
+  currentVersion       Int                  @default(1)
+  sessionResults       SessionResults[]
+  sessionFieldValues   SessionFieldValues[]
+  versions             SessionVersions[]
+  attachments          Attachments[]
+  tags                 Tags[]
+  issues               Issue[]
+  comments             Comment[]
+  configurationGroupId String?
 
   @@index([projectId, isDeleted])
   @@index([createdById])
   @@index([assignedToId])
   @@index([stateId])
   @@index([isCompleted, createdAt])
+  @@index([configurationGroupId])
 }
 
 model SessionResults {

@@ -1,14 +1,15 @@
 import { expect, test } from "../../fixtures";
 
 /**
- * Session Configuration Combobox Tests
+ * Session Configuration Multi-Select Combobox Tests
  *
- * Tests the AsyncCombobox (single-select) component used for selecting
- * a configuration when creating a new session. Covers:
+ * Tests the MultiAsyncCombobox (multi-select) component used for selecting
+ * configurations when creating a new session. Covers:
  * - Opening the combobox and seeing available configurations
  * - Searching/filtering configurations
- * - Selecting a configuration
- * - Selecting the "None" (unassigned) option
+ * - Selecting a configuration (shown as badge)
+ * - Selecting multiple configurations
+ * - Removing a selected configuration
  * - Pagination controls in the dropdown
  * - Creating a session with a selected configuration
  */
@@ -36,13 +37,14 @@ test.describe("Session Configuration Combobox", () => {
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Find the Configuration field's combobox trigger
-    // The ConfigurationSelect renders an AsyncCombobox with role="combobox"
-    // It's in the right column of the form, after Template and State selects
-    // Use label-based scoping to target the correct combobox (not Template or State)
-    const configCombobox = dialog
-      .locator('label:has-text("Configuration")')
-      .locator('..')
+    // Find the Configurations field's combobox trigger (plural label = multi-select)
+    const configLabel = dialog.locator(
+      'label:has-text("Configurations")'
+    );
+    await expect(configLabel).toBeVisible({ timeout: 5000 });
+
+    const configCombobox = configLabel
+      .locator("..")
       .locator('button[role="combobox"]');
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
 
@@ -56,7 +58,7 @@ test.describe("Session Configuration Combobox", () => {
     await expect(configOption).toBeVisible({ timeout: 5000 });
   });
 
-  test("should select a configuration and display it in trigger", async ({
+  test("should select a configuration and display it as a badge", async ({
     api,
     page,
   }) => {
@@ -78,9 +80,11 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configuration")')
-      .locator('..')
+    const configLabel = dialog.locator(
+      'label:has-text("Configurations")'
+    );
+    const configCombobox = configLabel
+      .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
 
@@ -89,58 +93,14 @@ test.describe("Session Configuration Combobox", () => {
       .locator(`[role="option"]:has-text("${configName}")`)
       .click();
 
-    // Verify the trigger now shows the selected config name
+    // Close the popover
+    await page.keyboard.press("Escape");
+
+    // The label should show count "(1)"
+    await expect(configLabel).toContainText("(1)", { timeout: 5000 });
+
+    // The selected config should appear as a badge inside the combobox trigger
     await expect(configCombobox).toContainText(configName, { timeout: 5000 });
-  });
-
-  test("should show None/unassigned option and allow clearing selection", async ({
-    api,
-    page,
-  }) => {
-    const projectId = await api.createProject(
-      `E2E Session None ${Date.now()}`
-    );
-    const configName = `None Config ${Date.now()}`;
-    await api.createConfiguration(configName);
-
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
-
-    // Open the modal
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
-
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configuration")')
-      .locator('..')
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
-
-    // First select a configuration
-    await page
-      .locator(`[role="option"]:has-text("${configName}")`)
-      .click();
-
-    // Verify it's selected
-    await expect(configCombobox).toContainText(configName, { timeout: 5000 });
-
-    // Re-open and select "None" (unassigned) option
-    await configCombobox.click();
-
-    // The ConfigurationSelect has showUnassigned=true, which renders a "None" option
-    const noneOption = page.locator('[role="option"][data-value="unassigned"]');
-    await expect(noneOption).toBeVisible({ timeout: 5000 });
-    await noneOption.click();
-
-    // Verify the trigger no longer shows the config name
-    await expect(configCombobox).not.toContainText(configName, {
-      timeout: 3000,
-    });
   });
 
   test("should search and filter configurations", async ({ api, page }) => {
@@ -164,9 +124,11 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configuration")')
-      .locator('..')
+    const configLabel = dialog.locator(
+      'label:has-text("Configurations")'
+    );
+    const configCombobox = configLabel
+      .locator("..")
       .locator('button[role="combobox"]');
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
     await configCombobox.click();
@@ -216,9 +178,11 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
-    const configCombobox = dialog
-      .locator('label:has-text("Configuration")')
-      .locator('..')
+    const configLabel = dialog.locator(
+      'label:has-text("Configurations")'
+    );
+    const configCombobox = configLabel
+      .locator("..")
       .locator('button[role="combobox"]');
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
     await configCombobox.click();
@@ -228,10 +192,7 @@ test.describe("Session Configuration Combobox", () => {
       page.locator(`[role="option"]:has-text("${configName}")`)
     ).toBeVisible({ timeout: 5000 });
 
-    // Verify pagination footer is visible inside the combobox popover
-    // The Previous/Next buttons and page indicator are rendered inside the popover content
-    // which is portaled to the body. Since the combobox is the only open popover,
-    // these buttons are unique on the page.
+    // Verify pagination footer is visible
     const prevButton = page.getByRole("button", { name: "Previous" });
     const nextButton = page.getByRole("button", { name: "Next" });
     await expect(prevButton).toBeVisible({ timeout: 5000 });
@@ -239,11 +200,6 @@ test.describe("Session Configuration Combobox", () => {
 
     // Previous should be disabled on first page
     await expect(prevButton).toBeDisabled();
-
-    // Verify page indicator text is shown (e.g., "Showing 1-20 of N")
-    // The text is inside a span with specific classes, next to the pagination buttons
-    const paginationText = page.locator('text=/Showing \\d+/');
-    await expect(paginationText).toBeVisible({ timeout: 5000 });
   });
 
   test("should create session with selected configuration", async ({
@@ -271,9 +227,11 @@ test.describe("Session Configuration Combobox", () => {
     await nameInput.fill(`E2E Session ${Date.now()}`);
 
     // Select a configuration
-    const configCombobox = dialog
-      .locator('label:has-text("Configuration")')
-      .locator('..')
+    const configLabel = dialog.locator(
+      'label:has-text("Configurations")'
+    );
+    const configCombobox = configLabel
+      .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
 
@@ -281,11 +239,14 @@ test.describe("Session Configuration Combobox", () => {
       .locator(`[role="option"]:has-text("${configName}")`)
       .click();
 
-    // Verify config is selected
+    // Close the popover
+    await page.keyboard.press("Escape");
+
+    // Verify config is selected (badge visible)
     await expect(configCombobox).toContainText(configName, { timeout: 5000 });
 
     // Submit the form
-    const submitButton = dialog.getByRole("button", { name: /submit/i });
+    const submitButton = dialog.getByRole("button", { name: /create/i });
     await expect(submitButton).toBeVisible();
     await submitButton.click();
 

@@ -1413,7 +1413,8 @@
           "completedAt",
           "createdAt",
           "createdById",
-          "currentVersion"
+          "currentVersion",
+          "configurationGroupId"
         ]
       },
       "SessionResultsScalarFieldEnum": {
@@ -6288,6 +6289,16 @@
             "items": {
               "$ref": "#/components/schemas/Comment"
             }
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -34125,6 +34136,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "oneOf": [
               {
@@ -34359,6 +34383,16 @@
           },
           "currentVersion": {
             "$ref": "#/components/schemas/SortOrder"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
           },
           "project": {
             "$ref": "#/components/schemas/ProjectsOrderByWithRelationInput"
@@ -34641,6 +34675,19 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -34990,6 +35037,19 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -75187,6 +75247,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -75374,6 +75444,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -75548,6 +75631,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -75691,6 +75784,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -203933,6 +204039,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -204102,6 +204218,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
           },
@@ -204263,6 +204389,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
@@ -204438,6 +204574,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -213324,6 +213470,19 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -227619,6 +227778,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "template": {
             "$ref": "#/components/schemas/TemplatesCreateNestedOneWithoutSessionsInput"
           },
@@ -227793,6 +227962,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -245109,6 +245288,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -245277,6 +245466,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -256774,6 +256973,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -256948,6 +257157,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -267974,6 +268193,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -268148,6 +268377,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -269865,6 +270104,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -270033,6 +270282,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -271487,6 +271746,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -271665,6 +271934,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -300756,6 +301035,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -300934,6 +301223,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -303520,6 +303819,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -303783,6 +304095,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -314079,6 +314404,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -314257,6 +314592,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionFieldValues": {
             "$ref": "#/components/schemas/SessionFieldValuesUncheckedCreateNestedManyWithoutSessionInput"
@@ -315931,6 +316276,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -316194,6 +316552,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -317634,6 +318005,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -317812,6 +318193,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -318427,6 +318818,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -318690,6 +319094,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -319329,6 +319746,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -319507,6 +319934,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -319971,6 +320408,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -320234,6 +320684,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -338753,6 +339216,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -338931,6 +339404,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -395678,6 +396161,16 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutSessionsInput"
           },
@@ -395856,6 +396349,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedCreateNestedManyWithoutSessionInput"
@@ -398442,6 +398945,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -398705,6 +399221,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -403483,6 +404012,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -403620,6 +404159,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -409670,6 +410219,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -409923,6 +410485,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -410157,6 +410732,19 @@
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -410293,6 +410881,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -410552,6 +411153,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -410787,6 +411401,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -422911,6 +423538,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -427039,6 +427676,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "template": {
             "$ref": "#/components/schemas/TemplatesUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -427295,6 +427945,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -427530,6 +428193,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -434522,6 +435198,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -435871,6 +436557,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -436124,6 +436823,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -436356,6 +437068,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -442014,6 +442739,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -442990,6 +443725,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -443246,6 +443994,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -443481,6 +444242,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -447036,6 +447810,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -447998,6 +448782,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -448254,6 +449051,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -448489,6 +449299,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -449405,6 +450228,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "required": [
@@ -449705,6 +450538,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -449958,6 +450804,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -450190,6 +451049,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -451579,6 +452451,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -451845,6 +452730,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -452087,6 +452985,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -474800,6 +475711,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutSessionsNestedInput"
           },
@@ -475066,6 +475990,19 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sessionResults": {
             "$ref": "#/components/schemas/SessionResultsUncheckedUpdateManyWithoutSessionNestedInput"
           },
@@ -475308,6 +476245,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -498453,6 +499403,9 @@
               }
             ]
           },
+          "configurationGroupId": {
+            "type": "boolean"
+          },
           "_count": {
             "oneOf": [
               {
@@ -507659,6 +508612,9 @@
           "currentVersion": {
             "type": "boolean"
           },
+          "configurationGroupId": {
+            "type": "boolean"
+          },
           "_all": {
             "type": "boolean"
           }
@@ -507796,6 +508752,9 @@
           },
           "currentVersion": {
             "type": "boolean"
+          },
+          "configurationGroupId": {
+            "type": "boolean"
           }
         }
       },
@@ -507854,6 +508813,9 @@
             "type": "boolean"
           },
           "currentVersion": {
+            "type": "boolean"
+          },
+          "configurationGroupId": {
             "type": "boolean"
           }
         }
@@ -522891,6 +523853,16 @@
           },
           "currentVersion": {
             "type": "integer"
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "_count": {
             "oneOf": [
@@ -544823,6 +545795,9 @@
           "currentVersion": {
             "type": "integer"
           },
+          "configurationGroupId": {
+            "type": "integer"
+          },
           "_all": {
             "type": "integer"
           }
@@ -544848,6 +545823,7 @@
           "createdAt",
           "createdById",
           "currentVersion",
+          "configurationGroupId",
           "_all"
         ]
       },
@@ -545265,6 +546241,16 @@
                 "type": "integer"
               }
             ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         }
       },
@@ -545450,6 +546436,16 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "configurationGroupId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           }

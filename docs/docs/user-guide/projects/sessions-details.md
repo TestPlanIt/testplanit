@@ -39,6 +39,7 @@ The header area displays key information and actions:
 
 - **Description**: Displays the session's description using a rich-text viewer. In Edit mode, this becomes an editable TipTap editor.
 - **Mission**: Displays the session's mission/charter using a rich-text viewer. In Edit mode, this becomes an editable TipTap editor.
+- **Configuration Selector** (View Mode Only, Multi-Config Sessions): When a session is part of a [multi-configuration group](./sessions-add.md#multi-configuration-support), a configuration selector appears above the results. This single-select combobox shows the current session's configuration and lists all sibling sessions in the group. Selecting a different configuration navigates to that sibling session's detail page, matching the behavior of the [Test Run Details](./run-details.md) multi-configuration selector.
 - **Session Results** (View Mode Only):
   - **Summary**: Shows counts of different result types (Notes, Issues, Questions) recorded.
   - **Add Result Form**: A form to quickly add new results (Note, Issue, Question), including a text area and optional attachment upload.

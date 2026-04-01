@@ -176,11 +176,14 @@ export function MultiAsyncCombobox<T>({
                 <Badge
                   key={getOptionValue(v)}
                   variant="secondary"
-                  className="mr-1 shrink-0"
+                  className="mr-1 shrink-0 min-w-[80px] max-w-[200px] overflow-hidden"
+                  title={getOptionLabel(v)}
                 >
-                  {renderSelectedOption
-                    ? renderSelectedOption(v)
-                    : getOptionLabel(v)}
+                  <span className="min-w-0 flex-1 truncate">
+                    {renderSelectedOption
+                      ? renderSelectedOption(v)
+                      : getOptionLabel(v)}
+                  </span>
                   <span
                     title={getOptionLabel(v)}
                     role="button"
@@ -233,11 +236,16 @@ export function MultiAsyncCombobox<T>({
                   const visibleOptions = hideSelected
                     ? options.filter((option) => !isSelected(option))
                     : options;
-                  const visibleCount = visibleOptions.length;
+                  const selectAllCount =
+                    total != null
+                      ? hideSelected
+                        ? total - value.length
+                        : total
+                      : visibleOptions.length;
 
                   return (
                     <>
-                      {visibleCount > 0 && (
+                      {selectAllCount > 0 && visibleOptions.length > 0 && (
                         <CommandItem
                           value="__select_all__"
                           onSelect={async () => {
@@ -287,7 +295,7 @@ export function MultiAsyncCombobox<T>({
                           <div className="flex items-center w-full text-foreground-background font-medium gap-2">
                             <PackagePlus className="h-3 w-3 shrink-0" />
                             {tCommon("actions.selectAll")} {"("}
-                            {visibleCount}
+                            {selectAllCount}
                             {")"}
                           </div>
                         </CommandItem>

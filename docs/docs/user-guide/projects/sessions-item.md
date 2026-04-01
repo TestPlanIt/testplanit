@@ -29,9 +29,11 @@ The component uses a 4-column grid, similar to the [Test Run Item](./test-run-it
 4. **Members & Actions (Right Column)**:
     - **Active Sessions**: Displays user avatars involved with the session (Creator, Assigned To) using the `MemberList` component.
     - **Completed Sessions**: Shows the associated [Milestone](./milestones.md) (if any) and the completion date.
-    - **Actions Menu** (Visible on Active sessions for Admins/Project Admins):
+    - **Actions Menu** (Visible for users with appropriate permissions):
       - A vertical ellipsis (`...`) button triggers a dropdown menu.
+      - **Edit**: Navigates to the session detail page in edit mode (available on active sessions).
       - **Complete**: Opens the confirmation dialog to mark the session as finished. See [Session Details](./sessions-details.md#header) for more on completing a session.
+      - **Duplicate**: Opens the [Add Session](./sessions-add.md#session-duplication) dialog pre-populated with the session's metadata, allowing quick re-creation for regression cycles or new milestones.
 
 ## Styling
 

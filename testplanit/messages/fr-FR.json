@@ -584,7 +584,7 @@
       "testRuns": "{count, plural, =0 {Aucun test exécuté} =1 {1 test exécuté} other {Nombre de tests exécutés}}",
       "sessions": "{count, plural, =0 {Aucune session} =1 {1 session} other {Nombre de sessions}}",
       "noOptions": "Aucune option disponible",
-      "multiConfiguration": "Partie d'un test multiconfiguration",
+      "multiConfiguration": "Faisant partie d'un groupe à configurations multiples",
       "otherConfigurations": "Autres configurations",
       "selected": "Sélectionné : {count}",
       "defaultProjectAccess": "Accès au projet par défaut",
@@ -1366,13 +1366,21 @@
       "noWorkflowsConfigured": "Aucun flux de travail de validation n'est configuré pour ce projet. Veuillez configurer les flux de travail dans les paramètres d'administration pour activer la validation des sessions."
     },
     "messages": {
-      "createSuccess": "Session créée avec succès"
+      "createSuccess": "Session créée avec succès",
+      "createSuccessMultiple": "{count} Sessions créées avec succès",
+      "duplicateSuccess": "Session dupliquée avec succès",
+      "duplicateSuccessMultiple": "{count} Sessions dupliquées avec succès"
+    },
+    "duplicateDialog": {
+      "title": "Session dupliquée",
+      "description": "Créer une copie de la session <nameStyle>{name}</nameStyle> avec toutes les métadonnées mais aucun résultat."
     },
     "errors": {
       "failedToCreate": "Impossible de créer une nouvelle session",
       "failedToCreateVersion": "Échec de la création de la version de session",
       "nameAlreadyExists": "Ce nom de session existe déjà. Veuillez choisir un nouveau nom.",
-      "createFailed": "Échec de la création de la session"
+      "createFailed": "Échec de la création de la session",
+      "duplicateFailed": "Échec de la duplication de la session"
     },
     "validation": {
       "nameMinLength": "Le nom doit comporter au moins 2 caractères.",

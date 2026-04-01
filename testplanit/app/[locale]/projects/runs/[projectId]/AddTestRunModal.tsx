@@ -333,9 +333,9 @@ const BasicInfoDialog = React.memo(
                               </div>
                             )}
                             renderSelectedOption={(config) => (
-                              <span className="flex items-center gap-1">
-                                <Combine className="w-3 h-3" />
-                                {config.name}
+                              <span className="flex items-center gap-1 min-w-0">
+                                <Combine className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{config.name}</span>
                               </span>
                             )}
                             getOptionValue={(config) => config.id}

@@ -1878,12 +1878,14 @@ model Sessions {
     tags               Tags[]
     issues             Issue[]
     comments           Comment[]
+    configurationGroupId String?
 
     @@index([projectId, isDeleted])
     @@index([createdById])
     @@index([assignedToId])
     @@index([stateId])
     @@index([isCompleted, createdAt])
+    @@index([configurationGroupId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 

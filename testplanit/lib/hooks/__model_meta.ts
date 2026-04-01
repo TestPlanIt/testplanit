@@ -4082,6 +4082,10 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'session',
+                }, configurationGroupId: {
+                    name: "configurationGroupId",
+                    type: "String",
+                    isOptional: true,
                 },
             }, uniqueConstraints: {
                 id: {

@@ -13,9 +13,9 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
-import { useFindManyColor } from "~/lib/hooks";
+import { useFindManyColor, useFindManySessionFieldValues, useFindUniqueSessions } from "~/lib/hooks";
 import { ColorMap, createColorMap, getCondition, getStatus, getStatusStyle, MilestonesWithTypes, sortMilestones } from "~/utils/milestoneUtils";
-import { AddSessionModal } from "./AddSessionModal";
+import { AddSessionModal, type SessionDuplicationPreset } from "./AddSessionModal";
 import SessionItem from "./SessionItem";
 import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
 
@@ -208,6 +208,71 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     {}
   );
 
+  // Single AddSessionModal state (handles both add and duplicate)
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalMilestoneId, setAddModalMilestoneId] = useState<number | undefined>(undefined);
+  const [duplicationPreset, setDuplicationPreset] = useState<SessionDuplicationPreset | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<{ id: number; name: string } | null>(null);
+
+  // Fetch source session data when duplicateSource is set
+  const { data: duplicateSessionData, isLoading: isDuplicateLoading } =
+    useFindUniqueSessions(
+      {
+        where: { id: duplicateSource?.id ?? 0 },
+        select: {
+          name: true,
+          configId: true,
+          milestoneId: true,
+          stateId: true,
+          assignedToId: true,
+          templateId: true,
+          estimate: true,
+          note: true,
+          mission: true,
+          tags: { select: { id: true } },
+          issues: { select: { id: true } },
+        },
+      },
+      { enabled: !!duplicateSource }
+    );
+
+  const { data: duplicateFieldValues } = useFindManySessionFieldValues(
+    {
+      where: { sessionId: duplicateSource?.id ?? 0 },
+      select: { fieldId: true, value: true },
+    },
+    { enabled: !!duplicateSource }
+  );
+
+  // Auto-open AddSessionModal once data is fetched
+  useEffect(() => {
+    if (duplicateSource && duplicateSessionData && !isDuplicateLoading) {
+      const preset: SessionDuplicationPreset = {
+        originalName: duplicateSessionData.name || duplicateSource.name,
+        originalConfigId: duplicateSessionData.configId,
+        originalMilestoneId: duplicateSessionData.milestoneId,
+        originalStateId: duplicateSessionData.stateId,
+        originalAssignedToId: duplicateSessionData.assignedToId,
+        originalTemplateId: duplicateSessionData.templateId,
+        originalEstimate: duplicateSessionData.estimate,
+        originalNote: duplicateSessionData.note,
+        originalMission: duplicateSessionData.mission,
+        originalTagIds:
+          duplicateSessionData.tags?.map((t: { id: number }) => t.id) || [],
+        originalIssueIds:
+          duplicateSessionData.issues?.map((i: { id: number }) => i.id) || [],
+        originalFieldValues:
+          duplicateFieldValues?.map((fv: { fieldId: number; value: any }) => ({
+            fieldId: fv.fieldId,
+            value: fv.value,
+          })) || [],
+      };
+      setDuplicationPreset(preset);
+      setAddModalMilestoneId(undefined);
+      setAddModalOpen(true);
+    }
+  }, [duplicateSource, duplicateSessionData, duplicateFieldValues, isDuplicateLoading]);
+
   useEffect(() => {
     if (colors) {
       const map = createColorMap(colors);
@@ -266,6 +331,26 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setSelectedSession(null);
+  };
+
+  const handleDuplicateSession = (session: { id: number; name: string }) => {
+    setDuplicateSource(session);
+  };
+
+  const handleOpenAddModal = (milestoneId?: number) => {
+    setDuplicationPreset(null);
+    setDuplicateSource(null);
+    setAddModalMilestoneId(milestoneId);
+    setAddModalOpen(true);
+  };
+
+  const handleAddModalClose = (open: boolean) => {
+    setAddModalOpen(open);
+    if (!open) {
+      setDuplicationPreset(null);
+      setDuplicateSource(null);
+      setAddModalMilestoneId(undefined);
+    }
   };
 
   const _toggleMilestone = (milestoneId: number) => {
@@ -351,17 +436,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
             <div className="milestone-dates flex justify-end">
               <div className="grow text-sm text-muted-foreground">
                 {canAddEdit && (
-                  <AddSessionModal
-                    defaultMilestoneId={milestone.id}
-                    trigger={
-                      <Button variant="link" className="p-0">
-                        <CirclePlus className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tCommon("add")}
-                        </span>
-                      </Button>
-                    }
-                  />
+                  <Button variant="link" className="p-0" onClick={() => handleOpenAddModal(milestone.id)}>
+                    <CirclePlus className="h-4 w-4" />
+                    <span className="hidden md:inline">
+                      {tCommon("add")}
+                    </span>
+                  </Button>
                 )}
                 <DateTextDisplay
                   startDate={
@@ -389,8 +469,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                       testSession={testSession}
                       isCompleted={testSession.isCompleted}
                       onComplete={handleOpenDialog}
+                      onDuplicate={handleDuplicateSession}
                       canComplete={canCloseSession}
+                      canDuplicate={canAddEdit}
                       isNew={newSessionId === testSession.id}
+                      showMilestone={false}
                     />
                   </div>
                 )
@@ -427,16 +510,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                 <div className="milestone-status"></div>
                 <div className="milestone-dates flex justify-end">
                   {canAddEdit && (
-                    <AddSessionModal
-                      trigger={
-                        <Button variant="default" size="sm">
-                          <CirclePlus className="h-4 w-4" />
-                          <span className="hidden md:inline">
-                            {t("actions.add")}
-                          </span>
-                        </Button>
-                      }
-                    />
+                    <Button variant="default" size="sm" onClick={() => handleOpenAddModal()}>
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="hidden md:inline">
+                        {t("actions.add")}
+                      </span>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -447,8 +526,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   testSession={testSession}
                   isCompleted={testSession.isCompleted}
                   onComplete={handleOpenDialog}
+                  onDuplicate={handleDuplicateSession}
                   canComplete={canCloseSession}
+                  canDuplicate={canAddEdit}
                   isNew={newSessionId === testSession.id}
+                  showMilestone={false}
                 />
               </div>
             ))}
@@ -488,10 +570,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   key={testSession.id}
                   testSession={testSession}
                   isCompleted={testSession.isCompleted}
-                  onComplete={handleOpenDialog} // Still needed for potential future actions?
-                  canComplete={canCloseSession} // Pass permission, though menu won't show
+                  onComplete={handleOpenDialog}
+                  onDuplicate={handleDuplicateSession}
+                  canComplete={canCloseSession}
+                  canDuplicate={canAddEdit}
                   isNew={newSessionId === testSession.id}
-                  showMilestone={true} // Show milestone within the item for context
+                  showMilestone={true}
                 />
               ))}
             </div>
@@ -507,6 +591,13 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
           projectId={selectedSession.projectId}
         />
       )}
+
+      <AddSessionModal
+        open={addModalOpen}
+        onOpenChange={handleAddModalClose}
+        defaultMilestoneId={addModalMilestoneId}
+        duplicationPreset={duplicationPreset}
+      />
     </div>
   );
 };
