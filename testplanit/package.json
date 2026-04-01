@@ -170,7 +170,7 @@
     "@zenstackhq/runtime": "~2.22.2",
     "@zenstackhq/server": "~2.22.2",
     "ai": "^6.0.141",
-    "axios": "^1.14.0",
+    "axios": "1.14.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.71.1",
     "busboy": "^1.6.0",
