@@ -672,7 +672,7 @@ importers:
         specifier: ^6.0.141
         version: 6.0.141(zod@4.3.6)
       axios:
-        specifier: ^1.14.0
+        specifier: 1.14.0
         version: 1.14.0
       bcrypt:
         specifier: ^6.0.0
