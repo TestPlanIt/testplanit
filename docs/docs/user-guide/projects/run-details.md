@@ -25,9 +25,13 @@ The header displays:
 - **Action Buttons**:
   - **View Mode (Active Run)**:
     - **Edit** (`SquarePen` icon): Switches the page to Edit mode (if user has permission).
+    - **Duplicate** (`Copy` icon): Opens the duplication dialog to create a copy of the test run.
+    - **Export PDF** (`FileDown` icon): Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
     - **Complete** (`CircleCheckBig` icon): Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
+    - **Duplicate** (`Copy` icon): Opens the duplication dialog to create a copy of the test run.
+    - **Export PDF** (`FileDown` icon): Exports the test run to PDF (available on completed runs as well).
     - **Delete** (`Trash2` icon): Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
   - **Edit Mode**:
     - **Save** (`Save` icon): Saves changes made in Edit mode.
@@ -69,6 +73,7 @@ When multiple configurations are selected:
 - **Filtering**: The ViewSelector filters work across all selected configurations, showing accurate counts
 
 This feature is useful for:
+
 - Comparing test results across different browsers, operating systems, or environments
 - Getting an overview of testing progress across a matrix of configurations
 - Identifying test cases that fail in specific configurations

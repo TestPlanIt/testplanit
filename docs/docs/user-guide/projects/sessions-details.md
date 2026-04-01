@@ -27,8 +27,10 @@ The header area displays key information and actions:
     - **Version Selector**: If the session has multiple versions (i.e., has been edited), a dropdown appears allowing you to view [previous versions](./sessions-versions.md).
     - **Edit** (`SquarePen` icon): Switches the page to Edit mode (if user has permission).
     - **Complete** (`CircleCheckBig` icon): Opens a confirmation dialog to mark the session as finished. You select the final "Done" state and set the completion date. This action creates a new version and is irreversible (if user has permission).
+    - **Export PDF** (`FileDown` icon): Exports the session to a PDF document including all metadata, description, mission, tags, issues, custom field values, and session results with their statuses, details, and result-level custom fields. Embedded images from attachments are included.
   - **View Mode (Completed Session)**:
     - Displays a "Completed On [Date]" badge.
+    - **Export PDF** (`FileDown` icon): Exports the session to PDF (available on completed sessions as well).
     - **Delete** (`Trash2` icon): Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
   - **Edit Mode**:
     - **Save** (`Save` icon): Saves changes made in Edit mode. This creates a new version of the session.

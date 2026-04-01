@@ -65,7 +65,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {
-  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, Copy, Maximize2, Save, SquarePen, Trash2, TriangleAlert
+  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, Copy, FileDown, Maximize2, Save, SquarePen, Trash2, TriangleAlert
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -89,6 +89,7 @@ import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { useExportTestRunPdf } from "~/hooks/pdf/useExportTestRunPdf";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import AddTestRunModal from "../AddTestRunModal";
 import DuplicateTestRunDialog, {
@@ -455,6 +456,12 @@ export default function TestRunPage() {
     data: (TestRunWithRelations & { testRunType?: string }) | null;
     refetch: () => void;
   };
+
+  // PDF export hook
+  const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
+    useExportTestRunPdf({
+      testRunData: testRunData as any,
+    });
 
   // Fetch JUnit test suites if this is a JUNIT run
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
@@ -1397,6 +1404,8 @@ export default function TestRunPage() {
           milestones={milestoneOptions}
           statusScope={statusScope}
           selectedTestCaseId={selectedTestCaseId}
+          handleExportPdf={handleExportPdf}
+          isExportingPdf={isExportingPdf}
         />
       </PaginationProvider>
     );
@@ -1451,7 +1460,7 @@ export default function TestRunPage() {
               </CardTitle>
               <div className="flex items-start gap-2 flex-wrap">
                 {testRunData?.isCompleted ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-1">
                     <Badge
                       variant="secondary"
                       className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
@@ -1468,26 +1477,45 @@ export default function TestRunPage() {
                         />
                       </div>
                     </Badge>
-                    {/* Duplicate button for COMPLETED runs */}
+                    {/* Action buttons for COMPLETED runs */}
                     {canAddEditRun &&
                       !isAutomatedTestRunType(testRunData?.testRunType) && (
                         <Button
                           type="button"
                           variant="secondary"
                           onClick={() => setIsDuplicateDialogOpen(true)}
+                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <Copy className="h-4 w-4 " />
-                          {t("common.actions.duplicate")}
+                          <Copy className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {t("common.actions.duplicate")}
+                          </span>
                         </Button>
                       )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleExportPdf}
+                      disabled={isExportingPdf}
+                      className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                    >
+                      <FileDown className="h-4 w-4 shrink-0" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                        {isExportingPdf
+                          ? t("common.actions.exportingPdf")
+                          : t("common.actions.exportPdf")}
+                      </span>
+                    </Button>
                     {effectiveCanDelete && (
                       <Button
                         variant="secondary"
                         onClick={() => setIsDeleteDialogOpen(true)}
-                        className="text-destructive"
+                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
                       >
-                        <Trash2 className="h-4 w-4 " />
-                        {t("common.actions.delete")}
+                        <Trash2 className="h-4 w-4 shrink-0" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                          {t("common.actions.delete")}
+                        </span>
                       </Button>
                     )}
                   </div>
@@ -1496,43 +1524,64 @@ export default function TestRunPage() {
                   <>
                     {!isEditMode ? (
                       // View Mode Buttons for NON-COMPLETED runs
-                      <div className="flex flex-col gap-2">
-                        {/* Edit button on its own row, right-justified */}
+                      <div className="flex items-center gap-1">
                         {canAddEditRun && !isMultiConfigSelected && (
-                          <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleEditClick}
+                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                          >
+                            <SquarePen className="h-4 w-4 shrink-0" />
+                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                              {t("common.actions.edit")}
+                            </span>
+                          </Button>
+                        )}
+                        {canAddEditRun &&
+                          !isAutomatedTestRunType(
+                            testRunData?.testRunType
+                          ) && (
                             <Button
                               type="button"
                               variant="secondary"
-                              onClick={handleEditClick}
+                              onClick={() => setIsDuplicateDialogOpen(true)}
+                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                             >
-                              <SquarePen className="h-4 w-4 " />{" "}
-                              {t("common.actions.edit")}
+                              <Copy className="h-4 w-4 shrink-0" />
+                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                {t("common.actions.duplicate")}
+                              </span>
                             </Button>
-                          </div>
-                        )}
-                        {/* Duplicate and Complete buttons on the next row */}
-                        <div className="flex items-center gap-2">
-                          {canAddEditRun &&
-                            !isAutomatedTestRunType(
-                              testRunData?.testRunType
-                            ) && (
+                          )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleExportPdf}
+                          disabled={isExportingPdf}
+                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                        >
+                          <FileDown className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {isExportingPdf
+                              ? t("common.actions.exportingPdf")
+                              : t("common.actions.exportPdf")}
+                          </span>
+                        </Button>
+                        {canCloseRun && (
+                          <CompleteTestRunDialog
+                            trigger={
                               <Button
                                 type="button"
                                 variant="secondary"
-                                onClick={() => setIsDuplicateDialogOpen(true)}
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                               >
-                                <Copy className="h-4 w-4 " />{" "}
-                                {t("common.actions.duplicate")}
-                              </Button>
-                            )}
-                          {canCloseRun && ( // Removed !testRunData?.isCompleted as parent already checks for !isCompleted
-                            <CompleteTestRunDialog
-                              trigger={
-                                <Button type="button" variant="secondary">
-                                  <CircleCheckBig className="h-4 w-4 " />{" "}
+                                <CircleCheckBig className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                                   {t("common.actions.complete")}
-                                </Button>
-                              }
+                                </span>
+                              </Button>
+                            }
                               testRunId={Number(runId)}
                               projectId={Number(projectId)}
                               stateId={testRunData?.stateId || 0}
@@ -1540,7 +1589,6 @@ export default function TestRunPage() {
                             />
                           )}
                         </div>
-                      </div>
                     ) : (
                       // Edit Mode Buttons for NON-COMPLETED runs
                       <div className="flex flex-col gap-2">

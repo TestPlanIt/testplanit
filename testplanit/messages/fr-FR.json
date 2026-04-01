@@ -103,6 +103,8 @@
       "createTag": "Créer une balise \"{name}\"",
       "noTagsFound": "Aucune étiquette trouvée",
       "duplicate": "Double",
+      "exportPdf": "Exporter le PDF",
+      "exportingPdf": "Exportation...",
       "change": "Changement",
       "viewAll": "Afficher tout",
       "undo": "Défaire",

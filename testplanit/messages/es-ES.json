@@ -103,6 +103,8 @@
       "createTag": "Crear etiqueta \"{name}\"",
       "noTagsFound": "No se encontraron etiquetas",
       "duplicate": "Duplicate",
+      "exportPdf": "Exportar PDF",
+      "exportingPdf": "Exportador...",
       "change": "Cambiar",
       "viewAll": "Ver todo",
       "undo": "Deshacer",

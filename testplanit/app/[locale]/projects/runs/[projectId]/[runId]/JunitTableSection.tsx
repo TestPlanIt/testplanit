@@ -40,7 +40,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
 } from "@/components/ui/tooltip";
 import {
-  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, Maximize2, Save, SquarePen, Trash2
+  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, FileDown, Maximize2, Save, SquarePen, Trash2
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -86,6 +86,8 @@ function JunitTableSection({
   milestones,
   statusScope,
   selectedTestCaseId,
+  handleExportPdf,
+  isExportingPdf,
 }: any) {
   const { data: session } = useSession();
   const [junitFilter, setJunitFilter] = useState("");
@@ -338,7 +340,7 @@ function JunitTableSection({
               </CardTitle>
               <div className="flex items-start gap-2">
                 {testRunData?.isCompleted ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-1">
                     <Badge
                       variant="secondary"
                       className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
@@ -359,14 +361,32 @@ function JunitTableSection({
                         />
                       </div>
                     </Badge>
+                    {handleExportPdf && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleExportPdf}
+                        disabled={isExportingPdf}
+                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                      >
+                        <FileDown className="h-4 w-4 shrink-0" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                          {isExportingPdf
+                            ? t("common.actions.exportingPdf")
+                            : t("common.actions.exportPdf")}
+                        </span>
+                      </Button>
+                    )}
                     {effectiveCanDelete && (
                       <Button
                         variant="secondary"
                         onClick={() => setIsDeleteDialogOpen(true)}
-                        className="text-destructive"
+                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
                       >
-                        <Trash2 className="h-4 w-4" />
-                        {t("common.actions.delete")}
+                        <Trash2 className="h-4 w-4 shrink-0" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                          {t("common.actions.delete")}
+                        </span>
                       </Button>
                     )}
                   </div>
@@ -379,17 +399,42 @@ function JunitTableSection({
                             type="button"
                             variant="secondary"
                             onClick={handleEditClick}
+                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
                           >
-                            <SquarePen className="h-4 w-4" />
-                            {t("common.actions.edit")}
+                            <SquarePen className="h-4 w-4 shrink-0" />
+                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                              {t("common.actions.edit")}
+                            </span>
+                          </Button>
+                        )}
+                        {handleExportPdf && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleExportPdf}
+                            disabled={isExportingPdf}
+                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                          >
+                            <FileDown className="h-4 w-4 shrink-0" />
+                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                              {isExportingPdf
+                                ? t("common.actions.exportingPdf")
+                                : t("common.actions.exportPdf")}
+                            </span>
                           </Button>
                         )}
                         {!testRunData?.isCompleted && canCloseRun && (
                           <CompleteTestRunDialog
                             trigger={
-                              <Button type="button" variant="secondary">
-                                <CircleCheckBig className="h-4 w-4" />
-                                {t("common.actions.complete")}
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <CircleCheckBig className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("common.actions.complete")}
+                                </span>
                               </Button>
                             }
                             testRunId={Number(runId)}

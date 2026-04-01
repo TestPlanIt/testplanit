@@ -103,6 +103,8 @@
       "createTag": "Create Tag \"{name}\"",
       "noTagsFound": "No Tags Found",
       "duplicate": "Duplicate",
+      "exportPdf": "Export PDF",
+      "exportingPdf": "Exporting...",
       "change": "Change",
       "viewAll": "View All",
       "undo": "Undo",
