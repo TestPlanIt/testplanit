@@ -223,9 +223,9 @@ test.describe("Session Multi-Configuration Creation", () => {
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
-    await page
-      .locator(`[role="option"]:has-text("${configName}")`)
-      .click();
+    const option = page.locator(`[role="option"]:has-text("${configName}")`);
+    await expect(option).toBeVisible({ timeout: 10000 });
+    await option.click({ force: true });
     await page.keyboard.press("Escape");
 
     // Verify count shows "(1)"
