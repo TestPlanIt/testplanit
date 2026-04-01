@@ -223,6 +223,13 @@ test.describe("Session Multi-Configuration Creation", () => {
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
+
+    // Search for the specific config to filter out configs from other tests
+    const searchInput = page.locator('[cmdk-input]');
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+    await searchInput.fill(configName);
+    await page.waitForTimeout(500);
+
     const option = page.locator(`[role="option"]:has-text("${configName}")`);
     await expect(option).toBeVisible({ timeout: 10000 });
     await option.click({ force: true });

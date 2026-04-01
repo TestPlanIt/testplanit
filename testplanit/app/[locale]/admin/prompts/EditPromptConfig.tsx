@@ -31,7 +31,7 @@ import * as z from "zod";
 import {
   useFindManyPromptConfig, useUpdatePromptConfig
 } from "~/lib/hooks/prompt-config";
-import { useUpdatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
+import { useCreatePromptConfigPrompt, useUpdatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
 import type { ExtendedPromptConfig } from "./columns";
 import { PromptFeatureSection } from "./PromptFeatureSection";
@@ -77,6 +77,8 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
   const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
   const { mutateAsync: updatePromptConfigPrompt } =
     useUpdatePromptConfigPrompt();
+  const { mutateAsync: createPromptConfigPrompt } =
+    useCreatePromptConfigPrompt();
   const { data: existingDefaults } = useFindManyPromptConfig({
     where: { isDefault: true, isDeleted: false },
   });
@@ -171,6 +173,22 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
               ...(promptData.llmIntegrationId
                 ? { llmIntegration: { connect: { id: promptData.llmIntegrationId } } }
                 : { llmIntegration: { disconnect: true } }),
+              modelOverride: promptData.modelOverride || null,
+            },
+          });
+        } else {
+          // Create a new PromptConfigPrompt for features that don't have one yet
+          await createPromptConfigPrompt({
+            data: {
+              promptConfig: { connect: { id: config.id } },
+              feature,
+              systemPrompt: promptData.systemPrompt,
+              userPrompt: promptData.userPrompt || "",
+              temperature: promptData.temperature,
+              maxOutputTokens: promptData.maxOutputTokens,
+              ...(promptData.llmIntegrationId
+                ? { llmIntegration: { connect: { id: promptData.llmIntegrationId } } }
+                : {}),
               modelOverride: promptData.modelOverride || null,
             },
           });

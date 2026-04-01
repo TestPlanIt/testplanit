@@ -134,14 +134,17 @@ test.describe("Prompt LLM Selector - Select Integration", () => {
     await accordionTrigger2.scrollIntoViewIfNeeded();
     await accordionTrigger2.click();
 
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
-    // Verify the select shows the integration name
-    const openAccordion2 = dialog2.locator('[data-state="open"]').first();
-    const llmSelectText = openAccordion2
+    // Find the accordion item that contains "Test Case Generation" and is open
+    const accordionItem2 = dialog2
+      .locator('[data-orientation="vertical"] > div')
+      .filter({ hasText: "Test Case Generation" })
+      .first();
+    const llmSelectText = accordionItem2
       .locator('button[role="combobox"]')
       .first();
-    await expect(llmSelectText).toContainText(llmName);
+    await expect(llmSelectText).toContainText(llmName, { timeout: 10000 });
   });
 });
 
@@ -254,14 +257,18 @@ test.describe("Prompt LLM Selector - Clear Integration", () => {
     await accordionTrigger2.scrollIntoViewIfNeeded();
     await accordionTrigger2.click();
 
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
-    const openAccordion2 = dialog2.locator('[data-state="open"]').first();
-    const llmSelectText2 = openAccordion2
+    // Find the accordion item that contains "Test Case Generation"
+    const accordionItem2 = dialog2
+      .locator('[data-orientation="vertical"] > div')
+      .filter({ hasText: "Test Case Generation" })
+      .first();
+    const llmSelectText2 = accordionItem2
       .locator('button[role="combobox"]')
       .first();
 
     // Should not contain the LLM name (it's been cleared)
-    await expect(llmSelectText2).not.toContainText(llmName);
+    await expect(llmSelectText2).not.toContainText(llmName, { timeout: 10000 });
   });
 });

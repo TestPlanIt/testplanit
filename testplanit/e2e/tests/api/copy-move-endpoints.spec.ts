@@ -201,7 +201,8 @@ test.describe("Copy-Move API Endpoints", () => {
       api,
     }) => {
       // Create a case in the target project with the same name as the source case
-      await api.createTestCase(targetProjectId, targetFolderId, sourceCaseName);
+      const collisionCaseId = await api.createTestCase(targetProjectId, targetFolderId, sourceCaseName);
+      expect(collisionCaseId).toBeGreaterThan(0);
 
       const response = await request.post(
         `${baseURL}/api/repository/copy-move/preflight`,

@@ -554,7 +554,7 @@ test.describe("View Selector - Repository Views", () => {
 
     // Verify the filter button has selected styling
     await expect(async () => {
-      const hasSelectedClass = await issueFilter.evaluate((el) => {
+      const hasSelectedClass = await issueFilter.first().evaluate((el) => {
         return el.className.includes("bg-primary");
       });
       expect(hasSelectedClass).toBe(true);

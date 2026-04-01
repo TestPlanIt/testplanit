@@ -227,7 +227,7 @@ export async function POST(request: Request) {
         isDeleted: false,
         OR: sourceNames.map((n) => ({
           name: n.name,
-          className: n.className === null ? { equals: null as any } : n.className,
+          ...(n.className === null ? {} : { className: n.className }),
           source: n.source,
         })),
       },

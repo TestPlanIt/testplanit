@@ -37,7 +37,7 @@ test.describe("Field-Based Filtering", () => {
     folderId: number;
   }> {
     // Create project
-    const projectId = await api.createProject(`Filter Test ${Date.now()}`);
+    const projectId = await api.createProject(`Filter Test ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
     // Create a folder for test cases
     const folderId = await api.createFolder(projectId, "Filter Test Cases");
