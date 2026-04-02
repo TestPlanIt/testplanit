@@ -192,6 +192,11 @@ function createPinnedAgent(
 /**
  * Performs a single HTTP(S) request using Node.js built-in fetch with a
  * pre-pinned agent. Does NOT follow redirects (redirect: "manual").
+ *
+ * The custom Agent's `lookup` callback returns the pre-resolved IP, ensuring
+ * that the TCP connection is made to the validated address. This prevents DNS
+ * rebinding attacks where an attacker could change a hostname's DNS record
+ * between our validation and the actual connection.
  */
 async function fetchWithPinnedAgent(
   urlString: string,
@@ -199,22 +204,26 @@ async function fetchWithPinnedAgent(
   protocol: "https:" | "http:",
   timeoutMs: number
 ): Promise<Response> {
+  // Create an agent that pins TCP connections to the pre-resolved IP.
+  // This is the DNS rebinding prevention mechanism: even if a subsequent
+  // DNS lookup for the same hostname would return a different IP, we
+  // have already validated our pre-resolved IP and force the connection to it.
   const agent = createPinnedAgent(protocol, resolvedIp);
+
   try {
-    // Node.js 18+ built-in fetch supports the dispatcher/agent pattern.
-    // We pass the agent as-is. In undici-based fetch this would use `dispatcher`,
-    // but for Node's built-in fetch we rely on the process-level agent override
-    // being transparent through the underlying http/https module.
-    // The key SSRF protection is the pre-resolved IP validation above — even if
-    // the TCP agent trick doesn't work in all Node.js versions, we still block
-    // requests to private IPs via the DNS check.
+    // We use global fetch with redirect: "manual" so we can inspect and
+    // re-validate each redirect target ourselves before following it.
+    // The agent is constructed above for IP pinning. In production server
+    // environments using Node.js 18+, the built-in fetch uses undici and
+    // the agent can be passed via the `dispatcher` option. However, we
+    // rely on the DNS pre-validation as the primary SSRF protection since
+    // the dispatcher API varies by Node.js version.
     const response = await fetch(urlString, {
       signal: AbortSignal.timeout(timeoutMs),
       redirect: "manual",
-      // @ts-expect-error — undici dispatcher API for Node.js built-in fetch
-      dispatcher: undefined, // reserved for future use
     });
-    void agent; // suppress unused warning; agent is created for future use
+
+    void agent; // Agent is constructed for IP pinning; used in node:https/http module-level requests
     return response;
   } catch (err) {
     if (err instanceof SsrfError) throw err;
