@@ -2128,7 +2128,17 @@
         "documentDescriptionPlaceholder": "Paste your requirements document content here...",
         "documentPriority": "Priority (Optional)",
         "selectPriority": "Select priority",
-        "saveDocument": "Save Document Requirements"
+        "saveDocument": "Save Document Requirements",
+        "fromUrl": "From URL",
+        "urlInput": "Page URL",
+        "urlInputPlaceholder": "https://example.com/docs",
+        "urlValidationError": "Please enter a valid URL starting with http:// or https://",
+        "followLinks": "Follow links",
+        "followLinksHint": "Only pages on the same domain as the URL you enter will be crawled.",
+        "maxDepth": "Max depth",
+        "maxPages": "Max pages",
+        "crawlProgress": "Fetching page {current} of {total}...",
+        "robotsSkipped": "{count, plural, one {# page skipped} other {# pages skipped}} (robots.txt)"
       },
       "selectIssue": {
         "title": "Select External Issue",
@@ -2215,6 +2225,8 @@
         "networkRoutingError": "Network routing or server configuration issue - received HTML error page instead of API response",
         "invalidSourceConfig": "Invalid source configuration",
         "failedToCreateCaseVersion": "Failed to create case version",
+        "noUrlProvided": "Please enter a URL to generate test cases from",
+        "urlFetchFailed": "Failed to fetch content from the provided URL. Please check the URL and try again.",
         "llm": {
           "genericTitle": "AI Generation Error",
           "genericMessage": "There was an error generating test cases with AI. Please try again or adjust your input.",

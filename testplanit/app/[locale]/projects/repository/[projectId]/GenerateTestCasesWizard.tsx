@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -53,8 +54,10 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  Globe,
   Info,
   ListChecks,
+  Loader2,
   Search,
   Settings,
   Sparkles,
@@ -198,9 +201,20 @@ export function GenerateTestCasesWizard({
   const [selectedIssue, setSelectedIssue] = useState<ExternalIssue | null>(
     null
   );
-  const [sourceType, setSourceType] = useState<"issue" | "document">("issue");
+  const [sourceType, setSourceType] = useState<"issue" | "document" | "url">("issue");
   const [documentRequirements, setDocumentRequirements] =
     useState<DocumentRequirements | null>(null);
+  const [urlInput, setUrlInput] = useState('');
+  const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
+  const [followLinks, setFollowLinks] = useState(false);
+  const [maxDepth, setMaxDepth] = useState(2);
+  const [maxPages, setMaxPages] = useState(10);
+  const [urlJobId, setUrlJobId] = useState<string | null>(null);
+  const [urlJobProgress, setUrlJobProgress] = useState<{
+    pagesProcessed: number;
+    totalPages: number;
+  } | null>(null);
+  const [urlRobotsSkipped, setUrlRobotsSkipped] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
   );
@@ -362,9 +376,9 @@ export function GenerateTestCasesWizard({
       setHasActiveIntegrations(hasIntegrations);
       setHasActiveLlm(project.projectLlmIntegrations.length > 0);
 
-      // If no external integrations, default to document source type
+      // If no external integrations, default to URL source type
       if (!hasIntegrations) {
-        setSourceType("document");
+        setSourceType("url");
       }
     }
   }, [project]);
@@ -400,6 +414,57 @@ export function GenerateTestCasesWizard({
     });
     return () => cancelAnimationFrame(frame);
   }, [isGenerating, generatedTestCases.length]);
+
+  // Poll URL job status while a job is active
+  useEffect(() => {
+    if (!urlJobId) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/llm/generate-from-url/status/${urlJobId}`);
+        const data = await res.json();
+        if (data.progress) {
+          setUrlJobProgress({
+            pagesProcessed: data.progress.pagesProcessed ?? 0,
+            totalPages: data.progress.totalPages ?? 0,
+          });
+          setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
+        }
+        if (data.state === 'completed') {
+          clearInterval(interval);
+          setUrlJobId(null);
+          setUrlJobProgress(null);
+          setIsGenerating(false);
+          if (data.result?.testCases?.length > 0) {
+            setGeneratedTestCases(data.result.testCases);
+            setSelectedTestCases(new Set(data.result.testCases.map((tc: GeneratedTestCase) => tc.id)));
+            setCurrentStep(WizardStep.REVIEW_GENERATED);
+          } else {
+            toast.error(t("generateTestCases.errors.urlFetchFailed"));
+          }
+        } else if (data.state === 'failed') {
+          clearInterval(interval);
+          setUrlJobId(null);
+          setUrlJobProgress(null);
+          setIsGenerating(false);
+          toast.error(data.failedReason ?? t("generateTestCases.errors.urlFetchFailed"));
+        }
+      } catch {
+        // Network error — keep polling, will retry next interval
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [urlJobId, t]);
+
+  // Cancel active URL job when user switches away from URL tab
+  useEffect(() => {
+    if (sourceType !== 'url' && urlJobId) {
+      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+      setUrlJobId(null);
+      setUrlJobProgress(null);
+      setUrlRobotsSkipped(0);
+      setIsGenerating(false);
+    }
+  }, [sourceType, urlJobId]);
 
   const toggleFieldSelection = (fieldId: number, isRequired: boolean) => {
     if (isRequired) {
@@ -445,6 +510,13 @@ export function GenerateTestCasesWizard({
     }
   };
 
+  function isValidUrl(value: string): boolean {
+    try {
+      const u = new URL(value);
+      return u.protocol === 'https:' || u.protocol === 'http:';
+    } catch { return false; }
+  }
+
   // Define wizard steps with icons
   const wizardSteps = useMemo<WizardStepDefinition[]>(
     () => [
@@ -476,7 +548,9 @@ export function GenerateTestCasesWizard({
   const maxUnlockedStep = useMemo<WizardStep>(() => {
     // Check if step 1 is valid (source selected)
     const hasSource =
-      sourceType === "issue" ? selectedIssue : documentRequirements;
+      sourceType === "issue" ? selectedIssue :
+      sourceType === "url" ? (urlInput && isValidUrl(urlInput)) :
+      documentRequirements;
 
     if (!hasSource) {
       // Step 1 is not complete, so only step 1 is accessible
@@ -519,6 +593,7 @@ export function GenerateTestCasesWizard({
     sourceType,
     selectedIssue,
     documentRequirements,
+    urlInput,
     selectedTemplateId,
     generatedTestCases.length,
   ]);
@@ -584,8 +659,19 @@ export function GenerateTestCasesWizard({
   const resetWizard = () => {
     setCurrentStep(WizardStep.SELECT_ISSUE);
     setSelectedIssue(null);
-    setSourceType("issue");
+    setSourceType(hasActiveIntegrations ? "issue" : "url");
     setDocumentRequirements(null);
+    setUrlInput('');
+    setUrlValidationError(null);
+    setFollowLinks(false);
+    setMaxDepth(2);
+    setMaxPages(10);
+    if (urlJobId) {
+      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+    }
+    setUrlJobId(null);
+    setUrlJobProgress(null);
+    setUrlRobotsSkipped(0);
     setSelectedTemplateId(
       templates?.find((t) => t.isDefault)?.id || templates?.[0]?.id || null
     );
@@ -621,7 +707,9 @@ export function GenerateTestCasesWizard({
 
   const generateTestCases = async () => {
     const hasSource =
-      sourceType === "issue" ? selectedIssue : documentRequirements;
+      sourceType === "issue" ? selectedIssue :
+      sourceType === "url" ? (urlInput && isValidUrl(urlInput)) :
+      documentRequirements;
 
     // Enhanced validation with specific error messages
     if (!hasActiveLlm) {
@@ -632,6 +720,9 @@ export function GenerateTestCasesWizard({
     if (!hasSource) {
       if (sourceType === "issue") {
         toast.error(t("generateTestCases.errors.noIssueSelected"));
+      } else if (sourceType === "url") {
+        setUrlValidationError(t("generateTestCases.selectSource.urlValidationError"));
+        toast.error(t("generateTestCases.errors.noUrlProvided"));
       } else {
         toast.error(t("generateTestCases.errors.noDocumentProvided"));
       }
@@ -652,6 +743,43 @@ export function GenerateTestCasesWizard({
     setShowErrorDetails(false);
     setIsGenerating(true);
     setGeneratingStatus("preparing");
+
+    // URL source type: submit to background job, poll for completion
+    if (sourceType === "url") {
+      if (!urlInput || !isValidUrl(urlInput)) {
+        setUrlValidationError(t("generateTestCases.selectSource.urlValidationError"));
+        setIsGenerating(false);
+        return;
+      }
+      setUrlValidationError(null);
+      try {
+        const submitRes = await fetch('/api/llm/generate-from-url/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            url: urlInput,
+            options: {
+              followLinks,
+              maxDepth,
+              maxPages,
+            },
+          }),
+        });
+        const submitData = await submitRes.json();
+        if (!submitRes.ok) {
+          throw new Error(submitData.error || 'Failed to submit URL job');
+        }
+        setUrlJobId(submitData.jobId);
+        setUrlRobotsSkipped(0);
+        // Polling useEffect handles completion — do NOT advance steps yet
+        return;
+      } catch (err: any) {
+        setIsGenerating(false);
+        toast.error(err.message || t("generateTestCases.errors.urlFetchFailed"));
+        return;
+      }
+    }
 
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
@@ -2493,13 +2621,9 @@ export function GenerateTestCasesWizard({
   const canProceed = () => {
     switch (currentStep) {
       case WizardStep.SELECT_ISSUE:
-        // If no external integrations, only allow document source
-        if (!hasActiveIntegrations) {
-          return documentRequirements !== null;
-        }
-        return sourceType === "issue"
-          ? selectedIssue !== null
-          : documentRequirements !== null;
+        if (sourceType === "issue") return selectedIssue !== null;
+        if (sourceType === "url") return urlInput.length > 0 && isValidUrl(urlInput);
+        return documentRequirements !== null;
       case WizardStep.SELECT_TEMPLATE:
         return selectedTemplateId !== null;
       case WizardStep.ADD_NOTES:
@@ -2697,20 +2821,26 @@ export function GenerateTestCasesWizard({
                     <Tabs
                       value={sourceType}
                       onValueChange={(value) =>
-                        setSourceType(value as "issue" | "document")
+                        setSourceType(value as "issue" | "document" | "url")
                       }
                     >
                       {hasActiveIntegrations ? (
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                           <TabsTrigger value="issue">
                             {t("generateTestCases.selectSource.fromIssue")}
+                          </TabsTrigger>
+                          <TabsTrigger value="url">
+                            {t("generateTestCases.selectSource.fromUrl")}
                           </TabsTrigger>
                           <TabsTrigger value="document">
                             {t("generateTestCases.selectSource.fromDocument")}
                           </TabsTrigger>
                         </TabsList>
                       ) : (
-                        <TabsList className="grid w-full grid-cols-1">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="url">
+                            {t("generateTestCases.selectSource.fromUrl")}
+                          </TabsTrigger>
                           <TabsTrigger value="document">
                             {t("generateTestCases.selectSource.fromDocument")}
                           </TabsTrigger>
@@ -2822,6 +2952,102 @@ export function GenerateTestCasesWizard({
                           )}
                         </TabsContent>
                       )}
+
+                      <TabsContent value="url" className="mt-4">
+                        <div className="space-y-4">
+                          {/* URL Input */}
+                          <div className="space-y-2">
+                            <Label htmlFor="url-input">
+                              {t("generateTestCases.selectSource.urlInput")}
+                            </Label>
+                            <Input
+                              id="url-input"
+                              type="url"
+                              placeholder={t("generateTestCases.selectSource.urlInputPlaceholder")}
+                              value={urlInput}
+                              onChange={(e) => {
+                                setUrlInput(e.target.value);
+                                if (urlValidationError) setUrlValidationError(null);
+                              }}
+                              className={urlValidationError ? "border-destructive" : ""}
+                            />
+                            {urlValidationError && (
+                              <p className="text-sm text-destructive">{urlValidationError}</p>
+                            )}
+                          </div>
+
+                          {/* Follow Links Toggle */}
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id="follow-links"
+                                checked={followLinks}
+                                onCheckedChange={setFollowLinks}
+                              />
+                              <Label htmlFor="follow-links">
+                                {t("generateTestCases.selectSource.followLinks")}
+                              </Label>
+                            </div>
+                            {followLinks && (
+                              <>
+                                <p className="text-sm text-muted-foreground">
+                                  {t("generateTestCases.selectSource.followLinksHint")}
+                                </p>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <Label htmlFor="max-depth">
+                                      {t("generateTestCases.selectSource.maxDepth")}
+                                    </Label>
+                                    <Input
+                                      id="max-depth"
+                                      type="number"
+                                      min={1}
+                                      max={5}
+                                      value={maxDepth}
+                                      onChange={(e) => setMaxDepth(Math.min(5, Math.max(1, Number(e.target.value) || 1)))}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label htmlFor="max-pages">
+                                      {t("generateTestCases.selectSource.maxPages")}
+                                    </Label>
+                                    <Input
+                                      id="max-pages"
+                                      type="number"
+                                      min={1}
+                                      max={50}
+                                      value={maxPages}
+                                      onChange={(e) => setMaxPages(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
+                                    />
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Progress Display */}
+                          {urlJobId && urlJobProgress && (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>
+                                  {t("generateTestCases.selectSource.crawlProgress", {
+                                    current: urlJobProgress.pagesProcessed,
+                                    total: urlJobProgress.totalPages,
+                                  })}
+                                </span>
+                              </div>
+                              {urlRobotsSkipped > 0 && (
+                                <p className="text-xs text-muted-foreground ml-6">
+                                  {t("generateTestCases.selectSource.robotsSkipped", {
+                                    count: urlRobotsSkipped,
+                                  })}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
 
                       <TabsContent value="document" className="mt-4">
                         {documentRequirements ? (
