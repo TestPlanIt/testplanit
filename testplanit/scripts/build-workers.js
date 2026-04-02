@@ -32,6 +32,7 @@ const entryPoints = [
   'workers/duplicateScanWorker.ts',
   'workers/magicSelectWorker.ts',
   'workers/stepSequenceScanWorker.ts',
+  'workers/generateFromUrlWorker.ts',
   'scheduler.ts',
 ];
 
