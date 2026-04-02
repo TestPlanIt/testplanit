@@ -77,6 +77,7 @@ enum NotificationType {
   SHARE_LINK_ACCESSED
   LLM_BUDGET_ALERT
   COPY_MOVE_COMPLETE
+  GENERATE_FROM_URL_COMPLETE
 }
 
 enum WorkflowType {

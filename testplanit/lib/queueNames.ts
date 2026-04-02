@@ -13,3 +13,4 @@ export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";
 export const MAGIC_SELECT_QUEUE_NAME = "magic-select";
+export const GENERATE_FROM_URL_QUEUE_NAME = "generate-from-url";

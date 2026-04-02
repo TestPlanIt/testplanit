@@ -240,4 +240,30 @@ Analyze whether these two test cases are duplicates of each other.`,
     maxOutputTokens: 512,
     source: "fallback",
   },
+
+  [LLM_FEATURES.GENERATE_FROM_URL]: {
+    systemPrompt: `You are an expert QA engineer. Your task is to analyze the provided web page content and generate comprehensive test cases that cover the functionality described.
+
+CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
+
+JSON structure (EXACT format required):
+{
+  "testCases": [
+    {
+      "name": "Test case name",
+      "description": "What this test validates",
+      "steps": [
+        { "action": "Step action", "expectedResult": "Expected outcome" }
+      ],
+      "tags": ["optional", "tags"]
+    }
+  ]
+}
+
+Return ONLY the JSON.`,
+    userPrompt: "",
+    temperature: 0.7,
+    maxOutputTokens: 6000,
+    source: "fallback",
+  },
 };

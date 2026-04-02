@@ -665,7 +665,8 @@
           "MILESTONE_DUE_REMINDER",
           "SHARE_LINK_ACCESSED",
           "LLM_BUDGET_ALERT",
-          "COPY_MOVE_COMPLETE"
+          "COPY_MOVE_COMPLETE",
+          "GENERATE_FROM_URL_COMPLETE"
         ]
       },
       "ShareLinkEntityType": {
