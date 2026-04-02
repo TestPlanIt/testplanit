@@ -241,14 +241,14 @@ describe("ssrfSafeFetch - redirect handling", () => {
     // First DNS lookup for original host — returns public IP
     mockDnsLookup
       .mockResolvedValueOnce({ address: "93.184.216.34", family: 4 } as never)
-      // Second DNS lookup for redirect target — returns private IP
+      // Second DNS lookup for redirect target — returns private IP (cloud metadata)
       .mockResolvedValueOnce({ address: "169.254.169.254", family: 4 } as never);
 
     const redirectResponse = createMockResponse({
       status: 302,
       headers: { "content-type": "text/html" },
       body: null,
-      location: "http://metadata.internal/",
+      location: "https://metadata.internal/",
     });
 
     const mockFetch = vi.fn().mockResolvedValueOnce(redirectResponse);
@@ -263,11 +263,12 @@ describe("ssrfSafeFetch - redirect handling", () => {
   });
 
   it("throws SsrfError with code TOO_MANY_REDIRECTS after more than 5 redirects", async () => {
-    // Resolve all DNS lookups to public IP
-    mockDnsLookup.mockResolvedValue({
-      address: "93.184.216.34",
-      family: 4,
-    } as never);
+    // Resolve all DNS lookups to a public IP (need enough mocks for initial + 5 redirect hops)
+    const publicIpResult = { address: "93.184.216.34", family: 4 } as never;
+    // We need 6 DNS lookups (initial + 5 redirects = 6 total requests before TOO_MANY_REDIRECTS)
+    for (let i = 0; i < 7; i++) {
+      mockDnsLookup.mockResolvedValueOnce(publicIpResult);
+    }
 
     // Each response redirects to the next URL (all go to public destinations)
     const redirectResponse = (n: number) =>
