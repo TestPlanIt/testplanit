@@ -1722,6 +1722,7 @@
     "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Référentiel de cas de test",
     "folders": "Dossiers",
+    "showDescendants": "Afficher tous les descendants",
     "addFolder": "Ajouter un dossier",
     "emptyFolders": "Cliquez sur le bouton « Ajouter un dossier » ci-dessus pour ajouter le premier dossier.",
     "selectedAllCases": "{count, plural, =0 {Tous les cas sélectionnés} one {Nombre de cas sélectionnés sur toutes les pages} other {Nombre de cas sélectionnés sur toutes les pages}}",

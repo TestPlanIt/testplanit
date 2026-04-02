@@ -1722,6 +1722,7 @@
     "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Test Case Repository",
     "folders": "Folders",
+    "showDescendants": "Show all descendants",
     "addFolder": "Add Folder",
     "emptyFolders": "Click the Add Folder button above to add the first folder.",
     "selectedAllCases": "{count, plural, =0 {Selected all cases} one {Selected # case across all pages} other {Selected # cases across all pages}}",

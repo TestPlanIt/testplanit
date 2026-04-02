@@ -251,6 +251,8 @@ interface NameCellProps {
   automated?: boolean;
   source?: RepositoryCaseSource;
   isSoftDeletedInRun?: boolean;
+  showDescendants?: boolean;
+  folderPathMap?: Map<number, string> | null;
 }
 
 const NameCell = React.memo(function NameCell({
@@ -267,6 +269,8 @@ const NameCell = React.memo(function NameCell({
   canAddEditResults,
   source,
   isSoftDeletedInRun,
+  showDescendants,
+  folderPathMap,
 }: NameCellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -292,9 +296,13 @@ const NameCell = React.memo(function NameCell({
     }
   );
 
-  // Build the full folder path
+  // Build the full folder path - prefer folderPathMap when available (showDescendants mode)
   const folderPath = React.useMemo(() => {
-    if (!folder || !allFolders) return "";
+    if (!folder) return "";
+    if (folderPathMap && folderPathMap.has(folder.id)) {
+      return folderPathMap.get(folder.id) ?? "";
+    }
+    if (!allFolders) return "";
 
     const getFolderPath = (folderId: number, path: string = ""): string => {
       const currentFolder = allFolders.find((f) => f.id === folderId);
@@ -310,7 +318,7 @@ const NameCell = React.memo(function NameCell({
     };
 
     return getFolderPath(folder.id);
-  }, [folder, allFolders]);
+  }, [folder, allFolders, folderPathMap]);
 
   if (isRunMode && canAddEditResults) {
     const handleClick = () => {
@@ -320,7 +328,7 @@ const NameCell = React.memo(function NameCell({
       router.replace(`${pathname}?${params.toString()}`);
     };
 
-    const showFolderInfo = viewType && viewType !== "folders" && folder;
+    const showFolderInfo = (viewType && viewType !== "folders" && folder) || (showDescendants && folder);
 
     return (
       <div className="flex items-center">
@@ -378,7 +386,7 @@ const NameCell = React.memo(function NameCell({
     );
   }
 
-  const showFolderInfo = viewType && viewType !== "folders" && folder;
+  const showFolderInfo = (viewType && viewType !== "folders" && folder) || (showDescendants && folder);
 
   return (
     <div className="flex items-center">
@@ -1305,7 +1313,9 @@ export const getColumns = (
   quickScriptEnabled?: boolean,
   canAddEdit?: boolean,
   onQuickScript?: (caseId: number) => void,
-  onCopyMove?: (caseId: number) => void
+  onCopyMove?: (caseId: number) => void,
+  showDescendants?: boolean,
+  folderPathMap?: Map<number, string> | null
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1679,6 +1689,8 @@ export const getColumns = (
           canAddEditResults={canAddEditResults}
           source={row.original.source}
           isSoftDeletedInRun={isRunMode && row.original.isDeleted}
+          showDescendants={showDescendants}
+          folderPathMap={folderPathMap}
         />
       ),
     },

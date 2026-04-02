@@ -86,6 +86,12 @@ interface CasesProps {
   copyMoveFolderId?: number | null;
   copyMoveFolderName?: string;
   onCopyMoveFolderDialogClose?: () => void;
+  /** When showDescendants is active, filter cases to these folder IDs (selected + all descendants) */
+  descendantFolderIds?: number[] | null;
+  /** Whether the "show all descendants" toggle is active */
+  showDescendants?: boolean;
+  /** Map of folderId to full folder path string, for display when showDescendants is active */
+  folderPathMap?: Map<number, string> | null;
 }
 
 export default function Cases({
@@ -110,6 +116,9 @@ export default function Cases({
   copyMoveFolderId,
   copyMoveFolderName,
   onCopyMoveFolderDialogClose,
+  descendantFolderIds,
+  showDescendants = false,
+  folderPathMap,
 }: CasesProps) {
   const t = useTranslations();
 
@@ -516,8 +525,12 @@ export default function Cases({
         viewType === "assignedTo" || viewType === "status";
 
       if (viewType === "folders" && folderId) {
-        // 1. Folder view with specific folder
-        baseConditions.push({ folderId: { equals: folderId } });
+        // 1. Folder view with specific folder (or folder + all descendants)
+        if (descendantFolderIds && descendantFolderIds.length > 0) {
+          baseConditions.push({ folderId: { in: descendantFolderIds } });
+        } else {
+          baseConditions.push({ folderId: { equals: folderId } });
+        }
       } else if (
         !isTestRunSpecificView &&
         (filterId === null ||
@@ -1235,7 +1248,7 @@ export default function Cases({
         AND: baseConditions,
       };
       return finalWhereClause;
-    }, [deferredSearchString, projectId, viewType, folderId, filterId]);
+    }, [deferredSearchString, projectId, viewType, folderId, filterId, descendantFolderIds]);
 
   // Build post-fetch filters for text/link/steps operators
   const postFetchFilters: PostFetchFilter[] = useMemo(() => {
@@ -2876,7 +2889,10 @@ export default function Cases({
         ? (caseId: number) => {
             handleCopyMove([caseId]);
           }
-        : undefined
+        : undefined,
+      // Show descendants mode - display folder badge on each case
+      showDescendants,
+      folderPathMap
     );
   }, [
     userPreferencesForColumns,
@@ -2905,6 +2921,8 @@ export default function Cases({
     quickScriptEnabled,
     handleCopyMove,
     showCopyMove,
+    showDescendants,
+    folderPathMap,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component

@@ -1722,6 +1722,7 @@
     "orphanedFieldsWarning": "Este caso de prueba tiene {count, plural, =1 {# valor de campo} other {# valores de campo}} que {count, plural, =1 {es} other {son}} no incluidos en la plantilla actual \"{templateName}\". {count, plural, =1 {Este campo es} other {Estos campos son}} mostrados a continuación, pero es posible que no se puedan editar hasta que se agreguen a la plantilla.",
     "title": "Repositorio de Casos de Prueba",
     "folders": "Carpetas",
+    "showDescendants": "Mostrar todos los descendientes",
     "addFolder": "Añadir carpeta",
     "emptyFolders": "Haga clic en el botón Añadir carpeta para añadir la primera carpeta.",
     "selectedAllCases": "{count, plural, =0 {Se seleccionaron todos los casos} one {Se seleccionó el número de casos en todas las páginas} other {Se seleccionó el número de casos en todas las páginas}}",

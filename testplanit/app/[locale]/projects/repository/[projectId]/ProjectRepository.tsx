@@ -12,19 +12,41 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import { Toggle } from "@/components/ui/toggle";
 import { ViewSelector } from "@/components/ViewSelector";
 import { ApplicationArea } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Bot, Bug, Calendar, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheckBig, FolderTree, Hash, LayoutTemplate, Link, ListChecks, ListOrdered, Search, SquareCheckBig, Tags, Type, User, UserCog, Workflow, X
+  Bot,
+  Bug,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  CircleCheckBig,
+  FolderDown,
+  FolderTree,
+  Hash,
+  LayoutTemplate,
+  Link,
+  ListChecks,
+  ListOrdered,
+  Search,
+  SquareCheckBig,
+  Tags,
+  Type,
+  User,
+  UserCog,
+  Workflow,
+  X,
 } from "lucide-react";
 import { FindDuplicatesButton } from "@/components/duplicates/FindDuplicatesButton";
 import { useSession } from "next-auth/react";
@@ -32,7 +54,12 @@ import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import * as React from "react";
 import {
-  useCallback, useDeferredValue, useEffect, useMemo, useRef, useState
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { emptyEditorContent } from "~/app/constants";
@@ -41,14 +68,14 @@ import { usePageFileDrop } from "~/hooks/usePageFileDrop";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   PaginationProvider,
-  usePagination
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
   useCountProjects,
   useFindFirstProjects,
   useFindFirstRepositories,
   useFindManyRepositoryCases,
-  useFindManyTestRunCases
+  useFindManyTestRunCases,
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
@@ -361,9 +388,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     useProjectPermissions(numericProjectId, "TestCaseRepository");
 
   // Fetch permissions specifically for Test Runs
-  const {
-    permissions: testRunPermissions,
-  } = useProjectPermissions(numericProjectId, "TestRuns");
+  const { permissions: testRunPermissions } = useProjectPermissions(
+    numericProjectId,
+    "TestRuns"
+  );
 
   const _ALL_VALUES_FILTER = "__ALL__"; // Special value for All Values filter
 
@@ -384,6 +412,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [copyMoveFolderId, setCopyMoveFolderId] = useState<number | null>(null);
   const [copyMoveFolderName, setCopyMoveFolderName] = useState<string>("");
 
+  // "Show all descendants" toggle state
+  const [showDescendants, setShowDescendants] = useState(false);
+
   const handleCopyMoveFolder = useCallback(
     (folderId: number, folderName: string) => {
       setCopyMoveFolderId(folderId);
@@ -400,7 +431,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Elasticsearch-powered search state (for selection mode)
   const [esSearchQuery, setEsSearchQuery] = useState("");
   const debouncedEsSearchQuery = useDebounce(esSearchQuery, 300);
-  const [esSearchResultIds, setEsSearchResultIds] = useState<number[] | null>(null);
+  const [esSearchResultIds, setEsSearchResultIds] = useState<number[] | null>(
+    null
+  );
   const [_esSearchLoading, setEsSearchLoading] = useState(false);
   const [_esSearchTotal, setEsSearchTotal] = useState<number>(0);
   // Tracks whether the panel was already collapsed before search started.
@@ -520,72 +553,116 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     return folder?.text ?? null;
   }, [selectedFolderId, folderHierarchy]);
 
-  const { data: testRunCasesWithLoading } =
-    useFindManyTestRunCases(
-      {
-        where: {
-          testRunId: Number(params.runId),
-        },
-        select: {
-          id: true,
-          repositoryCaseId: true,
-          order: true,
-          statusId: true,
-          status: {
-            select: {
-              id: true,
-              name: true,
-              color: {
-                select: {
-                  value: true,
-                },
+  // Compute descendant folder IDs when showDescendants is active
+  const descendantFolderIds = useMemo(() => {
+    if (!showDescendants || !selectedFolderId || folderHierarchy.length === 0)
+      return null;
+    const ids: number[] = [selectedFolderId];
+    const queue = [selectedFolderId];
+    while (queue.length > 0) {
+      const parentId = queue.shift()!;
+      for (const folder of folderHierarchy) {
+        if (folder.parent === parentId) {
+          ids.push(folder.id);
+          queue.push(folder.id);
+        }
+      }
+    }
+    return ids;
+  }, [showDescendants, selectedFolderId, folderHierarchy]);
+
+  // Build folder path map for displaying relative paths when showDescendants is active
+  const folderPathMap = useMemo(() => {
+    if (!showDescendants || !selectedFolderId || folderHierarchy.length === 0)
+      return null;
+    const map = new Map<number, string>();
+    const folderById = new Map(folderHierarchy.map((f) => [f.id, f]));
+
+    const buildPath = (folderId: number): string => {
+      const parts: string[] = [];
+      let currentId: number | null = folderId;
+      while (currentId !== null && currentId !== selectedFolderId) {
+        const folder = folderById.get(currentId);
+        if (!folder) break;
+        parts.unshift(folder.text);
+        currentId = typeof folder.parent === "number" ? folder.parent : null;
+      }
+      // Prepend the selected folder name
+      const selectedFolder = folderById.get(selectedFolderId);
+      if (selectedFolder) parts.unshift(selectedFolder.text);
+      return parts.join(" › ");
+    };
+
+    for (const folder of folderHierarchy) {
+      map.set(folder.id, buildPath(folder.id));
+    }
+    return map;
+  }, [showDescendants, selectedFolderId, folderHierarchy]);
+
+  const { data: testRunCasesWithLoading } = useFindManyTestRunCases(
+    {
+      where: {
+        testRunId: Number(params.runId),
+      },
+      select: {
+        id: true,
+        repositoryCaseId: true,
+        order: true,
+        statusId: true,
+        status: {
+          select: {
+            id: true,
+            name: true,
+            color: {
+              select: {
+                value: true,
               },
             },
           },
-          assignedToId: true,
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          isCompleted: true,
-          notes: true,
-          startedAt: true,
-          completedAt: true,
-          elapsed: true,
         },
+        assignedToId: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        isCompleted: true,
+        notes: true,
+        startedAt: true,
+        completedAt: true,
+        elapsed: true,
       },
-      {
-        enabled:
-          isRunMode &&
-          !!session?.user &&
-          !!params.runId &&
-          !isNaN(Number(params.runId)),
-        refetchOnWindowFocus: true,
-      }
-    );
+    },
+    {
+      enabled:
+        isRunMode &&
+        !!session?.user &&
+        !!params.runId &&
+        !isNaN(Number(params.runId)),
+      refetchOnWindowFocus: true,
+    }
+  );
   const _testRunCases = testRunCasesWithLoading as TestRunCase[] | undefined;
 
-  const { data: caseFoldersWithLoading } =
-    useFindManyRepositoryCases(
-      {
-        where: {
-          AND: [
-            { isDeleted: false, isArchived: false },
-            { projectId: numericProjectId },
-            { id: { in: selectedTestCases } },
-            { folder: { isDeleted: false } },
-          ],
-        },
-        select: {
-          folderId: true,
-        },
+  const { data: caseFoldersWithLoading } = useFindManyRepositoryCases(
+    {
+      where: {
+        AND: [
+          { isDeleted: false, isArchived: false },
+          { projectId: numericProjectId },
+          { id: { in: selectedTestCases } },
+          { folder: { isDeleted: false } },
+        ],
       },
-      {
-        enabled: isValidProjectId && isRunMode && selectedTestCases.length > 0,
-      }
-    );
+      select: {
+        folderId: true,
+      },
+    },
+    {
+      enabled: isValidProjectId && isRunMode && selectedTestCases.length > 0,
+    }
+  );
   const caseFolders = caseFoldersWithLoading;
 
   const folderIdsWithTestCases = useMemo(() => {
@@ -641,7 +718,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           type: field.type,
           fieldId: field.fieldId,
           options: field.options,
-          values: field.values && Array.isArray(field.values) ? new Set(field.values) : new Set(),
+          values:
+            field.values && Array.isArray(field.values)
+              ? new Set(field.values)
+              : new Set(),
           counts: field.counts,
         };
       }
@@ -1049,7 +1129,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     };
 
     doSearch();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [debouncedEsSearchQuery, numericProjectId]);
 
   // Auto-collapse left panel when ES search is active
@@ -1352,7 +1434,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     onCollapse={() => setIsCollapsed(true)}
                     onExpand={() => setIsCollapsed(false)}
                     className={`p-0 m-0 ${
-                      isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                      isTransitioning
+                        ? "transition-all duration-300 ease-in-out"
+                        : ""
                     }`}
                     data-testid="repository-left-panel"
                   >
@@ -1438,7 +1522,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       </div>
                     </div>
                   </ResizablePanel>
-                  <ResizableHandle withHandle className="w-1" disabled={isEsSearchActive} />
+                  <ResizableHandle
+                    withHandle
+                    className="w-1"
+                    disabled={isEsSearchActive}
+                  />
                   <div className="shrink-0 pt-0.5">
                     <Button
                       type="button"
@@ -1472,9 +1560,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                               <Input
                                 type="text"
-                                placeholder={t("search.placeholder.thisProject")}
+                                placeholder={t(
+                                  "search.placeholder.thisProject"
+                                )}
                                 value={esSearchQuery}
-                                onChange={(e) => setEsSearchQuery(e.target.value)}
+                                onChange={(e) =>
+                                  setEsSearchQuery(e.target.value)
+                                }
                                 className="pl-10 pr-10 h-8"
                               />
                               {esSearchQuery && (
@@ -1505,57 +1597,74 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 folderName={selectedFolderName}
                                 onImportComplete={refetchFolderStats}
                               />
-                              <FindDuplicatesButton projectId={projectIdParam} />
+                              <FindDuplicatesButton
+                                projectId={projectIdParam}
+                              />
                               <AddCaseModal folderId={selectedFolderId ?? 0} />
                             </div>
                           )}
                         </div>
 
-                        {selectedItem === "folders" && !isRunMode && !isEsSearchActive && (
-                          <>
-                            <BreadcrumbComponent
-                              breadcrumbItems={getBreadcrumbItems}
-                              projectId={projectIdParam}
-                              onClick={handleBreadcrumbClick}
-                              isLastClickable={false}
-                            />
-                            <div className="flex items-center justify-between mx-2">
-                              {""}
-                            </div>
-                            {/* Display Folder Documentation */}
-                            {selectedItem === "folders" &&
-                              !isRunMode &&
-                              selectedFolderId !== null &&
-                              (() => {
-                                const selectedFolderNode = folderHierarchy.find(
-                                  (folder) => folder.id === selectedFolderId
-                                );
-                                if (selectedFolderNode?.data?.docs) {
-                                  const docsContent = parseTipTapContent(
-                                    selectedFolderNode.data.docs
-                                  );
-                                  // Check if docsContent is effectively empty by comparing with emptyEditorContent
-                                  const isEmpty =
-                                    JSON.stringify(docsContent) ===
-                                    JSON.stringify(emptyEditorContent);
-
-                                  if (!isEmpty) {
-                                    return (
-                                      <div className="ml-4 bg-muted rounded-lg">
-                                        <TipTapEditor
-                                          content={docsContent}
-                                          readOnly={true}
-                                          projectId={projectIdParam}
-                                          className="prose prose-sm max-w-none dark:prose-invert"
-                                        />
-                                      </div>
+                        {selectedItem === "folders" &&
+                          !isRunMode &&
+                          !isEsSearchActive && (
+                            <>
+                              <div className="flex items-center justify-between mt-2">
+                                <BreadcrumbComponent
+                                  breadcrumbItems={getBreadcrumbItems}
+                                  projectId={projectIdParam}
+                                  onClick={handleBreadcrumbClick}
+                                  isLastClickable={false}
+                                />
+                                {selectedFolderId !== null && (
+                                  <Toggle
+                                    variant="outline"
+                                    size="sm"
+                                    pressed={showDescendants}
+                                    onPressedChange={setShowDescendants}
+                                    aria-label={t("repository.showDescendants")}
+                                    className="h-7 gap-1 text-xs mr-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                  >
+                                    <FolderDown className="h-3.5 w-3.5" />
+                                    {t("repository.showDescendants")}
+                                  </Toggle>
+                                )}
+                              </div>
+                              {/* Display Folder Documentation */}
+                              {selectedItem === "folders" &&
+                                !isRunMode &&
+                                selectedFolderId !== null &&
+                                (() => {
+                                  const selectedFolderNode =
+                                    folderHierarchy.find(
+                                      (folder) => folder.id === selectedFolderId
                                     );
+                                  if (selectedFolderNode?.data?.docs) {
+                                    const docsContent = parseTipTapContent(
+                                      selectedFolderNode.data.docs
+                                    );
+                                    // Check if docsContent is effectively empty by comparing with emptyEditorContent
+                                    const isEmpty =
+                                      JSON.stringify(docsContent) ===
+                                      JSON.stringify(emptyEditorContent);
+
+                                    if (!isEmpty) {
+                                      return (
+                                        <div className="ml-4 bg-muted rounded-lg">
+                                          <TipTapEditor
+                                            content={docsContent}
+                                            readOnly={true}
+                                            projectId={projectIdParam}
+                                            className="prose prose-sm max-w-none dark:prose-invert"
+                                          />
+                                        </div>
+                                      );
+                                    }
                                   }
-                                }
-                                return null;
-                              })()}
-                          </>
-                        )}
+                                  return null;
+                                })()}
+                            </>
+                          )}
                       </div>
                       <Cases
                         folderId={isEsSearchActive ? null : selectedFolderId}
@@ -1581,6 +1690,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         onCopyMoveFolderDialogClose={
                           handleCopyMoveFolderDialogClose
                         }
+                        descendantFolderIds={descendantFolderIds}
+                        showDescendants={showDescendants}
+                        folderPathMap={folderPathMap}
                       />
                     </>
                   </ResizablePanel>
