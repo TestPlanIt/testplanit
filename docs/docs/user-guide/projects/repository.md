@@ -59,7 +59,7 @@ The page features a resizable two-panel layout:
     * **Collapse Button**: A chevron button (`<`/`>`) on the handle between panels allows collapsing or expanding this left panel.
 
 * **Right Panel (Test Case List)**:
-    * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder.
+    * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder. Next to the breadcrumb, a **Show all descendants** toggle (folder-down icon) lets you view test cases from the selected folder and all of its nested subfolders in a single list. When enabled, each test case row displays a folder badge showing which subfolder it belongs to, with a tooltip showing the full folder path. All existing sorting, filtering, search, and bulk actions work on the aggregated list.
     * **Add Case Button**: Allows adding a new test case using a detailed modal (`AddCaseModal`).
     * **Generate Test Cases Button**: Opens the AI generation wizard (sparkles icon, requires [LLM Integration](../llm-integrations.md)).
     * **Import Cases Button**: Opens the CSV import wizard for bulk test case creation.

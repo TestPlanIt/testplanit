@@ -601,4 +601,44 @@ describe("Cases component", () => {
       expect(screen.queryByTestId("data-table")).not.toBeInTheDocument();
     });
   });
+
+  it("renders with showDescendants and descendantFolderIds props", async () => {
+    const casesInMultipleFolders = [
+      { ...mockCase, id: 1, name: "Case in Parent", folderId: 10 },
+      { ...mockCase, id: 2, name: "Case in Child", folderId: 20 },
+    ];
+    setupMocks({ data: casesInMultipleFolders });
+
+    render(
+      <Cases
+        {...defaultProps}
+        folderId={10}
+        viewType="folders"
+        showDescendants={true}
+        descendantFolderIds={[10, 20, 30]}
+        folderPathMap={new Map([[10, "Parent"], [20, "Parent > Child"], [30, "Parent > Other"]])}
+      />
+    );
+
+    // DataTable should render with the cases from multiple folders
+    const dataTable = await screen.findByTestId("data-table");
+    expect(dataTable).toBeInTheDocument();
+    expect(dataTable.getAttribute("data-count")).toBe("2");
+  });
+
+  it("renders without descendant props (default behavior)", async () => {
+    setupMocks({ data: [mockCase] });
+
+    render(
+      <Cases
+        {...defaultProps}
+        folderId={10}
+        viewType="folders"
+      />
+    );
+
+    const dataTable = await screen.findByTestId("data-table");
+    expect(dataTable).toBeInTheDocument();
+    expect(dataTable.getAttribute("data-count")).toBe("1");
+  });
 });

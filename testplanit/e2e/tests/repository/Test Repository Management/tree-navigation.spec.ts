@@ -303,6 +303,53 @@ test.describe("Tree Navigation", () => {
     await expect(rootFolder.first()).toBeVisible({ timeout: 5000 });
   });
 
+  test("Show All Descendants Toggle Displays Cases From Subfolders", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
+
+    // Create parent folder with a child folder
+    const parentName = `Parent Descendants ${uniqueId}`;
+    const parentId = await api.createFolder(projectId, parentName);
+    const childName = `Child Descendants ${uniqueId}`;
+    const childId = await api.createFolder(projectId, childName, parentId);
+
+    // Create test cases in different folders
+    const parentCaseName = `Parent Case ${uniqueId}`;
+    await api.createTestCase(projectId, parentId, parentCaseName);
+    const childCaseName = `Child Case ${uniqueId}`;
+    await api.createTestCase(projectId, childId, childCaseName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the parent folder - should only show parent's case
+    await repositoryPage.selectFolder(parentId);
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${childCaseName}"`)).not.toBeVisible({ timeout: 3000 });
+
+    // Click the "Show all descendants" toggle
+    const descendantsToggle = page.getByRole("button", { name: /show all descendants/i });
+    await expect(descendantsToggle).toBeVisible({ timeout: 5000 });
+    await descendantsToggle.click();
+    await page.waitForLoadState("networkidle");
+
+    // Both cases should now be visible
+    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${childCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // Child case should show a folder badge
+    const childCaseRow = page.locator("tr").filter({ hasText: childCaseName });
+    await expect(childCaseRow.locator(`text="${childName}"`)).toBeVisible({ timeout: 5000 });
+
+    // Toggle off - should go back to showing only parent's case
+    await descendantsToggle.click();
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${childCaseName}"`)).not.toBeVisible({ timeout: 3000 });
+  });
+
   test("View Test Cases in Selected Folder Only", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
