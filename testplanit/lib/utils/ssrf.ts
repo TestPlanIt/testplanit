@@ -190,13 +190,14 @@ function createPinnedAgent(
 }
 
 /**
- * Performs a single HTTP(S) request using Node.js built-in fetch with a
- * pre-pinned agent. Does NOT follow redirects (redirect: "manual").
+ * Performs a single HTTP(S) request using Node.js http/https modules with a
+ * pre-pinned agent. Does NOT follow redirects automatically.
  *
- * The custom Agent's `lookup` callback returns the pre-resolved IP, ensuring
- * that the TCP connection is made to the validated address. This prevents DNS
- * rebinding attacks where an attacker could change a hostname's DNS record
- * between our validation and the actual connection.
+ * Uses http.request/https.request (NOT global fetch) because these natively
+ * support the `agent` option. The custom Agent's `lookup` callback returns the
+ * pre-resolved IP, ensuring the TCP connection is made to the validated address.
+ * This prevents DNS rebinding attacks where an attacker could change a hostname's
+ * DNS record between our validation and the actual connection.
  */
 async function fetchWithPinnedAgent(
   urlString: string,
@@ -204,34 +205,75 @@ async function fetchWithPinnedAgent(
   protocol: "https:" | "http:",
   timeoutMs: number
 ): Promise<Response> {
-  // Create an agent that pins TCP connections to the pre-resolved IP.
-  // This is the DNS rebinding prevention mechanism: even if a subsequent
-  // DNS lookup for the same hostname would return a different IP, we
-  // have already validated our pre-resolved IP and force the connection to it.
   const agent = createPinnedAgent(protocol, resolvedIp);
+  const url = new URL(urlString);
 
-  try {
-    // We use global fetch with redirect: "manual" so we can inspect and
-    // re-validate each redirect target ourselves before following it.
-    // The agent is constructed above for IP pinning. In production server
-    // environments using Node.js 18+, the built-in fetch uses undici and
-    // the agent can be passed via the `dispatcher` option. However, we
-    // rely on the DNS pre-validation as the primary SSRF protection since
-    // the dispatcher API varies by Node.js version.
-    const response = await fetch(urlString, {
-      signal: AbortSignal.timeout(timeoutMs),
-      redirect: "manual",
+  return new Promise<Response>((resolve, reject) => {
+    const requestFn = protocol === "https:" ? https.request : http.request;
+
+    const req = requestFn(
+      url,
+      {
+        agent,
+        timeout: timeoutMs,
+        headers: {
+          "User-Agent": "TestPlanIt/1.0",
+          Accept: "text/html, */*",
+        },
+      },
+      (res) => {
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (value) {
+            headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+          }
+        }
+
+        const readable = new ReadableStream<Uint8Array>({
+          start(controller) {
+            res.on("data", (chunk: Buffer) => {
+              controller.enqueue(new Uint8Array(chunk));
+            });
+            res.on("end", () => {
+              controller.close();
+            });
+            res.on("error", (err) => {
+              controller.error(err);
+            });
+          },
+        });
+
+        resolve(
+          new Response(readable, {
+            status: res.statusCode ?? 200,
+            statusText: res.statusMessage ?? "",
+            headers,
+          })
+        );
+      }
+    );
+
+    req.on("error", (err) => {
+      reject(
+        new SsrfError(
+          `Fetch failed for ${urlString}: ${err.message}`,
+          "FETCH_FAILED"
+        )
+      );
     });
 
-    void agent; // Agent is constructed for IP pinning; used in node:https/http module-level requests
-    return response;
-  } catch (err) {
-    if (err instanceof SsrfError) throw err;
-    throw new SsrfError(
-      `Fetch failed for ${urlString}: ${err instanceof Error ? err.message : String(err)}`,
-      "FETCH_FAILED"
-    );
-  }
+    req.on("timeout", () => {
+      req.destroy();
+      reject(
+        new SsrfError(
+          `Request timed out after ${timeoutMs}ms for ${urlString}`,
+          "FETCH_FAILED"
+        )
+      );
+    });
+
+    req.end();
+  });
 }
 
 /**

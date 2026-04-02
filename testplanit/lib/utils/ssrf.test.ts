@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { EventEmitter } from "node:events";
 import {
   ssrfSafeFetch,
   isPrivateOrInternalIp,
@@ -13,69 +14,113 @@ vi.mock("node:dns/promises", () => ({
   lookup: vi.fn(),
 }));
 
+// Mock https and http modules
+vi.mock("node:https", () => ({
+  Agent: vi.fn(),
+  request: vi.fn(),
+}));
+
+vi.mock("node:http", () => ({
+  Agent: vi.fn(),
+  request: vi.fn(),
+}));
+
 import * as dns from "node:dns/promises";
+import * as https from "node:https";
+import * as http from "node:http";
 
 const mockDnsLookup = vi.mocked(dns.lookup);
+const mockHttpsRequest = vi.mocked(https.request);
+const mockHttpRequest = vi.mocked(http.request);
 
-// Helper to create a mock Response
-function createMockResponse({
-  status = 200,
-  headers = { "content-type": "text/html; charset=utf-8" },
-  body = "Hello, World!",
-  location,
-}: {
-  status?: number;
-  headers?: Record<string, string>;
-  body?: string | null;
-  location?: string;
-} = {}): Response {
-  const headersObj: Record<string, string> = { ...headers };
-  if (location) {
-    headersObj["location"] = location;
+/**
+ * Creates a mock IncomingMessage that emits data/end events, and a mock
+ * ClientRequest that fires the callback and supports error/timeout events.
+ */
+function setupMockRequest(
+  protocol: "https" | "http",
+  opts: {
+    status?: number;
+    headers?: Record<string, string>;
+    body?: string | null;
   }
+) {
+  const { status = 200, headers = { "content-type": "text/html; charset=utf-8" }, body = "Hello" } = opts;
 
-  const responseHeaders = new Headers(headersObj);
+  const mockRes = new EventEmitter() as EventEmitter & {
+    statusCode: number;
+    statusMessage: string;
+    headers: Record<string, string>;
+  };
+  mockRes.statusCode = status;
+  mockRes.statusMessage = "OK";
+  mockRes.headers = headers;
 
-  // Create a proper readable stream for the body
-  let bodyInit: BodyInit | null = null;
-  if (body !== null) {
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(body);
-    bodyInit = new ReadableStream({
-      start(controller) {
-        controller.enqueue(bytes);
-        controller.close();
-      },
+  const mockReq = new EventEmitter() as EventEmitter & {
+    end: ReturnType<typeof vi.fn>;
+    destroy: ReturnType<typeof vi.fn>;
+  };
+  mockReq.end = vi.fn();
+  mockReq.destroy = vi.fn();
+
+  const requestMock = protocol === "https" ? mockHttpsRequest : mockHttpRequest;
+  requestMock.mockImplementation((_url: unknown, _opts: unknown, callback: unknown) => {
+    // Fire callback asynchronously to simulate real behavior
+    process.nextTick(() => {
+      (callback as (res: typeof mockRes) => void)(mockRes);
+      // Emit body data
+      if (body !== null) {
+        const encoder = new TextEncoder();
+        mockRes.emit("data", Buffer.from(encoder.encode(body)));
+      }
+      mockRes.emit("end");
     });
-  }
-
-  return new Response(bodyInit, {
-    status,
-    headers: responseHeaders,
+    return mockReq as unknown as ReturnType<typeof https.request>;
   });
+
+  return { mockReq, mockRes };
 }
 
-// Helper to create a large streaming response
-function createLargeStreamResponse(sizeBytes: number): Response {
-  const chunkSize = 1024; // 1KB chunks
-  const chunk = new Uint8Array(chunkSize).fill(65); // 'A' repeated
-  const totalChunks = Math.ceil(sizeBytes / chunkSize);
+/**
+ * Sets up a mock request that streams large data in chunks.
+ */
+function setupLargeStreamRequest(
+  protocol: "https" | "http",
+  sizeBytes: number
+) {
+  const mockRes = new EventEmitter() as EventEmitter & {
+    statusCode: number;
+    statusMessage: string;
+    headers: Record<string, string>;
+  };
+  mockRes.statusCode = 200;
+  mockRes.statusMessage = "OK";
+  mockRes.headers = { "content-type": "text/html" };
 
-  const stream = new ReadableStream({
-    start(controller) {
-      let sent = 0;
-      while (sent < totalChunks) {
-        controller.enqueue(chunk);
-        sent++;
+  const mockReq = new EventEmitter() as EventEmitter & {
+    end: ReturnType<typeof vi.fn>;
+    destroy: ReturnType<typeof vi.fn>;
+  };
+  mockReq.end = vi.fn();
+  mockReq.destroy = vi.fn();
+
+  const requestMock = protocol === "https" ? mockHttpsRequest : mockHttpRequest;
+  requestMock.mockImplementation((_url: unknown, _opts: unknown, callback: unknown) => {
+    process.nextTick(() => {
+      (callback as (res: typeof mockRes) => void)(mockRes);
+      // Stream data in 1KB chunks
+      const chunkSize = 1024;
+      const chunk = Buffer.alloc(chunkSize, 65); // 'A' repeated
+      const totalChunks = Math.ceil(sizeBytes / chunkSize);
+      for (let i = 0; i < totalChunks; i++) {
+        mockRes.emit("data", chunk);
       }
-      controller.close();
-    },
+      mockRes.emit("end");
+    });
+    return mockReq as unknown as ReturnType<typeof https.request>;
   });
 
-  return new Response(stream, {
-    status: 200,
-    headers: new Headers({ "content-type": "text/html" }),
-  });
+  return { mockReq, mockRes };
 }
 
 describe("isPrivateOrInternalIp", () => {
@@ -172,20 +217,15 @@ describe("ssrfSafeFetch - protocol checks", () => {
       family: 4,
     } as never);
 
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        status: 200,
-        headers: { "content-type": "text/html" },
-        body: "Hello",
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("http", {
+      status: 200,
+      headers: { "content-type": "text/html" },
+      body: "Hello",
+    });
 
     await expect(
       ssrfSafeFetch("http://example.com", { allowHttp: true })
     ).resolves.toBeDefined();
-
-    vi.unstubAllGlobals();
   });
 });
 
@@ -244,54 +284,60 @@ describe("ssrfSafeFetch - redirect handling", () => {
       // Second DNS lookup for redirect target — returns private IP (cloud metadata)
       .mockResolvedValueOnce({ address: "169.254.169.254", family: 4 } as never);
 
-    const redirectResponse = createMockResponse({
+    // First request returns a redirect
+    setupMockRequest("https", {
       status: 302,
-      headers: { "content-type": "text/html" },
+      headers: { "content-type": "text/html", location: "https://metadata.internal/" },
       body: null,
-      location: "https://metadata.internal/",
     });
-
-    const mockFetch = vi.fn().mockResolvedValueOnce(redirectResponse);
-    vi.stubGlobal("fetch", mockFetch);
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
         err instanceof SsrfError && err.code === "REDIRECT_PRIVATE_IP"
     );
-
-    vi.unstubAllGlobals();
   });
 
   it("throws SsrfError with code TOO_MANY_REDIRECTS after more than 5 redirects", async () => {
-    // Resolve all DNS lookups to a public IP (need enough mocks for initial + 5 redirect hops)
     const publicIpResult = { address: "93.184.216.34", family: 4 } as never;
-    // We need 6 DNS lookups (initial + 5 redirects = 6 total requests before TOO_MANY_REDIRECTS)
+    // We need enough DNS lookups for initial + 5 redirects + 1 more
     for (let i = 0; i < 7; i++) {
       mockDnsLookup.mockResolvedValueOnce(publicIpResult);
     }
 
-    // Each response redirects to the next URL (all go to public destinations)
-    const redirectResponse = (n: number) =>
-      createMockResponse({
-        status: 302,
-        headers: { "content-type": "text/html" },
-        body: null,
-        location: `https://example.com/redirect-${n}`,
-      });
+    // Each call returns a redirect
+    let callCount = 0;
+    mockHttpsRequest.mockImplementation((_url: unknown, _opts: unknown, callback: unknown) => {
+      callCount++;
+      const mockRes = new EventEmitter() as EventEmitter & {
+        statusCode: number;
+        statusMessage: string;
+        headers: Record<string, string>;
+      };
+      mockRes.statusCode = 302;
+      mockRes.statusMessage = "Found";
+      mockRes.headers = {
+        "content-type": "text/html",
+        location: `https://example.com/redirect-${callCount}`,
+      };
 
-    const mockFetch = vi.fn();
-    // Set up 6 redirect responses (exceeds MAX_REDIRECTS of 5)
-    for (let i = 1; i <= 6; i++) {
-      mockFetch.mockResolvedValueOnce(redirectResponse(i));
-    }
-    vi.stubGlobal("fetch", mockFetch);
+      const mockReq = new EventEmitter() as EventEmitter & {
+        end: ReturnType<typeof vi.fn>;
+        destroy: ReturnType<typeof vi.fn>;
+      };
+      mockReq.end = vi.fn();
+      mockReq.destroy = vi.fn();
+
+      process.nextTick(() => {
+        (callback as (res: typeof mockRes) => void)(mockRes);
+        mockRes.emit("end");
+      });
+      return mockReq as unknown as ReturnType<typeof https.request>;
+    });
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
         err instanceof SsrfError && err.code === "TOO_MANY_REDIRECTS"
     );
-
-    vi.unstubAllGlobals();
   });
 });
 
@@ -304,18 +350,11 @@ describe("ssrfSafeFetch - content-type checks", () => {
     } as never);
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("throws SsrfError with code INVALID_CONTENT_TYPE for application/pdf response", async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        headers: { "content-type": "application/pdf" },
-        body: "PDF content",
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("https", {
+      headers: { "content-type": "application/pdf" },
+      body: "PDF content",
+    });
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
@@ -324,13 +363,10 @@ describe("ssrfSafeFetch - content-type checks", () => {
   });
 
   it("throws SsrfError with code INVALID_CONTENT_TYPE for application/json response", async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        headers: { "content-type": "application/json" },
-        body: '{"key": "value"}',
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("https", {
+      headers: { "content-type": "application/json" },
+      body: '{"key": "value"}',
+    });
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
@@ -339,13 +375,10 @@ describe("ssrfSafeFetch - content-type checks", () => {
   });
 
   it("does NOT throw for text/html; charset=utf-8 response", async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        headers: { "content-type": "text/html; charset=utf-8" },
-        body: "<html><body>Hello</body></html>",
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("https", {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      body: "<html><body>Hello</body></html>",
+    });
 
     await expect(ssrfSafeFetch("https://example.com")).resolves.toMatchObject({
       contentType: "text/html; charset=utf-8",
@@ -353,13 +386,10 @@ describe("ssrfSafeFetch - content-type checks", () => {
   });
 
   it("returns body and finalUrl on successful fetch", async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        headers: { "content-type": "text/html; charset=utf-8" },
-        body: "<html><body>Test content</body></html>",
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("https", {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      body: "<html><body>Test content</body></html>",
+    });
 
     const result = await ssrfSafeFetch("https://example.com");
     expect(result.body).toBe("<html><body>Test content</body></html>");
@@ -377,22 +407,15 @@ describe("ssrfSafeFetch - size limits", () => {
     } as never);
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("throws SsrfError with code CONTENT_TOO_LARGE when Content-Length header exceeds 5MB", async () => {
     const oversizeBytes = MAX_PAGE_BYTES + 1;
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        headers: {
-          "content-type": "text/html",
-          "content-length": String(oversizeBytes),
-        },
-        body: "Small body",
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("https", {
+      headers: {
+        "content-type": "text/html",
+        "content-length": String(oversizeBytes),
+      },
+      body: "Small body",
+    });
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
@@ -401,12 +424,8 @@ describe("ssrfSafeFetch - size limits", () => {
   });
 
   it("throws SsrfError with code CONTENT_TOO_LARGE when streaming body exceeds 5MB (no Content-Length)", async () => {
-    // Create a response that streams more than 5MB
     const oversizeBytes = MAX_PAGE_BYTES + 1024; // 5MB + 1KB
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce(createLargeStreamResponse(oversizeBytes));
-    vi.stubGlobal("fetch", mockFetch);
+    setupLargeStreamRequest("https", oversizeBytes);
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
@@ -416,16 +435,37 @@ describe("ssrfSafeFetch - size limits", () => {
 
   it("returns full body for response under 5MB", async () => {
     const smallBody = "A".repeat(1024); // 1KB
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      createMockResponse({
-        headers: { "content-type": "text/html" },
-        body: smallBody,
-      })
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    setupMockRequest("https", {
+      headers: { "content-type": "text/html" },
+      body: smallBody,
+    });
 
     const result = await ssrfSafeFetch("https://example.com");
     expect(result.body).toBe(smallBody);
+  });
+});
+
+describe("ssrfSafeFetch - agent pinning", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDnsLookup.mockResolvedValue({
+      address: "93.184.216.34",
+      family: 4,
+    } as never);
+  });
+
+  it("passes an agent with lookup callback to https.request", async () => {
+    setupMockRequest("https", {
+      headers: { "content-type": "text/html" },
+      body: "Hello",
+    });
+
+    await ssrfSafeFetch("https://example.com");
+
+    expect(mockHttpsRequest).toHaveBeenCalledTimes(1);
+    const callArgs = mockHttpsRequest.mock.calls[0];
+    const requestOpts = callArgs[1] as Record<string, unknown>;
+    expect(requestOpts).toHaveProperty("agent");
   });
 });
 
