@@ -115,10 +115,14 @@ function getValidatedBaseUrl(
     // URL not in allowlist — fall through to custom endpoint check below
   }
 
+  // Self-hosted providers (Ollama, Custom LLM) are expected to run on
+  // localhost or private networks — skip the private IP check for these
+  const SELF_HOSTED_PROVIDERS = ["OLLAMA", "CUSTOM_LLM"];
+
   // For providers that allow custom endpoints, permit any non-private URL
   // (e.g. LiteLLM proxies, Azure AI endpoints for Anthropic models)
   if (CUSTOM_ENDPOINT_PROVIDERS.includes(provider)) {
-    if (isPrivateOrInternalHost(parsedUrl.hostname)) {
+    if (!SELF_HOSTED_PROVIDERS.includes(provider) && isPrivateOrInternalHost(parsedUrl.hostname)) {
       console.warn(
         `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. Using default.`
       );
