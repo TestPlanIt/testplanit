@@ -489,16 +489,18 @@ export function GenerateTestCasesWizard({
     const urlJobIdParam = searchParams.get('urlJobId');
     if (!urlJobIdParam) return;
 
-    // Open the dialog and start polling that job
+    // Remove the param from URL immediately to prevent re-triggering
+    const url = new URL(window.location.href);
+    url.searchParams.delete('urlJobId');
+    window.history.replaceState({}, '', url.toString());
+
+    // Reset wizard state first, then set up for polling
+    resetWizard();
     setOpen(true);
     setSourceType('url');
     setIsGenerating(true);
     setUrlJobId(urlJobIdParam);
-
-    // Remove the param from URL to prevent re-triggering
-    const url = new URL(window.location.href);
-    url.searchParams.delete('urlJobId');
-    window.history.replaceState({}, '', url.toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const toggleFieldSelection = (fieldId: number, isRequired: boolean) => {
@@ -702,9 +704,8 @@ export function GenerateTestCasesWizard({
     setFollowLinks(false);
     setMaxDepth(2);
     setMaxPages(10);
-    if (urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
-    }
+    // Don't cancel the URL job on wizard close — let it complete in the
+    // background so the user can review results via the notification link
     setUrlJobId(null);
     setUrlJobProgress(null);
     setUrlRobotsSkipped(0);
