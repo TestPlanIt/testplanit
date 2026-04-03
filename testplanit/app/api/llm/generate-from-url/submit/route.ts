@@ -8,6 +8,11 @@ import { authOptions } from "~/server/auth";
 const submitSchema = z.object({
   projectId: z.number(),
   url: z.string().url(),
+  templateId: z.number().optional(),
+  folderId: z.number().optional(),
+  userNotes: z.string().optional(),
+  quantity: z.string().optional(),
+  autoGenerateTags: z.boolean().optional(),
   options: z
     .object({
       followLinks: z.boolean().default(false),
