@@ -374,10 +374,21 @@ export const processor = async (
       systemPrompt = resolvedPrompt.systemPrompt;
       userPrompt = resolvedPrompt.userPrompt;
     } else {
-      // Use our mode-specific fallback prompt (requirements vs application)
-      // The fallback prompts in fallback-prompts.ts are designed for URL generation
-      // and should NOT be replaced with buildSystemPrompt (which is for issue-based generation)
-      systemPrompt = resolvedPrompt.systemPrompt;
+      // Build the template-aware system prompt (includes JSON structure, field
+      // lists, steps/priority instructions) then replace its generic intro with
+      // our mode-specific intro from the fallback prompt.
+      const templatePrompt = buildSystemPrompt(
+        template, generationContext, job.data.quantity, job.data.autoGenerateTags
+      );
+
+      // The generic intro is the first paragraph (up to "CRITICAL:").
+      // Replace it with the mode-specific context from the fallback prompt,
+      // which tells the LLM how to interpret the web content.
+      const modeIntro = resolvedPrompt.systemPrompt.split("CRITICAL:")[0].trim();
+      const templateInstructions = templatePrompt.substring(
+        templatePrompt.indexOf("CRITICAL:")
+      );
+      systemPrompt = modeIntro + "\n\n" + templateInstructions;
       userPrompt = webContentSection;
     }
 
