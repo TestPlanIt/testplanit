@@ -390,7 +390,7 @@ export const processor = async (
         message: `Generating test cases for page ${i + 1} of ${pages.length}`,
         pagesProcessed: pages.length,
         totalPages: pages.length,
-        pagesGenerated: i,
+        pagesGenerated: i + 1,
         totalPagesForGeneration: pages.length,
         totalTestCases: allTestCases.length,
         generationPages,
