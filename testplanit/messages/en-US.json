@@ -4313,7 +4313,8 @@
         "shareLinkAccessedTitle": "Share Link Accessed",
         "viewedYourSharedLink": "viewed your shared link",
         "viewedAt": "Viewed at",
-        "budgetDisclaimer": "Budget limits are informational only and do not prevent usage."
+        "budgetDisclaimer": "Budget limits are informational only and do not prevent usage.",
+        "reviewGeneratedCases": "Review generated test cases"
       }
     },
     "issues": {
