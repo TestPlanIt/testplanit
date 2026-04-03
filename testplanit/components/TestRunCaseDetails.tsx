@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { Attachments, Prisma, Status } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   CheckCircle,
@@ -39,8 +40,12 @@ import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import { useCreateTestRunResults, useFindFirstWorkflows, useFindManyStatus, useFindManyTestRunResults, useUpdateTestRunCases, useUpdateTestRuns } from "~/lib/hooks";
+import { useFindFirstWorkflows, useFindManyStatus, useUpdateTestRunCases } from "~/lib/hooks";
 import { useFindManyTemplates } from "~/lib/hooks/templates";
+import {
+  isPermissionDeniedSubmitResultError,
+  submitTestRunResult
+} from "~/lib/test-run-result-submit";
 import { IconName } from "~/types/globals";
 import { ForecastDisplay } from "./ForecastDisplay";
 import LinkedCasesPanel from "./LinkedCasesPanel";
@@ -84,6 +89,7 @@ export function TestRunCaseDetails({
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
@@ -95,6 +101,10 @@ export function TestRunCaseDetails({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
+  const invalidateAfterSubmit = async () => {
+    // submitTestRunResult uses a raw fetch call, so we manually invalidate caches.
+    await queryClient.invalidateQueries();
+  };
 
   // Fetch permissions
   const {
@@ -120,17 +130,7 @@ export function TestRunCaseDetails({
     setSelectedAttachments([]);
   };
 
-  const { mutateAsync: createTestRunResult } = useCreateTestRunResults();
   const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
-  const { mutateAsync: updateTestRun } = useUpdateTestRuns();
-
-  // Check if this is the first result for this test run
-  const { data: existingResults } = useFindManyTestRunResults({
-    where: {
-      testRunId,
-    },
-    take: 1,
-  });
 
   // Find the first IN_PROGRESS workflow state for this project
   const { data: inProgressWorkflow } = useFindFirstWorkflows({
@@ -517,42 +517,17 @@ export function TestRunCaseDetails({
         return;
       }
 
-      // Create the test run result
-      await createTestRunResult({
-        data: {
-          testRunId,
-          testRunCaseId,
-          statusId: successStatus.id,
-          notes: emptyEditorContent,
-          evidence: {},
-          executedById: session.user.id,
-          attempt: 1,
-          testRunCaseVersion: testcase.currentVersion,
-        },
+      await submitTestRunResult({
+        testRunId,
+        testRunCaseId,
+        statusId: successStatus.id,
+        notes: emptyEditorContent,
+        evidence: {},
+        attempt: 1,
+        testRunCaseVersion: testcase.currentVersion,
+        inProgressStateId: inProgressWorkflow?.id ?? null,
       });
-
-      // If this is the first result and we have an IN_PROGRESS workflow state
-      if (existingResults?.length === 0 && inProgressWorkflow) {
-        // Update the test run's workflow state
-        await updateTestRun({
-          where: {
-            id: testRunId,
-          },
-          data: {
-            stateId: inProgressWorkflow.id,
-          },
-        });
-      }
-
-      // Update the test run case status
-      await updateTestRunCase({
-        where: {
-          id: testRunCaseId,
-        },
-        data: {
-          statusId: successStatus.id,
-        },
-      });
+      await invalidateAfterSubmit();
 
       // --- Trigger forecast update for this case ---
       fetch(`/api/forecast/update?caseId=${caseId}`);
@@ -581,9 +556,15 @@ export function TestRunCaseDetails({
       }
     } catch (error) {
       console.error("Error submitting result:", error);
-      toast.error(tCommon("errors.error"), {
-        description: tCommon("errors.somethingWentWrong"),
-      });
+      if (isPermissionDeniedSubmitResultError(error)) {
+        toast.error(tCommon("errors.accessDenied"), {
+          description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.somethingWentWrong"),
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -733,29 +714,18 @@ export function TestRunCaseDetails({
                             setIsSubmitting(true);
 
                             try {
-                              // Create the test run result
-                              await createTestRunResult({
-                                data: {
-                                  testRunId,
-                                  testRunCaseId,
-                                  statusId: status.id,
-                                  notes: emptyEditorContent,
-                                  evidence: {},
-                                  executedById: session.user.id,
-                                  attempt: 1,
-                                  testRunCaseVersion: testcase.currentVersion,
-                                },
+                              await submitTestRunResult({
+                                testRunId,
+                                testRunCaseId,
+                                statusId: status.id,
+                                notes: emptyEditorContent,
+                                evidence: {},
+                                attempt: 1,
+                                testRunCaseVersion: testcase.currentVersion,
+                                inProgressStateId:
+                                  inProgressWorkflow?.id ?? null,
                               });
-
-                              // Update the test run case status
-                              await updateTestRunCase({
-                                where: {
-                                  id: testRunCaseId,
-                                },
-                                data: {
-                                  statusId: status.id,
-                                },
-                              });
+                              await invalidateAfterSubmit();
 
                               toast.success(tCommon("actions.resultAdded"), {
                                 description: tCommon(
@@ -785,11 +755,19 @@ export function TestRunCaseDetails({
                               }
                             } catch (error) {
                               console.error("Error submitting result:", error);
-                              toast.error(tCommon("errors.error"), {
-                                description: tCommon(
-                                  "errors.somethingWentWrong"
-                                ),
-                              });
+                              if (isPermissionDeniedSubmitResultError(error)) {
+                                toast.error(tCommon("errors.accessDenied"), {
+                                  description: tCommon(
+                                    "errors.resultSubmitPermissionDenied"
+                                  ),
+                                });
+                              } else {
+                                toast.error(tCommon("errors.error"), {
+                                  description: tCommon(
+                                    "errors.somethingWentWrong"
+                                  ),
+                                });
+                              }
                             } finally {
                               setIsSubmitting(false);
                             }

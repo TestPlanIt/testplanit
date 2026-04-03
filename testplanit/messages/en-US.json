@@ -554,6 +554,7 @@
       "contentRequired": "Content is required",
       "invalidContentFormat": "Invalid content format",
       "permissionDenied": "You do not have permission to access this page.",
+      "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models"
     },

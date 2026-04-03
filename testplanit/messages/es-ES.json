@@ -554,6 +554,7 @@
       "contentRequired": "El contenido es obligatorio",
       "invalidContentFormat": "Formato de contenido no válido",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
+      "resultSubmitPermissionDenied": "No puedes enviar resultados para este caso. Pide a un administrador que te lo asigne.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos"
     },
