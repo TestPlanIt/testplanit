@@ -283,9 +283,12 @@ export const processor = async (
     const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
+    // Read provider timeout for lock extension (default 30s if not configured)
+    let llmTimeout = 30_000;
     if (llmProviderConfig) {
       maxTokens = llmProviderConfig.defaultMaxTokens ?? 6000;
       retryOptions = { maxRetries: llmProviderConfig.retryAttempts ?? 3 };
+      llmTimeout = llmProviderConfig.timeout ?? 30_000;
     }
 
     // Fetch template data for prompt building
@@ -399,7 +402,9 @@ export const processor = async (
         ? resolvedPrompt.userPrompt
         : buildSinglePageContent(page);
 
-      await job.extendLock(token!, 120_000);
+      // Extend BullMQ lock to at least the LLM timeout + buffer for retries,
+      // so the job isn't marked stalled while waiting for the LLM response
+      await job.extendLock(token!, llmTimeout + 30_000);
 
       try {
         const llmResponse = await llmManager.chat(
