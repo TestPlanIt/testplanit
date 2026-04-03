@@ -2144,6 +2144,7 @@
         "maxPages": "Max pages",
         "crawlProgress": "{current, plural, one {Fetched # page so far...} other {Fetched # pages so far...}}",
         "generatingProgress": "Generating test cases: page {current} of {total} ({testCases} cases so far)",
+        "generatingSinglePage": "Generating test cases...",
         "generatingSetup": "Preparing to generate test cases...",
         "robotsSkipped": "{count, plural, one {# page skipped} other {# pages skipped}} (robots.txt)"
       },

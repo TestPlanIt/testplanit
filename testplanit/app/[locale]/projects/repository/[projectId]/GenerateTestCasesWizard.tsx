@@ -2987,11 +2987,13 @@ export function GenerateTestCasesWizard({
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <Sparkles className="h-4 w-4 animate-pulse" />
                               <span>
-                                {t("generateTestCases.selectSource.generatingProgress", {
-                                  current: urlJobProgress.pagesGenerated ?? 0,
-                                  total: urlJobProgress.totalPagesForGeneration ?? 0,
-                                  testCases: urlJobProgress.totalTestCases ?? 0,
-                                })}
+                                {(urlJobProgress.totalPagesForGeneration ?? 0) > 1
+                                  ? t("generateTestCases.selectSource.generatingProgress", {
+                                      current: urlJobProgress.pagesGenerated ?? 0,
+                                      total: urlJobProgress.totalPagesForGeneration ?? 0,
+                                      testCases: urlJobProgress.totalTestCases ?? 0,
+                                    })
+                                  : t("generateTestCases.selectSource.generatingSinglePage")}
                               </span>
                             </div>
                           </div>
