@@ -347,16 +347,23 @@ export const processor = async (
         template = {
           id: dbTemplate.id,
           name: dbTemplate.templateName,
-          fields: dbTemplate.caseFields.map((cf: any) => ({
-            id: cf.caseField.id,
-            name: cf.caseField.displayName,
-            type: cf.caseField.type.type,
-            required: cf.caseField.isRequired,
-            options:
-              cf.caseField.fieldOptions?.length > 0
-                ? cf.caseField.fieldOptions.map((fo: any) => fo.fieldOption.name)
-                : undefined,
-          })),
+          fields: dbTemplate.caseFields
+            // Only include fields the user selected — no point asking the LLM
+            // to generate values for fields that won't be shown or imported
+            .filter((cf: any) =>
+              !job.data.selectedFieldIds?.length ||
+              job.data.selectedFieldIds.includes(cf.caseFieldId)
+            )
+            .map((cf: any) => ({
+              id: cf.caseField.id,
+              name: cf.caseField.displayName,
+              type: cf.caseField.type.type,
+              required: cf.caseField.isRequired,
+              options:
+                cf.caseField.fieldOptions?.length > 0
+                  ? cf.caseField.fieldOptions.map((fo: any) => fo.fieldOption.name)
+                  : undefined,
+            })),
         };
       }
     }
