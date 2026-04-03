@@ -127,12 +127,6 @@ interface SsrfFetchResult {
   contentType: string;
 }
 
-type LookupCallback = (
-  err: NodeJS.ErrnoException | null,
-  address: string,
-  family: number
-) => void;
-
 /**
  * Resolves the hostname and validates the IP is not private/internal.
  * Returns the resolved IP address string.
@@ -171,22 +165,29 @@ function createPinnedAgent(
   protocol: "https:" | "http:",
   resolvedIp: string
 ): https.Agent | http.Agent {
+  // Node's Agent calls lookup as: lookup(hostname, options, callback)
+  // In Node 24, the default options include { all: true }, which means the
+  // callback expects (err, results[]) not (err, address, family). We must
+  // detect this and respond with the correct shape.
   const lookup = (
     _hostname: string,
-    _opts: Record<string, unknown>,
-    cb: LookupCallback
+    options: Record<string, unknown>,
+    cb: (...args: unknown[]) => void
   ) => {
-    cb(null, resolvedIp, 4);
+    if (options && options.all) {
+      // Node expects: cb(null, [{address, family}, ...])
+      cb(null, [{ address: resolvedIp, family: 4 }]);
+    } else {
+      // Node expects: cb(null, address, family)
+      cb(null, resolvedIp, 4);
+    }
   };
 
+  const agentOpts = { lookup } as Record<string, unknown>;
   if (protocol === "https:") {
-    return new https.Agent({ lookup } as https.AgentOptions & {
-      lookup: typeof lookup;
-    });
+    return new https.Agent(agentOpts as https.AgentOptions);
   }
-  return new http.Agent({ lookup } as http.AgentOptions & {
-    lookup: typeof lookup;
-  });
+  return new http.Agent(agentOpts as http.AgentOptions);
 }
 
 /**
