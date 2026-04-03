@@ -2188,7 +2188,9 @@
         "templateFields": "Template Fields:",
         "moreFields": "... and {count, plural, one {# more field} other {# more fields}}",
         "crawledUrls": "{count, plural, one {# page crawled} other {# pages crawled}}",
-        "spaWarning": "This page may require JavaScript rendering. Results may be incomplete."
+        "spaWarning": "This page may require JavaScript rendering. Results may be incomplete.",
+        "filterByPage": "Filter by page",
+        "allPages": "All pages"
       },
       "generatingLegacy": "Generating test cases with AI...",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",

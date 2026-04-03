@@ -141,6 +141,7 @@ interface GeneratedTestCase {
   fieldValues: Record<string, any>;
   automated: boolean;
   tags?: string[];
+  sourceUrl?: string;
 }
 
 type LlmErrorType =
@@ -232,6 +233,8 @@ export function GenerateTestCasesWizard({
   const [crawledPagesResult, setCrawledPagesResult] = useState<CrawledPageDisplay[]>([]);
   // When true, the wizard was opened from a notification link — show review only, no back navigation
   const [isNotificationReopen, setIsNotificationReopen] = useState(false);
+  // Filter review test cases by source page URL (null = show all)
+  const [reviewPageFilter, setReviewPageFilter] = useState<string | null>(null);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
@@ -788,6 +791,7 @@ export function GenerateTestCasesWizard({
     // Don't cancel the URL job on wizard close — let it complete in the
     // background so the user can review results via the notification link
     setIsNotificationReopen(false);
+    setReviewPageFilter(null);
     setUrlJobId(null);
     setUrlJobProgress(null);
     setUrlRobotsSkipped(0);
@@ -3578,41 +3582,55 @@ export function GenerateTestCasesWizard({
               {/* Step 4: Review Generated Test Cases */}
               {currentStep === WizardStep.REVIEW_GENERATED && (
                 <Card shadow="none">
-                  {sourceType === 'url' && crawledPagesResult.length > 0 && (
+                  {sourceType === 'url' && crawledPagesResult.length > 1 && (
                     <div className="px-6 pt-6">
-                      <Collapsible>
-                        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
-                          <Globe className="w-4 h-4" />
-                          <span>{t("generateTestCases.review.crawledUrls", { count: crawledPagesResult.length })}</span>
-                          <ChevronDown className="w-4 h-4 ml-auto transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-3 space-y-2">
-                          {crawledPagesResult.map((page, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-sm py-1.5 px-3 rounded-md bg-muted/50">
-                              <ExternalLink className="w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground" />
-                              <div className="min-w-0 flex-1">
-                                <a
-                                  href={page.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline truncate block"
-                                >
-                                  {page.title || page.url}
-                                </a>
-                                {page.title && (
-                                  <span className="text-xs text-muted-foreground truncate block">{page.url}</span>
-                                )}
-                                {page.spaWarning && (
-                                  <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
-                                    <AlertTriangle className="w-3 h-3" />
-                                    {t("generateTestCases.review.spaWarning")}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </CollapsibleContent>
-                      </Collapsible>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Globe className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {t("generateTestCases.review.filterByPage")}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setReviewPageFilter(null)}
+                          className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                            reviewPageFilter === null
+                              ? "border-primary bg-primary/10 text-primary font-medium"
+                              : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                          }`}
+                        >
+                          {t("generateTestCases.review.allPages")}
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {generatedTestCases.length}
+                          </Badge>
+                        </button>
+                        {crawledPagesResult.map((page, idx) => {
+                          const pageTestCount = generatedTestCases.filter(
+                            tc => tc.sourceUrl === page.url
+                          ).length;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setReviewPageFilter(page.url)}
+                              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs transition-colors max-w-[300px] ${
+                                reviewPageFilter === page.url
+                                  ? "border-primary bg-primary/10 text-primary font-medium"
+                                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                              }`}
+                            >
+                              <span className="truncate">{page.title || page.url}</span>
+                              {page.spaWarning && (
+                                <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                              )}
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                {pageTestCount}
+                              </Badge>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   <CardHeader>
@@ -3702,7 +3720,9 @@ export function GenerateTestCasesWizard({
                       </Alert>
                     ) : (
                       <div className={`space-y-4 transition-opacity duration-300 ${isGenerating ? "opacity-60" : "opacity-100"}`}>
-                        {generatedTestCases.map((testCase, index) => {
+                        {generatedTestCases
+                        .filter(tc => !reviewPageFilter || tc.sourceUrl === reviewPageFilter)
+                        .map((testCase, index) => {
                           const template = templates?.find(
                             (t) => t.id === selectedTemplateId
                           );

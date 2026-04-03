@@ -412,7 +412,7 @@ export const processor = async (
       // For multi-page crawls, override the quantity to be per page
       const pageCount = pagesForLlm.length;
       const perPageNote = pageCount > 1
-        ? `\n\nIMPORTANT: The web content contains ${pageCount} pages. Generate the requested number of test cases PER PAGE, not for all pages combined. Each page represents a different part of the application/documentation and should have its own set of test cases.`
+        ? `\n\nIMPORTANT: The web content contains ${pageCount} pages. Generate the requested number of test cases PER PAGE, not for all pages combined. Each page represents a different part of the application/documentation and should have its own set of test cases.\n\nFor EACH test case, include a "sourceUrl" field set to the URL of the page it was derived from (matching the "Content from ..." headers above). This is required for organizing test cases by page.`
         : "";
 
       systemPrompt = modeIntro + "\n\n" + templateInstructions + perPageNote;
