@@ -139,7 +139,10 @@ export const processor = async (
     await job.updateProgress({ phase: "setup", message: "initializing" });
 
     const seedUrl = job.data.url;
-    const startHostname = new URL(seedUrl).hostname;
+    // The effective hostname is determined after the first page fetch (in case
+    // the seed URL redirects, e.g. testplanit.com → www.testplanit.com).
+    // Initialize from seed URL; updated after first successful fetch.
+    let startHostname = new URL(seedUrl).hostname;
 
     // 4. Fetch robots.txt once at crawl start (per locked decision)
     const robots = await fetchRobots(new URL(seedUrl).origin);
@@ -184,6 +187,13 @@ export const processor = async (
       // Fetch page
       try {
         const { body, finalUrl } = await ssrfSafeFetch(normalizedUrl, { allowHttp: true });
+
+        // Update hostname from the first page's final URL (handles redirects
+        // like testplanit.com → www.testplanit.com)
+        if (item.depth === 0) {
+          startHostname = new URL(finalUrl).hostname;
+        }
+
         const result = extractContent(body, finalUrl);
 
         // Extract title from first h1 in markdown (Readability prepends article.title as <h1>)
