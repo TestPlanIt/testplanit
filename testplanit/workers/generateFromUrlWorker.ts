@@ -437,9 +437,11 @@ export const processor = async (
           console.warn(`Generate-from-URL job ${job.id} page ${i + 1} parse warning:`, parseError.userError);
         }
 
-        // Tag each test case with the source URL
+        // Tag each test case with the source URL and assign unique IDs
+        // (each per-page LLM call returns IDs starting at tc_1, causing duplicates)
         for (const tc of pageCases) {
           (tc as any).sourceUrl = page.url;
+          (tc as any).id = `tc_p${i + 1}_${allTestCases.length + 1}`;
           allTestCases.push(tc);
         }
 
