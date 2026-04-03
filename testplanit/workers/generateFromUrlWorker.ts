@@ -408,7 +408,14 @@ export const processor = async (
       const templateInstructions = templatePrompt.substring(
         templatePrompt.indexOf("CRITICAL:")
       );
-      systemPrompt = modeIntro + "\n\n" + templateInstructions;
+
+      // For multi-page crawls, override the quantity to be per page
+      const pageCount = pagesForLlm.length;
+      const perPageNote = pageCount > 1
+        ? `\n\nIMPORTANT: The web content contains ${pageCount} pages. Generate the requested number of test cases PER PAGE, not for all pages combined. Each page represents a different part of the application/documentation and should have its own set of test cases.`
+        : "";
+
+      systemPrompt = modeIntro + "\n\n" + templateInstructions + perPageNote;
       userPrompt = webContentSection;
     }
 
