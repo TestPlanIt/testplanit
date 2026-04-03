@@ -2143,6 +2143,8 @@
         "maxDepth": "Max depth",
         "maxPages": "Max pages",
         "crawlProgress": "Fetching page {current} of {total}...",
+        "generatingProgress": "Generating test cases: page {current} of {total} ({testCases} cases so far)",
+        "generatingSetup": "Preparing to generate test cases...",
         "robotsSkipped": "{count, plural, one {# page skipped} other {# pages skipped}} (robots.txt)"
       },
       "selectIssue": {

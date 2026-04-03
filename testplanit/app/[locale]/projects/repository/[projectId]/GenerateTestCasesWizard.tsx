@@ -219,9 +219,20 @@ export function GenerateTestCasesWizard({
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPages, setMaxPages] = useState(10);
   const [urlJobId, setUrlJobId] = useState<string | null>(null);
+  interface GenerationPageProgress {
+    url: string;
+    title?: string;
+    status: "pending" | "generating" | "done" | "failed";
+    testCaseCount: number;
+  }
   const [urlJobProgress, setUrlJobProgress] = useState<{
     pagesProcessed: number;
     totalPages: number;
+    phase?: string;
+    pagesGenerated?: number;
+    totalPagesForGeneration?: number;
+    totalTestCases?: number;
+    generationPages?: GenerationPageProgress[];
   } | null>(null);
   const [urlRobotsSkipped, setUrlRobotsSkipped] = useState(0);
 
@@ -495,6 +506,11 @@ export function GenerateTestCasesWizard({
           setUrlJobProgress({
             pagesProcessed: data.progress.pagesProcessed ?? 0,
             totalPages: data.progress.totalPages ?? 0,
+            phase: data.progress.phase,
+            pagesGenerated: data.progress.pagesGenerated,
+            totalPagesForGeneration: data.progress.totalPagesForGeneration,
+            totalTestCases: data.progress.totalTestCases,
+            generationPages: data.progress.generationPages,
           });
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
         }
@@ -3194,18 +3210,94 @@ export function GenerateTestCasesWizard({
 
                           {/* Progress Display */}
                           {urlJobId && urlJobProgress && (
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>
-                                  {t("generateTestCases.selectSource.crawlProgress", {
-                                    current: urlJobProgress.pagesProcessed,
-                                    total: urlJobProgress.totalPages,
-                                  })}
-                                </span>
-                              </div>
+                            <div className="space-y-3">
+                              {/* Phase: crawling */}
+                              {urlJobProgress.phase === "crawling" && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>
+                                    {t("generateTestCases.selectSource.crawlProgress", {
+                                      current: urlJobProgress.pagesProcessed,
+                                      total: urlJobProgress.totalPages,
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Phase: generating — per-page progress */}
+                              {urlJobProgress.phase === "generating" && urlJobProgress.generationPages && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Sparkles className="h-4 w-4 animate-pulse" />
+                                      <span>
+                                        {t("generateTestCases.selectSource.generatingProgress", {
+                                          current: urlJobProgress.pagesGenerated ?? 0,
+                                          total: urlJobProgress.totalPagesForGeneration ?? 0,
+                                          testCases: urlJobProgress.totalTestCases ?? 0,
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                                    {urlJobProgress.generationPages.map((gp, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
+                                          gp.status === "generating"
+                                            ? "bg-primary/5 border border-primary/20"
+                                            : gp.status === "done"
+                                              ? "bg-muted/50"
+                                              : gp.status === "failed"
+                                                ? "bg-destructive/5"
+                                                : "bg-muted/30 text-muted-foreground"
+                                        }`}
+                                      >
+                                        {gp.status === "generating" && (
+                                          <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
+                                        )}
+                                        {gp.status === "done" && (
+                                          <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
+                                        )}
+                                        {gp.status === "failed" && (
+                                          <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                                        )}
+                                        {gp.status === "pending" && (
+                                          <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
+                                        )}
+                                        <span className="truncate flex-1">{gp.title || gp.url}</span>
+                                        {gp.status === "done" && (
+                                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                            {gp.testCaseCount} {gp.testCaseCount === 1 ? "case" : "cases"}
+                                          </Badge>
+                                        )}
+                                        {gp.status === "failed" && (
+                                          <span className="text-[10px] text-destructive shrink-0">failed</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Phase: generating but no generationPages yet (setup) */}
+                              {urlJobProgress.phase === "generating" && !urlJobProgress.generationPages && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>{t("generateTestCases.selectSource.generatingSetup")}</span>
+                                </div>
+                              )}
+
+                              {/* Phase: crawling — simple progress (no generationPages) */}
+                              {urlJobProgress.phase !== "generating" && urlJobProgress.phase !== "crawling" && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>{urlJobProgress.phase === "setup" ? t("generateTestCases.selectSource.generatingSetup") : t("generateTestCases.selectSource.crawlProgress", { current: urlJobProgress.pagesProcessed, total: urlJobProgress.totalPages })}</span>
+                                </div>
+                              )}
+
                               {urlRobotsSkipped > 0 && (
-                                <p className="text-xs text-muted-foreground ml-6">
+                                <p className="text-xs text-muted-foreground">
                                   {t("generateTestCases.selectSource.robotsSkipped", {
                                     count: urlRobotsSkipped,
                                   })}

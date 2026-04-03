@@ -361,6 +361,18 @@ export const processor = async (
 
     // Process each page with its own LLM call
     const allTestCases: any[] = [];
+    // Track per-page generation results for progress reporting
+    const generationPages: Array<{
+      url: string;
+      title?: string;
+      status: "pending" | "generating" | "done" | "failed";
+      testCaseCount: number;
+    }> = pages.map(p => ({
+      url: p.url,
+      title: p.title,
+      status: "pending" as const,
+      testCaseCount: 0,
+    }));
 
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
@@ -369,6 +381,7 @@ export const processor = async (
       const isCancelled = await redis.get(cancelKey(job.id));
       if (isCancelled) break;
 
+      generationPages[i].status = "generating";
       await job.updateProgress({
         phase: "generating",
         message: `Generating test cases for page ${i + 1} of ${pages.length}`,
@@ -376,6 +389,8 @@ export const processor = async (
         totalPages: pages.length,
         pagesGenerated: i,
         totalPagesForGeneration: pages.length,
+        totalTestCases: allTestCases.length,
+        generationPages,
         skippedRobots,
       });
 
@@ -427,10 +442,27 @@ export const processor = async (
           (tc as any).sourceUrl = page.url;
           allTestCases.push(tc);
         }
+
+        generationPages[i].status = "done";
+        generationPages[i].testCaseCount = pageCases.length;
       } catch (pageErr) {
         // Log but don't fail the whole job — other pages may succeed
         console.warn(`Generate-from-URL job ${job.id} page ${i + 1} LLM error:`, pageErr instanceof Error ? pageErr.message : String(pageErr));
+        generationPages[i].status = "failed";
       }
+
+      // Post-page progress update with result
+      await job.updateProgress({
+        phase: "generating",
+        message: `Generated test cases for page ${i + 1} of ${pages.length}`,
+        pagesProcessed: pages.length,
+        totalPages: pages.length,
+        pagesGenerated: i + 1,
+        totalPagesForGeneration: pages.length,
+        totalTestCases: allTestCases.length,
+        generationPages,
+        skippedRobots,
+      });
     }
 
     const testCases = allTestCases;
