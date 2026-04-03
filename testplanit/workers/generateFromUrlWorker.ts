@@ -58,6 +58,7 @@ export interface GenerateFromUrlJobResult {
   robotsSkipped: number;
   urlsCrawled: string[];
   crawledPages: CrawledPageInfo[];
+  templateId?: number;
 }
 
 // ---- Cancel key ----
@@ -465,6 +466,7 @@ export const processor = async (
       robotsSkipped: skippedRobots,
       urlsCrawled: pages.map(p => p.url),
       crawledPages,
+      templateId: job.data.templateId,
     };
   } catch (err) {
     // Send failure notification (only for non-cancellation errors)

@@ -463,6 +463,18 @@ export function GenerateTestCasesWizard({
     return { ...tc, fieldValues: converted };
   }, [templates, selectedTemplateId]);
 
+  // Restore template and select all its fields from a job result's templateId.
+  // Used when the wizard is reopened from a notification link or poll completion
+  // since the user's original field selection is not preserved in the job result.
+  const restoreTemplateFromResult = useCallback((resultTemplateId?: number) => {
+    if (!resultTemplateId || !templates) return;
+    setSelectedTemplateId(resultTemplateId);
+    const tmpl = templates.find((t) => t.id === resultTemplateId);
+    if (tmpl) {
+      setSelectedFieldIds(new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId)));
+    }
+  }, [templates]);
+
   // Poll URL job status while a job is active
   useEffect(() => {
     if (!urlJobId) return;
@@ -483,6 +495,7 @@ export function GenerateTestCasesWizard({
           setUrlJobProgress(null);
           setIsGenerating(false);
           setCrawledPagesResult(data.result?.crawledPages ?? []);
+          restoreTemplateFromResult(data.result?.templateId);
           if (data.result?.testCases?.length > 0) {
             const converted = data.result.testCases.map(convertFieldOptionIds);
             setGeneratedTestCases(converted);
@@ -540,6 +553,7 @@ export function GenerateTestCasesWizard({
 
         if (data.state === 'completed' && data.result?.testCases?.length > 0) {
           setCrawledPagesResult(data.result.crawledPages ?? []);
+          restoreTemplateFromResult(data.result.templateId);
           const converted = data.result.testCases.map(convertFieldOptionIds);
           setGeneratedTestCases(converted);
           setSelectedTestCases(new Set(converted.map((tc: GeneratedTestCase) => tc.id)));
