@@ -133,10 +133,17 @@ function getValidatedBaseUrl(
         .filter(Boolean);
 
       if (!allowedPrivateHosts.includes(parsedUrl.hostname.toLowerCase())) {
-        console.warn(
+        const message =
           `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. ` +
-          `To allow this, add "${parsedUrl.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`
-        );
+          `To allow this, add "${parsedUrl.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`;
+        console.warn(message);
+        // For providers with no cloud default (Ollama, Custom LLM), silently
+        // returning undefined leaves the adapter with no URL — it hangs or
+        // errors unhelpfully. Throw so the error surfaces to the user.
+        const NO_DEFAULT_PROVIDERS = ["OLLAMA", "CUSTOM_LLM"];
+        if (NO_DEFAULT_PROVIDERS.includes(provider)) {
+          throw new Error(message);
+        }
         return undefined;
       }
     }
