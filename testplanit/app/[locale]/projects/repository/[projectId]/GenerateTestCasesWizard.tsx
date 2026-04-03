@@ -409,26 +409,20 @@ export function GenerateTestCasesWizard({
     }
   }, [templates]);
 
-  // Track whether field IDs were explicitly set by restoreTemplateFromResult
-  // to prevent the template-change effect from overriding the restored selection
-  const skipFieldAutoSelect = useRef(false);
-
+  // Auto-select all fields when the user changes template in the wizard flow.
+  // Skip when currentStep is REVIEW_GENERATED — that means we restored from a
+  // job result and selectedFieldIds was already set explicitly.
   useEffect(() => {
-    if (selectedTemplateId && templates) {
-      if (skipFieldAutoSelect.current) {
-        skipFieldAutoSelect.current = false;
-        return;
-      }
+    if (selectedTemplateId && templates && currentStep !== WizardStep.REVIEW_GENERATED) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
-        // Initialize with all field IDs selected by default
         const allFieldIds = new Set(
           template.caseFields.map((cf) => cf.caseFieldId)
         );
         setSelectedFieldIds(allFieldIds);
       }
     }
-  }, [selectedTemplateId, templates]);
+  }, [selectedTemplateId, templates, currentStep]);
 
   // Auto-scroll to bottom when new cards stream in.
   // requestAnimationFrame ensures the new card is laid out before we read scrollHeight.
@@ -475,8 +469,6 @@ export function GenerateTestCasesWizard({
   // Uses the exact field IDs from the job if available, otherwise selects all.
   const restoreTemplateFromResult = useCallback((resultTemplateId?: number, resultFieldIds?: number[]) => {
     if (!resultTemplateId || !templates) return;
-    // Prevent the template-change useEffect from overriding our field selection
-    skipFieldAutoSelect.current = true;
     setSelectedTemplateId(resultTemplateId);
     if (resultFieldIds && resultFieldIds.length > 0) {
       setSelectedFieldIds(new Set(resultFieldIds));
