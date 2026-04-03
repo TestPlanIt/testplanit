@@ -230,6 +230,8 @@ export function GenerateTestCasesWizard({
     spaWarning: boolean;
   }
   const [crawledPagesResult, setCrawledPagesResult] = useState<CrawledPageDisplay[]>([]);
+  // When true, the wizard was opened from a notification link — show review only, no back navigation
+  const [isNotificationReopen, setIsNotificationReopen] = useState(false);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
@@ -494,12 +496,39 @@ export function GenerateTestCasesWizard({
     url.searchParams.delete('urlJobId');
     window.history.replaceState({}, '', url.toString());
 
-    // Reset wizard state first, then set up for polling
+    // Reset wizard state, then fetch job result immediately (no 3s polling delay)
     resetWizard();
-    setOpen(true);
+    setIsNotificationReopen(true);
     setSourceType('url');
-    setIsGenerating(true);
-    setUrlJobId(urlJobIdParam);
+    setOpen(true);
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/llm/generate-from-url/status/${urlJobIdParam}`);
+        const data = await res.json();
+
+        if (data.state === 'completed' && data.result?.testCases?.length > 0) {
+          setCrawledPagesResult(data.result.crawledPages ?? []);
+          setGeneratedTestCases(data.result.testCases);
+          setSelectedTestCases(new Set(data.result.testCases.map((tc: GeneratedTestCase) => tc.id)));
+          setCurrentStep(WizardStep.REVIEW_GENERATED);
+        } else if (data.state === 'completed') {
+          toast.error(t("generateTestCases.errors.urlFetchFailed"));
+          setIsNotificationReopen(false);
+        } else if (data.state === 'failed') {
+          toast.error(data.failedReason ?? t("generateTestCases.errors.urlFetchFailed"));
+          setIsNotificationReopen(false);
+        } else {
+          // Job still running — fall back to polling
+          setIsGenerating(true);
+          setUrlJobId(urlJobIdParam);
+          setIsNotificationReopen(false);
+        }
+      } catch {
+        toast.error("Failed to load job results");
+        setIsNotificationReopen(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -706,6 +735,7 @@ export function GenerateTestCasesWizard({
     setMaxPages(10);
     // Don't cancel the URL job on wizard close — let it complete in the
     // background so the user can review results via the notification link
+    setIsNotificationReopen(false);
     setUrlJobId(null);
     setUrlJobProgress(null);
     setUrlRobotsSkipped(0);
@@ -2731,15 +2761,17 @@ export function GenerateTestCasesWizard({
             </Alert>
           </DialogHeader>
 
-          <div className="px-6 py-4 shrink-0">
-            <WizardProgress
-              steps={wizardSteps}
-              activeStep={currentStep}
-              maxUnlockedStep={maxUnlockedStep}
-              onStepSelect={handleStepSelect}
-              isImporting={isImporting}
-            />
-          </div>
+          {!isNotificationReopen && (
+            <div className="px-6 py-4 shrink-0">
+              <WizardProgress
+                steps={wizardSteps}
+                activeStep={currentStep}
+                maxUnlockedStep={maxUnlockedStep}
+                onStepSelect={handleStepSelect}
+                isImporting={isImporting}
+              />
+            </div>
+          )}
 
           <div
             ref={scrollContainerRef}
@@ -3685,7 +3717,7 @@ export function GenerateTestCasesWizard({
           {/* Dialog Footer */}
           <div className="flex items-center justify-between mt-6 pt-4 border-t shrink-0">
             <div className="flex items-center gap-2">
-              {currentStep > WizardStep.SELECT_ISSUE && (
+              {currentStep > WizardStep.SELECT_ISSUE && !isNotificationReopen && (
                 <Button
                   variant="outline"
                   onClick={handleBack}
