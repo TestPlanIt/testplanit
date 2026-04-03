@@ -413,7 +413,6 @@ export const processor = async (
             userId: job.data.userId,
             feature: llmFeature,
             projectId: job.data.projectId,
-            timeout: 120_000,
           },
           retryOptions
         );
