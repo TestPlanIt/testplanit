@@ -2954,8 +2954,111 @@ export function GenerateTestCasesWizard({
                 </div>
               )}
 
+              {/* URL Generation Progress Overlay — shown on any step while URL job runs */}
+              {urlJobId && isGenerating && sourceType === 'url' && urlJobProgress && (
+                <Card shadow="none">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 animate-pulse" />
+                      {t("generateTestCases.selectSource.generatingSetup")}
+                    </CardTitle>
+                    <CardDescription>
+                      {t("generateTestCases.review.description")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Phase: crawling */}
+                      {urlJobProgress.phase === "crawling" && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>
+                            {t("generateTestCases.selectSource.crawlProgress", {
+                              current: urlJobProgress.pagesProcessed,
+                              total: urlJobProgress.totalPages,
+                            })}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Phase: generating — per-page progress */}
+                      {urlJobProgress.phase === "generating" && urlJobProgress.generationPages && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Sparkles className="h-4 w-4 animate-pulse" />
+                              <span>
+                                {t("generateTestCases.selectSource.generatingProgress", {
+                                  current: urlJobProgress.pagesGenerated ?? 0,
+                                  total: urlJobProgress.totalPagesForGeneration ?? 0,
+                                  testCases: urlJobProgress.totalTestCases ?? 0,
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            {urlJobProgress.generationPages.map((gp, idx) => (
+                              <div
+                                key={idx}
+                                className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
+                                  gp.status === "generating"
+                                    ? "bg-primary/5 border border-primary/20"
+                                    : gp.status === "done"
+                                      ? "bg-muted/50"
+                                      : gp.status === "failed"
+                                        ? "bg-destructive/5"
+                                        : "bg-muted/30 text-muted-foreground"
+                                }`}
+                              >
+                                {gp.status === "generating" && (
+                                  <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
+                                )}
+                                {gp.status === "done" && (
+                                  <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
+                                )}
+                                {gp.status === "failed" && (
+                                  <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                                )}
+                                {gp.status === "pending" && (
+                                  <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
+                                )}
+                                <span className="truncate flex-1">{gp.title || gp.url}</span>
+                                {gp.status === "done" && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                    {gp.testCaseCount} {gp.testCaseCount === 1 ? "case" : "cases"}
+                                  </Badge>
+                                )}
+                                {gp.status === "failed" && (
+                                  <span className="text-[10px] text-destructive shrink-0">failed</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Phase: setup or other */}
+                      {urlJobProgress.phase !== "generating" && urlJobProgress.phase !== "crawling" && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>{t("generateTestCases.selectSource.generatingSetup")}</span>
+                        </div>
+                      )}
+
+                      {urlRobotsSkipped > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("generateTestCases.selectSource.robotsSkipped", {
+                            count: urlRobotsSkipped,
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Step 1: Select Source */}
-              {currentStep === WizardStep.SELECT_ISSUE && (
+              {currentStep === WizardStep.SELECT_ISSUE && !(urlJobId && isGenerating && sourceType === 'url') && (
                 <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -3381,7 +3484,7 @@ export function GenerateTestCasesWizard({
               )}
 
               {/* Step 2: Select Template */}
-              {currentStep === WizardStep.SELECT_TEMPLATE && (
+              {currentStep === WizardStep.SELECT_TEMPLATE && !(urlJobId && isGenerating && sourceType === 'url') && (
                 <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -3526,7 +3629,7 @@ export function GenerateTestCasesWizard({
               )}
 
               {/* Step 3: Add Notes */}
-              {currentStep === WizardStep.ADD_NOTES && (
+              {currentStep === WizardStep.ADD_NOTES && !(urlJobId && isGenerating && sourceType === 'url') && (
                 <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
