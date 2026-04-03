@@ -37,6 +37,11 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -48,6 +53,7 @@ import {
   AlertTriangle,
   Bot,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -67,7 +73,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -194,6 +200,7 @@ export function GenerateTestCasesWizard({
   const tCommon = useTranslations("common");
   const params = useParams();
   const projectId = Number(params.projectId);
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
 
   const [open, setOpen] = useState(false);
@@ -215,6 +222,14 @@ export function GenerateTestCasesWizard({
     totalPages: number;
   } | null>(null);
   const [urlRobotsSkipped, setUrlRobotsSkipped] = useState(0);
+
+  interface CrawledPageDisplay {
+    url: string;
+    title?: string;
+    spaWarning: boolean;
+  }
+  const [crawledPagesResult, setCrawledPagesResult] = useState<CrawledPageDisplay[]>([]);
+
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
   );
@@ -434,6 +449,7 @@ export function GenerateTestCasesWizard({
           setUrlJobId(null);
           setUrlJobProgress(null);
           setIsGenerating(false);
+          setCrawledPagesResult(data.result?.crawledPages ?? []);
           if (data.result?.testCases?.length > 0) {
             setGeneratedTestCases(data.result.testCases);
             setSelectedTestCases(new Set(data.result.testCases.map((tc: GeneratedTestCase) => tc.id)));
@@ -446,6 +462,7 @@ export function GenerateTestCasesWizard({
           setUrlJobId(null);
           setUrlJobProgress(null);
           setIsGenerating(false);
+          setCrawledPagesResult([]);
           toast.error(data.failedReason ?? t("generateTestCases.errors.urlFetchFailed"));
         }
       } catch {
@@ -465,6 +482,23 @@ export function GenerateTestCasesWizard({
       setIsGenerating(false);
     }
   }, [sourceType, urlJobId]);
+
+  // Reopen wizard from notification link via ?urlJobId= query parameter
+  useEffect(() => {
+    const urlJobIdParam = searchParams.get('urlJobId');
+    if (!urlJobIdParam) return;
+
+    // Open the dialog and start polling that job
+    setOpen(true);
+    setSourceType('url');
+    setIsGenerating(true);
+    setUrlJobId(urlJobIdParam);
+
+    // Remove the param from URL to prevent re-triggering
+    const url = new URL(window.location.href);
+    url.searchParams.delete('urlJobId');
+    window.history.replaceState({}, '', url.toString());
+  }, [searchParams]);
 
   const toggleFieldSelection = (fieldId: number, isRequired: boolean) => {
     if (isRequired) {
@@ -680,6 +714,7 @@ export function GenerateTestCasesWizard({
     setQuantity("several");
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
+    setCrawledPagesResult([]);
     setIsGenerating(false);
     setIsImporting(false);
     setLlmError(null);
@@ -759,6 +794,11 @@ export function GenerateTestCasesWizard({
           body: JSON.stringify({
             projectId,
             url: urlInput,
+            templateId: selectedTemplateId,
+            folderId,
+            userNotes: userNotes || undefined,
+            quantity: quantity || undefined,
+            autoGenerateTags: autoGenerateTags || undefined,
             options: {
               followLinks,
               maxDepth,
@@ -3415,6 +3455,43 @@ export function GenerateTestCasesWizard({
               {/* Step 4: Review Generated Test Cases */}
               {currentStep === WizardStep.REVIEW_GENERATED && (
                 <Card shadow="none">
+                  {sourceType === 'url' && crawledPagesResult.length > 0 && (
+                    <div className="px-6 pt-6">
+                      <Collapsible>
+                        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
+                          <Globe className="w-4 h-4" />
+                          <span>{t("generateTestCases.review.crawledUrls", { count: crawledPagesResult.length })}</span>
+                          <ChevronDown className="w-4 h-4 ml-auto transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-3 space-y-2">
+                          {crawledPagesResult.map((page, idx) => (
+                            <div key={idx} className="flex items-start gap-2 text-sm py-1.5 px-3 rounded-md bg-muted/50">
+                              <ExternalLink className="w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground" />
+                              <div className="min-w-0 flex-1">
+                                <a
+                                  href={page.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline truncate block"
+                                >
+                                  {page.title || page.url}
+                                </a>
+                                {page.title && (
+                                  <span className="text-xs text-muted-foreground truncate block">{page.url}</span>
+                                )}
+                                {page.spaWarning && (
+                                  <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    {t("generateTestCases.review.spaWarning")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  )}
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
