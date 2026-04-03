@@ -409,8 +409,16 @@ export function GenerateTestCasesWizard({
     }
   }, [templates]);
 
+  // Track whether field IDs were explicitly set by restoreTemplateFromResult
+  // to prevent the template-change effect from overriding the restored selection
+  const skipFieldAutoSelect = useRef(false);
+
   useEffect(() => {
     if (selectedTemplateId && templates) {
+      if (skipFieldAutoSelect.current) {
+        skipFieldAutoSelect.current = false;
+        return;
+      }
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
         // Initialize with all field IDs selected by default
@@ -467,6 +475,8 @@ export function GenerateTestCasesWizard({
   // Uses the exact field IDs from the job if available, otherwise selects all.
   const restoreTemplateFromResult = useCallback((resultTemplateId?: number, resultFieldIds?: number[]) => {
     if (!resultTemplateId || !templates) return;
+    // Prevent the template-change useEffect from overriding our field selection
+    skipFieldAutoSelect.current = true;
     setSelectedTemplateId(resultTemplateId);
     if (resultFieldIds && resultFieldIds.length > 0) {
       setSelectedFieldIds(new Set(resultFieldIds));
