@@ -390,6 +390,9 @@ export const processor = async (
         userId: job.data.userId,
         feature: LLM_FEATURES.GENERATE_FROM_URL,
         projectId: job.data.projectId,
+        // URL generation sends large multi-page prompts — use a longer timeout
+        // than the provider default to avoid aborting slow-but-valid responses
+        timeout: 120_000,
       },
       retryOptions
     );
