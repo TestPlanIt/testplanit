@@ -39,6 +39,7 @@ export interface GenerateFromUrlJobData extends MultiTenantJobData {
     maxPages: number;
   };
   templateId?: number;
+  selectedFieldIds?: number[];
   folderId?: number;
   userNotes?: string;
   quantity?: string;
@@ -59,6 +60,7 @@ export interface GenerateFromUrlJobResult {
   urlsCrawled: string[];
   crawledPages: CrawledPageInfo[];
   templateId?: number;
+  selectedFieldIds?: number[];
 }
 
 // ---- Cancel key ----
@@ -477,6 +479,7 @@ export const processor = async (
       urlsCrawled: pages.map(p => p.url),
       crawledPages,
       templateId: job.data.templateId,
+      selectedFieldIds: job.data.selectedFieldIds,
     };
   } catch (err) {
     // Send failure notification (only for non-cancellation errors)

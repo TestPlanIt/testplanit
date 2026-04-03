@@ -463,15 +463,19 @@ export function GenerateTestCasesWizard({
     return { ...tc, fieldValues: converted };
   }, [templates, selectedTemplateId]);
 
-  // Restore template and select all its fields from a job result's templateId.
-  // Used when the wizard is reopened from a notification link or poll completion
-  // since the user's original field selection is not preserved in the job result.
-  const restoreTemplateFromResult = useCallback((resultTemplateId?: number) => {
+  // Restore template and field selection from a job result.
+  // Uses the exact field IDs from the job if available, otherwise selects all.
+  const restoreTemplateFromResult = useCallback((resultTemplateId?: number, resultFieldIds?: number[]) => {
     if (!resultTemplateId || !templates) return;
     setSelectedTemplateId(resultTemplateId);
-    const tmpl = templates.find((t) => t.id === resultTemplateId);
-    if (tmpl) {
-      setSelectedFieldIds(new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId)));
+    if (resultFieldIds && resultFieldIds.length > 0) {
+      setSelectedFieldIds(new Set(resultFieldIds));
+    } else {
+      // Fallback: select all fields if the job didn't carry field IDs
+      const tmpl = templates.find((t) => t.id === resultTemplateId);
+      if (tmpl) {
+        setSelectedFieldIds(new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId)));
+      }
     }
   }, [templates]);
 
@@ -495,7 +499,7 @@ export function GenerateTestCasesWizard({
           setUrlJobProgress(null);
           setIsGenerating(false);
           setCrawledPagesResult(data.result?.crawledPages ?? []);
-          restoreTemplateFromResult(data.result?.templateId);
+          restoreTemplateFromResult(data.result?.templateId, data.result?.selectedFieldIds);
           if (data.result?.testCases?.length > 0) {
             const converted = data.result.testCases.map(convertFieldOptionIds);
             setGeneratedTestCases(converted);
@@ -875,6 +879,7 @@ export function GenerateTestCasesWizard({
             url: urlInput,
             mode: urlMode,
             templateId: selectedTemplateId,
+            selectedFieldIds: Array.from(selectedFieldIds),
             folderId,
             userNotes: userNotes || undefined,
             quantity: quantity || undefined,

@@ -10,6 +10,7 @@ const submitSchema = z.object({
   url: z.string().url(),
   mode: z.enum(["requirements", "application"]).default("requirements"),
   templateId: z.number().optional(),
+  selectedFieldIds: z.array(z.number()).optional(),
   folderId: z.number().optional(),
   userNotes: z.string().optional(),
   quantity: z.string().optional(),
