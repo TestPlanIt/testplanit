@@ -360,27 +360,26 @@ export const processor = async (
       folderContext: job.data.folderId ?? 0,
     };
 
-    // Resolve prompt template (use buildSystemPrompt if no custom prompt configured)
+    // Resolve prompt template
     const resolvedPrompt = await promptResolver.resolve(
       llmFeature,
       job.data.projectId
     );
 
-    const systemPrompt = resolvedPrompt.source !== "fallback"
-      ? resolvedPrompt.systemPrompt
-      : buildSystemPrompt(template, generationContext, job.data.quantity, job.data.autoGenerateTags);
+    let systemPrompt: string;
+    let userPrompt: string;
 
-    // Build synthetic IssueData for buildUserPrompt
-    const syntheticIssue: IssueData = {
-      key: "URL",
-      title: seedUrl,
-      description: webContentSection,
-      status: "Web Content",
-    };
-
-    const userPrompt = resolvedPrompt.source !== "fallback"
-      ? resolvedPrompt.userPrompt
-      : buildUserPrompt(syntheticIssue, generationContext);
+    if (resolvedPrompt.source !== "fallback") {
+      // User has configured a custom prompt for this feature — use it directly
+      systemPrompt = resolvedPrompt.systemPrompt;
+      userPrompt = resolvedPrompt.userPrompt;
+    } else {
+      // Use our mode-specific fallback prompt (requirements vs application)
+      // The fallback prompts in fallback-prompts.ts are designed for URL generation
+      // and should NOT be replaced with buildSystemPrompt (which is for issue-based generation)
+      systemPrompt = resolvedPrompt.systemPrompt;
+      userPrompt = webContentSection;
+    }
 
     // Extend lock before LLM call (can take a while)
     await job.extendLock(token!, 120_000);
