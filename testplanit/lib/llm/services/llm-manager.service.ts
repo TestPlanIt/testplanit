@@ -115,18 +115,30 @@ function getValidatedBaseUrl(
     // URL not in allowlist — fall through to custom endpoint check below
   }
 
-  // Self-hosted providers (Ollama, Custom LLM) are expected to run on
-  // localhost or private networks — skip the private IP check for these
-  const SELF_HOSTED_PROVIDERS = ["OLLAMA", "CUSTOM_LLM"];
-
   // For providers that allow custom endpoints, permit any non-private URL
   // (e.g. LiteLLM proxies, Azure AI endpoints for Anthropic models)
+  //
+  // NOTE: Self-hosted providers (Ollama, Custom LLM, Gitea) naturally use
+  // localhost/private IPs, but allowing them unconditionally is an SSRF risk
+  // in multi-tenant hosted environments where a tenant admin could point the
+  // endpoint at cloud metadata or internal services. Use the
+  // ALLOWED_PRIVATE_HOSTS environment variable to explicitly permit specific
+  // private addresses that the hosting operator trusts.
   if (CUSTOM_ENDPOINT_PROVIDERS.includes(provider)) {
-    if (!SELF_HOSTED_PROVIDERS.includes(provider) && isPrivateOrInternalHost(parsedUrl.hostname)) {
-      console.warn(
-        `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. Using default.`
-      );
-      return undefined;
+    if (isPrivateOrInternalHost(parsedUrl.hostname)) {
+      // Check if the host is in the operator-level allowlist
+      const allowedPrivateHosts = (process.env.ALLOWED_PRIVATE_HOSTS ?? "")
+        .split(",")
+        .map(h => h.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (!allowedPrivateHosts.includes(parsedUrl.hostname.toLowerCase())) {
+        console.warn(
+          `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. ` +
+          `To allow this, add "${parsedUrl.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`
+        );
+        return undefined;
+      }
     }
     return userProvidedUrl;
   }

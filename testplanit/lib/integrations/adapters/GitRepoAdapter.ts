@@ -238,9 +238,18 @@ export abstract class GitRepoAdapter {
   protected sanitizeUrl(url: string): string {
     const parsed = new URL(url);
     if (!isSsrfSafe(parsed.href)) {
-      throw new Error(
-        "Request blocked: URL targets a private or internal address"
-      );
+      // Check operator-level allowlist for self-hosted providers (Gitea, etc.)
+      const allowedPrivateHosts = (process.env.ALLOWED_PRIVATE_HOSTS ?? "")
+        .split(",")
+        .map(h => h.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (!allowedPrivateHosts.includes(parsed.hostname.toLowerCase())) {
+        throw new Error(
+          `Request blocked: URL targets a private or internal address. ` +
+          `To allow this, add "${parsed.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`
+        );
+      }
     }
     // new URL() adds a trailing slash to origin-only URLs (e.g. "https://gitlab.com"
     // becomes "https://gitlab.com/"). Preserve the original's trailing-slash behavior
