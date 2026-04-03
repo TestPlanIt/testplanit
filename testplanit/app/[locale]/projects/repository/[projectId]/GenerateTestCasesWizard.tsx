@@ -37,11 +37,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -53,7 +48,6 @@ import {
   AlertTriangle,
   Bot,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -209,12 +203,18 @@ export function GenerateTestCasesWizard({
   const [selectedIssue, setSelectedIssue] = useState<ExternalIssue | null>(
     null
   );
-  const [sourceType, setSourceType] = useState<"issue" | "document" | "url">("issue");
+  const [sourceType, setSourceType] = useState<"issue" | "document" | "url">(
+    "issue"
+  );
   const [documentRequirements, setDocumentRequirements] =
     useState<DocumentRequirements | null>(null);
-  const [urlInput, setUrlInput] = useState('');
-  const [urlMode, setUrlMode] = useState<"requirements" | "application">("requirements");
-  const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+  const [urlMode, setUrlMode] = useState<"requirements" | "application">(
+    "requirements"
+  );
+  const [urlValidationError, setUrlValidationError] = useState<string | null>(
+    null
+  );
   const [followLinks, setFollowLinks] = useState(false);
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPages, setMaxPages] = useState(10);
@@ -241,7 +241,9 @@ export function GenerateTestCasesWizard({
     title?: string;
     spaWarning: boolean;
   }
-  const [crawledPagesResult, setCrawledPagesResult] = useState<CrawledPageDisplay[]>([]);
+  const [crawledPagesResult, setCrawledPagesResult] = useState<
+    CrawledPageDisplay[]
+  >([]);
   // When true, the wizard was opened from a notification link — show review only, no back navigation
   const [isNotificationReopen, setIsNotificationReopen] = useState(false);
   // Filter review test cases by source page URL (null = show all)
@@ -427,7 +429,11 @@ export function GenerateTestCasesWizard({
   // Skip when currentStep is REVIEW_GENERATED — that means we restored from a
   // job result and selectedFieldIds was already set explicitly.
   useEffect(() => {
-    if (selectedTemplateId && templates && currentStep !== WizardStep.REVIEW_GENERATED) {
+    if (
+      selectedTemplateId &&
+      templates &&
+      currentStep !== WizardStep.REVIEW_GENERATED
+    ) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
         const allFieldIds = new Set(
@@ -451,56 +457,67 @@ export function GenerateTestCasesWizard({
 
   // Convert option names → IDs for dropdown/multi-select fields in generated test cases.
   // The worker returns string names but the UI expects numeric option IDs.
-  const convertFieldOptionIds = useCallback((tc: GeneratedTestCase): GeneratedTestCase => {
-    const template = templates?.find((t) => t.id === selectedTemplateId);
-    if (!template) return tc;
-    const converted: Record<string, any> = { ...tc.fieldValues };
-    template.caseFields.forEach((cf: any) => {
-      const name = cf.caseField.displayName;
-      const type = cf.caseField.type.type;
-      const val = converted[name];
-      if (!val) return;
-      if (type === "Dropdown" && typeof val === "string") {
-        const opt = cf.caseField.fieldOptions?.find(
-          (fo: any) => fo.fieldOption.name.toLowerCase() === val.toLowerCase()
-        );
-        if (opt) converted[name] = opt.fieldOption.id;
-      } else if (type === "Multi-Select" && Array.isArray(val)) {
-        converted[name] = val
-          .map((n: string) => {
-            const opt = cf.caseField.fieldOptions?.find(
-              (fo: any) => fo.fieldOption.name.toLowerCase() === n.toLowerCase()
-            );
-            return opt?.fieldOption.id;
-          })
-          .filter((id: number | undefined) => id !== undefined);
-      }
-    });
-    return { ...tc, fieldValues: converted };
-  }, [templates, selectedTemplateId]);
+  const convertFieldOptionIds = useCallback(
+    (tc: GeneratedTestCase): GeneratedTestCase => {
+      const template = templates?.find((t) => t.id === selectedTemplateId);
+      if (!template) return tc;
+      const converted: Record<string, any> = { ...tc.fieldValues };
+      template.caseFields.forEach((cf: any) => {
+        const name = cf.caseField.displayName;
+        const type = cf.caseField.type.type;
+        const val = converted[name];
+        if (!val) return;
+        if (type === "Dropdown" && typeof val === "string") {
+          const opt = cf.caseField.fieldOptions?.find(
+            (fo: any) => fo.fieldOption.name.toLowerCase() === val.toLowerCase()
+          );
+          if (opt) converted[name] = opt.fieldOption.id;
+        } else if (type === "Multi-Select" && Array.isArray(val)) {
+          converted[name] = val
+            .map((n: string) => {
+              const opt = cf.caseField.fieldOptions?.find(
+                (fo: any) =>
+                  fo.fieldOption.name.toLowerCase() === n.toLowerCase()
+              );
+              return opt?.fieldOption.id;
+            })
+            .filter((id: number | undefined) => id !== undefined);
+        }
+      });
+      return { ...tc, fieldValues: converted };
+    },
+    [templates, selectedTemplateId]
+  );
 
   // Restore template and field selection from a job result.
   // Uses the exact field IDs from the job if available, otherwise selects all.
-  const restoreTemplateFromResult = useCallback((resultTemplateId?: number, resultFieldIds?: number[]) => {
-    if (!resultTemplateId || !templates) return;
-    setSelectedTemplateId(resultTemplateId);
-    if (resultFieldIds && resultFieldIds.length > 0) {
-      setSelectedFieldIds(new Set(resultFieldIds));
-    } else {
-      // Fallback: select all fields if the job didn't carry field IDs
-      const tmpl = templates.find((t) => t.id === resultTemplateId);
-      if (tmpl) {
-        setSelectedFieldIds(new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId)));
+  const restoreTemplateFromResult = useCallback(
+    (resultTemplateId?: number, resultFieldIds?: number[]) => {
+      if (!resultTemplateId || !templates) return;
+      setSelectedTemplateId(resultTemplateId);
+      if (resultFieldIds && resultFieldIds.length > 0) {
+        setSelectedFieldIds(new Set(resultFieldIds));
+      } else {
+        // Fallback: select all fields if the job didn't carry field IDs
+        const tmpl = templates.find((t) => t.id === resultTemplateId);
+        if (tmpl) {
+          setSelectedFieldIds(
+            new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId))
+          );
+        }
       }
-    }
-  }, [templates]);
+    },
+    [templates]
+  );
 
   // Poll URL job status while a job is active
   useEffect(() => {
     if (!urlJobId) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/llm/generate-from-url/status/${urlJobId}`);
+        const res = await fetch(
+          `/api/llm/generate-from-url/status/${urlJobId}`
+        );
         const data = await res.json();
         if (data.progress) {
           setUrlJobProgress({
@@ -514,28 +531,35 @@ export function GenerateTestCasesWizard({
           });
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
         }
-        if (data.state === 'completed') {
+        if (data.state === "completed") {
           clearInterval(interval);
           setUrlJobId(null);
           setUrlJobProgress(null);
           setIsGenerating(false);
           setCrawledPagesResult(data.result?.crawledPages ?? []);
-          restoreTemplateFromResult(data.result?.templateId, data.result?.selectedFieldIds);
+          restoreTemplateFromResult(
+            data.result?.templateId,
+            data.result?.selectedFieldIds
+          );
           if (data.result?.testCases?.length > 0) {
             const converted = data.result.testCases.map(convertFieldOptionIds);
             setGeneratedTestCases(converted);
-            setSelectedTestCases(new Set(converted.map((tc: GeneratedTestCase) => tc.id)));
+            setSelectedTestCases(
+              new Set(converted.map((tc: GeneratedTestCase) => tc.id))
+            );
             setCurrentStep(WizardStep.REVIEW_GENERATED);
           } else {
             toast.error(t("generateTestCases.errors.urlFetchFailed"));
           }
-        } else if (data.state === 'failed') {
+        } else if (data.state === "failed") {
           clearInterval(interval);
           setUrlJobId(null);
           setUrlJobProgress(null);
           setIsGenerating(false);
           setCrawledPagesResult([]);
-          toast.error(data.failedReason ?? t("generateTestCases.errors.urlFetchFailed"));
+          toast.error(
+            data.failedReason ?? t("generateTestCases.errors.urlFetchFailed")
+          );
         }
       } catch {
         // Network error — keep polling, will retry next interval
@@ -546,8 +570,10 @@ export function GenerateTestCasesWizard({
 
   // Cancel active URL job when user switches away from URL tab
   useEffect(() => {
-    if (sourceType !== 'url' && urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+    if (sourceType !== "url" && urlJobId) {
+      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+        method: "POST",
+      }).catch(() => {});
       setUrlJobId(null);
       setUrlJobProgress(null);
       setUrlRobotsSkipped(0);
@@ -557,37 +583,43 @@ export function GenerateTestCasesWizard({
 
   // Reopen wizard from notification link via ?urlJobId= query parameter
   useEffect(() => {
-    const urlJobIdParam = searchParams.get('urlJobId');
+    const urlJobIdParam = searchParams.get("urlJobId");
     if (!urlJobIdParam) return;
 
     // Remove the param from URL immediately to prevent re-triggering
     const url = new URL(window.location.href);
-    url.searchParams.delete('urlJobId');
-    window.history.replaceState({}, '', url.toString());
+    url.searchParams.delete("urlJobId");
+    window.history.replaceState({}, "", url.toString());
 
     // Reset wizard state, then fetch job result immediately (no 3s polling delay)
     resetWizard();
     setIsNotificationReopen(true);
-    setSourceType('url');
+    setSourceType("url");
     setOpen(true);
 
     (async () => {
       try {
-        const res = await fetch(`/api/llm/generate-from-url/status/${urlJobIdParam}`);
+        const res = await fetch(
+          `/api/llm/generate-from-url/status/${urlJobIdParam}`
+        );
         const data = await res.json();
 
-        if (data.state === 'completed' && data.result?.testCases?.length > 0) {
+        if (data.state === "completed" && data.result?.testCases?.length > 0) {
           setCrawledPagesResult(data.result.crawledPages ?? []);
           restoreTemplateFromResult(data.result.templateId);
           const converted = data.result.testCases.map(convertFieldOptionIds);
           setGeneratedTestCases(converted);
-          setSelectedTestCases(new Set(converted.map((tc: GeneratedTestCase) => tc.id)));
+          setSelectedTestCases(
+            new Set(converted.map((tc: GeneratedTestCase) => tc.id))
+          );
           setCurrentStep(WizardStep.REVIEW_GENERATED);
-        } else if (data.state === 'completed') {
+        } else if (data.state === "completed") {
           toast.error(t("generateTestCases.errors.urlFetchFailed"));
           setIsNotificationReopen(false);
-        } else if (data.state === 'failed') {
-          toast.error(data.failedReason ?? t("generateTestCases.errors.urlFetchFailed"));
+        } else if (data.state === "failed") {
+          toast.error(
+            data.failedReason ?? t("generateTestCases.errors.urlFetchFailed")
+          );
           setIsNotificationReopen(false);
         } else {
           // Job still running — fall back to polling
@@ -650,8 +682,10 @@ export function GenerateTestCasesWizard({
   function isValidUrl(value: string): boolean {
     try {
       const u = new URL(value);
-      return u.protocol === 'https:' || u.protocol === 'http:';
-    } catch { return false; }
+      return u.protocol === "https:" || u.protocol === "http:";
+    } catch {
+      return false;
+    }
   }
 
   // Define wizard steps with icons
@@ -685,9 +719,11 @@ export function GenerateTestCasesWizard({
   const maxUnlockedStep = useMemo<WizardStep>(() => {
     // Check if step 1 is valid (source selected)
     const hasSource =
-      sourceType === "issue" ? selectedIssue :
-      sourceType === "url" ? (urlInput && isValidUrl(urlInput)) :
-      documentRequirements;
+      sourceType === "issue"
+        ? selectedIssue
+        : sourceType === "url"
+          ? urlInput && isValidUrl(urlInput)
+          : documentRequirements;
 
     if (!hasSource) {
       // Step 1 is not complete, so only step 1 is accessible
@@ -798,7 +834,7 @@ export function GenerateTestCasesWizard({
     setSelectedIssue(null);
     setSourceType(hasActiveIntegrations ? "issue" : "url");
     setDocumentRequirements(null);
-    setUrlInput('');
+    setUrlInput("");
     setUrlMode("requirements");
     setUrlValidationError(null);
     setFollowLinks(false);
@@ -847,9 +883,11 @@ export function GenerateTestCasesWizard({
 
   const generateTestCases = async () => {
     const hasSource =
-      sourceType === "issue" ? selectedIssue :
-      sourceType === "url" ? (urlInput && isValidUrl(urlInput)) :
-      documentRequirements;
+      sourceType === "issue"
+        ? selectedIssue
+        : sourceType === "url"
+          ? urlInput && isValidUrl(urlInput)
+          : documentRequirements;
 
     // Enhanced validation with specific error messages
     if (!hasActiveLlm) {
@@ -861,7 +899,9 @@ export function GenerateTestCasesWizard({
       if (sourceType === "issue") {
         toast.error(t("generateTestCases.errors.noIssueSelected"));
       } else if (sourceType === "url") {
-        setUrlValidationError(t("generateTestCases.selectSource.urlValidationError"));
+        setUrlValidationError(
+          t("generateTestCases.selectSource.urlValidationError")
+        );
         toast.error(t("generateTestCases.errors.noUrlProvided"));
       } else {
         toast.error(t("generateTestCases.errors.noDocumentProvided"));
@@ -887,15 +927,17 @@ export function GenerateTestCasesWizard({
     // URL source type: submit to background job, poll for completion
     if (sourceType === "url") {
       if (!urlInput || !isValidUrl(urlInput)) {
-        setUrlValidationError(t("generateTestCases.selectSource.urlValidationError"));
+        setUrlValidationError(
+          t("generateTestCases.selectSource.urlValidationError")
+        );
         setIsGenerating(false);
         return;
       }
       setUrlValidationError(null);
       try {
-        const submitRes = await fetch('/api/llm/generate-from-url/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const submitRes = await fetch("/api/llm/generate-from-url/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             projectId,
             url: urlInput,
@@ -915,7 +957,7 @@ export function GenerateTestCasesWizard({
         });
         const submitData = await submitRes.json();
         if (!submitRes.ok) {
-          throw new Error(submitData.error || 'Failed to submit URL job');
+          throw new Error(submitData.error || "Failed to submit URL job");
         }
         setUrlJobId(submitData.jobId);
         setUrlRobotsSkipped(0);
@@ -923,7 +965,9 @@ export function GenerateTestCasesWizard({
         return;
       } catch (err: any) {
         setIsGenerating(false);
-        toast.error(err.message || t("generateTestCases.errors.urlFetchFailed"));
+        toast.error(
+          err.message || t("generateTestCases.errors.urlFetchFailed")
+        );
         return;
       }
     }
@@ -1422,7 +1466,9 @@ export function GenerateTestCasesWizard({
     abortControllerRef.current?.abort();
     // Cancel URL generation background job
     if (urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+        method: "POST",
+      }).catch(() => {});
       setUrlJobId(null);
       setUrlJobProgress(null);
       setUrlRobotsSkipped(0);
@@ -2778,7 +2824,8 @@ export function GenerateTestCasesWizard({
     switch (currentStep) {
       case WizardStep.SELECT_ISSUE:
         if (sourceType === "issue") return selectedIssue !== null;
-        if (sourceType === "url") return urlInput.length > 0 && isValidUrl(urlInput);
+        if (sourceType === "url")
+          return urlInput.length > 0 && isValidUrl(urlInput);
         return documentRequirements !== null;
       case WizardStep.SELECT_TEMPLATE:
         return selectedTemplateId !== null;
@@ -2964,830 +3011,976 @@ export function GenerateTestCasesWizard({
               )}
 
               {/* URL Generation Progress Overlay — shown on any step while URL job runs */}
-              {urlJobId && isGenerating && sourceType === 'url' && urlJobProgress && (
-                <Card shadow="none">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 animate-pulse" />
-                      {t("generateTestCases.selectSource.generatingSetup")}
-                    </CardTitle>
-                    <CardDescription>
-                      {t("generateTestCases.review.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {/* Phase: crawling */}
-                      {urlJobProgress.phase === "crawling" && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>
-                            {t("generateTestCases.selectSource.crawlProgress", {
-                              current: urlJobProgress.pagesProcessed,
-                            })}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Phase: generating — per-page progress */}
-                      {urlJobProgress.phase === "generating" && urlJobProgress.generationPages && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Sparkles className="h-4 w-4 animate-pulse" />
-                              <span>
-                                {(urlJobProgress.totalPagesForGeneration ?? 0) > 1
-                                  ? t("generateTestCases.selectSource.generatingProgress", {
-                                      current: urlJobProgress.pagesGenerated ?? 0,
-                                      total: urlJobProgress.totalPagesForGeneration ?? 0,
-                                      testCases: urlJobProgress.totalTestCases ?? 0,
-                                    })
-                                  : t("generateTestCases.selectSource.generatingSinglePage")}
-                              </span>
-                            </div>
+              {urlJobId &&
+                isGenerating &&
+                sourceType === "url" &&
+                urlJobProgress && (
+                  <Card shadow="none">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 animate-pulse" />
+                        {t("generateTestCases.selectSource.generatingSetup")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("generateTestCases.review.description")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {/* Phase: crawling */}
+                        {urlJobProgress.phase === "crawling" && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>
+                              {t(
+                                "generateTestCases.selectSource.crawlProgress",
+                                {
+                                  current: urlJobProgress.pagesProcessed,
+                                }
+                              )}
+                            </span>
                           </div>
-                          <div className="space-y-1.5">
-                            {urlJobProgress.generationPages.map((gp, idx) => (
-                              <div
-                                key={idx}
-                                className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
-                                  gp.status === "generating"
-                                    ? "bg-primary/5 border border-primary/20"
-                                    : gp.status === "done"
-                                      ? "bg-muted/50"
-                                      : gp.status === "failed"
-                                        ? "bg-destructive/5"
-                                        : "bg-muted/30 text-muted-foreground"
-                                }`}
-                              >
-                                {gp.status === "generating" && (
-                                  <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
-                                )}
-                                {gp.status === "done" && (
-                                  <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
-                                )}
-                                {gp.status === "failed" && (
-                                  <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-                                )}
-                                {gp.status === "pending" && (
-                                  <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
-                                )}
-                                <span className="truncate flex-1">{gp.title || gp.url}</span>
-                                {gp.status === "done" && (
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                    {gp.testCaseCount} {gp.testCaseCount === 1 ? "case" : "cases"}
-                                  </Badge>
-                                )}
-                                {gp.status === "failed" && (
-                                  <span className="text-[10px] text-destructive shrink-0">failed</span>
+                        )}
+
+                        {/* Phase: generating — per-page progress */}
+                        {urlJobProgress.phase === "generating" &&
+                          urlJobProgress.generationPages && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <Sparkles className="h-4 w-4 animate-pulse" />
+                                  <span>
+                                    {(urlJobProgress.totalPagesForGeneration ??
+                                      0) > 1
+                                      ? t(
+                                          "generateTestCases.selectSource.generatingProgress",
+                                          {
+                                            current:
+                                              urlJobProgress.pagesGenerated ??
+                                              0,
+                                            total:
+                                              urlJobProgress.totalPagesForGeneration ??
+                                              0,
+                                            testCases:
+                                              urlJobProgress.totalTestCases ??
+                                              0,
+                                          }
+                                        )
+                                      : t(
+                                          "generateTestCases.selectSource.generatingSinglePage"
+                                        )}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                {urlJobProgress.generationPages.map(
+                                  (gp, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
+                                        gp.status === "generating"
+                                          ? "bg-primary/5 border border-primary/20"
+                                          : gp.status === "done"
+                                            ? "bg-muted/50"
+                                            : gp.status === "failed"
+                                              ? "bg-destructive/5"
+                                              : "bg-muted/30 text-muted-foreground"
+                                      }`}
+                                    >
+                                      {gp.status === "generating" && (
+                                        <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
+                                      )}
+                                      {gp.status === "done" && (
+                                        <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
+                                      )}
+                                      {gp.status === "failed" && (
+                                        <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                                      )}
+                                      {gp.status === "pending" && (
+                                        <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
+                                      )}
+                                      <span className="truncate flex-1">
+                                        {gp.title || gp.url}
+                                      </span>
+                                      {gp.status === "done" && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-[10px] px-1.5 py-0 shrink-0"
+                                        >
+                                          {t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}
+                                        </Badge>
+                                      )}
+                                      {gp.status === "failed" && (
+                                        <span className="text-[10px] text-destructive shrink-0">
+                                          {t("generateTestCases.selectSource.generatingPageFailed")}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
                                 )}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                            </div>
+                          )}
 
-                      {/* Phase: setup or other */}
-                      {urlJobProgress.phase !== "generating" && urlJobProgress.phase !== "crawling" && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>{t("generateTestCases.selectSource.generatingSetup")}</span>
-                        </div>
-                      )}
+                        {/* Phase: setup or other */}
+                        {urlJobProgress.phase !== "generating" &&
+                          urlJobProgress.phase !== "crawling" && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>
+                                {t(
+                                  "generateTestCases.selectSource.generatingSetup"
+                                )}
+                              </span>
+                            </div>
+                          )}
 
-                      {urlRobotsSkipped > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          {t("generateTestCases.selectSource.robotsSkipped", {
-                            count: urlRobotsSkipped,
-                          })}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                        {urlRobotsSkipped > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {t("generateTestCases.selectSource.robotsSkipped", {
+                              count: urlRobotsSkipped,
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
               {/* Step 1: Select Source */}
-              {currentStep === WizardStep.SELECT_ISSUE && !(urlJobId && isGenerating && sourceType === 'url') && (
-                <Card shadow="none">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Search className="w-5 h-5" />
-                      {t("generateTestCases.selectSource.title")}
-                    </CardTitle>
-                    <CardDescription>
-                      {t("generateTestCases.selectSource.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Tabs
-                      value={sourceType}
-                      onValueChange={(value) =>
-                        setSourceType(value as "issue" | "document" | "url")
-                      }
-                    >
-                      {hasActiveIntegrations ? (
-                        <TabsList className="grid w-full grid-cols-3">
-                          <TabsTrigger value="issue">
-                            {t("generateTestCases.selectSource.fromIssue")}
-                          </TabsTrigger>
-                          <TabsTrigger value="url">
-                            {t("generateTestCases.selectSource.fromUrl")}
-                          </TabsTrigger>
-                          <TabsTrigger value="document">
-                            {t("generateTestCases.selectSource.fromDocument")}
-                          </TabsTrigger>
-                        </TabsList>
-                      ) : (
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="url">
-                            {t("generateTestCases.selectSource.fromUrl")}
-                          </TabsTrigger>
-                          <TabsTrigger value="document">
-                            {t("generateTestCases.selectSource.fromDocument")}
-                          </TabsTrigger>
-                        </TabsList>
-                      )}
+              {currentStep === WizardStep.SELECT_ISSUE &&
+                !(urlJobId && isGenerating && sourceType === "url") && (
+                  <Card shadow="none">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Search className="w-5 h-5" />
+                        {t("generateTestCases.selectSource.title")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("generateTestCases.selectSource.description")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Tabs
+                        value={sourceType}
+                        onValueChange={(value) =>
+                          setSourceType(value as "issue" | "document" | "url")
+                        }
+                      >
+                        {hasActiveIntegrations ? (
+                          <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="issue">
+                              {t("generateTestCases.selectSource.fromIssue")}
+                            </TabsTrigger>
+                            <TabsTrigger value="url">
+                              {t("generateTestCases.selectSource.fromUrl")}
+                            </TabsTrigger>
+                            <TabsTrigger value="document">
+                              {t("generateTestCases.selectSource.fromDocument")}
+                            </TabsTrigger>
+                          </TabsList>
+                        ) : (
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="url">
+                              {t("generateTestCases.selectSource.fromUrl")}
+                            </TabsTrigger>
+                            <TabsTrigger value="document">
+                              {t("generateTestCases.selectSource.fromDocument")}
+                            </TabsTrigger>
+                          </TabsList>
+                        )}
 
-                      {hasActiveIntegrations && (
-                        <TabsContent value="issue" className="mt-4">
-                          {selectedIssue ? (
-                            <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="space-y-3 flex-1">
-                                  {/* Header with issue key and external link */}
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      variant="default"
-                                      className="font-bold text-sm"
-                                    >
-                                      {selectedIssue.key ||
-                                        selectedIssue.externalKey}
-                                    </Badge>
-                                    {(selectedIssue.url ||
-                                      selectedIssue.externalUrl) && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 px-2 text-xs"
-                                        onClick={() => {
-                                          const url =
-                                            selectedIssue.url ||
-                                            selectedIssue.externalUrl;
-                                          if (url) {
-                                            window.open(
-                                              url,
-                                              "_blank",
-                                              "noopener,noreferrer"
-                                            );
-                                          }
-                                        }}
+                        {hasActiveIntegrations && (
+                          <TabsContent value="issue" className="mt-4">
+                            {selectedIssue ? (
+                              <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="space-y-3 flex-1">
+                                    {/* Header with issue key and external link */}
+                                    <div className="flex items-center gap-2">
+                                      <Badge
+                                        variant="default"
+                                        className="font-bold text-sm"
                                       >
-                                        <ExternalLink className="w-3 h-3" />
-                                        {t(
-                                          "generateTestCases.openInExternalSystem",
-                                          {
-                                            provider: getProviderDisplayName(
-                                              project?.projectIntegrations?.[0]
-                                                ?.integration?.provider
-                                            ),
-                                          }
-                                        )}
-                                      </Button>
-                                    )}
-                                    {selectedIssue.priority && (
-                                      <IssuePriorityDisplay
-                                        priority={selectedIssue.priority}
-                                      />
-                                    )}
-                                    <IssueStatusDisplay
-                                      status={
-                                        selectedIssue.status ||
-                                        selectedIssue.externalStatus
-                                      }
-                                    />
-                                  </div>
-
-                                  {/* Issue title */}
-                                  <div>
-                                    <h4 className="font-medium text-base leading-tight">
-                                      {selectedIssue.title}
-                                    </h4>
-                                  </div>
-
-                                  {/* Issue description */}
-                                  {selectedIssue.description && (
-                                    <div>
-                                      <Label className="text-xs font-medium text-muted-foreground mb-1">
-                                        {tCommon("fields.description")}
-                                      </Label>
-                                      <div className="text-sm text-foreground">
-                                        <IssueDescriptionText
-                                          description={
-                                            selectedIssue.description
-                                          }
+                                        {selectedIssue.key ||
+                                          selectedIssue.externalKey}
+                                      </Badge>
+                                      {(selectedIssue.url ||
+                                        selectedIssue.externalUrl) && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 px-2 text-xs"
+                                          onClick={() => {
+                                            const url =
+                                              selectedIssue.url ||
+                                              selectedIssue.externalUrl;
+                                            if (url) {
+                                              window.open(
+                                                url,
+                                                "_blank",
+                                                "noopener,noreferrer"
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <ExternalLink className="w-3 h-3" />
+                                          {t(
+                                            "generateTestCases.openInExternalSystem",
+                                            {
+                                              provider: getProviderDisplayName(
+                                                project
+                                                  ?.projectIntegrations?.[0]
+                                                  ?.integration?.provider
+                                              ),
+                                            }
+                                          )}
+                                        </Button>
+                                      )}
+                                      {selectedIssue.priority && (
+                                        <IssuePriorityDisplay
+                                          priority={selectedIssue.priority}
                                         />
+                                      )}
+                                      <IssueStatusDisplay
+                                        status={
+                                          selectedIssue.status ||
+                                          selectedIssue.externalStatus
+                                        }
+                                      />
+                                    </div>
+
+                                    {/* Issue title */}
+                                    <div>
+                                      <h4 className="font-medium text-base leading-tight">
+                                        {selectedIssue.title}
+                                      </h4>
+                                    </div>
+
+                                    {/* Issue description */}
+                                    {selectedIssue.description && (
+                                      <div>
+                                        <Label className="text-xs font-medium text-muted-foreground mb-1">
+                                          {tCommon("fields.description")}
+                                        </Label>
+                                        <div className="text-sm text-foreground">
+                                          <IssueDescriptionText
+                                            description={
+                                              selectedIssue.description
+                                            }
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedIssue(null)}
+                                    className="ml-4"
+                                  >
+                                    {tCommon("actions.change")}
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button
+                                onClick={() => setIsSearchOpen(true)}
+                                variant="outline"
+                                className="w-full"
+                              >
+                                <Search className="w-4 h-4 " />
+                                {t(
+                                  "generateTestCases.selectIssue.searchButton"
+                                )}
+                              </Button>
+                            )}
+                          </TabsContent>
+                        )}
+
+                        <TabsContent value="url" className="mt-4">
+                          <div className="space-y-4">
+                            {/* URL Input */}
+                            <div className="space-y-2">
+                              <Label htmlFor="url-input">
+                                {t("generateTestCases.selectSource.urlInput")}
+                              </Label>
+                            </div>
+
+                            {/* Mode Selector */}
+                            <div className="space-y-2">
+                              <Label>
+                                {t("generateTestCases.selectSource.urlMode")}
+                              </Label>
+                              <div className="flex gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setUrlMode("requirements")}
+                                  className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
+                                    urlMode === "requirements"
+                                      ? "border-primary bg-primary/10 text-primary font-medium"
+                                      : "border-border text-muted-foreground hover:border-primary/50"
+                                  }`}
+                                >
+                                  <div className="font-medium">
+                                    {t(
+                                      "generateTestCases.selectSource.urlModeRequirements"
+                                    )}
+                                  </div>
+                                  <div className="text-xs mt-0.5 opacity-80">
+                                    {t(
+                                      "generateTestCases.selectSource.urlModeRequirementsHint"
+                                    )}
+                                  </div>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setUrlMode("application")}
+                                  className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
+                                    urlMode === "application"
+                                      ? "border-primary bg-primary/10 text-primary font-medium"
+                                      : "border-border text-muted-foreground hover:border-primary/50"
+                                  }`}
+                                >
+                                  <div className="font-medium">
+                                    {t(
+                                      "generateTestCases.selectSource.urlModeApplication"
+                                    )}
+                                  </div>
+                                  <div className="text-xs mt-0.5 opacity-80">
+                                    {t(
+                                      "generateTestCases.selectSource.urlModeApplicationHint"
+                                    )}
+                                  </div>
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Input
+                                id="url-input"
+                                type="url"
+                                placeholder={t(
+                                  "generateTestCases.selectSource.urlInputPlaceholder"
+                                )}
+                                value={urlInput}
+                                onChange={(e) => {
+                                  setUrlInput(e.target.value);
+                                  if (urlValidationError)
+                                    setUrlValidationError(null);
+                                }}
+                                className={
+                                  urlValidationError ? "border-destructive" : ""
+                                }
+                              />
+                              {urlValidationError && (
+                                <p className="text-sm text-destructive">
+                                  {urlValidationError}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Follow Links Toggle */}
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="follow-links"
+                                  checked={followLinks}
+                                  onCheckedChange={setFollowLinks}
+                                />
+                                <Label htmlFor="follow-links">
+                                  {t(
+                                    "generateTestCases.selectSource.followLinks"
+                                  )}
+                                </Label>
+                              </div>
+                              {followLinks && (
+                                <>
+                                  <p className="text-sm text-muted-foreground">
+                                    {t(
+                                      "generateTestCases.selectSource.followLinksHint"
+                                    )}
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                      <Label htmlFor="max-depth">
+                                        {t(
+                                          "generateTestCases.selectSource.maxDepth"
+                                        )}
+                                      </Label>
+                                      <Input
+                                        id="max-depth"
+                                        type="number"
+                                        min={1}
+                                        max={5}
+                                        value={maxDepth}
+                                        onChange={(e) =>
+                                          setMaxDepth(
+                                            Math.min(
+                                              5,
+                                              Math.max(
+                                                1,
+                                                Number(e.target.value) || 1
+                                              )
+                                            )
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label htmlFor="max-pages">
+                                        {t(
+                                          "generateTestCases.selectSource.maxPages"
+                                        )}
+                                      </Label>
+                                      <Input
+                                        id="max-pages"
+                                        type="number"
+                                        min={1}
+                                        max={50}
+                                        value={maxPages}
+                                        onChange={(e) =>
+                                          setMaxPages(
+                                            Math.min(
+                                              50,
+                                              Math.max(
+                                                1,
+                                                Number(e.target.value) || 1
+                                              )
+                                            )
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Progress Display */}
+                            {urlJobId && urlJobProgress && (
+                              <div className="space-y-3">
+                                {/* Phase: crawling */}
+                                {urlJobProgress.phase === "crawling" && (
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>
+                                      {t(
+                                        "generateTestCases.selectSource.crawlProgress",
+                                        {
+                                          current:
+                                            urlJobProgress.pagesProcessed,
+                                          total: urlJobProgress.totalPages,
+                                        }
+                                      )}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Phase: generating — per-page progress */}
+                                {urlJobProgress.phase === "generating" &&
+                                  urlJobProgress.generationPages && (
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                          <Sparkles className="h-4 w-4 animate-pulse" />
+                                          <span>
+                                            {t(
+                                              "generateTestCases.selectSource.generatingProgress",
+                                              {
+                                                current:
+                                                  urlJobProgress.pagesGenerated ??
+                                                  0,
+                                                total:
+                                                  urlJobProgress.totalPagesForGeneration ??
+                                                  0,
+                                                testCases:
+                                                  urlJobProgress.totalTestCases ??
+                                                  0,
+                                              }
+                                            )}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                                        {urlJobProgress.generationPages.map(
+                                          (gp, idx) => (
+                                            <div
+                                              key={idx}
+                                              className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
+                                                gp.status === "generating"
+                                                  ? "bg-primary/5 border border-primary/20"
+                                                  : gp.status === "done"
+                                                    ? "bg-muted/50"
+                                                    : gp.status === "failed"
+                                                      ? "bg-destructive/5"
+                                                      : "bg-muted/30 text-muted-foreground"
+                                              }`}
+                                            >
+                                              {gp.status === "generating" && (
+                                                <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
+                                              )}
+                                              {gp.status === "done" && (
+                                                <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
+                                              )}
+                                              {gp.status === "failed" && (
+                                                <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                                              )}
+                                              {gp.status === "pending" && (
+                                                <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
+                                              )}
+                                              <span className="truncate flex-1">
+                                                {gp.title || gp.url}
+                                              </span>
+                                              {gp.status === "done" && (
+                                                <Badge
+                                                  variant="secondary"
+                                                  className="text-[10px] px-1.5 py-0 shrink-0"
+                                                >
+                                                  {gp.testCaseCount}{" "}
+                                                  {gp.testCaseCount === 1
+                                                    ? "case"
+                                                    : "cases"}
+                                                </Badge>
+                                              )}
+                                              {gp.status === "failed" && (
+                                                <span className="text-[10px] text-destructive shrink-0">
+                                                  failed
+                                                </span>
+                                              )}
+                                            </div>
+                                          )
+                                        )}
                                       </div>
                                     </div>
                                   )}
-                                </div>
 
+                                {/* Phase: generating but no generationPages yet (setup) */}
+                                {urlJobProgress.phase === "generating" &&
+                                  !urlJobProgress.generationPages && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      <span>
+                                        {t(
+                                          "generateTestCases.selectSource.generatingSetup"
+                                        )}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                {/* Phase: crawling — simple progress (no generationPages) */}
+                                {urlJobProgress.phase !== "generating" &&
+                                  urlJobProgress.phase !== "crawling" && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      <span>
+                                        {urlJobProgress.phase === "setup"
+                                          ? t(
+                                              "generateTestCases.selectSource.generatingSetup"
+                                            )
+                                          : t(
+                                              "generateTestCases.selectSource.crawlProgress",
+                                              {
+                                                current:
+                                                  urlJobProgress.pagesProcessed,
+                                              }
+                                            )}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                {urlRobotsSkipped > 0 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {t(
+                                      "generateTestCases.selectSource.robotsSkipped",
+                                      {
+                                        count: urlRobotsSkipped,
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="document" className="mt-4">
+                          {documentRequirements ? (
+                            <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-2">
+                                  <h4 className="font-medium">
+                                    {documentRequirements.title}
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground line-clamp-3">
+                                    {documentRequirements.description}
+                                  </p>
+                                </div>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setSelectedIssue(null)}
-                                  className="ml-4"
+                                  onClick={() => setDocumentRequirements(null)}
                                 >
                                   {tCommon("actions.change")}
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <Button
-                              onClick={() => setIsSearchOpen(true)}
-                              variant="outline"
-                              className="w-full"
-                            >
-                              <Search className="w-4 h-4 " />
-                              {t("generateTestCases.selectIssue.searchButton")}
-                            </Button>
+                            <div className="space-y-4">
+                              <div>
+                                <Label
+                                  htmlFor="doc-description"
+                                  className="text-sm font-medium"
+                                >
+                                  {t(
+                                    "generateTestCases.selectSource.documentDescription"
+                                  )}
+                                </Label>
+                                <Textarea
+                                  id="doc-description"
+                                  placeholder={t(
+                                    "generateTestCases.selectSource.documentDescriptionPlaceholder"
+                                  )}
+                                  rows={8}
+                                  className="mt-1"
+                                />
+                              </div>
+                              <Button
+                                onClick={() => {
+                                  const description = (
+                                    document.getElementById(
+                                      "doc-description"
+                                    ) as HTMLTextAreaElement
+                                  )?.value;
+
+                                  if (description) {
+                                    setDocumentRequirements({
+                                      id: `doc_${Date.now()}`,
+                                      title: t(
+                                        "generateTestCases.selectSource.documentDescription"
+                                      ),
+                                      description,
+                                      isDocument: true,
+                                    });
+                                  }
+                                }}
+                                className="w-full"
+                              >
+                                {t(
+                                  "generateTestCases.selectSource.saveDocument"
+                                )}
+                              </Button>
+                            </div>
                           )}
                         </TabsContent>
-                      )}
+                      </Tabs>
+                    </CardContent>
+                  </Card>
+                )}
 
-                      <TabsContent value="url" className="mt-4">
-                        <div className="space-y-4">
-                          {/* URL Input */}
-                          <div className="space-y-2">
-                            <Label htmlFor="url-input">
-                              {t("generateTestCases.selectSource.urlInput")}
-                            </Label>
-                          </div>
-
-                          {/* Mode Selector */}
-                          <div className="space-y-2">
-                            <Label>{t("generateTestCases.selectSource.urlMode")}</Label>
-                            <div className="flex gap-3">
-                              <button
-                                type="button"
-                                onClick={() => setUrlMode("requirements")}
-                                className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
-                                  urlMode === "requirements"
-                                    ? "border-primary bg-primary/10 text-primary font-medium"
-                                    : "border-border text-muted-foreground hover:border-primary/50"
-                                }`}
-                              >
-                                <div className="font-medium">{t("generateTestCases.selectSource.urlModeRequirements")}</div>
-                                <div className="text-xs mt-0.5 opacity-80">{t("generateTestCases.selectSource.urlModeRequirementsHint")}</div>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setUrlMode("application")}
-                                className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
-                                  urlMode === "application"
-                                    ? "border-primary bg-primary/10 text-primary font-medium"
-                                    : "border-border text-muted-foreground hover:border-primary/50"
-                                }`}
-                              >
-                                <div className="font-medium">{t("generateTestCases.selectSource.urlModeApplication")}</div>
-                                <div className="text-xs mt-0.5 opacity-80">{t("generateTestCases.selectSource.urlModeApplicationHint")}</div>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Input
-                              id="url-input"
-                              type="url"
-                              placeholder={t("generateTestCases.selectSource.urlInputPlaceholder")}
-                              value={urlInput}
-                              onChange={(e) => {
-                                setUrlInput(e.target.value);
-                                if (urlValidationError) setUrlValidationError(null);
-                              }}
-                              className={urlValidationError ? "border-destructive" : ""}
-                            />
-                            {urlValidationError && (
-                              <p className="text-sm text-destructive">{urlValidationError}</p>
+              {/* Step 2: Select Template */}
+              {currentStep === WizardStep.SELECT_TEMPLATE &&
+                !(urlJobId && isGenerating && sourceType === "url") && (
+                  <Card shadow="none">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        {t("generateTestCases.selectTemplate.title")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("generateTestCases.selectTemplate.description")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Select
+                        value={selectedTemplateId?.toString() || ""}
+                        onValueChange={(value) =>
+                          setSelectedTemplateId(Number(value))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={t(
+                              "generateTestCases.selectTemplate.placeholder"
                             )}
-                          </div>
-
-                          {/* Follow Links Toggle */}
-                          <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                              <Switch
-                                id="follow-links"
-                                checked={followLinks}
-                                onCheckedChange={setFollowLinks}
-                              />
-                              <Label htmlFor="follow-links">
-                                {t("generateTestCases.selectSource.followLinks")}
-                              </Label>
-                            </div>
-                            {followLinks && (
-                              <>
-                                <p className="text-sm text-muted-foreground">
-                                  {t("generateTestCases.selectSource.followLinksHint")}
-                                </p>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-1">
-                                    <Label htmlFor="max-depth">
-                                      {t("generateTestCases.selectSource.maxDepth")}
-                                    </Label>
-                                    <Input
-                                      id="max-depth"
-                                      type="number"
-                                      min={1}
-                                      max={5}
-                                      value={maxDepth}
-                                      onChange={(e) => setMaxDepth(Math.min(5, Math.max(1, Number(e.target.value) || 1)))}
-                                    />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label htmlFor="max-pages">
-                                      {t("generateTestCases.selectSource.maxPages")}
-                                    </Label>
-                                    <Input
-                                      id="max-pages"
-                                      type="number"
-                                      min={1}
-                                      max={50}
-                                      value={maxPages}
-                                      onChange={(e) => setMaxPages(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
-                                    />
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                          {/* Progress Display */}
-                          {urlJobId && urlJobProgress && (
-                            <div className="space-y-3">
-                              {/* Phase: crawling */}
-                              {urlJobProgress.phase === "crawling" && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>
-                                    {t("generateTestCases.selectSource.crawlProgress", {
-                                      current: urlJobProgress.pagesProcessed,
-                                      total: urlJobProgress.totalPages,
-                                    })}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Phase: generating — per-page progress */}
-                              {urlJobProgress.phase === "generating" && urlJobProgress.generationPages && (
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                      <Sparkles className="h-4 w-4 animate-pulse" />
-                                      <span>
-                                        {t("generateTestCases.selectSource.generatingProgress", {
-                                          current: urlJobProgress.pagesGenerated ?? 0,
-                                          total: urlJobProgress.totalPagesForGeneration ?? 0,
-                                          testCases: urlJobProgress.totalTestCases ?? 0,
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                    {urlJobProgress.generationPages.map((gp, idx) => (
-                                      <div
-                                        key={idx}
-                                        className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
-                                          gp.status === "generating"
-                                            ? "bg-primary/5 border border-primary/20"
-                                            : gp.status === "done"
-                                              ? "bg-muted/50"
-                                              : gp.status === "failed"
-                                                ? "bg-destructive/5"
-                                                : "bg-muted/30 text-muted-foreground"
-                                        }`}
-                                      >
-                                        {gp.status === "generating" && (
-                                          <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
-                                        )}
-                                        {gp.status === "done" && (
-                                          <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
-                                        )}
-                                        {gp.status === "failed" && (
-                                          <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-                                        )}
-                                        {gp.status === "pending" && (
-                                          <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
-                                        )}
-                                        <span className="truncate flex-1">{gp.title || gp.url}</span>
-                                        {gp.status === "done" && (
-                                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                            {gp.testCaseCount} {gp.testCaseCount === 1 ? "case" : "cases"}
-                                          </Badge>
-                                        )}
-                                        {gp.status === "failed" && (
-                                          <span className="text-[10px] text-destructive shrink-0">failed</span>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Phase: generating but no generationPages yet (setup) */}
-                              {urlJobProgress.phase === "generating" && !urlJobProgress.generationPages && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>{t("generateTestCases.selectSource.generatingSetup")}</span>
-                                </div>
-                              )}
-
-                              {/* Phase: crawling — simple progress (no generationPages) */}
-                              {urlJobProgress.phase !== "generating" && urlJobProgress.phase !== "crawling" && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>{urlJobProgress.phase === "setup" ? t("generateTestCases.selectSource.generatingSetup") : t("generateTestCases.selectSource.crawlProgress", { current: urlJobProgress.pagesProcessed })}</span>
-                                </div>
-                              )}
-
-                              {urlRobotsSkipped > 0 && (
-                                <p className="text-xs text-muted-foreground">
-                                  {t("generateTestCases.selectSource.robotsSkipped", {
-                                    count: urlRobotsSkipped,
-                                  })}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="document" className="mt-4">
-                        {documentRequirements ? (
-                          <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-2">
-                                <h4 className="font-medium">
-                                  {documentRequirements.title}
-                                </h4>
-                                <p className="text-sm text-muted-foreground line-clamp-3">
-                                  {documentRequirements.description}
-                                </p>
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {templates?.map((template) => (
+                            <SelectItem
+                              key={template.id}
+                              value={template.id.toString()}
+                            >
+                              <div className="flex items-center justify-between w-full gap-2">
+                                <span>{template.templateName}</span>
+                                {template.isDefault && (
+                                  <TooltipProvider delayDuration={300}>
+                                    <Tooltip>
+                                      <TooltipTrigger className="ml-1" asChild>
+                                        <Badge variant="secondary">
+                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {tCommon("defaultOption")}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
                               </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {selectedTemplateId && (
+                        <div className="mt-4 p-4 bg-muted rounded-lg">
+                          <h5 className="font-medium mb-2">
+                            {tGlobal(
+                              "admin.imports.testmo.mapping.templateColumnFields"
+                            )}
+                          </h5>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-sm text-muted-foreground">
+                              {t(
+                                "generateTestCases.selectTemplate.fieldsDescription"
+                              )}
+                            </p>
+                            <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setDocumentRequirements(null)}
+                                onClick={selectAllFields}
+                                type="button"
                               >
-                                {tCommon("actions.change")}
+                                {tCommon("actions.selectAll")}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={deselectOptionalFields}
+                                type="button"
+                              >
+                                {t(
+                                  "generateTestCases.selectTemplate.requiredOnly"
+                                )}
                               </Button>
                             </div>
                           </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div>
-                              <Label
-                                htmlFor="doc-description"
-                                className="text-sm font-medium"
-                              >
-                                {t(
-                                  "generateTestCases.selectSource.documentDescription"
-                                )}
-                              </Label>
-                              <Textarea
-                                id="doc-description"
-                                placeholder={t(
-                                  "generateTestCases.selectSource.documentDescriptionPlaceholder"
-                                )}
-                                rows={8}
-                                className="mt-1"
-                              />
-                            </div>
-                            <Button
-                              onClick={() => {
-                                const description = (
-                                  document.getElementById(
-                                    "doc-description"
-                                  ) as HTMLTextAreaElement
-                                )?.value;
-
-                                if (description) {
-                                  setDocumentRequirements({
-                                    id: `doc_${Date.now()}`,
-                                    title: t(
-                                      "generateTestCases.selectSource.documentDescription"
-                                    ),
-                                    description,
-                                    isDocument: true,
-                                  });
-                                }
-                              }}
-                              className="w-full"
-                            >
-                              {t("generateTestCases.selectSource.saveDocument")}
-                            </Button>
-                          </div>
-                        )}
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Step 2: Select Template */}
-              {currentStep === WizardStep.SELECT_TEMPLATE && !(urlJobId && isGenerating && sourceType === 'url') && (
-                <Card shadow="none">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      {t("generateTestCases.selectTemplate.title")}
-                    </CardTitle>
-                    <CardDescription>
-                      {t("generateTestCases.selectTemplate.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Select
-                      value={selectedTemplateId?.toString() || ""}
-                      onValueChange={(value) =>
-                        setSelectedTemplateId(Number(value))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t(
-                            "generateTestCases.selectTemplate.placeholder"
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates?.map((template) => (
-                          <SelectItem
-                            key={template.id}
-                            value={template.id.toString()}
-                          >
-                            <div className="flex items-center justify-between w-full gap-2">
-                              <span>{template.templateName}</span>
-                              {template.isDefault && (
-                                <TooltipProvider delayDuration={300}>
-                                  <Tooltip>
-                                    <TooltipTrigger className="ml-1" asChild>
-                                      <Badge variant="secondary">
-                                        <Star className="h-3 w-3 fill-current text-primary-background" />
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      {tCommon("defaultOption")}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {selectedTemplateId && (
-                      <div className="mt-4 p-4 bg-muted rounded-lg">
-                        <h5 className="font-medium mb-2">
-                          {tGlobal(
-                            "admin.imports.testmo.mapping.templateColumnFields"
-                          )}
-                        </h5>
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm text-muted-foreground">
-                            {t(
-                              "generateTestCases.selectTemplate.fieldsDescription"
-                            )}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={selectAllFields}
-                              type="button"
-                            >
-                              {tCommon("actions.selectAll")}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={deselectOptionalFields}
-                              type="button"
-                            >
-                              {t(
-                                "generateTestCases.selectTemplate.requiredOnly"
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {templates
-                            ?.find((t) => t.id === selectedTemplateId)
-                            ?.caseFields.slice()
-                            .sort((a, b) => a.order - b.order)
-                            .map((field) => (
-                              <div
-                                key={field.caseFieldId}
-                                className="flex items-center justify-between p-2 rounded border bg-background"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <Checkbox
-                                    id={`field-${field.caseFieldId}`}
-                                    checked={selectedFieldIds.has(
-                                      field.caseFieldId
-                                    )}
-                                    onCheckedChange={() =>
-                                      toggleFieldSelection(
-                                        field.caseFieldId,
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {templates
+                              ?.find((t) => t.id === selectedTemplateId)
+                              ?.caseFields.slice()
+                              .sort((a, b) => a.order - b.order)
+                              .map((field) => (
+                                <div
+                                  key={field.caseFieldId}
+                                  className="flex items-center justify-between p-2 rounded border bg-background"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Checkbox
+                                      id={`field-${field.caseFieldId}`}
+                                      checked={selectedFieldIds.has(
+                                        field.caseFieldId
+                                      )}
+                                      onCheckedChange={() =>
+                                        toggleFieldSelection(
+                                          field.caseFieldId,
+                                          field.caseField.isRequired
+                                        )
+                                      }
+                                      disabled={field.caseField.isRequired}
+                                    />
+                                    <Label
+                                      htmlFor={`field-${field.caseFieldId}`}
+                                      className={`text-sm cursor-pointer ${
                                         field.caseField.isRequired
-                                      )
-                                    }
-                                    disabled={field.caseField.isRequired}
-                                  />
-                                  <Label
-                                    htmlFor={`field-${field.caseFieldId}`}
-                                    className={`text-sm cursor-pointer ${
-                                      field.caseField.isRequired
-                                        ? "text-muted-foreground"
-                                        : ""
-                                    }`}
-                                  >
-                                    {field.caseField.displayName}
-                                  </Label>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {field.caseField.type.type}
-                                  </Badge>
-                                  {field.caseField.isRequired && (
+                                          ? "text-muted-foreground"
+                                          : ""
+                                      }`}
+                                    >
+                                      {field.caseField.displayName}
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
                                     <Badge
-                                      variant="destructive"
+                                      variant="outline"
                                       className="text-xs"
                                     >
-                                      {tCommon("fields.required")}
+                                      {field.caseField.type.type}
                                     </Badge>
-                                  )}
+                                    {field.caseField.isRequired && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="text-xs"
+                                      >
+                                        {tCommon("fields.required")}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
               {/* Step 3: Add Notes */}
-              {currentStep === WizardStep.ADD_NOTES && !(urlJobId && isGenerating && sourceType === 'url') && (
-                <Card shadow="none">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="w-5 h-5" />
-                      {t("generateTestCases.addNotes.title")}
-                    </CardTitle>
-                    <CardDescription>
-                      {t("generateTestCases.addNotes.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className=" overflow-y-auto">
-                    <div className="mb-4">
-                      <Label className="text-sm font-medium mb-2 block">
-                        {t("generateTestCases.addNotes.quantity")}
-                      </Label>
-                      <Select value={quantity} onValueChange={setQuantity}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="just_one">
-                            {t(
-                              "generateTestCases.addNotes.quantityOptions.justOne"
-                            )}
-                          </SelectItem>
-                          <SelectItem value="couple">
-                            {t(
-                              "generateTestCases.addNotes.quantityOptions.couple"
-                            )}
-                          </SelectItem>
-                          <SelectItem value="few">
-                            {t(
-                              "generateTestCases.addNotes.quantityOptions.few"
-                            )}
-                          </SelectItem>
-                          <SelectItem value="several">
-                            {t(
-                              "generateTestCases.addNotes.quantityOptions.several"
-                            )}
-                          </SelectItem>
-                          <SelectItem value="many">
-                            {t(
-                              "generateTestCases.addNotes.quantityOptions.many"
-                            )}
-                          </SelectItem>
-                          <SelectItem value="all">
-                            {t(
-                              "generateTestCases.addNotes.quantityOptions.maximum"
-                            )}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Textarea
-                      placeholder={t("generateTestCases.addNotes.placeholder")}
-                      value={userNotes}
-                      onChange={(e) => setUserNotes(e.target.value)}
-                      rows={6}
-                      className="mb-4"
-                    />
-
-                    {/* Auto-generate tags option */}
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Checkbox
-                        id="auto-generate-tags"
-                        checked={autoGenerateTags}
-                        onCheckedChange={(checked) =>
-                          setAutoGenerateTags(checked === true)
-                        }
-                      />
-                      <Label
-                        htmlFor="auto-generate-tags"
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {t("generateTestCases.autoGenerateTags")}
-                      </Label>
-                    </div>
-
-                    {/* Quick suggestions */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">
-                        {t("generateTestCases.addNotes.suggestions")}
-                      </Label>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          {
-                            key: "security",
-                            value: t(
-                              "generateTestCases.addNotes.suggestionItems.security"
-                            ),
-                          },
-                          {
-                            key: "edgeCases",
-                            value: t(
-                              "generateTestCases.addNotes.suggestionItems.edgeCases"
-                            ),
-                          },
-                          {
-                            key: "happyPath",
-                            value: t(
-                              "generateTestCases.addNotes.suggestionItems.happyPath"
-                            ),
-                          },
-                          {
-                            key: "mobile",
-                            value: t(
-                              "generateTestCases.addNotes.suggestionItems.mobile"
-                            ),
-                          },
-                          {
-                            key: "api",
-                            value: t(
-                              "generateTestCases.addNotes.suggestionItems.api"
-                            ),
-                          },
-                          {
-                            key: "accessibility",
-                            value: t(
-                              "generateTestCases.addNotes.suggestionItems.accessibility"
-                            ),
-                          },
-                        ].map((suggestion) => (
-                          <Button
-                            key={suggestion.key}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setUserNotes((prev) =>
-                                prev
-                                  ? `${prev}\n${suggestion.value}`
-                                  : suggestion.value
-                              );
-                            }}
-                          >
-                            {suggestion.value}
-                          </Button>
-                        ))}
+              {currentStep === WizardStep.ADD_NOTES &&
+                !(urlJobId && isGenerating && sourceType === "url") && (
+                  <Card shadow="none">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings className="w-5 h-5" />
+                        {t("generateTestCases.addNotes.title")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("generateTestCases.addNotes.description")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className=" overflow-y-auto">
+                      <div className="mb-4">
+                        <Label className="text-sm font-medium mb-2 block">
+                          {t("generateTestCases.addNotes.quantity")}
+                        </Label>
+                        <Select value={quantity} onValueChange={setQuantity}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="just_one">
+                              {t(
+                                "generateTestCases.addNotes.quantityOptions.justOne"
+                              )}
+                            </SelectItem>
+                            <SelectItem value="couple">
+                              {t(
+                                "generateTestCases.addNotes.quantityOptions.couple"
+                              )}
+                            </SelectItem>
+                            <SelectItem value="few">
+                              {t(
+                                "generateTestCases.addNotes.quantityOptions.few"
+                              )}
+                            </SelectItem>
+                            <SelectItem value="several">
+                              {t(
+                                "generateTestCases.addNotes.quantityOptions.several"
+                              )}
+                            </SelectItem>
+                            <SelectItem value="many">
+                              {t(
+                                "generateTestCases.addNotes.quantityOptions.many"
+                              )}
+                            </SelectItem>
+                            <SelectItem value="all">
+                              {t(
+                                "generateTestCases.addNotes.quantityOptions.maximum"
+                              )}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+
+                      <Textarea
+                        placeholder={t(
+                          "generateTestCases.addNotes.placeholder"
+                        )}
+                        value={userNotes}
+                        onChange={(e) => setUserNotes(e.target.value)}
+                        rows={6}
+                        className="mb-4"
+                      />
+
+                      {/* Auto-generate tags option */}
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Checkbox
+                          id="auto-generate-tags"
+                          checked={autoGenerateTags}
+                          onCheckedChange={(checked) =>
+                            setAutoGenerateTags(checked === true)
+                          }
+                        />
+                        <Label
+                          htmlFor="auto-generate-tags"
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {t("generateTestCases.autoGenerateTags")}
+                        </Label>
+                      </div>
+
+                      {/* Quick suggestions */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          {t("generateTestCases.addNotes.suggestions")}
+                        </Label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            {
+                              key: "security",
+                              value: t(
+                                "generateTestCases.addNotes.suggestionItems.security"
+                              ),
+                            },
+                            {
+                              key: "edgeCases",
+                              value: t(
+                                "generateTestCases.addNotes.suggestionItems.edgeCases"
+                              ),
+                            },
+                            {
+                              key: "happyPath",
+                              value: t(
+                                "generateTestCases.addNotes.suggestionItems.happyPath"
+                              ),
+                            },
+                            {
+                              key: "mobile",
+                              value: t(
+                                "generateTestCases.addNotes.suggestionItems.mobile"
+                              ),
+                            },
+                            {
+                              key: "api",
+                              value: t(
+                                "generateTestCases.addNotes.suggestionItems.api"
+                              ),
+                            },
+                            {
+                              key: "accessibility",
+                              value: t(
+                                "generateTestCases.addNotes.suggestionItems.accessibility"
+                              ),
+                            },
+                          ].map((suggestion) => (
+                            <Button
+                              key={suggestion.key}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setUserNotes((prev) =>
+                                  prev
+                                    ? `${prev}\n${suggestion.value}`
+                                    : suggestion.value
+                                );
+                              }}
+                            >
+                              {suggestion.value}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
               {/* Step 4: Review Generated Test Cases */}
               {currentStep === WizardStep.REVIEW_GENERATED && (
                 <Card shadow="none">
-                  {sourceType === 'url' && crawledPagesResult.length > 1 && (
+                  {sourceType === "url" && crawledPagesResult.length > 1 && (
                     <div className="px-6 pt-6">
                       <div className="flex items-center gap-2">
                         <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -3796,26 +3989,33 @@ export function GenerateTestCasesWizard({
                         </span>
                         <Select
                           value={reviewPageFilter ?? "__all__"}
-                          onValueChange={(val) => setReviewPageFilter(val === "__all__" ? null : val)}
+                          onValueChange={(val) =>
+                            setReviewPageFilter(val === "__all__" ? null : val)
+                          }
                         >
                           <SelectTrigger className="w-full max-w-md h-9 text-sm">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__all__">
-                              {t("generateTestCases.review.allPages")} ({generatedTestCases.length})
+                              {t("generateTestCases.review.allPages")} (
+                              {generatedTestCases.length})
                             </SelectItem>
                             {crawledPagesResult.map((page, idx) => {
                               const pageTestCount = generatedTestCases.filter(
-                                tc => tc.sourceUrl === page.url
+                                (tc) => tc.sourceUrl === page.url
                               ).length;
                               return (
                                 <SelectItem key={idx} value={page.url}>
-                                  <span className="truncate">{page.title || page.url}</span>
+                                  <span className="truncate">
+                                    {page.title || page.url}
+                                  </span>
                                   {page.spaWarning && (
                                     <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
                                   )}
-                                  <span className="text-muted-foreground ml-1">({pageTestCount})</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    ({pageTestCount})
+                                  </span>
                                 </SelectItem>
                               );
                             })}
@@ -3910,46 +4110,52 @@ export function GenerateTestCasesWizard({
                         </AlertDescription>
                       </Alert>
                     ) : (
-                      <div className={`space-y-4 transition-opacity duration-300 ${isGenerating ? "opacity-60" : "opacity-100"}`}>
+                      <div
+                        className={`space-y-4 transition-opacity duration-300 ${isGenerating ? "opacity-60" : "opacity-100"}`}
+                      >
                         {generatedTestCases
-                        .filter(tc => !reviewPageFilter || tc.sourceUrl === reviewPageFilter)
-                        .map((testCase, index) => {
-                          const template = templates?.find(
-                            (t) => t.id === selectedTemplateId
-                          );
-                          if (!template) {
-                            return null;
-                          }
+                          .filter(
+                            (tc) =>
+                              !reviewPageFilter ||
+                              tc.sourceUrl === reviewPageFilter
+                          )
+                          .map((testCase, index) => {
+                            const template = templates?.find(
+                              (t) => t.id === selectedTemplateId
+                            );
+                            if (!template) {
+                              return null;
+                            }
 
-                          return (
-                            <GeneratedTestCaseCard
-                              key={testCase.id}
-                              testCase={testCase}
-                              template={template}
-                              selectedFieldIds={selectedFieldIds}
-                              isSelected={selectedTestCases.has(testCase.id)}
-                              onSelectionChange={(checked) =>
-                                toggleTestCaseSelection(testCase.id, checked)
-                              }
-                              isEditing={editingTestCaseIds.has(testCase.id)}
-                              onStartEdit={() =>
-                                startEditingTestCase(testCase.id)
-                              }
-                              onCancelEdit={() =>
-                                stopEditingTestCase(testCase.id)
-                              }
-                              onSave={handleSaveEditedTestCase}
-                              autoGenerateTags={autoGenerateTags}
-                              disabled={isGenerating}
-                              t={t}
-                              tCommon={tCommon}
-                              session={session}
-                              projectId={projectId}
-                              index={index}
-                              formSubmitHandlersRef={formSubmitHandlersRef}
-                            />
-                          );
-                        })}
+                            return (
+                              <GeneratedTestCaseCard
+                                key={testCase.id}
+                                testCase={testCase}
+                                template={template}
+                                selectedFieldIds={selectedFieldIds}
+                                isSelected={selectedTestCases.has(testCase.id)}
+                                onSelectionChange={(checked) =>
+                                  toggleTestCaseSelection(testCase.id, checked)
+                                }
+                                isEditing={editingTestCaseIds.has(testCase.id)}
+                                onStartEdit={() =>
+                                  startEditingTestCase(testCase.id)
+                                }
+                                onCancelEdit={() =>
+                                  stopEditingTestCase(testCase.id)
+                                }
+                                onSave={handleSaveEditedTestCase}
+                                autoGenerateTags={autoGenerateTags}
+                                disabled={isGenerating}
+                                t={t}
+                                tCommon={tCommon}
+                                session={session}
+                                projectId={projectId}
+                                index={index}
+                                formSubmitHandlersRef={formSubmitHandlersRef}
+                              />
+                            );
+                          })}
                         {/* "Still generating" indicator below rendered cards */}
                         {isGenerating && (
                           <div className="flex items-center justify-between rounded-lg border border-dashed p-4">
@@ -3981,16 +4187,17 @@ export function GenerateTestCasesWizard({
           {/* Dialog Footer */}
           <div className="flex items-center justify-between mt-6 pt-4 border-t shrink-0">
             <div className="flex items-center gap-2">
-              {currentStep > WizardStep.SELECT_ISSUE && !isNotificationReopen && (
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  disabled={isImporting}
-                >
-                  <ChevronLeft className="w-4 h-4 " />
-                  {tCommon("actions.back")}
-                </Button>
-              )}
+              {currentStep > WizardStep.SELECT_ISSUE &&
+                !isNotificationReopen && (
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={isImporting}
+                  >
+                    <ChevronLeft className="w-4 h-4 " />
+                    {tCommon("actions.back")}
+                  </Button>
+                )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -3999,7 +4206,9 @@ export function GenerateTestCasesWizard({
                 onClick={() => {
                   // Cancel any active URL generation job before closing
                   if (urlJobId) {
-                    fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+                    fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+                      method: "POST",
+                    }).catch(() => {});
                   }
                   setOpen(false);
                 }}
