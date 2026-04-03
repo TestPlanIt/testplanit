@@ -402,7 +402,14 @@ export const processor = async (
       retryOptions
     );
 
-    // Parse and validate
+    // Parse and validate — use a synthetic IssueData for the parser's fallback naming
+    const syntheticIssue: IssueData = {
+      key: "URL",
+      title: seedUrl,
+      description: webContentSection,
+      status: "Web Content",
+    };
+
     const { testCases, parseError } = parseAndValidateTestCases(
       llmResponse.content,
       template,
