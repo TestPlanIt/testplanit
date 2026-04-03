@@ -3779,52 +3779,38 @@ export function GenerateTestCasesWizard({
                 <Card shadow="none">
                   {sourceType === 'url' && crawledPagesResult.length > 1 && (
                     <div className="px-6 pt-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Globe className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm font-medium text-muted-foreground shrink-0">
                           {t("generateTestCases.review.filterByPage")}
                         </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setReviewPageFilter(null)}
-                          className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs transition-colors ${
-                            reviewPageFilter === null
-                              ? "border-primary bg-primary/10 text-primary font-medium"
-                              : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                          }`}
+                        <Select
+                          value={reviewPageFilter ?? "__all__"}
+                          onValueChange={(val) => setReviewPageFilter(val === "__all__" ? null : val)}
                         >
-                          {t("generateTestCases.review.allPages")}
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            {generatedTestCases.length}
-                          </Badge>
-                        </button>
-                        {crawledPagesResult.map((page, idx) => {
-                          const pageTestCount = generatedTestCases.filter(
-                            tc => tc.sourceUrl === page.url
-                          ).length;
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => setReviewPageFilter(page.url)}
-                              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs transition-colors max-w-[300px] ${
-                                reviewPageFilter === page.url
-                                  ? "border-primary bg-primary/10 text-primary font-medium"
-                                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                              }`}
-                            >
-                              <span className="truncate">{page.title || page.url}</span>
-                              {page.spaWarning && (
-                                <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
-                              )}
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                {pageTestCount}
-                              </Badge>
-                            </button>
-                          );
-                        })}
+                          <SelectTrigger className="w-full max-w-md h-9 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__all__">
+                              {t("generateTestCases.review.allPages")} ({generatedTestCases.length})
+                            </SelectItem>
+                            {crawledPagesResult.map((page, idx) => {
+                              const pageTestCount = generatedTestCases.filter(
+                                tc => tc.sourceUrl === page.url
+                              ).length;
+                              return (
+                                <SelectItem key={idx} value={page.url}>
+                                  <span className="truncate">{page.title || page.url}</span>
+                                  {page.spaWarning && (
+                                    <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
+                                  )}
+                                  <span className="text-muted-foreground ml-1">({pageTestCount})</span>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   )}
