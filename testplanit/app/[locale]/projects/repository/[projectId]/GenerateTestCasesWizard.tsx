@@ -1418,7 +1418,16 @@ export function GenerateTestCasesWizard({
   };
 
   const handleCancelGeneration = () => {
+    // Cancel SSE streaming (issue/document generation)
     abortControllerRef.current?.abort();
+    // Cancel URL generation background job
+    if (urlJobId) {
+      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+      setUrlJobId(null);
+      setUrlJobProgress(null);
+      setUrlRobotsSkipped(0);
+      setIsGenerating(false);
+    }
   };
 
   const handleRetryGeneration = () => {
@@ -3987,7 +3996,13 @@ export function GenerateTestCasesWizard({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  // Cancel any active URL generation job before closing
+                  if (urlJobId) {
+                    fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, { method: 'POST' }).catch(() => {});
+                  }
+                  setOpen(false);
+                }}
                 disabled={isImporting}
               >
                 {tCommon("cancel")}
