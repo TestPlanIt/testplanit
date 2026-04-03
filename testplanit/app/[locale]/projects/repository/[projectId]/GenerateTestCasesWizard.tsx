@@ -2975,7 +2975,6 @@ export function GenerateTestCasesWizard({
                           <span>
                             {t("generateTestCases.selectSource.crawlProgress", {
                               current: urlJobProgress.pagesProcessed,
-                              total: urlJobProgress.totalPages,
                             })}
                           </span>
                         </div>
@@ -3395,7 +3394,7 @@ export function GenerateTestCasesWizard({
                               {urlJobProgress.phase !== "generating" && urlJobProgress.phase !== "crawling" && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>{urlJobProgress.phase === "setup" ? t("generateTestCases.selectSource.generatingSetup") : t("generateTestCases.selectSource.crawlProgress", { current: urlJobProgress.pagesProcessed, total: urlJobProgress.totalPages })}</span>
+                                  <span>{urlJobProgress.phase === "setup" ? t("generateTestCases.selectSource.generatingSetup") : t("generateTestCases.selectSource.crawlProgress", { current: urlJobProgress.pagesProcessed })}</span>
                                 </div>
                               )}
 
