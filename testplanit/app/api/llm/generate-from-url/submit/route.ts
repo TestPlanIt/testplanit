@@ -8,6 +8,7 @@ import { authOptions } from "~/server/auth";
 const submitSchema = z.object({
   projectId: z.number(),
   url: z.string().url(),
+  mode: z.enum(["requirements", "application"]).default("requirements"),
   templateId: z.number().optional(),
   folderId: z.number().optional(),
   userNotes: z.string().optional(),

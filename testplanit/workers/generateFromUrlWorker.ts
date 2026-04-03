@@ -32,6 +32,7 @@ export interface GenerateFromUrlJobData extends MultiTenantJobData {
   projectId: number;
   userId: string;
   url: string;
+  mode: "requirements" | "application";
   options: {
     followLinks: boolean;
     maxDepth: number;
@@ -277,8 +278,13 @@ export const processor = async (
     const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
     const promptResolver = new PromptResolver(prisma as any);
 
+    // Select the LLM feature based on mode — each has its own customizable prompt
+    const llmFeature = job.data.mode === "application"
+      ? LLM_FEATURES.GENERATE_FROM_URL_APP
+      : LLM_FEATURES.GENERATE_FROM_URL;
+
     const resolved = await llmManager.resolveIntegration(
-      LLM_FEATURES.GENERATE_FROM_URL,
+      llmFeature,
       job.data.projectId
     );
 
@@ -356,7 +362,7 @@ export const processor = async (
 
     // Resolve prompt template (use buildSystemPrompt if no custom prompt configured)
     const resolvedPrompt = await promptResolver.resolve(
-      LLM_FEATURES.GENERATE_FROM_URL,
+      llmFeature,
       job.data.projectId
     );
 
@@ -388,7 +394,7 @@ export const processor = async (
         ],
         maxTokens,
         userId: job.data.userId,
-        feature: LLM_FEATURES.GENERATE_FROM_URL,
+        feature: llmFeature,
         projectId: job.data.projectId,
         // URL generation sends large multi-page prompts — use a longer timeout
         // than the provider default to avoid aborting slow-but-valid responses

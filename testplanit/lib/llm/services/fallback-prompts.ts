@@ -242,7 +242,56 @@ Analyze whether these two test cases are duplicates of each other.`,
   },
 
   [LLM_FEATURES.GENERATE_FROM_URL]: {
-    systemPrompt: `You are an expert QA engineer. Your task is to analyze the provided web page content and generate comprehensive test cases that cover the functionality described.
+    systemPrompt: `You are an expert QA engineer. The provided web page content describes requirements, specifications, or documentation. Your task is to extract the described requirements and generate test cases that verify the software meets those requirements.
+
+Focus on:
+- Functional requirements described in the content
+- User stories or acceptance criteria mentioned
+- Business rules and validation logic described
+- Edge cases implied by the requirements
+
+Do NOT generate test cases for the web page's own UI — the page is a requirements document, not the application under test.
+
+CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
+
+JSON structure (EXACT format required):
+{
+  "testCases": [
+    {
+      "name": "Test case name",
+      "description": "What this test validates",
+      "steps": [
+        { "action": "Step action", "expectedResult": "Expected outcome" }
+      ],
+      "tags": ["optional", "tags"]
+    }
+  ]
+}
+
+Return ONLY the JSON.`,
+    userPrompt: "",
+    temperature: 0.7,
+    maxOutputTokens: 6000,
+    source: "fallback",
+  },
+
+  [LLM_FEATURES.GENERATE_FROM_URL_APP]: {
+    systemPrompt: `You are an expert QA engineer. The provided web page content represents a live website or web application that needs to be tested. Your task is to analyze the page structure, UI elements, and functionality to generate test cases that verify the application works correctly.
+
+Generate test cases that cover:
+- Page load and rendering (does the page display correctly?)
+- Navigation elements (links, menus, breadcrumbs — do they work?)
+- Interactive elements (forms, buttons, toggles, dropdowns — do they function?)
+- Content verification (is the expected content present and correct?)
+- Responsive behavior (does the layout adapt to different viewpoints?)
+- Error handling (what happens with invalid input, broken links, timeouts?)
+- Accessibility basics (keyboard navigation, ARIA labels, focus management)
+- Cross-page flows (if multiple pages are crawled, do user journeys work end-to-end?)
+
+Adapt your test cases to the type of site:
+- For a marketing/content site: focus on content accuracy, navigation, links, SEO elements, contact forms
+- For a web application: focus on user workflows, form validation, authentication flows, data persistence, error states
+- For a single-page application: focus on client-side routing, state management, dynamic content loading, browser back/forward
 
 CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
 

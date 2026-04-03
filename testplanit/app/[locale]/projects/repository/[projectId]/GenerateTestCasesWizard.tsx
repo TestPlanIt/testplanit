@@ -212,6 +212,7 @@ export function GenerateTestCasesWizard({
   const [documentRequirements, setDocumentRequirements] =
     useState<DocumentRequirements | null>(null);
   const [urlInput, setUrlInput] = useState('');
+  const [urlMode, setUrlMode] = useState<"requirements" | "application">("requirements");
   const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
   const [followLinks, setFollowLinks] = useState(false);
   const [maxDepth, setMaxDepth] = useState(2);
@@ -696,6 +697,7 @@ export function GenerateTestCasesWizard({
     setSourceType(hasActiveIntegrations ? "issue" : "url");
     setDocumentRequirements(null);
     setUrlInput('');
+    setUrlMode("requirements");
     setUrlValidationError(null);
     setFollowLinks(false);
     setMaxDepth(2);
@@ -794,6 +796,7 @@ export function GenerateTestCasesWizard({
           body: JSON.stringify({
             projectId,
             url: urlInput,
+            mode: urlMode,
             templateId: selectedTemplateId,
             folderId,
             userNotes: userNotes || undefined,
@@ -3000,6 +3003,40 @@ export function GenerateTestCasesWizard({
                             <Label htmlFor="url-input">
                               {t("generateTestCases.selectSource.urlInput")}
                             </Label>
+                          </div>
+
+                          {/* Mode Selector */}
+                          <div className="space-y-2">
+                            <Label>{t("generateTestCases.selectSource.urlMode")}</Label>
+                            <div className="flex gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setUrlMode("requirements")}
+                                className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
+                                  urlMode === "requirements"
+                                    ? "border-primary bg-primary/10 text-primary font-medium"
+                                    : "border-border text-muted-foreground hover:border-primary/50"
+                                }`}
+                              >
+                                <div className="font-medium">{t("generateTestCases.selectSource.urlModeRequirements")}</div>
+                                <div className="text-xs mt-0.5 opacity-80">{t("generateTestCases.selectSource.urlModeRequirementsHint")}</div>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setUrlMode("application")}
+                                className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
+                                  urlMode === "application"
+                                    ? "border-primary bg-primary/10 text-primary font-medium"
+                                    : "border-border text-muted-foreground hover:border-primary/50"
+                                }`}
+                              >
+                                <div className="font-medium">{t("generateTestCases.selectSource.urlModeApplication")}</div>
+                                <div className="text-xs mt-0.5 opacity-80">{t("generateTestCases.selectSource.urlModeApplicationHint")}</div>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
                             <Input
                               id="url-input"
                               type="url"
