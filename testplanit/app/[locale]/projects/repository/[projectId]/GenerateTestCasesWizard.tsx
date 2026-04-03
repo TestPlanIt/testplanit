@@ -433,6 +433,36 @@ export function GenerateTestCasesWizard({
     return () => cancelAnimationFrame(frame);
   }, [isGenerating, generatedTestCases.length]);
 
+  // Convert option names → IDs for dropdown/multi-select fields in generated test cases.
+  // The worker returns string names but the UI expects numeric option IDs.
+  const convertFieldOptionIds = useCallback((tc: GeneratedTestCase): GeneratedTestCase => {
+    const template = templates?.find((t) => t.id === selectedTemplateId);
+    if (!template) return tc;
+    const converted: Record<string, any> = { ...tc.fieldValues };
+    template.caseFields.forEach((cf: any) => {
+      const name = cf.caseField.displayName;
+      const type = cf.caseField.type.type;
+      const val = converted[name];
+      if (!val) return;
+      if (type === "Dropdown" && typeof val === "string") {
+        const opt = cf.caseField.fieldOptions?.find(
+          (fo: any) => fo.fieldOption.name.toLowerCase() === val.toLowerCase()
+        );
+        if (opt) converted[name] = opt.fieldOption.id;
+      } else if (type === "Multi-Select" && Array.isArray(val)) {
+        converted[name] = val
+          .map((n: string) => {
+            const opt = cf.caseField.fieldOptions?.find(
+              (fo: any) => fo.fieldOption.name.toLowerCase() === n.toLowerCase()
+            );
+            return opt?.fieldOption.id;
+          })
+          .filter((id: number | undefined) => id !== undefined);
+      }
+    });
+    return { ...tc, fieldValues: converted };
+  }, [templates, selectedTemplateId]);
+
   // Poll URL job status while a job is active
   useEffect(() => {
     if (!urlJobId) return;
@@ -454,8 +484,9 @@ export function GenerateTestCasesWizard({
           setIsGenerating(false);
           setCrawledPagesResult(data.result?.crawledPages ?? []);
           if (data.result?.testCases?.length > 0) {
-            setGeneratedTestCases(data.result.testCases);
-            setSelectedTestCases(new Set(data.result.testCases.map((tc: GeneratedTestCase) => tc.id)));
+            const converted = data.result.testCases.map(convertFieldOptionIds);
+            setGeneratedTestCases(converted);
+            setSelectedTestCases(new Set(converted.map((tc: GeneratedTestCase) => tc.id)));
             setCurrentStep(WizardStep.REVIEW_GENERATED);
           } else {
             toast.error(t("generateTestCases.errors.urlFetchFailed"));
@@ -509,8 +540,9 @@ export function GenerateTestCasesWizard({
 
         if (data.state === 'completed' && data.result?.testCases?.length > 0) {
           setCrawledPagesResult(data.result.crawledPages ?? []);
-          setGeneratedTestCases(data.result.testCases);
-          setSelectedTestCases(new Set(data.result.testCases.map((tc: GeneratedTestCase) => tc.id)));
+          const converted = data.result.testCases.map(convertFieldOptionIds);
+          setGeneratedTestCases(converted);
+          setSelectedTestCases(new Set(converted.map((tc: GeneratedTestCase) => tc.id)));
           setCurrentStep(WizardStep.REVIEW_GENERATED);
         } else if (data.state === 'completed') {
           toast.error(t("generateTestCases.errors.urlFetchFailed"));
