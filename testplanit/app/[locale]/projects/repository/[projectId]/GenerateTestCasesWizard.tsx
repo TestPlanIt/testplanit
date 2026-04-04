@@ -2650,10 +2650,10 @@ export function GenerateTestCasesWizard({
                                       <span className="truncate flex-1">
                                         {gp.title || gp.url}
                                       </span>
-                                      {gp.status === "done" && (
+                                      {(gp.status === "done" || (gp.status === "generating" && gp.testCaseCount > 0)) && (
                                         <Badge
                                           variant="secondary"
-                                          className="text-[10px] px-1.5 py-0 shrink-0"
+                                          className={`text-[10px] px-1.5 py-0 shrink-0 ${gp.status === "generating" ? "animate-pulse" : ""}`}
                                         >
                                           {"("}
                                           {t(
