@@ -3538,15 +3538,12 @@ export function GenerateTestCasesWizard({
                                                   variant="secondary"
                                                   className="text-[10px] px-1.5 py-0 shrink-0"
                                                 >
-                                                  {gp.testCaseCount}{" "}
-                                                  {gp.testCaseCount === 1
-                                                    ? "case"
-                                                    : "cases"}
+                                                  {t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}
                                                 </Badge>
                                               )}
                                               {gp.status === "failed" && (
                                                 <span className="text-[10px] text-destructive shrink-0">
-                                                  failed
+                                                  {t("generateTestCases.selectSource.generatingPageFailed")}
                                                 </span>
                                               )}
                                             </div>
