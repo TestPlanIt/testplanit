@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { projectId, issue, template, context, quantity, autoGenerateTags } =
+  const { projectId, issue, template, context, quantity, autoGenerateTags, feature: featureOverride } =
     body as {
       projectId: number;
       issue: IssueData;
@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
       context: GenerationContext;
       quantity?: string;
       autoGenerateTags?: boolean;
+      /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
+      feature?: string;
     };
 
   if (!projectId || !issue || !template) {
@@ -161,13 +163,14 @@ export async function POST(req: NextRequest) {
 
         const manager = LlmManager.getInstance(prisma);
         const resolver = new PromptResolver(prisma);
+        const llmFeature = (featureOverride as any) ?? LLM_FEATURES.TEST_CASE_GENERATION;
         const resolvedPrompt = await resolver.resolve(
-          LLM_FEATURES.TEST_CASE_GENERATION,
+          llmFeature,
           projectId
         );
 
         const resolved = await manager.resolveIntegration(
-          LLM_FEATURES.TEST_CASE_GENERATION,
+          llmFeature,
           projectId,
           resolvedPrompt
         );
@@ -278,7 +281,7 @@ export async function POST(req: NextRequest) {
           temperature: resolvedPrompt.temperature,
           maxTokens,
           userId: session.user.id,
-          feature: "test_case_generation",
+          feature: llmFeature,
           ...(resolved.model ? { model: resolved.model } : {}),
           timeout: 0,
           metadata: {

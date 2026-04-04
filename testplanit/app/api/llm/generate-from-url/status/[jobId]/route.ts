@@ -56,27 +56,10 @@ export async function GET(
           : job.returnvalue;
     }
 
-    // Read partial results from Redis for incremental rendering.
-    // Always check when job is active — the Redis key exists as soon as the
-    // first page completes, regardless of what's in the BullMQ progress object.
-    let partialResults = null;
-    if (state === "active") {
-      try {
-        const connection = await queue.client;
-        const raw = await connection.get(`generate-from-url:partial:${jobId}`);
-        if (raw) {
-          partialResults = JSON.parse(raw);
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    }
-
     return NextResponse.json({
       jobId: job.id,
       state,
       progress: job.progress,
-      partialResults,
       result,
       failedReason: state === "failed" ? job.failedReason : null,
       timestamp: job.timestamp,
