@@ -12,7 +12,6 @@ import { LLM_FEATURES } from "../lib/llm/constants";
 import { NotificationService } from "../lib/services/notificationService";
 import {
   buildSystemPrompt,
-  buildUserPrompt,
   fetchHierarchyContext,
   parseAndValidateTestCases,
   type IssueData,
@@ -24,7 +23,12 @@ import { GENERATE_FROM_URL_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
 import { ssrfSafeFetch, SsrfError } from "../lib/utils/ssrf";
 import { extractContent } from "../lib/utils/contentExtractor";
-import { extractLinks, normalizeUrl, hashContent, fetchRobots } from "../lib/utils/crawl";
+import {
+  extractLinks,
+  normalizeUrl,
+  hashContent,
+  fetchRobots,
+} from "../lib/utils/crawl";
 
 // ---- Job data / result types ----
 
@@ -80,7 +84,7 @@ interface PageContent {
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ---- Helper: build web content section for a single page with injection protection ----
@@ -131,7 +135,9 @@ export const processor = async (
 
     // 5. BFS loop initialization
     const visited = new Set<string>();
-    const bfsQueue: Array<{ url: string; depth: number }> = [{ url: seedUrl, depth: 0 }];
+    const bfsQueue: Array<{ url: string; depth: number }> = [
+      { url: seedUrl, depth: 0 },
+    ];
     const pages: PageContent[] = [];
     const spaWarnings: string[] = [];
     let skippedRobots = 0;
@@ -156,7 +162,10 @@ export const processor = async (
           phase: "crawling",
           message: `Skipped robots.txt: ${normalizedUrl}`,
           pagesProcessed: pages.length,
-          totalPages: Math.min(pages.length + bfsQueue.length, job.data.options.maxPages),
+          totalPages: Math.min(
+            pages.length + bfsQueue.length,
+            job.data.options.maxPages
+          ),
           skippedRobots,
         });
         continue;
@@ -168,7 +177,9 @@ export const processor = async (
 
       // Fetch page
       try {
-        const { body, finalUrl } = await ssrfSafeFetch(normalizedUrl, { allowHttp: true });
+        const { body, finalUrl } = await ssrfSafeFetch(normalizedUrl, {
+          allowHttp: true,
+        });
 
         // Update hostname from the first page's final URL (handles redirects
         // like testplanit.com → www.testplanit.com)
@@ -184,7 +195,7 @@ export const processor = async (
 
         // Content deduplication — hash first 1000 chars of extracted markdown
         const contentHash = hashContent(result.markdown.slice(0, 1000));
-        const isDuplicate = pages.some(p => p.hash === contentHash);
+        const isDuplicate = pages.some((p) => p.hash === contentHash);
 
         if (!isDuplicate) {
           pages.push({
@@ -221,7 +232,9 @@ export const processor = async (
         if (err instanceof SsrfError) {
           console.log(`Skipped ${normalizedUrl}: ${err.code} — ${err.message}`);
         } else {
-          console.log(`Skipped ${normalizedUrl}: ${err instanceof Error ? err.message : String(err)}`);
+          console.log(
+            `Skipped ${normalizedUrl}: ${err instanceof Error ? err.message : String(err)}`
+          );
         }
       }
 
@@ -233,7 +246,10 @@ export const processor = async (
         phase: "crawling",
         message: `Fetching page ${pages.length}`,
         pagesProcessed: pages.length,
-        totalPages: Math.min(pages.length + bfsQueue.length, job.data.options.maxPages),
+        totalPages: Math.min(
+          pages.length + bfsQueue.length,
+          job.data.options.maxPages
+        ),
         skippedRobots,
       });
 
@@ -260,13 +276,17 @@ export const processor = async (
 
     // 9. LLM generation — one call per page
     const prisma = getPrismaClientForJob(job.data);
-    const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
+    const llmManager = LlmManager.createForWorker(
+      prisma as any,
+      job.data.tenantId
+    );
     const promptResolver = new PromptResolver(prisma as any);
 
     // Select the LLM feature based on mode — each has its own customizable prompt
-    const llmFeature = job.data.mode === "application"
-      ? LLM_FEATURES.GENERATE_FROM_URL_APP
-      : LLM_FEATURES.GENERATE_FROM_URL;
+    const llmFeature =
+      job.data.mode === "application"
+        ? LLM_FEATURES.GENERATE_FROM_URL_APP
+        : LLM_FEATURES.GENERATE_FROM_URL;
 
     const resolved = await llmManager.resolveIntegration(
       llmFeature,
@@ -280,9 +300,11 @@ export const processor = async (
     let maxTokens = 6000;
     let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
 
-    const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst({
-      where: { llmIntegrationId: resolved.integrationId },
-    });
+    const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst(
+      {
+        where: { llmIntegrationId: resolved.integrationId },
+      }
+    );
     // Read provider timeout for lock extension (default 30s if not configured)
     let llmTimeout = 30_000;
     if (llmProviderConfig) {
@@ -315,9 +337,10 @@ export const processor = async (
           id: dbTemplate.id,
           name: dbTemplate.templateName,
           fields: dbTemplate.caseFields
-            .filter((cf: any) =>
-              !job.data.selectedFieldIds?.length ||
-              job.data.selectedFieldIds.includes(cf.caseFieldId)
+            .filter(
+              (cf: any) =>
+                !job.data.selectedFieldIds?.length ||
+                job.data.selectedFieldIds.includes(cf.caseFieldId)
             )
             .map((cf: any) => ({
               id: cf.caseField.id,
@@ -326,7 +349,9 @@ export const processor = async (
               required: cf.caseField.isRequired,
               options:
                 cf.caseField.fieldOptions?.length > 0
-                  ? cf.caseField.fieldOptions.map((fo: any) => fo.fieldOption.name)
+                  ? cf.caseField.fieldOptions.map(
+                      (fo: any) => fo.fieldOption.name
+                    )
                   : undefined,
             })),
         };
@@ -334,9 +359,16 @@ export const processor = async (
     }
 
     // Fetch existing cases context (LLM-01)
-    const existingCasesTokenBudget = Math.floor((llmProviderConfig?.maxTokensPerRequest ?? 4096) * 0.10);
+    const existingCasesTokenBudget = Math.floor(
+      (llmProviderConfig?.maxTokensPerRequest ?? 4096) * 0.1
+    );
     const existingTestCases = job.data.folderId
-      ? await fetchHierarchyContext(prisma, job.data.projectId, job.data.folderId, existingCasesTokenBudget)
+      ? await fetchHierarchyContext(
+          prisma,
+          job.data.projectId,
+          job.data.folderId,
+          existingCasesTokenBudget
+        )
       : [];
 
     const generationContext: GenerationContext = {
@@ -346,16 +378,24 @@ export const processor = async (
     };
 
     // Build the system prompt once (same for all pages)
-    const resolvedPrompt = await promptResolver.resolve(llmFeature, job.data.projectId);
+    const resolvedPrompt = await promptResolver.resolve(
+      llmFeature,
+      job.data.projectId
+    );
 
     let systemPrompt: string;
     if (resolvedPrompt.source !== "fallback") {
       systemPrompt = resolvedPrompt.systemPrompt;
     } else {
       const templatePrompt = buildSystemPrompt(
-        template, generationContext, job.data.quantity, job.data.autoGenerateTags
+        template,
+        generationContext,
+        job.data.quantity,
+        job.data.autoGenerateTags
       );
-      const modeIntro = resolvedPrompt.systemPrompt.split("CRITICAL:")[0].trim();
+      const modeIntro = resolvedPrompt.systemPrompt
+        .split("CRITICAL:")[0]
+        .trim();
       const templateInstructions = templatePrompt.substring(
         templatePrompt.indexOf("CRITICAL:")
       );
@@ -370,7 +410,7 @@ export const processor = async (
       title?: string;
       status: "pending" | "generating" | "done" | "failed";
       testCaseCount: number;
-    }> = pages.map(p => ({
+    }> = pages.map((p) => ({
       url: p.url,
       title: p.title,
       status: "pending" as const,
@@ -398,9 +438,10 @@ export const processor = async (
       });
 
       // Build per-page user prompt
-      const userPrompt = resolvedPrompt.source !== "fallback"
-        ? resolvedPrompt.userPrompt
-        : buildSinglePageContent(page);
+      const userPrompt =
+        resolvedPrompt.source !== "fallback"
+          ? resolvedPrompt.userPrompt
+          : buildSinglePageContent(page);
 
       // Retry logic: try the LLM call up to 2 times per page (initial + 1 retry)
       // since there's no way for the user to retry just failed pages
@@ -434,16 +475,20 @@ export const processor = async (
             status: "Web Content",
           };
 
-          const { testCases: pageCases, parseError } = parseAndValidateTestCases(
-            llmResponse.content,
-            template,
-            syntheticIssue,
-            job.data.autoGenerateTags,
-            job.data.quantity
-          );
+          const { testCases: pageCases, parseError } =
+            parseAndValidateTestCases(
+              llmResponse.content,
+              template,
+              syntheticIssue,
+              job.data.autoGenerateTags,
+              job.data.quantity
+            );
 
           if (parseError) {
-            console.warn(`Generate-from-URL job ${job.id} page ${i + 1} parse warning:`, parseError.userError);
+            console.warn(
+              `Generate-from-URL job ${job.id} page ${i + 1} parse warning:`,
+              parseError.userError
+            );
           }
 
           // Tag each test case with the source URL and assign unique IDs
@@ -457,12 +502,17 @@ export const processor = async (
           generationPages[i].testCaseCount = pageCases.length;
           break;
         } catch (pageErr) {
-          const errMsg = pageErr instanceof Error ? pageErr.message : String(pageErr);
+          const errMsg =
+            pageErr instanceof Error ? pageErr.message : String(pageErr);
           if (attempt < PAGE_MAX_ATTEMPTS) {
-            console.warn(`Generate-from-URL job ${job.id} page ${i + 1} attempt ${attempt} failed: ${errMsg}. Retrying in 3s...`);
+            console.warn(
+              `Generate-from-URL job ${job.id} page ${i + 1} attempt ${attempt} failed: ${errMsg}. Retrying in 3s...`
+            );
             await sleep(3000);
           } else {
-            console.warn(`Generate-from-URL job ${job.id} page ${i + 1} failed after ${PAGE_MAX_ATTEMPTS} attempts: ${errMsg}`);
+            console.warn(
+              `Generate-from-URL job ${job.id} page ${i + 1} failed after ${PAGE_MAX_ATTEMPTS} attempts: ${errMsg}`
+            );
             generationPages[i].status = "failed";
           }
         }
@@ -485,7 +535,7 @@ export const processor = async (
     const testCases = allTestCases;
 
     // Build crawledPages info
-    const crawledPages: CrawledPageInfo[] = pages.map(p => ({
+    const crawledPages: CrawledPageInfo[] = pages.map((p) => ({
       url: p.url,
       title: p.title,
       spaWarning: p.spaWarning,
@@ -506,7 +556,10 @@ export const processor = async (
         },
       });
     } catch (notifyErr) {
-      console.error(`Failed to send success notification for job ${job.id}:`, notifyErr);
+      console.error(
+        `Failed to send success notification for job ${job.id}:`,
+        notifyErr
+      );
     }
 
     return {
@@ -514,14 +567,15 @@ export const processor = async (
       pagesProcessed: pages.length,
       warnings: spaWarnings,
       robotsSkipped: skippedRobots,
-      urlsCrawled: pages.map(p => p.url),
+      urlsCrawled: pages.map((p) => p.url),
       crawledPages,
       templateId: job.data.templateId,
       selectedFieldIds: job.data.selectedFieldIds,
     };
   } catch (err) {
     // Send failure notification (only for non-cancellation errors)
-    const isCancellation = err instanceof Error && err.message === "Job cancelled by user";
+    const isCancellation =
+      err instanceof Error && err.message === "Job cancelled by user";
     if (!isCancellation) {
       try {
         await NotificationService.createNotification({
@@ -538,7 +592,10 @@ export const processor = async (
           },
         });
       } catch (notifyErr) {
-        console.error(`Failed to send failure notification for job ${job.id}:`, notifyErr);
+        console.error(
+          `Failed to send failure notification for job ${job.id}:`,
+          notifyErr
+        );
       }
     }
     throw err; // Re-throw so BullMQ marks job as failed

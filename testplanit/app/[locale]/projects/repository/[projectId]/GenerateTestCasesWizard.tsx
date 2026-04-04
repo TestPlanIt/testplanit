@@ -520,17 +520,19 @@ export function GenerateTestCasesWizard({
           setUrlJobProgress(null);
           setIsGenerating(false);
           setCrawledPagesResult(data.result?.crawledPages ?? []);
-          restoreTemplateFromResult(
-            data.result?.templateId,
-            data.result?.selectedFieldIds
-          );
           if (data.result?.testCases?.length > 0) {
+            // Set step FIRST so the useEffect guard on selectedTemplateId
+            // sees REVIEW_GENERATED and skips the auto-select-all-fields logic
+            setCurrentStep(WizardStep.REVIEW_GENERATED);
+            restoreTemplateFromResult(
+              data.result?.templateId,
+              data.result?.selectedFieldIds
+            );
             const converted = data.result.testCases.map(convertFieldOptionIds);
             setGeneratedTestCases(converted);
             setSelectedTestCases(
               new Set(converted.map((tc: GeneratedTestCase) => tc.id))
             );
-            setCurrentStep(WizardStep.REVIEW_GENERATED);
           } else {
             toast.error(t("generateTestCases.errors.urlFetchFailed"));
           }
@@ -588,14 +590,19 @@ export function GenerateTestCasesWizard({
         const data = await res.json();
 
         if (data.state === "completed" && data.result?.testCases?.length > 0) {
+          // Set step FIRST so the useEffect guard on selectedTemplateId
+          // sees REVIEW_GENERATED and skips the auto-select-all-fields logic
+          setCurrentStep(WizardStep.REVIEW_GENERATED);
           setCrawledPagesResult(data.result.crawledPages ?? []);
-          restoreTemplateFromResult(data.result.templateId);
+          restoreTemplateFromResult(
+            data.result.templateId,
+            data.result.selectedFieldIds
+          );
           const converted = data.result.testCases.map(convertFieldOptionIds);
           setGeneratedTestCases(converted);
           setSelectedTestCases(
             new Set(converted.map((tc: GeneratedTestCase) => tc.id))
           );
-          setCurrentStep(WizardStep.REVIEW_GENERATED);
         } else if (data.state === "completed") {
           toast.error(t("generateTestCases.errors.urlFetchFailed"));
           setIsNotificationReopen(false);
