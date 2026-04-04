@@ -514,6 +514,12 @@ export function GenerateTestCasesWizard({
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
 
           // Render test cases incrementally as pages complete
+          console.log('[URL-GEN] Progress poll:', {
+            hasCompletedTestCases: !!data.progress.completedTestCases,
+            completedCount: data.progress.completedTestCases?.length ?? 0,
+            phase: data.progress.phase,
+            totalTestCases: data.progress.totalTestCases,
+          });
           if (data.progress.completedTestCases?.length > 0) {
             // Restore template on first batch so fields render correctly
             if (currentStep !== WizardStep.REVIEW_GENERATED) {
