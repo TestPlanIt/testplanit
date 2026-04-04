@@ -62,12 +62,20 @@ export async function POST(
       return NextResponse.json({ message: "Job cancelled" });
     }
 
-    // Active -- set Redis cancellation flag for worker to pick up between batches
+    // Active -- set Redis cancellation flag for worker to pick up between pages,
+    // AND try to force-fail the job so it stops immediately even during a long LLM call
     const connection = await queue.client;
     await connection.set(`generate-from-url:cancel:${jobId}`, "1", "EX", 3600);
 
+    try {
+      await job.moveToFailed(new Error("Job cancelled by user"), "0", true);
+    } catch {
+      // moveToFailed may fail if the job is locked by the worker — the Redis
+      // cancel key will still be picked up between pages as a fallback
+    }
+
     return NextResponse.json({
-      message: "Cancellation requested, job will stop after current batch",
+      message: "Cancellation requested",
     });
   } catch (error) {
     console.error("Generate from URL cancel error:", error);
