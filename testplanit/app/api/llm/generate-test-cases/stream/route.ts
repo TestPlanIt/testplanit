@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
           userId: session.user.id,
           feature: llmFeature,
           ...(resolved.model ? { model: resolved.model } : {}),
-          timeout: 0,
+          timeout: providerConfig?.timeout ?? 0,
           metadata: {
             projectId,
             issueKey: issue.key,
