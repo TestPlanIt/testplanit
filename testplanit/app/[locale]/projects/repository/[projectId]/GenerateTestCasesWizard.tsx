@@ -602,9 +602,19 @@ export function GenerateTestCasesWizard({
         );
         const data = await res.json();
 
-        if (data.state === "completed" && data.result?.testCases?.length > 0) {
-          // Set step FIRST so the useEffect guard on selectedTemplateId
-          // sees REVIEW_GENERATED and skips the auto-select-all-fields logic
+        if (data.state === "completed" && data.result?.crawlOnly && data.result?.crawledPages?.length > 0) {
+          // Crawl-only: start SSE streaming per page for incremental generation
+          setIsNotificationReopen(false);
+          setCrawledPagesResult(data.result.crawledPages);
+          restoreTemplateFromResult(
+            data.result.templateId,
+            data.result.selectedFieldIds
+          );
+          setCurrentStep(WizardStep.REVIEW_GENERATED);
+          setIsGenerating(true);
+          streamUrlTestCases(data.result.crawledPages);
+        } else if (data.state === "completed" && data.result?.testCases?.length > 0) {
+          // Legacy: worker-generated test cases
           setCurrentStep(WizardStep.REVIEW_GENERATED);
           setCrawledPagesResult(data.result.crawledPages ?? []);
           restoreTemplateFromResult(
@@ -892,6 +902,7 @@ export function GenerateTestCasesWizard({
   const streamUrlTestCases = async (
     crawledPages: Array<{ url: string; title?: string; spaWarning: boolean; markdown?: string }>
   ) => {
+    console.log('[URL-GEN] streamUrlTestCases called with', crawledPages.length, 'pages, markdown lengths:', crawledPages.map(p => p.markdown?.length ?? 0));
     const template = templates?.find((t) => t.id === selectedTemplateId);
     if (!template) {
       setIsGenerating(false);
@@ -980,11 +991,13 @@ export function GenerateTestCasesWizard({
         });
 
         if (!response.ok) {
-          console.warn(
-            `URL generation stream failed for page ${pageIdx + 1}: HTTP ${response.status}`
+          const errText = await response.text().catch(() => '');
+          console.error(
+            `URL generation stream failed for page ${pageIdx + 1}: HTTP ${response.status}`, errText.substring(0, 500)
           );
           continue; // Skip failed pages, try the next
         }
+        console.log(`[URL-GEN] SSE stream started for page ${pageIdx + 1}`);
 
         // Consume the SSE stream — same logic as issue/document generation
         const reader = response.body!.getReader();
