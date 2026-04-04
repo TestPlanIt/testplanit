@@ -298,7 +298,6 @@ export const processor = async (
     }
 
     let maxTokens = 6000;
-    let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
 
     const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst(
       {
@@ -309,7 +308,6 @@ export const processor = async (
     let llmTimeout = 30_000;
     if (llmProviderConfig) {
       maxTokens = llmProviderConfig.defaultMaxTokens ?? 6000;
-      retryOptions = { maxRetries: llmProviderConfig.retryAttempts ?? 3 };
       llmTimeout = llmProviderConfig.timeout ?? 30_000;
     }
 
@@ -453,20 +451,58 @@ export const processor = async (
         await job.extendLock(token!, llmTimeout + 30_000);
 
         try {
-          const llmResponse = await llmManager.chat(
-            resolved.integrationId,
-            {
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt },
-              ],
-              maxTokens,
-              userId: job.data.userId,
-              feature: llmFeature,
-              projectId: job.data.projectId,
-            },
-            retryOptions
-          );
+          // Use streaming to provide real-time case count feedback.
+          // Count test cases as they appear by tracking "name": occurrences
+          // in the streamed JSON (each test case has exactly one "name" field).
+          const chunks: string[] = [];
+          let streamedCaseCount = 0;
+          let lastProgressUpdate = Date.now();
+
+          const stream = llmManager.chatStream(resolved.integrationId, {
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            maxTokens,
+            userId: job.data.userId,
+            feature: llmFeature,
+            projectId: job.data.projectId,
+            timeout: llmTimeout,
+          });
+
+          for await (const chunk of stream) {
+            chunks.push(chunk.delta);
+
+            // Count test cases by tracking "name" keys in the JSON stream.
+            // Each test case object has exactly one "name" field.
+            const newCaseMatches = (chunk.delta.match(/"name"\s*:/g) || [])
+              .length;
+            if (newCaseMatches > 0) {
+              streamedCaseCount += newCaseMatches;
+            }
+
+            // Update progress at most every 2 seconds to avoid flooding BullMQ
+            const now = Date.now();
+            if (now - lastProgressUpdate > 2000) {
+              lastProgressUpdate = now;
+              generationPages[i].testCaseCount = streamedCaseCount;
+              await job.updateProgress({
+                phase: "generating",
+                message: `Generating test cases for page ${i + 1} of ${pages.length}`,
+                pagesProcessed: pages.length,
+                totalPages: pages.length,
+                pagesGenerated: i + 1,
+                totalPagesForGeneration: pages.length,
+                totalTestCases: allTestCases.length + streamedCaseCount,
+                generationPages,
+                skippedRobots,
+              });
+              // Keep lock alive during long streams
+              await job.extendLock(token!, llmTimeout + 30_000);
+            }
+          }
+
+          const fullContent = chunks.join("");
 
           const syntheticIssue: IssueData = {
             key: "URL",
@@ -477,7 +513,7 @@ export const processor = async (
 
           const { testCases: pageCases, parseError } =
             parseAndValidateTestCases(
-              llmResponse.content,
+              fullContent,
               template,
               syntheticIssue,
               job.data.autoGenerateTags,
