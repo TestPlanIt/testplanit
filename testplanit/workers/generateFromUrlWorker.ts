@@ -554,7 +554,7 @@ export const processor = async (
         }
       }
 
-      // Post-page progress update with result
+      // Post-page progress update with completed test cases for incremental rendering
       await job.updateProgress({
         phase: "generating",
         message: `Generated test cases for page ${i + 1} of ${pages.length}`,
@@ -565,6 +565,15 @@ export const processor = async (
         totalTestCases: allTestCases.length,
         generationPages,
         skippedRobots,
+        // Include completed test cases so the UI can render them incrementally
+        completedTestCases: allTestCases,
+        crawledPages: pages.map((p) => ({
+          url: p.url,
+          title: p.title,
+          spaWarning: p.spaWarning,
+        })),
+        templateId: job.data.templateId,
+        selectedFieldIds: job.data.selectedFieldIds,
       });
     }
 

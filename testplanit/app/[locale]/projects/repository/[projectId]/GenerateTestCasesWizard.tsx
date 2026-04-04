@@ -512,6 +512,26 @@ export function GenerateTestCasesWizard({
             generationPages: data.progress.generationPages,
           });
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
+
+          // Render test cases incrementally as pages complete
+          if (data.progress.completedTestCases?.length > 0) {
+            // Restore template on first batch so fields render correctly
+            if (currentStep !== WizardStep.REVIEW_GENERATED) {
+              setCurrentStep(WizardStep.REVIEW_GENERATED);
+              restoreTemplateFromResult(
+                data.progress.templateId,
+                data.progress.selectedFieldIds
+              );
+              if (data.progress.crawledPages) {
+                setCrawledPagesResult(data.progress.crawledPages);
+              }
+            }
+            const converted = data.progress.completedTestCases.map(convertFieldOptionIds);
+            setGeneratedTestCases(converted);
+            setSelectedTestCases(
+              new Set(converted.map((tc: GeneratedTestCase) => tc.id))
+            );
+          }
         }
         if (data.state === "completed") {
           clearInterval(interval);
@@ -520,8 +540,8 @@ export function GenerateTestCasesWizard({
           setIsGenerating(false);
           setCrawledPagesResult(data.result?.crawledPages ?? []);
           if (data.result?.testCases?.length > 0) {
-            // Set step FIRST so the useEffect guard on selectedTemplateId
-            // sees REVIEW_GENERATED and skips the auto-select-all-fields logic
+            // Final update with all test cases (may include cases from
+            // last page that weren't in the last progress update)
             setCurrentStep(WizardStep.REVIEW_GENERATED);
             restoreTemplateFromResult(
               data.result?.templateId,
@@ -532,7 +552,7 @@ export function GenerateTestCasesWizard({
             setSelectedTestCases(
               new Set(converted.map((tc: GeneratedTestCase) => tc.id))
             );
-          } else {
+          } else if (generatedTestCases.length === 0) {
             toast.error(t("generateTestCases.errors.urlFetchFailed"));
           }
         } else if (data.state === "failed") {
@@ -550,6 +570,7 @@ export function GenerateTestCasesWizard({
       }
     }, 3000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentStep and generatedTestCases.length are read inside but intentionally excluded to avoid re-triggering the polling effect
   }, [urlJobId, t, restoreTemplateFromResult, convertFieldOptionIds]);
 
   // Cancel active URL job when user switches away from URL tab
