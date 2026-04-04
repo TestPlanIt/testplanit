@@ -586,7 +586,6 @@ export const processor = async (
         totalTestCases: allTestCases.length,
         generationPages,
         skippedRobots,
-        hasPartialResults: allTestCases.length > 0,
       });
     }
 
