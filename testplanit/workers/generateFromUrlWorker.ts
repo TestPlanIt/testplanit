@@ -257,15 +257,28 @@ export const processor = async (
     // Clean up cancel key if it was set during crawl
     await redis.del(cancelKey(job.id));
 
-    // 9. Return crawled pages WITH markdown content — LLM generation is done
-    //    client-side via SSE streaming (same as issue/document generation) for
-    //    real-time incremental test case rendering.
+    // 9. Store crawled page content in Redis for client-side SSE streaming.
+    //    BullMQ returnvalue has size limits, so we store large page content
+    //    separately and let the status endpoint serve it.
     const crawledPages: CrawledPageInfo[] = pages.map((p) => ({
       url: p.url,
       title: p.title,
       spaWarning: p.spaWarning,
-      markdown: p.markdown,
     }));
+
+    await redis.set(
+      `generate-from-url:pages:${job.id}`,
+      JSON.stringify(
+        pages.map((p) => ({
+          url: p.url,
+          title: p.title,
+          spaWarning: p.spaWarning,
+          markdown: p.markdown,
+        }))
+      ),
+      "EX",
+      3600 // 1 hour TTL
+    );
 
     // 10. Send notification that crawl is complete
     try {

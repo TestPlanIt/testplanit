@@ -56,6 +56,20 @@ export async function GET(
           : job.returnvalue;
     }
 
+    // For crawl-only jobs, load the full page content from Redis
+    // (too large for BullMQ returnvalue)
+    if (state === "completed" && result?.crawlOnly) {
+      try {
+        const connection = await queue.client;
+        const raw = await connection.get(`generate-from-url:pages:${jobId}`);
+        if (raw) {
+          result.crawledPages = JSON.parse(raw);
+        }
+      } catch {
+        // Ignore — crawledPages without markdown is still usable
+      }
+    }
+
     return NextResponse.json({
       jobId: job.id,
       state,
