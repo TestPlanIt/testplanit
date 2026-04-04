@@ -3107,12 +3107,12 @@ export function GenerateTestCasesWizard({
                                           variant="secondary"
                                           className="text-[10px] px-1.5 py-0 shrink-0"
                                         >
-                                          {t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}
+                                          {"("}{t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}{")"}
                                         </Badge>
                                       )}
                                       {gp.status === "failed" && (
                                         <span className="text-[10px] text-destructive shrink-0">
-                                          {t("generateTestCases.selectSource.generatingPageFailed")}
+                                          {"("}{t("generateTestCases.selectSource.generatingPageFailed")}{")"}
                                         </span>
                                       )}
                                     </div>
@@ -3538,12 +3538,12 @@ export function GenerateTestCasesWizard({
                                                   variant="secondary"
                                                   className="text-[10px] px-1.5 py-0 shrink-0"
                                                 >
-                                                  {t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}
+                                                  {"("}{t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}{")"}
                                                 </Badge>
                                               )}
                                               {gp.status === "failed" && (
                                                 <span className="text-[10px] text-destructive shrink-0">
-                                                  {t("generateTestCases.selectSource.generatingPageFailed")}
+                                                  {"("}{t("generateTestCases.selectSource.generatingPageFailed")}{")"}
                                                 </span>
                                               )}
                                             </div>
