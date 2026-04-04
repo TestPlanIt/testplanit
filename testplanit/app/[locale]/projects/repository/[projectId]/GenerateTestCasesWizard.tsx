@@ -1224,6 +1224,10 @@ export function GenerateTestCasesWizard({
                     };
                   });
 
+                  tagged.forEach((tc) => {
+                    console.log(`[URL-GEN] Finalized test case (page ${pageIdx + 1}):`, JSON.stringify(tc, null, 2));
+                  });
+
                   pageYieldedCount += newCases.length;
                   globalYieldedCount += newCases.length;
                   finalizedCases.push(...tagged);
