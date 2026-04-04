@@ -2573,8 +2573,7 @@ export function GenerateTestCasesWizard({
               {/* URL Generation Progress Overlay — shown on any step while URL job runs */}
               {urlJobId &&
                 isGenerating &&
-                sourceType === "url" &&
-                urlJobProgress && (
+                sourceType === "url" && (
                   <Card shadow="none">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -2587,8 +2586,20 @@ export function GenerateTestCasesWizard({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
+                        {/* Waiting for first progress update */}
+                        {!urlJobProgress && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>
+                              {t(
+                                "generateTestCases.selectSource.generatingSetup"
+                              )}
+                            </span>
+                          </div>
+                        )}
+
                         {/* Phase: crawling */}
-                        {urlJobProgress.phase === "crawling" && (
+                        {urlJobProgress?.phase === "crawling" && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>
@@ -2603,8 +2614,8 @@ export function GenerateTestCasesWizard({
                         )}
 
                         {/* Phase: generating — per-page progress */}
-                        {urlJobProgress.phase === "generating" &&
-                          urlJobProgress.generationPages && (
+                        {urlJobProgress?.phase === "generating" &&
+                          urlJobProgress?.generationPages && (
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
                                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -2701,7 +2712,8 @@ export function GenerateTestCasesWizard({
                           )}
 
                         {/* Phase: setup or other */}
-                        {urlJobProgress.phase !== "generating" &&
+                        {urlJobProgress &&
+                          urlJobProgress.phase !== "generating" &&
                           urlJobProgress.phase !== "crawling" && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Loader2 className="h-4 w-4 animate-spin" />
