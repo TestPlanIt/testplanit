@@ -452,9 +452,11 @@ export const processor = async (
 
         try {
           // Use streaming to provide real-time case count feedback.
-          // Count test cases as they appear by tracking "name": occurrences
-          // in the streamed JSON (each test case has exactly one "name" field).
+          // Stream the LLM response and count test cases as they appear.
+          // We match against accumulated content (not individual chunks) because
+          // tokens like "name": are often split across streaming chunks.
           const chunks: string[] = [];
+          let accumulated = "";
           let streamedCaseCount = 0;
           let lastProgressUpdate = Date.now();
 
@@ -472,14 +474,12 @@ export const processor = async (
 
           for await (const chunk of stream) {
             chunks.push(chunk.delta);
+            accumulated += chunk.delta;
 
-            // Count test cases by tracking "name" keys in the JSON stream.
-            // Each test case object has exactly one "name" field.
-            const newCaseMatches = (chunk.delta.match(/"name"\s*:/g) || [])
-              .length;
-            if (newCaseMatches > 0) {
-              streamedCaseCount += newCaseMatches;
-            }
+            // Count test cases by counting "name": occurrences in full
+            // accumulated text. Each test case has exactly one "name" field.
+            const totalCases = (accumulated.match(/"name"\s*:/g) || []).length;
+            streamedCaseCount = totalCases;
 
             // Update progress at most every 2 seconds to avoid flooding BullMQ
             const now = Date.now();
