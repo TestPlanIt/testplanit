@@ -520,15 +520,17 @@ export function GenerateTestCasesWizard({
           setUrlJobProgress(null);
 
           if (data.result?.crawlOnly && data.result?.crawledPages?.length > 0) {
-            // Crawl-only: pages are ready — start SSE streaming per page
-            // for real-time incremental test case rendering (same as issue/document)
+            // Crawl-only: pages are ready — start SSE streaming per page.
+            // IMPORTANT: set step FIRST. setInterval callbacks aren't auto-batched
+            // by React 18, so each setState triggers a render. The useEffect on
+            // selectedTemplateId must see REVIEW_GENERATED to skip auto-select-all.
+            setCurrentStep(WizardStep.REVIEW_GENERATED);
             setCrawledPagesResult(data.result.crawledPages);
             restoreTemplateFromResult(
               data.result?.templateId,
               data.result?.selectedFieldIds
             );
-            setCurrentStep(WizardStep.REVIEW_GENERATED);
-            // Kick off SSE generation in the background (don't await — it runs async)
+            setIsGenerating(true);
             streamUrlTestCases(data.result.crawledPages);
           } else if (data.result?.testCases?.length > 0) {
             // Legacy path: worker did LLM generation
