@@ -3995,8 +3995,8 @@ export function GenerateTestCasesWizard({
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__all__">
-                              {t("generateTestCases.review.allPages")} (
-                              {generatedTestCases.length})
+                              {t("generateTestCases.review.allPages")}{" "}
+                              {"("}{generatedTestCases.length}{")"}
                             </SelectItem>
                             {crawledPagesResult.map((page, idx) => {
                               const pageTestCount = generatedTestCases.filter(
@@ -4011,7 +4011,7 @@ export function GenerateTestCasesWizard({
                                     <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
                                   )}
                                   <span className="text-muted-foreground ml-1">
-                                    ({pageTestCount})
+                                    {"("}{pageTestCount}{")"}
                                   </span>
                                 </SelectItem>
                               );
