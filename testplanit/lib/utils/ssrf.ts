@@ -351,23 +351,22 @@ export async function ssrfSafeFetch(
   urlString: string,
   options: SsrfFetchOptions = {}
 ): Promise<SsrfFetchResult> {
-  const { allowHttp = false, maxBytes = MAX_PAGE_BYTES, timeoutMs = FETCH_TIMEOUT_MS } =
-    options;
+  const {
+    allowHttp = false,
+    maxBytes = MAX_PAGE_BYTES,
+    timeoutMs = FETCH_TIMEOUT_MS,
+  } = options;
 
   let currentUrl = urlString;
   let redirectsRemaining = MAX_REDIRECTS;
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     // a. Parse the URL
     let url: URL;
     try {
       url = new URL(currentUrl);
     } catch {
-      throw new SsrfError(
-        `Invalid URL: ${currentUrl}`,
-        "PROTOCOL_NOT_ALLOWED"
-      );
+      throw new SsrfError(`Invalid URL: ${currentUrl}`, "PROTOCOL_NOT_ALLOWED");
     }
 
     // b. Validate protocol

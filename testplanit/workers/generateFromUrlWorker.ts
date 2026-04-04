@@ -405,7 +405,6 @@ export const processor = async (
       // Retry logic: try the LLM call up to 2 times per page (initial + 1 retry)
       // since there's no way for the user to retry just failed pages
       const PAGE_MAX_ATTEMPTS = 2;
-      let pageSuccess = false;
 
       for (let attempt = 1; attempt <= PAGE_MAX_ATTEMPTS; attempt++) {
         // Extend BullMQ lock to at least the LLM timeout + buffer,
@@ -456,7 +455,6 @@ export const processor = async (
 
           generationPages[i].status = "done";
           generationPages[i].testCaseCount = pageCases.length;
-          pageSuccess = true;
           break;
         } catch (pageErr) {
           const errMsg = pageErr instanceof Error ? pageErr.message : String(pageErr);

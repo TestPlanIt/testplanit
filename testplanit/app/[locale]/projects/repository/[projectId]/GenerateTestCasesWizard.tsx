@@ -71,22 +71,14 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateCaseFieldValues,
-  useCreateCaseFieldVersionValues,
-  useCreateRepositoryCases,
-  useCreateRepositoryCaseVersions,
-  useCreateSteps,
   useFindFirstProjects,
   useFindFirstWorkflows,
   useFindManyRepositoryCases,
   useFindManyTemplates,
-  useUpdateRepositoryCases,
-  useUpsertIssue,
-  useUpsertTags,
 } from "~/lib/hooks";
+import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
   convertHtmlToTipTapJSON,
   ensureTipTapJSON,
@@ -394,15 +386,6 @@ export function GenerateTestCasesWizard({
   );
   const canAddEdit = permissions?.canAddEdit ?? false;
 
-  // ZenStack hooks for creating entities
-  const createRepositoryCase = useCreateRepositoryCases();
-  const updateRepositoryCase = useUpdateRepositoryCases();
-  const upsertIssue = useUpsertIssue();
-  const createCaseFieldValue = useCreateCaseFieldValues();
-  const createStep = useCreateSteps();
-  const upsertTag = useUpsertTags();
-  const createRepositoryCaseVersion = useCreateRepositoryCaseVersions();
-  const createCaseFieldVersionValue = useCreateCaseFieldVersionValues();
 
   useEffect(() => {
     if (project) {
@@ -566,7 +549,7 @@ export function GenerateTestCasesWizard({
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, [urlJobId, t]);
+  }, [urlJobId, t, restoreTemplateFromResult, convertFieldOptionIds]);
 
   // Cancel active URL job when user switches away from URL tab
   useEffect(() => {
@@ -1552,7 +1535,6 @@ export function GenerateTestCasesWizard({
         selectedTestCases.has(tc.id)
       );
 
-      // Get the selected template for field mapping
       const selectedTemplate = templates?.find(
         (t) => t.id === selectedTemplateId
       );
@@ -1560,558 +1542,105 @@ export function GenerateTestCasesWizard({
         throw new Error("Selected template not found");
       }
 
-      // Get the highest order for new cases
       let maxOrder = 0;
-
       if (maxOrderData && maxOrderData.length > 0) {
         maxOrder = maxOrderData[0].order || 0;
       }
 
-      let importedCount = 0;
-      let sharedIssue = null;
+      // Build field mappings from the template for the server action
+      const fieldMappings = selectedTemplate.caseFields
+        .filter(
+          (cf) =>
+            cf.caseField.displayName !== "Steps" &&
+            !cf.caseField.displayName.toLowerCase().includes("steps")
+        )
+        .map((cf) => ({
+          fieldName: cf.caseField.displayName,
+          caseFieldId: cf.caseFieldId,
+          fieldType: cf.caseField.type.type,
+          fieldOptions: cf.caseField.fieldOptions?.map((fo: any) => ({
+            id: fo.fieldOption.id,
+            name: fo.fieldOption.name,
+          })),
+        }));
 
-      // Create or find the issue once before importing test cases (if needed)
-      if (sourceType === "issue" && selectedIssue && session?.user?.id) {
+      // Build issue data if applicable
+      let issue: {
+        externalId: string;
+        integrationId: number;
+        issueKey: string;
+        title: string;
+        description?: string;
+        externalUrl?: string;
+      } | undefined;
+
+      if (sourceType === "issue" && selectedIssue) {
         const issueKey = selectedIssue.key || selectedIssue.externalKey;
         const integrationId = project?.projectIntegrations?.[0]?.integrationId;
-
-        if (!integrationId) {
-          console.error("No integration found for project");
-          // Skip issue creation but continue with import
-        } else {
-          // Use upsert to find existing or create new issue atomically
-          try {
-            sharedIssue = await upsertIssue.mutateAsync({
-              where: {
-                externalId_integrationId: {
-                  externalId: selectedIssue.id || issueKey || "",
-                  integrationId: integrationId,
-                },
-              },
-              create: {
-                name: issueKey || selectedIssue.title,
-                title: selectedIssue.title,
-                description: t("generateTestCases.importData.issueDescription"),
-                externalKey: issueKey,
-                externalId: selectedIssue.id || issueKey,
-                externalUrl: selectedIssue.url || selectedIssue.externalUrl,
-                projectId: projectId,
-                integrationId: integrationId,
-                createdById: session.user.id,
-              },
-              update: {
-                // Update fields that might have changed
-                title: selectedIssue.title,
-                externalKey: issueKey,
-                externalUrl: selectedIssue.url || selectedIssue.externalUrl,
-              },
-            });
-          } catch (error) {
-            console.error("Error finding or creating issue:", error);
-          }
-        }
-      }
-
-      for (const testCase of testCasesToImport) {
-        try {
-          // Get proper repository ID and workflow state
-          const repositoryId = project?.repositories?.[0]?.id;
-          const stateId = defaultWorkflow?.id;
-
-          if (!repositoryId || !stateId || !session?.user?.id) {
-            console.error(
-              `Missing required data - repositoryId: ${repositoryId}, stateId: ${stateId}, userId: ${session?.user?.id}`
-            );
-            continue;
-          }
-
-          // Create the repository case
-          let newCase;
-          const calculatedOrder = maxOrder + importedCount + 1;
-
-          const caseData = {
-            projectId,
-            repositoryId,
-            folderId,
-            templateId: selectedTemplateId,
-            name: testCase.name.slice(0, 255), // Ensure name doesn't exceed limit
-            source: "API" as const, // Generated via API
-            stateId,
-            order: calculatedOrder,
-            creatorId: session.user.id,
-            automated: false,
-            currentVersion: 1,
+        if (integrationId && issueKey) {
+          issue = {
+            externalId: selectedIssue.id || issueKey || "",
+            integrationId,
+            issueKey,
+            title: selectedIssue.title,
+            description: t("generateTestCases.importData.issueDescription"),
+            externalUrl: selectedIssue.url || selectedIssue.externalUrl,
           };
-
-          try {
-            newCase = await createRepositoryCase.mutateAsync({
-              data: caseData,
-            });
-          } catch (error) {
-            console.error(
-              `Failed to create repository case for "${testCase.name}":`,
-              error
-            );
-            console.error("Error details:", {
-              message: error instanceof Error ? error.message : String(error),
-              status: (error as any)?.status,
-              details: (error as any)?.info,
-            });
-
-            // Show specific error to user for case creation failures
-            let caseErrorMessage = t(
-              "generateTestCases.errors.caseCreationFailed",
-              { name: testCase.name }
-            );
-            if (error instanceof Error) {
-              if (
-                error.message.includes("unique constraint") ||
-                error.message.includes("duplicate")
-              ) {
-                caseErrorMessage = t(
-                  "generateTestCases.errors.caseAlreadyExists",
-                  { name: testCase.name }
-                );
-              } else if (
-                error.message.includes("template") ||
-                error.message.includes("templateId")
-              ) {
-                caseErrorMessage = t(
-                  "generateTestCases.errors.invalidTemplateConfig",
-                  { name: testCase.name }
-                );
-              } else if (
-                error.message.includes("name") &&
-                error.message.includes("length")
-              ) {
-                caseErrorMessage = t("generateTestCases.errors.nameTooLong", {
-                  name: testCase.name,
-                });
-              } else if (error.message.trim().length > 5) {
-                caseErrorMessage = t(
-                  "generateTestCases.errors.caseCreationError",
-                  { name: testCase.name, error: error.message }
-                );
-              }
-            }
-            toast.error(caseErrorMessage);
-            continue;
-          }
-
-          if (!newCase) {
-            console.error(
-              `Failed to create repository case for: ${testCase.name}`
-            );
-            continue;
-          }
-
-          // Create repository case version for version 1
-          let newCaseVersion;
-          try {
-            // Prepare steps data for version - convert to proper TipTap editor format
-            const resolvedStepsForVersion =
-              testCase.steps?.map((step) => {
-                // Convert step text to TipTap format
-                const stepContent =
-                  typeof step.step === "string"
-                    ? {
-                        type: "doc",
-                        content: [
-                          {
-                            type: "paragraph",
-                            content: [{ type: "text", text: step.step }],
-                          },
-                        ],
-                      }
-                    : step.step || emptyEditorContent;
-
-                // Convert expected result to TipTap format
-                const expectedResultContent =
-                  typeof step.expectedResult === "string"
-                    ? {
-                        type: "doc",
-                        content: [
-                          {
-                            type: "paragraph",
-                            content: [
-                              { type: "text", text: step.expectedResult },
-                            ],
-                          },
-                        ],
-                      }
-                    : step.expectedResult || emptyEditorContent;
-
-                return {
-                  step: stepContent,
-                  expectedResult: expectedResultContent,
-                };
-              }) || [];
-
-            // Prepare issues data for version if linked to an external issue
-            const issuesDataForVersion = sharedIssue
-              ? [
-                  {
-                    id: sharedIssue.id,
-                    name: sharedIssue.name,
-                    externalId: sharedIssue.externalId,
-                  },
-                ]
-              : [];
-
-            // Prepare tags data for version
-            const tagNamesForVersion =
-              autoGenerateTags && testCase.tags ? testCase.tags : [];
-
-            newCaseVersion = await createRepositoryCaseVersion.mutateAsync({
-              data: {
-                repositoryCase: { connect: { id: newCase.id } },
-                project: { connect: { id: projectId } },
-                staticProjectName:
-                  project?.name || tCommon("labels.unknownProject"),
-                staticProjectId: projectId,
-                repositoryId: project?.repositories?.[0]?.id || 0,
-                folderId: folderId,
-                folderName: t(
-                  "generateTestCases.importData.generatedFolderName"
-                ), // Use a default folder name since it's required
-                templateId: selectedTemplateId,
-                templateName: selectedTemplate.templateName,
-                name: testCase.name.slice(0, 255),
-                stateId: defaultWorkflow.id,
-                stateName: defaultWorkflow.name || tCommon("labels.unknown"),
-                estimate: 0, // AI generated cases don't have duration estimates by default
-                order: calculatedOrder,
-                createdAt: new Date(),
-                creatorId: session.user.id,
-                creatorName: session.user.name || tCommon("labels.unknownUser"),
-                automated: false,
-                isArchived: false,
-                isDeleted: false,
-                version: 1,
-                steps: resolvedStepsForVersion,
-                attachments: [], // No attachments for AI generated cases
-                tags: tagNamesForVersion,
-                issues: issuesDataForVersion,
-              },
-            });
-
-            if (!newCaseVersion) {
-              throw new Error(
-                t("generateTestCases.errors.failedToCreateCaseVersion")
-              );
-            }
-          } catch (error) {
-            console.error(
-              `Error creating repository case version for ${testCase.name}:`,
-              error
-            );
-            // Continue with import even if version creation fails
-          }
-
-          // Create field values for the test case
-          // Filter out Steps field since it's handled separately via createStep calls
-          for (const [fieldName, fieldValue] of Object.entries(
-            testCase.fieldValues
-          )) {
-            // Skip Steps field - it's handled separately via createStep calls above
-            if (
-              fieldName === "Steps" ||
-              fieldName.toLowerCase().includes("steps")
-            ) {
-              continue;
-            }
-
-            const templateField = selectedTemplate.caseFields.find(
-              (cf) => cf.caseField.displayName === fieldName
-            );
-
-            if (templateField && fieldValue != null) {
-              try {
-                // Process the field value based on field type
-                let processedValue = fieldValue;
-                const fieldType = templateField.caseField.type.type;
-
-                switch (fieldType) {
-                  case "Text Long":
-                    // Convert string to TipTap JSON format if it's a string
-                    if (typeof fieldValue === "string") {
-                      processedValue = JSON.stringify(
-                        ensureTipTapJSON(fieldValue)
-                      );
-                    } else {
-                      processedValue = JSON.stringify(fieldValue);
-                    }
-                    break;
-
-                  case "Dropdown":
-                  case "Multi-Select":
-                    // Try to map option names to IDs
-                    if (Array.isArray(fieldValue)) {
-                      processedValue = fieldValue.map((optionName: any) => {
-                        const option =
-                          templateField.caseField.fieldOptions?.find(
-                            (fo: any) => fo.fieldOption.name === optionName
-                          );
-                        return option ? option.fieldOption.id : optionName;
-                      });
-                    } else if (typeof fieldValue === "string") {
-                      const option = templateField.caseField.fieldOptions?.find(
-                        (fo: any) => fo.fieldOption.name === fieldValue
-                      );
-                      processedValue = option
-                        ? option.fieldOption.id
-                        : fieldValue;
-                    }
-                    break;
-
-                  case "Checkbox":
-                    processedValue = Boolean(fieldValue);
-                    break;
-
-                  case "Integer":
-                    processedValue = parseInt(fieldValue as string) || 0;
-                    break;
-
-                  case "Number":
-                    processedValue = parseFloat(fieldValue as string) || 0;
-                    break;
-
-                  default:
-                    // For other types, use as-is
-                    processedValue = fieldValue;
-                    break;
-                }
-
-                await createCaseFieldValue.mutateAsync({
-                  data: {
-                    testCaseId: newCase.id,
-                    fieldId: templateField.caseFieldId,
-                    value: processedValue,
-                  },
-                });
-              } catch (error) {
-                console.error(
-                  `Error creating field value for ${fieldName}:`,
-                  error
-                );
-              }
-            }
-          }
-
-          // Create field version values for the repository case version
-          // Filter out Steps field since it's handled separately in the version JSON
-          if (newCaseVersion) {
-            for (const [fieldName, fieldValue] of Object.entries(
-              testCase.fieldValues
-            )) {
-              // Skip Steps field - it's handled in the version JSON above
-              if (
-                fieldName === "Steps" ||
-                fieldName.toLowerCase().includes("steps")
-              ) {
-                continue;
-              }
-
-              const templateField = selectedTemplate.caseFields.find(
-                (cf) => cf.caseField.displayName === fieldName
-              );
-
-              if (templateField && fieldValue != null) {
-                try {
-                  // Process the field value based on field type (same logic as above)
-                  let processedValue = fieldValue;
-                  const fieldType = templateField.caseField.type.type;
-
-                  switch (fieldType) {
-                    case "Text Long":
-                      if (typeof fieldValue === "string") {
-                        processedValue = JSON.stringify(
-                          ensureTipTapJSON(fieldValue)
-                        );
-                      } else {
-                        processedValue = JSON.stringify(fieldValue);
-                      }
-                      break;
-
-                    case "Dropdown":
-                    case "Multi-Select":
-                      if (Array.isArray(fieldValue)) {
-                        processedValue = fieldValue.map((optionName: any) => {
-                          const option =
-                            templateField.caseField.fieldOptions?.find(
-                              (fo: any) => fo.fieldOption.name === optionName
-                            );
-                          return option ? option.fieldOption.id : optionName;
-                        });
-                      } else if (typeof fieldValue === "string") {
-                        const option =
-                          templateField.caseField.fieldOptions?.find(
-                            (fo: any) => fo.fieldOption.name === fieldValue
-                          );
-                        processedValue = option
-                          ? option.fieldOption.id
-                          : fieldValue;
-                      }
-                      break;
-
-                    case "Checkbox":
-                      processedValue = Boolean(fieldValue);
-                      break;
-
-                    case "Integer":
-                      processedValue = parseInt(fieldValue as string) || 0;
-                      break;
-
-                    case "Number":
-                      processedValue = parseFloat(fieldValue as string) || 0;
-                      break;
-
-                    default:
-                      processedValue = fieldValue;
-                      break;
-                  }
-
-                  await createCaseFieldVersionValue.mutateAsync({
-                    data: {
-                      version: { connect: { id: newCaseVersion.id } },
-                      field: fieldName,
-                      value: processedValue,
-                    },
-                  });
-                } catch (error) {
-                  console.error(
-                    `Error creating field version value for ${fieldName}:`,
-                    error
-                  );
-                }
-              }
-            }
-          }
-
-          // Create steps if provided
-          if (testCase.steps && Array.isArray(testCase.steps)) {
-            for (
-              let stepIndex = 0;
-              stepIndex < testCase.steps.length;
-              stepIndex++
-            ) {
-              const step = testCase.steps[stepIndex];
-              try {
-                // Convert step text to TipTap JSON format
-                const stepContent =
-                  typeof step.step === "string"
-                    ? ensureTipTapJSON(step.step)
-                    : step.step || emptyEditorContent;
-
-                // Convert expected result to TipTap JSON format
-                const expectedResultContent =
-                  typeof step.expectedResult === "string"
-                    ? ensureTipTapJSON(step.expectedResult)
-                    : step.expectedResult || emptyEditorContent;
-
-                await createStep.mutateAsync({
-                  data: {
-                    testCaseId: newCase.id,
-                    step: stepContent,
-                    expectedResult: expectedResultContent,
-                    order: stepIndex,
-                  },
-                });
-              } catch (error) {
-                console.error(`Error creating step ${stepIndex + 1}:`, error);
-              }
-            }
-          }
-
-          // Link to shared issue if available
-          if (sharedIssue) {
-            try {
-              await updateRepositoryCase.mutateAsync({
-                where: { id: newCase.id },
-                data: {
-                  order: calculatedOrder, // Explicitly preserve the order
-                  issues: {
-                    connect: [{ id: sharedIssue.id }],
-                  },
-                },
-              });
-            } catch (error) {
-              console.error(
-                `Error linking issue to case ${newCase.id}:`,
-                error
-              );
-            }
-          }
-
-          // Handle tags - upsert and attach to test case (only if user opted for auto-generation)
-          if (autoGenerateTags && testCase.tags && testCase.tags.length > 0) {
-            try {
-              const tagIds: number[] = [];
-
-              for (const tagName of testCase.tags) {
-                try {
-                  // Upsert the tag (create if doesn't exist, get if exists)
-                  const tag = await upsertTag.mutateAsync({
-                    where: { name: tagName.trim() },
-                    update: {}, // No updates needed, just return existing
-                    create: {
-                      name: tagName.trim(),
-                      isDeleted: false,
-                    },
-                  });
-
-                  if (tag?.id) {
-                    tagIds.push(tag.id);
-                  }
-                } catch (tagError) {
-                  console.error(`Error upserting tag "${tagName}":`, tagError);
-                  // Continue with other tags even if one fails
-                }
-              }
-
-              // Connect all successfully created/found tags to the test case
-              if (tagIds.length > 0) {
-                await updateRepositoryCase.mutateAsync({
-                  where: { id: newCase.id },
-                  data: {
-                    order: calculatedOrder, // Explicitly preserve the order
-                    tags: {
-                      connect: tagIds.map((id) => ({ id })),
-                    },
-                  },
-                });
-              }
-            } catch (error) {
-              console.error(
-                `Error handling tags for test case ${testCase.name}:`,
-                error
-              );
-              // Don't fail the import if tags fail - just log the error
-            }
-          }
-
-          importedCount++;
-          setImportProgress(importedCount);
-        } catch (error) {
-          console.error(`Error importing test case ${testCase.name}:`, error);
         }
       }
+
+      const result = await importGeneratedTestCases({
+        projectId,
+        projectName: project?.name || tCommon("labels.unknownProject"),
+        repositoryId: project.repositories[0].id,
+        folderId,
+        folderName: t("generateTestCases.importData.generatedFolderName"),
+        templateId: selectedTemplateId,
+        templateName: selectedTemplate.templateName,
+        stateId: defaultWorkflow.id,
+        stateName: defaultWorkflow.name || tCommon("labels.unknown"),
+        maxOrder,
+        autoGenerateTags,
+        testCases: testCasesToImport.map((tc) => ({
+          id: tc.id,
+          name: tc.name,
+          steps: tc.steps?.map((s) => ({
+            step: s.step,
+            expectedResult: s.expectedResult,
+          })),
+          fieldValues: tc.fieldValues,
+          automated: tc.automated,
+          tags: tc.tags,
+        })),
+        fieldMappings,
+        issue,
+      });
+
+      if (result.status === "error") {
+        throw new Error(result.message || t("generateTestCases.errors.importFailed"));
+      }
+
+      if (result.errors.length > 0) {
+        for (const err of result.errors) {
+          toast.error(err);
+        }
+      }
+
+      setImportProgress(result.importedCount);
 
       toast.success(
         t("generateTestCases.success.imported", {
-          count: importedCount,
+          count: result.importedCount,
         })
       );
 
       onImportComplete?.();
-      // Dispatch event to refresh Cases component data
       window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
       setOpen(false);
       resetWizard();
     } catch (error) {
       console.error("Error importing test cases:", error);
 
-      // Provide detailed error message for import failures
       let errorMessage = t("generateTestCases.errors.importFailed");
 
       if (error instanceof Error) {
@@ -3107,12 +2636,21 @@ export function GenerateTestCasesWizard({
                                           variant="secondary"
                                           className="text-[10px] px-1.5 py-0 shrink-0"
                                         >
-                                          {"("}{t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}{")"}
+                                          {"("}
+                                          {t(
+                                            "generateTestCases.selectSource.generatingPageCases",
+                                            { count: gp.testCaseCount }
+                                          )}
+                                          {")"}
                                         </Badge>
                                       )}
                                       {gp.status === "failed" && (
                                         <span className="text-[10px] text-destructive shrink-0">
-                                          {"("}{t("generateTestCases.selectSource.generatingPageFailed")}{")"}
+                                          {"("}
+                                          {t(
+                                            "generateTestCases.selectSource.generatingPageFailed"
+                                          )}
+                                          {")"}
                                         </span>
                                       )}
                                     </div>
@@ -3538,12 +3076,21 @@ export function GenerateTestCasesWizard({
                                                   variant="secondary"
                                                   className="text-[10px] px-1.5 py-0 shrink-0"
                                                 >
-                                                  {"("}{t("generateTestCases.selectSource.generatingPageCases", { count: gp.testCaseCount })}{")"}
+                                                  {"("}
+                                                  {t(
+                                                    "generateTestCases.selectSource.generatingPageCases",
+                                                    { count: gp.testCaseCount }
+                                                  )}
+                                                  {")"}
                                                 </Badge>
                                               )}
                                               {gp.status === "failed" && (
                                                 <span className="text-[10px] text-destructive shrink-0">
-                                                  {"("}{t("generateTestCases.selectSource.generatingPageFailed")}{")"}
+                                                  {"("}
+                                                  {t(
+                                                    "generateTestCases.selectSource.generatingPageFailed"
+                                                  )}
+                                                  {")"}
                                                 </span>
                                               )}
                                             </div>
@@ -3995,8 +3542,9 @@ export function GenerateTestCasesWizard({
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__all__">
-                              {t("generateTestCases.review.allPages")}{" "}
-                              {"("}{generatedTestCases.length}{")"}
+                              {t("generateTestCases.review.allPages")} {"("}
+                              {generatedTestCases.length}
+                              {")"}
                             </SelectItem>
                             {crawledPagesResult.map((page, idx) => {
                               const pageTestCount = generatedTestCases.filter(
@@ -4011,7 +3559,9 @@ export function GenerateTestCasesWizard({
                                     <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
                                   )}
                                   <span className="text-muted-foreground ml-1">
-                                    {"("}{pageTestCount}{")"}
+                                    {"("}
+                                    {pageTestCount}
+                                    {")"}
                                   </span>
                                 </SelectItem>
                               );
