@@ -202,7 +202,7 @@ export function GenerateTestCasesWizard({
     useState<DocumentRequirements | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const [urlMode, setUrlMode] = useState<"requirements" | "application">(
-    "requirements"
+    "application"
   );
   const [urlValidationError, setUrlValidationError] = useState<string | null>(
     null
@@ -824,7 +824,7 @@ export function GenerateTestCasesWizard({
     setSourceType(hasActiveIntegrations ? "issue" : "url");
     setDocumentRequirements(null);
     setUrlInput("");
-    setUrlMode("requirements");
+    setUrlMode("application");
     setUrlValidationError(null);
     setFollowLinks(false);
     setMaxDepth(2);
@@ -2612,7 +2612,12 @@ export function GenerateTestCasesWizard({
                                 </div>
                               </div>
                               <Progress
-                                value={((urlJobProgress.pagesGenerated ?? 0) / (urlJobProgress.totalPagesForGeneration ?? 1)) * 100}
+                                value={
+                                  ((urlJobProgress.pagesGenerated ?? 0) /
+                                    (urlJobProgress.totalPagesForGeneration ??
+                                      1)) *
+                                  100
+                                }
                                 className="h-1.5"
                               />
                               <div className="space-y-1.5 max-h-48 overflow-y-auto">
