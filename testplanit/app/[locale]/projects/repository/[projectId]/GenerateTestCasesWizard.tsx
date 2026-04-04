@@ -2579,10 +2579,12 @@ export function GenerateTestCasesWizard({
                 </div>
               )}
 
-              {/* URL Generation Progress Overlay — shown on any step while URL job runs */}
+              {/* URL Generation Progress Overlay — shown before test cases arrive.
+                  Once test cases start appearing, progress moves inline into the review step. */}
               {urlJobId &&
                 isGenerating &&
-                sourceType === "url" && (
+                sourceType === "url" &&
+                generatedTestCases.length === 0 && (
                   <Card shadow="none">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -3582,8 +3584,9 @@ export function GenerateTestCasesWizard({
                   </Card>
                 )}
 
-              {/* Step 4: Review Generated Test Cases */}
-              {currentStep === WizardStep.REVIEW_GENERATED && (
+              {/* Step 4: Review Generated Test Cases (also shown during URL generation for incremental rendering) */}
+              {(currentStep === WizardStep.REVIEW_GENERATED ||
+                (urlJobId && isGenerating && sourceType === "url" && generatedTestCases.length > 0)) && (
                 <Card shadow="none">
                   {sourceType === "url" && crawledPagesResult.length > 1 && (
                     <div className="px-6 pt-6">
@@ -3630,6 +3633,45 @@ export function GenerateTestCasesWizard({
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+                  )}
+                  {/* Inline URL generation progress — shown while generating inside review step */}
+                  {urlJobId && isGenerating && sourceType === "url" && (
+                    <div className="px-6 pt-6 space-y-2">
+                      {urlJobProgress?.phase === "generating" && urlJobProgress?.generationPages ? (
+                        <>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Sparkles className="h-4 w-4 animate-pulse" />
+                            <span>
+                              {(urlJobProgress.totalPagesForGeneration ?? 0) > 1
+                                ? t("generateTestCases.selectSource.generatingProgress", {
+                                    current: urlJobProgress.pagesGenerated ?? 0,
+                                    total: urlJobProgress.totalPagesForGeneration ?? 0,
+                                    testCases: urlJobProgress.totalTestCases ?? 0,
+                                  })
+                                : t("generateTestCases.selectSource.generatingSinglePage")}
+                            </span>
+                          </div>
+                          <Progress
+                            value={((urlJobProgress.pagesGenerated ?? 0) / (urlJobProgress.totalPagesForGeneration ?? 1)) * 100}
+                            className="h-1.5"
+                          />
+                        </>
+                      ) : urlJobProgress?.phase === "crawling" ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>
+                            {t("generateTestCases.selectSource.crawlProgress", {
+                              current: urlJobProgress.pagesProcessed,
+                            })}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>{t("generateTestCases.selectSource.generatingSetup")}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   <CardHeader>
