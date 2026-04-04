@@ -496,18 +496,6 @@ export const processor = async (
                 totalTestCases: allTestCases.length + streamedCaseCount,
                 generationPages,
                 skippedRobots,
-                // Always include completed test cases so the UI can render
-                // them incrementally — BullMQ overwrites progress on each update
-                ...(allTestCases.length > 0 && {
-                  completedTestCases: allTestCases,
-                  crawledPages: pages.map((p) => ({
-                    url: p.url,
-                    title: p.title,
-                    spaWarning: p.spaWarning,
-                  })),
-                  templateId: job.data.templateId,
-                  selectedFieldIds: job.data.selectedFieldIds,
-                }),
               });
               // Keep lock alive during long streams
               await job.extendLock(token!, llmTimeout + 30_000);
@@ -566,7 +554,28 @@ export const processor = async (
         }
       }
 
-      // Post-page progress update with completed test cases for incremental rendering
+      // Store completed test cases in a separate Redis key for incremental rendering.
+      // BullMQ's job.progress has size limits that silently drop large objects.
+      if (allTestCases.length > 0) {
+        const partialResult = JSON.stringify({
+          completedTestCases: allTestCases,
+          crawledPages: pages.map((p) => ({
+            url: p.url,
+            title: p.title,
+            spaWarning: p.spaWarning,
+          })),
+          templateId: job.data.templateId,
+          selectedFieldIds: job.data.selectedFieldIds,
+        });
+        await redis.set(
+          `generate-from-url:partial:${job.id}`,
+          partialResult,
+          "EX",
+          3600 // 1 hour TTL
+        );
+      }
+
+      // Post-page progress update (lightweight — no test case data)
       await job.updateProgress({
         phase: "generating",
         message: `Generated test cases for page ${i + 1} of ${pages.length}`,
@@ -577,15 +586,7 @@ export const processor = async (
         totalTestCases: allTestCases.length,
         generationPages,
         skippedRobots,
-        // Include completed test cases so the UI can render them incrementally
-        completedTestCases: allTestCases,
-        crawledPages: pages.map((p) => ({
-          url: p.url,
-          title: p.title,
-          spaWarning: p.spaWarning,
-        })),
-        templateId: job.data.templateId,
-        selectedFieldIds: job.data.selectedFieldIds,
+        hasPartialResults: allTestCases.length > 0,
       });
     }
 

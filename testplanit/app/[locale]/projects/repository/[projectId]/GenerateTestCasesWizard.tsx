@@ -513,26 +513,20 @@ export function GenerateTestCasesWizard({
           });
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
 
-          // Render test cases incrementally as pages complete
-          console.log('[URL-GEN] Progress poll:', {
-            hasCompletedTestCases: !!data.progress.completedTestCases,
-            completedCount: data.progress.completedTestCases?.length ?? 0,
-            phase: data.progress.phase,
-            totalTestCases: data.progress.totalTestCases,
-          });
-          if (data.progress.completedTestCases?.length > 0) {
+          // Render test cases incrementally from partial results (stored in Redis, not BullMQ progress)
+          if (data.partialResults?.completedTestCases?.length > 0) {
             // Restore template on first batch so fields render correctly
             if (currentStep !== WizardStep.REVIEW_GENERATED) {
               setCurrentStep(WizardStep.REVIEW_GENERATED);
               restoreTemplateFromResult(
-                data.progress.templateId,
-                data.progress.selectedFieldIds
+                data.partialResults.templateId,
+                data.partialResults.selectedFieldIds
               );
-              if (data.progress.crawledPages) {
-                setCrawledPagesResult(data.progress.crawledPages);
+              if (data.partialResults.crawledPages) {
+                setCrawledPagesResult(data.partialResults.crawledPages);
               }
             }
-            const converted = data.progress.completedTestCases.map(convertFieldOptionIds);
+            const converted = data.partialResults.completedTestCases.map(convertFieldOptionIds);
             setGeneratedTestCases(converted);
             setSelectedTestCases(
               new Set(converted.map((tc: GeneratedTestCase) => tc.id))
