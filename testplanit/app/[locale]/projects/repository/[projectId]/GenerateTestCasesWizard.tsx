@@ -213,7 +213,9 @@ function extractPartialTestCases(
       if (fvBrace !== -1) {
         const fvContent = partialJson.slice(fvBrace);
         // Match complete "key": "value" pairs (string values)
-        const stringPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*"((?:[^"\\]|\\.)*)"/g);
+        const stringPairs = fvContent.matchAll(
+          /"([^"]+?)"\s*:\s*"((?:[^"\\]|\\.)*)"/g
+        );
         for (const m of stringPairs) {
           fieldValues[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, "\n");
         }
@@ -261,23 +263,38 @@ function extractPartialTestCases(
         let sEsc = false;
         for (let si = 0; si < stepsContent.length; si++) {
           const sc = stepsContent[si];
-          if (sEsc) { sEsc = false; continue; }
-          if (sc === "\\") { sEsc = true; continue; }
-          if (sc === '"') { sInStr = !sInStr; continue; }
+          if (sEsc) {
+            sEsc = false;
+            continue;
+          }
+          if (sc === "\\") {
+            sEsc = true;
+            continue;
+          }
+          if (sc === '"') {
+            sInStr = !sInStr;
+            continue;
+          }
           if (sInStr) continue;
-          if (sc === "{") { if (sDepth === 0) sObjStart = si; sDepth++; }
-          else if (sc === "}") {
+          if (sc === "{") {
+            if (sDepth === 0) sObjStart = si;
+            sDepth++;
+          } else if (sc === "}") {
             sDepth--;
             if (sDepth === 0 && sObjStart >= 0) {
               try {
-                const stepObj = JSON.parse(stepsContent.slice(sObjStart, si + 1));
+                const stepObj = JSON.parse(
+                  stepsContent.slice(sObjStart, si + 1)
+                );
                 if (stepObj.step || stepObj.expectedResult) {
                   steps.push({
                     step: String(stepObj.step ?? ""),
                     expectedResult: String(stepObj.expectedResult ?? ""),
                   });
                 }
-              } catch { /* incomplete */ }
+              } catch {
+                /* incomplete */
+              }
               sObjStart = -1;
             }
           }
@@ -681,7 +698,6 @@ export function GenerateTestCasesWizard({
             generationPages: data.progress.generationPages,
           });
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
-
         }
         if (data.state === "completed") {
           clearInterval(interval);
@@ -700,7 +716,10 @@ export function GenerateTestCasesWizard({
               data.result?.selectedFieldIds
             );
             setIsGenerating(true);
-            streamUrlTestCases(data.result.crawledPages, data.result.selectedFieldIds);
+            streamUrlTestCases(
+              data.result.crawledPages,
+              data.result.selectedFieldIds
+            );
           } else if (data.result?.testCases?.length > 0) {
             // Legacy path: worker did LLM generation
             setIsGenerating(false);
@@ -773,7 +792,11 @@ export function GenerateTestCasesWizard({
         );
         const data = await res.json();
 
-        if (data.state === "completed" && data.result?.crawlOnly && data.result?.crawledPages?.length > 0) {
+        if (
+          data.state === "completed" &&
+          data.result?.crawlOnly &&
+          data.result?.crawledPages?.length > 0
+        ) {
           // Crawl-only: start SSE streaming per page for incremental generation
           setIsNotificationReopen(false);
           setCrawledPagesResult(data.result.crawledPages);
@@ -784,7 +807,10 @@ export function GenerateTestCasesWizard({
           setCurrentStep(WizardStep.REVIEW_GENERATED);
           setIsGenerating(true);
           streamUrlTestCases(data.result.crawledPages);
-        } else if (data.state === "completed" && data.result?.testCases?.length > 0) {
+        } else if (
+          data.state === "completed" &&
+          data.result?.testCases?.length > 0
+        ) {
           // Legacy: worker-generated test cases
           setCurrentStep(WizardStep.REVIEW_GENERATED);
           setCrawledPagesResult(data.result.crawledPages ?? []);
@@ -1071,10 +1097,20 @@ export function GenerateTestCasesWizard({
    * cases render one-by-one as the LLM produces them.
    */
   const streamUrlTestCases = async (
-    crawledPages: Array<{ url: string; title?: string; spaWarning: boolean; markdown?: string }>,
+    crawledPages: Array<{
+      url: string;
+      title?: string;
+      spaWarning: boolean;
+      markdown?: string;
+    }>,
     fieldIdsOverride?: number[]
   ) => {
-    console.log('[URL-GEN] streamUrlTestCases called with', crawledPages.length, 'pages, fieldIdsOverride:', fieldIdsOverride?.length);
+    console.log(
+      "[URL-GEN] streamUrlTestCases called with",
+      crawledPages.length,
+      "pages, fieldIdsOverride:",
+      fieldIdsOverride?.length
+    );
     const template = templates?.find((t) => t.id === selectedTemplateId);
     if (!template) {
       setIsGenerating(false);
@@ -1113,9 +1149,7 @@ export function GenerateTestCasesWizard({
     };
 
     const llmFeature =
-      urlMode === "application"
-        ? "generate_from_url_app"
-        : "generate_from_url";
+      urlMode === "application" ? "generate_from_url_app" : "generate_from_url";
 
     let globalYieldedCount = 0;
 
@@ -1173,9 +1207,10 @@ export function GenerateTestCasesWizard({
         });
 
         if (!response.ok) {
-          const errText = await response.text().catch(() => '');
+          const errText = await response.text().catch(() => "");
           console.error(
-            `URL generation stream failed for page ${pageIdx + 1}: HTTP ${response.status}`, errText.substring(0, 500)
+            `URL generation stream failed for page ${pageIdx + 1}: HTTP ${response.status}`,
+            errText.substring(0, 500)
           );
           continue; // Skip failed pages, try the next
         }
@@ -1225,7 +1260,10 @@ export function GenerateTestCasesWizard({
                   });
 
                   tagged.forEach((tc) => {
-                    console.log(`[URL-GEN] Finalized test case (page ${pageIdx + 1}):`, JSON.stringify(tc, null, 2));
+                    console.log(
+                      `[URL-GEN] Finalized test case (page ${pageIdx + 1}):`,
+                      JSON.stringify(tc, null, 2)
+                    );
                   });
 
                   pageYieldedCount += newCases.length;
@@ -1250,9 +1288,7 @@ export function GenerateTestCasesWizard({
                 setGeneratedTestCases(allCases);
                 setSelectedTestCases(
                   new Set(
-                    allCases
-                      .filter((tc) => !tc._streaming)
-                      .map((tc) => tc.id)
+                    allCases.filter((tc) => !tc._streaming).map((tc) => tc.id)
                   )
                 );
               }
@@ -2775,7 +2811,9 @@ export function GenerateTestCasesWizard({
                 <div className="space-y-1.5 text-sm text-muted-foreground">
                   {Object.entries(testCase.fieldValues).map(([key, value]) => (
                     <div key={key}>
-                      <span className="font-medium text-foreground/70">{key}:</span>{" "}
+                      <span className="font-medium text-foreground/70">
+                        {key}:
+                      </span>{" "}
                       <span className="text-muted-foreground">
                         {typeof value === "string"
                           ? value.length > 200
@@ -2798,12 +2836,27 @@ export function GenerateTestCasesWizard({
               )}
               {testCase.steps && testCase.steps.length > 0 && (
                 <div className="space-y-1 text-sm">
-                  <span className="font-medium text-foreground/70 text-xs">{"Steps:"}</span>
+                  <span className="font-medium text-foreground/70 text-xs">
+                    {"Steps:"}
+                  </span>
                   {testCase.steps.map((step, si) => (
-                    <div key={si} className="pl-2 border-l-2 border-muted text-xs text-muted-foreground">
-                      <div><span className="font-medium">{"Step "}{si + 1}{":" }</span> {step.step}</div>
+                    <div
+                      key={si}
+                      className="pl-2 border-l-2 border-muted text-xs text-muted-foreground"
+                    >
+                      <div>
+                        <span className="font-medium">
+                          {"Step "}
+                          {si + 1}
+                          {":"}
+                        </span>{" "}
+                        {step.step}
+                      </div>
                       {step.expectedResult && (
-                        <div className="text-muted-foreground/70">{"Expected: "}{step.expectedResult}</div>
+                        <div className="text-muted-foreground/70">
+                          {"Expected: "}
+                          {step.expectedResult}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -2976,8 +3029,10 @@ export function GenerateTestCasesWizard({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">
-                        {t("generateTestCases.review.allPages")}{" "}
-                        {"("}{generatedTestCases.length}{")"}
+                        {t("generateTestCases.review.allPages", {
+                          pages: crawledPagesResult.length,
+                          cases: generatedTestCases.length,
+                        })}
                       </SelectItem>
                       {crawledPagesResult.map((page, idx) => {
                         const pageTestCount = generatedTestCases.filter(
@@ -2992,7 +3047,9 @@ export function GenerateTestCasesWizard({
                               <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
                             )}
                             <span className="text-muted-foreground ml-1">
-                              {"("}{pageTestCount}{")"}
+                              {"("}
+                              {pageTestCount}
+                              {")"}
                             </span>
                           </SelectItem>
                         );
@@ -3225,7 +3282,9 @@ export function GenerateTestCasesWizard({
                                       <span className="truncate flex-1">
                                         {gp.title || gp.url}
                                       </span>
-                                      {(gp.status === "done" || (gp.status === "generating" && gp.testCaseCount > 0)) && (
+                                      {(gp.status === "done" ||
+                                        (gp.status === "generating" &&
+                                          gp.testCaseCount > 0)) && (
                                         <Badge
                                           variant="secondary"
                                           className={`text-[10px] px-1.5 py-0 shrink-0 ${gp.status === "generating" ? "animate-pulse" : ""}`}
@@ -4118,27 +4177,44 @@ export function GenerateTestCasesWizard({
 
               {/* Step 4: Review Generated Test Cases (also shown during URL generation for incremental rendering) */}
               {(currentStep === WizardStep.REVIEW_GENERATED ||
-                (urlJobId && isGenerating && sourceType === "url" && generatedTestCases.length > 0)) && (
+                (urlJobId &&
+                  isGenerating &&
+                  sourceType === "url" &&
+                  generatedTestCases.length > 0)) && (
                 <Card shadow="none">
                   {/* Inline URL generation progress — shown while generating inside review step */}
                   {urlJobId && isGenerating && sourceType === "url" && (
                     <div className="px-6 pt-6 space-y-2">
-                      {urlJobProgress?.phase === "generating" && urlJobProgress?.generationPages ? (
+                      {urlJobProgress?.phase === "generating" &&
+                      urlJobProgress?.generationPages ? (
                         <>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Sparkles className="h-4 w-4 animate-pulse" />
                             <span>
                               {(urlJobProgress.totalPagesForGeneration ?? 0) > 1
-                                ? t("generateTestCases.selectSource.generatingProgress", {
-                                    current: urlJobProgress.pagesGenerated ?? 0,
-                                    total: urlJobProgress.totalPagesForGeneration ?? 0,
-                                    testCases: urlJobProgress.totalTestCases ?? 0,
-                                  })
-                                : t("generateTestCases.selectSource.generatingSinglePage")}
+                                ? t(
+                                    "generateTestCases.selectSource.generatingProgress",
+                                    {
+                                      current:
+                                        urlJobProgress.pagesGenerated ?? 0,
+                                      total:
+                                        urlJobProgress.totalPagesForGeneration ??
+                                        0,
+                                      testCases:
+                                        urlJobProgress.totalTestCases ?? 0,
+                                    }
+                                  )
+                                : t(
+                                    "generateTestCases.selectSource.generatingSinglePage"
+                                  )}
                             </span>
                           </div>
                           <Progress
-                            value={((urlJobProgress.pagesGenerated ?? 0) / (urlJobProgress.totalPagesForGeneration ?? 1)) * 100}
+                            value={
+                              ((urlJobProgress.pagesGenerated ?? 0) /
+                                (urlJobProgress.totalPagesForGeneration ?? 1)) *
+                              100
+                            }
                             className="h-1.5"
                           />
                         </>
@@ -4154,7 +4230,11 @@ export function GenerateTestCasesWizard({
                       ) : (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>{t("generateTestCases.selectSource.generatingSetup")}</span>
+                          <span>
+                            {t(
+                              "generateTestCases.selectSource.generatingSetup"
+                            )}
+                          </span>
                         </div>
                       )}
                     </div>

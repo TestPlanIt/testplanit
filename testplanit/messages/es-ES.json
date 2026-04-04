@@ -2196,7 +2196,7 @@
         "crawledUrls": "{count, plural, one {# página rastreada} other {# páginas rastreadas}}",
         "spaWarning": "Esta página puede requerir la renderización mediante JavaScript. Los resultados pueden estar incompletos.",
         "filterByPage": "Filtrar por página",
-        "allPages": "Todas las páginas"
+        "allPages": "Todas las páginas ({pages, plural, one {# página} other {# páginas}}, {cases, plural, one {# caso} other {# casos}})"
       },
       "generatingLegacy": "Generación de casos de prueba con IA...",
       "import": "{count, plural, =0 {Importar casos de prueba} =1 {Importar 1 caso de prueba} other {Importar # casos de prueba}}",

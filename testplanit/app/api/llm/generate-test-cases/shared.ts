@@ -344,31 +344,17 @@ export function buildSystemPrompt(
   );
   const includeSteps = hasStepsField;
 
+  // Build the example structure with ONLY the fields the template defines.
+  // No hardcoded priority, automated, or top-level steps — these only appear
+  // if the template includes corresponding fields in fieldValues.
   const baseStructure: any = {
     id: "tc_1",
     name: "Specific test case name based on the issue",
     fieldValues: JSON.parse(fieldValuesJson.trim()),
-    automated: false,
   };
 
   if (autoGenerateTags) {
     baseStructure.tags = ["UI", "Functional", "Smoke"];
-  }
-
-  if (includeSteps) {
-    baseStructure.steps = [
-      {
-        step: "Specific action to perform for this feature/requirement",
-        expectedResult: "Expected outcome specific to this issue",
-      },
-    ];
-  }
-
-  const priorityField = template.fields.find((f) =>
-    f.name.toLowerCase().includes("priority")
-  );
-  if (!priorityField) {
-    baseStructure.priority = "High";
   }
 
   const exampleStructureJson = JSON.stringify(baseStructure, null, 8).replace(
@@ -392,13 +378,11 @@ export function buildSystemPrompt(
     )
     .join("\n");
   const stepsInstruction = includeSteps
-    ? "\n- Test steps must be detailed and actionable for the specific issue requirements"
+    ? "\n- For the Steps field in fieldValues, provide detailed step objects with 'step' and 'expectedResult' keys"
     : "";
-  const priorityInstruction = !priorityField
-    ? '\n- Use priority: "High", "Medium", or "Low"'
-    : priorityField?.options
-      ? `\n- For Priority field, use ONLY these values: [${priorityField.options.join(", ")}]`
-      : "";
+  const priorityInstruction = priorityField?.options
+    ? `\n- For the ${priorityField.name} field in fieldValues, use ONLY these values: [${priorityField.options.join(", ")}]`
+    : "";
   const tagInstructions = autoGenerateTags
     ? '- TAGS: Include 2-4 relevant tags per test case that categorize the test (e.g., "UI", "API", "Security", "Performance", "Integration", "Smoke", "Regression", "Functional", "Edge Case", "Mobile", "Desktop", etc.)'
     : "";
@@ -433,9 +417,11 @@ ${optionalFieldsList}
 
 REQUIREMENTS:
 - Generate ${quantityGuidance} that are SPECIFIC to the provided issue
+- Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include priority, automated, steps, or any other top-level keys.
+- ALL data belongs inside fieldValues using the exact field names shown above
 - Each test case name should reference the actual feature/functionality being tested${stepsInstruction}${priorityInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
-- IMPORTANT: Include ALL optional fields in fieldValues, especially text fields like Description, Preconditions, and Post Conditions
+- IMPORTANT: Include ALL optional fields in fieldValues
 - For text/textarea fields (Description, Preconditions, Post Conditions, etc.):
   * Always provide substantial, detailed content (minimum 2-3 sentences)
   * Include specific details relevant to the issue being tested
@@ -657,20 +643,6 @@ export function parseAndValidateTestCases(
               {
                 id: "fallback_tc_1",
                 name: `Test case for ${issue.title.substring(0, 50)}`,
-                description:
-                  "Fallback test case generated when LLM response wasn't in expected JSON format",
-                steps: [
-                  {
-                    step: "Review the issue requirements and acceptance criteria",
-                    expectedResult:
-                      "Requirements are clearly understood and testable scenarios are identified",
-                  },
-                  {
-                    step: "Execute the primary functionality described in the issue",
-                    expectedResult:
-                      "Functionality works as described in the issue",
-                  },
-                ],
                 fieldValues: template.fields.reduce(
                   (acc, field) => {
                     acc[field.name] =
@@ -679,8 +651,6 @@ export function parseAndValidateTestCases(
                   },
                   {} as Record<string, string>
                 ),
-                priority: issue.priority || "Medium",
-                automated: false,
                 ...(autoGenerateTags && {
                   tags: ["Fallback", "Manual", "Review"],
                 }),
@@ -831,21 +801,32 @@ export function parseAndValidateTestCases(
         }
       });
 
+      // If the LLM put steps at the top level instead of in fieldValues,
+      // move them into fieldValues for any Steps-type field
+      if (Array.isArray(tc.steps) && tc.steps.length > 0) {
+        const stepsFieldDef = template.fields.find(
+          (f) => f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
+        );
+        if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
+          validatedFieldValues[stepsFieldDef.name] = tc.steps;
+        }
+      }
+
+      // If the LLM put priority at the top level instead of in fieldValues,
+      // move it into fieldValues for any priority-like field
+      if (tc.priority && typeof tc.priority === "string") {
+        const priorityFieldDef = template.fields.find(
+          (f) => f.name.toLowerCase().includes("priority")
+        );
+        if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
+          validatedFieldValues[priorityFieldDef.name] = tc.priority;
+        }
+      }
+
       return {
         id: tc.id || `generated_${Date.now()}_${index}`,
         name: tc.name || `Test Case ${index + 1}`,
-        description: tc.description,
-        steps: Array.isArray(tc.steps)
-          ? tc.steps.filter(
-              (step) =>
-                step &&
-                typeof step.step === "string" &&
-                typeof step.expectedResult === "string"
-            )
-          : [],
         fieldValues: validatedFieldValues,
-        priority: validatedPriority || validPriorityOptions[0] || "Medium",
-        automated: Boolean(tc.automated),
         tags: Array.isArray(tc.tags)
           ? tc.tags
               .filter(
@@ -989,21 +970,30 @@ export function validateTestCase(
     }
   });
 
+  // If the LLM put steps at the top level, move into fieldValues
+  if (Array.isArray(tc.steps) && tc.steps.length > 0) {
+    const stepsFieldDef = template.fields.find(
+      (f) => f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
+    );
+    if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
+      validatedFieldValues[stepsFieldDef.name] = tc.steps;
+    }
+  }
+
+  // If the LLM put priority at the top level, move into fieldValues
+  if (tc.priority && typeof tc.priority === "string") {
+    const priorityFieldDef = template.fields.find(
+      (f) => f.name.toLowerCase().includes("priority")
+    );
+    if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
+      validatedFieldValues[priorityFieldDef.name] = tc.priority;
+    }
+  }
+
   return {
     id: tc.id || `generated_${Date.now()}_${index}`,
     name: tc.name || `Test Case ${index + 1}`,
-    description: tc.description,
-    steps: Array.isArray(tc.steps)
-      ? tc.steps.filter(
-          (step) =>
-            step &&
-            typeof step.step === "string" &&
-            typeof step.expectedResult === "string"
-        )
-      : [],
     fieldValues: validatedFieldValues,
-    priority: validatedPriority || validPriorityOptions[0] || "Medium",
-    automated: Boolean(tc.automated),
     tags: Array.isArray(tc.tags)
       ? tc.tags
           .filter((tag) => typeof tag === "string" && tag.trim().length > 0)
