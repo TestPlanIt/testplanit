@@ -402,59 +402,72 @@ export const processor = async (
         ? resolvedPrompt.userPrompt
         : buildSinglePageContent(page);
 
-      // Extend BullMQ lock to at least the LLM timeout + buffer for retries,
-      // so the job isn't marked stalled while waiting for the LLM response
-      await job.extendLock(token!, llmTimeout + 30_000);
+      // Retry logic: try the LLM call up to 2 times per page (initial + 1 retry)
+      // since there's no way for the user to retry just failed pages
+      const PAGE_MAX_ATTEMPTS = 2;
+      let pageSuccess = false;
 
-      try {
-        const llmResponse = await llmManager.chat(
-          resolved.integrationId,
-          {
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            maxTokens,
-            userId: job.data.userId,
-            feature: llmFeature,
-            projectId: job.data.projectId,
-          },
-          retryOptions
-        );
+      for (let attempt = 1; attempt <= PAGE_MAX_ATTEMPTS; attempt++) {
+        // Extend BullMQ lock to at least the LLM timeout + buffer,
+        // so the job isn't marked stalled while waiting for the LLM response
+        await job.extendLock(token!, llmTimeout + 30_000);
 
-        const syntheticIssue: IssueData = {
-          key: "URL",
-          title: page.url,
-          description: page.markdown,
-          status: "Web Content",
-        };
+        try {
+          const llmResponse = await llmManager.chat(
+            resolved.integrationId,
+            {
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+              maxTokens,
+              userId: job.data.userId,
+              feature: llmFeature,
+              projectId: job.data.projectId,
+            },
+            retryOptions
+          );
 
-        const { testCases: pageCases, parseError } = parseAndValidateTestCases(
-          llmResponse.content,
-          template,
-          syntheticIssue,
-          job.data.autoGenerateTags,
-          job.data.quantity
-        );
+          const syntheticIssue: IssueData = {
+            key: "URL",
+            title: page.url,
+            description: page.markdown,
+            status: "Web Content",
+          };
 
-        if (parseError) {
-          console.warn(`Generate-from-URL job ${job.id} page ${i + 1} parse warning:`, parseError.userError);
+          const { testCases: pageCases, parseError } = parseAndValidateTestCases(
+            llmResponse.content,
+            template,
+            syntheticIssue,
+            job.data.autoGenerateTags,
+            job.data.quantity
+          );
+
+          if (parseError) {
+            console.warn(`Generate-from-URL job ${job.id} page ${i + 1} parse warning:`, parseError.userError);
+          }
+
+          // Tag each test case with the source URL and assign unique IDs
+          for (const tc of pageCases) {
+            (tc as any).sourceUrl = page.url;
+            (tc as any).id = `tc_p${i + 1}_${allTestCases.length + 1}`;
+            allTestCases.push(tc);
+          }
+
+          generationPages[i].status = "done";
+          generationPages[i].testCaseCount = pageCases.length;
+          pageSuccess = true;
+          break;
+        } catch (pageErr) {
+          const errMsg = pageErr instanceof Error ? pageErr.message : String(pageErr);
+          if (attempt < PAGE_MAX_ATTEMPTS) {
+            console.warn(`Generate-from-URL job ${job.id} page ${i + 1} attempt ${attempt} failed: ${errMsg}. Retrying in 3s...`);
+            await sleep(3000);
+          } else {
+            console.warn(`Generate-from-URL job ${job.id} page ${i + 1} failed after ${PAGE_MAX_ATTEMPTS} attempts: ${errMsg}`);
+            generationPages[i].status = "failed";
+          }
         }
-
-        // Tag each test case with the source URL and assign unique IDs
-        // (each per-page LLM call returns IDs starting at tc_1, causing duplicates)
-        for (const tc of pageCases) {
-          (tc as any).sourceUrl = page.url;
-          (tc as any).id = `tc_p${i + 1}_${allTestCases.length + 1}`;
-          allTestCases.push(tc);
-        }
-
-        generationPages[i].status = "done";
-        generationPages[i].testCaseCount = pageCases.length;
-      } catch (pageErr) {
-        // Log but don't fail the whole job — other pages may succeed
-        console.warn(`Generate-from-URL job ${job.id} page ${i + 1} LLM error:`, pageErr instanceof Error ? pageErr.message : String(pageErr));
-        generationPages[i].status = "failed";
       }
 
       // Post-page progress update with result
