@@ -943,6 +943,15 @@ export function GenerateTestCasesWizard({
         setIsGenerating(false);
         return;
       }
+      // Cancel any existing URL job before submitting a new one
+      if (urlJobId) {
+        fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+          method: "POST",
+        }).catch(() => {});
+        setUrlJobId(null);
+        setUrlJobProgress(null);
+        setUrlRobotsSkipped(0);
+      }
       setUrlValidationError(null);
       try {
         const submitRes = await fetch("/api/llm/generate-from-url/submit", {
