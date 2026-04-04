@@ -700,7 +700,7 @@ export function GenerateTestCasesWizard({
               data.result?.selectedFieldIds
             );
             setIsGenerating(true);
-            streamUrlTestCases(data.result.crawledPages);
+            streamUrlTestCases(data.result.crawledPages, data.result.selectedFieldIds);
           } else if (data.result?.testCases?.length > 0) {
             // Legacy path: worker did LLM generation
             setIsGenerating(false);
@@ -1071,9 +1071,10 @@ export function GenerateTestCasesWizard({
    * cases render one-by-one as the LLM produces them.
    */
   const streamUrlTestCases = async (
-    crawledPages: Array<{ url: string; title?: string; spaWarning: boolean; markdown?: string }>
+    crawledPages: Array<{ url: string; title?: string; spaWarning: boolean; markdown?: string }>,
+    fieldIdsOverride?: number[]
   ) => {
-    console.log('[URL-GEN] streamUrlTestCases called with', crawledPages.length, 'pages, markdown lengths:', crawledPages.map(p => p.markdown?.length ?? 0));
+    console.log('[URL-GEN] streamUrlTestCases called with', crawledPages.length, 'pages, fieldIdsOverride:', fieldIdsOverride?.length);
     const template = templates?.find((t) => t.id === selectedTemplateId);
     if (!template) {
       setIsGenerating(false);
@@ -1084,8 +1085,15 @@ export function GenerateTestCasesWizard({
     const { extractStreamedTestCases, parseAndValidateTestCases } =
       await import("~/app/api/llm/generate-test-cases/shared");
 
+    // Use explicit field IDs from the job result to avoid stale closure issues
+    // (React's setInterval doesn't batch, so selectedFieldIds may have been
+    // overwritten by the auto-select-all useEffect before this runs)
+    const fieldIds = fieldIdsOverride
+      ? new Set(fieldIdsOverride)
+      : selectedFieldIds;
+
     const templateFields = template.caseFields
-      .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
+      .filter((cf) => fieldIds.has(cf.caseFieldId))
       .sort((a, b) => a.order - b.order)
       .map((cf) => ({
         id: cf.caseField.id,
