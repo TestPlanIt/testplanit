@@ -24,8 +24,12 @@ import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateResultFieldValues, useCreateTestRunResults, useCreateTestRunStepResults, useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstWorkflows, useFindManyIssue, useFindManySharedStepItem, useFindManyStatus, useFindManyTemplateResultAssignment, useFindManyTestRunResults, useUpdateTestRunCases, useUpdateTestRuns
+  useCreateAttachments, useCreateResultFieldValues, useCreateTestRunStepResults, useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstWorkflows, useFindManyIssue, useFindManySharedStepItem, useFindManyStatus, useFindManyTemplateResultAssignment, useFindManyTestRunResults, useUpdateTestRunCases
 } from "~/lib/hooks";
+import {
+  isPermissionDeniedSubmitResultError,
+  submitTestRunResult
+} from "~/lib/test-run-result-submit";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { ExtendedCases } from "./columns";
@@ -224,6 +228,10 @@ export function AddResultModal({
   const locale = useLocale();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const invalidateAfterSubmit = async () => {
+    // submitTestRunResult uses a raw fetch call, so we manually invalidate caches.
+    await queryClient.invalidateQueries();
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setSelectedStatusColor] =
     useState<string>("#3b82f6");
@@ -462,21 +470,11 @@ export function AddResultModal({
     },
   });
 
-  const { mutateAsync: createTestRunResult } = useCreateTestRunResults();
   const { mutateAsync: createAttachments } = useCreateAttachments();
   const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
-  const { mutateAsync: updateTestRun } = useUpdateTestRuns();
   const { mutateAsync: createResultFieldValue } = useCreateResultFieldValues();
   const { mutateAsync: createTestRunStepResult } =
     useCreateTestRunStepResults();
-
-  // Check if this is the first result for this test run
-  const { data: existingResults } = useFindManyTestRunResults({
-    where: {
-      testRunId,
-    },
-    take: 1,
-  });
 
   // Find the first IN_PROGRESS workflow state for this project
   const { data: inProgressWorkflow } = useFindFirstWorkflows({
@@ -698,45 +696,17 @@ export function AddResultModal({
           if (!selectedCase.testRunCaseId) return;
           const caseVersion = 1;
 
-          // Create the test run result
-          const result = await createTestRunResult({
-            data: {
-              testRunId,
-              testRunCaseId: selectedCase.testRunCaseId,
-              statusId: parseInt(values.statusId as string),
-              notes: values.resultData || emptyEditorContent,
-              evidence: values.evidence as any,
-              elapsed: elapsedInSeconds,
-              executedById: session.user.id,
-              attempt: values.attempt as number,
-              testRunCaseVersion: caseVersion,
-              issues: {
-                connect: issueIdsToConnect.map((id) => ({ id })),
-              },
-            },
-          });
-
-          // If this is the first result and we have an IN_PROGRESS workflow state
-          if (existingResults?.length === 0 && inProgressWorkflow) {
-            // Update the test run's workflow state
-            await updateTestRun({
-              where: {
-                id: testRunId,
-              },
-              data: {
-                stateId: inProgressWorkflow.id,
-              },
-            });
-          }
-
-          // Update the test run case status
-          await updateTestRunCase({
-            where: {
-              id: selectedCase.testRunCaseId,
-            },
-            data: {
-              statusId: parseInt(values.statusId as string),
-            },
+          const result = await submitTestRunResult({
+            testRunId,
+            testRunCaseId: selectedCase.testRunCaseId,
+            statusId: parseInt(values.statusId as string),
+            notes: values.resultData || emptyEditorContent,
+            evidence: values.evidence as any,
+            elapsed: elapsedInSeconds,
+            attempt: values.attempt as number,
+            testRunCaseVersion: caseVersion,
+            issueIds: issueIdsToConnect,
+            inProgressStateId: inProgressWorkflow?.id ?? null,
           });
 
           // Save template field values if any exist
@@ -979,44 +949,17 @@ export function AddResultModal({
         await Promise.all(bulkPromises);
       } else if (testRunCaseId && repositoryCase?.currentVersion) {
         // Handle single result submission
-        const result = await createTestRunResult({
-          data: {
-            testRunId,
-            testRunCaseId,
-            statusId: parseInt(values.statusId as string),
-            notes: values.resultData || emptyEditorContent,
-            evidence: values.evidence as any,
-            elapsed: elapsedInSeconds,
-            executedById: session.user.id,
-            attempt: values.attempt as number,
-            testRunCaseVersion: repositoryCase.currentVersion,
-            issues: {
-              connect: issueIdsToConnect.map((id) => ({ id })),
-            },
-          },
-        });
-
-        // If this is the first result and we have an IN_PROGRESS workflow state
-        if (existingResults?.length === 0 && inProgressWorkflow) {
-          // Update the test run's workflow state
-          await updateTestRun({
-            where: {
-              id: testRunId,
-            },
-            data: {
-              stateId: inProgressWorkflow.id,
-            },
-          });
-        }
-
-        // Update the test run case status
-        await updateTestRunCase({
-          where: {
-            id: testRunCaseId,
-          },
-          data: {
-            statusId: parseInt(values.statusId as string),
-          },
+        const result = await submitTestRunResult({
+          testRunId,
+          testRunCaseId,
+          statusId: parseInt(values.statusId as string),
+          notes: values.resultData || emptyEditorContent,
+          evidence: values.evidence as any,
+          elapsed: elapsedInSeconds,
+          attempt: values.attempt as number,
+          testRunCaseVersion: repositoryCase.currentVersion,
+          issueIds: issueIdsToConnect,
+          inProgressStateId: inProgressWorkflow?.id ?? null,
         });
 
         // Save template field values if any exist
@@ -1290,6 +1233,8 @@ export function AddResultModal({
       setSelectedStepIssues({});
       setSelectedSharedItemIssues({}); // Reset shared item issues
 
+      await invalidateAfterSubmit();
+
       toast.success(
         isBulkResult
           ? tCommon("actions.resultsAdded", {
@@ -1308,9 +1253,15 @@ export function AddResultModal({
       onClose();
     } catch (error) {
       console.error("Error submitting result:", error);
-      toast.error(tCommon("errors.error"), {
-        description: tCommon("errors.somethingWentWrong"),
-      });
+      if (isPermissionDeniedSubmitResultError(error)) {
+        toast.error(tCommon("errors.accessDenied"), {
+          description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.somethingWentWrong"),
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

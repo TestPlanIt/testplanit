@@ -1,3 +1,9 @@
+## [0.20.3](https://github.com/TestPlanIt/testplanit/compare/v0.20.2...v0.20.3) (2026-04-03)
+
+### Bug Fixes
+
+* Bugfix/permission issue ([#178](https://github.com/TestPlanIt/testplanit/issues/178)) ([81863e3](https://github.com/TestPlanIt/testplanit/commit/81863e35503a66fd48c5e0c7cce6882e0a34a137))
+
 ## [0.20.2](https://github.com/TestPlanIt/testplanit/compare/v0.20.1...v0.20.2) (2026-04-02)
 
 ### Bug Fixes
