@@ -287,7 +287,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
     // Use request timeout if provided, otherwise fall back to config timeout.
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetch(`${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse&key=${this.apiKey}`, {
+    const response = await this.safeFetchLongRunning(`${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse&key=${this.apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

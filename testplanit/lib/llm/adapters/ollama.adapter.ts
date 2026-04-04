@@ -156,8 +156,10 @@ export class OllamaAdapter extends BaseLlmAdapter {
 
     // Use request timeout if provided, otherwise fall back to config timeout.
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
+    // Use safeFetchLongRunning to bypass undici's 5-min body timeout — Ollama
+    // may pause for a long time before the first token on large prompts.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetch(`${this.baseUrl}/api/chat`, {
+    const response = await this.safeFetchLongRunning(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(ollamaRequest),

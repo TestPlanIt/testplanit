@@ -124,8 +124,9 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
     // Use request timeout if provided, otherwise fall back to config timeout.
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
+    // Use safeFetchLongRunning to bypass undici's 5-min body timeout.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetch(this.endpoint, {
+    const response = await this.safeFetchLongRunning(this.endpoint, {
       method: "POST",
       headers: this.getCustomHeaders(),
       body: JSON.stringify(customRequest),
