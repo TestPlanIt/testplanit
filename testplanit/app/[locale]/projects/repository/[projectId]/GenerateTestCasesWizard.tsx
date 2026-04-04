@@ -252,15 +252,35 @@ function extractPartialTestCases(
       const stepsArr = partialJson.indexOf("[", stepsStart);
       if (stepsArr !== -1) {
         const stepsContent = partialJson.slice(stepsArr);
-        const stepMatches = stepsContent.matchAll(
-          /\{\s*"step"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"expectedResult"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g
-        );
+        // Find complete step objects — handle both field orderings
+        // Extract each {...} block in the steps array
         steps = [];
-        for (const m of stepMatches) {
-          steps.push({
-            step: m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n"),
-            expectedResult: m[2].replace(/\\"/g, '"').replace(/\\n/g, "\n"),
-          });
+        let sDepth = 0;
+        let sObjStart = -1;
+        let sInStr = false;
+        let sEsc = false;
+        for (let si = 0; si < stepsContent.length; si++) {
+          const sc = stepsContent[si];
+          if (sEsc) { sEsc = false; continue; }
+          if (sc === "\\") { sEsc = true; continue; }
+          if (sc === '"') { sInStr = !sInStr; continue; }
+          if (sInStr) continue;
+          if (sc === "{") { if (sDepth === 0) sObjStart = si; sDepth++; }
+          else if (sc === "}") {
+            sDepth--;
+            if (sDepth === 0 && sObjStart >= 0) {
+              try {
+                const stepObj = JSON.parse(stepsContent.slice(sObjStart, si + 1));
+                if (stepObj.step || stepObj.expectedResult) {
+                  steps.push({
+                    step: String(stepObj.step ?? ""),
+                    expectedResult: String(stepObj.expectedResult ?? ""),
+                  });
+                }
+              } catch { /* incomplete */ }
+              sObjStart = -1;
+            }
+          }
         }
       }
     }
@@ -2765,8 +2785,16 @@ export function GenerateTestCasesWizard({
                 </div>
               )}
               {testCase.steps && testCase.steps.length > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  {testCase.steps.length} {"step"}{testCase.steps.length !== 1 ? "s" : ""} {"received..."}
+                <div className="space-y-1 text-sm">
+                  <span className="font-medium text-foreground/70 text-xs">{"Steps:"}</span>
+                  {testCase.steps.map((step, si) => (
+                    <div key={si} className="pl-2 border-l-2 border-muted text-xs text-muted-foreground">
+                      <div><span className="font-medium">{"Step "}{si + 1}{":" }</span> {step.step}</div>
+                      {step.expectedResult && (
+                        <div className="text-muted-foreground/70">{"Expected: "}{step.expectedResult}</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
