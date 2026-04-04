@@ -2143,7 +2143,7 @@
         "maxDepth": "Max depth",
         "maxPages": "Max pages",
         "crawlProgress": "{current, plural, one {Fetched # page so far...} other {Fetched # pages so far...}}",
-        "generatingProgress": "Generating test cases: page {current} of {total} ({testCases} cases so far)",
+        "generatingProgress": "Generating test cases: {testCases} generated, working on page {current} of {total}...",
         "generatingSinglePage": "Generating test cases...",
         "generatingSetup": "Preparing to generate test cases...",
         "generatingPageCases": "{count, plural, one {# case} other {# cases}}",

@@ -386,7 +386,6 @@ export function GenerateTestCasesWizard({
   );
   const canAddEdit = permissions?.canAddEdit ?? false;
 
-
   useEffect(() => {
     if (project) {
       const hasIntegrations = project.projectIntegrations.length > 0;
@@ -1572,14 +1571,16 @@ export function GenerateTestCasesWizard({
         }));
 
       // Build issue data if applicable
-      let issue: {
-        externalId: string;
-        integrationId: number;
-        issueKey: string;
-        title: string;
-        description?: string;
-        externalUrl?: string;
-      } | undefined;
+      let issue:
+        | {
+            externalId: string;
+            integrationId: number;
+            issueKey: string;
+            title: string;
+            description?: string;
+            externalUrl?: string;
+          }
+        | undefined;
 
       if (sourceType === "issue" && selectedIssue) {
         const issueKey = selectedIssue.key || selectedIssue.externalKey;
@@ -1624,7 +1625,9 @@ export function GenerateTestCasesWizard({
       });
 
       if (result.status === "error") {
-        throw new Error(result.message || t("generateTestCases.errors.importFailed"));
+        throw new Error(
+          result.message || t("generateTestCases.errors.importFailed")
+        );
       }
 
       if (result.errors.length > 0) {
@@ -2608,7 +2611,11 @@ export function GenerateTestCasesWizard({
                                   </span>
                                 </div>
                               </div>
-                              <div className="space-y-1.5">
+                              <Progress
+                                value={((urlJobProgress.pagesGenerated ?? 0) / (urlJobProgress.totalPagesForGeneration ?? 1)) * 100}
+                                className="h-1.5"
+                              />
+                              <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                 {urlJobProgress.generationPages.map(
                                   (gp, idx) => (
                                     <div
@@ -2861,26 +2868,6 @@ export function GenerateTestCasesWizard({
                               <div className="flex gap-3">
                                 <button
                                   type="button"
-                                  onClick={() => setUrlMode("requirements")}
-                                  className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
-                                    urlMode === "requirements"
-                                      ? "border-primary bg-primary/10 text-primary font-medium"
-                                      : "border-border text-muted-foreground hover:border-primary/50"
-                                  }`}
-                                >
-                                  <div className="font-medium">
-                                    {t(
-                                      "generateTestCases.selectSource.urlModeRequirements"
-                                    )}
-                                  </div>
-                                  <div className="text-xs mt-0.5 opacity-80">
-                                    {t(
-                                      "generateTestCases.selectSource.urlModeRequirementsHint"
-                                    )}
-                                  </div>
-                                </button>
-                                <button
-                                  type="button"
                                   onClick={() => setUrlMode("application")}
                                   className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
                                     urlMode === "application"
@@ -2896,6 +2883,26 @@ export function GenerateTestCasesWizard({
                                   <div className="text-xs mt-0.5 opacity-80">
                                     {t(
                                       "generateTestCases.selectSource.urlModeApplicationHint"
+                                    )}
+                                  </div>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setUrlMode("requirements")}
+                                  className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
+                                    urlMode === "requirements"
+                                      ? "border-primary bg-primary/10 text-primary font-medium"
+                                      : "border-border text-muted-foreground hover:border-primary/50"
+                                  }`}
+                                >
+                                  <div className="font-medium">
+                                    {t(
+                                      "generateTestCases.selectSource.urlModeRequirements"
+                                    )}
+                                  </div>
+                                  <div className="text-xs mt-0.5 opacity-80">
+                                    {t(
+                                      "generateTestCases.selectSource.urlModeRequirementsHint"
                                     )}
                                   </div>
                                 </button>
