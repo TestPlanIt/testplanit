@@ -2690,6 +2690,55 @@ export function GenerateTestCasesWizard({
             </div>
           )}
 
+          {/* Page filter — fixed above scroll area so it's always visible */}
+          {sourceType === "url" &&
+            crawledPagesResult.length > 1 &&
+            (currentStep === WizardStep.REVIEW_GENERATED ||
+              (urlJobId && isGenerating && generatedTestCases.length > 0)) && (
+              <div className="px-6 pb-2 pt-1 border-b shrink-0">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium text-muted-foreground shrink-0">
+                    {t("generateTestCases.review.filterByPage")}
+                  </span>
+                  <Select
+                    value={reviewPageFilter ?? "__all__"}
+                    onValueChange={(val) =>
+                      setReviewPageFilter(val === "__all__" ? null : val)
+                    }
+                  >
+                    <SelectTrigger className="w-full max-w-md h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">
+                        {t("generateTestCases.review.allPages")}{" "}
+                        {"("}{generatedTestCases.length}{")"}
+                      </SelectItem>
+                      {crawledPagesResult.map((page, idx) => {
+                        const pageTestCount = generatedTestCases.filter(
+                          (tc) => tc.sourceUrl === page.url
+                        ).length;
+                        return (
+                          <SelectItem key={idx} value={page.url}>
+                            <span className="truncate">
+                              {page.title || page.url}
+                            </span>
+                            {page.spaWarning && (
+                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
+                            )}
+                            <span className="text-muted-foreground ml-1">
+                              {"("}{pageTestCount}{")"}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
           <div
             ref={scrollContainerRef}
             className="flex-1 min-h-0 px-4 overflow-y-auto"
@@ -3807,53 +3856,6 @@ export function GenerateTestCasesWizard({
               {(currentStep === WizardStep.REVIEW_GENERATED ||
                 (urlJobId && isGenerating && sourceType === "url" && generatedTestCases.length > 0)) && (
                 <Card shadow="none">
-                  {sourceType === "url" && crawledPagesResult.length > 1 && (
-                    <div className="px-6 pt-6">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm font-medium text-muted-foreground shrink-0">
-                          {t("generateTestCases.review.filterByPage")}
-                        </span>
-                        <Select
-                          value={reviewPageFilter ?? "__all__"}
-                          onValueChange={(val) =>
-                            setReviewPageFilter(val === "__all__" ? null : val)
-                          }
-                        >
-                          <SelectTrigger className="w-full max-w-md h-9 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__all__">
-                              {t("generateTestCases.review.allPages")} {"("}
-                              {generatedTestCases.length}
-                              {")"}
-                            </SelectItem>
-                            {crawledPagesResult.map((page, idx) => {
-                              const pageTestCount = generatedTestCases.filter(
-                                (tc) => tc.sourceUrl === page.url
-                              ).length;
-                              return (
-                                <SelectItem key={idx} value={page.url}>
-                                  <span className="truncate">
-                                    {page.title || page.url}
-                                  </span>
-                                  {page.spaWarning && (
-                                    <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
-                                  )}
-                                  <span className="text-muted-foreground ml-1">
-                                    {"("}
-                                    {pageTestCount}
-                                    {")"}
-                                  </span>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
                   {/* Inline URL generation progress — shown while generating inside review step */}
                   {urlJobId && isGenerating && sourceType === "url" && (
                     <div className="px-6 pt-6 space-y-2">
