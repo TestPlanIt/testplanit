@@ -496,6 +496,18 @@ export const processor = async (
                 totalTestCases: allTestCases.length + streamedCaseCount,
                 generationPages,
                 skippedRobots,
+                // Always include completed test cases so the UI can render
+                // them incrementally — BullMQ overwrites progress on each update
+                ...(allTestCases.length > 0 && {
+                  completedTestCases: allTestCases,
+                  crawledPages: pages.map((p) => ({
+                    url: p.url,
+                    title: p.title,
+                    spaWarning: p.spaWarning,
+                  })),
+                  templateId: job.data.templateId,
+                  selectedFieldIds: job.data.selectedFieldIds,
+                }),
               });
               // Keep lock alive during long streams
               await job.extendLock(token!, llmTimeout + 30_000);
