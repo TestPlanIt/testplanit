@@ -2128,7 +2128,27 @@
         "documentDescriptionPlaceholder": "Collez ici le contenu de votre document de spécifications...",
         "documentPriority": "Priorité (facultatif)",
         "selectPriority": "Sélectionner la priorité",
-        "saveDocument": "Exigences relatives aux documents de sauvegarde"
+        "saveDocument": "Exigences relatives aux documents de sauvegarde",
+        "fromUrl": "À partir de l'URL",
+        "urlInput": "URL de la page",
+        "urlInputPlaceholder": "https://example.com/docs",
+        "urlMode": "Que contient cette URL ?",
+        "urlModeRequirements": "Exigences",
+        "urlModeRequirementsHint": "La page décrit ce qu'il faut construire.",
+        "urlModeApplication": "Application",
+        "urlModeApplicationHint": "Page est l'application à tester",
+        "urlValidationError": "Veuillez saisir une URL valide commençant par http:// ou https://",
+        "followLinks": "Suivre les liens",
+        "followLinksHint": "Seules les pages du même domaine que l'URL que vous saisissez seront explorées.",
+        "maxDepth": "Profondeur maximale",
+        "maxPages": "Pages maximales",
+        "crawlProgress": "{current, plural, one {Page récupérée # jusqu'à présent...} other {Pages récupérées # jusqu'à présent...}}",
+        "generatingProgress": "Génération des cas de test : {testCases} générés, traitement en cours sur la page {current} de {total}...",
+        "generatingSinglePage": "Génération de cas de test...",
+        "generatingSetup": "Préparation de la génération des cas de test...",
+        "generatingPageCases": "{count, plural, one {# cas} other {# cas}}",
+        "generatingPageFailed": "échoué",
+        "robotsSkipped": "{count, plural, one {# page ignorée} other {# pages ignorées}} (robots.txt)"
       },
       "selectIssue": {
         "title": "Sélectionner un problème externe",
@@ -2171,7 +2191,11 @@
         "selected": "{count} de {total} sélectionné",
         "moreSteps": "... et {count, plural, one {# étape supplémentaire} other {# étapes supplémentaires}}",
         "templateFields": "Champs du modèle :",
-        "moreFields": "... et {count, plural, one {# champ supplémentaire} other {# champs supplémentaires}}"
+        "moreFields": "... et {count, plural, one {# champ supplémentaire} other {# champs supplémentaires}}",
+        "crawledUrls": "{count, plural, one {# page explorée} other {# pages explorées}}",
+        "spaWarning": "Cette page peut nécessiter l'affichage de JavaScript. Les résultats peuvent être incomplets.",
+        "filterByPage": "Filtrer par page",
+        "allPages": "Toutes les pages"
       },
       "generatingLegacy": "Générer des cas de test avec l'IA...",
       "import": "{count, plural, =0 {Importer les cas de test} =1 {Importer 1 cas de test} other {Importer # cas de test}}",
@@ -2215,6 +2239,8 @@
         "networkRoutingError": "Problème de routage réseau ou de configuration du serveur : réception d’une page d’erreur HTML au lieu d’une réponse API.",
         "invalidSourceConfig": "Configuration source invalide",
         "failedToCreateCaseVersion": "Échec de la création de la version du dossier",
+        "noUrlProvided": "Veuillez saisir une URL pour générer des cas de test à partir de",
+        "urlFetchFailed": "Impossible de récupérer le contenu à partir de l'URL fournie. Veuillez vérifier l'URL et réessayer.",
         "llm": {
           "genericTitle": "Erreur de génération d'IA",
           "genericMessage": "Une erreur s'est produite lors de la génération des cas de test avec l'IA. Veuillez réessayer ou modifier vos données d'entrée.",
@@ -4294,7 +4320,8 @@
         "shareLinkAccessedTitle": "Lien de partage consulté",
         "viewedYourSharedLink": "J'ai consulté votre lien partagé",
         "viewedAt": "Consulté à",
-        "budgetDisclaimer": "Les limites budgétaires sont données à titre indicatif uniquement et n'empêchent pas l'utilisation."
+        "budgetDisclaimer": "Les limites budgétaires sont données à titre indicatif uniquement et n'empêchent pas l'utilisation.",
+        "reviewGeneratedCases": "Examiner les cas de test générés"
       }
     },
     "issues": {

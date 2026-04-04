@@ -2128,7 +2128,27 @@
         "documentDescriptionPlaceholder": "Pegue el contenido del documento requerido aquí...",
         "documentPriority": "Prioridad (opcional)",
         "selectPriority": "Seleccionar prioridad",
-        "saveDocument": "Guardar requerimientos de documento"
+        "saveDocument": "Guardar requerimientos de documento",
+        "fromUrl": "Desde URL",
+        "urlInput": "URL de la página",
+        "urlInputPlaceholder": "https://example.com/docs",
+        "urlMode": "¿Qué contiene esta URL?",
+        "urlModeRequirements": "Requisitos",
+        "urlModeRequirementsHint": "La página describe qué construir",
+        "urlModeApplication": "Solicitud",
+        "urlModeApplicationHint": "Page es la aplicación para probar",
+        "urlValidationError": "Introduzca una URL válida que comience con http:// o https://",
+        "followLinks": "Sigue los enlaces",
+        "followLinksHint": "Solo se rastrearán las páginas que se encuentren en el mismo dominio que la URL que ingrese.",
+        "maxDepth": "Profundidad máxima",
+        "maxPages": "Páginas máximas",
+        "crawlProgress": "{current, plural, one {Páginas obtenidas hasta ahora...} other {Páginas obtenidas hasta ahora...}}",
+        "generatingProgress": "Generando casos de prueba: {testCases} generado, trabajando en la página {current} de {total}...",
+        "generatingSinglePage": "Generando casos de prueba...",
+        "generatingSetup": "Preparándonos para generar casos de prueba...",
+        "generatingPageCases": "{count, plural, one {# caso} other {# casos}}",
+        "generatingPageFailed": "fallido",
+        "robotsSkipped": "{count, plural, one {# página omitida} other {# páginas omitidas}} (robots.txt)"
       },
       "selectIssue": {
         "title": "Seleccionar problema externo",
@@ -2171,7 +2191,11 @@
         "selected": "{count} de {total} seleccionados",
         "moreSteps": "... y {count, plural, one {# más pasos} other {# más pasos}}",
         "templateFields": "Campos de Plantilla:",
-        "moreFields": "... y {count, plural, one {# más campos} other {# más campos}}"
+        "moreFields": "... y {count, plural, one {# más campos} other {# más campos}}",
+        "crawledUrls": "{count, plural, one {# página rastreada} other {# páginas rastreadas}}",
+        "spaWarning": "Esta página puede requerir la renderización mediante JavaScript. Los resultados pueden estar incompletos.",
+        "filterByPage": "Filtrar por página",
+        "allPages": "Todas las páginas"
       },
       "generatingLegacy": "Generación de casos de prueba con IA...",
       "import": "{count, plural, =0 {Importar casos de prueba} =1 {Importar 1 caso de prueba} other {Importar # casos de prueba}}",
@@ -2215,6 +2239,8 @@
         "networkRoutingError": "Problema de enrutamiento de red o configuración del servidor: recibí una página de error HTML en lugar de una respuesta de API",
         "invalidSourceConfig": "Configuración de origen no válida",
         "failedToCreateCaseVersion": "No se pudo crear la versión del caso",
+        "noUrlProvided": "Introduzca una URL para generar casos de prueba desde",
+        "urlFetchFailed": "No se pudo obtener el contenido de la URL proporcionada. Por favor, verifique la URL e inténtelo de nuevo.",
         "llm": {
           "genericTitle": "Error de generación de IA",
           "genericMessage": "Se produjo un error al generar los casos de prueba con IA. Inténtelo de nuevo o ajuste sus datos.",
@@ -4294,7 +4320,8 @@
         "shareLinkAccessedTitle": "Enlace compartido accedido",
         "viewedYourSharedLink": "vi tu enlace compartido",
         "viewedAt": "Visto en",
-        "budgetDisclaimer": "Los límites de presupuesto son sólo informativos y no impiden su uso."
+        "budgetDisclaimer": "Los límites de presupuesto son sólo informativos y no impiden su uso.",
+        "reviewGeneratedCases": "Revisar los casos de prueba generados"
       }
     },
     "issues": {
