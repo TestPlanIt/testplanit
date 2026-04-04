@@ -128,6 +128,155 @@ interface GeneratedTestCase {
   automated: boolean;
   tags?: string[];
   sourceUrl?: string;
+  /** True while the test case is still streaming from the LLM */
+  _streaming?: boolean;
+}
+
+/**
+ * Extract partially-complete test cases from a growing JSON stream.
+ * Returns stub test cases as soon as the "name" field is complete,
+ * then progressively fills in fieldValues, tags, and steps as they
+ * appear. Returns the same array on each call — callers should replace
+ * state entirely, not append.
+ *
+ * This complements extractStreamedTestCases (which waits for fully-closed
+ * JSON objects) by providing earlier feedback to the user.
+ */
+function extractPartialTestCases(
+  accumulated: string,
+  alreadyFinalized: number
+): GeneratedTestCase[] {
+  const results: GeneratedTestCase[] = [];
+
+  // Find each test case object start by locating "name" keys that follow
+  // an opening brace. We scan the testCases array portion of the JSON.
+  const testCasesStart = accumulated.indexOf('"testCases"');
+  if (testCasesStart === -1) return results;
+
+  const arrayStart = accumulated.indexOf("[", testCasesStart);
+  if (arrayStart === -1) return results;
+
+  const content = accumulated.slice(arrayStart + 1);
+
+  // Track brace depth to find object boundaries
+  let depth = 0;
+  let objectStart = -1;
+  let inString = false;
+  let escape = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (ch === "{") {
+      if (depth === 0) objectStart = i;
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        // Complete object — skip it, extractStreamedTestCases handles these
+        objectStart = -1;
+      }
+    }
+  }
+
+  // If we have an incomplete object (depth > 0, objectStart >= 0),
+  // try to extract partial fields from it — but only for objects beyond
+  // what's already been finalized
+  if (depth > 0 && objectStart >= 0) {
+    const partialJson = content.slice(objectStart);
+
+    // Extract "name": "value"
+    const nameMatch = partialJson.match(/"name"\s*:\s*"([^"]*?)"/);
+    if (!nameMatch) return results; // Name not complete yet
+
+    const name = nameMatch[1];
+
+    // Extract individual fieldValues
+    const fieldValues: Record<string, any> = {};
+    const fvStart = partialJson.indexOf('"fieldValues"');
+    if (fvStart !== -1) {
+      const fvBrace = partialJson.indexOf("{", fvStart);
+      if (fvBrace !== -1) {
+        const fvContent = partialJson.slice(fvBrace);
+        // Match complete "key": "value" pairs (string values)
+        const stringPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*"((?:[^"\\]|\\.)*)"/g);
+        for (const m of stringPairs) {
+          fieldValues[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, "\n");
+        }
+        // Match complete "key": number pairs
+        const numPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*(\d+)/g);
+        for (const m of numPairs) {
+          fieldValues[m[1]] = parseInt(m[2], 10);
+        }
+        // Match complete "key": ["val1", "val2"] array pairs
+        const arrPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*\[([^\]]*)\]/g);
+        for (const m of arrPairs) {
+          try {
+            fieldValues[m[1]] = JSON.parse(`[${m[2]}]`);
+          } catch {
+            // Array not complete yet
+          }
+        }
+      }
+    }
+
+    // Extract tags
+    let tags: string[] | undefined;
+    const tagsMatch = partialJson.match(/"tags"\s*:\s*\[(.*?)\]/s);
+    if (tagsMatch) {
+      try {
+        tags = JSON.parse(`[${tagsMatch[1]}]`);
+      } catch {
+        // tags not complete
+      }
+    }
+
+    // Extract steps (complete step objects only)
+    let steps: Array<{ step: string; expectedResult: string }> | undefined;
+    const stepsStart = partialJson.indexOf('"steps"');
+    if (stepsStart !== -1) {
+      const stepsArr = partialJson.indexOf("[", stepsStart);
+      if (stepsArr !== -1) {
+        const stepsContent = partialJson.slice(stepsArr);
+        const stepMatches = stepsContent.matchAll(
+          /\{\s*"step"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"expectedResult"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g
+        );
+        steps = [];
+        for (const m of stepMatches) {
+          steps.push({
+            step: m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n"),
+            expectedResult: m[2].replace(/\\"/g, '"').replace(/\\n/g, "\n"),
+          });
+        }
+      }
+    }
+
+    results.push({
+      id: `streaming_${alreadyFinalized + 1}`,
+      name,
+      fieldValues,
+      automated: false,
+      tags,
+      steps,
+      _streaming: true,
+    });
+  }
+
+  return results;
 }
 
 type LlmErrorType =
@@ -946,6 +1095,9 @@ export function GenerateTestCasesWizard({
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
+    // All fully-parsed test cases across all pages
+    const finalizedCases: GeneratedTestCase[] = [];
+
     try {
       for (let pageIdx = 0; pageIdx < crawledPages.length; pageIdx++) {
         if (abortController.signal.aborted) break;
@@ -1001,13 +1153,14 @@ export function GenerateTestCasesWizard({
         }
         console.log(`[URL-GEN] SSE stream started for page ${pageIdx + 1}`);
 
-        // Consume the SSE stream — same logic as issue/document generation
+        // Consume the SSE stream with incremental rendering:
+        // - Finalized cases: fully-closed JSON objects, rendered permanently
+        // - Streaming stub: the in-progress test case, updated live as fields arrive
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         let accumulated = "";
         let pageYieldedCount = 0;
-
         setGeneratingStatus("streaming");
 
         while (true) {
@@ -1026,6 +1179,7 @@ export function GenerateTestCasesWizard({
               if (data.type === "chunk") {
                 accumulated += data.delta;
 
+                // 1. Check for newly completed test cases
                 const newCases = extractStreamedTestCases(
                   accumulated,
                   templateForParsing,
@@ -1033,7 +1187,6 @@ export function GenerateTestCasesWizard({
                 );
 
                 if (newCases.length > 0) {
-                  // Tag with sourceUrl and unique IDs
                   const tagged = newCases.map((tc) => {
                     const converted = convertFieldOptionIds(tc);
                     return {
@@ -1043,20 +1196,33 @@ export function GenerateTestCasesWizard({
                     };
                   });
 
-                  tagged.forEach((tc) => {
-                    console.log(`[URL-GEN] Rendered test case (page ${pageIdx + 1}):`, JSON.stringify(tc, null, 2));
-                  });
-
                   pageYieldedCount += newCases.length;
                   globalYieldedCount += newCases.length;
-
-                  setGeneratedTestCases((prev) => [...prev, ...tagged]);
-                  setSelectedTestCases((prev) => {
-                    const next = new Set(prev);
-                    tagged.forEach((tc) => next.add(tc.id));
-                    return next;
-                  });
+                  finalizedCases.push(...tagged);
                 }
+
+                // 2. Extract the in-progress (partial) test case
+                const partials = extractPartialTestCases(
+                  accumulated,
+                  pageYieldedCount
+                );
+
+                // 3. Build the full list: previous + this page finalized + streaming stub
+                const streamingStub = partials.map((tc) => ({
+                  ...tc,
+                  sourceUrl: page.url,
+                  id: `streaming_p${pageIdx + 1}`,
+                }));
+
+                const allCases = [...finalizedCases, ...streamingStub];
+                setGeneratedTestCases(allCases);
+                setSelectedTestCases(
+                  new Set(
+                    allCases
+                      .filter((tc) => !tc._streaming)
+                      .map((tc) => tc.id)
+                  )
+                );
               }
             } catch (e) {
               if (e instanceof SyntaxError) continue;
@@ -1064,6 +1230,9 @@ export function GenerateTestCasesWizard({
             }
           }
         }
+
+        // Remove any lingering streaming stub after the page stream ends
+        setGeneratedTestCases([...finalizedCases]);
 
         // Final parse for this page to recover any trailing content
         if (accumulated) {
@@ -2553,6 +2722,55 @@ export function GenerateTestCasesWizard({
               </div>
             </form>
           </FormProvider>
+        </div>
+      );
+    }
+
+    // Streaming stub: show a simplified card with available fields and a pulse animation
+    if (testCase._streaming) {
+      return (
+        <div
+          ref={cardRef}
+          className="border rounded-lg p-4 border-primary/30 bg-primary/5 animate-pulse"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary/60">
+              <Loader2 className="w-4 h-4 animate-spin" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <h4 className="font-medium">{testCase.name}</h4>
+              {Object.entries(testCase.fieldValues).length > 0 && (
+                <div className="space-y-1.5 text-sm text-muted-foreground">
+                  {Object.entries(testCase.fieldValues).map(([key, value]) => (
+                    <div key={key}>
+                      <span className="font-medium text-foreground/70">{key}:</span>{" "}
+                      <span className="text-muted-foreground">
+                        {typeof value === "string"
+                          ? value.length > 200
+                            ? value.substring(0, 200) + "..."
+                            : value
+                          : JSON.stringify(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {testCase.tags && testCase.tags.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {testCase.tags.map((tag, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {testCase.steps && testCase.steps.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {testCase.steps.length} {"step"}{testCase.steps.length !== 1 ? "s" : ""} {"received..."}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       );
     }
