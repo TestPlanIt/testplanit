@@ -142,6 +142,50 @@ export abstract class BaseLlmAdapter {
   }
 
   /**
+   * Fetch wrapper that disables Node.js undici's default 5-minute body timeout.
+   * Use this for LLM chat calls that may take longer than 5 minutes (e.g., large
+   * prompts on slow local models). The AbortSignal timeout controls the actual
+   * timeout instead of undici's internal bodyTimeout.
+   */
+  protected async safeFetchLongRunning(
+    url: string,
+    init?: RequestInit
+  ): Promise<Response> {
+    const parsed = new URL(url);
+
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      throw new Error(`URL must use http or https protocol: ${url}`);
+    }
+
+    const h = parsed.hostname;
+    if (
+      h === "169.254.169.254" ||
+      h === "metadata.google.internal" ||
+      h === "metadata.google" ||
+      h === "100.100.100.200"
+    ) {
+      throw new Error(`Requests to ${h} are not allowed`);
+    }
+
+    // Node's fetch (undici) has a default bodyTimeout of 300s (5 min).
+    // For long-running requests, create a per-request Agent with no timeout.
+    try {
+      const undici = await import("undici");
+      const agent = new undici.Agent({
+        bodyTimeout: 0,
+        headersTimeout: 0,
+      });
+      return fetch(parsed.href, {
+        ...init,
+        dispatcher: agent,
+      } as any);
+    } catch {
+      // If undici is not available, fall back to regular fetch
+      return fetch(parsed.href, init);
+    }
+  }
+
+  /**
    * Create an LLM error
    */
   protected createError(

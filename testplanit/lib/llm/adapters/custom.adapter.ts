@@ -89,7 +89,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetch(this.endpoint, {
+      const response = await this.safeFetchLongRunning(this.endpoint, {
         method: "POST",
         headers: this.getCustomHeaders(),
         body: JSON.stringify(customRequest),

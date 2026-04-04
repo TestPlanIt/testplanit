@@ -97,7 +97,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetch(`${this.baseUrl}/api/chat`, {
+      const response = await this.safeFetchLongRunning(`${this.baseUrl}/api/chat`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify(ollamaRequest),

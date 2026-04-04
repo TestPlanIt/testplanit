@@ -88,7 +88,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetch(this.getChatCompletionsUrl(), {
+      const response = await this.safeFetchLongRunning(this.getChatCompletionsUrl(), {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify(openAIRequest),
