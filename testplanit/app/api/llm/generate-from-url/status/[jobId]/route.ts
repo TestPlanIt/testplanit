@@ -88,3 +88,36 @@ export async function GET(
     );
   }
 }
+
+/**
+ * DELETE: Clean up crawled page content from Redis after import.
+ * Prevents the notification link from re-triggering generation.
+ */
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ jobId: string }> },
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const queue = getGenerateFromUrlQueue();
+    if (!queue) {
+      return NextResponse.json({ error: "Queue not available" }, { status: 503 });
+    }
+
+    const { jobId } = await params;
+    const connection = await queue.client;
+    await connection.del(`generate-from-url:pages:${jobId}`);
+
+    return NextResponse.json({ message: "Cleaned up" });
+  } catch (error) {
+    console.error("Generate from URL cleanup error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

@@ -428,7 +428,6 @@ export async function importGeneratedTestCases(
             }
 
             // 5. Batch create steps
-            console.log(`[import] Test case "${testCase.name}" steps:`, testCase.steps?.length ?? 0, JSON.stringify(testCase.steps?.[0])?.substring(0, 200));
             if (testCase.steps && testCase.steps.length > 0) {
               const stepData = testCase.steps.map((step, stepIndex) => ({
                 testCaseId: newCase.id,

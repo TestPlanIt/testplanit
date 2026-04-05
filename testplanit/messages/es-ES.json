@@ -2109,6 +2109,7 @@
       "generatingPreparing": "Preparando solicitud...",
       "generatingCallingAi": "Esperando a que la IA genere los casos de prueba...",
       "generatingStreaming": "La IA está generando el caso de prueba {count}...",
+      "generatingStreamingPage": "La IA está generando el caso de prueba {count} — página {current} de {total}: {page}",
       "generatingProcessing": "Procesando los casos de prueba generados...",
       "generatingHint": "Esto puede tardar un minuto, dependiendo de la complejidad del material de origen.",
       "steps": {

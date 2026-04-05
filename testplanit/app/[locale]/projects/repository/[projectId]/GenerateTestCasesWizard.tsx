@@ -451,8 +451,15 @@ export function GenerateTestCasesWizard({
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState("");
+  const [urlStreamingPageInfo, setUrlStreamingPageInfo] = useState<{
+    current: number;
+    total: number;
+    title?: string;
+  } | null>(null);
   // AbortController for cancelling the streaming fetch
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Track last crawl job ID for cleanup after import
+  const lastCrawlJobIdRef = useRef<string | null>(null);
   // Ref on the wizard's scrollable content area
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -707,6 +714,7 @@ export function GenerateTestCasesWizard({
         }
         if (data.state === "completed") {
           clearInterval(interval);
+          lastCrawlJobIdRef.current = urlJobId;
           setUrlJobId(null);
           setUrlJobProgress(null);
 
@@ -807,12 +815,17 @@ export function GenerateTestCasesWizard({
         );
         const data = await res.json();
 
+        // Check if crawled pages have markdown content (Redis key may have expired)
+        const hasPageContent = data.result?.crawledPages?.some(
+          (p: any) => p.markdown && p.markdown.length > 0
+        );
+
         if (
           data.state === "completed" &&
           data.result?.crawlOnly &&
-          data.result?.crawledPages?.length > 0
+          hasPageContent
         ) {
-          // Crawl-only: start SSE streaming per page for incremental generation
+          // Crawl-only with content: start SSE streaming per page for incremental generation
           setIsNotificationReopen(false);
           setGeneratedTestCases([]);
           setCrawledPagesResult(data.result.crawledPages);
@@ -822,7 +835,16 @@ export function GenerateTestCasesWizard({
           );
           setCurrentStep(WizardStep.REVIEW_GENERATED);
           setIsGenerating(true);
-          streamUrlTestCases(data.result.crawledPages);
+          streamUrlTestCases(data.result.crawledPages, data.result.selectedFieldIds);
+        } else if (
+          data.state === "completed" &&
+          data.result?.crawlOnly &&
+          !hasPageContent
+        ) {
+          // Crawl-only but no content: pages already consumed or Redis expired
+          setIsNotificationReopen(false);
+          toast.info?.("These test cases have already been generated and imported.") ??
+            toast("These test cases have already been generated and imported.");
         } else if (
           data.state === "completed" &&
           data.result?.testCases?.length > 0
@@ -1125,12 +1147,6 @@ export function GenerateTestCasesWizard({
     }>,
     fieldIdsOverride?: number[]
   ) => {
-    console.log(
-      "[URL-GEN] streamUrlTestCases called with",
-      crawledPages.length,
-      "pages, fieldIdsOverride:",
-      fieldIdsOverride?.length
-    );
     const template = templates?.find((t) => t.id === selectedTemplateId);
     if (!template) {
       setIsGenerating(false);
@@ -1203,6 +1219,13 @@ export function GenerateTestCasesWizard({
         };
 
         setGeneratingStatus("calling_ai");
+        if (crawledPages.length > 1) {
+          setUrlStreamingPageInfo({
+            current: pageIdx + 1,
+            total: crawledPages.length,
+            title: page.title || undefined,
+          });
+        }
 
         const response = await fetch("/api/llm/generate-test-cases/stream", {
           method: "POST",
@@ -1276,13 +1299,6 @@ export function GenerateTestCasesWizard({
                       sourceUrl: page.url,
                       id: `tc_p${pageIdx + 1}_${globalYieldedCount + 1}`,
                     };
-                  });
-
-                  tagged.forEach((tc) => {
-                    console.log(
-                      `[URL-GEN] Finalized test case (page ${pageIdx + 1}):`,
-                      JSON.stringify(tc, null, 2)
-                    );
                   });
 
                   pageYieldedCount += newCases.length;
@@ -1368,6 +1384,7 @@ export function GenerateTestCasesWizard({
     } finally {
       setIsGenerating(false);
       setGeneratingStatus("");
+      setUrlStreamingPageInfo(null);
       abortControllerRef.current = null;
     }
   };
@@ -2163,6 +2180,15 @@ export function GenerateTestCasesWizard({
 
       onImportComplete?.();
       window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
+
+      // Clean up Redis crawled pages so notification link can't re-trigger generation
+      if (lastCrawlJobIdRef.current) {
+        fetch(`/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`, {
+          method: "DELETE",
+        }).catch(() => {});
+        lastCrawlJobIdRef.current = null;
+      }
+
       setOpen(false);
       resetWizard();
     } catch (error) {
@@ -4075,9 +4101,16 @@ export function GenerateTestCasesWizard({
                               : generatingStatus === "calling_ai"
                                 ? t("generateTestCases.generatingCallingAi")
                                 : generatingStatus === "streaming"
-                                  ? t("generateTestCases.generatingStreaming", {
-                                      count: generatedTestCases.length + 1,
-                                    })
+                                  ? urlStreamingPageInfo
+                                    ? t("generateTestCases.generatingStreamingPage", {
+                                        count: generatedTestCases.length + 1,
+                                        current: urlStreamingPageInfo.current,
+                                        total: urlStreamingPageInfo.total,
+                                        page: urlStreamingPageInfo.title || `${urlStreamingPageInfo.current}`,
+                                      })
+                                    : t("generateTestCases.generatingStreaming", {
+                                        count: generatedTestCases.length + 1,
+                                      })
                                   : generatingStatus === "processing"
                                     ? t(
                                         "generateTestCases.generatingProcessing"
@@ -4158,9 +4191,16 @@ export function GenerateTestCasesWizard({
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <Sparkles className="w-4 h-4 animate-pulse text-primary shrink-0" />
                               <span>
-                                {t("generateTestCases.generatingStreaming", {
-                                  count: generatedTestCases.length + 1,
-                                })}
+                                {urlStreamingPageInfo
+                                  ? t("generateTestCases.generatingStreamingPage", {
+                                      count: generatedTestCases.length + 1,
+                                      current: urlStreamingPageInfo.current,
+                                      total: urlStreamingPageInfo.total,
+                                      page: urlStreamingPageInfo.title || `${urlStreamingPageInfo.current}`,
+                                    })
+                                  : t("generateTestCases.generatingStreaming", {
+                                      count: generatedTestCases.length + 1,
+                                    })}
                               </span>
                             </div>
                             <Button

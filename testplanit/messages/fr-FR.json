@@ -2109,6 +2109,7 @@
       "generatingPreparing": "Préparation de la demande...",
       "generatingCallingAi": "En attendant que l'IA génère des cas de test...",
       "generatingStreaming": "L'IA génère un cas de test {count}...",
+      "generatingStreamingPage": "L'IA génère le cas de test {count} — page {current} de {total}: {page}",
       "generatingProcessing": "Traitement des cas de test générés...",
       "generatingHint": "Cela peut prendre une minute en fonction de la complexité de votre document source.",
       "steps": {
