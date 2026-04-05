@@ -112,6 +112,7 @@ interface DocumentRequirements {
 interface GeneratedTestCase {
   id: string;
   name: string;
+  /** @deprecated Steps now live inside fieldValues. Kept for backward compat with old LLM responses. */
   steps?: Array<{
     id?: number;
     step: any;
@@ -125,11 +126,30 @@ interface GeneratedTestCase {
     isDeleted?: boolean;
   }>;
   fieldValues: Record<string, any>;
-  automated: boolean;
+  /** @deprecated No longer produced by LLM. Kept for backward compat. */
+  automated?: boolean;
   tags?: string[];
   sourceUrl?: string;
   /** True while the test case is still streaming from the LLM */
   _streaming?: boolean;
+}
+
+/** Get the steps array from a test case, checking both fieldValues (new) and top-level steps (legacy) */
+function getTestCaseSteps(
+  testCase: GeneratedTestCase,
+  templateFields?: Array<{ caseField: { displayName: string; type: { type: string } } }>
+): any[] {
+  // Check fieldValues first for any Steps-type field
+  if (templateFields) {
+    for (const field of templateFields) {
+      if (field.caseField.type.type === "Steps") {
+        const val = testCase.fieldValues[field.caseField.displayName];
+        if (Array.isArray(val) && val.length > 0) return val;
+      }
+    }
+  }
+  // Fallback to top-level steps (legacy LLM responses)
+  return testCase.steps ?? [];
 }
 
 /**
@@ -397,20 +417,10 @@ export function GenerateTestCasesWizard({
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPages, setMaxPages] = useState(10);
   const [urlJobId, setUrlJobId] = useState<string | null>(null);
-  interface GenerationPageProgress {
-    url: string;
-    title?: string;
-    status: "pending" | "generating" | "done" | "failed";
-    testCaseCount: number;
-  }
   const [urlJobProgress, setUrlJobProgress] = useState<{
     pagesProcessed: number;
     totalPages: number;
     phase?: string;
-    pagesGenerated?: number;
-    totalPagesForGeneration?: number;
-    totalTestCases?: number;
-    generationPages?: GenerationPageProgress[];
   } | null>(null);
   const [urlRobotsSkipped, setUrlRobotsSkipped] = useState(0);
 
@@ -692,10 +702,6 @@ export function GenerateTestCasesWizard({
             pagesProcessed: data.progress.pagesProcessed ?? 0,
             totalPages: data.progress.totalPages ?? 0,
             phase: data.progress.phase,
-            pagesGenerated: data.progress.pagesGenerated,
-            totalPagesForGeneration: data.progress.totalPagesForGeneration,
-            totalTestCases: data.progress.totalTestCases,
-            generationPages: data.progress.generationPages,
           });
           setUrlRobotsSkipped(data.progress.skippedRobots ?? 0);
         }
@@ -705,12 +711,17 @@ export function GenerateTestCasesWizard({
           setUrlJobProgress(null);
 
           if (data.result?.crawlOnly && data.result?.crawledPages?.length > 0) {
+            // Abort any in-progress SSE stream before starting a new one
+            abortControllerRef.current?.abort();
+            abortControllerRef.current = null;
+
             // Crawl-only: pages are ready — start SSE streaming per page.
             // IMPORTANT: set step FIRST. setInterval callbacks aren't auto-batched
             // by React 18, so each setState triggers a render. The useEffect on
             // selectedTemplateId must see REVIEW_GENERATED to skip auto-select-all.
             setCurrentStep(WizardStep.REVIEW_GENERATED);
             setCrawledPagesResult(data.result.crawledPages);
+            setGeneratedTestCases([]);
             restoreTemplateFromResult(
               data.result?.templateId,
               data.result?.selectedFieldIds
@@ -779,6 +790,10 @@ export function GenerateTestCasesWizard({
     url.searchParams.delete("urlJobId");
     window.history.replaceState({}, "", url.toString());
 
+    // Abort any in-progress SSE stream before resetting
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+
     // Reset wizard state, then fetch job result immediately (no 3s polling delay)
     resetWizard();
     setIsNotificationReopen(true);
@@ -799,6 +814,7 @@ export function GenerateTestCasesWizard({
         ) {
           // Crawl-only: start SSE streaming per page for incremental generation
           setIsNotificationReopen(false);
+          setGeneratedTestCases([]);
           setCrawledPagesResult(data.result.crawledPages);
           restoreTemplateFromResult(
             data.result.templateId,
@@ -1040,6 +1056,10 @@ export function GenerateTestCasesWizard({
   }, [currentStep, goNext]); // generateTestCases is intentionally not included as it's not memoized
 
   const resetWizard = () => {
+    // Abort any in-progress SSE stream
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+
     setCurrentStep(WizardStep.SELECT_ISSUE);
     setSelectedIssue(null);
     setSourceType(hasActiveIntegrations ? "issue" : "url");
@@ -1214,7 +1234,6 @@ export function GenerateTestCasesWizard({
           );
           continue; // Skip failed pages, try the next
         }
-        console.log(`[URL-GEN] SSE stream started for page ${pageIdx + 1}`);
 
         // Consume the SSE stream with incremental rendering:
         // - Finalized cases: fully-closed JSON objects, rendered permanently
@@ -1943,9 +1962,10 @@ export function GenerateTestCasesWizard({
   };
 
   const handleCancelGeneration = () => {
-    // Cancel SSE streaming (issue/document generation)
+    // Cancel SSE streaming (issue/document/URL generation)
     abortControllerRef.current?.abort();
-    // Cancel URL generation background job
+    abortControllerRef.current = null;
+    // Cancel URL crawl background job if still running
     if (urlJobId) {
       fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
         method: "POST",
@@ -1953,8 +1973,8 @@ export function GenerateTestCasesWizard({
       setUrlJobId(null);
       setUrlJobProgress(null);
       setUrlRobotsSkipped(0);
-      setIsGenerating(false);
     }
+    setIsGenerating(false);
   };
 
   const handleRetryGeneration = () => {
@@ -2101,17 +2121,22 @@ export function GenerateTestCasesWizard({
         stateName: defaultWorkflow.name || tCommon("labels.unknown"),
         maxOrder,
         autoGenerateTags,
-        testCases: testCasesToImport.map((tc) => ({
-          id: tc.id,
-          name: tc.name,
-          steps: tc.steps?.map((s) => ({
-            step: s.step,
-            expectedResult: s.expectedResult,
-          })),
-          fieldValues: tc.fieldValues,
-          automated: tc.automated,
-          tags: tc.tags,
-        })),
+        testCases: testCasesToImport.map((tc) => {
+          const steps = getTestCaseSteps(tc, selectedTemplate?.caseFields);
+          return {
+            id: tc.id,
+            name: tc.name,
+            steps: steps.length > 0
+              ? steps.map((s: any) => ({
+                  step: s.step,
+                  expectedResult: s.expectedResult,
+                }))
+              : undefined,
+            fieldValues: tc.fieldValues,
+            tags: tc.tags,
+            sourceUrl: tc.sourceUrl,
+          };
+        }),
         fieldMappings,
         issue,
       });
@@ -2532,7 +2557,7 @@ export function GenerateTestCasesWizard({
         const fieldId = field.caseField.id.toString();
         const rawValue =
           field.caseField.type.type === "Steps"
-            ? testCase.steps || []
+            ? getTestCaseSteps(testCase, selectedTemplateFields)
             : testCase.fieldValues[displayName];
         initial[fieldId] = mapFieldValueForForm(field, rawValue);
       });
@@ -2587,10 +2612,10 @@ export function GenerateTestCasesWizard({
         );
       });
 
-      let updatedSteps = testCase.steps;
+      let updatedSteps: any[] = getTestCaseSteps(testCase, selectedTemplateFields);
       if (stepsField) {
         const stepsData = data[stepsField.caseField.id.toString()] || [];
-        updatedSteps = mapStepsFormValueToGeneratedSteps(stepsData);
+        updatedSteps = mapStepsFormValueToGeneratedSteps(stepsData) ?? [];
       }
 
       const nextTestCase: GeneratedTestCase = {
@@ -2628,8 +2653,9 @@ export function GenerateTestCasesWizard({
     }, [isEditing, testCase.id, handleSave]);
 
     const stepsForDisplay = useMemo(() => {
-      if (!testCase.steps) return [];
-      return testCase.steps.map((step, index) => {
+      const steps = getTestCaseSteps(testCase, selectedTemplateFields);
+      if (!steps || steps.length === 0) return [];
+      return steps.map((step: any, index: number) => {
         const existingGroup = step?.sharedStepGroup as any;
         const sharedStepGroup = existingGroup
           ? {
@@ -2654,7 +2680,7 @@ export function GenerateTestCasesWizard({
             typeof step?.testCaseId === "number" ? step.testCaseId : 0,
         };
       });
-    }, [testCase.steps]);
+    }, [testCase, selectedTemplateFields]);
 
     const priorityField = useMemo(() => {
       return selectedTemplateFields.find((field: any) =>
@@ -3213,109 +3239,8 @@ export function GenerateTestCasesWizard({
                           </div>
                         )}
 
-                        {/* Phase: generating — per-page progress */}
-                        {urlJobProgress?.phase === "generating" &&
-                          urlJobProgress?.generationPages && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Sparkles className="h-4 w-4 animate-pulse" />
-                                  <span>
-                                    {(urlJobProgress.totalPagesForGeneration ??
-                                      0) > 1
-                                      ? t(
-                                          "generateTestCases.selectSource.generatingProgress",
-                                          {
-                                            current:
-                                              urlJobProgress.pagesGenerated ??
-                                              0,
-                                            total:
-                                              urlJobProgress.totalPagesForGeneration ??
-                                              0,
-                                            testCases:
-                                              urlJobProgress.totalTestCases ??
-                                              0,
-                                          }
-                                        )
-                                      : t(
-                                          "generateTestCases.selectSource.generatingSinglePage"
-                                        )}
-                                  </span>
-                                </div>
-                              </div>
-                              <Progress
-                                value={
-                                  ((urlJobProgress.pagesGenerated ?? 0) /
-                                    (urlJobProgress.totalPagesForGeneration ??
-                                      1)) *
-                                  100
-                                }
-                                className="h-1.5"
-                              />
-                              <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                {urlJobProgress.generationPages.map(
-                                  (gp, idx) => (
-                                    <div
-                                      key={idx}
-                                      className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
-                                        gp.status === "generating"
-                                          ? "bg-primary/5 border border-primary/20"
-                                          : gp.status === "done"
-                                            ? "bg-muted/50"
-                                            : gp.status === "failed"
-                                              ? "bg-destructive/5"
-                                              : "bg-muted/30 text-muted-foreground"
-                                      }`}
-                                    >
-                                      {gp.status === "generating" && (
-                                        <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
-                                      )}
-                                      {gp.status === "done" && (
-                                        <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
-                                      )}
-                                      {gp.status === "failed" && (
-                                        <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-                                      )}
-                                      {gp.status === "pending" && (
-                                        <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
-                                      )}
-                                      <span className="truncate flex-1">
-                                        {gp.title || gp.url}
-                                      </span>
-                                      {(gp.status === "done" ||
-                                        (gp.status === "generating" &&
-                                          gp.testCaseCount > 0)) && (
-                                        <Badge
-                                          variant="secondary"
-                                          className={`text-[10px] px-1.5 py-0 shrink-0 ${gp.status === "generating" ? "animate-pulse" : ""}`}
-                                        >
-                                          {"("}
-                                          {t(
-                                            "generateTestCases.selectSource.generatingPageCases",
-                                            { count: gp.testCaseCount }
-                                          )}
-                                          {")"}
-                                        </Badge>
-                                      )}
-                                      {gp.status === "failed" && (
-                                        <span className="text-[10px] text-destructive shrink-0">
-                                          {"("}
-                                          {t(
-                                            "generateTestCases.selectSource.generatingPageFailed"
-                                          )}
-                                          {")"}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
-
                         {/* Phase: setup or other */}
                         {urlJobProgress &&
-                          urlJobProgress.phase !== "generating" &&
                           urlJobProgress.phase !== "crawling" && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -3670,106 +3595,8 @@ export function GenerateTestCasesWizard({
                                   </div>
                                 )}
 
-                                {/* Phase: generating — per-page progress */}
-                                {urlJobProgress.phase === "generating" &&
-                                  urlJobProgress.generationPages && (
-                                    <div className="space-y-2">
-                                      <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                          <Sparkles className="h-4 w-4 animate-pulse" />
-                                          <span>
-                                            {t(
-                                              "generateTestCases.selectSource.generatingProgress",
-                                              {
-                                                current:
-                                                  urlJobProgress.pagesGenerated ??
-                                                  0,
-                                                total:
-                                                  urlJobProgress.totalPagesForGeneration ??
-                                                  0,
-                                                testCases:
-                                                  urlJobProgress.totalTestCases ??
-                                                  0,
-                                              }
-                                            )}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                        {urlJobProgress.generationPages.map(
-                                          (gp, idx) => (
-                                            <div
-                                              key={idx}
-                                              className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md ${
-                                                gp.status === "generating"
-                                                  ? "bg-primary/5 border border-primary/20"
-                                                  : gp.status === "done"
-                                                    ? "bg-muted/50"
-                                                    : gp.status === "failed"
-                                                      ? "bg-destructive/5"
-                                                      : "bg-muted/30 text-muted-foreground"
-                                              }`}
-                                            >
-                                              {gp.status === "generating" && (
-                                                <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
-                                              )}
-                                              {gp.status === "done" && (
-                                                <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
-                                              )}
-                                              {gp.status === "failed" && (
-                                                <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-                                              )}
-                                              {gp.status === "pending" && (
-                                                <div className="h-3 w-3 rounded-full border border-muted-foreground/30 shrink-0" />
-                                              )}
-                                              <span className="truncate flex-1">
-                                                {gp.title || gp.url}
-                                              </span>
-                                              {gp.status === "done" && (
-                                                <Badge
-                                                  variant="secondary"
-                                                  className="text-[10px] px-1.5 py-0 shrink-0"
-                                                >
-                                                  {"("}
-                                                  {t(
-                                                    "generateTestCases.selectSource.generatingPageCases",
-                                                    { count: gp.testCaseCount }
-                                                  )}
-                                                  {")"}
-                                                </Badge>
-                                              )}
-                                              {gp.status === "failed" && (
-                                                <span className="text-[10px] text-destructive shrink-0">
-                                                  {"("}
-                                                  {t(
-                                                    "generateTestCases.selectSource.generatingPageFailed"
-                                                  )}
-                                                  {")"}
-                                                </span>
-                                              )}
-                                            </div>
-                                          )
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                {/* Phase: generating but no generationPages yet (setup) */}
-                                {urlJobProgress.phase === "generating" &&
-                                  !urlJobProgress.generationPages && (
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                      <span>
-                                        {t(
-                                          "generateTestCases.selectSource.generatingSetup"
-                                        )}
-                                      </span>
-                                    </div>
-                                  )}
-
-                                {/* Phase: crawling — simple progress (no generationPages) */}
-                                {urlJobProgress.phase !== "generating" &&
-                                  urlJobProgress.phase !== "crawling" && (
+                                {/* Phase: setup or other */}
+                                {urlJobProgress.phase !== "crawling" && (
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                       <span>
@@ -4182,61 +4009,15 @@ export function GenerateTestCasesWizard({
                   sourceType === "url" &&
                   generatedTestCases.length > 0)) && (
                 <Card shadow="none">
-                  {/* Inline URL generation progress — shown while generating inside review step */}
-                  {urlJobId && isGenerating && sourceType === "url" && (
-                    <div className="px-6 pt-6 space-y-2">
-                      {urlJobProgress?.phase === "generating" &&
-                      urlJobProgress?.generationPages ? (
-                        <>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Sparkles className="h-4 w-4 animate-pulse" />
-                            <span>
-                              {(urlJobProgress.totalPagesForGeneration ?? 0) > 1
-                                ? t(
-                                    "generateTestCases.selectSource.generatingProgress",
-                                    {
-                                      current:
-                                        urlJobProgress.pagesGenerated ?? 0,
-                                      total:
-                                        urlJobProgress.totalPagesForGeneration ??
-                                        0,
-                                      testCases:
-                                        urlJobProgress.totalTestCases ?? 0,
-                                    }
-                                  )
-                                : t(
-                                    "generateTestCases.selectSource.generatingSinglePage"
-                                  )}
-                            </span>
-                          </div>
-                          <Progress
-                            value={
-                              ((urlJobProgress.pagesGenerated ?? 0) /
-                                (urlJobProgress.totalPagesForGeneration ?? 1)) *
-                              100
-                            }
-                            className="h-1.5"
-                          />
-                        </>
-                      ) : urlJobProgress?.phase === "crawling" ? (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>
-                            {t("generateTestCases.selectSource.crawlProgress", {
-                              current: urlJobProgress.pagesProcessed,
-                            })}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>
-                            {t(
-                              "generateTestCases.selectSource.generatingSetup"
-                            )}
-                          </span>
-                        </div>
-                      )}
+                  {/* Inline URL generation progress — shown while SSE streaming */}
+                  {isGenerating && sourceType === "url" && (
+                    <div className="px-6 pt-6">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <span>
+                          {t("generateTestCases.selectSource.generatingSinglePage")}
+                        </span>
+                      </div>
                     </div>
                   )}
                   <CardHeader>

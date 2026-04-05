@@ -2144,11 +2144,8 @@
         "maxDepth": "Profundidad máxima",
         "maxPages": "Páginas máximas",
         "crawlProgress": "{current, plural, one {Páginas obtenidas hasta ahora...} other {Páginas obtenidas hasta ahora...}}",
-        "generatingProgress": "Generando casos de prueba: {testCases} generado, trabajando en la página {current} de {total}...",
         "generatingSinglePage": "Generando casos de prueba...",
         "generatingSetup": "Preparándonos para generar casos de prueba...",
-        "generatingPageCases": "{count, plural, one {# caso} other {# casos}}",
-        "generatingPageFailed": "fallido",
         "robotsSkipped": "{count, plural, one {# página omitida} other {# páginas omitidas}} (robots.txt)"
       },
       "selectIssue": {

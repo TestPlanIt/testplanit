@@ -31,8 +31,9 @@ const TestCaseInputSchema = z.object({
   name: z.string(),
   steps: z.array(StepSchema).optional(),
   fieldValues: z.record(z.string(), z.any()),
-  automated: z.boolean(),
+  automated: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
+  sourceUrl: z.string().optional(),
 });
 
 const ImportInputSchema = z.object({
@@ -222,16 +223,68 @@ export async function importGeneratedTestCases(
           }
         }
 
+        // For URL-generated cases with multiple source pages, create subfolders
+        const sourceUrls = new Set(
+          data.testCases
+            .map((tc) => tc.sourceUrl)
+            .filter((url): url is string => !!url)
+        );
+        const folderIdBySourceUrl = new Map<string, number>();
+
+        if (sourceUrls.size > 1) {
+          // Multiple pages — create a subfolder per page
+          let folderOrder = 0;
+          for (const url of sourceUrls) {
+            // Derive folder name from URL: use path or hostname
+            let folderName: string;
+            try {
+              const parsed = new URL(url);
+              const pathPart = parsed.pathname === "/" ? "" : parsed.pathname;
+              folderName = pathPart
+                ? pathPart
+                    .replace(/^\//, "")
+                    .replace(/\/$/, "")
+                    .replace(/\//g, " - ")
+                : parsed.hostname;
+            } catch {
+              folderName = url.slice(0, 100);
+            }
+            // Sanitize: remove special chars, limit length
+            folderName = folderName
+              .replace(/[<>:"/\\|?*]/g, "")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 100) || "Page";
+
+            const folder = await tx.repositoryFolders.create({
+              data: {
+                name: folderName,
+                projectId: data.projectId,
+                repositoryId: data.repositoryId,
+                parentId: data.folderId,
+                creatorId: userId,
+                order: folderOrder++,
+              },
+              select: { id: true },
+            });
+            folderIdBySourceUrl.set(url, folder.id);
+          }
+        }
+
         for (const testCase of data.testCases) {
           try {
             const calculatedOrder = data.maxOrder + importedCount + 1;
+            // Use subfolder if one was created for this page, otherwise use the target folder
+            const targetFolderId = testCase.sourceUrl
+              ? folderIdBySourceUrl.get(testCase.sourceUrl) ?? data.folderId
+              : data.folderId;
 
             // 1. Create the repository case
             const newCase = await tx.repositoryCases.create({
               data: {
                 projectId: data.projectId,
                 repositoryId: data.repositoryId,
-                folderId: data.folderId,
+                folderId: targetFolderId,
                 templateId: data.templateId,
                 name: testCase.name.slice(0, 255),
                 source: RepositoryCaseSource.API,

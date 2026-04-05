@@ -2144,11 +2144,8 @@
         "maxDepth": "Profondeur maximale",
         "maxPages": "Pages maximales",
         "crawlProgress": "{current, plural, one {Page récupérée # jusqu'à présent...} other {Pages récupérées # jusqu'à présent...}}",
-        "generatingProgress": "Génération des cas de test : {testCases} générés, traitement en cours sur la page {current} de {total}...",
         "generatingSinglePage": "Génération de cas de test...",
         "generatingSetup": "Préparation de la génération des cas de test...",
-        "generatingPageCases": "{count, plural, one {# cas} other {# cas}}",
-        "generatingPageFailed": "échoué",
         "robotsSkipped": "{count, plural, one {# page ignorée} other {# pages ignorées}} (robots.txt)"
       },
       "selectIssue": {

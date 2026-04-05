@@ -45,14 +45,18 @@ export interface GenerationContext {
 export interface GeneratedTestCase {
   id: string;
   name: string;
+  /** @deprecated Use fieldValues instead */
   description?: string;
+  /** @deprecated Steps now live inside fieldValues */
   steps?: Array<{
     step: string;
     expectedResult: string;
   }>;
   fieldValues: Record<string, any>;
+  /** @deprecated Priority now lives inside fieldValues */
   priority?: string;
-  automated: boolean;
+  /** @deprecated No longer produced by LLM */
+  automated?: boolean;
   tags?: string[];
 }
 
@@ -380,6 +384,9 @@ export function buildSystemPrompt(
   const stepsInstruction = includeSteps
     ? "\n- For the Steps field in fieldValues, provide detailed step objects with 'step' and 'expectedResult' keys"
     : "";
+  const priorityField = template.fields.find((f) =>
+    f.name.toLowerCase().includes("priority")
+  );
   const priorityInstruction = priorityField?.options
     ? `\n- For the ${priorityField.name} field in fieldValues, use ONLY these values: [${priorityField.options.join(", ")}]`
     : "";
@@ -750,30 +757,8 @@ export function parseAndValidateTestCases(
   }
 
   // Validate and sanitize
-  const priorityField = template.fields.find((f) =>
-    f.name.toLowerCase().includes("priority")
-  );
-  const validPriorityOptions = priorityField?.options || [
-    "High",
-    "Medium",
-    "Low",
-  ];
-
   const testCases =
     parsedResponse.testCases?.map((tc, index) => {
-      let validatedPriority = tc.priority;
-      if (tc.priority && !validPriorityOptions.includes(tc.priority)) {
-        const lowerPriority = tc.priority.toLowerCase();
-        const mappedPriority = validPriorityOptions.find(
-          (option) =>
-            option.toLowerCase() === lowerPriority ||
-            option.toLowerCase().includes(lowerPriority) ||
-            lowerPriority.includes(option.toLowerCase())
-        );
-        validatedPriority =
-          mappedPriority || validPriorityOptions[0] || "Medium";
-      }
-
       const validatedFieldValues = { ...tc.fieldValues };
 
       template.fields.forEach((field) => {
@@ -925,27 +910,6 @@ export function validateTestCase(
   index: number,
   template: TemplateData,
 ): GeneratedTestCase {
-  const priorityField = template.fields.find((f) =>
-    f.name.toLowerCase().includes("priority")
-  );
-  const validPriorityOptions = priorityField?.options || [
-    "High",
-    "Medium",
-    "Low",
-  ];
-
-  let validatedPriority = tc.priority;
-  if (tc.priority && !validPriorityOptions.includes(tc.priority)) {
-    const lowerPriority = tc.priority.toLowerCase();
-    const mappedPriority = validPriorityOptions.find(
-      (option) =>
-        option.toLowerCase() === lowerPriority ||
-        option.toLowerCase().includes(lowerPriority) ||
-        lowerPriority.includes(option.toLowerCase())
-    );
-    validatedPriority = mappedPriority || validPriorityOptions[0] || "Medium";
-  }
-
   const validatedFieldValues = { ...tc.fieldValues };
   template.fields.forEach((field) => {
     if (field.options && validatedFieldValues[field.name]) {
