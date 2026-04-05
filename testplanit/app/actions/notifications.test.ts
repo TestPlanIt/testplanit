@@ -33,7 +33,7 @@ vi.mock("~/lib/services/notificationService", () => ({
 }));
 
 import {
-  createUserRegistrationNotification, deleteNotification, getUnreadNotificationCount, markAllNotificationsAsRead, markNotificationAsRead,
+  createUserRegistrationNotification, deleteAllNotifications, deleteNotification, getUnreadNotificationCount, markAllNotificationsAsRead, markNotificationAsRead,
   markNotificationAsUnread
 } from "./notifications";
 
@@ -218,6 +218,53 @@ describe("notifications actions", () => {
       expect(result).toEqual({
         success: false,
         error: "Failed to update notifications",
+      });
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("deleteAllNotifications", () => {
+    it("should throw error when not authenticated", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+
+      await expect(deleteAllNotifications()).rejects.toThrow("Unauthorized");
+    });
+
+    it("should soft delete all notifications for user", async () => {
+      mockUpdateMany.mockResolvedValue({ count: 3 });
+
+      const result = await deleteAllNotifications();
+
+      expect(result).toEqual({ success: true, count: 3 });
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        where: {
+          userId: "user-123",
+          isDeleted: false,
+        },
+        data: { isDeleted: true },
+      });
+    });
+
+    it("should return zero count when no notifications", async () => {
+      mockUpdateMany.mockResolvedValue({ count: 0 });
+
+      const result = await deleteAllNotifications();
+
+      expect(result).toEqual({ success: true, count: 0 });
+    });
+
+    it("should return error on database failure", async () => {
+      mockUpdateMany.mockRejectedValue(new Error("DB error"));
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const result = await deleteAllNotifications();
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to delete notifications",
       });
 
       consoleSpy.mockRestore();

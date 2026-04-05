@@ -4283,17 +4283,25 @@
       "actions": {
         "markRead": "Marquer comme lu",
         "markUnread": "Marquer comme non lu",
-        "markAllRead": "Marquer tout comme lu"
+        "markAllRead": "Marquer tout comme lu",
+        "deleteAll": "Supprimer tout"
       },
       "success": {
         "deleted": "Notification supprimée",
-        "markedAllRead": "Toutes les notifications marquées comme lues"
+        "markedAllRead": "Toutes les notifications marquées comme lues",
+        "deletedAll": "Toutes les notifications ont été supprimées."
       },
       "error": {
         "markRead": "Impossible de marquer comme lu",
         "markUnread": "Impossible de marquer comme non lu",
         "delete": "Impossible de supprimer la notification",
-        "markAllRead": "Impossible de marquer tous les éléments comme lus"
+        "markAllRead": "Impossible de marquer tous les éléments comme lus",
+        "deleteAll": "Impossible de supprimer les notifications"
+      },
+      "deleteAllDialog": {
+        "title": "Supprimer toutes les notifications ?",
+        "description": "Cette action supprimera définitivement toutes vos notifications. Elle est irréversible.",
+        "confirm": "Supprimer tout"
       },
       "content": {
         "testCaseAssignmentTitle": "Nouvelle affectation de cas de test",

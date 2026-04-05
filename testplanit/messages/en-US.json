@@ -4283,17 +4283,25 @@
       "actions": {
         "markRead": "Mark as read",
         "markUnread": "Mark as unread",
-        "markAllRead": "Mark all as read"
+        "markAllRead": "Mark all as read",
+        "deleteAll": "Delete all"
       },
       "success": {
         "deleted": "Notification deleted",
-        "markedAllRead": "All notifications marked as read"
+        "markedAllRead": "All notifications marked as read",
+        "deletedAll": "All notifications deleted"
       },
       "error": {
         "markRead": "Failed to mark as read",
         "markUnread": "Failed to mark as unread",
         "delete": "Failed to delete notification",
-        "markAllRead": "Failed to mark all as read"
+        "markAllRead": "Failed to mark all as read",
+        "deleteAll": "Failed to delete notifications"
+      },
+      "deleteAllDialog": {
+        "title": "Delete all notifications?",
+        "description": "This will permanently remove all your notifications. This action cannot be undone.",
+        "confirm": "Delete all"
       },
       "content": {
         "testCaseAssignmentTitle": "New Test Case Assignment",

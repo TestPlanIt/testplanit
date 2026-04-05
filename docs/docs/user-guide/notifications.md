@@ -52,6 +52,10 @@ The notification panel displays when you click the bell icon:
 - **Mark All Read Button**: Quickly mark all notifications as read
   - Disabled when no unread notifications
   - Click to mark all as read at once
+- **Delete All Button**: Remove all notifications at once
+  - Disabled when no notifications exist
+  - Displays a confirmation dialog before deleting
+  - Soft-deletes all notifications (they will no longer appear in the panel)
 
 ### Notification Items
 
