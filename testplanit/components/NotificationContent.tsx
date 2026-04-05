@@ -497,12 +497,12 @@ export function NotificationContent({
                 </Link>
               </div>
             )}
-            {data.projectId && (
+            {data.projectId && data.projectName && (
               <div className="flex items-center gap-1 flex-wrap">
                 <span>{t("inProject")}</span>
                 <ProjectNameCell
                   projectId={data.projectId}
-                  value=""
+                  value={data.projectName}
                   size="sm"
                 />
               </div>

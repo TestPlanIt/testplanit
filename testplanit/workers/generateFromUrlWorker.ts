@@ -1,6 +1,7 @@
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
+  getPrismaClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
@@ -282,15 +283,21 @@ export const processor = async (
 
     // 10. Send notification that crawl is complete
     try {
+      const prisma = getPrismaClientForJob(job.data);
+      const project = await prisma.projects.findUnique({
+        where: { id: job.data.projectId },
+        select: { name: true },
+      });
       await NotificationService.createNotification({
         userId: job.data.userId,
         type: NotificationType.GENERATE_FROM_URL_COMPLETE,
         title: "Pages crawled",
-        message: `${pages.length} page${pages.length === 1 ? "" : "s"} crawled from ${seedUrl}. Click to generate test cases.`,
+        message: `${pages.length} page${pages.length === 1 ? "" : "s"} crawled from ${seedUrl}.`,
         relatedEntityId: job.id,
         tenantId: job.data.tenantId,
         data: {
           projectId: job.data.projectId,
+          projectName: project?.name || "",
           jobId: job.id,
         },
       });

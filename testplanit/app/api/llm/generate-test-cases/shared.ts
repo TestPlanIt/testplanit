@@ -319,7 +319,10 @@ export function buildSystemPrompt(
               exampleValue = "Option 1";
               break;
             case "steps":
-              exampleValue = [];
+              exampleValue = [
+                { "step": "Specific action to perform", "expectedResult": "Expected outcome" },
+                { "step": "Another action to verify", "expectedResult": "Another expected outcome" },
+              ];
               break;
             default:
               exampleValue = `${field.name} value for this specific issue`;

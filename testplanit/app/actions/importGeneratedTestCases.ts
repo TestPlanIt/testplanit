@@ -256,8 +256,18 @@ export async function importGeneratedTestCases(
               .trim()
               .slice(0, 100) || "Page";
 
-            const folder = await tx.repositoryFolders.create({
-              data: {
+            // Use upsert to handle duplicate folder names (same URL path from different pages)
+            const folder = await tx.repositoryFolders.upsert({
+              where: {
+                projectId_repositoryId_parentId_name_isDeleted: {
+                  projectId: data.projectId,
+                  repositoryId: data.repositoryId,
+                  parentId: data.folderId,
+                  name: folderName,
+                  isDeleted: false,
+                },
+              },
+              create: {
                 name: folderName,
                 projectId: data.projectId,
                 repositoryId: data.repositoryId,
@@ -265,6 +275,7 @@ export async function importGeneratedTestCases(
                 creatorId: userId,
                 order: folderOrder++,
               },
+              update: {},
               select: { id: true },
             });
             folderIdBySourceUrl.set(url, folder.id);
@@ -342,7 +353,7 @@ export async function importGeneratedTestCases(
                 staticProjectName: data.projectName,
                 projectId: data.projectId,
                 repositoryId: data.repositoryId,
-                folderId: data.folderId,
+                folderId: targetFolderId,
                 folderName: data.folderName,
                 templateId: data.templateId,
                 templateName: data.templateName,
@@ -417,6 +428,7 @@ export async function importGeneratedTestCases(
             }
 
             // 5. Batch create steps
+            console.log(`[import] Test case "${testCase.name}" steps:`, testCase.steps?.length ?? 0, JSON.stringify(testCase.steps?.[0])?.substring(0, 200));
             if (testCase.steps && testCase.steps.length > 0) {
               const stepData = testCase.steps.map((step, stepIndex) => ({
                 testCaseId: newCase.id,
