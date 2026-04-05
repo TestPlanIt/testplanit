@@ -1,3 +1,9 @@
+## [0.20.4](https://github.com/TestPlanIt/testplanit/compare/v0.20.3...v0.20.4) (2026-04-05)
+
+### Enhancements
+
+* **notifications:** add "Delete All" functionality for notifications ([#179](https://github.com/TestPlanIt/testplanit/issues/179)) ([30a3ecb](https://github.com/TestPlanIt/testplanit/commit/30a3ecb2488fb06e533c604b8782499bc7fca63c))
+
 ## [0.20.3](https://github.com/TestPlanIt/testplanit/compare/v0.20.2...v0.20.3) (2026-04-03)
 
 ### Bug Fixes
