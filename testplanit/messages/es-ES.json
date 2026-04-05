@@ -554,7 +554,7 @@
       "contentRequired": "El contenido es obligatorio",
       "invalidContentFormat": "Formato de contenido no válido",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
-      "resultSubmitPermissionDenied": "No puedes enviar resultados para este caso. Pide a un administrador que te lo asigne.",
+      "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos"
     },
@@ -4260,17 +4260,25 @@
       "actions": {
         "markRead": "Marcar como leído",
         "markUnread": "Marcar como no leído",
-        "markAllRead": "Marcar todo como leído"
+        "markAllRead": "Marcar todo como leído",
+        "deleteAll": "Eliminar todo"
       },
       "success": {
         "deleted": "Notificación eliminada",
-        "markedAllRead": "Todas las notificaciones marcadas como leídas"
+        "markedAllRead": "Todas las notificaciones marcadas como leídas",
+        "deletedAll": "Se eliminaron todas las notificaciones"
       },
       "error": {
         "markRead": "Error al marcar como leído",
         "markUnread": "Error al marcar como no leído",
         "delete": "Error al eliminar la notificación",
-        "markAllRead": "No se pudo marcar todo como leído"
+        "markAllRead": "No se pudo marcar todo como leído",
+        "deleteAll": "No se pudieron eliminar las notificaciones."
+      },
+      "deleteAllDialog": {
+        "title": "¿Eliminar todas las notificaciones?",
+        "description": "Esto eliminará permanentemente todas tus notificaciones. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar todo"
       },
       "content": {
         "testCaseAssignmentTitle": "Nueva tarea de caso de prueba",

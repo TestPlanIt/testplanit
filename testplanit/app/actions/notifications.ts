@@ -89,6 +89,29 @@ export async function markAllNotificationsAsRead() {
   }
 }
 
+export async function deleteAllNotifications() {
+  const session = await getServerAuthSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    const result = await prisma.notification.updateMany({
+      where: {
+        userId: session.user.id,
+        isDeleted: false,
+      },
+      data: { isDeleted: true },
+    });
+
+    revalidatePath("/");
+    return { success: true, count: result.count };
+  } catch (error) {
+    console.error("Failed to delete all notifications:", error);
+    return { success: false, error: "Failed to delete notifications" };
+  }
+}
+
 export async function getUnreadNotificationCount() {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
