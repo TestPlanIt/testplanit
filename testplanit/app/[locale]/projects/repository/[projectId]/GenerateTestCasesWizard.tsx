@@ -54,6 +54,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  FolderOpen,
   Globe,
   Info,
   ListChecks,
@@ -68,7 +69,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type MutableRefObject, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -132,6 +133,27 @@ interface GeneratedTestCase {
   sourceUrl?: string;
   /** True while the test case is still streaming from the LLM */
   _streaming?: boolean;
+}
+
+/** Derive folder name from a URL — mirrors the logic in importGeneratedTestCases.ts */
+function folderNameFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const pathPart = parsed.pathname === "/" ? "" : parsed.pathname;
+    let name = pathPart
+      ? pathPart
+          .replace(/^\//, "")
+          .replace(/\/$/, "")
+          .replace(/\//g, " - ")
+      : parsed.hostname;
+    return name
+      .replace(/[<>:"/\\|?*]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 100) || "Page";
+  } catch {
+    return url.slice(0, 100);
+  }
 }
 
 /** Get the steps array from a test case, checking both fieldValues (new) and top-level steps (legacy) */
@@ -383,6 +405,669 @@ const stepTitles = [
   "generateTestCases.steps.reviewGenerated",
 ];
 
+interface GeneratedTestCaseCardProps {
+  testCase: GeneratedTestCase;
+  template: any;
+  selectedFieldIds: Set<number>;
+  isSelected: boolean;
+  onSelectionChange: (checked: boolean | "indeterminate") => void;
+  isEditing: boolean;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onSave: (updated: GeneratedTestCase) => void;
+  autoGenerateTags: boolean;
+  disabled?: boolean;
+  t: any;
+  tCommon: any;
+  session: any;
+  projectId: number;
+  index: number;
+  formSubmitHandlersRef: MutableRefObject<Map<string, () => void>>;
+  folderLabel?: string;
+}
+
+const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
+  testCase,
+  template,
+  selectedFieldIds,
+  isSelected,
+  onSelectionChange,
+  isEditing,
+  onStartEdit,
+  onCancelEdit,
+  onSave,
+  autoGenerateTags,
+  disabled,
+  t: _t,
+  tCommon,
+  session,
+  projectId,
+  index,
+  formSubmitHandlersRef,
+  folderLabel,
+}: GeneratedTestCaseCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to card when entering edit mode
+  useEffect(() => {
+    if (isEditing && cardRef.current) {
+      cardRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [isEditing]);
+
+  const selectedTemplateFields = useMemo(
+    () =>
+      template.caseFields
+        .filter((field: any) => selectedFieldIds.has(field.caseField.id))
+        .sort((a: any, b: any) => a.order - b.order),
+    [template.caseFields, selectedFieldIds]
+  );
+
+  const stepsField = useMemo(
+    () =>
+      selectedTemplateFields.find(
+        (field: any) => field.caseField.type.type === "Steps"
+      ),
+    [selectedTemplateFields]
+  );
+
+  const mapFieldValueForForm = (field: any, rawValue: any) => {
+    const fieldType = field.caseField.type.type;
+
+    if (fieldType === "Steps") {
+      if (Array.isArray(rawValue)) {
+        return rawValue.map((step: any, index: number) => ({
+          ...step,
+          order: step?.order ?? index,
+          step: ensureTipTapJSON(step?.step ?? ""),
+          expectedResult: ensureTipTapJSON(step?.expectedResult ?? ""),
+          isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
+          sharedStepGroupId: step?.sharedStepGroupId ?? null,
+          sharedStepGroupName: step?.sharedStepGroupName ?? null,
+        }));
+      }
+
+      if (rawValue && typeof rawValue === "object") {
+        if (Array.isArray((rawValue as any)?.content)) {
+          return [
+            {
+              step: ensureTipTapJSON(rawValue),
+              expectedResult: ensureTipTapJSON(""),
+              order: 0,
+              isShared: false,
+              sharedStepGroupId: null,
+              sharedStepGroupName: null,
+            },
+          ];
+        }
+
+        if ((rawValue as any).step || (rawValue as any).expectedResult) {
+          return [
+            {
+              ...rawValue,
+              step: ensureTipTapJSON((rawValue as any).step ?? ""),
+              expectedResult: ensureTipTapJSON(
+                (rawValue as any).expectedResult ?? ""
+              ),
+              order: (rawValue as any).order ?? 0,
+              isShared: (rawValue as any).isShared ?? false,
+              sharedStepGroupId: (rawValue as any).sharedStepGroupId ?? null,
+              sharedStepGroupName:
+                (rawValue as any).sharedStepGroupName ?? null,
+            },
+          ];
+        }
+      }
+
+      if (typeof rawValue === "string" && rawValue.trim().length > 0) {
+        return [
+          {
+            step: ensureTipTapJSON(rawValue),
+            expectedResult: ensureTipTapJSON(""),
+            order: 0,
+            isShared: false,
+            sharedStepGroupId: null,
+            sharedStepGroupName: null,
+          },
+        ];
+      }
+
+      return [];
+    }
+
+    if (fieldType === "Dropdown") {
+      if (typeof rawValue === "number") return rawValue;
+      if (typeof rawValue === "string") {
+        try {
+          JSON.parse(rawValue);
+        } catch {
+          const option = field.caseField.fieldOptions?.find(
+            (fo: any) => fo.fieldOption.name === rawValue
+          );
+          if (option) return option.fieldOption.id;
+          const parsed = Number(rawValue);
+          return Number.isNaN(parsed) ? null : parsed;
+        }
+      }
+      return rawValue ?? null;
+    }
+
+    if (fieldType === "Multi-Select") {
+      const valuesArray = Array.isArray(rawValue)
+        ? rawValue
+        : typeof rawValue === "string" && rawValue.length > 0
+          ? rawValue
+              .split(/\n|,/)
+              .map((value: string) => value.trim())
+              .filter((value: string) => value.length > 0)
+          : [];
+
+      return valuesArray
+        .map((value: any) => {
+          if (typeof value === "number") return value;
+          const option = field.caseField.fieldOptions?.find(
+            (fo: any) => fo.fieldOption.name === value
+          );
+          if (option) {
+            return option.fieldOption.id;
+          }
+          const parsed = Number(value);
+          return Number.isNaN(parsed) ? null : parsed;
+        })
+        .filter((value: any) => value !== null);
+    }
+
+    if (fieldType === "Checkbox") {
+      return Boolean(rawValue);
+    }
+
+    if (fieldType === "Text Long") {
+      return serializeTipTapJSON(rawValue);
+    }
+
+    if (fieldType === "Date") {
+      if (!rawValue) return null;
+      if (rawValue instanceof Date) return rawValue;
+      const dateCandidate = new Date(rawValue);
+      return Number.isNaN(dateCandidate.getTime()) ? null : dateCandidate;
+    }
+
+    return rawValue ?? "";
+  };
+
+  const mapFormValueToFieldValue = (field: any, value: any) => {
+    const fieldType = field.caseField.type.type;
+
+    switch (fieldType) {
+      case "Dropdown":
+        return value ?? null;
+      case "Multi-Select":
+        return Array.isArray(value) ? value : [];
+      case "Checkbox":
+        return Boolean(value);
+      case "Text Long":
+        return serializeTipTapJSON(value);
+      case "Integer":
+      case "Number":
+        if (value === null || value === undefined || value === "") {
+          return null;
+        }
+        return Number(value);
+      case "Date":
+        if (!value) return null;
+        if (value instanceof Date) {
+          return value.toISOString();
+        }
+        try {
+          const parsed = new Date(value);
+          return parsed.toISOString();
+        } catch {
+          return value;
+        }
+      default:
+        return value ?? null;
+    }
+  };
+
+  const mapStepsFormValueToGeneratedSteps = (
+    steps: any[]
+  ): GeneratedTestCase["steps"] => {
+    if (!Array.isArray(steps)) return [];
+    return steps.map((step, index) => ({
+      id: typeof step?.id === "number" ? step.id : undefined,
+      order: step?.order ?? index,
+      step: ensureTipTapJSON(step?.step ?? ""),
+      expectedResult: ensureTipTapJSON(step?.expectedResult ?? ""),
+      isShared: step?.isShared ?? false,
+      sharedStepGroupId: step?.sharedStepGroupId ?? null,
+      sharedStepGroupName:
+        step?.sharedStepGroupName ?? step?.sharedStepGroup?.name ?? null,
+      sharedStepGroup: step?.sharedStepGroup ?? null,
+      isDeleted: step?.isDeleted ?? false,
+      testCaseId: step?.testCaseId ?? 0,
+    }));
+  };
+
+  const defaultValues = useMemo(() => {
+    const initial: Record<string, any> = {
+      name: testCase.name,
+      tagsInput: (testCase.tags || []).join(", "),
+    };
+
+    selectedTemplateFields.forEach((field: any) => {
+      const displayName = field.caseField.displayName;
+      const fieldId = field.caseField.id.toString();
+      const rawValue =
+        field.caseField.type.type === "Steps"
+          ? getTestCaseSteps(testCase, selectedTemplateFields)
+          : testCase.fieldValues[displayName];
+      initial[fieldId] = mapFieldValueForForm(field, rawValue);
+    });
+
+    return initial;
+  }, [testCase, selectedTemplateFields]);
+
+  const formMethods = useForm({
+    defaultValues,
+  });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = formMethods;
+
+  useEffect(() => {
+    if (isEditing) {
+      reset(defaultValues);
+    }
+  }, [isEditing, defaultValues, reset]);
+
+  const parseTags = (rawValue: string | undefined) => {
+    if (!rawValue) return [];
+    return rawValue
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(
+        (tag, index, self) => tag.length > 0 && self.indexOf(tag) === index
+      );
+  };
+
+  const handleSave = handleSubmit((data) => {
+    const updatedFieldValues: Record<string, any> = {
+      ...testCase.fieldValues,
+    };
+
+    selectedTemplateFields.forEach((field: any) => {
+      const displayName = field.caseField.displayName;
+      const fieldId = field.caseField.id.toString();
+
+      if (field.caseField.type.type === "Steps") {
+        delete updatedFieldValues[displayName];
+        return;
+      }
+
+      updatedFieldValues[displayName] = mapFormValueToFieldValue(
+        field,
+        data[fieldId]
+      );
+    });
+
+    let updatedSteps: any[] = getTestCaseSteps(testCase, selectedTemplateFields);
+    if (stepsField) {
+      const stepsData = data[stepsField.caseField.id.toString()] || [];
+      updatedSteps = mapStepsFormValueToGeneratedSteps(stepsData) ?? [];
+    }
+
+    const nextTestCase: GeneratedTestCase = {
+      ...testCase,
+      name: data.name?.trim() ? data.name.trim() : testCase.name,
+      automated: false,
+      tags: autoGenerateTags ? parseTags(data.tagsInput) : testCase.tags,
+      fieldValues: updatedFieldValues,
+      steps: updatedSteps,
+    };
+
+    onSave(nextTestCase);
+  });
+
+  const handleCancel = () => {
+    reset(defaultValues);
+    onCancelEdit();
+  };
+
+  // Register/unregister form submit handler for programmatic submission
+  useEffect(() => {
+    const handlers = formSubmitHandlersRef.current;
+    const id = testCase.id;
+
+    if (isEditing) {
+      handlers.set(id, handleSave);
+    } else {
+      handlers.delete(id);
+    }
+    // Cleanup on unmount
+    return () => {
+      handlers.delete(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, testCase.id, handleSave]);
+
+  const stepsForDisplay = useMemo(() => {
+    const steps = getTestCaseSteps(testCase, selectedTemplateFields);
+    if (!steps || steps.length === 0) return [];
+    return steps.map((step: any, index: number) => {
+      const existingGroup = step?.sharedStepGroup as any;
+      const sharedStepGroup = existingGroup
+        ? {
+            name: existingGroup.name ?? null,
+            isDeleted: existingGroup.isDeleted ?? false,
+          }
+        : step?.sharedStepGroupName
+          ? { name: step.sharedStepGroupName, isDeleted: false }
+          : null;
+
+      return {
+        id: typeof step?.id === "number" ? step.id : index,
+        order: step?.order ?? index,
+        step: ensureTipTapJSON(step?.step ?? ""),
+        expectedResult: ensureTipTapJSON(step?.expectedResult ?? ""),
+        sharedStepGroupId: step?.sharedStepGroupId ?? null,
+        sharedStepGroupName: step?.sharedStepGroupName ?? null,
+        sharedStepGroup,
+        isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
+        isDeleted: step?.isDeleted ?? false,
+        testCaseId:
+          typeof step?.testCaseId === "number" ? step.testCaseId : 0,
+      };
+    });
+  }, [testCase, selectedTemplateFields]);
+
+  const priorityField = useMemo(() => {
+    return selectedTemplateFields.find((field: any) =>
+      field.caseField.displayName.toLowerCase().includes("priority")
+    );
+  }, [selectedTemplateFields]);
+
+  const _priorityValue = priorityField
+    ? testCase.fieldValues[priorityField.caseField.displayName]
+    : null;
+
+  const renderFieldList = (isEdit: boolean) => (
+    <div className="mt-3 border-t pt-3 space-y-4">
+      {selectedTemplateFields.map((field: any) => {
+        const displayName = field.caseField.displayName;
+        const fieldId = field.caseField.id.toString();
+        const fieldType = field.caseField.type.type;
+
+        const commonProps = {
+          fieldType,
+          caseId: `generated-${testCase.id}`,
+          template,
+          fieldId: field.caseField.id,
+          session,
+          projectId,
+          previousFieldValue: undefined,
+          fieldValue: testCase.fieldValues[displayName],
+          stepsForDisplay:
+            fieldType === "Steps" ? stepsForDisplay : undefined,
+          explicitFieldNameForSteps:
+            fieldType === "Steps" ? fieldId : undefined,
+        } as const;
+
+        return (
+          <div key={`field-${field.caseField.id}`} className="space-y-2">
+            <div className="font-medium text-sm text-primary border-b border-muted-foreground/50 pb-1">
+              {displayName}
+            </div>
+            <FieldValueRenderer
+              {...commonProps}
+              isEditMode={isEdit}
+              isSubmitting={false}
+              control={control}
+              errors={errors}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  if (isEditing) {
+    return (
+      <div
+        ref={cardRef}
+        className="border rounded-lg p-4 transition-colors border-primary/60 bg-primary/5"
+      >
+        <FormProvider {...formMethods}>
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="flex items-start gap-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={onSelectionChange}
+                  className="mt-1"
+                />
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary bg-background text-sm font-medium text-primary">
+                  {index + 1}
+                </div>
+              </label>
+              <div className="flex-1 space-y-4">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`generated-${testCase.id}-name`}>
+                      {tCommon("name")}
+                    </Label>
+                    <Controller
+                      name="name"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          id={`generated-${testCase.id}-name`}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      )}
+                    />
+                  </div>
+                  {autoGenerateTags && (
+                    <div className="space-y-2">
+                      <Label htmlFor={`generated-${testCase.id}-tags`}>
+                        {tCommon("fields.tags")}
+                      </Label>
+                      <Controller
+                        name="tagsInput"
+                        control={control}
+                        render={({ field }) => (
+                          <Input
+                            id={`generated-${testCase.id}-tags`}
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Tag A, Tag B"
+                          />
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {renderFieldList(true)}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {autoGenerateTags &&
+                    testCase.tags?.map((tag, index) => (
+                      <Badge
+                        key={`editing-${testCase.id}-tag-${index}`}
+                        variant="outline"
+                        className="text-xs text-primary"
+                      >
+                        <Tag className="h-3 w-3 shrink-0 mr-1" />
+                        {tag}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit">{tCommon("actions.save")}</Button>
+            </div>
+          </form>
+        </FormProvider>
+      </div>
+    );
+  }
+
+  // Streaming stub: show a simplified card with available fields and a pulse animation
+  if (testCase._streaming) {
+    return (
+      <div
+        ref={cardRef}
+        className="border rounded-lg p-4 border-primary/30 bg-primary/5 animate-pulse"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary/60">
+            <Loader2 className="w-4 h-4 animate-spin" />
+          </div>
+          <div className="flex-1 space-y-2">
+            <h4 className="font-medium">{testCase.name}</h4>
+            {folderLabel && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <FolderOpen className="w-3 h-3 shrink-0" />
+                <span>{folderLabel}</span>
+              </div>
+            )}
+            {Object.entries(testCase.fieldValues).length > 0 && (
+              <div className="space-y-1.5 text-sm text-muted-foreground">
+                {Object.entries(testCase.fieldValues).map(([key, value]) => (
+                  <div key={key}>
+                    <span className="font-medium text-foreground/70">
+                      {key}:
+                    </span>{" "}
+                    <span className="text-muted-foreground">
+                      {typeof value === "string"
+                        ? value.length > 200
+                          ? value.substring(0, 200) + "..."
+                          : value
+                        : JSON.stringify(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {testCase.tags && testCase.tags.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {testCase.tags.map((tag, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {testCase.steps && testCase.steps.length > 0 && (
+              <div className="space-y-1 text-sm">
+                <span className="font-medium text-foreground/70 text-xs">
+                  {"Steps:"}
+                </span>
+                {testCase.steps.map((step, si) => (
+                  <div
+                    key={si}
+                    className="pl-2 border-l-2 border-muted text-xs text-muted-foreground"
+                  >
+                    <div>
+                      <span className="font-medium">
+                        {"Step "}
+                        {si + 1}
+                        {":"}
+                      </span>{" "}
+                      {step.step}
+                    </div>
+                    {step.expectedResult && (
+                      <div className="text-muted-foreground/70">
+                        {"Expected: "}
+                        {step.expectedResult}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      className={`border rounded-lg p-4 transition-colors ${
+        isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={onSelectionChange}
+            className="mt-1"
+          />
+          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-medium text-primary">
+            {index + 1}
+          </div>
+        </label>
+        <div className="flex-1 space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <h4 className="font-medium wrap-break-word">{testCase.name}</h4>
+              {folderLabel && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <FolderOpen className="w-3 h-3 shrink-0" />
+                  <span>{folderLabel}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onStartEdit}
+                disabled={disabled}
+              >
+                <SquarePen className="w-4 h-4 mr-1" />
+                {tCommon("actions.edit")}
+              </Button>
+            </div>
+          </div>
+
+          {renderFieldList(false)}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {autoGenerateTags &&
+              testCase.tags?.map((tag, index) => (
+                <Badge
+                  key={`${testCase.id}-tag-${index}`}
+                  variant="outline"
+                  className="text-xs text-primary"
+                >
+                  <Tag className="h-3 w-3 shrink-0 mr-1" />
+                  {tag}
+                </Badge>
+              ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export function GenerateTestCasesWizard({
   folderId,
   folderName,
@@ -462,6 +1147,9 @@ export function GenerateTestCasesWizard({
   const lastCrawlJobIdRef = useRef<string | null>(null);
   // Ref on the wizard's scrollable content area
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Throttle streaming UI updates to once per animation frame
+  const pendingStreamUpdateRef = useRef<GeneratedTestCase[] | null>(null);
+  const rafIdRef = useRef<number>(0);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -1081,6 +1769,12 @@ export function GenerateTestCasesWizard({
     // Abort any in-progress SSE stream
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    // Cancel any pending rAF update
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = 0;
+      pendingStreamUpdateRef.current = null;
+    }
 
     setCurrentStep(WizardStep.SELECT_ISSUE);
     setSelectedIssue(null);
@@ -1320,18 +2014,40 @@ export function GenerateTestCasesWizard({
                 }));
 
                 const allCases = [...finalizedCases, ...streamingStub];
-                setGeneratedTestCases(allCases);
-                setSelectedTestCases(
-                  new Set(
-                    allCases.filter((tc) => !tc._streaming).map((tc) => tc.id)
-                  )
-                );
+
+                // Only update selection when new finalized cases arrive (not on every chunk)
+                if (newCases.length > 0) {
+                  setSelectedTestCases(
+                    new Set(
+                      allCases.filter((tc) => !tc._streaming).map((tc) => tc.id)
+                    )
+                  );
+                }
+
+                // Throttle UI updates to once per animation frame
+                pendingStreamUpdateRef.current = allCases;
+                if (!rafIdRef.current) {
+                  rafIdRef.current = requestAnimationFrame(() => {
+                    if (pendingStreamUpdateRef.current) {
+                      setGeneratedTestCases(pendingStreamUpdateRef.current);
+                      pendingStreamUpdateRef.current = null;
+                    }
+                    rafIdRef.current = 0;
+                  });
+                }
               }
             } catch (e) {
               if (e instanceof SyntaxError) continue;
               throw e;
             }
           }
+        }
+
+        // Flush any pending rAF update before moving to the next page
+        if (rafIdRef.current) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = 0;
+          pendingStreamUpdateRef.current = null;
         }
 
         // Remove any lingering streaming stub after the page stream ends
@@ -1382,6 +2098,15 @@ export function GenerateTestCasesWizard({
         toast.error(t("generateTestCases.errors.generateFailed"));
       }
     } finally {
+      // Flush any pending rAF update so the final state is rendered
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = 0;
+      }
+      if (pendingStreamUpdateRef.current) {
+        setGeneratedTestCases(pendingStreamUpdateRef.current);
+        pendingStreamUpdateRef.current = null;
+      }
       setIsGenerating(false);
       setGeneratingStatus("");
       setUrlStreamingPageInfo(null);
@@ -2326,655 +3051,6 @@ export function GenerateTestCasesWizard({
     setEditingTestCaseIds(new Set());
     setShowUnsavedEditsDialog(false);
     void importSelectedTestCases();
-  };
-
-  interface GeneratedTestCaseCardProps {
-    testCase: GeneratedTestCase;
-    template: any;
-    selectedFieldIds: Set<number>;
-    isSelected: boolean;
-    onSelectionChange: (checked: boolean | "indeterminate") => void;
-    isEditing: boolean;
-    onStartEdit: () => void;
-    onCancelEdit: () => void;
-    onSave: (updated: GeneratedTestCase) => void;
-    autoGenerateTags: boolean;
-    disabled?: boolean;
-    t: any;
-    tCommon: any;
-    session: any;
-    projectId: number;
-    index: number;
-    formSubmitHandlersRef: React.MutableRefObject<Map<string, () => void>>;
-  }
-
-  const GeneratedTestCaseCard = ({
-    testCase,
-    template,
-    selectedFieldIds,
-    isSelected,
-    onSelectionChange,
-    isEditing,
-    onStartEdit,
-    onCancelEdit,
-    onSave,
-    autoGenerateTags,
-    disabled,
-    t: _t,
-    tCommon,
-    session,
-    projectId,
-    index,
-    formSubmitHandlersRef,
-  }: GeneratedTestCaseCardProps) => {
-    const cardRef = useRef<HTMLDivElement>(null);
-
-    // Scroll to card when entering edit mode
-    useEffect(() => {
-      if (isEditing && cardRef.current) {
-        cardRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, [isEditing]);
-
-    const selectedTemplateFields = useMemo(
-      () =>
-        template.caseFields
-          .filter((field: any) => selectedFieldIds.has(field.caseField.id))
-          .sort((a: any, b: any) => a.order - b.order),
-      [template.caseFields, selectedFieldIds]
-    );
-
-    const stepsField = useMemo(
-      () =>
-        selectedTemplateFields.find(
-          (field: any) => field.caseField.type.type === "Steps"
-        ),
-      [selectedTemplateFields]
-    );
-
-    const mapFieldValueForForm = (field: any, rawValue: any) => {
-      const fieldType = field.caseField.type.type;
-
-      if (fieldType === "Steps") {
-        if (Array.isArray(rawValue)) {
-          return rawValue.map((step: any, index: number) => ({
-            ...step,
-            order: step?.order ?? index,
-            step: ensureTipTapJSON(step?.step ?? ""),
-            expectedResult: ensureTipTapJSON(step?.expectedResult ?? ""),
-            isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
-            sharedStepGroupId: step?.sharedStepGroupId ?? null,
-            sharedStepGroupName: step?.sharedStepGroupName ?? null,
-          }));
-        }
-
-        if (rawValue && typeof rawValue === "object") {
-          if (Array.isArray((rawValue as any)?.content)) {
-            return [
-              {
-                step: ensureTipTapJSON(rawValue),
-                expectedResult: ensureTipTapJSON(""),
-                order: 0,
-                isShared: false,
-                sharedStepGroupId: null,
-                sharedStepGroupName: null,
-              },
-            ];
-          }
-
-          if ((rawValue as any).step || (rawValue as any).expectedResult) {
-            return [
-              {
-                ...rawValue,
-                step: ensureTipTapJSON((rawValue as any).step ?? ""),
-                expectedResult: ensureTipTapJSON(
-                  (rawValue as any).expectedResult ?? ""
-                ),
-                order: (rawValue as any).order ?? 0,
-                isShared: (rawValue as any).isShared ?? false,
-                sharedStepGroupId: (rawValue as any).sharedStepGroupId ?? null,
-                sharedStepGroupName:
-                  (rawValue as any).sharedStepGroupName ?? null,
-              },
-            ];
-          }
-        }
-
-        if (typeof rawValue === "string" && rawValue.trim().length > 0) {
-          return [
-            {
-              step: ensureTipTapJSON(rawValue),
-              expectedResult: ensureTipTapJSON(""),
-              order: 0,
-              isShared: false,
-              sharedStepGroupId: null,
-              sharedStepGroupName: null,
-            },
-          ];
-        }
-
-        return [];
-      }
-
-      if (fieldType === "Dropdown") {
-        if (typeof rawValue === "number") return rawValue;
-        if (typeof rawValue === "string") {
-          try {
-            JSON.parse(rawValue);
-          } catch {
-            const option = field.caseField.fieldOptions?.find(
-              (fo: any) => fo.fieldOption.name === rawValue
-            );
-            if (option) return option.fieldOption.id;
-            const parsed = Number(rawValue);
-            return Number.isNaN(parsed) ? null : parsed;
-          }
-        }
-        return rawValue ?? null;
-      }
-
-      if (fieldType === "Multi-Select") {
-        const valuesArray = Array.isArray(rawValue)
-          ? rawValue
-          : typeof rawValue === "string" && rawValue.length > 0
-            ? rawValue
-                .split(/\n|,/)
-                .map((value: string) => value.trim())
-                .filter((value: string) => value.length > 0)
-            : [];
-
-        return valuesArray
-          .map((value: any) => {
-            if (typeof value === "number") return value;
-            const option = field.caseField.fieldOptions?.find(
-              (fo: any) => fo.fieldOption.name === value
-            );
-            if (option) {
-              return option.fieldOption.id;
-            }
-            const parsed = Number(value);
-            return Number.isNaN(parsed) ? null : parsed;
-          })
-          .filter((value: any) => value !== null);
-      }
-
-      if (fieldType === "Checkbox") {
-        return Boolean(rawValue);
-      }
-
-      if (fieldType === "Text Long") {
-        return serializeTipTapJSON(rawValue);
-      }
-
-      if (fieldType === "Date") {
-        if (!rawValue) return null;
-        if (rawValue instanceof Date) return rawValue;
-        const dateCandidate = new Date(rawValue);
-        return Number.isNaN(dateCandidate.getTime()) ? null : dateCandidate;
-      }
-
-      return rawValue ?? "";
-    };
-
-    const mapFormValueToFieldValue = (field: any, value: any) => {
-      const fieldType = field.caseField.type.type;
-
-      switch (fieldType) {
-        case "Dropdown":
-          return value ?? null;
-        case "Multi-Select":
-          return Array.isArray(value) ? value : [];
-        case "Checkbox":
-          return Boolean(value);
-        case "Text Long":
-          return serializeTipTapJSON(value);
-        case "Integer":
-        case "Number":
-          if (value === null || value === undefined || value === "") {
-            return null;
-          }
-          return Number(value);
-        case "Date":
-          if (!value) return null;
-          if (value instanceof Date) {
-            return value.toISOString();
-          }
-          try {
-            const parsed = new Date(value);
-            return parsed.toISOString();
-          } catch {
-            return value;
-          }
-        default:
-          return value ?? null;
-      }
-    };
-
-    const mapStepsFormValueToGeneratedSteps = (
-      steps: any[]
-    ): GeneratedTestCase["steps"] => {
-      if (!Array.isArray(steps)) return [];
-      return steps.map((step, index) => ({
-        id: typeof step?.id === "number" ? step.id : undefined,
-        order: step?.order ?? index,
-        step: ensureTipTapJSON(step?.step ?? ""),
-        expectedResult: ensureTipTapJSON(step?.expectedResult ?? ""),
-        isShared: step?.isShared ?? false,
-        sharedStepGroupId: step?.sharedStepGroupId ?? null,
-        sharedStepGroupName:
-          step?.sharedStepGroupName ?? step?.sharedStepGroup?.name ?? null,
-        sharedStepGroup: step?.sharedStepGroup ?? null,
-        isDeleted: step?.isDeleted ?? false,
-        testCaseId: step?.testCaseId ?? 0,
-      }));
-    };
-
-    const defaultValues = useMemo(() => {
-      const initial: Record<string, any> = {
-        name: testCase.name,
-        tagsInput: (testCase.tags || []).join(", "),
-      };
-
-      selectedTemplateFields.forEach((field: any) => {
-        const displayName = field.caseField.displayName;
-        const fieldId = field.caseField.id.toString();
-        const rawValue =
-          field.caseField.type.type === "Steps"
-            ? getTestCaseSteps(testCase, selectedTemplateFields)
-            : testCase.fieldValues[displayName];
-        initial[fieldId] = mapFieldValueForForm(field, rawValue);
-      });
-
-      return initial;
-    }, [testCase, selectedTemplateFields]);
-
-    const formMethods = useForm({
-      defaultValues,
-    });
-
-    const {
-      control,
-      handleSubmit,
-      reset,
-      formState: { errors },
-    } = formMethods;
-
-    useEffect(() => {
-      if (isEditing) {
-        reset(defaultValues);
-      }
-    }, [isEditing, defaultValues, reset]);
-
-    const parseTags = (rawValue: string | undefined) => {
-      if (!rawValue) return [];
-      return rawValue
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(
-          (tag, index, self) => tag.length > 0 && self.indexOf(tag) === index
-        );
-    };
-
-    const handleSave = handleSubmit((data) => {
-      const updatedFieldValues: Record<string, any> = {
-        ...testCase.fieldValues,
-      };
-
-      selectedTemplateFields.forEach((field: any) => {
-        const displayName = field.caseField.displayName;
-        const fieldId = field.caseField.id.toString();
-
-        if (field.caseField.type.type === "Steps") {
-          delete updatedFieldValues[displayName];
-          return;
-        }
-
-        updatedFieldValues[displayName] = mapFormValueToFieldValue(
-          field,
-          data[fieldId]
-        );
-      });
-
-      let updatedSteps: any[] = getTestCaseSteps(testCase, selectedTemplateFields);
-      if (stepsField) {
-        const stepsData = data[stepsField.caseField.id.toString()] || [];
-        updatedSteps = mapStepsFormValueToGeneratedSteps(stepsData) ?? [];
-      }
-
-      const nextTestCase: GeneratedTestCase = {
-        ...testCase,
-        name: data.name?.trim() ? data.name.trim() : testCase.name,
-        automated: false,
-        tags: autoGenerateTags ? parseTags(data.tagsInput) : testCase.tags,
-        fieldValues: updatedFieldValues,
-        steps: updatedSteps,
-      };
-
-      onSave(nextTestCase);
-    });
-
-    const handleCancel = () => {
-      reset(defaultValues);
-      onCancelEdit();
-    };
-
-    // Register/unregister form submit handler for programmatic submission
-    useEffect(() => {
-      const handlers = formSubmitHandlersRef.current;
-      const id = testCase.id;
-
-      if (isEditing) {
-        handlers.set(id, handleSave);
-      } else {
-        handlers.delete(id);
-      }
-      // Cleanup on unmount
-      return () => {
-        handlers.delete(id);
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isEditing, testCase.id, handleSave]);
-
-    const stepsForDisplay = useMemo(() => {
-      const steps = getTestCaseSteps(testCase, selectedTemplateFields);
-      if (!steps || steps.length === 0) return [];
-      return steps.map((step: any, index: number) => {
-        const existingGroup = step?.sharedStepGroup as any;
-        const sharedStepGroup = existingGroup
-          ? {
-              name: existingGroup.name ?? null,
-              isDeleted: existingGroup.isDeleted ?? false,
-            }
-          : step?.sharedStepGroupName
-            ? { name: step.sharedStepGroupName, isDeleted: false }
-            : null;
-
-        return {
-          id: typeof step?.id === "number" ? step.id : index,
-          order: step?.order ?? index,
-          step: ensureTipTapJSON(step?.step ?? ""),
-          expectedResult: ensureTipTapJSON(step?.expectedResult ?? ""),
-          sharedStepGroupId: step?.sharedStepGroupId ?? null,
-          sharedStepGroupName: step?.sharedStepGroupName ?? null,
-          sharedStepGroup,
-          isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
-          isDeleted: step?.isDeleted ?? false,
-          testCaseId:
-            typeof step?.testCaseId === "number" ? step.testCaseId : 0,
-        };
-      });
-    }, [testCase, selectedTemplateFields]);
-
-    const priorityField = useMemo(() => {
-      return selectedTemplateFields.find((field: any) =>
-        field.caseField.displayName.toLowerCase().includes("priority")
-      );
-    }, [selectedTemplateFields]);
-
-    const _priorityValue = priorityField
-      ? testCase.fieldValues[priorityField.caseField.displayName]
-      : null;
-
-    const renderFieldList = (isEdit: boolean) => (
-      <div className="mt-3 border-t pt-3 space-y-4">
-        {selectedTemplateFields.map((field: any) => {
-          const displayName = field.caseField.displayName;
-          const fieldId = field.caseField.id.toString();
-          const fieldType = field.caseField.type.type;
-
-          const commonProps = {
-            fieldType,
-            caseId: `generated-${testCase.id}`,
-            template,
-            fieldId: field.caseField.id,
-            session,
-            projectId,
-            previousFieldValue: undefined,
-            fieldValue: testCase.fieldValues[displayName],
-            stepsForDisplay:
-              fieldType === "Steps" ? stepsForDisplay : undefined,
-            explicitFieldNameForSteps:
-              fieldType === "Steps" ? fieldId : undefined,
-          } as const;
-
-          return (
-            <div key={`field-${field.caseField.id}`} className="space-y-2">
-              <div className="font-medium text-sm text-primary border-b border-muted-foreground/50 pb-1">
-                {displayName}
-              </div>
-              <FieldValueRenderer
-                {...commonProps}
-                isEditMode={isEdit}
-                isSubmitting={false}
-                control={control}
-                errors={errors}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-
-    if (isEditing) {
-      return (
-        <div
-          ref={cardRef}
-          className="border rounded-lg p-4 transition-colors border-primary/60 bg-primary/5"
-        >
-          <FormProvider {...formMethods}>
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="flex items-start gap-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={onSelectionChange}
-                    className="mt-1"
-                  />
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary bg-background text-sm font-medium text-primary">
-                    {index + 1}
-                  </div>
-                </label>
-                <div className="flex-1 space-y-4">
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`generated-${testCase.id}-name`}>
-                        {tCommon("name")}
-                      </Label>
-                      <Controller
-                        name="name"
-                        control={control}
-                        render={({ field }) => (
-                          <Input
-                            id={`generated-${testCase.id}-name`}
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        )}
-                      />
-                    </div>
-                    {autoGenerateTags && (
-                      <div className="space-y-2">
-                        <Label htmlFor={`generated-${testCase.id}-tags`}>
-                          {tCommon("fields.tags")}
-                        </Label>
-                        <Controller
-                          name="tagsInput"
-                          control={control}
-                          render={({ field }) => (
-                            <Input
-                              id={`generated-${testCase.id}-tags`}
-                              {...field}
-                              value={field.value ?? ""}
-                              placeholder="Tag A, Tag B"
-                            />
-                          )}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {renderFieldList(true)}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {autoGenerateTags &&
-                      testCase.tags?.map((tag, index) => (
-                        <Badge
-                          key={`editing-${testCase.id}-tag-${index}`}
-                          variant="outline"
-                          className="text-xs text-primary"
-                        >
-                          <Tag className="h-3 w-3 shrink-0 mr-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleCancel}>
-                  {tCommon("cancel")}
-                </Button>
-                <Button type="submit">{tCommon("actions.save")}</Button>
-              </div>
-            </form>
-          </FormProvider>
-        </div>
-      );
-    }
-
-    // Streaming stub: show a simplified card with available fields and a pulse animation
-    if (testCase._streaming) {
-      return (
-        <div
-          ref={cardRef}
-          className="border rounded-lg p-4 border-primary/30 bg-primary/5 animate-pulse"
-        >
-          <div className="flex items-start gap-3">
-            <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary/60">
-              <Loader2 className="w-4 h-4 animate-spin" />
-            </div>
-            <div className="flex-1 space-y-2">
-              <h4 className="font-medium">{testCase.name}</h4>
-              {Object.entries(testCase.fieldValues).length > 0 && (
-                <div className="space-y-1.5 text-sm text-muted-foreground">
-                  {Object.entries(testCase.fieldValues).map(([key, value]) => (
-                    <div key={key}>
-                      <span className="font-medium text-foreground/70">
-                        {key}:
-                      </span>{" "}
-                      <span className="text-muted-foreground">
-                        {typeof value === "string"
-                          ? value.length > 200
-                            ? value.substring(0, 200) + "..."
-                            : value
-                          : JSON.stringify(value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {testCase.tags && testCase.tags.length > 0 && (
-                <div className="flex gap-1 flex-wrap">
-                  {testCase.tags.map((tag, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {testCase.steps && testCase.steps.length > 0 && (
-                <div className="space-y-1 text-sm">
-                  <span className="font-medium text-foreground/70 text-xs">
-                    {"Steps:"}
-                  </span>
-                  {testCase.steps.map((step, si) => (
-                    <div
-                      key={si}
-                      className="pl-2 border-l-2 border-muted text-xs text-muted-foreground"
-                    >
-                      <div>
-                        <span className="font-medium">
-                          {"Step "}
-                          {si + 1}
-                          {":"}
-                        </span>{" "}
-                        {step.step}
-                      </div>
-                      {step.expectedResult && (
-                        <div className="text-muted-foreground/70">
-                          {"Expected: "}
-                          {step.expectedResult}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        ref={cardRef}
-        className={`border rounded-lg p-4 transition-colors ${
-          isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          <label className="flex items-start gap-3 cursor-pointer">
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={onSelectionChange}
-              className="mt-1"
-            />
-            <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-medium text-primary">
-              {index + 1}
-            </div>
-          </label>
-          <div className="flex-1 space-y-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <h4 className="font-medium wrap-break-word">{testCase.name}</h4>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onStartEdit}
-                  disabled={disabled}
-                >
-                  <SquarePen className="w-4 h-4 mr-1" />
-                  {tCommon("actions.edit")}
-                </Button>
-              </div>
-            </div>
-
-            {renderFieldList(false)}
-
-            <div className="flex flex-wrap items-center gap-2">
-              {autoGenerateTags &&
-                testCase.tags?.map((tag, index) => (
-                  <Badge
-                    key={`${testCase.id}-tag-${index}`}
-                    variant="outline"
-                    className="text-xs text-primary"
-                  >
-                    <Tag className="h-3 w-3 shrink-0 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const canProceed = () => {
@@ -4182,6 +4258,11 @@ export function GenerateTestCasesWizard({
                                 projectId={projectId}
                                 index={index}
                                 formSubmitHandlersRef={formSubmitHandlersRef}
+                                folderLabel={
+                                  crawledPagesResult.length > 1 && testCase.sourceUrl
+                                    ? folderNameFromUrl(testCase.sourceUrl)
+                                    : undefined
+                                }
                               />
                             );
                           })}
