@@ -27,9 +27,8 @@ const LoadingSpinnerAlert: React.FC<LoadingSpinnerProps> = ({
       <AlertDialogDescription className="sr-only">
         {t("common.loading")}
       </AlertDialogDescription>
-      <AlertDialogContent className="bg-transparent border-0 border-transparent">
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="flex flex-col items-center">
+      <AlertDialogContent className="bg-transparent border-0 border-transparent shadow-none">
+        <div className="flex flex-col items-center">
             <div
               className={cn(
                 "flex items-center justify-center text-primary",
@@ -56,7 +55,6 @@ const LoadingSpinnerAlert: React.FC<LoadingSpinnerProps> = ({
                 {message}
               </div>
             )}
-          </div>
         </div>
       </AlertDialogContent>
     </AlertDialog>
