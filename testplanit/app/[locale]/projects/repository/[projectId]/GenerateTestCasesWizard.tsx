@@ -927,7 +927,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                                       );
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-3 w-3 text-destructive" />
                                   </button>
                                 </Badge>
                               ))}
@@ -1251,7 +1251,11 @@ export function GenerateTestCasesWizard({
     testCaseCount: number;
     hasGeneratedResults: boolean;
     hasPageContent: boolean;
-    progress: { phase?: string; pagesProcessed?: number; totalPages?: number } | null;
+    progress: {
+      phase?: string;
+      pagesProcessed?: number;
+      totalPages?: number;
+    } | null;
     timestamp: number;
     finishedOn: number | null;
     failedReason: string | null;
@@ -1633,9 +1637,7 @@ export function GenerateTestCasesWizard({
       setOpen(true);
 
       try {
-        const res = await fetch(
-          `/api/llm/generate-from-url/status/${jobId}`
-        );
+        const res = await fetch(`/api/llm/generate-from-url/status/${jobId}`);
         const data = await res.json();
 
         // Check for previously generated test cases (saved after SSE streaming)
@@ -3805,11 +3807,15 @@ export function GenerateTestCasesWizard({
                               {recentUrlJobs.length > 0 && !urlJobId && (
                                 <div className="space-y-2">
                                   <Label className="text-xs text-muted-foreground">
-                                    {t("generateTestCases.selectSource.recentGenerations")}
+                                    {t(
+                                      "generateTestCases.selectSource.recentGenerations"
+                                    )}
                                   </Label>
                                   <div className="space-y-1.5">
                                     {recentUrlJobs.map((job) => {
-                                      const isInProgress = job.state === "active" || job.state === "waiting";
+                                      const isInProgress =
+                                        job.state === "active" ||
+                                        job.state === "waiting";
                                       return (
                                         <div
                                           key={job.jobId}
@@ -3843,29 +3849,61 @@ export function GenerateTestCasesWizard({
                                               </div>
                                               <div className="text-xs text-muted-foreground">
                                                 {isInProgress ? (
-                                                  t("generateTestCases.selectSource.recentJobCrawling", {
-                                                    pages: job.progress?.pagesProcessed ?? 0,
-                                                  })
+                                                  t(
+                                                    "generateTestCases.selectSource.recentJobCrawling",
+                                                    {
+                                                      pages:
+                                                        job.progress
+                                                          ?.pagesProcessed ?? 0,
+                                                    }
+                                                  )
                                                 ) : (
                                                   <>
-                                                    {t("generateTestCases.selectSource.recentJobInfo", {
-                                                      pages: job.pagesProcessed,
-                                                      hasTestCases: job.testCaseCount > 0 ? "true" : "false",
-                                                      testCases: job.testCaseCount,
-                                                    })}
+                                                    {t(
+                                                      "generateTestCases.selectSource.recentJobInfo",
+                                                      {
+                                                        pages:
+                                                          job.pagesProcessed,
+                                                        hasTestCases:
+                                                          job.testCaseCount > 0
+                                                            ? "true"
+                                                            : "false",
+                                                        testCases:
+                                                          job.testCaseCount,
+                                                      }
+                                                    )}
                                                     {" · "}
                                                     <DateFormatter
-                                                      date={new Date(job.finishedOn ?? job.timestamp)}
-                                                      formatString={session?.user?.preferences?.dateFormat}
-                                                      timezone={session?.user?.preferences?.timezone}
+                                                      date={
+                                                        new Date(
+                                                          job.finishedOn ??
+                                                            job.timestamp
+                                                        )
+                                                      }
+                                                      formatString={
+                                                        session?.user
+                                                          ?.preferences
+                                                          ?.dateFormat
+                                                      }
+                                                      timezone={
+                                                        session?.user
+                                                          ?.preferences
+                                                          ?.timezone
+                                                      }
                                                     />
                                                     {job.hasGeneratedResults ? (
                                                       <span className="ml-1 text-primary">
-                                                        {"·"} {t("generateTestCases.selectSource.recentJobHasResults")}
+                                                        {"·"}{" "}
+                                                        {t(
+                                                          "generateTestCases.selectSource.recentJobHasResults"
+                                                        )}
                                                       </span>
                                                     ) : (
                                                       <span className="ml-1">
-                                                        {"·"} {t("generateTestCases.selectSource.recentJobClickToGenerate")}
+                                                        {"·"}{" "}
+                                                        {t(
+                                                          "generateTestCases.selectSource.recentJobClickToGenerate"
+                                                        )}
                                                       </span>
                                                     )}
                                                   </>
@@ -3874,25 +3912,32 @@ export function GenerateTestCasesWizard({
                                             </div>
                                             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                                           </button>
-                                          <button
+                                          <Button
                                             type="button"
-                                            className="rounded-full p-1 hover:bg-muted text-muted-foreground hover:text-foreground shrink-0"
-                                            onClick={() => setJobToRemove(job.jobId)}
+                                            size="icon"
+                                            variant="destructive"
+                                            className="shrink-0"
+                                            onClick={() =>
+                                              setJobToRemove(job.jobId)
+                                            }
                                           >
                                             <X className="w-3.5 h-3.5" />
-                                          </button>
+                                          </Button>
                                         </div>
                                       );
                                     })}
                                   </div>
                                 </div>
                               )}
-                              {recentUrlJobsLoading && recentUrlJobs.length === 0 && (
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                  {t("generateTestCases.selectSource.loadingRecentJobs")}
-                                </div>
-                              )}
+                              {recentUrlJobsLoading &&
+                                recentUrlJobs.length === 0 && (
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    {t(
+                                      "generateTestCases.selectSource.loadingRecentJobs"
+                                    )}
+                                  </div>
+                                )}
 
                               {/* URL Input */}
                               <div className="space-y-2">
@@ -4858,7 +4903,9 @@ export function GenerateTestCasesWizard({
       {/* Confirm remove recent generation */}
       <AlertDialog
         open={jobToRemove !== null}
-        onOpenChange={(open) => { if (!open) setJobToRemove(null); }}
+        onOpenChange={(open) => {
+          if (!open) setJobToRemove(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
