@@ -346,6 +346,7 @@ export class TestmoExportAnalyzer {
   private stagingService: TestmoStagingService | null = null;
   private jobId: string | null = null;
   private readonly masterRepositoryIds = new Set<number>();
+  private snapshotCaseKeyIndex = 0;
 
   constructor(
     private readonly defaults: {
@@ -369,6 +370,7 @@ export class TestmoExportAnalyzer {
     this.stagingService = new TestmoStagingService(options.prisma);
     this.jobId = options.jobId;
     this.masterRepositoryIds.clear();
+    this.snapshotCaseKeyIndex = 0;
 
     const startedAt = new Date();
     const _preserveDatasets =
@@ -686,6 +688,32 @@ export class TestmoExportAnalyzer {
     }
 
     if (this.shouldSkipRow(datasetName, rowData)) {
+      // For snapshot repository_cases, stage a lightweight key mapping
+      // so the worker can resolve snapshot case IDs back to master cases
+      if (
+        datasetName === "repository_cases" &&
+        rowData &&
+        typeof rowData === "object"
+      ) {
+        const key = (rowData as Record<string, unknown>).key;
+        const id = (rowData as Record<string, unknown>).id;
+        if (key != null && id != null) {
+          const keyData = {
+            id,
+            key,
+            project_id: (rowData as Record<string, unknown>).project_id,
+          };
+          const keyDatasetName = "_snapshot_case_keys";
+          if (!this.stagingBatches.has(keyDatasetName)) {
+            this.stagingBatches.set(keyDatasetName, []);
+          }
+          const keyBatch = this.stagingBatches.get(keyDatasetName)!;
+          keyBatch.push({ index: this.snapshotCaseKeyIndex++, data: keyData });
+          if (keyBatch.length >= STAGING_BATCH_SIZE) {
+            await this.flushStagingBatch(keyDatasetName);
+          }
+        }
+      }
       return;
     }
 
