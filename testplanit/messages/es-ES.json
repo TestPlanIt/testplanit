@@ -2133,6 +2133,14 @@
         "selectPriority": "Seleccionar prioridad",
         "saveDocument": "Guardar requerimientos de documento",
         "fromUrl": "Desde URL",
+        "recentGenerations": "Trabajos recientes de generación de casos de prueba a partir de URL",
+        "recentJobInfo": "{pages, plural, one {# página} other {# páginas}}{hasTestCases, select, true { · {testCases, plural, one {# caso de prueba} other {# casos de prueba}}} other {}}",
+        "recentJobHasResults": "Listo para revisar",
+        "recentJobClickToGenerate": "Haz clic para generar casos de prueba",
+        "recentJobCrawling": "Gateando... {pages, plural, one {# página} other {# páginas}} hasta ahora",
+        "removeJobTitle": "Eliminar generación",
+        "confirmRemoveJob": "Esto eliminará el rastreo almacenado en caché y los casos de prueba generados. Siempre puedes generarlos de nuevo desde la misma URL.",
+        "loadingRecentJobs": "Cargando trabajos recientes...",
         "urlInput": "URL de la página",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "¿Qué contiene esta URL?",
@@ -2214,6 +2222,7 @@
         "generateFailed": "Error al generar casos de prueba. Vuelve a intentarlo.",
         "importFailed": "Error al importar casos de prueba. Vuelve a intentarlo.",
         "noTestCasesGenerated": "No se han generado casos de prueba. Por favor, inténtalo de nuevo con entradas diferentes.",
+        "jobNoLongerAvailable": "Esta generación ya no está disponible. Inicie una nueva desde el asistente Generar casos de prueba.",
         "noAiModel": "No hay ningún modelo de IA configurado para este proyecto. Configure un modelo de IA en la configuración del proyecto.",
         "noIssueSelected": "Seleccione un problema para generar casos de prueba.",
         "noDocumentProvided": "Proporcione detalles del documento de requisitos.",
@@ -4329,7 +4338,10 @@
         "viewedYourSharedLink": "vi tu enlace compartido",
         "viewedAt": "Visto en",
         "budgetDisclaimer": "Los límites de presupuesto son sólo informativos y no impiden su uso.",
-        "reviewGeneratedCases": "Revisar los casos de prueba generados"
+        "reviewGeneratedCases": "Revisar los casos de prueba generados",
+        "generateFromUrlCompleteTitle": "Las páginas se han indexado correctamente.",
+        "generateFromUrlCompleteMessage": "{pages, plural, one {# página} other {# páginas}} rastreadas desde {url} en el proyecto \"{projectName}\". Haga clic para revisar y generar casos de prueba.",
+        "generateFromUrlFailedTitle": "Falló el rastreo de URL"
       }
     },
     "issues": {

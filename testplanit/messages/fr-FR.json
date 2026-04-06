@@ -2133,6 +2133,14 @@
         "selectPriority": "Sélectionner la priorité",
         "saveDocument": "Exigences relatives aux documents de sauvegarde",
         "fromUrl": "À partir de l'URL",
+        "recentGenerations": "Offres d'emploi récentes : Générer des cas de test à partir d'une URL",
+        "recentJobInfo": "{pages, plural, one {# page} other {# pages}}{hasTestCases, select, true { · {testCases, plural, one {# cas de test} other {# cas de test}}} other {}}",
+        "recentJobHasResults": "Prêt à examiner",
+        "recentJobClickToGenerate": "Cliquez pour générer des cas de test",
+        "recentJobCrawling": "Ramper... {pages, plural, one {# page} other {# pages}} jusqu'à présent",
+        "removeJobTitle": "Supprimer la génération",
+        "confirmRemoveJob": "Cette opération supprimera l'exploration mise en cache et tous les cas de test générés. Vous pouvez toujours les générer à nouveau à partir de la même URL.",
+        "loadingRecentJobs": "Chargement des offres d'emploi récentes...",
         "urlInput": "URL de la page",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "Que contient cette URL ?",
@@ -2214,6 +2222,7 @@
         "generateFailed": "Impossible de générer les cas de test. Veuillez réessayer.",
         "importFailed": "L'importation des cas de test a échoué. Veuillez réessayer.",
         "noTestCasesGenerated": "Aucun cas de test n'a été généré. Veuillez réessayer avec des entrées différentes.",
+        "jobNoLongerAvailable": "Cette génération n'est plus disponible. Veuillez en créer une nouvelle à partir de l'assistant Générer des cas de test.",
         "noAiModel": "Aucun modèle d'IA n'est configuré pour ce projet. Veuillez configurer un modèle d'IA dans les paramètres du projet.",
         "noIssueSelected": "Veuillez sélectionner un problème à partir duquel générer des cas de test.",
         "noDocumentProvided": "Veuillez fournir les détails du document requis.",
@@ -4329,7 +4338,10 @@
         "viewedYourSharedLink": "J'ai consulté votre lien partagé",
         "viewedAt": "Consulté à",
         "budgetDisclaimer": "Les limites budgétaires sont données à titre indicatif uniquement et n'empêchent pas l'utilisation.",
-        "reviewGeneratedCases": "Examiner les cas de test générés"
+        "reviewGeneratedCases": "Examiner les cas de test générés",
+        "generateFromUrlCompleteTitle": "Pages explorées avec succès",
+        "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} extraites de {url} dans le projet «{projectName}». Cliquez pour consulter et générer des cas de test.",
+        "generateFromUrlFailedTitle": "Échec de l'exploration de l'URL"
       }
     },
     "issues": {

@@ -128,7 +128,7 @@ export async function PUT(
       `generate-from-url:generated:${jobId}`,
       JSON.stringify(body),
       "EX",
-      86400, // 24 hour TTL
+      604800, // 7 day TTL
     );
 
     return NextResponse.json({ message: "Saved" });

@@ -1,13 +1,10 @@
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
-import { NotificationService } from "../lib/services/notificationService";
-import { NotificationType } from "@prisma/client";
 import { GENERATE_FROM_URL_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
 import { ssrfSafeFetch, SsrfError } from "../lib/utils/ssrf";
@@ -278,37 +275,12 @@ export const processor = async (
         }))
       ),
       "EX",
-      86400 // 24 hour TTL
+      604800 // 7 day TTL
     );
 
-    // 10. Send notification that crawl is complete
-    try {
-      const prisma = getPrismaClientForJob(job.data);
-      const project = await prisma.projects.findUnique({
-        where: { id: job.data.projectId },
-        select: { name: true },
-      });
-      await NotificationService.createNotification({
-        userId: job.data.userId,
-        type: NotificationType.GENERATE_FROM_URL_COMPLETE,
-        title: "Pages crawled",
-        message: `${pages.length} page${pages.length === 1 ? "" : "s"} crawled from ${seedUrl}.`,
-        relatedEntityId: job.id,
-        tenantId: job.data.tenantId,
-        data: {
-          projectId: job.data.projectId,
-          projectName: project?.name || "",
-          jobId: job.id,
-          url: seedUrl,
-          pagesProcessed: pages.length,
-        },
-      });
-    } catch (notifyErr) {
-      console.error(
-        `Failed to send crawl notification for job ${job.id}:`,
-        notifyErr
-      );
-    }
+    // No success notification — the user is in the wizard watching the crawl
+    // progress, and LLM generation starts automatically when crawling finishes.
+    // Failure notifications are still sent (see catch block below).
 
     return {
       crawlOnly: true,
@@ -321,31 +293,7 @@ export const processor = async (
       selectedFieldIds: job.data.selectedFieldIds,
     };
   } catch (err) {
-    // Send failure notification (only for non-cancellation errors)
-    const isCancellation =
-      err instanceof Error && err.message === "Job cancelled by user";
-    if (!isCancellation) {
-      try {
-        await NotificationService.createNotification({
-          userId: job.data.userId,
-          type: NotificationType.GENERATE_FROM_URL_COMPLETE,
-          title: "Test case generation failed",
-          message: `Failed to generate from ${job.data.url}: ${err instanceof Error ? err.message : String(err)}`,
-          relatedEntityId: job.id,
-          tenantId: job.data.tenantId,
-          data: {
-            projectId: job.data.projectId,
-            jobId: job.id,
-            error: true,
-          },
-        });
-      } catch (notifyErr) {
-        console.error(
-          `Failed to send failure notification for job ${job.id}:`,
-          notifyErr
-        );
-      }
-    }
+    // No notification — the wizard polls for status and shows the error directly.
     throw err; // Re-throw so BullMQ marks job as failed
   }
 };

@@ -44,9 +44,9 @@ Choose your test generation source:
 - **Follow Links**: Optionally crawl linked pages on the same domain
   - Configure maximum crawl depth (1-5 levels)
   - Configure maximum pages to crawl (1-50)
-- Pages are crawled in the background, so you can continue working while waiting
-- A notification is sent when crawling completes, allowing you to review results later
+- Pages are crawled in the background while you wait in the wizard
 - The crawl respects `robots.txt` rules and skips disallowed pages
+- **Recent Generations**: When you select the URL tab, any recent crawl jobs for the current project are shown above the URL input. You can click to resume a previous generation or remove it with the X button.
 
 ### Step 2: Select Template
 
@@ -97,18 +97,24 @@ Choose your test generation source:
 - Select specific test cases to import using checkboxes
 - Bulk select/deselect options available
 - Edit any test case inline before importing (click the Edit button)
-- Tags can be added or removed interactively during editing
+- Tags can be added or removed interactively during editing using tag badges with add/remove controls
 
 **For URL-based generation with multiple pages:**
 
 - A page filter dropdown allows you to view test cases from a specific page
 - Each test case shows which folder it will be imported into (derived from the page URL path)
 - Test cases from each page are placed in their own subfolder on import
+- Progress is saved after each page completes, so you can safely close the wizard and return later without losing completed pages
 
-**Notification Link:**
+**Resuming a previous generation:**
 
-- After generating test cases, you can close the wizard and return later via the notification link
-- Previously generated test cases are preserved for 24 hours and restored without re-generating
+- Recent URL generations appear at the top of the URL tab when you open the wizard
+- Each entry shows the URL, page count, test case count (if generated), and completion date in your preferred date format
+- Entries marked "Ready to review" have cached test cases that load instantly
+- Entries marked "Click to generate test cases" have crawled pages ready for LLM generation
+- In-progress crawls show a spinner with the current page count
+- You can remove any entry using the X button (with confirmation)
+- Generated results are cached for 7 days
 
 ## Generation Process
 
@@ -117,15 +123,15 @@ When you click "Generate":
 **For Issue/Document sources:**
 
 1. **Context Analysis**: The AI analyzes the source material and existing test cases in the folder
-2. **Streaming Generation**: Test cases appear in real-time as the AI generates them
+2. **Streaming Generation**: Test cases appear in real-time as the AI generates them, with partial field previews as data arrives
 3. **Field Population**: Custom fields are populated with relevant content
 4. **Quality Validation**: Generated content is validated for completeness
 
 **For URL sources:**
 
-1. **Background Crawl**: Pages are fetched in a background job (you'll see progress)
+1. **Background Crawl**: Pages are fetched in a background job (you'll see progress in the wizard)
 2. **Content Extraction**: HTML is converted to clean markdown for analysis
-3. **Per-Page Generation**: The AI generates test cases for each crawled page via streaming
+3. **Per-Page Generation**: The AI generates test cases for each crawled page via streaming, with progress saved after each page
 4. **Folder Organization**: Test cases are organized by source page for easy navigation
 
 ## Generated Content Structure
@@ -192,6 +198,8 @@ Auto-generated tags include:
 - **Priorities**: Based on issue priority or risk assessment
 - **Platforms**: Based on mentioned platforms or environments
 
+Tags can be edited before import: click Edit on any test case to add, remove, or rename tags using the interactive tag editor. Tags are sanitized to remove special characters, matching the same rules used elsewhere in the application.
+
 ### URL Crawling Details
 
 When generating from a URL:
@@ -203,6 +211,7 @@ When generating from a URL:
 - **Polite crawling**: A 500ms delay between page fetches prevents overloading target servers
 - **robots.txt**: Disallowed paths are skipped (the seed URL itself is always fetched)
 - **SSRF protection**: Private/internal IP addresses and cloud metadata endpoints are blocked
+- **Incremental saves**: Test cases are saved to a server-side cache after each page completes, so closing the wizard mid-generation preserves all completed pages
 
 ## Best Practices
 
@@ -220,6 +229,7 @@ When generating from a URL:
 3. **Use Application mode**: For testing live web applications
 4. **Use Requirements mode**: For specification or documentation pages
 5. **Add notes**: Use the additional instructions field to focus generation on specific areas
+6. **Safe to close**: You can close the wizard after any page completes — your results are saved and available in the Recent Generations list
 
 ### Template Configuration
 
@@ -278,10 +288,10 @@ When generating from a URL:
 - Some single-page applications (SPAs) may not render without JavaScript
 - Try entering the URL directly in a browser to verify it loads
 
-**Notification says "already generated and imported":**
+**"This generation is no longer available":**
 
-- The test cases from this crawl have already been imported
-- Start a new generation from the Generate Test Cases button
+- The cached results have expired (7-day limit) or were removed
+- Start a new generation from the Generate Test Cases wizard
 
 ### Error Messages
 

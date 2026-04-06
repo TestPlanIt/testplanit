@@ -256,8 +256,9 @@ export async function importGeneratedTestCases(
               .trim()
               .slice(0, 100) || "Page";
 
-            // Use upsert to handle duplicate folder names (same URL path from different pages)
-            const folder = await tx.repositoryFolders.upsert({
+            // Find existing folder (active or soft-deleted) and reuse/restore it,
+            // or create a new one if none exists.
+            const existingActive = await tx.repositoryFolders.findUnique({
               where: {
                 projectId_repositoryId_parentId_name_isDeleted: {
                   projectId: data.projectId,
@@ -267,17 +268,49 @@ export async function importGeneratedTestCases(
                   isDeleted: false,
                 },
               },
-              create: {
-                name: folderName,
-                projectId: data.projectId,
-                repositoryId: data.repositoryId,
-                parentId: data.folderId,
-                creatorId: userId,
-                order: folderOrder++,
-              },
-              update: {},
               select: { id: true },
             });
+
+            let folder: { id: number };
+            if (existingActive) {
+              folder = existingActive;
+            } else {
+              // Check for a soft-deleted folder with the same name and restore it
+              const existingDeleted = await tx.repositoryFolders.findUnique({
+                where: {
+                  projectId_repositoryId_parentId_name_isDeleted: {
+                    projectId: data.projectId,
+                    repositoryId: data.repositoryId,
+                    parentId: data.folderId,
+                    name: folderName,
+                    isDeleted: true,
+                  },
+                },
+                select: { id: true },
+              });
+
+              if (existingDeleted) {
+                // Restore the soft-deleted folder
+                folder = await tx.repositoryFolders.update({
+                  where: { id: existingDeleted.id },
+                  data: { isDeleted: false, order: folderOrder++ },
+                  select: { id: true },
+                });
+              } else {
+                // Create a new folder
+                folder = await tx.repositoryFolders.create({
+                  data: {
+                    name: folderName,
+                    projectId: data.projectId,
+                    repositoryId: data.repositoryId,
+                    parentId: data.folderId,
+                    creatorId: userId,
+                    order: folderOrder++,
+                  },
+                  select: { id: true },
+                });
+              }
+            }
             folderIdBySourceUrl.set(url, folder.id);
           }
         }

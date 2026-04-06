@@ -278,7 +278,7 @@ describe("GenerateFromUrlWorker", () => {
   });
 
   describe("Redis page storage", () => {
-    it("should store crawled page content in Redis with 24h TTL", async () => {
+    it("should store crawled page content in Redis with 7-day TTL", async () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-redis-1" }) as Job);
 
@@ -286,7 +286,7 @@ describe("GenerateFromUrlWorker", () => {
         "generate-from-url:pages:job-redis-1",
         expect.any(String),
         "EX",
-        86400
+        604800
       );
     });
 
@@ -425,83 +425,31 @@ describe("GenerateFromUrlWorker", () => {
   });
 
   describe("notifications", () => {
-    it("should send success notification with GENERATE_FROM_URL_COMPLETE type", async () => {
+    it("should not send notifications on success (wizard handles status via polling)", async () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-success-1" }) as Job);
 
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: "user-abc",
-          type: "GENERATE_FROM_URL_COMPLETE",
-          title: "Pages crawled",
-        })
-      );
+      expect(mockCreateNotification).not.toHaveBeenCalled();
     });
 
-    it("should include seed URL in success notification message", async () => {
-      const { processor } = await loadWorker();
-      await processor(makeMockJob({ id: "job-success-2" }) as Job);
-
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.stringContaining("https://example.com/docs"),
-        })
-      );
-    });
-
-    it("should include projectId, projectName, and jobId in success notification data", async () => {
-      const { processor } = await loadWorker();
-      await processor(makeMockJob({ id: "job-success-3" }) as Job);
-
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            projectId: 42,
-            projectName: "Test Project",
-            jobId: "job-success-3",
-          }),
-        })
-      );
-    });
-
-    it("should send failure notification on error", async () => {
-      // Trigger an error by making ssrfSafeFetch throw for the seed URL
+    it("should not send notifications on failure (wizard handles errors via polling)", async () => {
       mockSsrfSafeFetch.mockRejectedValue(new Error("Connection refused"));
-      // With no pages extracted, the worker throws "No content could be extracted"
 
       const { processor } = await loadWorker();
       await expect(
         processor(makeMockJob({ id: "job-fail-1" }) as Job)
-      ).rejects.toThrow("No content could be extracted");
+      ).rejects.toThrow();
 
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: "user-abc",
-          data: expect.objectContaining({
-            projectId: 42,
-            jobId: "job-fail-1",
-            error: true,
-          }),
-        })
-      );
+      expect(mockCreateNotification).not.toHaveBeenCalled();
     });
 
-    it("should still throw after sending failure notification (BullMQ marks job as failed)", async () => {
+    it("should still throw on error so BullMQ marks job as failed", async () => {
       mockSsrfSafeFetch.mockRejectedValue(new Error("Connection refused"));
 
       const { processor } = await loadWorker();
       await expect(
         processor(makeMockJob({ id: "job-fail-2" }) as Job)
       ).rejects.toThrow();
-    });
-
-    it("should not fail the job if notification sending itself fails", async () => {
-      mockCreateNotification.mockRejectedValue(new Error("Notification queue down"));
-
-      const { processor } = await loadWorker();
-      const result = await processor(makeMockJob({ id: "job-notif-fail" }) as Job);
-      expect(result.crawlOnly).toBe(true);
-      expect(result.pagesProcessed).toBe(1);
     });
   });
 
