@@ -328,7 +328,9 @@ const NameCell = React.memo(function NameCell({
       router.replace(`${pathname}?${params.toString()}`);
     };
 
-    const showFolderInfo = (viewType && viewType !== "folders" && folder) || (showDescendants && folder);
+    const showFolderInfo =
+      (viewType && viewType !== "folders" && folder) ||
+      (showDescendants && folder);
 
     return (
       <div className="flex items-center">
@@ -386,7 +388,9 @@ const NameCell = React.memo(function NameCell({
     );
   }
 
-  const showFolderInfo = (viewType && viewType !== "folders" && folder) || (showDescendants && folder);
+  const showFolderInfo =
+    (viewType && viewType !== "folders" && folder) ||
+    (showDescendants && folder);
 
   return (
     <div className="flex items-center">
@@ -871,11 +875,6 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
 
   return (
     <div className="max-h-[400px] overflow-y-auto">
-      <DropdownMenuLabel className="flex items-center">
-        <PlusSquare className="mr-1 h-4 w-4" />
-        {t("common.actions.addToTestRun")}
-      </DropdownMenuLabel>
-      <Separator />
       {testRuns?.map((testRun) => (
         <DropdownMenuItem
           key={testRun.id}
@@ -2182,7 +2181,10 @@ export const getColumns = (
     });
   } else {
     if (
-      (canDelete || canAddEditRun || (quickScriptEnabled && canAddEdit) || !!onCopyMove) &&
+      (canDelete ||
+        canAddEditRun ||
+        (quickScriptEnabled && canAddEdit) ||
+        !!onCopyMove) &&
       !isSelectionMode
     ) {
       orderedColumns.push({

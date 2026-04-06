@@ -4329,7 +4329,10 @@
         "viewedYourSharedLink": "viewed your shared link",
         "viewedAt": "Viewed at",
         "budgetDisclaimer": "Budget limits are informational only and do not prevent usage.",
-        "reviewGeneratedCases": "Review generated test cases"
+        "reviewGeneratedCases": "Review generated test cases",
+        "generateFromUrlCompleteTitle": "Pages crawled successfully",
+        "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} crawled from {url} in project \"{projectName}\". Click to review and generate test cases.",
+        "generateFromUrlFailedTitle": "URL crawl failed"
       }
     },
     "issues": {

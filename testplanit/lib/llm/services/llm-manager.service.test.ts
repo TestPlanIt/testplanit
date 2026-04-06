@@ -285,9 +285,9 @@ describe("LlmManager", () => {
       expect(adapter).toBeDefined();
     });
 
-    it("should block Ollama adapter with localhost URL and use default", async () => {
-      // Spy on console.warn to verify the warning is logged
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    it("should throw for Ollama adapter with localhost URL when not in ALLOWED_PRIVATE_HOSTS", async () => {
+      const original = process.env.ALLOWED_PRIVATE_HOSTS;
+      process.env.ALLOWED_PRIVATE_HOSTS = "";
 
       mockPrisma.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
@@ -295,16 +295,11 @@ describe("LlmManager", () => {
         credentials: { baseUrl: "http://localhost:11434" },
       });
 
-      const adapter = await manager.getAdapter(1);
-
-      // Adapter should still be created (with default/undefined URL)
-      expect(adapter).toBeDefined();
-      // Warning should be logged about blocked URL
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Blocked private/internal URL")
+      await expect(manager.getAdapter(1)).rejects.toThrow(
+        "Blocked private/internal URL"
       );
 
-      warnSpy.mockRestore();
+      process.env.ALLOWED_PRIVATE_HOSTS = original;
     });
 
     it("should create Custom LLM adapter", async () => {

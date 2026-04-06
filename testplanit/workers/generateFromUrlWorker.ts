@@ -299,6 +299,8 @@ export const processor = async (
           projectId: job.data.projectId,
           projectName: project?.name || "",
           jobId: job.id,
+          url: seedUrl,
+          pagesProcessed: pages.length,
         },
       });
     } catch (notifyErr) {

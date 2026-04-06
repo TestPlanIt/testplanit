@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 import {
   ssrfSafeFetch,
   isPrivateOrInternalIp,
+  getAllowedPrivateHosts,
   SsrfError,
   MAX_PAGE_BYTES,
   FETCH_TIMEOUT_MS,
@@ -466,6 +467,100 @@ describe("ssrfSafeFetch - agent pinning", () => {
     const callArgs = mockHttpsRequest.mock.calls[0];
     const requestOpts = callArgs[1] as Record<string, unknown>;
     expect(requestOpts).toHaveProperty("agent");
+  });
+});
+
+describe("getAllowedPrivateHosts", () => {
+  it("returns empty set when env var is unset", () => {
+    const original = process.env.ALLOWED_PRIVATE_HOSTS;
+    delete process.env.ALLOWED_PRIVATE_HOSTS;
+    try {
+      const hosts = getAllowedPrivateHosts();
+      expect(hosts.size).toBe(0);
+    } finally {
+      process.env.ALLOWED_PRIVATE_HOSTS = original;
+    }
+  });
+
+  it("parses comma-separated hostnames into a lowercase set", () => {
+    const original = process.env.ALLOWED_PRIVATE_HOSTS;
+    process.env.ALLOWED_PRIVATE_HOSTS = " Localhost , 192.168.1.100 , ollama.internal ";
+    try {
+      const hosts = getAllowedPrivateHosts();
+      expect(hosts).toEqual(new Set(["localhost", "192.168.1.100", "ollama.internal"]));
+    } finally {
+      process.env.ALLOWED_PRIVATE_HOSTS = original;
+    }
+  });
+
+  it("filters out empty entries from trailing commas", () => {
+    const original = process.env.ALLOWED_PRIVATE_HOSTS;
+    process.env.ALLOWED_PRIVATE_HOSTS = "localhost,,";
+    try {
+      const hosts = getAllowedPrivateHosts();
+      expect(hosts).toEqual(new Set(["localhost"]));
+    } finally {
+      process.env.ALLOWED_PRIVATE_HOSTS = original;
+    }
+  });
+});
+
+describe("ssrfSafeFetch - ALLOWED_PRIVATE_HOSTS allowlist", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("allows a private IP when the hostname is in allowedHosts", async () => {
+    mockDnsLookup.mockResolvedValueOnce({
+      address: "127.0.0.1",
+      family: 4,
+    } as never);
+
+    setupMockRequest("https", {
+      headers: { "content-type": "text/html" },
+      body: "<html>OK</html>",
+    });
+
+    const result = await ssrfSafeFetch("https://localhost:11434", {
+      allowedHosts: new Set(["localhost"]),
+    });
+    expect(result.body).toBe("<html>OK</html>");
+  });
+
+  it("still blocks a private IP when the hostname is NOT in allowedHosts", async () => {
+    mockDnsLookup.mockResolvedValueOnce({
+      address: "127.0.0.1",
+      family: 4,
+    } as never);
+
+    await expect(
+      ssrfSafeFetch("https://localhost:11434", {
+        allowedHosts: new Set(["other-host"]),
+      })
+    ).rejects.toSatisfy(
+      (err: unknown) => err instanceof SsrfError && err.code === "PRIVATE_IP"
+    );
+  });
+
+  it("still blocks redirect to private IP when redirect hostname is not in allowedHosts", async () => {
+    mockDnsLookup
+      .mockResolvedValueOnce({ address: "93.184.216.34", family: 4 } as never)
+      .mockResolvedValueOnce({ address: "10.0.0.1", family: 4 } as never);
+
+    setupMockRequest("https", {
+      status: 302,
+      headers: { "content-type": "text/html", location: "https://internal.corp/" },
+      body: null,
+    });
+
+    await expect(
+      ssrfSafeFetch("https://example.com", {
+        allowedHosts: new Set(["example.com"]),
+      })
+    ).rejects.toSatisfy(
+      (err: unknown) =>
+        err instanceof SsrfError && err.code === "REDIRECT_PRIVATE_IP"
+    );
   });
 });
 

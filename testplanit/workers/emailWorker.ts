@@ -89,6 +89,10 @@ const processor = async (job: Job) => {
           if (data.projectId && data.milestoneId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
           }
+        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+          if (data.projectId && data.jobId && !data.error) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
+          }
         }
 
         // Get translated title and message
@@ -167,6 +171,24 @@ const processor = async (job: Job) => {
               : "components.notifications.content.milestoneDueSoon",
             { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
           );
+        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+          if (data.error) {
+            translatedTitle = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.generateFromUrlFailedTitle"
+            );
+            translatedMessage = notification.message;
+          } else {
+            translatedTitle = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.generateFromUrlCompleteTitle"
+            );
+            translatedMessage = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.generateFromUrlCompleteMessage",
+              { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+            );
+          }
         }
 
         // Get email template translations
@@ -282,6 +304,10 @@ const processor = async (job: Job) => {
               if (data.projectId && data.milestoneId) {
                 url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
               }
+            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+              if (data.projectId && data.jobId && !data.error) {
+                url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
+              }
             }
 
             // Get translated title and message
@@ -336,6 +362,23 @@ const processor = async (job: Job) => {
                   : "components.notifications.content.milestoneDueSoon",
                 { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
               );
+            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+              if (data.error) {
+                translatedTitle = await getServerTranslation(
+                  userLocale,
+                  "components.notifications.content.generateFromUrlFailedTitle"
+                );
+              } else {
+                translatedTitle = await getServerTranslation(
+                  userLocale,
+                  "components.notifications.content.generateFromUrlCompleteTitle"
+                );
+                translatedMessage = await getServerTranslation(
+                  userLocale,
+                  "components.notifications.content.generateFromUrlCompleteMessage",
+                  { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+                );
+              }
             }
 
             return {

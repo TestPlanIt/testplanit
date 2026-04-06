@@ -5,6 +5,7 @@
  */
 
 import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
+import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 
 export interface RepoFileEntry {
   path: string;
@@ -239,12 +240,9 @@ export abstract class GitRepoAdapter {
     const parsed = new URL(url);
     if (!isSsrfSafe(parsed.href)) {
       // Check operator-level allowlist for self-hosted providers (Gitea, etc.)
-      const allowedPrivateHosts = (process.env.ALLOWED_PRIVATE_HOSTS ?? "")
-        .split(",")
-        .map(h => h.trim().toLowerCase())
-        .filter(Boolean);
+      const allowedPrivateHosts = getAllowedPrivateHosts();
 
-      if (!allowedPrivateHosts.includes(parsed.hostname.toLowerCase())) {
+      if (!allowedPrivateHosts.has(parsed.hostname.toLowerCase())) {
         throw new Error(
           `Request blocked: URL targets a private or internal address. ` +
           `To allow this, add "${parsed.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`

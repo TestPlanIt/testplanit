@@ -48,6 +48,21 @@ export class SsrfError extends Error {
   }
 }
 
+// ─── Allowed Private Hosts ───────────────────────────────────────────────────
+
+/**
+ * Parses the ALLOWED_PRIVATE_HOSTS environment variable into a lowercase set of
+ * hostnames. Shared across ssrfSafeFetch, LLM manager, and GitRepoAdapter.
+ */
+export function getAllowedPrivateHosts(): Set<string> {
+  return new Set(
+    (process.env.ALLOWED_PRIVATE_HOSTS ?? "")
+      .split(",")
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
 // ─── IP Validation ────────────────────────────────────────────────────────────
 
 /**
@@ -116,6 +131,9 @@ interface SsrfFetchOptions {
   maxBytes?: number;
   /** Request timeout in milliseconds. Default: FETCH_TIMEOUT_MS (10s). */
   timeoutMs?: number;
+  /** Hostnames allowed to resolve to private/internal IPs.
+   *  Defaults to parsing ALLOWED_PRIVATE_HOSTS env var. */
+  allowedHosts?: Set<string>;
 }
 
 interface SsrfFetchResult {
@@ -129,11 +147,13 @@ interface SsrfFetchResult {
 
 /**
  * Resolves the hostname and validates the IP is not private/internal.
+ * If the hostname appears in `allowedHosts`, the private-IP check is skipped.
  * Returns the resolved IP address string.
  */
 async function resolveAndValidate(
   hostname: string,
-  errorCodeForPrivate: "PRIVATE_IP" | "REDIRECT_PRIVATE_IP"
+  errorCodeForPrivate: "PRIVATE_IP" | "REDIRECT_PRIVATE_IP",
+  allowedHosts: Set<string>
 ): Promise<string> {
   let address: string;
   try {
@@ -146,7 +166,10 @@ async function resolveAndValidate(
     );
   }
 
-  if (isPrivateOrInternalIp(address)) {
+  if (
+    isPrivateOrInternalIp(address) &&
+    !allowedHosts.has(hostname.toLowerCase())
+  ) {
     throw new SsrfError(
       `Resolved IP ${address} for host ${hostname} is in a private/internal range`,
       errorCodeForPrivate
@@ -355,6 +378,7 @@ export async function ssrfSafeFetch(
     allowHttp = false,
     maxBytes = MAX_PAGE_BYTES,
     timeoutMs = FETCH_TIMEOUT_MS,
+    allowedHosts = getAllowedPrivateHosts(),
   } = options;
 
   let currentUrl = urlString;
@@ -383,7 +407,8 @@ export async function ssrfSafeFetch(
     const isRedirect = currentUrl !== urlString;
     const resolvedIp = await resolveAndValidate(
       url.hostname,
-      isRedirect ? "REDIRECT_PRIVATE_IP" : "PRIVATE_IP"
+      isRedirect ? "REDIRECT_PRIVATE_IP" : "PRIVATE_IP",
+      allowedHosts
     );
 
     // d. Make the request with the pinned IP agent

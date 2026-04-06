@@ -149,7 +149,18 @@ For security reasons, custom endpoint URLs are validated to prevent Server-Side 
   - Cloud metadata endpoints: `169.254.169.254`, `*.internal`
   - IPv6 loopback addresses
 
-If you need to connect to a self-hosted LLM running on a local network, you must expose it through a publicly accessible URL or use a reverse proxy with proper authentication.
+**Recommended:** Expose self-hosted services through a reverse proxy with proper authentication and a publicly accessible URL. This preserves SSRF protection while allowing TestPlanIt to reach your internal services securely.
+
+As a convenience alternative, you can set the `ALLOWED_PRIVATE_HOSTS` environment variable to a comma-separated list of trusted hostnames. This bypasses SSRF protection for the listed addresses and applies to LLM provider endpoints, code repository connections, and URL-based test case generation.
+
+```bash
+# Allow localhost and a private IP for self-hosted services
+ALLOWED_PRIVATE_HOSTS="localhost,192.168.1.100,ollama.internal"
+```
+
+:::warning
+Only add hosts that you trust. `ALLOWED_PRIVATE_HOSTS` disables SSRF protection for every listed address across all features. A reverse proxy is the safer option for production environments.
+:::
 
 ### Project Assignment
 

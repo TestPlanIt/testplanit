@@ -37,6 +37,10 @@ Navigate to **Administration > Code Repositories** and add a connection to your 
 
 You'll need to provide credentials with read access to the repository.
 
+:::note Self-hosted repositories
+URLs pointing to private or internal addresses (e.g., `localhost`, `192.168.x.x`) are blocked by default to prevent SSRF attacks. The recommended approach is to expose self-hosted repositories through a reverse proxy with a publicly accessible URL. Alternatively, you can add the hostname to the `ALLOWED_PRIVATE_HOSTS` environment variable. See [AI Models — Endpoint URL Requirements](../llm-integrations#endpoint-url-requirements) for details.
+:::
+
 ### 2. Configure QuickScript Settings
 
 In your project, go to **Settings > QuickScript** to configure:

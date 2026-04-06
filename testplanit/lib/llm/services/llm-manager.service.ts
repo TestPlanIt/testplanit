@@ -4,6 +4,7 @@ import {
   AzureOpenAIAdapter, BaseLlmAdapter, CustomLlmAdapter, GeminiAdapter,
   OllamaAdapter, OpenAIAdapter
 } from "../adapters";
+import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 
 interface LlmCredentials {
   apiKey?: string;
@@ -127,12 +128,9 @@ function getValidatedBaseUrl(
   if (CUSTOM_ENDPOINT_PROVIDERS.includes(provider)) {
     if (isPrivateOrInternalHost(parsedUrl.hostname)) {
       // Check if the host is in the operator-level allowlist
-      const allowedPrivateHosts = (process.env.ALLOWED_PRIVATE_HOSTS ?? "")
-        .split(",")
-        .map(h => h.trim().toLowerCase())
-        .filter(Boolean);
+      const allowedPrivateHosts = getAllowedPrivateHosts();
 
-      if (!allowedPrivateHosts.includes(parsedUrl.hostname.toLowerCase())) {
+      if (!allowedPrivateHosts.has(parsedUrl.hostname.toLowerCase())) {
         const message =
           `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. ` +
           `To allow this, add "${parsedUrl.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`;

@@ -479,13 +479,16 @@ export function NotificationContent({
   if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
     if (data.projectId && data.jobId) {
       const reviewLink = `/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-      const isFailure = notification.title?.toLowerCase().includes("failed");
+      const isFailure = data.error === true;
 
       return (
         <div className="space-y-2">
           <h4 className="font-medium text-sm">{notification.title}</h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>{notification.message}</p>
+            {data.url && (
+              <p className="text-xs truncate">{data.url}</p>
+            )}
             {!isFailure && (
               <div className="flex items-center gap-1">
                 <Link
@@ -497,7 +500,7 @@ export function NotificationContent({
                 </Link>
               </div>
             )}
-            {data.projectId && data.projectName && (
+            {data.projectName && (
               <div className="flex items-center gap-1 flex-wrap">
                 <span>{t("inProject")}</span>
                 <ProjectNameCell

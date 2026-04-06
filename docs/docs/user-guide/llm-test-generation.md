@@ -4,7 +4,7 @@ title: Test Case Generation
 
 # AI-Powered Test Case Generation
 
-Generate comprehensive test cases from requirements, issues, and documentation using AI.
+Generate comprehensive test cases from requirements, issues, documentation, or live web pages using AI.
 
 ## Prerequisites
 
@@ -34,6 +34,19 @@ Choose your test generation source:
 - Enter requirements directly into the form
 - Provide title, description, and priority
 - Ideal for early-stage requirements or internal specifications
+
+**From URL:**
+
+- Enter a web page URL to crawl and analyze
+- Choose between two modes:
+  - **Application**: Treats the URL as a live application and generates test cases for its functionality
+  - **Requirements**: Treats the page content as a requirements document
+- **Follow Links**: Optionally crawl linked pages on the same domain
+  - Configure maximum crawl depth (1-5 levels)
+  - Configure maximum pages to crawl (1-50)
+- Pages are crawled in the background, so you can continue working while waiting
+- A notification is sent when crawling completes, allowing you to review results later
+- The crawl respects `robots.txt` rules and skips disallowed pages
 
 ### Step 2: Select Template
 
@@ -74,53 +87,61 @@ Choose your test generation source:
 
 ### Step 4: Review and Import
 
-- Review all generated test cases
+- Test cases stream in as they are generated, appearing as collapsible cards
+- Click the chevron next to a test case name to expand and view all fields
 - Each case shows:
-  - Name and description
-  - Generated test steps (if applicable)
-  - Populated template fields
+  - Name
+  - Populated template fields (description, steps, priority, etc.)
   - Generated tags (if enabled)
-  - Priority and automation status
-- Select specific test cases to import
+  - Folder assignment (for multi-page URL generation)
+- Select specific test cases to import using checkboxes
 - Bulk select/deselect options available
+- Edit any test case inline before importing (click the Edit button)
+- Tags can be added or removed interactively during editing
+
+**For URL-based generation with multiple pages:**
+
+- A page filter dropdown allows you to view test cases from a specific page
+- Each test case shows which folder it will be imported into (derived from the page URL path)
+- Test cases from each page are placed in their own subfolder on import
+
+**Notification Link:**
+
+- After generating test cases, you can close the wizard and return later via the notification link
+- Previously generated test cases are preserved for 24 hours and restored without re-generating
 
 ## Generation Process
 
 When you click "Generate":
 
-1. **Context Analysis**: The AI analyzes the source material and existing test cases
-2. **Template Processing**: Template fields and requirements are processed
-3. **Content Generation**: Test cases are generated based on your specifications
-4. **Field Population**: Custom fields are populated with relevant content
-5. **Tag Generation**: Tags are automatically created (if enabled)
-6. **Quality Validation**: Generated content is validated for completeness
+**For Issue/Document sources:**
+
+1. **Context Analysis**: The AI analyzes the source material and existing test cases in the folder
+2. **Streaming Generation**: Test cases appear in real-time as the AI generates them
+3. **Field Population**: Custom fields are populated with relevant content
+4. **Quality Validation**: Generated content is validated for completeness
+
+**For URL sources:**
+
+1. **Background Crawl**: Pages are fetched in a background job (you'll see progress)
+2. **Content Extraction**: HTML is converted to clean markdown for analysis
+3. **Per-Page Generation**: The AI generates test cases for each crawled page via streaming
+4. **Folder Organization**: Test cases are organized by source page for easy navigation
 
 ## Generated Content Structure
 
 ### Test Case Fields
 
-The AI automatically populates:
+The AI populates fields based on your selected template. Only template-defined fields are included in the output.
 
-**Core Fields:**
+**Common Fields:**
 
 - **Name**: Descriptive, action-oriented test case names
-- **Description**: Detailed test objectives and scope (if template field exists)
-- **Priority**: Inferred from source issue priority or requirement importance
-
-**Template Fields:**
-
+- **Description**: Detailed test objectives and scope
+- **Steps**: Detailed step/expected result pairs
+- **Priority**: Inferred from source context (when a Priority dropdown field exists)
 - **Preconditions**: Required setup or system state
-- **Test Data**: Sample data needed for execution
-- **Environment**: Target testing environment
-- **Expected Results**: Detailed expected outcomes
-- **Post-conditions**: Expected system state after testing
-
-**System Fields:**
-
-- **Steps**: Detailed action/expected result pairs
-- **Tags**: Contextually relevant tags
-- **Automated**: Suggestion for automation potential
-- **Estimate**: Time estimate based on complexity
+- **Tags**: Contextually relevant tags (when auto-generate is enabled)
 
 ### Test Steps Format
 
@@ -143,7 +164,7 @@ Expected Result: User is redirected to the dashboard
 
 The AI considers:
 
-- **Existing Test Cases**: Avoids duplication of current test scenarios
+- **Existing Test Cases**: Avoids duplication of current test scenarios in the folder
 - **Project Domain**: Understands your application type and testing needs
 - **Template Structure**: Adapts content to fit your specific template fields
 - **Issue History**: Incorporates comments and updates from linked issues
@@ -153,9 +174,14 @@ The AI considers:
 - **Required Fields**: Always populated with essential content
 - **Optional Fields**: Can be selectively included based on your workflow
 - **Field Types**: Content is formatted appropriately for each field type:
-  - Rich text fields receive formatted content
-  - Dropdown fields receive valid option values
-  - Multi-select fields receive appropriate value arrays
+  - **Text String**: Short text values relevant to the test case
+  - **Text Long**: Rich text with detailed, multi-sentence content
+  - **Dropdown**: A valid option value from the field's configured options
+  - **Multi-Select**: An array of valid option values from the field's configured options
+  - **Steps**: Structured step/expected result pairs
+  - **Number / Integer**: Numeric values
+  - **Checkbox**: Boolean true/false values
+  - **Date**: ISO date strings (e.g., `2024-01-01`)
 
 ### Intelligent Tagging
 
@@ -166,6 +192,18 @@ Auto-generated tags include:
 - **Priorities**: Based on issue priority or risk assessment
 - **Platforms**: Based on mentioned platforms or environments
 
+### URL Crawling Details
+
+When generating from a URL:
+
+- **Same-domain only**: Only pages on the same domain as the seed URL are crawled
+- **Redirect handling**: If the seed URL redirects (e.g., `example.com` to `www.example.com`), the final hostname is used for link filtering
+- **Content deduplication**: Pages with identical content are automatically skipped
+- **SPA detection**: Single-page applications that require JavaScript rendering are flagged with a warning
+- **Polite crawling**: A 500ms delay between page fetches prevents overloading target servers
+- **robots.txt**: Disallowed paths are skipped (the seed URL itself is always fetched)
+- **SSRF protection**: Private/internal IP addresses and cloud metadata endpoints are blocked
+
 ## Best Practices
 
 ### Source Material Quality
@@ -174,6 +212,14 @@ Auto-generated tags include:
 2. **Clear Requirements**: Well-written requirements lead to comprehensive test coverage
 3. **Include Context**: Add comments or descriptions that explain business logic
 4. **Specify Constraints**: Mention any technical limitations or dependencies
+
+### URL Generation Tips
+
+1. **Start with the main page**: Use the most relevant page as the seed URL
+2. **Limit page count**: Start with fewer pages and increase if needed
+3. **Use Application mode**: For testing live web applications
+4. **Use Requirements mode**: For specification or documentation pages
+5. **Add notes**: Use the additional instructions field to focus generation on specific areas
 
 ### Template Configuration
 
@@ -225,6 +271,18 @@ Auto-generated tags include:
 - Check field naming and descriptions
 - Ensure selected fields are appropriate for AI generation
 
+**URL crawl returns no content:**
+
+- Verify the URL is accessible from the server
+- Check if the page requires authentication
+- Some single-page applications (SPAs) may not render without JavaScript
+- Try entering the URL directly in a browser to verify it loads
+
+**Notification says "already generated and imported":**
+
+- The test cases from this crawl have already been imported
+- Start a new generation from the Generate Test Cases button
+
 ### Error Messages
 
 **"No AI model is configured"**
@@ -244,52 +302,14 @@ Auto-generated tags include:
 - Verify the model name is correct
 - Test the integration connection
 
+**"Blocked private/internal URL"**
+
+- Self-hosted LLM providers (Ollama, Custom LLM) using localhost or private IPs require the `ALLOWED_PRIVATE_HOSTS` environment variable
+- Add the hostname to the comma-separated list (e.g., `ALLOWED_PRIVATE_HOSTS=localhost,192.168.1.100`)
+
 ### Performance Optimization
 
 1. **Model Selection**: Balance quality needs with response time
-2. **Batch Processing**: Generate multiple test cases in single requests when possible
-3. **Field Selection**: Only populate fields you actually need
+2. **Field Selection**: Only populate fields you actually need
+3. **URL Crawl Limits**: Keep page counts reasonable (5-10 pages is usually sufficient)
 4. **Template Optimization**: Streamline templates for AI generation
-
-## API Reference
-
-For programmatic access to AI test generation:
-
-### Endpoints
-
-**LLM Integrations:**
-
-- `GET /api/llm-integrations` - List available integrations
-- `POST /api/llm-integrations/test-connection` - Test integration
-- `GET /api/llm-integrations/{id}/models` - Get available models
-
-**Test Generation:**
-
-- `POST /api/llm/generate-test-cases` - Generate test cases
-- `POST /api/llm/validate-content` - Validate generated content
-- `GET /api/llm/generation-history` - Get generation history
-
-### Example Request
-
-```javascript
-POST /api/llm/generate-test-cases
-{
-  "projectId": 123,
-  "issue": {
-    "key": "PROJ-456",
-    "title": "User login functionality",
-    "description": "Implement secure user authentication..."
-  },
-  "template": {
-    "id": 789,
-    "fields": [...selectedFields]
-  },
-  "context": {
-    "userNotes": "Focus on security testing",
-    "existingTestCases": [...],
-    "folderContext": 10
-  },
-  "quantity": "several",
-  "autoGenerateTags": true
-}
-```
