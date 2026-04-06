@@ -69,7 +69,15 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
-import { type MutableRefObject, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type MutableRefObject,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -141,16 +149,15 @@ function folderNameFromUrl(url: string): string {
     const parsed = new URL(url);
     const pathPart = parsed.pathname === "/" ? "" : parsed.pathname;
     let name = pathPart
-      ? pathPart
-          .replace(/^\//, "")
-          .replace(/\/$/, "")
-          .replace(/\//g, " - ")
+      ? pathPart.replace(/^\//, "").replace(/\/$/, "").replace(/\//g, " - ")
       : parsed.hostname;
-    return name
-      .replace(/[<>:"/\\|?*]/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 100) || "Page";
+    return (
+      name
+        .replace(/[<>:"/\\|?*]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 100) || "Page"
+    );
   } catch {
     return url.slice(0, 100);
   }
@@ -159,7 +166,9 @@ function folderNameFromUrl(url: string): string {
 /** Get the steps array from a test case, checking both fieldValues (new) and top-level steps (legacy) */
 function getTestCaseSteps(
   testCase: GeneratedTestCase,
-  templateFields?: Array<{ caseField: { displayName: string; type: { type: string } } }>
+  templateFields?: Array<{
+    caseField: { displayName: string; type: { type: string } };
+  }>
 ): any[] {
   // Check fieldValues first for any Steps-type field
   if (templateFields) {
@@ -717,7 +726,10 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
       );
     });
 
-    let updatedSteps: any[] = getTestCaseSteps(testCase, selectedTemplateFields);
+    let updatedSteps: any[] = getTestCaseSteps(
+      testCase,
+      selectedTemplateFields
+    );
     if (stepsField) {
       const stepsData = data[stepsField.caseField.id.toString()] || [];
       updatedSteps = mapStepsFormValueToGeneratedSteps(stepsData) ?? [];
@@ -781,8 +793,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         sharedStepGroup,
         isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
         isDeleted: step?.isDeleted ?? false,
-        testCaseId:
-          typeof step?.testCaseId === "number" ? step.testCaseId : 0,
+        testCaseId: typeof step?.testCaseId === "number" ? step.testCaseId : 0,
       };
     });
   }, [testCase, selectedTemplateFields]);
@@ -813,8 +824,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
           projectId,
           previousFieldValue: undefined,
           fieldValue: testCase.fieldValues[displayName],
-          stepsForDisplay:
-            fieldType === "Steps" ? stepsForDisplay : undefined,
+          stepsForDisplay: fieldType === "Steps" ? stepsForDisplay : undefined,
           explicitFieldNameForSteps:
             fieldType === "Steps" ? fieldId : undefined,
         } as const;
@@ -1503,12 +1513,36 @@ export function GenerateTestCasesWizard({
         );
         const data = await res.json();
 
+        // Check for previously generated test cases (saved after SSE streaming)
+        const savedCases = data.generatedTestCases;
+
         // Check if crawled pages have markdown content (Redis key may have expired)
         const hasPageContent = data.result?.crawledPages?.some(
           (p: any) => p.markdown && p.markdown.length > 0
         );
 
         if (
+          data.state === "completed" &&
+          savedCases?.testCases?.length > 0
+        ) {
+          // Restore previously generated test cases — no re-generation needed
+          setIsNotificationReopen(false);
+          lastCrawlJobIdRef.current = urlJobIdParam;
+          setCrawledPagesResult(savedCases.crawledPages ?? []);
+          restoreTemplateFromResult(
+            data.result.templateId,
+            data.result.selectedFieldIds
+          );
+          setCurrentStep(WizardStep.REVIEW_GENERATED);
+          setGeneratedTestCases(savedCases.testCases);
+          setSelectedTestCases(
+            new Set(
+              savedCases.testCases
+                .filter((tc: GeneratedTestCase) => !tc._streaming)
+                .map((tc: GeneratedTestCase) => tc.id)
+            )
+          );
+        } else if (
           data.state === "completed" &&
           data.result?.crawlOnly &&
           hasPageContent
@@ -1523,7 +1557,12 @@ export function GenerateTestCasesWizard({
           );
           setCurrentStep(WizardStep.REVIEW_GENERATED);
           setIsGenerating(true);
-          streamUrlTestCases(data.result.crawledPages, data.result.selectedFieldIds);
+          streamUrlTestCases(
+            data.result.crawledPages,
+            data.result.selectedFieldIds
+          );
+          // Store job ID so Redis cleanup happens after import
+          lastCrawlJobIdRef.current = urlJobIdParam;
         } else if (
           data.state === "completed" &&
           data.result?.crawlOnly &&
@@ -1531,7 +1570,9 @@ export function GenerateTestCasesWizard({
         ) {
           // Crawl-only but no content: pages already consumed or Redis expired
           setIsNotificationReopen(false);
-          toast.info?.("These test cases have already been generated and imported.") ??
+          toast.info?.(
+            "These test cases have already been generated and imported."
+          ) ??
             toast("These test cases have already been generated and imported.");
         } else if (
           data.state === "completed" &&
@@ -2091,6 +2132,26 @@ export function GenerateTestCasesWizard({
             });
           }
         }
+      }
+
+      // Save generated test cases to Redis so the notification link can
+      // restore them without re-running LLM generation.
+      if (finalizedCases.length > 0 && lastCrawlJobIdRef.current) {
+        fetch(
+          `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              testCases: finalizedCases,
+              crawledPages: crawledPages.map((p) => ({
+                url: p.url,
+                title: p.title,
+                spaWarning: p.spaWarning,
+              })),
+            }),
+          }
+        ).catch(() => {});
       }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
@@ -2868,12 +2929,13 @@ export function GenerateTestCasesWizard({
           return {
             id: tc.id,
             name: tc.name,
-            steps: steps.length > 0
-              ? steps.map((s: any) => ({
-                  step: s.step,
-                  expectedResult: s.expectedResult,
-                }))
-              : undefined,
+            steps:
+              steps.length > 0
+                ? steps.map((s: any) => ({
+                    step: s.step,
+                    expectedResult: s.expectedResult,
+                  }))
+                : undefined,
             fieldValues: tc.fieldValues,
             tags: tc.tags,
             sourceUrl: tc.sourceUrl,
@@ -2908,9 +2970,12 @@ export function GenerateTestCasesWizard({
 
       // Clean up Redis crawled pages so notification link can't re-trigger generation
       if (lastCrawlJobIdRef.current) {
-        fetch(`/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`, {
-          method: "DELETE",
-        }).catch(() => {});
+        fetch(
+          `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
+          {
+            method: "DELETE",
+          }
+        ).catch(() => {});
         lastCrawlJobIdRef.current = null;
       }
 
@@ -3192,6 +3257,14 @@ export function GenerateTestCasesWizard({
             ref={scrollContainerRef}
             className="flex-1 min-h-0 px-4 overflow-y-auto"
           >
+            {isNotificationReopen ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  {t("generateTestCases.loadingResults")}
+                </p>
+              </div>
+            ) : (
             <div className="space-y-6 pb-4">
               {isImporting && (
                 <LoadingSpinnerAlert
@@ -3699,23 +3772,23 @@ export function GenerateTestCasesWizard({
 
                                 {/* Phase: setup or other */}
                                 {urlJobProgress.phase !== "crawling" && (
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                      <span>
-                                        {urlJobProgress.phase === "setup"
-                                          ? t(
-                                              "generateTestCases.selectSource.generatingSetup"
-                                            )
-                                          : t(
-                                              "generateTestCases.selectSource.crawlProgress",
-                                              {
-                                                current:
-                                                  urlJobProgress.pagesProcessed,
-                                              }
-                                            )}
-                                      </span>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>
+                                      {urlJobProgress.phase === "setup"
+                                        ? t(
+                                            "generateTestCases.selectSource.generatingSetup"
+                                          )
+                                        : t(
+                                            "generateTestCases.selectSource.crawlProgress",
+                                            {
+                                              current:
+                                                urlJobProgress.pagesProcessed,
+                                            }
+                                          )}
+                                    </span>
+                                  </div>
+                                )}
 
                                 {urlRobotsSkipped > 0 && (
                                   <p className="text-xs text-muted-foreground">
@@ -4117,7 +4190,9 @@ export function GenerateTestCasesWizard({
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Sparkles className="h-4 w-4 animate-pulse" />
                         <span>
-                          {t("generateTestCases.selectSource.generatingSinglePage")}
+                          {t(
+                            "generateTestCases.selectSource.generatingSinglePage"
+                          )}
                         </span>
                       </div>
                     </div>
@@ -4169,7 +4244,7 @@ export function GenerateTestCasesWizard({
                       // No cards yet — show stage indicator / spinner
                       <div className="flex flex-col items-center justify-center py-12 space-y-4">
                         <Sparkles className="w-8 h-8 text-primary shrink-0" />
-                        <div className="w-full max-w-xs space-y-3">
+                        <div className="w-full max-w-md space-y-3">
                           <Progress className="animate-pulse" />
                           <p className="text-sm text-muted-foreground text-center">
                             {generatingStatus === "preparing"
@@ -4178,15 +4253,23 @@ export function GenerateTestCasesWizard({
                                 ? t("generateTestCases.generatingCallingAi")
                                 : generatingStatus === "streaming"
                                   ? urlStreamingPageInfo
-                                    ? t("generateTestCases.generatingStreamingPage", {
-                                        count: generatedTestCases.length + 1,
-                                        current: urlStreamingPageInfo.current,
-                                        total: urlStreamingPageInfo.total,
-                                        page: urlStreamingPageInfo.title || `${urlStreamingPageInfo.current}`,
-                                      })
-                                    : t("generateTestCases.generatingStreaming", {
-                                        count: generatedTestCases.length + 1,
-                                      })
+                                    ? t(
+                                        "generateTestCases.generatingStreamingPage",
+                                        {
+                                          count: generatedTestCases.length + 1,
+                                          current: urlStreamingPageInfo.current,
+                                          total: urlStreamingPageInfo.total,
+                                          page:
+                                            urlStreamingPageInfo.title ||
+                                            `${urlStreamingPageInfo.current}`,
+                                        }
+                                      )
+                                    : t(
+                                        "generateTestCases.generatingStreaming",
+                                        {
+                                          count: generatedTestCases.length + 1,
+                                        }
+                                      )
                                   : generatingStatus === "processing"
                                     ? t(
                                         "generateTestCases.generatingProcessing"
@@ -4259,46 +4342,21 @@ export function GenerateTestCasesWizard({
                                 index={index}
                                 formSubmitHandlersRef={formSubmitHandlersRef}
                                 folderLabel={
-                                  crawledPagesResult.length > 1 && testCase.sourceUrl
+                                  crawledPagesResult.length > 1 &&
+                                  testCase.sourceUrl
                                     ? folderNameFromUrl(testCase.sourceUrl)
                                     : undefined
                                 }
                               />
                             );
                           })}
-                        {/* "Still generating" indicator below rendered cards */}
-                        {isGenerating && (
-                          <div className="flex items-center justify-between rounded-lg border border-dashed p-4">
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <Sparkles className="w-4 h-4 animate-pulse text-primary shrink-0" />
-                              <span>
-                                {urlStreamingPageInfo
-                                  ? t("generateTestCases.generatingStreamingPage", {
-                                      count: generatedTestCases.length + 1,
-                                      current: urlStreamingPageInfo.current,
-                                      total: urlStreamingPageInfo.total,
-                                      page: urlStreamingPageInfo.title || `${urlStreamingPageInfo.current}`,
-                                    })
-                                  : t("generateTestCases.generatingStreaming", {
-                                      count: generatedTestCases.length + 1,
-                                    })}
-                              </span>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCancelGeneration}
-                            >
-                              {tCommon("cancel")}
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     )}
                   </CardContent>
                 </Card>
               )}
             </div>
+            )}
           </div>
 
           {/* Dialog Footer */}
@@ -4316,6 +4374,27 @@ export function GenerateTestCasesWizard({
                   </Button>
                 )}
             </div>
+
+            {/* Streaming progress — shown in footer while generating */}
+            {isGenerating && generatedTestCases.length > 0 && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="w-4 h-4 animate-pulse text-primary shrink-0" />
+                <span className="truncate">
+                  {urlStreamingPageInfo
+                    ? t("generateTestCases.generatingStreamingPage", {
+                        count: generatedTestCases.length + 1,
+                        current: urlStreamingPageInfo.current,
+                        total: urlStreamingPageInfo.total,
+                        page:
+                          urlStreamingPageInfo.title ||
+                          `${urlStreamingPageInfo.current}`,
+                      })
+                    : t("generateTestCases.generatingStreaming", {
+                        count: generatedTestCases.length + 1,
+                      })}
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <Button

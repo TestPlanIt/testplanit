@@ -2106,6 +2106,7 @@
       "buttonText": "Generate Test Cases",
       "title": "Generate Test Cases with AI",
       "description": "Use AI to automatically generate comprehensive test cases from external issues or documents.",
+      "loadingResults": "Loading generated test cases...",
       "generatingPreparing": "Preparing request...",
       "generatingCallingAi": "Waiting for AI to generate test cases...",
       "generatingStreaming": "AI is generating test case {count}...",

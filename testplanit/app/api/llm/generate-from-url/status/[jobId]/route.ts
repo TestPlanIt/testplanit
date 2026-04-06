@@ -56,14 +56,25 @@ export async function GET(
           : job.returnvalue;
     }
 
-    // For crawl-only jobs, load the full page content from Redis
-    // (too large for BullMQ returnvalue)
+    // For crawl-only jobs, check for saved generated test cases first,
+    // then fall back to loading crawled page content from Redis.
+    let generatedTestCases = null;
     if (state === "completed" && result?.crawlOnly) {
       try {
         const connection = await queue.client;
-        const raw = await connection.get(`generate-from-url:pages:${jobId}`);
-        if (raw) {
-          result.crawledPages = JSON.parse(raw);
+
+        // Check for previously generated test cases (saved after SSE streaming)
+        const savedResults = await connection.get(
+          `generate-from-url:generated:${jobId}`
+        );
+        if (savedResults) {
+          generatedTestCases = JSON.parse(savedResults);
+        } else {
+          // Fall back to crawled page content for fresh generation
+          const raw = await connection.get(`generate-from-url:pages:${jobId}`);
+          if (raw) {
+            result.crawledPages = JSON.parse(raw);
+          }
         }
       } catch {
         // Ignore — crawledPages without markdown is still usable
@@ -75,6 +86,7 @@ export async function GET(
       state,
       progress: job.progress,
       result,
+      generatedTestCases,
       failedReason: state === "failed" ? job.failedReason : null,
       timestamp: job.timestamp,
       processedOn: job.processedOn,
@@ -90,7 +102,47 @@ export async function GET(
 }
 
 /**
- * DELETE: Clean up crawled page content from Redis after import.
+ * PUT: Save generated test cases to Redis so the notification link
+ * can restore them without re-running LLM generation.
+ */
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ jobId: string }> },
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const queue = getGenerateFromUrlQueue();
+    if (!queue) {
+      return NextResponse.json({ error: "Queue not available" }, { status: 503 });
+    }
+
+    const { jobId } = await params;
+    const body = await request.json();
+
+    const connection = await queue.client;
+    await connection.set(
+      `generate-from-url:generated:${jobId}`,
+      JSON.stringify(body),
+      "EX",
+      86400, // 24 hour TTL
+    );
+
+    return NextResponse.json({ message: "Saved" });
+  } catch (error) {
+    console.error("Generate from URL save error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * DELETE: Clean up crawled page content and generated results from Redis after import.
  * Prevents the notification link from re-triggering generation.
  */
 export async function DELETE(
@@ -110,7 +162,10 @@ export async function DELETE(
 
     const { jobId } = await params;
     const connection = await queue.client;
-    await connection.del(`generate-from-url:pages:${jobId}`);
+    await connection.del(
+      `generate-from-url:pages:${jobId}`,
+      `generate-from-url:generated:${jobId}`,
+    );
 
     return NextResponse.json({ message: "Cleaned up" });
   } catch (error) {

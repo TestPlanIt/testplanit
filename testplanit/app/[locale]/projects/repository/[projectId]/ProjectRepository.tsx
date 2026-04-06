@@ -525,6 +525,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   useEffect(() => {
     const handleRepositoryCasesChanged = () => {
       refetchFolderStats();
+      // Also refetch the folder tree — imports may create new subfolders
+      refetchFoldersRef.current?.();
     };
 
     window.addEventListener(

@@ -1190,6 +1190,13 @@ const TreeView: React.FC<{
           canAddEdit={canAddEdit}
           refetchFolders={refetchFolders}
           refetchCases={refetchCases}
+          onDeleted={() => {
+            onSelectFolder(null);
+            setSelectedId(null);
+            const url = new URL(window.location.href);
+            url.searchParams.delete("node");
+            window.history.replaceState({}, "", url.toString());
+          }}
           open={deleteModalState.open}
           onOpenChange={(open) => setDeleteModalState({ open, node: null })}
         />

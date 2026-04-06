@@ -29,6 +29,7 @@ interface DeleteFolderModalProps {
   allFolders: FolderNode[];
   refetchFolders?: () => void;
   refetchCases?: () => void;
+  onDeleted?: () => void;
   canAddEdit: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -39,6 +40,7 @@ export function DeleteFolderModal({
   allFolders,
   refetchFolders,
   refetchCases,
+  onDeleted,
   canAddEdit,
   open: controlledOpen,
   onOpenChange,
@@ -133,6 +135,7 @@ export function DeleteFolderModal({
 
       setOpen(false);
       toast.success(t("repository.deleteFolder.success"));
+      onDeleted?.();
       refetchFolders?.();
       refetchCases?.();
     } catch (err: any) {

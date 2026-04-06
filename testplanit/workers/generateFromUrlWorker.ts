@@ -278,7 +278,7 @@ export const processor = async (
         }))
       ),
       "EX",
-      3600 // 1 hour TTL
+      86400 // 24 hour TTL
     );
 
     // 10. Send notification that crawl is complete
