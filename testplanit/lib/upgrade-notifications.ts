@@ -241,6 +241,17 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Projects with an LLM integration can enable <strong>semantic analysis</strong> for test case detection. See the <a href="https://docs.testplanit.com/blog/duplicate-detection" target="_blank">blog post</a> for details.</p>
     `,
   },
+  "0.21.0": {
+    title: "New Feature: Generate Test Cases from URL",
+    message: `
+      <p>Point the AI at any web page to generate test cases — with optional multi-page crawling.</p>
+      <ul>
+        <li>Select <strong>From URL</strong> in the Generate Test Cases wizard</li>
+        <li>Choose <strong>Application</strong> or <strong>Requirements</strong> mode</li>
+        <li>Enable <strong>Follow Links</strong> to crawl same-domain pages automatically</li>
+      </ul>
+    `,
+  },
 };
 
 /**
