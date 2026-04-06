@@ -4,6 +4,11 @@ import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +53,7 @@ import {
   AlertTriangle,
   Bot,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -65,6 +71,7 @@ import {
   SquarePen,
   Star,
   Tag,
+  X,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -94,6 +101,7 @@ import {
   serializeTipTapJSON,
 } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
+import { sanitizeName } from "~/utils";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
 
 interface ExternalIssue {
@@ -663,7 +671,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
   const defaultValues = useMemo(() => {
     const initial: Record<string, any> = {
       name: testCase.name,
-      tagsInput: (testCase.tags || []).join(", "),
+      tagsInput: testCase.tags || [],
     };
 
     selectedTemplateFields.forEach((field: any) => {
@@ -695,16 +703,6 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
       reset(defaultValues);
     }
   }, [isEditing, defaultValues, reset]);
-
-  const parseTags = (rawValue: string | undefined) => {
-    if (!rawValue) return [];
-    return rawValue
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(
-        (tag, index, self) => tag.length > 0 && self.indexOf(tag) === index
-      );
-  };
 
   const handleSave = handleSubmit((data) => {
     const updatedFieldValues: Record<string, any> = {
@@ -739,7 +737,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
       ...testCase,
       name: data.name?.trim() ? data.name.trim() : testCase.name,
       automated: false,
-      tags: autoGenerateTags ? parseTags(data.tagsInput) : testCase.tags,
+      tags: autoGenerateTags ? (data.tagsInput || []) : testCase.tags,
       fieldValues: updatedFieldValues,
       steps: updatedSteps,
     };
@@ -869,7 +867,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
               <div className="flex-1 space-y-4">
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor={`generated-${testCase.id}-name`}>
+                    <Label htmlFor={`generated-${testCase.id}-name`} className="text-primary">
                       {tCommon("name")}
                     </Label>
                     <Controller
@@ -886,40 +884,66 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                   </div>
                   {autoGenerateTags && (
                     <div className="space-y-2">
-                      <Label htmlFor={`generated-${testCase.id}-tags`}>
-                        {tCommon("fields.tags")}
-                      </Label>
+                      <Label className="text-primary">{tCommon("fields.tags")}</Label>
                       <Controller
                         name="tagsInput"
                         control={control}
-                        render={({ field }) => (
-                          <Input
-                            id={`generated-${testCase.id}-tags`}
-                            {...field}
-                            value={field.value ?? ""}
-                            placeholder="Tag A, Tag B"
-                          />
-                        )}
+                        render={({ field }) => {
+                          const tags: string[] = Array.isArray(field.value) ? field.value : [];
+                          return (
+                            <div className="flex flex-wrap items-center gap-2 rounded-md border p-2 min-h-[2.5rem]">
+                              {tags.map((tag, idx) => (
+                                <Badge
+                                  key={`edit-tag-${idx}`}
+                                  variant="outline"
+                                  className="text-xs text-primary flex items-center gap-1"
+                                >
+                                  <Tag className="h-3 w-3 shrink-0" />
+                                  {tag}
+                                  <button
+                                    type="button"
+                                    className="ml-0.5 rounded-full hover:bg-muted p-0.5"
+                                    onClick={() => {
+                                      field.onChange(tags.filter((_, i) => i !== idx));
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ))}
+                              <Input
+                                className="h-7 w-auto min-w-[120px] flex-1 px-2 text-sm"
+                                placeholder={tags.length === 0 ? tCommon("fields.tags") : ""}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === ",") {
+                                    e.preventDefault();
+                                    const sanitized = sanitizeName(e.currentTarget.value.trim());
+                                    if (sanitized && !tags.some((t) => t.toLowerCase() === sanitized.toLowerCase())) {
+                                      field.onChange([...tags, sanitized]);
+                                    }
+                                    e.currentTarget.value = "";
+                                  }
+                                  if (e.key === "Backspace" && e.currentTarget.value === "" && tags.length > 0) {
+                                    field.onChange(tags.slice(0, -1));
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const sanitized = sanitizeName(e.currentTarget.value.trim());
+                                  if (sanitized && !tags.some((t) => t.toLowerCase() === sanitized.toLowerCase())) {
+                                    field.onChange([...tags, sanitized]);
+                                  }
+                                  e.currentTarget.value = "";
+                                }}
+                              />
+                            </div>
+                          );
+                        }}
                       />
                     </div>
                   )}
                 </div>
 
                 {renderFieldList(true)}
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {autoGenerateTags &&
-                    testCase.tags?.map((tag, index) => (
-                      <Badge
-                        key={`editing-${testCase.id}-tag-${index}`}
-                        variant="outline"
-                        className="text-xs text-primary"
-                      >
-                        <Tag className="h-3 w-3 shrink-0 mr-1" />
-                        {tag}
-                      </Badge>
-                    ))}
-                </div>
               </div>
             </div>
 
@@ -1016,65 +1040,75 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
   }
 
   return (
-    <div
-      ref={cardRef}
-      className={`border rounded-lg p-4 transition-colors ${
-        isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={onSelectionChange}
-            className="mt-1"
-          />
-          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-medium text-primary">
-            {index + 1}
-          </div>
-        </label>
-        <div className="flex-1 space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <h4 className="font-medium wrap-break-word">{testCase.name}</h4>
-              {folderLabel && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <FolderOpen className="w-3 h-3 shrink-0" />
-                  <span>{folderLabel}</span>
-                </div>
-              )}
+    <Collapsible ref={cardRef}>
+      <div
+        className={`border rounded-lg transition-colors ${
+          isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+        }`}
+      >
+        <div className="flex items-start gap-3 p-4">
+          <label
+            className="flex items-start gap-3 cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onSelectionChange}
+              className="mt-1"
+            />
+            <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-medium text-primary">
+              {index + 1}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onStartEdit}
-                disabled={disabled}
-              >
-                <SquarePen className="w-4 h-4 mr-1" />
-                {tCommon("actions.edit")}
-              </Button>
-            </div>
-          </div>
-
-          {renderFieldList(false)}
-
-          <div className="flex flex-wrap items-center gap-2">
-            {autoGenerateTags &&
-              testCase.tags?.map((tag, index) => (
-                <Badge
-                  key={`${testCase.id}-tag-${index}`}
-                  variant="outline"
-                  className="text-xs text-primary"
+          </label>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1 min-w-0">
+                <CollapsibleTrigger className="flex items-center gap-1.5 text-left group">
+                  <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  <h4 className="font-medium wrap-break-word">{testCase.name}</h4>
+                </CollapsibleTrigger>
+                {folderLabel && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-5.5">
+                    <FolderOpen className="w-3 h-3 shrink-0" />
+                    <span>{folderLabel}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onStartEdit}
+                  disabled={disabled}
                 >
-                  <Tag className="h-3 w-3 shrink-0 mr-1" />
-                  {tag}
-                </Badge>
-              ))}
+                  <SquarePen className="w-4 h-4 mr-1" />
+                  {tCommon("actions.edit")}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 pl-[4.25rem] space-y-3">
+            {renderFieldList(false)}
+
+            <div className="flex flex-wrap items-center gap-2">
+              {autoGenerateTags &&
+                testCase.tags?.map((tag, idx) => (
+                  <Badge
+                    key={`${testCase.id}-tag-${idx}`}
+                    variant="outline"
+                    className="text-xs text-primary"
+                  >
+                    <Tag className="h-3 w-3 shrink-0 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+            </div>
+          </div>
+        </CollapsibleContent>
       </div>
-    </div>
+    </Collapsible>
   );
 });
 
@@ -2446,7 +2480,9 @@ export function GenerateTestCasesWizard({
       const { extractStreamedTestCases, parseAndValidateTestCases } =
         await import("~/app/api/llm/generate-test-cases/shared");
 
-      // Consume the SSE stream, rendering each test case as it completes
+      // Consume the SSE stream with incremental rendering:
+      // - Finalized cases: fully-closed JSON objects, rendered permanently
+      // - Streaming stub: the in-progress test case, updated live as fields arrive
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -2454,6 +2490,7 @@ export function GenerateTestCasesWizard({
       let streamDone = false;
       let streamError: string | undefined;
       let yieldedCount = 0; // how many test cases we've already rendered
+      const finalizedCases: GeneratedTestCase[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -2480,7 +2517,7 @@ export function GenerateTestCasesWizard({
               accumulated += data.delta;
               setGeneratingStatus("streaming");
 
-              // Extract only fully-closed test case objects from the stream
+              // 1. Extract fully-closed test case objects
               const newCases = extractStreamedTestCases(
                 accumulated,
                 templateForParsing,
@@ -2490,12 +2527,36 @@ export function GenerateTestCasesWizard({
               if (newCases.length > 0) {
                 const converted = newCases.map(convertFieldOptionIds);
                 yieldedCount += newCases.length;
+                finalizedCases.push(...converted);
 
-                setGeneratedTestCases((prev) => [...prev, ...converted]);
                 setSelectedTestCases((prev) => {
                   const next = new Set(prev);
                   converted.forEach((tc) => next.add(tc.id));
                   return next;
+                });
+              }
+
+              // 2. Extract the in-progress (partial) test case
+              const partials = extractPartialTestCases(
+                accumulated,
+                yieldedCount
+              );
+
+              const streamingStub = partials.map((tc) => ({
+                ...tc,
+                id: `streaming_issue`,
+              }));
+
+              // 3. Throttle UI updates to once per animation frame
+              const allCases = [...finalizedCases, ...streamingStub];
+              pendingStreamUpdateRef.current = allCases;
+              if (!rafIdRef.current) {
+                rafIdRef.current = requestAnimationFrame(() => {
+                  if (pendingStreamUpdateRef.current) {
+                    setGeneratedTestCases(pendingStreamUpdateRef.current);
+                    pendingStreamUpdateRef.current = null;
+                  }
+                  rafIdRef.current = 0;
                 });
               }
             } else if (data.type === "done") {
@@ -2509,6 +2570,15 @@ export function GenerateTestCasesWizard({
           }
         }
       }
+
+      // Flush any pending rAF update
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = 0;
+        pendingStreamUpdateRef.current = null;
+      }
+      // Remove any lingering streaming stub
+      setGeneratedTestCases([...finalizedCases]);
 
       if (streamError) {
         throw new Error(JSON.stringify({ message: streamError }));
@@ -4407,6 +4477,7 @@ export function GenerateTestCasesWizard({
                     }).catch(() => {});
                   }
                   setOpen(false);
+                  resetWizard();
                 }}
                 disabled={isImporting}
               >
@@ -4633,7 +4704,7 @@ function IssueDescriptionText({ description }: { description: string }) {
 
     return (
       <div
-        className="prose prose-sm dark:prose-invert max-w-none [&_*]:!text-inherit"
+        className="prose prose-sm dark:prose-invert max-w-none text-foreground [&_*]:!text-inherit"
         dangerouslySetInnerHTML={{ __html: htmlOutput }}
       />
     );

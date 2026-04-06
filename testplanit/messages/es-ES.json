@@ -2106,6 +2106,7 @@
       "buttonText": "Generar Casos de Prueba",
       "title": "Generar casos de prueba con IA",
       "description": "Utilice IA para generar automáticamente casos de prueba completos a partir de problemas o documentos externos.",
+      "loadingResults": "Cargando casos de prueba generados...",
       "generatingPreparing": "Preparando solicitud...",
       "generatingCallingAi": "Esperando a que la IA genere los casos de prueba...",
       "generatingStreaming": "La IA está generando el caso de prueba {count}...",

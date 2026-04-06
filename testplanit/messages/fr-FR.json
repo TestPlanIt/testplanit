@@ -2106,6 +2106,7 @@
       "buttonText": "Générer des cas de test",
       "title": "Générer des cas de test avec l'IA",
       "description": "Utiliser l'IA pour générer automatiquement des scénarios de test complets à partir de problèmes ou de documents externes.",
+      "loadingResults": "Chargement des cas de test générés...",
       "generatingPreparing": "Préparation de la demande...",
       "generatingCallingAi": "En attendant que l'IA génère des cas de test...",
       "generatingStreaming": "L'IA génère un cas de test {count}...",
