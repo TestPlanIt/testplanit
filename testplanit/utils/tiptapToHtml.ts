@@ -49,6 +49,24 @@ export function generateHTMLFallback(content: any): string {
               case 'italic':
                 text = `<em>${text}</em>`;
                 break;
+              case 'code':
+                text = `<code>${text}</code>`;
+                break;
+              case 'strike':
+                text = `<s>${text}</s>`;
+                break;
+              case 'underline':
+                text = `<u>${text}</u>`;
+                break;
+              case 'highlight':
+                text = `<mark>${text}</mark>`;
+                break;
+              case 'subscript':
+                text = `<sub>${text}</sub>`;
+                break;
+              case 'superscript':
+                text = `<sup>${text}</sup>`;
+                break;
               case 'link':
                 const href = mark.attrs?.href || '#';
                 const target = mark.attrs?.target || '_blank';
@@ -68,9 +86,44 @@ export function generateHTMLFallback(content: any): string {
         const ulContent = node.content?.map(processNode).join('') || '';
         return `<ul>${ulContent}</ul>`;
 
+      case 'orderedList':
+        const olContent = node.content?.map(processNode).join('') || '';
+        const start = node.attrs?.start || 1;
+        return start > 1 ? `<ol start="${start}">${olContent}</ol>` : `<ol>${olContent}</ol>`;
+
       case 'listItem':
         const liContent = node.content?.map(processNode).join('') || '';
         return `<li>${liContent}</li>`;
+
+      case 'blockquote':
+        const bqContent = node.content?.map(processNode).join('') || '';
+        return `<blockquote>${bqContent}</blockquote>`;
+
+      case 'codeBlock':
+        const cbContent = node.content?.map(processNode).join('') || '';
+        return `<pre><code>${cbContent}</code></pre>`;
+
+      case 'hardBreak':
+        return '<br>';
+
+      case 'horizontalRule':
+        return '<hr>';
+
+      case 'table':
+        const tableContent = node.content?.map(processNode).join('') || '';
+        return `<table>${tableContent}</table>`;
+
+      case 'tableRow':
+        const trContent = node.content?.map(processNode).join('') || '';
+        return `<tr>${trContent}</tr>`;
+
+      case 'tableCell':
+        const tdContent = node.content?.map(processNode).join('') || '';
+        return `<td>${tdContent}</td>`;
+
+      case 'tableHeader':
+        const thContent = node.content?.map(processNode).join('') || '';
+        return `<th>${thContent}</th>`;
 
       case 'image':
         const src = node.attrs?.src || '';
