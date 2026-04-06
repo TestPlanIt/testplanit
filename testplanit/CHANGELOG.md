@@ -1,3 +1,9 @@
+## [0.21.1](https://github.com/TestPlanIt/testplanit/compare/v0.21.0...v0.21.1) (2026-04-06)
+
+### Enhancements
+
+* implement snapshot case ID resolution for repository cases ([#180](https://github.com/TestPlanIt/testplanit/issues/180)) ([e849c77](https://github.com/TestPlanIt/testplanit/commit/e849c775a2f0fa680842cbe40f00372a2e4d88e1))
+
 ## [0.21.0](https://github.com/TestPlanIt/testplanit/compare/v0.20.4...v0.21.0) (2026-04-06)
 
 ### Features
