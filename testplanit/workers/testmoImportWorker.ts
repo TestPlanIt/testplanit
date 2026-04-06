@@ -1536,6 +1536,8 @@ interface RepositoryCasesImportResult {
   caseFieldMap: Map<string, number>;
   caseFieldMetadataById: Map<number, CaseFieldMetadata>;
   caseMetaMap: Map<number, { projectId: number; name: string }>;
+  /** Maps "projectSourceId:key" → imported TestPlanIt case ID for key-based snapshot resolution */
+  caseKeyMap: Map<string, number>;
 }
 
 interface MilestonesImportResult {
@@ -3111,6 +3113,7 @@ const importRepositoryCases = async (
 
   const caseIdMap = new Map<number, number>();
   const caseMetaMap = new Map<number, { projectId: number; name: string }>();
+  const caseKeyMap = new Map<string, number>();
   const summaryDetails = summary.details as Record<string, number>;
 
   // Debug tracking for dropdown/multi-select fields
@@ -3208,6 +3211,7 @@ const importRepositoryCases = async (
       caseFieldMap: new Map(),
       caseFieldMetadataById: new Map(),
       caseMetaMap,
+      caseKeyMap,
     };
   }
 
@@ -3431,6 +3435,13 @@ const importRepositoryCases = async (
 
           if (existing) {
             caseIdMap.set(caseSourceId, existing.id);
+            const existingKey = toStringValue(record.key);
+            if (existingKey) {
+              caseKeyMap.set(
+                `${projectSourceId}:${existingKey}`,
+                existing.id
+              );
+            }
             summary.total += 1;
             summary.mapped += 1;
             incrementEntityProgress(context, "repositoryCases", 0, 1);
@@ -3557,6 +3568,12 @@ const importRepositoryCases = async (
           });
 
           caseIdMap.set(caseSourceId, repositoryCase.id);
+          if (className) {
+            caseKeyMap.set(
+              `${projectSourceId}:${className}`,
+              repositoryCase.id
+            );
+          }
           const projectTemplateAssignments =
             templateAssignmentsByProject.get(projectId) ?? new Set<number>();
           projectTemplateAssignments.add(resolvedTemplateId);
@@ -4057,6 +4074,7 @@ const importRepositoryCases = async (
     caseFieldMap,
     caseFieldMetadataById,
     caseMetaMap,
+    caseKeyMap,
   };
 };
 
@@ -6245,6 +6263,49 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
       formatSummaryStatus(repositoryCaseTagsSummary)
     );
     releaseDatasetRows(datasetRowsByName, "repository_case_tags");
+
+    // Resolve snapshot case IDs to master cases via the Testmo `key` field.
+    // Closed runs in Testmo reference snapshot repositories, so run_tests.case_id
+    // may point to a snapshot case ID. The `key` field is stable across master and
+    // snapshot copies of the same case, allowing us to map back to the imported case.
+    const snapshotCaseKeys = await loadDatasetFromStaging("_snapshot_case_keys");
+    if (snapshotCaseKeys.length > 0) {
+      let resolvedCount = 0;
+      let alreadyMappedCount = 0;
+      let unresolvedCount = 0;
+
+      for (const row of snapshotCaseKeys) {
+        const record = row as Record<string, unknown>;
+        const snapshotCaseId = toNumberValue(record.id);
+        const key = toStringValue(record.key);
+        const projectSourceId = toNumberValue(record.project_id);
+
+        if (snapshotCaseId === null || !key || projectSourceId === null) {
+          continue;
+        }
+
+        // Skip if this ID is already in caseIdMap (e.g., it matched a master case)
+        if (caseImport.caseIdMap.has(snapshotCaseId)) {
+          alreadyMappedCount++;
+          continue;
+        }
+
+        // Look up the master case by project + key
+        const lookupKey = `${projectSourceId}:${key}`;
+        const importedCaseId = caseImport.caseKeyMap.get(lookupKey);
+        if (importedCaseId) {
+          caseImport.caseIdMap.set(snapshotCaseId, importedCaseId);
+          resolvedCount++;
+        } else {
+          unresolvedCount++;
+        }
+      }
+
+      logMessage(
+        context,
+        `Snapshot case key resolution: ${resolvedCount} resolved, ${alreadyMappedCount} already mapped, ${unresolvedCount} unresolved out of ${snapshotCaseKeys.length} snapshot cases`
+      );
+    }
 
     // ===== AUTOMATION IMPORTS =====
     logMessage(context, "Processing automation case imports");
