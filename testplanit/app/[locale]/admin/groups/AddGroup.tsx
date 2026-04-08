@@ -16,7 +16,7 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { CirclePlus, Trash2, Users } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 
 import {
   Form,
@@ -36,7 +36,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -48,11 +47,15 @@ const AddGroupFormSchema = z.object({
 
 type AddGroupFormData = z.infer<typeof AddGroupFormSchema>;
 
-export function AddGroupModal() {
+interface AddGroupProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddGroup({ open, onClose }: AddGroupProps) {
   const t = useTranslations("admin.groups");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const queryClient = useQueryClient();
@@ -60,20 +63,12 @@ export function AddGroupModal() {
   const { mutateAsync: createGroup } = useCreateGroups();
   const { mutateAsync: createManyGroupAssignment } =
     useCreateManyGroupAssignment();
-  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser(
-    {
-      where: { isActive: true, isDeleted: false },
-      orderBy: { name: "asc" },
-    },
-    { enabled: open }
-  );
+  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser({
+    where: { isActive: true, isDeleted: false },
+    orderBy: { name: "asc" },
+  });
 
   const allUsers: User[] | undefined = allUsersData as User[] | undefined;
-
-  const handleCancel = () => {
-    setAssignedUsers([]);
-    setOpen(false);
-  };
 
   const form = useForm<AddGroupFormData>({
     resolver: zodResolver(AddGroupFormSchema),
@@ -83,7 +78,6 @@ export function AddGroupModal() {
   });
 
   const {
-    reset,
     handleSubmit,
     control,
     setError,
@@ -133,9 +127,7 @@ export function AddGroupModal() {
       toast.success(
         tCommon("messages.created", { item: tGlobal("common.fields.groups") })
       );
-      setOpen(false);
-      reset({ name: "" });
-      setAssignedUsers([]);
+      onClose();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         setError("name", {
@@ -159,14 +151,7 @@ export function AddGroupModal() {
     allUsers?.filter((u) => !assignedUsers.some((a) => a.id === u.id)) ?? [];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4 mr-1" />
-          <span className="hidden md:inline">{t("add.button")}</span>
-          <span className="md:hidden">{tCommon("add")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[700px]">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -249,7 +234,7 @@ export function AddGroupModal() {
               <Button
                 variant="outline"
                 type="button"
-                onClick={handleCancel}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}
