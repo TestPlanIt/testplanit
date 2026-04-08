@@ -22,17 +22,19 @@ import {
   AlertDialogAction,
   AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { CirclePlus } from "lucide-react";
 import {
   useCreateManyMilestoneTypesAssignment,
   useDeleteManyMilestoneTypesAssignment, useFindManyMilestoneTypes, useFindManyProjects, useUpdateManyMilestoneTypes, useUpdateMilestoneTypes
 } from "~/lib/hooks";
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
-import { AddMilestoneTypeModal } from "./AddMilestoneTypes";
+import { AddMilestoneType } from "./AddMilestoneTypes";
 import { ExtendedMilestoneTypes, getColumns } from "./columns";
 
 type PageSizeOption = number | "All";
@@ -75,6 +77,7 @@ function MilestoneTypes() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [addMilestoneTypeOpen, setAddMilestoneTypeOpen] = useState(false);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -276,7 +279,18 @@ function MilestoneTypes() {
             </div>
             <div className="flex gap-2">
               <AddMilestonesToProjectsWizard />
-              <AddMilestoneTypeModal />
+              <Button onClick={() => setAddMilestoneTypeOpen(true)}>
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">
+                  {t("add.button")}
+                </span>
+              </Button>
+              {addMilestoneTypeOpen && (
+                <AddMilestoneType
+                  open={addMilestoneTypeOpen}
+                  onClose={() => setAddMilestoneTypeOpen(false)}
+                />
+              )}
             </div>
           </div>
           <CardDescription>{t("description")}</CardDescription>
