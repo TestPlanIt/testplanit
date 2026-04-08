@@ -2,15 +2,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Configurations } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useUpdateConfigurations } from "~/lib/hooks";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -28,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -40,26 +37,20 @@ const FormSchema = (t: any) =>
     }),
   });
 
-interface EditConfigurationModalProps {
+interface EditConfigurationProps {
   configuration: Configurations;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditConfigurationModal({
+export function EditConfiguration({
   configuration,
-}: EditConfigurationModalProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: EditConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
   const tCommon = useTranslations("common");
-
-  const handleCancel = () => setOpen(false);
-
-  const defaultFormValues = useMemo(
-    () => ({
-      name: configuration.name,
-    }),
-    [configuration.name]
-  );
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
     resolver: zodResolver(FormSchema(tCommon)),
@@ -67,12 +58,6 @@ export function EditConfigurationModal({
       name: configuration.name,
     },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form, form.reset]);
 
   const {
     formState: { errors },
@@ -88,7 +73,7 @@ export function EditConfigurationModal({
         },
       });
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -109,12 +94,7 @@ export function EditConfigurationModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -153,7 +133,7 @@ export function EditConfigurationModal({
                     : tCommon("errors.unknown")}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

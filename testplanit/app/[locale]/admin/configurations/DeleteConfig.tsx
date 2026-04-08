@@ -6,41 +6,37 @@ import { useUpdateConfigurations } from "~/lib/hooks";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteConfigurationModalProps {
+interface DeleteConfigurationProps {
   configuration: Configurations;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteConfigurationModal({
+export function DeleteConfiguration({
   configuration,
-}: DeleteConfigurationModalProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: DeleteConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
-  const handleCancel = () => {
-    setOpen(false);
-    reset();
-  };
-
   const form = useForm();
   const {
     formState: { errors },
     setError,
     handleSubmit,
-    reset,
   } = form;
 
   async function onSubmit() {
@@ -50,8 +46,7 @@ export function DeleteConfigurationModal({
         where: { id: configuration.id },
         data: { isDeleted: true },
       });
-      setOpen(false);
-      reset();
+      onClose();
     } catch {
       setError("root", {
         type: "custom",
@@ -63,20 +58,7 @@ export function DeleteConfigurationModal({
   }
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-          reset();
-        }
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -108,7 +90,7 @@ export function DeleteConfigurationModal({
               )}
               <AlertDialogCancel
                 type="button"
-                onClick={handleCancel}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

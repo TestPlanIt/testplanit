@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -11,11 +12,11 @@ import {
   ChevronRight,
   CircleCheckBig,
   CircleSlash2,
-  Component
+  Component,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteConfigCategoriesModal } from "./DeleteCategory";
-import { EditCategoryModal } from "./EditCategory";
 
 export type ConfigCategoryWithVariants = ConfigCategories & {
   variants: {
@@ -27,7 +28,9 @@ export type ConfigCategoryWithVariants = ConfigCategories & {
 };
 
 export const getColumns = (
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  onEditCategory?: (category: ConfigCategoryWithVariants) => void,
+  onDeleteCategory?: (category: ConfigCategoryWithVariants) => void
 ): ColumnDef<ConfigCategoryWithVariants>[] => [
   {
     id: "name",
@@ -125,14 +128,20 @@ export const getColumns = (
           e.preventDefault();
         }}
       >
-        <EditCategoryModal
-          key={`edit-${row.original.id}`}
-          category={row.original}
-        />
-        <DeleteConfigCategoriesModal
-          key={`delete-${row.original.id}`}
-          category={row.original}
-        />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditCategory?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="destructive"
+          className="px-2 py-1 h-auto"
+          onClick={() => onDeleteCategory?.(row.original)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
     ),
   },

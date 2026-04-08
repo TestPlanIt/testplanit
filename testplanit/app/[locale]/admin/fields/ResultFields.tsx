@@ -10,6 +10,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddResultFieldModal } from "./AddResultField";
+import { DeleteResultField } from "./DeleteResultField";
+import { EditResultField } from "./EditResultField";
 import { ExtendedResultFields, getColumns } from "./resultFieldColumns";
 
 export default function ResultFields() {
@@ -87,9 +89,21 @@ export default function ResultFields() {
     }
   );
 
+  const [editingResultField, setEditingResultField] =
+    useState<ExtendedResultFields | null>(null);
+  const [deletingResultField, setDeletingResultField] =
+    useState<ExtendedResultFields | null>(null);
+
   const columns: CustomColumnDef<ExtendedResultFields>[] = useMemo(
     // eslint-disable-next-line react-hooks/refs
-    () => getColumns(t, tCommon, handleToggle),
+    () =>
+      getColumns(
+        t,
+        tCommon,
+        handleToggle,
+        setEditingResultField,
+        setDeletingResultField
+      ),
     [handleToggle, t, tCommon]
   );
 
@@ -142,6 +156,20 @@ export default function ResultFields() {
             />
           </div>
         </CardContent>
+        {editingResultField && (
+          <EditResultField
+            resultfield={editingResultField}
+            open={editingResultField !== null}
+            onClose={() => setEditingResultField(null)}
+          />
+        )}
+        {deletingResultField && (
+          <DeleteResultField
+            resultfield={deletingResultField}
+            open={deletingResultField !== null}
+            onClose={() => setDeletingResultField(null)}
+          />
+        )}
       </Card>
     );
   }

@@ -16,8 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { emptyEditorContent } from "~/app/constants";
 
-import { SquarePen } from "lucide-react";
-
 import {
   Form,
   FormControl,
@@ -34,7 +32,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -43,13 +40,17 @@ import { Switch } from "@/components/ui/switch";
 
 import { useTranslations } from "next-intl";
 
-interface EditResultFieldModalProps {
+interface EditResultFieldProps {
   resultfield: ExtendedResultFields;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditResultFieldModal({
+export function EditResultField({
   resultfield,
-}: EditResultFieldModalProps) {
+  open,
+  onClose,
+}: EditResultFieldProps) {
   const t = useTranslations("admin.templates.resultFields.edit");
   const tCommon = useTranslations("common");
 
@@ -87,7 +88,6 @@ export function EditResultFieldModal({
       path: ["initialHeight"],
     });
 
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTypeOptions, setSelectedTypeOptions] = useState<any>(null);
   const [dropdownOptions, setDropdownOptions] = useState<FieldOptions[]>([]);
@@ -203,7 +203,6 @@ export function EditResultFieldModal({
     resultfield.initialHeight,
   ]);
 
-  const handleCancel = () => setOpen(false);
 
   const handleDropdownOptionsChange = (
     newOptions: FieldOptions[] | ((options: FieldOptions[]) => FieldOptions[])
@@ -646,7 +645,7 @@ export function EditResultFieldModal({
       });
 
       setIsSubmitting(false);
-      setOpen(false);
+      onClose();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("systemName", {
@@ -665,12 +664,7 @@ export function EditResultFieldModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-result-field-button">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         key={resultfield.id}
         className="sm:max-w-[600px] lg:max-w-[1000px]"
@@ -837,7 +831,7 @@ export function EditResultFieldModal({
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel} data-testid="result-field-cancel-button">
+              <Button variant="outline" type="button" onClick={onClose} data-testid="result-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting} data-testid="result-field-submit-button">

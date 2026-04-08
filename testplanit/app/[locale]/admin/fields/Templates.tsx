@@ -18,7 +18,9 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddTemplate } from "./AddTemplate";
-import { getColumns } from "./templateColumns";
+import { DeleteTemplate } from "./DeleteTemplate";
+import { EditTemplate } from "./EditTemplate";
+import { ExtendedTemplates, getColumns } from "./templateColumns";
 
 export default function TemplateComponent() {
   const { data: session, status } = useSession();
@@ -42,6 +44,10 @@ export default function TemplateComponent() {
     number | undefined
   >(undefined);
   const [addTemplateOpen, setAddTemplateOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] =
+    useState<ExtendedTemplates | null>(null);
+  const [deletingTemplate, setDeletingTemplate] =
+    useState<ExtendedTemplates | null>(null);
 
   const { mutateAsync: updateTemplate } = useUpdateTemplates();
   const { mutateAsync: updateManyTemplate } = useUpdateManyTemplates();
@@ -132,7 +138,13 @@ export default function TemplateComponent() {
   const columns: any[] = useMemo(
     () =>
       // eslint-disable-next-line react-hooks/refs
-      getColumns(tCommon, handleToggleEnabled, handleToggleDefault),
+      getColumns(
+        tCommon,
+        handleToggleEnabled,
+        handleToggleDefault,
+        setEditingTemplate,
+        setDeletingTemplate
+      ),
     [handleToggleEnabled, handleToggleDefault, tCommon]
   );
 
@@ -240,6 +252,20 @@ export default function TemplateComponent() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        {editingTemplate && (
+          <EditTemplate
+            template={editingTemplate as any}
+            open={editingTemplate !== null}
+            onClose={() => setEditingTemplate(null)}
+          />
+        )}
+        {deletingTemplate && (
+          <DeleteTemplate
+            template={deletingTemplate}
+            open={deletingTemplate !== null}
+            onClose={() => setDeletingTemplate(null)}
+          />
+        )}
       </>
     );
   }

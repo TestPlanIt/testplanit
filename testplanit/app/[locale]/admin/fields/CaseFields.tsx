@@ -11,6 +11,8 @@ import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddCaseFieldModal } from "./AddCaseField";
 import { ExtendedCaseFields, getColumns } from "./caseFieldColumns";
+import { DeleteCaseField } from "./DeleteCaseField";
+import { EditCaseField } from "./EditCaseField";
 
 export default function CaseFields() {
   const { data: session, status } = useSession();
@@ -87,9 +89,21 @@ export default function CaseFields() {
     }
   );
 
+  const [editingCaseField, setEditingCaseField] =
+    useState<ExtendedCaseFields | null>(null);
+  const [deletingCaseField, setDeletingCaseField] =
+    useState<ExtendedCaseFields | null>(null);
+
   const columns: CustomColumnDef<ExtendedCaseFields>[] = useMemo(
     // eslint-disable-next-line react-hooks/refs
-    () => getColumns(t, tCommon, handleToggle),
+    () =>
+      getColumns(
+        t,
+        tCommon,
+        handleToggle,
+        setEditingCaseField,
+        setDeletingCaseField
+      ),
     [handleToggle, t, tCommon]
   );
 
@@ -142,6 +156,20 @@ export default function CaseFields() {
             />
           </div>
         </CardContent>
+        {editingCaseField && (
+          <EditCaseField
+            casefield={editingCaseField}
+            open={editingCaseField !== null}
+            onClose={() => setEditingCaseField(null)}
+          />
+        )}
+        {deletingCaseField && (
+          <DeleteCaseField
+            casefield={deletingCaseField}
+            open={deletingCaseField !== null}
+            onClose={() => setDeletingCaseField(null)}
+          />
+        )}
       </Card>
     );
   }

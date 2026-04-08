@@ -18,8 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { emptyEditorContent } from "~/app/constants";
 
-import { SquarePen } from "lucide-react";
-
 import {
   Form,
   FormControl,
@@ -36,7 +34,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -44,11 +41,17 @@ import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 
-interface EditCaseFieldModalProps {
+interface EditCaseFieldProps {
   casefield: ExtendedCaseFields;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
+export function EditCaseField({
+  casefield,
+  open,
+  onClose,
+}: EditCaseFieldProps) {
   const t = useTranslations("admin.templates.caseFields.edit");
   const tCommon = useTranslations("common");
 
@@ -99,7 +102,6 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
       path: ["initialHeight"],
     });
 
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTypeOptions, setSelectedTypeOptions] = useState<any>(null);
   const [dropdownOptions, setDropdownOptions] = useState<FieldOptions[]>([]);
@@ -215,7 +217,6 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
     casefield.initialHeight,
   ]);
 
-  const handleCancel = () => setOpen(false);
 
   const handleDropdownOptionsChange = (
     newOptions: FieldOptions[] | ((options: FieldOptions[]) => FieldOptions[])
@@ -659,7 +660,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
       });
 
       setIsSubmitting(false);
-      setOpen(false);
+      onClose();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("systemName", {
@@ -678,12 +679,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-case-field-button">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         key={casefield.id}
         className="sm:max-w-[600px] lg:max-w-[1000px]"
@@ -850,7 +846,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel} data-testid="case-field-cancel-button">
+              <Button variant="outline" type="button" onClick={onClose} data-testid="case-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting} data-testid="case-field-submit-button">

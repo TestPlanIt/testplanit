@@ -22,8 +22,6 @@ import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { SquarePen } from "lucide-react";
-
 import {
   Form,
   FormControl,
@@ -40,7 +38,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
@@ -74,16 +71,21 @@ interface ExtendedTemplates extends Templates {
   resultFields: ExtendedTemplateResultField[];
 }
 
-interface EditTemplateModalProps {
+interface EditTemplateProps {
   template: ExtendedTemplates;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditTemplateModal({ template }: EditTemplateModalProps) {
+export function EditTemplate({
+  template,
+  open,
+  onClose,
+}: EditTemplateProps) {
   const t = useTranslations("admin.templates.edit");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableCaseFields, setAvailableCaseFields] = useState<
     DraggableField[]
@@ -182,20 +184,12 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
     }
   }, [isDefault, setValue]);
 
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-      // Reset the initialization flags when dialog opens so fields get re-initialized
-      caseFieldsInitializedRef.current = false;
-      resultFieldsInitializedRef.current = false;
-    }
-  }, [open, defaultFormValues, form, form.reset]);
-
-  // Initialize case fields only once when dialog opens and data is available
+  // Initialize case fields only once when data is available. Component is mounted
+  // fresh on each open by the parent so this only runs once per edit cycle.
   // Using a ref to prevent React Query refetches from resetting user selections during form submission
   useEffect(() => {
-    // Only initialize if dialog is open, data is available, and we haven't initialized yet
-    if (!open || caseFieldsInitializedRef.current || !caseFields) return;
+    // Only initialize if data is available and we haven't initialized yet
+    if (caseFieldsInitializedRef.current || !caseFields) return;
 
     const caseSelectedIds = new Set(
       template.caseFields.map((cf) => cf.caseFieldId)
@@ -219,13 +213,13 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
 
     // Mark as initialized to prevent re-runs from React Query refetches
     caseFieldsInitializedRef.current = true;
-  }, [open, caseFields, template.caseFields]);
+  }, [caseFields, template.caseFields]);
 
-  // Initialize result fields only once when dialog opens and data is available
+  // Initialize result fields only once when data is available
   // Using a ref to prevent React Query refetches from resetting user selections during form submission
   useEffect(() => {
-    // Only initialize if dialog is open, data is available, and we haven't initialized yet
-    if (!open || resultFieldsInitializedRef.current || !resultFields) return;
+    // Only initialize if data is available and we haven't initialized yet
+    if (resultFieldsInitializedRef.current || !resultFields) return;
 
     const resultSelectedIds = new Set(
       template.resultFields.map((rf) => rf.resultFieldId)
@@ -249,7 +243,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
 
     // Mark as initialized to prevent re-runs from React Query refetches
     resultFieldsInitializedRef.current = true;
-  }, [open, resultFields, template.resultFields]);
+  }, [resultFields, template.resultFields]);
 
   const handleAddField = (field: DraggableField, type: string) => {
     if (type === "case") {
@@ -353,7 +347,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
       }
 
       setIsSubmitting(false);
-      setOpen(false);
+      onClose();
     } catch (err: any) {
       console.error("Failed to update template:", err);
       setIsSubmitting(false);
@@ -361,12 +355,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-template-button">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit" data-testid="template-form">
@@ -551,7 +540,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
             <DialogFooter>
               <Button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 variant="outline"
                 data-testid="template-cancel-button"
               >

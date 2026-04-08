@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -8,10 +9,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Configurations } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { CircleCheckBig, CircleSlash2, Component } from "lucide-react";
+import {
+  CircleCheckBig,
+  CircleSlash2,
+  Component,
+  SquarePen,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteConfigurationModal } from "./DeleteConfig";
-import { EditConfigurationModal } from "./EditConfig";
 
 export type ConfigWithVariants = Configurations & {
   variants: {
@@ -26,7 +31,9 @@ export type ConfigWithVariants = Configurations & {
 
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"common">>,
-  handleToggle: (id: number, isEnabled: boolean) => void
+  handleToggle: (id: number, isEnabled: boolean) => void,
+  onEditConfiguration?: (config: ConfigWithVariants) => void,
+  onDeleteConfiguration?: (config: ConfigWithVariants) => void
 ): ColumnDef<ConfigWithVariants>[] => [
   {
     id: "name",
@@ -116,14 +123,20 @@ export const getColumns = (
     size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditConfigurationModal
-          key={`edit-${row.original.id}`}
-          configuration={row.original}
-        />
-        <DeleteConfigurationModal
-          key={`delete-${row.original.id}`}
-          configuration={row.original}
-        />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditConfiguration?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="destructive"
+          className="px-2 py-1 h-auto"
+          onClick={() => onDeleteConfiguration?.(row.original)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
     ),
   },
