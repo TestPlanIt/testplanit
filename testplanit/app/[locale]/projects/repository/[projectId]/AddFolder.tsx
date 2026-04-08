@@ -8,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -27,10 +26,10 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleX, FolderPlus, Undo2 } from "lucide-react";
+import { CircleX, Undo2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -47,38 +46,32 @@ const FormSchema = z.object({
   docs: z.any().optional(),
 });
 
-interface AddFolderModalProps {
+interface AddFolderProps {
   projectId: number;
   repositoryId: number;
   parentId: number | null;
-  panelWidth: number;
+  open: boolean;
+  onClose: () => void;
   onFolderCreated?: (newFolderId: number, parentId: number | null) => void;
 }
 
-export function AddFolderModal({
+export function AddFolder({
   projectId,
   repositoryId,
   parentId,
-  panelWidth: _panelWidth,
+  open,
+  onClose,
   onFolderCreated,
-}: AddFolderModalProps) {
+}: AddFolderProps) {
   const t = useTranslations();
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createFolder } = useCreateRepositoryFolders();
   const { data: session } = useSession();
-  const [editorKey, setEditorKey] = useState(0);
-  // Local state for the effective parent - allows user to override to create root folder
+  // Local state for the effective parent - allows user to override to create root folder.
+  // Initialized from prop; reset on each open via React unmount.
   const [effectiveParentId, setEffectiveParentId] = useState<number | null>(
     parentId
   );
-
-  // Sync effectiveParentId when dialog opens or parentId prop changes
-  useEffect(() => {
-    if (open) {
-      setEffectiveParentId(parentId);
-    }
-  }, [open, parentId]);
 
   const { data: parent } = useFindFirstRepositoryFolders(
     {
@@ -103,17 +96,8 @@ export function AddFolderModal({
       select: {
         order: true,
       },
-    },
-    {
-      enabled: open, // Only fetch when dialog is open
     }
   );
-
-  const handleCancel = () => {
-    setOpen(false);
-    form.reset();
-    setEditorKey((prev) => prev + 1);
-  };
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -122,46 +106,6 @@ export function AddFolderModal({
       docs: emptyEditorContent,
     },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        name: "",
-        docs: emptyEditorContent,
-      });
-      setEditorKey((prev) => prev + 1);
-    }
-  }, [open, form.reset, form]);
-
-  // Keyboard shortcut: Shift+N to open Add Folder dialog
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if Shift+N is pressed and no modal/input is focused
-      if (
-        e.shiftKey &&
-        e.key === "N" &&
-        !open &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.altKey
-      ) {
-        // Don't trigger if user is typing in an input, textarea, or contenteditable
-        const target = e.target as HTMLElement;
-        const isInputElement =
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.isContentEditable;
-
-        if (!isInputElement) {
-          e.preventDefault();
-          setOpen(true);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
 
   if (!session?.user?.id) {
     return null;
@@ -197,10 +141,8 @@ export function AddFolderModal({
           },
         });
 
-        setOpen(false);
+        onClose();
         setIsSubmitting(false);
-        form.reset();
-        setEditorKey((prev) => prev + 1);
 
         // Trigger refetch to update the tree view and pass new folder info
         if (onFolderCreated && newFolder) {
@@ -232,29 +174,7 @@ export function AddFolderModal({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-          form.reset();
-          setEditorKey((prev) => prev + 1);
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button
-          className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-          variant="secondary"
-          data-testid="add-folder-button"
-          title={`${t("repository.addFolder")} (Shift+N)`}
-        >
-          <FolderPlus className="w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {t("repository.addFolder")}
-          </span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -347,7 +267,6 @@ export function AddFolderModal({
                   <FormControl>
                     <div className="w-full border rounded-lg">
                       <TipTapEditor
-                        key={editorKey}
                         content={field.value}
                         onUpdate={(newContent) => field.onChange(newContent)}
                         placeholder={t("common.ui.enterDocumentation")}
@@ -371,7 +290,7 @@ export function AddFolderModal({
               <Button
                 variant="outline"
                 type="button"
-                onClick={handleCancel}
+                onClick={onClose}
                 data-testid="folder-cancel-button"
               >
                 {t("common.cancel")}

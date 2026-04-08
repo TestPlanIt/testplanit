@@ -16,6 +16,8 @@ import {
 import { useFindManyAppConfig } from "~/lib/hooks";
 import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
+import { DeleteAppConfig } from "./DeleteAppConfig";
+import { EditAppConfig } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
 type PageSizeOption = number | "All";
@@ -52,6 +54,10 @@ function AppConfigs() {
     Record<string, boolean>
   >({});
   const [addAppConfigOpen, setAddAppConfigOpen] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<AppConfigRow | null>(null);
+  const [deletingConfig, setDeletingConfig] = useState<AppConfigRow | null>(
+    null
+  );
 
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
@@ -124,7 +130,10 @@ function AppConfigs() {
     setCurrentPage(1);
   };
 
-  const columns = useMemo(() => getColumns(tCommon), [tCommon]);
+  const columns = useMemo(
+    () => getColumns(tCommon, setEditingConfig, setDeletingConfig),
+    [tCommon]
+  );
 
   return (
     <Card>
@@ -205,6 +214,20 @@ function AppConfigs() {
           />
         </div>
       </CardContent>
+      {editingConfig && (
+        <EditAppConfig
+          config={editingConfig}
+          open={editingConfig !== null}
+          onClose={() => setEditingConfig(null)}
+        />
+      )}
+      {deletingConfig && (
+        <DeleteAppConfig
+          config={deletingConfig}
+          open={deletingConfig !== null}
+          onClose={() => setDeletingConfig(null)}
+        />
+      )}
     </Card>
   );
 }

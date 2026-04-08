@@ -8,7 +8,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 // import * as AppConfigHooksMock from "./app-config.hooks.mock";
 
 // Import the mocked Edit modal - needed for DataTable mock
-import { EditAppConfigModal } from "./EditAppConfig";
+import { EditAppConfig } from "./EditAppConfig";
 
 // --- Mocks ---
 
@@ -70,9 +70,12 @@ vi.mock("next/navigation", async (importOriginal) => {
 vi.mock("./AddAppConfig", () => ({
   AddAppConfig: vi.fn(() => <div>{"Mock Add Modal"}</div>),
 }));
+// EditAppConfig is now a pure form component rendered conditionally by the
+// parent page; mock it as a div placeholder. The page test simulates the
+// "edit button clicked" view by rendering the mock for each row.
 vi.mock("./EditAppConfig", () => ({
-  EditAppConfigModal: vi.fn(({ config }) => (
-    <button>{`Mock Edit ${config.key}`}</button>
+  EditAppConfig: vi.fn(({ config }) => (
+    <div>{`Mock Edit ${config.key}`}</div>
   )),
 }));
 
@@ -96,7 +99,12 @@ vi.mock("@/components/tables/DataTable", () => ({
         <div>{`DataTable Received ${data.length} items`}</div>
         {/* Render mocked Edit Modals to verify data prop */}
         {data.map((item: any) => (
-          <EditAppConfigModal key={item.key} config={item} />
+          <EditAppConfig
+            key={item.key}
+            config={item}
+            open={false}
+            onClose={() => {}}
+          />
         ))}
       </div>
     );

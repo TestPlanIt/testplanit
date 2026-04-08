@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -39,7 +38,7 @@ import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea, Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Asterisk, ChevronLeft, ChevronRight, CirclePlus } from "lucide-react";
+import { Asterisk, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -249,8 +248,10 @@ const createFormSchema = (fields: any[]) => {
   });
 };
 
-interface AddCaseModalProps {
+interface AddCaseProps {
   folderId: number;
+  open: boolean;
+  onClose: () => void;
 }
 
 interface FormValues {
@@ -262,7 +263,7 @@ interface FormValues {
   [key: string]: any;
 }
 
-export function AddCaseModal({ folderId }: AddCaseModalProps) {
+export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const t = useTranslations();
   const locale = useLocale();
   const { data: session } = useSession();
@@ -270,7 +271,6 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   const numericProjectId = Number(projectId);
   const queryClient = useQueryClient();
 
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -481,7 +481,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
 
   const handleCancel = () => {
     setSelectedFiles([]);
-    setOpen(false);
+    onClose();
   };
 
   const uploadFiles = async (caseId: number) => {
@@ -1109,11 +1109,8 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
           refetchType: "all",
         });
 
-        setOpen(false);
+        onClose();
         setIsSubmitting(false);
-        setSelectedTags([]);
-        setLinkedIssueIds([]);
-        setSelectedFiles([]);
 
         // Fire-and-forget duplicate check — never blocks the save
         checkForDuplicates(convertedData.name, newCase.id, tagNamesForVersion).catch(() => {});
@@ -1142,20 +1139,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="default"
-          disabled={!folderId}
-          data-testid="add-case-button"
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-        >
-          <CirclePlus className="w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40 select-none">
-            {t("repository.cases.addCase")}
-          </span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1400px]" data-testid="add-case-dialog">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
