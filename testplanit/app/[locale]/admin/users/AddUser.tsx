@@ -1,7 +1,7 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useCreateManyGroupAssignment,
   useCreateManyProjectAssignment,
@@ -182,26 +182,33 @@ export function AddUserModal() {
 
   const handleCancel = () => setOpen(false);
 
-  // Use the new form-specific validation schema
-  const form = useForm<z.infer<typeof AddUserFormValidationSchema>>({
-    resolver: zodResolver(AddUserFormValidationSchema),
-    defaultValues: {
+  const defaultFormValues = useMemo(
+    () => ({
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
       isActive: true,
-      access: "USER",
+      access: "USER" as const,
       roleId: defaultRoleId ? defaultRoleId.toString() : "",
       isApi: false,
-      projects: [],
-      groups: [],
-    },
+      projects: [] as number[],
+      groups: [] as number[],
+    }),
+    [defaultRoleId]
+  );
+
+  // Use the new form-specific validation schema
+  const form = useForm<z.infer<typeof AddUserFormValidationSchema>>({
+    resolver: zodResolver(AddUserFormValidationSchema),
+    defaultValues: defaultFormValues,
   });
 
   const {
     setValue,
     control,
+    reset,
+    clearErrors,
     formState: { errors },
   } = form;
 
@@ -217,6 +224,16 @@ export function AddUserModal() {
       }
     }
   }, [roles, setValue, form]);
+
+  useEffect(() => {
+    if (!open) {
+      reset(defaultFormValues);
+      clearErrors();
+      setDeletedUser(null);
+      setShowRestoreDialog(false);
+      setIsSubmitting(false);
+    }
+  }, [open, defaultFormValues, reset, clearErrors]);
 
   // Check if email server is configured
   useEffect(() => {
