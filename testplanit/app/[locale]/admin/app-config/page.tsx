@@ -5,14 +5,16 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
   PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
 import { useFindManyAppConfig } from "~/lib/hooks";
-import { AddAppConfigModal } from "./AddAppConfig";
+import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
 import { AppConfigRow } from "./types";
 
@@ -49,6 +51,7 @@ function AppConfigs() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  const [addAppConfigOpen, setAddAppConfigOpen] = useState(false);
 
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
@@ -128,7 +131,16 @@ function AppConfigs() {
       <CardHeader>
         <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
           <CardTitle data-testid="app-config-title">{tGlobal("admin.menu.appConfig")}</CardTitle>
-          <AddAppConfigModal />
+          <Button onClick={() => setAddAppConfigOpen(true)}>
+            <CirclePlus className="h-4 w-4" />
+            {t("addConfig")}
+          </Button>
+          {addAppConfigOpen && (
+            <AddAppConfig
+              open={addAppConfigOpen}
+              onClose={() => setAddAppConfigOpen(false)}
+            />
+          )}
         </div>
       </CardHeader>
       <CardContent>

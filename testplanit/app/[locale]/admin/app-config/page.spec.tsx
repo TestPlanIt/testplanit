@@ -64,8 +64,11 @@ vi.mock("next/navigation", async (importOriginal) => {
 });
 
 // Modals (Mocking the implementation)
+// AddAppConfig is now a pure form component rendered conditionally by the
+// parent page; mock it as a placeholder div since the parent owns the
+// trigger button directly.
 vi.mock("./AddAppConfig", () => ({
-  AddAppConfigModal: vi.fn(() => <button>{"Mock Add Modal Trigger"}</button>),
+  AddAppConfig: vi.fn(() => <div>{"Mock Add Modal"}</div>),
 }));
 vi.mock("./EditAppConfig", () => ({
   EditAppConfigModal: vi.fn(({ config }) => (
@@ -151,7 +154,12 @@ test("renders initial layout, title, and add button", async () => {
 
   // Assertions for static elements first
   expect(screen.getByText("admin.menu.appConfig")).toBeInTheDocument();
-  expect(screen.getByText("Mock Add Modal Trigger")).toBeInTheDocument();
+  // Trigger button is rendered directly by the page (not inside the modal)
+  expect(
+    screen.getByRole("button", { name: "admin.appConfig.addConfig" })
+  ).toBeInTheDocument();
+  // The modal itself is conditionally mounted — not in the DOM until opened
+  expect(screen.queryByText("Mock Add Modal")).not.toBeInTheDocument();
   expect(
     screen.getByPlaceholderText("admin.appConfig.filterPlaceholder")
   ).toBeInTheDocument();
@@ -190,8 +198,13 @@ test("renders table indication and edit buttons when data exists", async () => {
   expect(screen.getByText("Mock Edit key1")).toBeVisible(); // Can use getBy now
   expect(screen.getByText("Mock Edit key2")).toBeVisible(); // Can use getBy now
 
-  // Check for the Add Modal Trigger (rendered outside DataTable)
-  expect(screen.getByText("Mock Add Modal Trigger")).toBeInTheDocument();
+  // Check for the Add trigger button (rendered directly by the page,
+  // outside DataTable). The modal itself is conditionally mounted and
+  // only appears when the button is clicked.
+  expect(
+    screen.getByRole("button", { name: "admin.appConfig.addConfig" })
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Mock Add Modal")).not.toBeInTheDocument();
 });
 
 test("calls data fetch hook with filter when text is entered", async () => {

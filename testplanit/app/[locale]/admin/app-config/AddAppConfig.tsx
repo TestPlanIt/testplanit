@@ -6,25 +6,27 @@ import {
   DialogContent,
   DialogDescription, DialogFooter, DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useCreateAppConfig } from "~/lib/hooks";
 
-export function AddAppConfigModal() {
+interface AddAppConfigProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
   const t = useTranslations("admin.appConfig");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const FormSchema = z.object({
@@ -56,8 +58,7 @@ export function AddAppConfigModal() {
           value: parsedValue,
         },
       });
-      setOpen(false);
-      form.reset();
+      onClose();
     } catch {
       form.setError("value", {
         type: "custom",
@@ -69,13 +70,7 @@ export function AddAppConfigModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="h-4 w-4" />
-          {t("addConfig")}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent data-testid="add-app-config-modal">
         <DialogHeader>
           <DialogTitle>{t("addConfig")}</DialogTitle>
@@ -124,7 +119,7 @@ export function AddAppConfigModal() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={onClose}
               disabled={isSubmitting}
               data-testid="app-config-cancel-button"
             >
