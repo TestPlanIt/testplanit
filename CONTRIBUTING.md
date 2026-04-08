@@ -205,6 +205,36 @@ src/
 └── tests/          # Test files
 ```
 
+### Modal Forms
+
+Any modal that contains a form (create/edit dialogs, wizards, etc.) must be conditionally mounted by its parent. The parent page owns the `open` state and renders the trigger button inline; the modal file is a pure form component that takes `{ open, onClose }` as props.
+
+```tsx
+// parent page
+const [addTagOpen, setAddTagOpen] = useState(false);
+
+return (
+  <>
+    <Button onClick={() => setAddTagOpen(true)}>Add Tag</Button>
+    {addTagOpen && (
+      <AddTag open={addTagOpen} onClose={() => setAddTagOpen(false)} />
+    )}
+  </>
+);
+```
+
+The modal component must NOT:
+
+- Hold its own `const [open, setOpen] = useState(false)` for the dialog state
+- Include a `<DialogTrigger>` or the trigger button itself
+- Rely on `useEffect` or imperative `reset()` calls to clear form state on close
+
+**Why this matters:** If the modal holds its own `open` state, it stays mounted for the entire page lifetime, so `useForm` state and any local `useState` values persist across open/close cycles. This leaks form data — including sensitive fields like passwords, API keys, upload URLs, and editor content — into subsequent uses of the dialog. Conditional mounting makes React's unmount handle all cleanup automatically, so the bug is structurally impossible.
+
+Reference implementations: `app/[locale]/admin/tags/AddTag.tsx`, `app/[locale]/admin/groups/AddGroup.tsx`, `app/[locale]/admin/llm/AddLlmIntegration.tsx`, `components/admin/integrations/IntegrationModal.tsx`.
+
+A CI check (`pnpm check:modal-pattern`) runs as part of `pnpm lint` and fails if a file matches the anti-pattern (`useForm` + local `[open, setOpen]` state + `DialogTrigger` without a reset mitigation).
+
 ## Commit Guidelines
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
