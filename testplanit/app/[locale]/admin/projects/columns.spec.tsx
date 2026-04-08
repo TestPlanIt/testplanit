@@ -88,13 +88,6 @@ vi.mock("~/lib/llm/provider-styles", () => ({
   }) => <span data-testid={`llm-badge-${provider}`}>{name ?? provider}</span>,
 }));
 
-// Mock DeleteProjectModal
-vi.mock("./DeleteProject", () => ({
-  DeleteProjectModal: ({ project }: { project: any }) => (
-    <button data-testid={`delete-project-${project.id}`}>Delete</button>
-  ),
-}));
-
 const mockTranslations = ((key: string) => key) as ReturnType<
   typeof import("next-intl").useTranslations<"common">
 >;

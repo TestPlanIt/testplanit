@@ -16,10 +16,9 @@ import {
   User
 } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Bug, GitBranchIcon, SquarePen } from "lucide-react";
+import { Bug, GitBranchIcon, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LlmProviderBadge } from "~/lib/llm/provider-styles";
-import { DeleteProjectModal } from "./DeleteProject";
 
 export interface ExtendedProjects extends Projects {
   creator: User;
@@ -50,7 +49,8 @@ export const getColumns = (
   userPreferences: any,
   handleToggleCompleted: (id: number, isCompleted: boolean) => void,
   handleOpenEditModal: (project: ExtendedProjects) => void,
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  onDeleteProject?: (project: ExtendedProjects) => void
 ): ColumnDef<ExtendedProjects>[] => {
   return [
     {
@@ -298,10 +298,14 @@ export const getColumns = (
           >
             <SquarePen className="h-4 w-4" />
           </Button>
-          <DeleteProjectModal
-            key={`delete-${row.original.id}`}
-            project={row.original}
-          />
+          <Button
+            variant="destructive"
+            size="icon"
+            className="px-2 py-1 h-auto"
+            onClick={() => onDeleteProject?.(row.original)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
