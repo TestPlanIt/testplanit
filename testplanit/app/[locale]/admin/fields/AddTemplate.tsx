@@ -20,8 +20,6 @@ import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 
-import { CirclePlus } from "lucide-react";
-
 import {
   Form,
   FormControl,
@@ -38,7 +36,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
@@ -46,8 +43,12 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 
-export function AddTemplateModal() {
-  const [open, setOpen] = useState(false);
+interface AddTemplateProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddTemplate({ open, onClose }: AddTemplateProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations("admin.templates.add");
   const tCommon = useTranslations("common");
@@ -265,7 +266,7 @@ export function AddTemplateModal() {
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -285,13 +286,7 @@ export function AddTemplateModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button data-testid="add-template-button">
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("title")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="template-form">
@@ -498,7 +493,7 @@ export function AddTemplateModal() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 disabled={isSubmitting}
                 data-testid="template-cancel-button"
               >

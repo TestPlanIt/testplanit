@@ -6,9 +6,10 @@ import {
   AlertDialogAction,
   AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Templates } from "@prisma/client";
-import { LayoutTemplate } from "lucide-react";
+import { CirclePlus, LayoutTemplate } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,7 +17,7 @@ import {
   useCreateManyTemplateProjectAssignment, useDeleteManyTemplateProjectAssignment, useFindManyProjects, useFindManyTemplates, useUpdateManyTemplates, useUpdateTemplates
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
-import { AddTemplateModal } from "./AddTemplate";
+import { AddTemplate } from "./AddTemplate";
 import { getColumns } from "./templateColumns";
 
 export default function TemplateComponent() {
@@ -40,6 +41,7 @@ export default function TemplateComponent() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<
     number | undefined
   >(undefined);
+  const [addTemplateOpen, setAddTemplateOpen] = useState(false);
 
   const { mutateAsync: updateTemplate } = useUpdateTemplates();
   const { mutateAsync: updateManyTemplate } = useUpdateManyTemplates();
@@ -177,7 +179,21 @@ export default function TemplateComponent() {
                 </CardTitle>
               </div>
               <div>
-                <AddTemplateModal />
+                <Button
+                  data-testid="add-template-button"
+                  onClick={() => setAddTemplateOpen(true)}
+                >
+                  <CirclePlus className="w-4" />
+                  <span className="hidden md:inline">
+                    {t("add.title")}
+                  </span>
+                </Button>
+                {addTemplateOpen && (
+                  <AddTemplate
+                    open={addTemplateOpen}
+                    onClose={() => setAddTemplateOpen(false)}
+                  />
+                )}
               </div>
             </div>
           </CardHeader>
