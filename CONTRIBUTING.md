@@ -207,7 +207,9 @@ src/
 
 ### Modal Forms
 
-Any modal that contains a form (create/edit dialogs, wizards, etc.) must be conditionally mounted by its parent. The parent page owns the `open` state and renders the trigger button inline; the modal file is a pure form component that takes `{ open, onClose }` as props.
+Any modal that contains a form (create/edit/delete dialogs, wizards, etc.) must be conditionally mounted by its parent. The parent page owns the `open` state (and the row being edited/deleted, when applicable) and renders the trigger button inline; the modal file is a pure form component that takes `{ open, onClose }` as props.
+
+**Add modal:**
 
 ```tsx
 // parent page
@@ -223,17 +225,56 @@ return (
 );
 ```
 
+**Edit/Delete modal (row-driven):**
+
+```tsx
+// parent page
+const [editingTag, setEditingTag] = useState<Tag | null>(null);
+const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
+
+const columns = useMemo(
+  () => getColumns(tCommon, setEditingTag, setDeletingTag),
+  [tCommon]
+);
+
+return (
+  <>
+    <DataTable columns={columns} data={tags} />
+    {editingTag && (
+      <EditTag
+        tag={editingTag}
+        open={editingTag !== null}
+        onClose={() => setEditingTag(null)}
+      />
+    )}
+    {deletingTag && (
+      <DeleteTag
+        tag={deletingTag}
+        open={deletingTag !== null}
+        onClose={() => setDeletingTag(null)}
+      />
+    )}
+  </>
+);
+```
+
+The columns file accepts `onEditX` / `onDeleteX` callback props and wires them to plain Button `onClick` handlers — no `<DialogTrigger>` lives inside columns or modals.
+
 The modal component must NOT:
 
 - Hold its own `const [open, setOpen] = useState(false)` for the dialog state
-- Include a `<DialogTrigger>` or the trigger button itself
+- Include a `<DialogTrigger>`, `<AlertDialogTrigger>`, or the trigger button itself
 - Rely on `useEffect` or imperative `reset()` calls to clear form state on close
 
 **Why this matters:** If the modal holds its own `open` state, it stays mounted for the entire page lifetime, so `useForm` state and any local `useState` values persist across open/close cycles. This leaks form data — including sensitive fields like passwords, API keys, upload URLs, and editor content — into subsequent uses of the dialog. Conditional mounting makes React's unmount handle all cleanup automatically, so the bug is structurally impossible.
 
-Reference implementations: `app/[locale]/admin/tags/AddTag.tsx`, `app/[locale]/admin/groups/AddGroup.tsx`, `app/[locale]/admin/llm/AddLlmIntegration.tsx`, `components/admin/integrations/IntegrationModal.tsx`.
+Reference implementations:
 
-A CI check (`pnpm check:modal-pattern`) runs as part of `pnpm lint` and fails if a file matches the anti-pattern (`useForm` + local `[open, setOpen]` state + `DialogTrigger` without a reset mitigation).
+- Add: `app/[locale]/admin/tags/AddTag.tsx`, `app/[locale]/admin/groups/AddGroup.tsx`, `app/[locale]/admin/llm/AddLlmIntegration.tsx`
+- Edit: `app/[locale]/admin/tags/EditTag.tsx`, `app/[locale]/admin/users/EditUser.tsx`, `app/[locale]/admin/llm/EditLlmIntegration.tsx`
+- Delete: `app/[locale]/admin/tags/DeleteTag.tsx`, `app/[locale]/admin/users/DeleteUser.tsx`, `app/[locale]/admin/issues/DeleteIssue.tsx`
+
+An optional CI check is available via `pnpm check:modal-pattern` and reports any file matching the anti-pattern (`useForm` + local `[open, setOpen]` state + `DialogTrigger`). It is not part of `pnpm lint` — run it manually when refactoring modals.
 
 ## Commit Guidelines
 
