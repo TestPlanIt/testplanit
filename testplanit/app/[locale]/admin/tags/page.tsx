@@ -14,13 +14,15 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { CirclePlus } from "lucide-react";
 import { useCountTags, useFindManyTags } from "~/lib/hooks";
-import { AddTagModal } from "./AddTag";
+import { AddTag } from "./AddTag";
 import { getColumns } from "./columns";
 
 type PageSizeOption = number | "All";
@@ -56,6 +58,7 @@ function TagList() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [addTagOpen, setAddTagOpen] = useState(false);
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
@@ -294,7 +297,18 @@ function TagList() {
               </CardTitle>
             </div>
             <div>
-              <AddTagModal />
+              <Button onClick={() => setAddTagOpen(true)}>
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">
+                  {tGlobal("tags.add.button")}
+                </span>
+              </Button>
+              {addTagOpen && (
+                <AddTag
+                  open={addTagOpen}
+                  onClose={() => setAddTagOpen(false)}
+                />
+              )}
             </div>
           </div>
           <CardDescription>{tGlobal("tags.description")}</CardDescription>
