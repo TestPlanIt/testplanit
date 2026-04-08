@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { WorkflowScope } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
 import { ExtendedWorkflows } from "~/types/Workflows";
-import { DeleteWorkflowsModal } from "./DeleteWorkflow";
-import { EditWorkflowsModal } from "./EditWorkflow";
 
 // Helper function to check if a workflow is the last of its type in its scope
 const isLastWorkflowOfType = (
@@ -34,7 +32,9 @@ export const getColumns = (
     id: number,
     isDefault: boolean,
     scope: WorkflowScope
-  ) => void
+  ) => void,
+  onEditWorkflow?: (workflow: ExtendedWorkflows) => void,
+  onDeleteWorkflow?: (workflow: ExtendedWorkflows) => void
 ): ColumnDef<ExtendedWorkflows>[] => [
   {
     id: "name",
@@ -139,9 +139,21 @@ export const getColumns = (
         !isLastWorkflowOfType(workflow, workflows) && !workflow.isDefault;
       return (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-          <EditWorkflowsModal workflows={workflow} allWorkflows={workflows} />
+          <Button
+            variant="ghost"
+            className="px-2 py-1 h-auto"
+            onClick={() => onEditWorkflow?.(workflow)}
+          >
+            <SquarePen className="h-5 w-5" />
+          </Button>
           {canDelete ? (
-            <DeleteWorkflowsModal workflows={workflow} />
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              onClick={() => onDeleteWorkflow?.(workflow)}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
           ) : (
             <Button
               variant="ghost"

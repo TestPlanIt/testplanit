@@ -36,6 +36,8 @@ import {
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
 import { AddMilestoneType } from "./AddMilestoneTypes";
 import { ExtendedMilestoneTypes, getColumns } from "./columns";
+import { DeleteMilestoneType } from "./DeleteMilestoneTypes";
+import { EditMilestoneType } from "./EditMilestoneTypes";
 
 type PageSizeOption = number | "All";
 
@@ -78,6 +80,10 @@ function MilestoneTypes() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [addMilestoneTypeOpen, setAddMilestoneTypeOpen] = useState(false);
+  const [editingMilestoneType, setEditingMilestoneType] =
+    useState<ExtendedMilestoneTypes | null>(null);
+  const [deletingMilestoneType, setDeletingMilestoneType] =
+    useState<ExtendedMilestoneTypes | null>(null);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -240,7 +246,13 @@ function MilestoneTypes() {
   };
 
   const columns: CustomColumnDef<ExtendedMilestoneTypes>[] = useMemo(
-    () => getColumns(handleToggleDefault, tCommon),
+    () =>
+      getColumns(
+        handleToggleDefault,
+        tCommon,
+        setEditingMilestoneType,
+        setDeletingMilestoneType
+      ),
     [handleToggleDefault, tCommon]
   );
 
@@ -376,6 +388,20 @@ function MilestoneTypes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {editingMilestoneType && (
+        <EditMilestoneType
+          milestoneType={editingMilestoneType}
+          open={editingMilestoneType !== null}
+          onClose={() => setEditingMilestoneType(null)}
+        />
+      )}
+      {deletingMilestoneType && (
+        <DeleteMilestoneType
+          milestoneType={deletingMilestoneType}
+          open={deletingMilestoneType !== null}
+          onClose={() => setDeletingMilestoneType(null)}
+        />
+      )}
     </main>
   );
 }

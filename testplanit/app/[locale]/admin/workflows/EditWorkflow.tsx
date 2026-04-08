@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/incompatible-library */
 import { Projects, Workflows, WorkflowType } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useCreateManyProjectWorkflowAssignment,
   useDeleteManyProjectWorkflowAssignment, useFindManyProjects, useUpdateManyWorkflows, useUpdateWorkflows
@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
-import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -34,7 +33,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import {
@@ -68,9 +66,11 @@ interface ExtendedWorkflows extends Workflows {
   projects: { projectId: number }[];
 }
 
-interface EditWorkflowsModalProps {
+interface EditWorkflowsProps {
   workflows: ExtendedWorkflows;
   allWorkflows: ExtendedWorkflows[];
+  open: boolean;
+  onClose: () => void;
 }
 
 // Helper function to check if a workflow is the last of its type in its scope
@@ -87,11 +87,12 @@ const isLastWorkflowOfType = (
   return sameTypeAndScope.length === 1;
 };
 
-export function EditWorkflowsModal({
+export function EditWorkflows({
   workflows: workflows,
   allWorkflows,
-}: EditWorkflowsModalProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: EditWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIconId, setSelectedIconId] = useState<number | null>(
     workflows.iconId
@@ -128,8 +129,6 @@ export function EditWorkflowsModal({
     setValue("projects", allProjectIds);
   };
 
-  const handleCancel = () => setOpen(false);
-
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
   };
@@ -137,18 +136,6 @@ export function EditWorkflowsModal({
   const handleColorSelect = (colorId: number) => {
     setSelectedColorId(colorId);
   };
-
-  const defaultFormValues = useMemo(
-    () => ({
-      name: workflows.name,
-      isEnabled: workflows.isEnabled,
-      isDefault: workflows.isDefault,
-      scope: workflows.scope,
-      workflowType: workflows.workflowType,
-      projects: workflows.projects.map((p) => p.projectId),
-    }),
-    [workflows]
-  );
 
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");
@@ -174,14 +161,15 @@ export function EditWorkflowsModal({
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: defaultFormValues,
+    defaultValues: {
+      name: workflows.name,
+      isEnabled: workflows.isEnabled,
+      isDefault: workflows.isDefault,
+      scope: workflows.scope,
+      workflowType: workflows.workflowType,
+      projects: workflows.projects.map((p) => p.projectId),
+    },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form, form.reset]);
 
   const {
     setValue,
@@ -240,7 +228,7 @@ export function EditWorkflowsModal({
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -261,12 +249,7 @@ export function EditWorkflowsModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -508,7 +491,7 @@ export function EditWorkflowsModal({
                     : tGlobal("common.errors.unknown")}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

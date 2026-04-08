@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { FieldIcon, MilestoneTypes } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
-import { DeleteMilestoneTypeModal } from "./DeleteMilestoneTypes";
-import { EditMilestoneTypeModal } from "./EditMilestoneTypes";
 
 export interface ExtendedMilestoneTypes extends MilestoneTypes {
   projects: {
@@ -19,7 +17,9 @@ export interface ExtendedMilestoneTypes extends MilestoneTypes {
 
 export const getColumns = (
   handleToggleDefault: (id: number, isDefault: boolean) => void,
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  onEditMilestoneType?: (milestoneType: ExtendedMilestoneTypes) => void,
+  onDeleteMilestoneType?: (milestoneType: ExtendedMilestoneTypes) => void
 ): ColumnDef<ExtendedMilestoneTypes>[] => [
   {
     id: "name",
@@ -83,10 +83,13 @@ export const getColumns = (
     size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditMilestoneTypeModal
-          key={`edit-${row.original.id}`}
-          milestoneType={row.original}
-        />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditMilestoneType?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
         {row.original.isDefault ? (
           <Button
             variant="ghost"
@@ -96,10 +99,13 @@ export const getColumns = (
             <Trash2 className="h-5 w-5" />
           </Button>
         ) : (
-          <DeleteMilestoneTypeModal
-            key={`delete-${row.original.id}`}
-            milestoneType={row.original}
-          />
+          <Button
+            variant="destructive"
+            className="px-2 py-1 h-auto"
+            onClick={() => onDeleteMilestoneType?.(row.original)}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
         )}
       </div>
     ),

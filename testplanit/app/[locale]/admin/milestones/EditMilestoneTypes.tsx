@@ -1,7 +1,7 @@
 "use client";
 import { MilestoneTypes } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useCreateManyMilestoneTypesAssignment,
   useDeleteManyMilestoneTypesAssignment, useFindManyProjects, useUpdateManyMilestoneTypes, useUpdateMilestoneTypes
@@ -20,7 +20,6 @@ import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
-import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -38,26 +37,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 
-interface ExtendedMilestoneTypes extends MilestoneTypes {
+export interface ExtendedMilestoneTypes extends MilestoneTypes {
   projects: { projectId: number }[];
 }
-interface EditMilestoneTypeModalProps {
+interface EditMilestoneTypeProps {
   milestoneType: ExtendedMilestoneTypes;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditMilestoneTypeModal({
+export function EditMilestoneType({
   milestoneType,
-}: EditMilestoneTypeModalProps) {
+  open,
+  onClose,
+}: EditMilestoneTypeProps) {
   const t = useTranslations("admin.milestones.edit");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIconId, setSelectedIconId] = useState<number | null>(
     milestoneType.iconId
@@ -100,33 +101,20 @@ export function EditMilestoneTypeModal({
     setValue("projects", allProjectIds);
   };
 
-  const handleCancel = () => setOpen(false);
-
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
   };
 
-  const defaultFormValues = useMemo(
-    () => ({
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
       name: milestoneType.name,
       isDefault: milestoneType.isDefault,
       projects: (milestoneType.projects || []).map(
         (project) => project.projectId
       ),
-    }),
-    [milestoneType.name, milestoneType.isDefault, milestoneType.projects]
-  );
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: defaultFormValues,
+    },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form, form.reset]);
 
   const {
     control,
@@ -176,7 +164,7 @@ export function EditMilestoneTypeModal({
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -196,12 +184,7 @@ export function EditMilestoneTypeModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -329,7 +312,7 @@ export function EditMilestoneTypeModal({
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

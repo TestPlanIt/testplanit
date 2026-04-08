@@ -1,6 +1,6 @@
 "use client";
 import { Status } from "@prisma/client";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useCreateManyProjectStatusAssignment, useCreateManyStatusScopeAssignment, useDeleteManyProjectStatusAssignment, useDeleteManyStatusScopeAssignment, useFindManyProjects, useFindManyStatusScope, useUpdateStatus
 } from "~/lib/hooks";
@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { ColorPicker } from "@/components/ColorPicker";
-import { SquarePen } from "lucide-react";
 
 import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
@@ -38,7 +37,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
@@ -73,16 +71,17 @@ interface ExtendedStatus extends Status {
   projects: { projectId: number }[];
 }
 
-interface EditStatusModalProps {
+interface EditStatusProps {
   status: ExtendedStatus;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditStatusModal({ status }: EditStatusModalProps) {
+export function EditStatus({ status, open, onClose }: EditStatusProps) {
   const t = useTranslations("admin.statuses.edit");
   const tAdd = useTranslations("admin.statuses.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(
     status.colorId
@@ -143,15 +142,18 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
     );
   };
 
-  const handleCancel = () => setOpen(false);
-
   const handleColorSelect = (colorId: number) => {
     setSelectedColorId(colorId);
     form.setValue("colorId", colorId, { shouldValidate: true });
   };
 
-  const defaultFormValues = useMemo(
-    () => ({
+  const EditStatusFormSchema = createEditStatusFormSchema(t, tAdd);
+
+  type EditStatusFormData = z.infer<typeof EditStatusFormSchema>;
+
+  const form = useForm<EditStatusFormData>({
+    resolver: zodResolver(EditStatusFormSchema),
+    defaultValues: {
       name: status.name,
       systemName: status.systemName,
       aliases: status.aliases ?? "",
@@ -162,25 +164,8 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
       isCompleted: status.isCompleted,
       scope: status.scope.map((p) => p.scopeId),
       projects: status.projects.map((p) => p.projectId),
-    }),
-    [status]
-  );
-
-  const EditStatusFormSchema = createEditStatusFormSchema(t, tAdd);
-
-  type EditStatusFormData = z.infer<typeof EditStatusFormSchema>;
-
-  const form = useForm<EditStatusFormData>({
-    resolver: zodResolver(EditStatusFormSchema),
-    defaultValues: defaultFormValues,
+    },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-      setSelectedColorId(status.colorId);
-    }
-  }, [open, defaultFormValues, form, status.colorId]);
 
   const {
     control,
@@ -253,7 +238,7 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -273,12 +258,7 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form
@@ -575,7 +555,7 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
                     : errors.root.message || tGlobal("common.errors.unknown")}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
