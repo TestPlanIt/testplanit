@@ -22,9 +22,9 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -65,13 +65,18 @@ type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface EditPromptConfigProps {
   config: ExtendedPromptConfig;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditPromptConfig({ config }: EditPromptConfigProps) {
+export function EditPromptConfig({
+  config,
+  open,
+  onClose,
+}: EditPromptConfigProps) {
   const t = useTranslations("admin.prompts");
   const tEdit = useTranslations("admin.prompts.edit");
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
@@ -85,42 +90,35 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
 
   const formSchema = createFormSchema();
 
+  // Build initial prompt values from config (component is mounted fresh
+  // on each open so this is computed once per edit cycle).
+  const initialPromptValues = (() => {
+    const promptValues: Record<string, any> = {};
+    for (const feature of featureKeys) {
+      const existing = config.prompts?.find((p) => p.feature === feature);
+      promptValues[feature] = {
+        id: existing?.id || "",
+        systemPrompt: existing?.systemPrompt || "",
+        userPrompt: existing?.userPrompt || "",
+        temperature: existing?.temperature ?? 0.7,
+        maxOutputTokens: existing?.maxOutputTokens ?? 2048,
+        llmIntegrationId: existing?.llmIntegrationId ?? null,
+        modelOverride: existing?.modelOverride ?? null,
+      };
+    }
+    return promptValues;
+  })();
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      isDefault: false,
-      isActive: true,
-      prompts: {},
+      name: config.name,
+      description: config.description || "",
+      isDefault: config.isDefault,
+      isActive: config.isActive,
+      prompts: initialPromptValues,
     },
   });
-
-  useEffect(() => {
-    if (config && open) {
-      const promptValues: Record<string, any> = {};
-      for (const feature of featureKeys) {
-        const existing = config.prompts?.find((p) => p.feature === feature);
-        promptValues[feature] = {
-          id: existing?.id || "",
-          systemPrompt: existing?.systemPrompt || "",
-          userPrompt: existing?.userPrompt || "",
-          temperature: existing?.temperature ?? 0.7,
-          maxOutputTokens: existing?.maxOutputTokens ?? 2048,
-          llmIntegrationId: existing?.llmIntegrationId ?? null,
-          modelOverride: existing?.modelOverride ?? null,
-        };
-      }
-
-      form.reset({
-        name: config.name,
-        description: config.description || "",
-        isDefault: config.isDefault,
-        isActive: config.isActive,
-        prompts: promptValues,
-      });
-    }
-  }, [config, open, form]);
 
   const onSubmit = async (values: FormData) => {
     setLoading(true);
@@ -197,7 +195,7 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
 
       toast.success(tCommon("fields.success"));
 
-      setOpen(false);
+      onClose();
     } catch (error: any) {
       console.error("Error updating prompt config:", error);
       const message =
@@ -212,16 +210,7 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(true)}
-        className="px-2 py-1 h-auto"
-      >
-        <Edit className="h-4 w-4" />
-      </Button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tEdit("title")}</DialogTitle>
@@ -330,7 +319,7 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setOpen(false)}
+                  onClick={onClose}
                 >
                   {tCommon("cancel")}
                 </Button>

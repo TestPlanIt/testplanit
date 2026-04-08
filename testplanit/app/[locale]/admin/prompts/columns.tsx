@@ -1,14 +1,13 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Projects, PromptConfig, PromptConfigPrompt } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { MessageSquareCode } from "lucide-react";
+import { Edit, MessageSquareCode, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCountProjects } from "~/lib/hooks/projects";
-import { DeletePromptConfig } from "./DeletePromptConfig";
-import { EditPromptConfig } from "./EditPromptConfig";
 
 export interface PromptConfigPromptWithIntegration extends PromptConfigPrompt {
   llmIntegration?: { id: number; name: string } | null;
@@ -40,7 +39,9 @@ export const getColumns = (
   userPreferences: any,
   handleToggleDefault: (id: string, currentIsDefault: boolean) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
-  t: ReturnType<typeof useTranslations<"admin.prompts">>
+  t: ReturnType<typeof useTranslations<"admin.prompts">>,
+  onEditConfig?: (config: ExtendedPromptConfig) => void,
+  onDeleteConfig?: (config: ExtendedPromptConfig) => void
 ): ColumnDef<ExtendedPromptConfig>[] => [
   {
     id: "name",
@@ -225,8 +226,26 @@ export const getColumns = (
     meta: { isPinned: "right" },
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditPromptConfig config={row.original} />
-        <DeletePromptConfig config={row.original} />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEditConfig?.(row.original)}
+          className="px-2 py-1 h-auto"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="destructive"
+          size="icon"
+          onClick={() => onDeleteConfig?.(row.original)}
+          className="px-2 py-1 h-auto"
+          disabled={row.original.isDefault}
+          title={
+            row.original.isDefault ? t("cannotDeleteDefault") : undefined
+          }
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     ),
   },

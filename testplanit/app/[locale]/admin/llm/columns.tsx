@@ -4,12 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle, Sparkles, XCircle } from "lucide-react";
+import { CheckCircle, Edit, Sparkles, Trash2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type MutableRefObject } from "react";
+import { Button } from "@/components/ui/button";
 import { LlmProviderBadge } from "~/lib/llm/provider-styles";
-import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
-import { EditLlmIntegration } from "./EditLlmIntegration";
 import { TestLlmIntegration } from "./TestLlmIntegration";
 
 export interface ExtendedLlmIntegration extends LlmIntegration {
@@ -29,7 +28,9 @@ export const getColumns = (
   tCommon: ReturnType<typeof useTranslations<"common">>,
   t: ReturnType<typeof useTranslations<"admin.llm">>,
   usageByIntegrationIdRef: MutableRefObject<Map<number, number>>,
-  totalIntegrations: number = 0
+  totalIntegrations: number = 0,
+  onEditIntegration?: (integration: ExtendedLlmIntegration) => void,
+  onDeleteIntegration?: (integration: ExtendedLlmIntegration) => void
 ): ColumnDef<ExtendedLlmIntegration>[] => [
   {
     id: "name",
@@ -265,16 +266,34 @@ export const getColumns = (
           key={`test-${row.original.id}`}
           integration={row.original}
         />
-        <EditLlmIntegration
-          key={`edit-${row.original.id}`}
-          integration={row.original}
-          currentSpend={usageByIntegrationIdRef.current.get(row.original.id) ?? 0}
-        />
-        <DeleteLlmIntegration
-          key={`delete-${row.original.id}`}
-          integration={row.original}
-          isOnlyIntegration={totalIntegrations <= 1}
-        />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEditIntegration?.(row.original)}
+          className="px-2 py-1 h-auto"
+          data-testid="llm-edit-button"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="destructive"
+          size="icon"
+          onClick={() => onDeleteIntegration?.(row.original)}
+          className="px-2 py-1 h-auto"
+          disabled={
+            row.original.llmProviderConfig?.isDefault &&
+            totalIntegrations > 1
+          }
+          title={
+            row.original.llmProviderConfig?.isDefault &&
+            totalIntegrations > 1
+              ? t("delete.cannotDeleteDefault")
+              : undefined
+          }
+          data-testid="llm-delete-button"
+        >
+          <Trash2 className="h-8 w-8 shrink-0" />
+        </Button>
       </div>
     ),
   },

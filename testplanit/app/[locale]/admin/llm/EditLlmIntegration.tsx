@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Info, Loader2, RotateCcw } from "lucide-react";
+import { Info, Loader2, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -96,11 +96,15 @@ const PROVIDERS_WITH_DYNAMIC_MODELS = [
 interface EditLlmIntegrationProps {
   integration: any;
   currentSpend?: number;
+  open: boolean;
+  onClose: () => void;
 }
 
 export function EditLlmIntegration({
   integration,
   currentSpend = 0,
+  open,
+  onClose,
 }: EditLlmIntegrationProps) {
   const t = useTranslations("admin.llm.edit");
   const tAdd = useTranslations("admin.llm.add");
@@ -108,7 +112,6 @@ export function EditLlmIntegration({
   const tLlm = useTranslations("admin.llm");
   const tIntegrations = useTranslations("admin.integrations");
   const tBudgetAlert = useTranslations("admin.llm.budgetAlert");
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
@@ -402,7 +405,7 @@ export function EditLlmIntegration({
         description: t("integrationUpdated"),
       });
 
-      setOpen(false);
+      onClose();
       // ZenStack will automatically invalidate hooks - no manual refresh needed
     } catch (error: any) {
       console.error("Error updating integration:", error);
@@ -443,17 +446,12 @@ export function EditLlmIntegration({
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(true)}
-        className="px-2 py-1 h-auto"
-        data-testid="llm-edit-button"
+      <Dialog
+        open={open}
+        onOpenChange={(value) => {
+          if (!resettingSpend && !value) onClose();
+        }}
       >
-        <Edit className="h-4 w-4" />
-      </Button>
-
-      <Dialog open={open} onOpenChange={(value) => { if (!resettingSpend) setOpen(value); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => { if (resettingSpend) e.preventDefault(); }}>
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
@@ -1031,7 +1029,7 @@ export function EditLlmIntegration({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setOpen(false)}
+                  onClick={onClose}
                 >
                   {tCommon("cancel")}
                 </Button>
