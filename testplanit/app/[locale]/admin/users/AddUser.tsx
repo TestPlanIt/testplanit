@@ -1,7 +1,7 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useCreateManyGroupAssignment,
   useCreateManyProjectAssignment,
@@ -34,7 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CirclePlus, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
@@ -55,18 +55,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { Roles } from "@prisma/client";
 
-export function AddUserModal() {
+interface AddUserProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddUser({ open, onClose }: AddUserProps) {
   const t = useTranslations("admin.users.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletedUser, setDeletedUser] = useState<any | null>(null);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -180,10 +183,10 @@ export function AddUserModal() {
     setValue("groups", allGroupIds);
   };
 
-  const handleCancel = () => setOpen(false);
-
-  const defaultFormValues = useMemo(
-    () => ({
+  // Use the new form-specific validation schema
+  const form = useForm<z.infer<typeof AddUserFormValidationSchema>>({
+    resolver: zodResolver(AddUserFormValidationSchema),
+    defaultValues: {
       name: "",
       email: "",
       password: "",
@@ -194,21 +197,12 @@ export function AddUserModal() {
       isApi: false,
       projects: [] as number[],
       groups: [] as number[],
-    }),
-    [defaultRoleId]
-  );
-
-  // Use the new form-specific validation schema
-  const form = useForm<z.infer<typeof AddUserFormValidationSchema>>({
-    resolver: zodResolver(AddUserFormValidationSchema),
-    defaultValues: defaultFormValues,
+    },
   });
 
   const {
     setValue,
     control,
-    reset,
-    clearErrors,
     formState: { errors },
   } = form;
 
@@ -224,16 +218,6 @@ export function AddUserModal() {
       }
     }
   }, [roles, setValue, form]);
-
-  useEffect(() => {
-    if (!open) {
-      reset(defaultFormValues);
-      clearErrors();
-      setDeletedUser(null);
-      setShowRestoreDialog(false);
-      setIsSubmitting(false);
-    }
-  }, [open, defaultFormValues, reset, clearErrors]);
 
   // Check if email server is configured
   useEffect(() => {
@@ -298,7 +282,7 @@ export function AddUserModal() {
 
       setShowRestoreDialog(false);
       setDeletedUser(null);
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch {
       form.setError("root", {
@@ -372,7 +356,7 @@ export function AddUserModal() {
       // Refetch all queries to update the user list immediately (optimistic update)
       queryClient.refetchQueries();
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -424,13 +408,7 @@ export function AddUserModal() {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button>
-            <CirclePlus className="w-4" />
-            <span className="hidden md:inline">{t("button")}</span>
-          </Button>
-        </DialogTrigger>
+      <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -769,7 +747,7 @@ export function AddUserModal() {
                     {errors.root.message}
                   </div>
                 )}
-                <Button variant="outline" type="button" onClick={handleCancel}>
+                <Button variant="outline" type="button" onClick={onClose}>
                   {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>

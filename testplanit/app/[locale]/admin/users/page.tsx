@@ -19,10 +19,12 @@ import { Filter } from "@/components/tables/Filter";
 
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { AddUserModal } from "./AddUser";
+import { CirclePlus } from "lucide-react";
+import { AddUser } from "./AddUser";
 
 type PageSizeOption = number | "All";
 
@@ -62,6 +64,7 @@ function UserList() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [showInactiveUsers, setShowInactiveUsers] = useState<boolean>(false);
+  const [addUserOpen, setAddUserOpen] = useState(false);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -240,7 +243,18 @@ function UserList() {
               </CardTitle>
             </div>
             <div>
-              <AddUserModal />
+              <Button onClick={() => setAddUserOpen(true)}>
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">
+                  {t("add.button")}
+                </span>
+              </Button>
+              {addUserOpen && (
+                <AddUser
+                  open={addUserOpen}
+                  onClose={() => setAddUserOpen(false)}
+                />
+              )}
             </div>
           </div>
         </CardHeader>
