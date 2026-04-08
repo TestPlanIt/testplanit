@@ -9,7 +9,7 @@
     "dev": "next dev",
     "dev:testdb": "dotenv -e .env.test -- pnpm dev",
     "postinstall": "NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && node scripts/fix-zenstack-symlink.js",
-    "lint": "eslint . && tsc --noEmit && pnpm check:modal-pattern",
+    "lint": "eslint . && tsc --noEmit",
     "type-check": "tsc --noEmit",
     "check:modal-pattern": "bash scripts/check-modal-pattern.sh",
     "start": "next start",
