@@ -645,6 +645,24 @@ function generateHTMLFallback(content) {
               case "italic":
                 text = `<em>${text}</em>`;
                 break;
+              case "code":
+                text = `<code>${text}</code>`;
+                break;
+              case "strike":
+                text = `<s>${text}</s>`;
+                break;
+              case "underline":
+                text = `<u>${text}</u>`;
+                break;
+              case "highlight":
+                text = `<mark>${text}</mark>`;
+                break;
+              case "subscript":
+                text = `<sub>${text}</sub>`;
+                break;
+              case "superscript":
+                text = `<sup>${text}</sup>`;
+                break;
               case "link":
                 const href = mark.attrs?.href || "#";
                 const target = mark.attrs?.target || "_blank";
@@ -661,9 +679,35 @@ function generateHTMLFallback(content) {
       case "bulletList":
         const ulContent = node.content?.map(processNode).join("") || "";
         return `<ul>${ulContent}</ul>`;
+      case "orderedList":
+        const olContent = node.content?.map(processNode).join("") || "";
+        const start = node.attrs?.start || 1;
+        return start > 1 ? `<ol start="${start}">${olContent}</ol>` : `<ol>${olContent}</ol>`;
       case "listItem":
         const liContent = node.content?.map(processNode).join("") || "";
         return `<li>${liContent}</li>`;
+      case "blockquote":
+        const bqContent = node.content?.map(processNode).join("") || "";
+        return `<blockquote>${bqContent}</blockquote>`;
+      case "codeBlock":
+        const cbContent = node.content?.map(processNode).join("") || "";
+        return `<pre><code>${cbContent}</code></pre>`;
+      case "hardBreak":
+        return "<br>";
+      case "horizontalRule":
+        return "<hr>";
+      case "table":
+        const tableContent = node.content?.map(processNode).join("") || "";
+        return `<table>${tableContent}</table>`;
+      case "tableRow":
+        const trContent = node.content?.map(processNode).join("") || "";
+        return `<tr>${trContent}</tr>`;
+      case "tableCell":
+        const tdContent = node.content?.map(processNode).join("") || "";
+        return `<td>${tdContent}</td>`;
+      case "tableHeader":
+        const thContent = node.content?.map(processNode).join("") || "";
+        return `<th>${thContent}</th>`;
       case "image":
         const src = node.attrs?.src || "";
         const alt = node.attrs?.alt || "";
@@ -744,6 +788,10 @@ var processor = async (job) => {
           if (data.projectId && data.milestoneId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
           }
+        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+          if (data.projectId && data.jobId && !data.error) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
+          }
         }
         let translatedTitle = notification.title;
         let translatedMessage = notification.message;
@@ -806,6 +854,24 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
             isOverdue ? "components.notifications.content.milestoneOverdue" : "components.notifications.content.milestoneDueSoon",
             { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
           );
+        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+          if (data.error) {
+            translatedTitle = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.generateFromUrlFailedTitle"
+            );
+            translatedMessage = notification.message;
+          } else {
+            translatedTitle = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.generateFromUrlCompleteTitle"
+            );
+            translatedMessage = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.generateFromUrlCompleteMessage",
+              { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+            );
+          }
         }
         const emailTranslations = await getServerTranslations(userLocale, [
           "email.greeting",
@@ -900,6 +966,10 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
               if (data.projectId && data.milestoneId) {
                 url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
               }
+            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+              if (data.projectId && data.jobId && !data.error) {
+                url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
+              }
             }
             let translatedTitle = notification.title;
             let translatedMessage = notification.message;
@@ -939,6 +1009,23 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
                 isOverdue ? "components.notifications.content.milestoneOverdue" : "components.notifications.content.milestoneDueSoon",
                 { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
               );
+            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
+              if (data.error) {
+                translatedTitle = await getServerTranslation(
+                  userLocale,
+                  "components.notifications.content.generateFromUrlFailedTitle"
+                );
+              } else {
+                translatedTitle = await getServerTranslation(
+                  userLocale,
+                  "components.notifications.content.generateFromUrlCompleteTitle"
+                );
+                translatedMessage = await getServerTranslation(
+                  userLocale,
+                  "components.notifications.content.generateFromUrlCompleteMessage",
+                  { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+                );
+              }
             }
             return {
               id: notification.id,

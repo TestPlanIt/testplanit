@@ -1948,6 +1948,7 @@ var TestmoExportAnalyzer = class {
   stagingService = null;
   jobId = null;
   masterRepositoryIds = /* @__PURE__ */ new Set();
+  snapshotCaseKeyIndex = 0;
   /**
    * Analyze a Testmo export and stream data to staging tables.
    */
@@ -1955,6 +1956,7 @@ var TestmoExportAnalyzer = class {
     this.stagingService = new TestmoStagingService(options.prisma);
     this.jobId = options.jobId;
     this.masterRepositoryIds.clear();
+    this.snapshotCaseKeyIndex = 0;
     const startedAt = /* @__PURE__ */ new Date();
     const _preserveDatasets = options.preserveDatasets ?? this.defaults.preserveDatasets;
     const sampleRowLimit = options.sampleRowLimit ?? this.defaults.sampleRowLimit;
@@ -2213,6 +2215,26 @@ var TestmoExportAnalyzer = class {
       return;
     }
     if (this.shouldSkipRow(datasetName, rowData)) {
+      if (datasetName === "repository_cases" && rowData && typeof rowData === "object") {
+        const key = rowData.key;
+        const id = rowData.id;
+        if (key != null && id != null) {
+          const keyData = {
+            id,
+            key,
+            project_id: rowData.project_id
+          };
+          const keyDatasetName = "_snapshot_case_keys";
+          if (!this.stagingBatches.has(keyDatasetName)) {
+            this.stagingBatches.set(keyDatasetName, []);
+          }
+          const keyBatch = this.stagingBatches.get(keyDatasetName);
+          keyBatch.push({ index: this.snapshotCaseKeyIndex++, data: keyData });
+          if (keyBatch.length >= STAGING_BATCH_SIZE) {
+            await this.flushStagingBatch(keyDatasetName);
+          }
+        }
+      }
       return;
     }
     if (!this.stagingBatches.has(datasetName)) {
@@ -8475,6 +8497,7 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
   };
   const caseIdMap = /* @__PURE__ */ new Map();
   const caseMetaMap = /* @__PURE__ */ new Map();
+  const caseKeyMap = /* @__PURE__ */ new Map();
   const summaryDetails = summary.details;
   const dropdownStats = /* @__PURE__ */ new Map();
   const templateRows = datasetRows.get("templates") ?? [];
@@ -8545,7 +8568,8 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
       caseIdMap,
       caseFieldMap: /* @__PURE__ */ new Map(),
       caseFieldMetadataById: /* @__PURE__ */ new Map(),
-      caseMetaMap
+      caseMetaMap,
+      caseKeyMap
     };
   }
   initializeEntityProgress(context, "repositoryCases", canonicalCaseCount);
@@ -8730,6 +8754,13 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
           });
           if (existing) {
             caseIdMap.set(caseSourceId, existing.id);
+            const existingKey = toStringValue2(record.key);
+            if (existingKey) {
+              caseKeyMap.set(
+                `${projectSourceId}:${existingKey}`,
+                existing.id
+              );
+            }
             summary.total += 1;
             summary.mapped += 1;
             incrementEntityProgress(context, "repositoryCases", 0, 1);
@@ -8834,6 +8865,12 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
             }
           });
           caseIdMap.set(caseSourceId, repositoryCase.id);
+          if (className) {
+            caseKeyMap.set(
+              `${projectSourceId}:${className}`,
+              repositoryCase.id
+            );
+          }
           const projectTemplateAssignments = templateAssignmentsByProject.get(projectId) ?? /* @__PURE__ */ new Set();
           projectTemplateAssignments.add(resolvedTemplateId);
           templateAssignmentsByProject.set(
@@ -9232,7 +9269,8 @@ Field: ${fieldName}`);
     caseIdMap,
     caseFieldMap,
     caseFieldMetadataById,
-    caseMetaMap
+    caseMetaMap,
+    caseKeyMap
   };
 };
 var importTestRuns = async (tx, datasetRows, projectIdMap, _canonicalRepoIdByProject, configurationIdMap, milestoneIdMap, workflowIdMap, userIdMap, importJob, context, persistProgress) => {
@@ -10904,6 +10942,37 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       formatSummaryStatus(repositoryCaseTagsSummary)
     );
     releaseDatasetRows(datasetRowsByName, "repository_case_tags");
+    const snapshotCaseKeys = await loadDatasetFromStaging("_snapshot_case_keys");
+    if (snapshotCaseKeys.length > 0) {
+      let resolvedCount = 0;
+      let alreadyMappedCount = 0;
+      let unresolvedCount = 0;
+      for (const row of snapshotCaseKeys) {
+        const record = row;
+        const snapshotCaseId = toNumberValue(record.id);
+        const key = toStringValue2(record.key);
+        const projectSourceId = toNumberValue(record.project_id);
+        if (snapshotCaseId === null || !key || projectSourceId === null) {
+          continue;
+        }
+        if (caseImport.caseIdMap.has(snapshotCaseId)) {
+          alreadyMappedCount++;
+          continue;
+        }
+        const lookupKey = `${projectSourceId}:${key}`;
+        const importedCaseId = caseImport.caseKeyMap.get(lookupKey);
+        if (importedCaseId) {
+          caseImport.caseIdMap.set(snapshotCaseId, importedCaseId);
+          resolvedCount++;
+        } else {
+          unresolvedCount++;
+        }
+      }
+      logMessage(
+        context,
+        `Snapshot case key resolution: ${resolvedCount} resolved, ${alreadyMappedCount} already mapped, ${unresolvedCount} unresolved out of ${snapshotCaseKeys.length} snapshot cases`
+      );
+    }
     logMessage(context, "Processing automation case imports");
     await persistProgress(
       "automationCases",

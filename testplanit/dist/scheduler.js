@@ -199,6 +199,20 @@ var init_ssrf = __esm({
   }
 });
 
+// lib/utils/ssrf.ts
+function getAllowedPrivateHosts() {
+  return new Set(
+    (process.env.ALLOWED_PRIVATE_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean)
+  );
+}
+var MAX_PAGE_BYTES;
+var init_ssrf2 = __esm({
+  "lib/utils/ssrf.ts"() {
+    "use strict";
+    MAX_PAGE_BYTES = 5 * 1024 * 1024;
+  }
+});
+
 // lib/integrations/adapters/GitHubRepoAdapter.ts
 var GitHubRepoAdapter_exports = {};
 __export(GitHubRepoAdapter_exports, {
@@ -670,6 +684,7 @@ var init_GitRepoAdapter = __esm({
   "lib/integrations/adapters/GitRepoAdapter.ts"() {
     "use strict";
     init_ssrf();
+    init_ssrf2();
     GitRepoAdapter = class {
       rateLimitDelay = 500;
       // ms between requests (baseline)
@@ -813,9 +828,12 @@ var init_GitRepoAdapter = __esm({
       sanitizeUrl(url) {
         const parsed = new URL(url);
         if (!isSsrfSafe(parsed.href)) {
-          throw new Error(
-            "Request blocked: URL targets a private or internal address"
-          );
+          const allowedPrivateHosts = getAllowedPrivateHosts();
+          if (!allowedPrivateHosts.has(parsed.hostname.toLowerCase())) {
+            throw new Error(
+              `Request blocked: URL targets a private or internal address. To allow this, add "${parsed.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`
+            );
+          }
         }
         let result = parsed.href;
         if (!url.endsWith("/") && result.endsWith("/")) {
