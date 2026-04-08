@@ -16,7 +16,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteMilestoneTypeModalProps {
@@ -106,12 +106,12 @@ export function DeleteMilestoneTypeModal({
                   item: tCommon("fields.milestoneTypes"),
                 })}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("confirmMessage", {
+                  name: milestoneType.name,
+                })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t("confirmMessage", {
-                name: milestoneType.name,
-              })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {tGlobal("runs.delete.warning")}
             </div>

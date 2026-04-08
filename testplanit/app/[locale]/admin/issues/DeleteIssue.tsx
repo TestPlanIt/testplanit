@@ -13,7 +13,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";
@@ -72,12 +72,12 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("title")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("confirmMessage", {
+                  name: issue.name,
+                })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t("confirmMessage", {
-                name: issue.name,
-              })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {tGlobal("runs.delete.warning")}
             </div>

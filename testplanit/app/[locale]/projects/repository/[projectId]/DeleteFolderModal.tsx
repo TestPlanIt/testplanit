@@ -2,7 +2,7 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2, TriangleAlert } from "lucide-react";
@@ -165,14 +165,14 @@ export function DeleteFolderModal({
               <TriangleAlert className="w-6 h-6 mr-2" />
               {t("repository.folderActions.delete")}
             </AlertDialogTitle>
+            <AlertDialogDescription className="overflow-hidden">
+              {isCasesLoading
+                ? t("common.loading")
+                : t("repository.deleteFolder.confirmMessage", {
+                    count: caseCount ?? 0,
+                  })}
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="overflow-hidden">
-            {isCasesLoading
-              ? t("common.loading")
-              : t("repository.deleteFolder.confirmMessage", {
-                  count: caseCount ?? 0,
-                })}
-          </div>
           <div className="bg-destructive text-destructive-foreground p-2">
             {t("repository.deleteFolder.warning")}
           </div>

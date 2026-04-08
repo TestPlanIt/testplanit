@@ -2,7 +2,7 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2, TriangleAlert } from "lucide-react";
@@ -132,6 +132,13 @@ export function DeleteCaseModal({
               <TriangleAlert className="w-6 h-6 mr-2" />
               {t("repository.deleteCase.title")}
             </AlertDialogTitle>
+            <AlertDialogDescription className="overflow-hidden">
+              {t("repository.deleteCase.confirmMessageStart")}
+              <span className="truncate font-bold max-w-[200px] inline-block align-bottom">
+                {testcase.name}
+              </span>
+              {t("repository.deleteCase.confirmMessageEnd")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           {showActiveRunWarning && (
             <div
@@ -148,13 +155,6 @@ export function DeleteCaseModal({
               </p>
             </div>
           )}
-          <div className="overflow-hidden">
-            {t("repository.deleteCase.confirmMessageStart")}
-            <span className="truncate font-bold max-w-[200px] inline-block align-bottom">
-              {testcase.name}
-            </span>
-            {t("repository.deleteCase.confirmMessageEnd")}
-          </div>
           <div className="bg-destructive text-destructive-foreground p-2">
             {t("repository.deleteCase.warning")}
           </div>

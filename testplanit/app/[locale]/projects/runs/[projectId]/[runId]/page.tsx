@@ -15,6 +15,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle
@@ -1975,12 +1976,12 @@ export default function TestRunPage() {
                 action: "Remove Cases",
               })}
             </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("common.dialogs.confirmAction.message", {
+                action: "remove these test cases",
+              })}
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <div>
-            {t("common.dialogs.confirmAction.message", {
-              action: "remove these test cases",
-            })}
-          </div>
           <div className="bg-destructive text-destructive-foreground p-2">
             {t("common.dialogs.delete.warning", { item: "test cases" })}
           </div>

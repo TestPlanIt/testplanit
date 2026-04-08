@@ -16,7 +16,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteRoleModalProps {
@@ -92,12 +92,12 @@ export function DeleteRoleModal({ role }: DeleteRoleModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("title")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("confirmMessage", {
+                  name: role.name,
+                })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t("confirmMessage", {
-                name: role.name,
-              })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {t("warning")}
             </div>

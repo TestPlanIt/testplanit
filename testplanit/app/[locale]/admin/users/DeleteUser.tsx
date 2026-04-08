@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -75,10 +75,10 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("admin.users.delete.title")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("common.dialogs.delete.description", { name: user.name })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t("common.dialogs.delete.description", { name: user.name })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {t("runs.delete.warning")}
             </div>

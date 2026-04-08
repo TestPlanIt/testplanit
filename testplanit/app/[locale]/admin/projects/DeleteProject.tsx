@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteProjectModalProps {
@@ -68,15 +68,17 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("title")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t.rich("confirmMessage", {
+                  name: project.name,
+                  strong: (chunks: any) => (
+                    <span className="whitespace-nowrap font-bold">
+                      {chunks}
+                    </span>
+                  ),
+                })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t.rich("confirmMessage", {
-                name: project.name,
-                strong: (chunks: any) => (
-                  <span className="whitespace-nowrap font-bold">{chunks}</span>
-                ),
-              })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {tGlobal("runs.delete.warning")}
             </div>

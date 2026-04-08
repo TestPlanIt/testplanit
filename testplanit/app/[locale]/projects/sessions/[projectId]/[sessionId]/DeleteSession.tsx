@@ -2,7 +2,7 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { Sessions } from "@prisma/client";
@@ -118,12 +118,12 @@ export function DeleteSessionModal({
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("sessions.actions.delete")}
               </AlertDialogTitle>
+              <AlertDialogDescription className="overflow-hidden">
+                {t("sessions.delete.confirmMessage", {
+                  name: testSession?.name ?? "",
+                })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="overflow-hidden">
-              {t("sessions.delete.confirmMessage", {
-                name: testSession?.name ?? "",
-              })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {t("sessions.delete.warning")}
             </div>

@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteGroupModalProps {
@@ -65,8 +65,10 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("deleteGroup")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("deleteGroupDescription")}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>{t("deleteGroupDescription")}</div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {tGlobal("runs.delete.warning")}
             </div>
