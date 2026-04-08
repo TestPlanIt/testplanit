@@ -1,3 +1,9 @@
+## [0.21.2](https://github.com/TestPlanIt/testplanit/compare/v0.21.1...v0.21.2) (2026-04-08)
+
+### Bug Fixes
+
+* **add-user:** reset form values and clear errors when closing user creation dialog ([#181](https://github.com/TestPlanIt/testplanit/issues/181)) ([846f3b3](https://github.com/TestPlanIt/testplanit/commit/846f3b3742a01f3c90da41f839fc45ed1743d4d9))
+
 ## [0.21.1](https://github.com/TestPlanIt/testplanit/compare/v0.21.0...v0.21.1) (2026-04-06)
 
 ### Enhancements
