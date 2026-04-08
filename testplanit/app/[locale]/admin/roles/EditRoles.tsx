@@ -13,8 +13,6 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { SquarePen } from "lucide-react";
-
 import {
   Form,
   FormControl,
@@ -32,7 +30,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,8 +39,10 @@ import { Label } from "@radix-ui/react-label";
 // Helper to get enum values safely
 const applicationAreaValues = Object.values(ApplicationArea);
 
-interface EditRoleModalProps {
+interface EditRoleProps {
   role: Roles;
+  open: boolean;
+  onClose: () => void;
 }
 
 // Define Zod schema for the form including permissions
@@ -64,10 +63,9 @@ const EditRoleFormSchema = z.object({
 
 type EditRoleFormData = z.infer<typeof EditRoleFormSchema>;
 
-export function EditRoleModal({ role }: EditRoleModalProps) {
+export function EditRole({ role, open, onClose }: EditRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateRole } = useUpdateRoles();
   const { mutateAsync: updateManyRoles } = useUpdateManyRoles();
@@ -78,8 +76,6 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
     useFindManyRolePermission({
       where: { roleId: role.id },
     });
-
-  const handleCancel = () => setOpen(false);
 
   // Prepare default form values, including permissions
   const defaultFormValues = useMemo(() => {
@@ -125,15 +121,13 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
     setError,
   } = form;
 
-  // Effect to reset form when modal opens or defaults change
+  // Reset the form once existingPermissions have loaded. Component is mounted
+  // fresh on each open by the parent, so this only runs once per edit cycle.
   useEffect(() => {
-    if (open) {
-      // Only reset if existingPermissions have loaded or there are none
-      if (!isLoadingPermissions) {
-        reset(defaultFormValues);
-      }
-    } // Reset dependency includes isLoadingPermissions now
-  }, [open, defaultFormValues, reset, isLoadingPermissions]);
+    if (!isLoadingPermissions) {
+      reset(defaultFormValues);
+    }
+  }, [defaultFormValues, reset, isLoadingPermissions]);
 
   async function onSubmit(data: EditRoleFormData) {
     setIsSubmitting(true);
@@ -173,7 +167,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
       // Wait for all permission updates to complete
       await Promise.all(permissionPromises);
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       // Handle potential errors (e.g., unique constraint on name)
@@ -259,12 +253,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -525,7 +514,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

@@ -31,18 +31,9 @@ vi.mock("@/components/tables/ProjectListDisplay", () => ({
   ),
 }));
 
-// Mock EditGroupModal and DeleteGroupModal
-vi.mock("./EditGroup", () => ({
-  EditGroupModal: ({ group }: { group: any }) => (
-    <button data-testid={`edit-group-${group.id}`}>Edit</button>
-  ),
-}));
-
-vi.mock("./DeleteGroup", () => ({
-  DeleteGroupModal: ({ group }: { group: any }) => (
-    <button data-testid={`delete-group-${group.id}`}>Delete</button>
-  ),
-}));
+// Both EditGroup and DeleteGroup are no longer rendered inside the cell —
+// the cell now renders Buttons that call the onEditGroup/onDeleteGroup
+// callback props, so we don't need to mock either modal.
 
 const mockTranslations = ((key: string) => key) as ReturnType<
   typeof import("next-intl").useTranslations<"common">

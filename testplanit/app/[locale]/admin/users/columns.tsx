@@ -9,11 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { User } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
-import { DeleteUserModal } from "./DeleteUser";
-import { EditUserModal } from "./EditUser";
 export interface ExtendedUser extends User {
   createdBy: {
     name: string;
@@ -41,7 +39,9 @@ export interface ExtendedUser extends User {
 export const getColumns = (
   userPreferences: any,
   handleToggle: (id: string, key: keyof ExtendedUser, value: boolean) => void,
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  onEditUser?: (user: ExtendedUser) => void,
+  onDeleteUser?: (user: ExtendedUser) => void
 ): ColumnDef<ExtendedUser>[] => [
   {
     id: "name",
@@ -226,12 +226,21 @@ export const getColumns = (
     meta: { isPinned: "right" },
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditUserModal key={`edit-${row.original.id}`} user={row.original} />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditUser?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
         {row.original.id !== userPreferences.user.id ? (
-          <DeleteUserModal
-            key={`delete-${row.original.id}`}
-            user={row.original}
-          />
+          <Button
+            variant="destructive"
+            className="px-2 py-1 h-auto"
+            onClick={() => onDeleteUser?.(row.original)}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
         ) : (
           <Button
             variant="ghost"

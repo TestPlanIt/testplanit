@@ -2,12 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Roles } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RoleNameCell } from "~/components/tables/RoleNameCell";
 import { UserListDisplay } from "~/components/tables/UserListDisplay";
-import { DeleteRoleModal } from "./DeleteRoles";
-import { EditRoleModal } from "./EditRoles";
 
 export interface ExtendedRoles extends Roles {
   users: {
@@ -19,7 +17,9 @@ export interface ExtendedRoles extends Roles {
 
 export const getColumns = (
   handleToggleDefault: (id: number, isDefault: boolean) => void,
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  onEditRole?: (role: ExtendedRoles) => void,
+  onDeleteRole?: (role: ExtendedRoles) => void
 ): ColumnDef<ExtendedRoles>[] => [
   {
     id: "name",
@@ -75,7 +75,13 @@ export const getColumns = (
     size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditRoleModal key={`edit-${row.original.id}`} role={row.original} />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditRole?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
         {row.original.isDefault ? (
           <Button
             variant="ghost"
@@ -85,10 +91,13 @@ export const getColumns = (
             <Trash2 className="h-5 w-5" />
           </Button>
         ) : (
-          <DeleteRoleModal
-            key={`delete-${row.original.id}`}
-            role={row.original}
-          />
+          <Button
+            variant="destructive"
+            className="px-2 py-1 h-auto"
+            onClick={() => onDeleteRole?.(row.original)}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
         )}
       </div>
     ),

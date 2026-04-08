@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { EditUserModal } from "./EditUser";
+import { EditUser } from "./EditUser";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
@@ -126,20 +126,28 @@ const testUser = {
   twoFactorBackupCodes: null,
 };
 
-// Helper to wrap component in QueryClientProvider
+// Helper to wrap component in QueryClientProvider. EditUser is now a pure
+// form component that takes { user, open, onClose } as props, so we render
+// it directly with open=true.
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
 }
 
-const renderWithProvider = (props = { user: testUser as any }) => {
+const renderOpen = (props: { user?: any } = {}) => {
   const queryClient = makeQueryClient();
+  const onClose = vi.fn();
   return {
     user: userEvent.setup(),
+    onClose,
     ...render(
       <QueryClientProvider client={queryClient}>
-        <EditUserModal {...props} />
+        <EditUser
+          user={(props.user ?? testUser) as any}
+          open={true}
+          onClose={onClose}
+        />
       </QueryClientProvider>
     ),
   };
@@ -153,17 +161,9 @@ beforeEach(() => {
   });
 });
 
-describe("EditUserModal", () => {
-  test("renders the edit button", () => {
-    renderWithProvider();
-    // SquarePen icon button
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
-
-  test("opens dialog on button click and shows pre-filled name and email", async () => {
-    const { user } = renderWithProvider();
-    const editButton = screen.getByRole("button");
-    await user.click(editButton);
+describe("EditUser", () => {
+  test("renders the dialog with pre-filled name and email", () => {
+    renderOpen();
 
     // Dialog title visible
     expect(
@@ -179,8 +179,7 @@ describe("EditUserModal", () => {
   });
 
   test("shows validation error when name is empty and form is submitted", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    const { user } = renderOpen();
 
     // Clear the name field
     const nameInput = screen.getByDisplayValue("Test User");
@@ -200,8 +199,7 @@ describe("EditUserModal", () => {
   });
 
   test("submits form and calls fetch with PATCH when form is valid", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    const { user } = renderOpen();
 
     const submitButton = screen.getByTestId("edit-user-submit-button");
     await user.click(submitButton);
@@ -224,11 +222,9 @@ describe("EditUserModal", () => {
 
   test("isActive switch is disabled when editing self", async () => {
     const selfUser = { ...testUser, id: "other-user-id" };
-    const { user } = renderWithProvider({ user: selfUser as any });
-    await user.click(screen.getByRole("button"));
+    renderOpen({ user: selfUser });
 
     // The isActive switch should be disabled when user.id === session.user.id
-    // It's a Switch with checked state based on isActive
     await waitFor(() => {
       const switches = screen.getAllByRole("switch");
       // First switch is isActive
@@ -237,9 +233,8 @@ describe("EditUserModal", () => {
     });
   });
 
-  test("closes dialog when cancel is clicked", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+  test("calls onClose when cancel is clicked", async () => {
+    const { user, onClose } = renderOpen();
 
     // Dialog is open
     expect(
@@ -251,11 +246,7 @@ describe("EditUserModal", () => {
     });
     await user.click(cancelButton);
 
-    // Dialog should be closed
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("heading", { name: "admin.users.edit.title" })
-      ).not.toBeInTheDocument();
-    });
+    // Parent will unmount the component on this callback
+    expect(onClose).toHaveBeenCalled();
   });
 });

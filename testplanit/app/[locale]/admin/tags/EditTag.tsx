@@ -1,6 +1,6 @@
 "use client";
 import { Tags } from "@prisma/client";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useFindManyTags, useUpdateTags } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +9,6 @@ import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -28,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -41,15 +38,16 @@ const EditTagSchema = z.object({
 
 type EditTagFormData = z.infer<typeof EditTagSchema>;
 
-interface EditTagModalProps {
+interface EditTagProps {
   tag: Tags;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditTagModal({ tag }: EditTagModalProps) {
+export function EditTag({ tag, open, onClose }: EditTagProps) {
   const t = useTranslations("admin.tags.edit");
   const tTags = useTranslations("tags.edit");
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateTag } = useUpdateTags();
   // Query all tags (including soft-deleted) for case-insensitive duplicate checking
@@ -57,25 +55,12 @@ export function EditTagModal({ tag }: EditTagModalProps) {
     select: { id: true, name: true, isDeleted: true },
   });
 
-  const handleCancel = () => setOpen(false);
-
-  const defaultFormValues = useMemo(
-    () => ({
-      name: tag.name,
-    }),
-    [tag.name]
-  );
-
   const form = useForm<EditTagFormData>({
     resolver: zodResolver(EditTagSchema),
-    defaultValues: defaultFormValues,
+    defaultValues: {
+      name: tag.name,
+    },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form, form.reset]);
 
   const {
     formState: { errors },
@@ -124,7 +109,7 @@ export function EditTagModal({ tag }: EditTagModalProps) {
           name: data.name,
         },
       });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -144,12 +129,7 @@ export function EditTagModal({ tag }: EditTagModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -184,7 +164,7 @@ export function EditTagModal({ tag }: EditTagModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

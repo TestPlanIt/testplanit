@@ -2,11 +2,11 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import { Button } from "@/components/ui/button";
 import { Tags } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteTagModal } from "./DeleteTag";
-import { EditTagModal } from "./EditTag";
 
 export interface ExtendedTags extends Tags {
   repositoryCases: { id: number }[];
@@ -20,7 +20,9 @@ export interface ExtendedTags extends Tags {
 
 export const getColumns = (
   tCommon: ReturnType<typeof useTranslations<"common">>,
-  isLoadingCounts: boolean = false
+  isLoadingCounts: boolean = false,
+  onEditTag?: (tag: ExtendedTags) => void,
+  onDeleteTag?: (tag: ExtendedTags) => void
 ): ColumnDef<ExtendedTags>[] => [
   {
     id: "name",
@@ -142,8 +144,20 @@ export const getColumns = (
     size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditTagModal key={`edit-${row.original.id}`} tag={row.original} />
-        <DeleteTagModal key={`delete-${row.original.id}`} tag={row.original} />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditTag?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="destructive"
+          className="px-2 py-1 h-auto"
+          onClick={() => onDeleteTag?.(row.original)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
     ),
   },

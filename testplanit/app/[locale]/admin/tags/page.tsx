@@ -23,7 +23,9 @@ import {
 import { CirclePlus } from "lucide-react";
 import { useCountTags, useFindManyTags } from "~/lib/hooks";
 import { AddTag } from "./AddTag";
-import { getColumns } from "./columns";
+import { ExtendedTags, getColumns } from "./columns";
+import { DeleteTag } from "./DeleteTag";
+import { EditTag } from "./EditTag";
 
 type PageSizeOption = number | "All";
 
@@ -59,6 +61,8 @@ function TagList() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [addTagOpen, setAddTagOpen] = useState(false);
+  const [editingTag, setEditingTag] = useState<ExtendedTags | null>(null);
+  const [deletingTag, setDeletingTag] = useState<ExtendedTags | null>(null);
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
@@ -262,7 +266,7 @@ function TagList() {
   }, [status, session, router]);
 
   const columns = useMemo(
-    () => getColumns(tCommon, isLoadingCounts),
+    () => getColumns(tCommon, isLoadingCounts, setEditingTag, setDeletingTag),
     [tCommon, isLoadingCounts]
   );
   const [columnVisibility, setColumnVisibility] = useState<
@@ -373,6 +377,20 @@ function TagList() {
           </div>
         </CardContent>
       </Card>
+      {editingTag && (
+        <EditTag
+          tag={editingTag}
+          open={editingTag !== null}
+          onClose={() => setEditingTag(null)}
+        />
+      )}
+      {deletingTag && (
+        <DeleteTag
+          tag={deletingTag}
+          open={deletingTag !== null}
+          onClose={() => setDeletingTag(null)}
+        />
+      )}
     </main>
   );
 }

@@ -8,37 +8,32 @@ import {
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteRoleModalProps {
+interface DeleteRoleProps {
   role: Roles;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteRoleModal({ role }: DeleteRoleModalProps) {
+export function DeleteRole({ role, open, onClose }: DeleteRoleProps) {
   const t = useTranslations("admin.roles.delete");
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateRole } = useUpdateRoles();
   const { mutateAsync: updateManyUser } = useUpdateManyUser();
 
-  const { data: defaultRole } = useFindFirstRoles(
-    {
-      where: { isDefault: true, isDeleted: false },
-    },
-    {
-      enabled: open,
-    }
-  );
+  const { data: defaultRole } = useFindFirstRoles({
+    where: { isDefault: true, isDeleted: false },
+  });
 
   const form = useForm();
   const {
@@ -65,7 +60,7 @@ export function DeleteRoleModal({ role }: DeleteRoleModalProps) {
         data: { isDeleted: true },
         where: { id: role.id },
       });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch {
       form.setError("root", {
@@ -78,12 +73,7 @@ export function DeleteRoleModal({ role }: DeleteRoleModalProps) {
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

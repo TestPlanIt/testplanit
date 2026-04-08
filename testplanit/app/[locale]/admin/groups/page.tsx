@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddGroup } from "./AddGroup";
+import { DeleteGroup } from "./DeleteGroup";
+import { EditGroup } from "./EditGroup";
 
 type PageSizeOption = number | "All";
 
@@ -63,6 +65,10 @@ function GroupList() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [addGroupOpen, setAddGroupOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<ExtendedGroups | null>(null);
+  const [deletingGroup, setDeletingGroup] = useState<ExtendedGroups | null>(
+    null
+  );
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -190,7 +196,7 @@ function GroupList() {
   };
 
   const columns: CustomColumnDef<ExtendedGroups>[] = useMemo(
-    () => getColumns(tCommon),
+    () => getColumns(tCommon, setEditingGroup, setDeletingGroup),
     [tCommon]
   );
 
@@ -286,6 +292,20 @@ function GroupList() {
             </div>
           </CardContent>
         </Card>
+        {editingGroup && (
+          <EditGroup
+            group={editingGroup}
+            open={editingGroup !== null}
+            onClose={() => setEditingGroup(null)}
+          />
+        )}
+        {deletingGroup && (
+          <DeleteGroup
+            group={deletingGroup}
+            open={deletingGroup !== null}
+            onClose={() => setDeletingGroup(null)}
+          />
+        )}
       </main>
     );
   }
