@@ -20,24 +20,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 const FormSchema = z.object({});
 
-interface EditAvatarModalProps {
+interface EditAvatarProps {
   user: User;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditAvatarModal({ user }: EditAvatarModalProps) {
-  const [open, setOpen] = useState(false);
+export function EditAvatar({ user, open, onClose }: EditAvatarProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { data: session, update: updateSession } = useSession();
   const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tCommon = useTranslations("common");
-  const handleCancel = () => setOpen(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -65,7 +64,7 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
         throw new Error(error.error || "Failed to update avatar");
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
 
       // Update the session to reflect the new avatar
@@ -88,10 +87,7 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="link">{t("changeProfilePicture")}</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -111,7 +107,7 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
