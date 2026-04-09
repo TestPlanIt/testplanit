@@ -987,9 +987,8 @@ const ActionsCell = React.memo(function ActionsCell({
         <DeleteCaseModal
           key={`delete-${row.original.id}`}
           testcase={row.original}
-          showLabel={false}
-          externalOpen={showDeleteModal}
-          onExternalOpenChange={setShowDeleteModal}
+          open={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
         />
       )}
     </div>

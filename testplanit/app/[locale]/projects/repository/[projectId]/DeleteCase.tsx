@@ -4,8 +4,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useUpdateRepositoryCases } from "~/lib/hooks";
@@ -29,27 +28,19 @@ interface DeleteModalTestCase {
 }
 
 interface DeleteCaseProps {
-  testcase: DeleteModalTestCase; // Use the new specific type
-  showLabel?: boolean;
+  testcase: DeleteModalTestCase;
+  open: boolean;
+  onClose: () => void;
   onDeleteSuccess?: () => void;
-  externalOpen?: boolean;
-  onExternalOpenChange?: (open: boolean) => void;
 }
 
 export function DeleteCaseModal({
   testcase,
-  showLabel,
+  open,
+  onClose,
   onDeleteSuccess,
-  externalOpen,
-  onExternalOpenChange,
 }: DeleteCaseProps) {
   const t = useTranslations();
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = externalOpen !== undefined;
-  const open = isControlled ? externalOpen : internalOpen;
-  const setOpen = isControlled
-    ? (val: boolean) => onExternalOpenChange?.(val)
-    : setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showActiveRunWarning, setShowActiveRunWarning] = useState(false);
   const [activeRunCount, setActiveRunCount] = useState(0);
@@ -87,13 +78,6 @@ export function DeleteCaseModal({
     }
   }, [open, testcase]);
 
-  const handleCancel = () => setOpen(false);
-
-  const handleOpen = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setOpen(true);
-  };
-
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
@@ -101,7 +85,7 @@ export function DeleteCaseModal({
         data: { isDeleted: true },
         where: { id: testcase.id },
       });
-      setOpen(false);
+      onClose();
       onDeleteSuccess?.();
       // Dispatch event to refresh Cases component data
       window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
@@ -113,18 +97,7 @@ export function DeleteCaseModal({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      {!isControlled && (
-        <Button
-          variant="destructive"
-          className="px-2 py-1 h-auto w-full"
-          type="button"
-          onClick={handleOpen}
-        >
-          <Trash2 className="h-5 w-5" />
-          {showLabel && <div>{t("common.actions.delete")}</div>}
-        </Button>
-      )}
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
         <div className="space-y-4">
           <AlertDialogHeader>
@@ -159,7 +132,7 @@ export function DeleteCaseModal({
             {t("repository.deleteCase.warning")}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel type="button" onClick={handleCancel}>
+            <AlertDialogCancel type="button" onClick={onClose}>
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction

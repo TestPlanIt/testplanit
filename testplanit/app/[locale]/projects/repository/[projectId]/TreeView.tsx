@@ -1176,9 +1176,8 @@ const TreeView: React.FC<{
       {editModalState.open && editModalState.folderId && (
         <EditFolderModal
           folderId={editModalState.folderId}
-          selected={selectedId === editModalState.folderId.toString()}
           open={editModalState.open}
-          onOpenChange={(open) => setEditModalState({ open, folderId: null })}
+          onClose={() => setEditModalState({ open: false, folderId: null })}
         />
       )}
 
@@ -1198,7 +1197,7 @@ const TreeView: React.FC<{
             window.history.replaceState({}, "", url.toString());
           }}
           open={deleteModalState.open}
-          onOpenChange={(open) => setDeleteModalState({ open, node: null })}
+          onClose={() => setDeleteModalState({ open: false, node: null })}
         />
       )}
     </>

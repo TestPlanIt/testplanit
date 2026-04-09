@@ -4,8 +4,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -31,8 +30,8 @@ interface DeleteFolderModalProps {
   refetchCases?: () => void;
   onDeleted?: () => void;
   canAddEdit: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
 }
 
 export function DeleteFolderModal({
@@ -42,13 +41,10 @@ export function DeleteFolderModal({
   refetchCases,
   onDeleted,
   canAddEdit,
-  open: controlledOpen,
-  onOpenChange,
+  open,
+  onClose,
 }: DeleteFolderModalProps) {
   const t = useTranslations();
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
-  const setOpen = onOpenChange || setUncontrolledOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateManyCases } = useUpdateManyRepositoryCases();
   const { mutateAsync: updateFolder } = useUpdateRepositoryFolders();
@@ -99,13 +95,6 @@ export function DeleteFolderModal({
 
   if (!canAddEdit || folderNode.id === 0) return null;
 
-  const handleCancel = () => setOpen(false);
-
-  const handleOpen = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setOpen(true);
-  };
-
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
@@ -133,7 +122,7 @@ export function DeleteFolderModal({
         })
       );
 
-      setOpen(false);
+      onClose();
       toast.success(t("repository.deleteFolder.success"));
       onDeleted?.();
       refetchFolders?.();
@@ -146,18 +135,7 @@ export function DeleteFolderModal({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      {controlledOpen === undefined && (
-        <Button
-          variant="secondary"
-          className="text-destructive"
-          type="button"
-          onClick={handleOpen}
-          data-testid={`delete-folder-btn-${folderNode.id}`}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      )}
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
         <div className="space-y-4">
           <AlertDialogHeader>
@@ -177,7 +155,7 @@ export function DeleteFolderModal({
             {t("repository.deleteFolder.warning")}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel type="button" onClick={handleCancel}>
+            <AlertDialogCancel type="button" onClick={onClose}>
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
