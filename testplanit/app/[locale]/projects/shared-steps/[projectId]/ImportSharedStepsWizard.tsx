@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -28,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import UploadAttachments from "@/components/UploadAttachments";
 import {
   AlertCircle, CheckCircle2, ChevronLeft,
-  ChevronRight, Download
+  ChevronRight
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -38,6 +37,8 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 
 interface ImportSharedStepsWizardProps {
+  open: boolean;
+  onClose: () => void;
   onImportComplete?: () => void;
 }
 
@@ -67,6 +68,8 @@ type Page1ValidationErrors = {
 };
 
 export function ImportSharedStepsWizard({
+  open,
+  onClose,
   onImportComplete,
 }: ImportSharedStepsWizardProps) {
   const t = useTranslations("sharedSteps");
@@ -76,7 +79,6 @@ export function ImportSharedStepsWizard({
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
 
-  const [open, setOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -421,7 +423,7 @@ export function ImportSharedStepsWizard({
           }),
         });
 
-        setOpen(false);
+        onClose();
         onImportComplete?.();
       } else {
         if (result.errors && result.errors.length > 0) {
@@ -737,13 +739,7 @@ export function ImportSharedStepsWizard({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <Download className="h-4 w-4" />
-          {t("importWizard.title")}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>

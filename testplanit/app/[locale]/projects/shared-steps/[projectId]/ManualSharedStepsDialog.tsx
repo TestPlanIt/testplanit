@@ -8,11 +8,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -27,10 +25,14 @@ import {
 } from "~/lib/hooks";
 
 interface ManualSharedStepsDialogProps {
+  open: boolean;
+  onClose: () => void;
   onComplete?: () => void;
 }
 
 export function ManualSharedStepsDialog({
+  open,
+  onClose,
   onComplete,
 }: ManualSharedStepsDialogProps) {
   const t = useTranslations("sharedSteps");
@@ -40,7 +42,6 @@ export function ManualSharedStepsDialog({
   const projectId = parseInt(params.projectId as string);
   const { data: session } = useSession();
 
-  const [open, setOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -112,19 +113,7 @@ export function ManualSharedStepsDialog({
 
       toast.success(t("manualEntry.success"));
 
-      // Reset form
-      setGroupName("");
-      form.reset({
-        steps: [
-          {
-            id: "step-1",
-            step: JSON.stringify(emptyEditorContent),
-            expectedResult: JSON.stringify(emptyEditorContent),
-          },
-        ],
-      });
-
-      setOpen(false);
+      onClose();
 
       if (onComplete) {
         onComplete();
@@ -137,32 +126,8 @@ export function ManualSharedStepsDialog({
     }
   };
 
-  const handleCancel = () => {
-    setGroupName("");
-    form.reset({
-      steps: [
-        {
-          id: "step-1",
-          step: JSON.stringify(emptyEditorContent),
-          expectedResult: JSON.stringify(emptyEditorContent),
-        },
-      ],
-    });
-    setOpen(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full"
-          data-testid="manual-shared-steps-btn"
-        >
-          <PlusCircle className="h-4 w-4" />
-          {t("manualEntry.buttonLabel")}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -202,7 +167,7 @@ export function ManualSharedStepsDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             {tCommon("cancel")}
           </Button>
           <Button
