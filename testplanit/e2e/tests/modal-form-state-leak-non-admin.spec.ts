@@ -12,18 +12,14 @@ import { RepositoryPage } from "../page-objects/repository/repository.page";
  *
  *   - Project Repository: AddFolder, AddCase
  *   - Project Milestones: AddMilestone
+ *   - Project Sessions: AddSessionModal
+ *   - Project Test Runs: AddTestRunModal
  *
  * Each test creates an isolated project via the api fixture (cleaned up
  * automatically on test teardown) so no test depends on shared seed state.
- * Every modal is always cancelled — no folders, cases, or milestones are
- * actually created by these tests.
+ * Every modal is always cancelled — no records are actually created.
  *
  * Not covered here (and the reason why):
- *
- *   - AddSessionModal / AddTestRunModal: still use the pre-fix pattern
- *     (local [open, setOpen] + DialogTrigger + reset() mitigation). They
- *     pass the check-modal-pattern guard because of the reset() call but
- *     are not approach-B. Testing them would assert the wrong contract.
  *
  *   - DeleteCase / DeleteFolder / DeleteMilestone / DeleteSession /
  *     DeleteTestRun: these are approach-B, but their confirmation
@@ -33,9 +29,11 @@ import { RepositoryPage } from "../page-objects/repository/repository.page";
  *     pattern is already validated structurally by the admin Edit
  *     row-switch tests in the sibling spec file.
  *
- *   - EditFolder / EditResultModal: still use the pre-fix pattern. Not
- *     approach-B, so out of scope for regression tests of the approach-B
- *     guarantee.
+ *   - EditResultModal: approach-B, but needs a test run + result row
+ *     to be clicked open, which requires more fixture setup than the
+ *     cost/benefit justifies. The structural guarantee (conditional
+ *     mount from TestResultHistory) is equivalent to the other edit
+ *     modals that are covered.
  */
 
 // ---- Shared helpers (mirrors modal-form-state-leak.spec.ts) --------------
@@ -189,6 +187,90 @@ test("Project Milestones AddMilestone modal resets between opens", async ({
   const firstFieldAgain = defaultNameField(dialog);
   await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
   await expect(firstFieldAgain).toHaveValue("");
+
+  await closeDialog(page);
+});
+
+// ---- Project Sessions: AddSessionModal -----------------------------------
+
+test("Project Sessions AddSessionModal resets between opens", async ({
+  page,
+  api,
+}) => {
+  const projectId = await api.createProject(
+    `E2E Modal Reset Session ${Date.now()}-${Math.random().toString(36).substring(7)}`
+  );
+
+  await page.goto(`/en-US/projects/sessions/${projectId}`);
+  await page.waitForLoadState("networkidle");
+
+  const addSessionButton = page.getByTestId("new-session-button");
+  await expect(addSessionButton).toBeVisible({ timeout: 10000 });
+
+  // --- First open: fill the name field, cancel ---
+  await addSessionButton.click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: 5000 });
+
+  const firstField = defaultNameField(dialog);
+  await expect(firstField).toBeVisible({ timeout: 5000 });
+
+  const uniqueValue = `Leak Session ${Date.now()}`;
+  await firstField.fill(uniqueValue);
+  await expect(firstField).toHaveValue(uniqueValue);
+
+  await closeDialog(page);
+
+  // --- Second open: name field must be empty ---
+  await addSessionButton.click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: 5000 });
+
+  const firstFieldAgain = defaultNameField(dialog);
+  await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
+  await expect(firstFieldAgain).toHaveValue("");
+
+  await closeDialog(page);
+});
+
+// ---- Project Test Runs: AddTestRunModal ----------------------------------
+
+test("Project Test Runs AddTestRunModal resets between opens", async ({
+  page,
+  api,
+}) => {
+  const projectId = await api.createProject(
+    `E2E Modal Reset Run ${Date.now()}-${Math.random().toString(36).substring(7)}`
+  );
+
+  await page.goto(`/en-US/projects/runs/${projectId}`);
+  await page.waitForLoadState("networkidle");
+
+  const addRunButton = page.getByTestId("new-run-button");
+  await expect(addRunButton).toBeVisible({ timeout: 10000 });
+
+  // AddTestRunModal uses a dedicated testid for its name field; prefer it
+  // over the defaultNameField helper since the run dialog has many inputs.
+  const nameInput = page.getByTestId("run-name-input");
+
+  // --- First open: fill the name field, cancel ---
+  await addRunButton.click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: 5000 });
+  await expect(nameInput).toBeVisible({ timeout: 5000 });
+
+  const uniqueValue = `Leak Run ${Date.now()}`;
+  await nameInput.fill(uniqueValue);
+  await expect(nameInput).toHaveValue(uniqueValue);
+
+  await closeDialog(page);
+
+  // --- Second open: name field must be empty ---
+  await addRunButton.click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: 5000 });
+  await expect(nameInput).toBeVisible({ timeout: 5000 });
+  await expect(nameInput).toHaveValue("");
 
   await closeDialog(page);
 });
