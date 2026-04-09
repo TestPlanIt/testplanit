@@ -7,7 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle, DialogTrigger
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -169,9 +169,6 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
 
   // For Add Link Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCase, setSelectedCase] = useState<CaseOption | null>(null);
-  const [selectedType, setSelectedType] = useState<LinkType | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const { mutateAsync: upsertLink } = useUpsertRepositoryCaseLink();
   const { mutateAsync: updateLink } = useUpdateRepositoryCaseLink();
@@ -235,24 +232,26 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   );
 
   // Add Link handler (upsert)
-  const handleAddLink = async () => {
-    setError(null);
+  // Validates inputs and creates the link. Returns an error message string
+  // on failure (for the dialog to display) or null on success.
+  const handleAddLink = async (
+    inputCase: CaseOption | null,
+    inputType: LinkType | null
+  ): Promise<string | null> => {
     // Zod validation
     const result = addLinkSchema.safeParse({
-      selectedCaseId: selectedCase?.id,
-      selectedType: selectedType as LinkType,
+      selectedCaseId: inputCase?.id,
+      selectedType: inputType as LinkType,
     });
     if (!result.success) {
-      setError(
+      return (
         result.error.issues[0]?.message || tLinkedCases("failedToCreate")
       );
-      return;
     }
     const { selectedCaseId: validCaseId, selectedType: validType } =
       result.data;
     if (validCaseId === caseId) {
-      setError(tLinkedCases("cannotLinkSelf"));
-      return;
+      return tLinkedCases("cannotLinkSelf");
     }
     // Prevent circular: check if selectedCaseId links back to this case
     const selectedCaseLinks = links?.filter(
@@ -263,8 +262,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
         (l: any) => l.caseAId === caseId || l.caseBId === caseId
       )
     ) {
-      setError(tLinkedCases("circularLink"));
-      return;
+      return tLinkedCases("circularLink");
     }
     try {
       await upsertLink({
@@ -286,14 +284,13 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
         },
       });
       setIsModalOpen(false);
-      setSelectedCase(null);
-      setSelectedType(null);
       refetch();
       // --- Trigger forecast update for both cases ---
       fetch(`/api/forecast/update?caseId=${caseId}`);
       fetch(`/api/forecast/update?caseId=${validCaseId}`);
+      return null;
     } catch (e: any) {
-      setError(e.message || tLinkedCases("failedToCreate"));
+      return e.message || tLinkedCases("failedToCreate");
     }
   };
 
@@ -329,102 +326,23 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           {tLinkedCases("title")}
         </CardTitle>
         {canManageLinks && (
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4" /> {tLinkedCases("addLink")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{tLinkedCases("addLinkedTestCase")}</DialogTitle>
-                <DialogDescription className="sr-only">
-                  {tLinkedCases("addLinkedTestCase")}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="block mb-1 font-medium">
-                    {tLinkedCases("testCase")}
-                  </label>
-                  <AsyncCombobox
-                    value={selectedCase}
-                    onValueChange={(option) =>
-                      setSelectedCase(option as CaseOption | null)
-                    }
-                    fetchOptions={fetchTestCases}
-                    dropdownClassName="p-0 min-w-[500px] max-w-[900px]"
-                    pageSize={10}
-                    renderOption={(option: any) => (
-                      <CaseDisplay
-                        id={option.id}
-                        name={option.name}
-                        source={option.source}
-                        automated={option.automated}
-                        size="large"
-                      />
-                    )}
-                    getOptionValue={(option: any) => option.id}
-                    placeholder={tLinkedCases("testCase")}
-                    showTotal
-                    renderTrigger={({ value, defaultContent }) => (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="justify-start text-left w-full"
-                      >
-                        {value ? (
-                          <span className="flex items-center gap-1 overflow-hidden">
-                            {isAutomatedCaseSource(value.source) ? (
-                              <Bot className="h-4 w-4 shrink-0" />
-                            ) : (
-                              <ListChecks className="h-4 w-4 shrink-0" />
-                            )}
-                            <span
-                              className="truncate whitespace-nowrap overflow-hidden"
-                              style={{ maxWidth: 400 }}
-                            >
-                              {value.name}
-                            </span>
-                          </span>
-                        ) : (
-                          defaultContent
-                        )}
-                      </Button>
-                    )}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium">
-                    {tLinkedCases("linkType")}
-                  </label>
-                  <Select
-                    value={selectedType || ""}
-                    onValueChange={(val) => setSelectedType(val as LinkType)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={tLinkedCases("linkType")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(LinkType).map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {tLinkedCases(type as LinkType)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {error && (
-                  <div className="text-destructive text-sm">{error}</div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button onClick={handleAddLink}>
-                  {tLinkedCases("addLink")}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <Plus className="w-4 h-4" /> {tLinkedCases("addLink")}
+            </Button>
+            {isModalOpen && (
+              <AddLinkDialog
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                fetchTestCases={fetchTestCases}
+                onSubmit={handleAddLink}
+              />
+            )}
+          </>
         )}
       </CardHeader>
       <CardContent className="p-0">
@@ -729,5 +647,131 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
     </Card>
   );
 };
+
+interface AddLinkDialogProps {
+  open: boolean;
+  onClose: () => void;
+  fetchTestCases: (
+    query: string,
+    page: number,
+    pageSize: number
+  ) => Promise<{ results: any[]; total: number }>;
+  onSubmit: (
+    selectedCase: CaseOption | null,
+    selectedType: LinkType | null
+  ) => Promise<string | null>;
+}
+
+function AddLinkDialog({
+  open,
+  onClose,
+  fetchTestCases,
+  onSubmit,
+}: AddLinkDialogProps) {
+  const tLinkedCases = useTranslations("linkedCases");
+  const [selectedCase, setSelectedCase] = useState<CaseOption | null>(null);
+  const [selectedType, setSelectedType] = useState<LinkType | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setError(null);
+    const errorMessage = await onSubmit(selectedCase, selectedType);
+    if (errorMessage) {
+      setError(errorMessage);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{tLinkedCases("addLinkedTestCase")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {tLinkedCases("addLinkedTestCase")}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="block mb-1 font-medium">
+              {tLinkedCases("testCase")}
+            </label>
+            <AsyncCombobox
+              value={selectedCase}
+              onValueChange={(option) =>
+                setSelectedCase(option as CaseOption | null)
+              }
+              fetchOptions={fetchTestCases}
+              dropdownClassName="p-0 min-w-[500px] max-w-[900px]"
+              pageSize={10}
+              renderOption={(option: any) => (
+                <CaseDisplay
+                  id={option.id}
+                  name={option.name}
+                  source={option.source}
+                  automated={option.automated}
+                  size="large"
+                />
+              )}
+              getOptionValue={(option: any) => option.id}
+              placeholder={tLinkedCases("testCase")}
+              showTotal
+              renderTrigger={({ value, defaultContent }) => (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="justify-start text-left w-full"
+                >
+                  {value ? (
+                    <span className="flex items-center gap-1 overflow-hidden">
+                      {isAutomatedCaseSource(value.source) ? (
+                        <Bot className="h-4 w-4 shrink-0" />
+                      ) : (
+                        <ListChecks className="h-4 w-4 shrink-0" />
+                      )}
+                      <span
+                        className="truncate whitespace-nowrap overflow-hidden"
+                        style={{ maxWidth: 400 }}
+                      >
+                        {value.name}
+                      </span>
+                    </span>
+                  ) : (
+                    defaultContent
+                  )}
+                </Button>
+              )}
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">
+              {tLinkedCases("linkType")}
+            </label>
+            <Select
+              value={selectedType || ""}
+              onValueChange={(val) => setSelectedType(val as LinkType)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={tLinkedCases("linkType")} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(LinkType).map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {tLinkedCases(type as LinkType)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {error && (
+            <div className="text-destructive text-sm">{error}</div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={handleSubmit}>{tLinkedCases("addLink")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default LinkedCasesPanel;
