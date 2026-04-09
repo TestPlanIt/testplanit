@@ -1,3 +1,9 @@
+## [0.21.3](https://github.com/TestPlanIt/testplanit/compare/v0.21.2...v0.21.3) (2026-04-09)
+
+### Bug Fixes
+
+* **modals:** Refactor/modal form state leak ([#185](https://github.com/TestPlanIt/testplanit/issues/185)) ([978027e](https://github.com/TestPlanIt/testplanit/commit/978027e585639bf5fbe6cef701022bdacae2cd34)), closes [#181](https://github.com/TestPlanIt/testplanit/issues/181) [#181](https://github.com/TestPlanIt/testplanit/issues/181)
+
 ## [0.21.2](https://github.com/TestPlanIt/testplanit/compare/v0.21.1...v0.21.2) (2026-04-08)
 
 ### Bug Fixes
