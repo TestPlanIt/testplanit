@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
-import { CirclePlus } from "lucide-react";
 
 import {
   Select,
@@ -43,7 +42,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -83,8 +81,12 @@ const FormSchema: any = z.object({
   projects: z.array(z.number()).optional(),
 });
 
-export function AddWorkflowsModal() {
-  const [open, setOpen] = useState(false);
+interface AddWorkflowsProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const t = useTranslations("admin.workflows");
@@ -126,8 +128,6 @@ export function AddWorkflowsModal() {
     setValue("projects", allProjectIds);
   };
 
-  const handleCancel = () => setOpen(false);
-
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
   };
@@ -151,7 +151,6 @@ export function AddWorkflowsModal() {
     control,
     setValue,
     formState: { errors },
-    reset,
   } = form;
 
   useEffect(() => {
@@ -160,18 +159,6 @@ export function AddWorkflowsModal() {
       setSelectedColorId(defaultColorData.id);
     }
   }, [defaultIconData, defaultColorData]);
-
-  useEffect(() => {
-    if (open) {
-      reset({
-        name: "",
-        isDefault: false,
-        isEnabled: true,
-        scope: undefined,
-        projects: [],
-      });
-    }
-  }, [open, reset]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
@@ -220,7 +207,7 @@ export function AddWorkflowsModal() {
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -240,13 +227,7 @@ export function AddWorkflowsModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("add.button")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -471,7 +452,7 @@ export function AddWorkflowsModal() {
                     : tGlobal("common.errors.unknown")}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

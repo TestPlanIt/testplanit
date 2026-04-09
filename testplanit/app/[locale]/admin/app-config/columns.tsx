@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -7,13 +8,14 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteAppConfigModal } from "./DeleteAppConfig";
-import { EditAppConfigModal } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
 export function getColumns(
-  t: ReturnType<typeof useTranslations<"common">>
+  t: ReturnType<typeof useTranslations<"common">>,
+  onEditConfig?: (config: AppConfigRow) => void,
+  onDeleteConfig?: (config: AppConfigRow) => void
 ): ColumnDef<AppConfigRow, unknown>[] {
   const formatValue = (value: any): string => {
     if (typeof value === "object") {
@@ -81,8 +83,22 @@ export function getColumns(
       meta: { isPinned: "right" },
       cell: ({ row }) => (
         <div className="whitespace-nowrap flex justify-center gap-1">
-          <EditAppConfigModal config={row.original} />
-          <DeleteAppConfigModal config={row.original} />
+          <Button
+            variant="ghost"
+            className="px-2 py-1 h-auto"
+            data-testid="edit-config-button"
+            onClick={() => onEditConfig?.(row.original)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            className="px-2 py-1 h-auto"
+            data-testid="delete-config"
+            onClick={() => onDeleteConfig?.(row.original)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },

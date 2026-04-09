@@ -1,11 +1,11 @@
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { UserListDisplay } from "@/components/tables/UserListDisplay";
+import { Button } from "@/components/ui/button";
 import { Groups } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
-import { DeleteGroupModal } from "./DeleteGroup";
-import { EditGroupModal } from "./EditGroup";
 
 export interface ExtendedGroups extends Groups {
   assignedUsers: {
@@ -17,7 +17,9 @@ export interface ExtendedGroups extends Groups {
 }
 
 export const getColumns = (
-  t: ReturnType<typeof useTranslations<"common">>
+  t: ReturnType<typeof useTranslations<"common">>,
+  onEditGroup?: (group: ExtendedGroups) => void,
+  onDeleteGroup?: (group: ExtendedGroups) => void
 ): ColumnDef<ExtendedGroups>[] => [
   {
     id: "name",
@@ -71,11 +73,20 @@ export const getColumns = (
     size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditGroupModal key={`edit-${row.original.id}`} group={row.original} />
-        <DeleteGroupModal
-          key={`delete-${row.original.id}`}
-          group={row.original}
-        />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          onClick={() => onEditGroup?.(row.original)}
+        >
+          <SquarePen className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="destructive"
+          className="px-2 py-1 h-auto"
+          onClick={() => onDeleteGroup?.(row.original)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
     ),
   },

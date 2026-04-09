@@ -18,12 +18,16 @@ import { ExtendedRoles, getColumns } from "./columns";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { AddRoleModal } from "./AddRoles";
+import { CirclePlus } from "lucide-react";
+import { AddRole } from "./AddRoles";
+import { DeleteRole } from "./DeleteRoles";
+import { EditRole } from "./EditRoles";
 
 type PageSizeOption = number | "All";
 
@@ -60,6 +64,9 @@ function RoleList() {
     direction: "asc",
   });
   const [searchString, setSearchString] = useState("");
+  const [addRoleOpen, setAddRoleOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<ExtendedRoles | null>(null);
+  const [deletingRole, setDeletingRole] = useState<ExtendedRoles | null>(null);
   const debouncedSearchString = useDebounce(searchString, 500);
 
   // Calculate skip and take based on pageSize
@@ -203,8 +210,14 @@ function RoleList() {
   );
 
   const columns = useMemo(
-    // eslint-disable-next-line react-hooks/refs
-    () => getColumns(handleToggleDefault, tCommon),
+    () =>
+      getColumns(
+        // eslint-disable-next-line react-hooks/refs
+        handleToggleDefault,
+        tCommon,
+        setEditingRole,
+        setDeletingRole
+      ),
     [handleToggleDefault, tCommon]
   );
 
@@ -238,7 +251,16 @@ function RoleList() {
               <CardTitle>{tGlobal("common.labels.roles")}</CardTitle>
             </div>
             <div>
-              <AddRoleModal />
+              <Button onClick={() => setAddRoleOpen(true)}>
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">{t("add.button")}</span>
+              </Button>
+              {addRoleOpen && (
+                <AddRole
+                  open={addRoleOpen}
+                  onClose={() => setAddRoleOpen(false)}
+                />
+              )}
             </div>
           </div>
           <CardDescription>{t("description")}</CardDescription>
@@ -296,6 +318,20 @@ function RoleList() {
           </div>
         </CardContent>
       </Card>
+      {editingRole && (
+        <EditRole
+          role={editingRole}
+          open={editingRole !== null}
+          onClose={() => setEditingRole(null)}
+        />
+      )}
+      {deletingRole && (
+        <DeleteRole
+          role={deletingRole}
+          open={deletingRole !== null}
+          onClose={() => setDeletingRole(null)}
+        />
+      )}
     </main>
   );
 }

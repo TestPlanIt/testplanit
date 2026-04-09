@@ -7,8 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -20,7 +19,6 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,23 +49,18 @@ const FormSchema = z.object({
 
 interface EditRepositoryFolderModalProps {
   folderId: number;
-  selected: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   projectId?: number;
 }
 
 export function EditFolderModal({
   folderId,
-  selected: _selected,
-  open: controlledOpen,
-  onOpenChange,
+  open,
+  onClose,
   projectId,
 }: EditRepositoryFolderModalProps) {
   const t = useTranslations();
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
-  const setOpen = onOpenChange || setUncontrolledOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateRepositoryFolder } = useUpdateRepositoryFolders();
   const [editorKey, setEditorKey] = useState(0);
@@ -80,7 +73,7 @@ export function EditFolderModal({
       },
     });
 
-  const handleCancel = () => setOpen(false);
+  const handleCancel = () => onClose();
 
   const defaultFormValues = useMemo(
     () => ({
@@ -130,7 +123,7 @@ export function EditFolderModal({
         },
       });
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       // Check for Prisma unique constraint errors in different possible locations
@@ -163,14 +156,7 @@ export function EditFolderModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {controlledOpen === undefined && (
-        <DialogTrigger asChild>
-          <Button variant="link" className={`p-1 text-primary-background`}>
-            <SquarePen className="h-3 w-3" />
-          </Button>
-        </DialogTrigger>
-      )}
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

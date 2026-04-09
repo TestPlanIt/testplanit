@@ -8,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -36,7 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Asterisk, Star, Upload } from "lucide-react";
+import { Asterisk, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -78,8 +77,8 @@ interface TestResultsImportDialogProps {
   projectId: number;
   onSuccess?: () => void;
   defaultFormat?: TestResultFormat;
-  externalOpen?: boolean;
-  onExternalOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   initialFiles?: File[];
 }
 
@@ -87,20 +86,17 @@ export default function TestResultsImportDialog({
   projectId,
   onSuccess,
   defaultFormat = "auto",
-  externalOpen,
-  onExternalOpenChange,
+  open,
+  onClose,
   initialFiles,
 }: TestResultsImportDialogProps) {
   const t = useTranslations("common.actions.junit.import");
   const tFormat = useTranslations("common.actions.testResults.import.format");
   const tCommon = useTranslations("common");
 
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = externalOpen !== undefined;
-  const open = isControlled ? externalOpen : internalOpen;
-  const setOpen = isControlled
-    ? (v: boolean) => onExternalOpenChange?.(v)
-    : setInternalOpen;
+  const setOpen = (v: boolean) => {
+    if (!v) onClose();
+  };
   const [format, setFormat] = useState<TestResultFormat>(defaultFormat);
   const [stateId, setStateId] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
@@ -363,12 +359,6 @@ export default function TestResultsImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Upload className="h-4 w-4" />
-          {t("title")}
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>

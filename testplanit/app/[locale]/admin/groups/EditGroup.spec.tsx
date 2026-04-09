@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { EditGroupModal } from "./EditGroup";
+import { EditGroup } from "./EditGroup";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
@@ -122,11 +122,13 @@ function makeQueryClient() {
 
 const renderWithProvider = (group = testGroup) => {
   const queryClient = makeQueryClient();
+  const onClose = vi.fn();
   return {
     user: userEvent.setup(),
+    onClose,
     ...render(
       <QueryClientProvider client={queryClient}>
-        <EditGroupModal group={group as any} />
+        <EditGroup group={group as any} open={true} onClose={onClose} />
       </QueryClientProvider>
     ),
   };
@@ -140,28 +142,18 @@ beforeEach(() => {
   mockDeleteManyGroupAssignment.mockResolvedValue({});
 });
 
-describe("EditGroupModal", () => {
-  test("renders the edit button", () => {
+describe("EditGroup", () => {
+  test("renders dialog with group name pre-filled", () => {
     renderWithProvider();
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
-
-  test("opens dialog with group name pre-filled", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
-
     expect(
       screen.getByRole("heading", { name: "admin.groups.edit.title" })
     ).toBeVisible();
-
     // Name input is pre-filled
     expect(screen.getByDisplayValue("Test Group")).toBeInTheDocument();
   });
 
   test("shows assigned users list when loaded", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
-
+    renderWithProvider();
     await waitFor(() => {
       // UserNameCell renders userId as text
       expect(screen.getByTestId("user-name-cell-u1")).toBeInTheDocument();
@@ -171,9 +163,7 @@ describe("EditGroupModal", () => {
   test("shows no users assigned message when assignment list is empty", async () => {
     useEmptyAssignments = true;
     const emptyGroup = { ...testGroup, assignedUsers: [] };
-    const { user } = renderWithProvider(emptyGroup as any);
-    await user.click(screen.getByRole("button"));
-
+    renderWithProvider(emptyGroup as any);
     await waitFor(() => {
       expect(
         screen.getByText("admin.groups.noUsersAssigned")
@@ -183,7 +173,6 @@ describe("EditGroupModal", () => {
 
   test("validates empty group name on submit - mutation not called", async () => {
     const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     const nameInput = screen.getByDisplayValue("Test Group");
     await user.clear(nameInput);
@@ -201,7 +190,6 @@ describe("EditGroupModal", () => {
 
   test("remove user button removes user from assigned list", async () => {
     const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     // User should be displayed
     await waitFor(() => {
@@ -224,7 +212,6 @@ describe("EditGroupModal", () => {
 
   test("submit calls updateGroup with correct data", async () => {
     const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     const submitButton = screen.getByRole("button", {
       name: "common.actions.save",

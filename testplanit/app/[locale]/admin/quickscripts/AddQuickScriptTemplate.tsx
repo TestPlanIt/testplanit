@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CirclePlus } from "lucide-react";
 import Mustache from "mustache";
 import "prismjs/themes/prism-tomorrow.css";
 import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
@@ -40,14 +39,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 
-export function AddQuickScriptTemplateModal() {
-  const [open, setOpen] = useState(false);
+interface AddQuickScriptTemplateProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddQuickScriptTemplate({
+  open,
+  onClose,
+}: AddQuickScriptTemplateProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations("admin.exportTemplates");
   const tCommon = useTranslations("common");
@@ -207,8 +212,7 @@ export function AddQuickScriptTemplateModal() {
         },
       });
 
-      setOpen(false);
-      form.reset();
+      onClose();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
@@ -227,13 +231,7 @@ export function AddQuickScriptTemplateModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button data-testid="add-export-template-button">
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("add.button")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="sm:max-w-[800px] lg:max-w-[1200px] max-h-[90vh] overflow-y-auto"
         data-testid="export-template-dialog"
@@ -514,7 +512,7 @@ export function AddQuickScriptTemplateModal() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

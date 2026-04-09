@@ -1,7 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useUpdateConfigVariants } from "~/lib/hooks";
@@ -9,8 +9,6 @@ import { Variant } from "./Categories";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -28,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -42,32 +39,21 @@ const FormSchema = (t: any) =>
 
 interface EditVariantModalProps {
   variant: Variant;
+  open: boolean;
   onClose: () => void;
   onSave: (updatedVariant: Variant) => void;
 }
 
 export function EditVariantModal({
   variant,
+  open,
   onClose,
   onSave,
 }: EditVariantModalProps) {
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfigVariants } = useUpdateConfigVariants();
   const t = useTranslations("admin.configurations.variants.edit");
   const tCommon = useTranslations("common");
-
-  const handleCancel = () => {
-    setOpen(false);
-    onClose();
-  };
-
-  const defaultFormValues = useMemo(
-    () => ({
-      name: variant.name,
-    }),
-    [variant.name]
-  );
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
     resolver: zodResolver(FormSchema(tCommon)),
@@ -75,12 +61,6 @@ export function EditVariantModal({
       name: variant.name,
     },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form, form.reset]);
 
   const {
     formState: { errors },
@@ -96,9 +76,9 @@ export function EditVariantModal({
         },
       });
 
-      setOpen(false);
-      setIsSubmitting(false);
       onSave({ ...variant, name: data.name });
+      onClose();
+      setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
@@ -118,12 +98,7 @@ export function EditVariantModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="link" className="p-0">
-          <SquarePen className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -162,7 +137,7 @@ export function EditVariantModal({
                     : tCommon("errors.unknown")}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

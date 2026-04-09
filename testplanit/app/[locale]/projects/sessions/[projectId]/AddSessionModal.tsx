@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -43,7 +42,7 @@ import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
-import { AlertTriangle, Asterisk, CirclePlus, Combine, LayoutList } from "lucide-react";
+import { AlertTriangle, Asterisk, Combine, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -96,17 +95,15 @@ export interface SessionDuplicationPreset {
 
 interface AddSessionModalProps {
   defaultMilestoneId?: number;
-  trigger?: React.ReactNode; // Optional custom trigger
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   duplicationPreset?: SessionDuplicationPreset | null;
 }
 
 export function AddSessionModal({
   defaultMilestoneId,
-  trigger,
-  open: controlledOpen,
-  onOpenChange: controlledOnOpenChange,
+  open,
+  onClose,
   duplicationPreset,
 }: AddSessionModalProps) {
   const { data: session } = useSession();
@@ -114,10 +111,6 @@ export function AddSessionModal({
   const numericProjectId = Number(projectId);
   const t = useTranslations();
   const locale = useLocale();
-
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
-  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createSessions } = useCreateSessions();
   const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
@@ -225,7 +218,7 @@ export function AddSessionModal({
 
   const milestonesOptions = transformMilestones(milestones || []);
 
-  const handleCancel = () => setOpen(false);
+  const handleCancel = () => onClose();
 
   type JsonArray = any[];
   type JsonObject = any;
@@ -672,7 +665,7 @@ export function AddSessionModal({
         createdSessions.push(newSession);
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
       const sessionsCreated = createdSessions.length;
       if (sessionsCreated > 1) {
@@ -708,16 +701,7 @@ export function AddSessionModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {!controlledOpen && (trigger ? (
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
-      ) : (
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <CirclePlus className="h-5 w-5" />
-          </Button>
-        </DialogTrigger>
-      ))}
+    <Dialog open={open} onOpenChange={onClose}>
       {selectedAttachmentIndex !== null && (
         <AttachmentsCarousel
           attachments={selectedAttachments}

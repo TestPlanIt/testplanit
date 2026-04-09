@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { emptyEditorContent } from "~/app/constants";
 
-import { CirclePlus, Ellipsis } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 
 import {
   Form,
@@ -36,7 +36,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -114,8 +113,8 @@ export interface FieldDraftOption {
 }
 
 export interface AddCaseFieldModalProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   onSubmitField?: (payload: {
     values: z.infer<typeof FormSchema>;
     dropdownOptions: FieldOptions[];
@@ -126,28 +125,22 @@ export interface AddCaseFieldModalProps {
     values?: Partial<z.infer<typeof FormSchema>>;
     options?: FieldDraftOption[];
   };
-  trigger?: React.ReactNode;
   submitLabel?: string;
 }
 
 export function AddCaseFieldModal({
-  open: controlledOpen,
-  onOpenChange,
+  open,
+  onClose,
   onSubmitField,
   draft,
-  trigger,
   submitLabel,
-}: AddCaseFieldModalProps = {}) {
+}: AddCaseFieldModalProps) {
   const t = useTranslations("admin.templates.caseFields.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen! : internalOpen;
   const setOpen = (value: boolean) => {
-    onOpenChange?.(value);
-    if (!isControlled) {
-      setInternalOpen(value);
+    if (!value) {
+      onClose();
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -707,16 +700,6 @@ export function AddCaseFieldModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {trigger !== null && (
-        <DialogTrigger asChild>
-          {trigger ?? (
-            <Button data-testid="add-case-field-button">
-              <CirclePlus className="w-4" />
-              <span className="hidden md:inline">{t("title")}</span>
-            </Button>
-          )}
-        </DialogTrigger>
-      )}
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="case-field-dialog">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="case-field-form">

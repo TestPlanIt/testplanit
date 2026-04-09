@@ -51,7 +51,7 @@ import {
   Theme, TimeFormat
 } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Circle, Moon, PenSquare, Sun, SunMoon, X } from "lucide-react";
+import { Check, Circle, Moon, PenSquare, Sun, SunMoon, UserLock, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -65,7 +65,7 @@ import {
 import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
 import { ChangePasswordModal } from "./ChangePasswordModal";
-import { EditAvatarModal } from "./EditAvatar";
+import { EditAvatar } from "./EditAvatar";
 import { RemoveAvatar } from "./RemoveAvatar";
 import { TwoFactorSettings } from "./TwoFactorSettings";
 
@@ -90,6 +90,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editAvatarOpen, setEditAvatarOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const { data: session, update: updateSession } = useSession();
   const t = useTranslations("users.profile");
   const tGlobal = useTranslations();
@@ -449,7 +451,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
                   )}
                 </div>
                 {user?.id === session?.user?.id && (
-                  <EditAvatarModal user={user} />
+                  <>
+                    <Button
+                      variant="link"
+                      onClick={() => setEditAvatarOpen(true)}
+                    >
+                      {tGlobal("users.avatar.changeProfilePicture")}
+                    </Button>
+                    {editAvatarOpen && (
+                      <EditAvatar
+                        user={user}
+                        open={editAvatarOpen}
+                        onClose={() => setEditAvatarOpen(false)}
+                      />
+                    )}
+                  </>
                 )}
               </div>
 
@@ -540,7 +556,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
                           </Button>
                           {(user?.authMethod === "INTERNAL" ||
                             user?.authMethod === "BOTH") && (
-                            <ChangePasswordModal />
+                            <>
+                              <Button
+                                variant="destructive"
+                                onClick={() => setChangePasswordOpen(true)}
+                              >
+                                <UserLock className="w-4 h-4" />
+                                {tGlobal(
+                                  "users.profile.changePasswordModal.buttonText"
+                                )}
+                              </Button>
+                              {changePasswordOpen && (
+                                <ChangePasswordModal
+                                  open={changePasswordOpen}
+                                  onClose={() =>
+                                    setChangePasswordOpen(false)
+                                  }
+                                />
+                              )}
+                            </>
                           )}
                           {user?.authMethod === "INTERNAL" && (
                             <Button

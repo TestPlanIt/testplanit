@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { ColorPicker } from "@/components/ColorPicker";
-import { CirclePlus } from "lucide-react";
 
 import {
   Form,
@@ -33,7 +32,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -73,11 +71,15 @@ const createAddStatusFormSchema = (
   });
 };
 
-export function AddStatusModal() {
+interface AddStatusProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddStatus({ open, onClose }: AddStatusProps) {
   const t = useTranslations("admin.statuses.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [systemNameFocused, setSystemNameFocused] = useState(false);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
@@ -131,8 +133,6 @@ export function AddStatusModal() {
     setValue("projects", allProjectIds);
   };
 
-  const handleCancel = () => setOpen(false);
-
   const handleColorSelect = (colorId: number) => {
     setSelectedColorId(colorId);
     form.setValue("colorId", colorId, { shouldValidate: true });
@@ -163,7 +163,6 @@ export function AddStatusModal() {
     setValue,
     watch,
     formState: { errors },
-    reset,
   } = form;
 
   const name = watch("name");
@@ -179,24 +178,6 @@ export function AddStatusModal() {
       setValue("systemName", formattedName, { shouldValidate: true });
     }
   }, [name, systemNameFocused, setValue]);
-
-  useEffect(() => {
-    if (open) {
-      reset({
-        name: "",
-        systemName: "",
-        aliases: "",
-        isEnabled: true,
-        isSuccess: false,
-        isFailure: false,
-        isCompleted: false,
-        colorId: undefined,
-        scope: [],
-        projects: [],
-      });
-      setSystemNameFocused(false);
-    }
-  }, [open, reset]);
 
   useEffect(() => {
     if (defaultColorData?.id && selectedColorId === null) {
@@ -259,7 +240,7 @@ export function AddStatusModal() {
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -279,13 +260,7 @@ export function AddStatusModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("button")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form
@@ -571,7 +546,7 @@ export function AddStatusModal() {
                       : tGlobal("common.errors.unknown")}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

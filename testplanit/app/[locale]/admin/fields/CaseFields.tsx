@@ -3,7 +3,8 @@
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CirclePlus, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +12,8 @@ import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddCaseFieldModal } from "./AddCaseField";
 import { ExtendedCaseFields, getColumns } from "./caseFieldColumns";
+import { DeleteCaseField } from "./DeleteCaseField";
+import { EditCaseField } from "./EditCaseField";
 
 export default function CaseFields() {
   const { data: session, status } = useSession();
@@ -87,12 +90,25 @@ export default function CaseFields() {
     }
   );
 
+  const [editingCaseField, setEditingCaseField] =
+    useState<ExtendedCaseFields | null>(null);
+  const [deletingCaseField, setDeletingCaseField] =
+    useState<ExtendedCaseFields | null>(null);
+
   const columns: CustomColumnDef<ExtendedCaseFields>[] = useMemo(
-    // eslint-disable-next-line react-hooks/refs
-    () => getColumns(t, tCommon, handleToggle),
+    () =>
+      getColumns(
+        t,
+        tCommon,
+        // eslint-disable-next-line react-hooks/refs
+        handleToggle,
+        setEditingCaseField,
+        setDeletingCaseField
+      ),
     [handleToggle, t, tCommon]
   );
 
+  const [addCaseFieldOpen, setAddCaseFieldOpen] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(() => {
@@ -125,7 +141,19 @@ export default function CaseFields() {
               </CardTitle>
             </div>
             <div>
-              <AddCaseFieldModal />
+              <Button
+                data-testid="add-case-field-button"
+                onClick={() => setAddCaseFieldOpen(true)}
+              >
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">{t("add.title")}</span>
+              </Button>
+              {addCaseFieldOpen && (
+                <AddCaseFieldModal
+                  open={addCaseFieldOpen}
+                  onClose={() => setAddCaseFieldOpen(false)}
+                />
+              )}
             </div>
           </div>
         </CardHeader>
@@ -142,6 +170,20 @@ export default function CaseFields() {
             />
           </div>
         </CardContent>
+        {editingCaseField && (
+          <EditCaseField
+            casefield={editingCaseField}
+            open={editingCaseField !== null}
+            onClose={() => setEditingCaseField(null)}
+          />
+        )}
+        {deletingCaseField && (
+          <DeleteCaseField
+            casefield={deletingCaseField}
+            open={deletingCaseField !== null}
+            onClose={() => setDeletingCaseField(null)}
+          />
+        )}
       </Card>
     );
   }

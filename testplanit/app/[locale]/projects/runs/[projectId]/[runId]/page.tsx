@@ -15,6 +15,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle
@@ -249,6 +250,7 @@ export default function TestRunPage() {
     SelectedConfigurationInfo[]
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [selectedTestCaseIds, setSelectedTestCaseIds] = useState<number[]>([]);
   const [selectedIssues, setSelectedIssues] = useState<number[]>([]);
@@ -1569,25 +1571,32 @@ export default function TestRunPage() {
                           </span>
                         </Button>
                         {canCloseRun && (
-                          <CompleteTestRunDialog
-                            trigger={
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <CircleCheckBig className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("common.actions.complete")}
-                                </span>
-                              </Button>
-                            }
-                              testRunId={Number(runId)}
-                              projectId={Number(projectId)}
-                              stateId={testRunData?.stateId || 0}
-                              stateName={testRunData?.state?.name || ""}
-                            />
-                          )}
+                          <>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              onClick={() => setIsCompleteDialogOpen(true)}
+                            >
+                              <CircleCheckBig className="h-4 w-4 shrink-0" />
+                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                {t("common.actions.complete")}
+                              </span>
+                            </Button>
+                            {isCompleteDialogOpen && (
+                              <CompleteTestRunDialog
+                                open={isCompleteDialogOpen}
+                                onClose={() =>
+                                  setIsCompleteDialogOpen(false)
+                                }
+                                testRunId={Number(runId)}
+                                projectId={Number(projectId)}
+                                stateId={testRunData?.stateId || 0}
+                                stateName={testRunData?.state?.name || ""}
+                              />
+                            )}
+                          </>
+                        )}
                         </div>
                     ) : (
                       // Edit Mode Buttons for NON-COMPLETED runs
@@ -1975,12 +1984,12 @@ export default function TestRunPage() {
                 action: "Remove Cases",
               })}
             </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("common.dialogs.confirmAction.message", {
+                action: "remove these test cases",
+              })}
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <div>
-            {t("common.dialogs.confirmAction.message", {
-              action: "remove these test cases",
-            })}
-          </div>
           <div className="bg-destructive text-destructive-foreground p-2">
             {t("common.dialogs.delete.warning", { item: "test cases" })}
           </div>
@@ -2058,9 +2067,9 @@ export default function TestRunPage() {
         <SimpleDndProvider>
           <AddTestRunModal
             open={isAddRunModalOpenForDuplicate}
-            onOpenChange={(isOpen) => {
-              setIsAddRunModalOpenForDuplicate(isOpen);
-              if (!isOpen) setAddRunModalInitPropsForDuplicate(null); // Clear props when closed
+            onClose={() => {
+              setIsAddRunModalOpenForDuplicate(false);
+              setAddRunModalInitPropsForDuplicate(null);
             }}
             initialSelectedCaseIds={
               addRunModalInitPropsForDuplicate.initialSelectedCaseIds

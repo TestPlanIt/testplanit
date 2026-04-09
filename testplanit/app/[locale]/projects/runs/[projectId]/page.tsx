@@ -42,7 +42,7 @@ import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApplicationArea } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CirclePlus, Maximize2 } from "lucide-react";
+import { CirclePlus, Maximize2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -202,20 +202,15 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   }, [modalSelectedTestCases]);
 
   // New handler for the main "Add Test Run" modal open state change
-  const handleAddNewTestRunModalOpenChange = useCallback(
-    (open: boolean) => {
-      setIsAddTestRunModalOpen(open);
-      if (!open) {
-        // Clear URL params when closing this specific modal
-        router.replace(pathname, { scroll: false });
-        // Clear sessionStorage when modal closes
-        sessionStorage.removeItem("createTestRun_selectedCases");
-        // Clear selected test cases
-        setModalSelectedTestCases([]);
-      }
-    },
-    [router, setIsAddTestRunModalOpen, pathname]
-  );
+  const handleCloseAddTestRunModal = useCallback(() => {
+    setIsAddTestRunModalOpen(false);
+    // Clear URL params when closing this specific modal
+    router.replace(pathname, { scroll: false });
+    // Clear sessionStorage when modal closes
+    sessionStorage.removeItem("createTestRun_selectedCases");
+    // Clear selected test cases
+    setModalSelectedTestCases([]);
+  }, [router, setIsAddTestRunModalOpen, pathname]);
 
   // New state for DuplicateTestRunDialog and subsequent AddTestRunModal for duplication
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
@@ -1022,39 +1017,43 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   <div>
                     {canAddEdit && (
                       <div className="flex flex-row gap-2">
-                        <TestResultsImportDialog
-                          projectId={parseInt(projectId)}
-                          onSuccess={() => {
-                            router.refresh();
-                            refetchIncompleteTestRuns();
-                          }}
-                          externalOpen={importDialogOpen}
-                          onExternalOpenChange={(v) => {
-                            setImportDialogOpen(v);
-                            if (!v) setDroppedFiles([]);
-                          }}
-                          initialFiles={
-                            droppedFiles.length > 0 ? droppedFiles : undefined
-                          }
-                        />
-                        <AddTestRunModal
-                          trigger={
-                            <Button
-                              type="button"
-                              variant="default"
-                              data-testid="new-run-button"
-                            >
-                              <CirclePlus className="h-4 w-4" />
-                              <span className="hidden md:inline">
-                                {t("add.title")}
-                              </span>
-                            </Button>
-                          }
-                          open={isAddTestRunModalOpen}
-                          onOpenChange={handleAddNewTestRunModalOpenChange}
-                          initialSelectedCaseIds={modalSelectedTestCases}
-                          onSelectedCasesChange={setModalSelectedTestCases}
-                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => setImportDialogOpen(true)}
+                        >
+                          <Upload className="h-4 w-4" />
+                          {tCommon("actions.junit.import.title")}
+                        </Button>
+                        {importDialogOpen && (
+                          <TestResultsImportDialog
+                            projectId={parseInt(projectId)}
+                            onSuccess={() => {
+                              router.refresh();
+                              refetchIncompleteTestRuns();
+                            }}
+                            open={importDialogOpen}
+                            onClose={() => {
+                              setImportDialogOpen(false);
+                              setDroppedFiles([]);
+                            }}
+                            initialFiles={
+                              droppedFiles.length > 0
+                                ? droppedFiles
+                                : undefined
+                            }
+                          />
+                        )}
+                        <Button
+                          type="button"
+                          variant="default"
+                          data-testid="new-run-button"
+                          onClick={() => setIsAddTestRunModalOpen(true)}
+                        >
+                          <CirclePlus className="h-4 w-4" />
+                          <span className="hidden md:inline">
+                            {t("add.title")}
+                          </span>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1400,20 +1399,15 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                           {tCommon("messages.emptyActive")}
                         </p>
                         {canAddEdit && (
-                          <AddTestRunModal
-                            trigger={
-                              <Button variant="default">
-                                <CirclePlus className="h-4 w-4" />
-                                <span className="hidden md:inline">
-                                  {t("add.title")}
-                                </span>
-                              </Button>
-                            }
-                            open={isAddTestRunModalOpen}
-                            onOpenChange={handleAddNewTestRunModalOpenChange}
-                            initialSelectedCaseIds={modalSelectedTestCases}
-                            onSelectedCasesChange={setModalSelectedTestCases}
-                          />
+                          <Button
+                            variant="default"
+                            onClick={() => setIsAddTestRunModalOpen(true)}
+                          >
+                            <CirclePlus className="h-4 w-4" />
+                            <span className="hidden md:inline">
+                              {t("add.title")}
+                            </span>
+                          </Button>
                         )}
                       </div>
                     ) : (
@@ -1592,11 +1586,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         {isAddRunModalOpenForDuplicate && addRunModalInitPropsForDuplicate && (
           <AddTestRunModal
             open={isAddRunModalOpenForDuplicate}
-            onOpenChange={(open) => {
-              setIsAddRunModalOpenForDuplicate(open);
-              if (!open) {
-                setAddRunModalInitPropsForDuplicate(null); // Clear duplication specific props
-              }
+            onClose={() => {
+              setIsAddRunModalOpenForDuplicate(false);
+              setAddRunModalInitPropsForDuplicate(null);
             }}
             initialSelectedCaseIds={
               addRunModalInitPropsForDuplicate.initialSelectedCaseIds
@@ -1620,7 +1612,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         {isAddTestRunModalOpen && (
           <AddTestRunModal
             open={isAddTestRunModalOpen}
-            onOpenChange={handleAddNewTestRunModalOpenChange}
+            onClose={handleCloseAddTestRunModal}
             initialSelectedCaseIds={modalSelectedTestCases}
             onSelectedCasesChange={setModalSelectedTestCases}
           />

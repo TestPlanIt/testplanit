@@ -4,7 +4,7 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CirclePlus } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { AddSessionModal } from "~/app/[locale]/projects/sessions/[projectId]/AddSessionModal";
 import {
   getStatus,
@@ -170,6 +170,12 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   RenderItem,
   translationFunction,
 }) => {
+  // Tracks which milestone's AddSessionModal is open. null = none open.
+  // "unscheduled" = opened from the unscheduled section.
+  const [addSessionFor, setAddSessionFor] = useState<
+    number | "unscheduled" | null
+  >(null);
+
   const result: React.ReactNode[] = [];
 
   // Helper function to check if a milestone has any items
@@ -240,17 +246,16 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           <div className="milestone-dates flex justify-end">
             <div className="grow text-sm text-muted-foreground">
               {isAdmin && (
-                <AddSessionModal
-                  defaultMilestoneId={milestone.id}
-                  trigger={
-                    <Button variant="link" className="p-0">
-                      <CirclePlus className="h-4 w-4" />
-                      <span className="hidden md:inline">
-                        {translationFunction("sessions.actions.add")}
-                      </span>
-                    </Button>
-                  }
-                />
+                <Button
+                  variant="link"
+                  className="p-0"
+                  onClick={() => setAddSessionFor(milestone.id)}
+                >
+                  <CirclePlus className="h-4 w-4" />
+                  <span className="hidden md:inline">
+                    {translationFunction("sessions.actions.add")}
+                  </span>
+                </Button>
               )}
               <DateTextDisplay
                 startDate={
@@ -352,17 +357,16 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           <div className="milestone-dates flex justify-end">
             <div className="grow text-sm text-muted-foreground">
               {isAdmin && (
-                <AddSessionModal
-                  defaultMilestoneId={milestone.id}
-                  trigger={
-                    <Button variant="link" className="p-0">
-                      <CirclePlus className="h-4 w-4" />
-                      <span className="hidden md:inline">
-                        {translationFunction("sessions.actions.add")}
-                      </span>
-                    </Button>
-                  }
-                />
+                <Button
+                  variant="link"
+                  className="p-0"
+                  onClick={() => setAddSessionFor(milestone.id)}
+                >
+                  <CirclePlus className="h-4 w-4" />
+                  <span className="hidden md:inline">
+                    {translationFunction("sessions.actions.add")}
+                  </span>
+                </Button>
               )}
               <DateTextDisplay
                 startDate={
@@ -426,16 +430,16 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           </div>
           <div className="milestone-dates flex justify-end">
             {isAdmin && (
-              <AddSessionModal
-                trigger={
-                  <Button variant="default" size="sm">
-                    <CirclePlus className="h-4 w-4" />
-                    <span className="hidden md:inline">
-                      {translationFunction("sessions.actions.add")}
-                    </span>
-                  </Button>
-                }
-              />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setAddSessionFor("unscheduled")}
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="hidden md:inline">
+                  {translationFunction("sessions.actions.add")}
+                </span>
+              </Button>
             )}
           </div>
         </div>
@@ -473,5 +477,18 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
     }
   });
 
-  return <>{result}</>;
+  return (
+    <>
+      {result}
+      {addSessionFor !== null && (
+        <AddSessionModal
+          open={addSessionFor !== null}
+          onClose={() => setAddSessionFor(null)}
+          defaultMilestoneId={
+            typeof addSessionFor === "number" ? addSessionFor : undefined
+          }
+        />
+      )}
+    </>
+  );
 };

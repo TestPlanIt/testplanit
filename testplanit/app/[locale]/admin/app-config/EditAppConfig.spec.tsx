@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 
-import { EditAppConfigModal } from "./EditAppConfig";
+import { EditAppConfig } from "./EditAppConfig";
 
 // Mock the translation hook
 vi.mock("next-intl", () => ({
@@ -28,14 +28,18 @@ const sampleConfig = {
   value: { initial: "data", count: 1 },
 };
 
-// Helper to wrap component in QueryClientProvider
+// Helper to wrap component in QueryClientProvider with open=true so the
+// dialog renders. EditAppConfig is now a pure form component that takes
+// { config, open, onClose } props.
 const queryClient = new QueryClient();
-const renderWithProvider = (configProp = sampleConfig) => {
+const renderOpen = (configProp = sampleConfig) => {
+  const onClose = vi.fn();
   return {
     user: userEvent.setup(),
+    onClose,
     ...render(
       <QueryClientProvider client={queryClient}>
-        <EditAppConfigModal config={configProp} />
+        <EditAppConfig config={configProp} open={true} onClose={onClose} />
       </QueryClientProvider>
     ),
   };
@@ -46,32 +50,23 @@ beforeEach(() => {
   mockUpdateMutateAsync.mockClear();
 });
 
-test("renders the edit button", () => {
-  renderWithProvider();
-  expect(screen.getByRole("button")).toBeInTheDocument();
-});
+test("renders dialog with initial data", () => {
+  renderOpen();
 
-test("opens modal and shows initial data when edit button is clicked", async () => {
-  const { user } = renderWithProvider();
-  const editButton = screen.getByRole("button");
-  await user.click(editButton);
-
-  // Check if the dialog title is visible
+  // Dialog title is visible
   expect(
     screen.getByRole("heading", { name: "admin.appConfig.editConfig" })
   ).toBeVisible();
-  // Check if the key is displayed (using mock translation)
+  // Key is displayed (using mock translation)
   expect(screen.getByText("common.fields.configKeys.sample_key")).toBeVisible();
-  // Check if the value textarea has the correct initial stringified JSON
+  // Value textarea has the correct initial stringified JSON
   expect(
     screen.getByLabelText("common.fields.value", { selector: "textarea" })
   ).toHaveValue(JSON.stringify(sampleConfig.value, null, 2));
 });
 
 test("shows validation error for invalid JSON", async () => {
-  const { user } = renderWithProvider();
-  const editButton = screen.getByRole("button");
-  await user.click(editButton);
+  const { user } = renderOpen();
 
   const valueInput = screen.getByLabelText("common.fields.value", {
     selector: "textarea",
@@ -95,11 +90,9 @@ test("shows validation error for invalid JSON", async () => {
   expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
 });
 
-test("calls update mutation with parsed data on successful submission", async () => {
+test("calls update mutation with parsed data and onClose on successful submission", async () => {
   mockUpdateMutateAsync.mockResolvedValue({});
-  const { user } = renderWithProvider();
-  const editButton = screen.getByRole("button");
-  await user.click(editButton);
+  const { user, onClose } = renderOpen();
 
   const valueInput = screen.getByLabelText("common.fields.value", {
     selector: "textarea",
@@ -126,14 +119,12 @@ test("calls update mutation with parsed data on successful submission", async ()
     data: { value: updatedValue }, // Expect the JS object
   });
 
-  // Optional: Check if modal closes
-  // expect(screen.queryByRole("heading", { name: "admin.appConfig.editConfig" })).not.toBeInTheDocument();
+  // After successful submission, onClose should be called
+  expect(onClose).toHaveBeenCalled();
 });
 
-test("closes modal when cancel button is clicked", async () => {
-  const { user } = renderWithProvider();
-  const editButton = screen.getByRole("button");
-  await user.click(editButton);
+test("calls onClose when cancel button is clicked", async () => {
+  const { user, onClose } = renderOpen();
 
   expect(
     screen.getByRole("heading", { name: "admin.appConfig.editConfig" })
@@ -144,11 +135,6 @@ test("closes modal when cancel button is clicked", async () => {
   });
   await user.click(cancelButton);
 
-  expect(
-    screen.queryByRole("heading", { name: "admin.appConfig.editConfig" })
-  ).not.toBeInTheDocument();
+  expect(onClose).toHaveBeenCalled();
   expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
 });
-
-// Remove placeholder comment
-// // --- Add more tests here for validation, submission, etc. ---

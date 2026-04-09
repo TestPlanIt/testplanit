@@ -20,7 +20,9 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { useCountIssue, useFindManyIssue } from "~/lib/hooks";
-import { useIssueColumns } from "./columns";
+import { ExtendedIssue, useIssueColumns } from "./columns";
+import { DeleteIssue } from "./DeleteIssue";
+import { EditIssue } from "./EditIssue";
 
 type PageSizeOption = number | "All";
 
@@ -321,9 +323,15 @@ function IssueList() {
     }
   }, [status, session, router]);
 
+  const [editingIssue, setEditingIssue] = useState<ExtendedIssue | null>(null);
+  const [deletingIssue, setDeletingIssue] = useState<ExtendedIssue | null>(
+    null
+  );
   const columns = useIssueColumns({
     tCommon,
     isLoadingCounts,
+    onEditIssue: setEditingIssue,
+    onDeleteIssue: setDeletingIssue,
   });
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -419,6 +427,20 @@ function IssueList() {
           </div>
         </CardContent>
       </Card>
+      {editingIssue && (
+        <EditIssue
+          issue={editingIssue}
+          open={editingIssue !== null}
+          onClose={() => setEditingIssue(null)}
+        />
+      )}
+      {deletingIssue && (
+        <DeleteIssue
+          issue={deletingIssue}
+          open={deletingIssue !== null}
+          onClose={() => setDeletingIssue(null)}
+        />
+      )}
     </main>
   );
 }

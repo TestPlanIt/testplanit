@@ -8,29 +8,31 @@ import {
 
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteMilestoneTypeModalProps {
+interface DeleteMilestoneTypeProps {
   milestoneType: MilestoneTypes;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteMilestoneTypeModal({
+export function DeleteMilestoneType({
   milestoneType,
-}: DeleteMilestoneTypeModalProps) {
+  open,
+  onClose,
+}: DeleteMilestoneTypeProps) {
   const t = useTranslations("admin.milestones.delete");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateMilestoneType } = useUpdateMilestoneTypes();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
@@ -77,7 +79,7 @@ export function DeleteMilestoneTypeModal({
         data: { isDeleted: true },
         where: { id: milestoneType.id },
       });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch {
       form.setError("root", {
@@ -90,12 +92,7 @@ export function DeleteMilestoneTypeModal({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -106,12 +103,12 @@ export function DeleteMilestoneTypeModal({
                   item: tCommon("fields.milestoneTypes"),
                 })}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("confirmMessage", {
+                  name: milestoneType.name,
+                })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t("confirmMessage", {
-                name: milestoneType.name,
-              })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {tGlobal("runs.delete.warning")}
             </div>
@@ -124,10 +121,15 @@ export function DeleteMilestoneTypeModal({
                   {errors.root.message}
                 </div>
               )}
-              <AlertDialogCancel disabled={isSubmitting}>
+              <AlertDialogCancel
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
                 {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
+                type="button"
                 disabled={isSubmitting}
                 onClick={onSubmit}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

@@ -6,25 +6,27 @@ import { useUpdateWorkflows } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteWorkflowsModalProps {
+interface DeleteWorkflowsProps {
   workflows: Workflows;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteWorkflowsModal({
+export function DeleteWorkflows({
   workflows: workflows,
-}: DeleteWorkflowsModalProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: DeleteWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateWorkflows } = useUpdateWorkflows();
 
@@ -32,17 +34,11 @@ export function DeleteWorkflowsModal({
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
 
-  const handleCancel = () => {
-    setOpen(false);
-    reset();
-  };
-
   const form = useForm();
   const {
     formState: { errors },
     setError,
     handleSubmit,
-    reset,
   } = form;
 
   async function onSubmit() {
@@ -52,8 +48,7 @@ export function DeleteWorkflowsModal({
         data: { isDeleted: true },
         where: { id: workflows.id },
       });
-      setOpen(false);
-      reset();
+      onClose();
     } catch {
       setError("root", {
         type: "custom",
@@ -65,20 +60,7 @@ export function DeleteWorkflowsModal({
   }
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-          reset();
-        }
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -110,7 +92,7 @@ export function DeleteWorkflowsModal({
               )}
               <AlertDialogCancel
                 type="button"
-                onClick={handleCancel}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

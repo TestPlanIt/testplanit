@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 
-import { AddAppConfigModal } from "./AddAppConfig";
+import { AddAppConfig } from "./AddAppConfig";
 
 // Mock the translation hook
 vi.mock("next-intl", () => ({
@@ -17,13 +17,18 @@ vi.mock("~/lib/hooks/app-config", () => ({
   useCreateAppConfig: () => ({ mutateAsync: mockMutateAsync }),
 }));
 
-// Helper to wrap component in QueryClientProvider
+// Helper to wrap component in QueryClientProvider with open=true so the
+// dialog renders. Each test gets its own onClose mock.
 const queryClient = new QueryClient();
-const renderWithProvider = (ui: React.ReactElement) => {
+const renderOpen = () => {
+  const onClose = vi.fn();
   return {
     user: userEvent.setup(),
+    onClose,
     ...render(
-      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AddAppConfig open={true} onClose={onClose} />
+      </QueryClientProvider>
     ),
   };
 };
@@ -33,25 +38,13 @@ beforeEach(() => {
   mockMutateAsync.mockClear();
 });
 
-test("renders the add config button", () => {
-  renderWithProvider(<AddAppConfigModal />);
-  expect(
-    screen.getByRole("button", { name: "admin.appConfig.addConfig" })
-  ).toBeInTheDocument();
-});
-
-test("opens modal when add button is clicked", async () => {
-  const { user } = renderWithProvider(<AddAppConfigModal />);
-  const addButton = screen.getByRole("button", {
-    name: "admin.appConfig.addConfig",
-  });
-  await user.click(addButton);
-
-  // Check if the dialog title is visible
+test("renders the dialog with form fields when open", () => {
+  renderOpen();
+  // Dialog title is visible
   expect(
     screen.getByRole("heading", { name: "admin.appConfig.addConfig" })
   ).toBeVisible();
-  // Check for form elements
+  // Form elements are visible
   expect(
     screen.getByLabelText("common.fields.key", { selector: "input" })
   ).toBeVisible();
@@ -61,11 +54,7 @@ test("opens modal when add button is clicked", async () => {
 });
 
 test("shows validation errors for empty fields on submit", async () => {
-  const { user } = renderWithProvider(<AddAppConfigModal />);
-  const addButton = screen.getByRole("button", {
-    name: "admin.appConfig.addConfig",
-  });
-  await user.click(addButton);
+  const { user } = renderOpen();
 
   // Find the submit button within the modal (use the mock translation)
   const submitButton = screen.getByRole("button", {
@@ -85,11 +74,7 @@ test("shows validation errors for empty fields on submit", async () => {
 });
 
 test("shows validation error for invalid JSON in value field", async () => {
-  const { user } = renderWithProvider(<AddAppConfigModal />);
-  const addButton = screen.getByRole("button", {
-    name: "admin.appConfig.addConfig",
-  });
-  await user.click(addButton);
+  const { user } = renderOpen();
 
   const keyInput = screen.getByLabelText("common.fields.key", {
     selector: "input",
@@ -114,15 +99,11 @@ test("shows validation error for invalid JSON in value field", async () => {
   expect(mockMutateAsync).not.toHaveBeenCalled();
 });
 
-test("calls mutation with parsed data on successful submission", async () => {
+test("calls mutation with parsed data and onClose on successful submission", async () => {
   // Make mockMutateAsync resolve successfully
   mockMutateAsync.mockResolvedValue({});
 
-  const { user } = renderWithProvider(<AddAppConfigModal />);
-  const addButton = screen.getByRole("button", {
-    name: "admin.appConfig.addConfig",
-  });
-  await user.click(addButton);
+  const { user, onClose } = renderOpen();
 
   const keyInput = screen.getByLabelText("common.fields.key", {
     selector: "input",
@@ -156,34 +137,21 @@ test("calls mutation with parsed data on successful submission", async () => {
     },
   });
 
-  // Optional: Check if the modal closes after successful submission
-  // This depends on how `setOpen(false)` interacts with the testing environment.
-  // await waitForElementToBeRemoved(() => screen.queryByRole("heading", { name: "admin.appConfig.addConfig" }));
+  // After successful submission, onClose should be called (so the parent
+  // can unmount this component).
+  expect(onClose).toHaveBeenCalled();
 });
 
-test("closes modal when cancel button is clicked", async () => {
-  const { user } = renderWithProvider(<AddAppConfigModal />);
-  const addButton = screen.getByRole("button", {
-    name: "admin.appConfig.addConfig",
-  });
-  await user.click(addButton);
-
-  // Modal should be open
-  expect(
-    screen.getByRole("heading", { name: "admin.appConfig.addConfig" })
-  ).toBeVisible();
+test("calls onClose when cancel button is clicked", async () => {
+  const { user, onClose } = renderOpen();
 
   const cancelButton = screen.getByRole("button", {
     name: "common.cancel",
   });
   await user.click(cancelButton);
 
-  // Modal should be closed - check that the heading is gone
-  // Use queryByRole which returns null if not found, instead of throwing
-  expect(
-    screen.queryByRole("heading", { name: "admin.appConfig.addConfig" })
-  ).not.toBeInTheDocument();
-
+  // Parent will unmount the component based on this callback.
+  expect(onClose).toHaveBeenCalled();
   // Ensure mutation was NOT called
   expect(mockMutateAsync).not.toHaveBeenCalled();
 });

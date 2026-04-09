@@ -15,6 +15,8 @@ import {
 } from "~/lib/hooks";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { ConfigWithVariants, getColumns } from "./configColumns";
+import { DeleteConfiguration } from "./DeleteConfig";
+import { EditConfiguration } from "./EditConfig";
 
 type PageSizeOption = number | "All";
 
@@ -118,9 +120,20 @@ function Configurations(): React.ReactElement | null {
     []
   );
 
+  const [editingConfiguration, setEditingConfiguration] =
+    useState<ConfigWithVariants | null>(null);
+  const [deletingConfiguration, setDeletingConfiguration] =
+    useState<ConfigWithVariants | null>(null);
+
   const columns = useMemo(
-    // eslint-disable-next-line react-hooks/refs
-    () => getColumns(tCommon, handleToggle),
+    () =>
+      getColumns(
+        tCommon,
+        // eslint-disable-next-line react-hooks/refs
+        handleToggle,
+        setEditingConfiguration,
+        setDeletingConfiguration
+      ),
     [tCommon, handleToggle]
   );
 
@@ -240,6 +253,20 @@ function Configurations(): React.ReactElement | null {
             </div>
           </CardContent>
         </Card>
+        {editingConfiguration && (
+          <EditConfiguration
+            configuration={editingConfiguration}
+            open={editingConfiguration !== null}
+            onClose={() => setEditingConfiguration(null)}
+          />
+        )}
+        {deletingConfiguration && (
+          <DeleteConfiguration
+            configuration={deletingConfiguration}
+            open={deletingConfiguration !== null}
+            onClose={() => setDeletingConfiguration(null)}
+          />
+        )}
       </main>
     );
   }

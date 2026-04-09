@@ -10,12 +10,17 @@ import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyStatus, useUpdateStatus } from "~/lib/hooks";
 import { getColumns } from "./columns";
 
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { AddStatusModal } from "./AddStatus";
+import { CirclePlus } from "lucide-react";
+import { AddStatus } from "./AddStatus";
+import { ExtendedStatus } from "./columns";
+import { DeleteStatus } from "./DeleteStatus";
+import { EditStatus } from "./EditStatus";
 
 export default function StatusList() {
   return <Status />;
@@ -125,7 +130,9 @@ function Status() {
         handleToggleSuccess,
         handleToggleFailure,
         handleToggleCompleted,
-        tCommon
+        tCommon,
+        setEditingStatus,
+        setDeletingStatus
       ),
     [
       handleToggleEnabled,
@@ -140,6 +147,13 @@ function Status() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  const [addStatusOpen, setAddStatusOpen] = useState(false);
+  const [editingStatus, setEditingStatus] = useState<ExtendedStatus | null>(
+    null
+  );
+  const [deletingStatus, setDeletingStatus] = useState<ExtendedStatus | null>(
+    null
+  );
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -162,7 +176,16 @@ function Status() {
               <CardTitle>{tCommon("labels.statuses")}</CardTitle>
             </div>
             <div>
-              <AddStatusModal />
+              <Button onClick={() => setAddStatusOpen(true)}>
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">{t("add.button")}</span>
+              </Button>
+              {addStatusOpen && (
+                <AddStatus
+                  open={addStatusOpen}
+                  onClose={() => setAddStatusOpen(false)}
+                />
+              )}
             </div>
           </div>
           <CardDescription>{t("description")}</CardDescription>
@@ -187,6 +210,20 @@ function Status() {
           </div>
         </CardContent>
       </Card>
+      {editingStatus && (
+        <EditStatus
+          status={editingStatus}
+          open={editingStatus !== null}
+          onClose={() => setEditingStatus(null)}
+        />
+      )}
+      {deletingStatus && (
+        <DeleteStatus
+          status={deletingStatus}
+          open={deletingStatus !== null}
+          onClose={() => setDeletingStatus(null)}
+        />
+      )}
     </main>
   );
 }

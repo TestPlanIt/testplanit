@@ -2,7 +2,7 @@
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Groups, User } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useCreateManyGroupAssignment,
   useDeleteManyGroupAssignment, useFindManyGroupAssignment, useFindManyUser, useUpdateGroups
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 
-import { SquarePen, Trash2, Users } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 
 import {
   Form,
@@ -35,12 +35,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-interface EditGroupModalProps {
+interface EditGroupProps {
   group: Groups & { assignedUsers: { userId: string }[] };
+  open: boolean;
+  onClose: () => void;
 }
 
 const EditGroupFormSchema = z.object({
@@ -51,10 +52,9 @@ const EditGroupFormSchema = z.object({
 
 type EditGroupFormData = z.infer<typeof EditGroupFormSchema>;
 
-export function EditGroupModal({ group }: EditGroupModalProps) {
+export function EditGroup({ group, open, onClose }: EditGroupProps) {
   const t = useTranslations("admin.groups");
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [initialAssignedUserIds, setInitialAssignedUserIds] = useState<
@@ -62,18 +62,12 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
   >(new Set());
 
   const { mutateAsync: updateGroup } = useUpdateGroups();
-  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser(
-    {
-      where: { isActive: true, isDeleted: false },
-      orderBy: { name: "asc" },
-    },
-    { enabled: open }
-  );
+  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser({
+    where: { isActive: true, isDeleted: false },
+    orderBy: { name: "asc" },
+  });
   const { data: groupAssignments, isLoading: assignmentsLoading } =
-    useFindManyGroupAssignment(
-      { where: { groupId: group.id } },
-      { enabled: open }
-    );
+    useFindManyGroupAssignment({ where: { groupId: group.id } });
   const { mutateAsync: createManyGroupAssignment } =
     useCreateManyGroupAssignment();
   const { mutateAsync: deleteManyGroupAssignment } =
@@ -81,37 +75,25 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
 
   const allUsers: User[] | undefined = allUsersData as User[] | undefined;
 
+  // Initialize assignedUsers once both queries resolve. Component is mounted
+  // fresh on each open by the parent, so this only runs once per edit cycle.
   useEffect(() => {
-    if (open && allUsers && groupAssignments) {
+    if (allUsers && groupAssignments) {
       const currentAssignedIds = new Set(groupAssignments.map((a) => a.userId));
       const currentAssignedUsers = allUsers.filter((u) =>
         currentAssignedIds.has(u.id)
       );
       setAssignedUsers(currentAssignedUsers);
       setInitialAssignedUserIds(currentAssignedIds);
-    } else if (!open) {
-      setAssignedUsers([]);
-      setInitialAssignedUserIds(new Set());
     }
-  }, [open, allUsers, groupAssignments]);
-
-  const defaultFormValues = useMemo(
-    () => ({
-      name: group.name,
-    }),
-    [group.name]
-  );
+  }, [allUsers, groupAssignments]);
 
   const form = useForm<EditGroupFormData>({
     resolver: zodResolver(EditGroupFormSchema),
-    defaultValues: defaultFormValues,
+    defaultValues: {
+      name: group.name,
+    },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form]);
 
   const {
     handleSubmit,
@@ -180,7 +162,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
         toast.error(tCommon("messages.updateError"));
       } else {
         toast.success(tCommon("messages.updateSuccess"));
-        setOpen(false);
+        onClose();
       }
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -207,12 +189,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
   const isLoading = usersLoading || assignmentsLoading;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[700px]">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -301,7 +278,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

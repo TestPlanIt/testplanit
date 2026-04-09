@@ -2,6 +2,7 @@
 
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,9 +11,10 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddMilestoneModal } from "@/projects/milestones/[projectId]/AddMilestoneModal";
+import { AddMilestone } from "@/projects/milestones/[projectId]/AddMilestoneModal";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
 import { ApplicationArea } from "@prisma/client";
+import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useEffect, useState } from "react";
@@ -30,6 +32,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const t = useTranslations();
   const router = useRouter();
   const [isClientLoading, setIsClientLoading] = useState(true);
+  const [addMilestoneOpen, setAddMilestoneOpen] = useState(false);
   const {
     session,
     isLoading: isAuthLoading,
@@ -163,7 +166,21 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                 </div>
                 {canAddEdit && (
                   <div>
-                    <AddMilestoneModal />
+                    <Button
+                      data-testid="new-milestone-button"
+                      onClick={() => setAddMilestoneOpen(true)}
+                    >
+                      <CirclePlus className="w-4" />
+                      <span className="hidden md:inline">
+                        {t("milestones.actions.add")}
+                      </span>
+                    </Button>
+                    {addMilestoneOpen && (
+                      <AddMilestone
+                        open={addMilestoneOpen}
+                        onClose={() => setAddMilestoneOpen(false)}
+                      />
+                    )}
                   </div>
                 )}
               </div>

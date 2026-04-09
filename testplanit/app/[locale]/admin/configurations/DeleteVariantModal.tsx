@@ -10,27 +10,28 @@ import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Trash, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface DeleteVariantModalProps {
   variant: Variant;
+  open: boolean;
   onClose: () => void;
   onDelete: (variantId: number) => void;
 }
 
 export function DeleteVariantModal({
   variant,
+  open,
   onClose,
   onDelete,
 }: DeleteVariantModalProps) {
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfigVariants } = useUpdateConfigVariants();
   const { mutateAsync: updateManyConfigurations } =
@@ -38,10 +39,6 @@ export function DeleteVariantModal({
   const t = useTranslations("admin.configurations.variants.delete");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const handleCancel = () => {
-    setOpen(false);
-    onClose();
-  };
 
   const form = useForm();
   const {
@@ -68,7 +65,7 @@ export function DeleteVariantModal({
 
       setIsSubmitting(false);
       onDelete(variant.id!);
-      setOpen(false);
+      onClose();
     } catch (err: any) {
       console.error(
         `Failed during deletion process for variant ID: ${variant.id}`,
@@ -84,12 +81,7 @@ export function DeleteVariantModal({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="link" className="p-0 ml-2">
-          <Trash className="h-4 w-4" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -120,7 +112,7 @@ export function DeleteVariantModal({
                   {tGlobal("common.errors.unknown")}
                 </div>
               )}
-              <AlertDialogCancel type="button" onClick={handleCancel}>
+              <AlertDialogCancel type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </AlertDialogCancel>
               <Button

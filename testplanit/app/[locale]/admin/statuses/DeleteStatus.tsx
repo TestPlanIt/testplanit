@@ -5,38 +5,32 @@ import { useUpdateStatus } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";
 
-interface DeleteStatusModalProps {
+interface DeleteStatusProps {
   status: Status;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
-  const [open, setOpen] = useState(false);
+export function DeleteStatus({ status, open, onClose }: DeleteStatusProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateStatus } = useUpdateStatus();
-
-  const handleCancel = () => {
-    setOpen(false);
-    reset();
-  };
 
   const form = useForm();
   const {
     formState: { errors },
     setError,
-    reset,
   } = form;
 
   const t = useTranslations("admin.statuses.delete");
@@ -50,8 +44,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
         data: { isDeleted: true },
         where: { id: status.id },
       });
-      setOpen(false);
-      reset();
+      onClose();
     } catch {
       setError("root", {
         type: "custom",
@@ -63,20 +56,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
   }
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-          reset();
-        }
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -104,7 +84,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
               )}
               <AlertDialogCancel
                 type="button"
-                onClick={handleCancel}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

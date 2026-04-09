@@ -1,7 +1,7 @@
 "use client";
 import { ApplicationArea } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useCreateRoles,
   useUpdateManyRoles,
@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { CirclePlus } from "lucide-react";
 
 import {
   Form,
@@ -34,7 +33,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
@@ -61,16 +59,18 @@ const AddRoleFormSchema = z.object({
 
 type AddRoleFormData = z.infer<typeof AddRoleFormSchema>;
 
-export function AddRoleModal() {
+interface AddRoleProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddRole({ open, onClose }: AddRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createRole } = useCreateRoles();
   const { mutateAsync: updateManyRoles } = useUpdateManyRoles();
   const upsertRolePermission = useUpsertRolePermission();
-
-  const handleCancel = () => setOpen(false);
 
   // Initialize permissions with all false values
   const initialPermissions = useMemo(
@@ -98,7 +98,6 @@ export function AddRoleModal() {
     control,
     setValue,
     watch,
-    reset,
     handleSubmit,
     formState: { errors },
     setError,
@@ -169,17 +168,6 @@ export function AddRoleModal() {
   };
   // --- End Re-added Handlers and Watcher ---
 
-  useEffect(() => {
-    // Reset form when modal opens
-    if (open) {
-      reset({
-        name: "",
-        isDefault: false,
-        permissions: initialPermissions,
-      });
-    }
-  }, [open, reset, initialPermissions]);
-
   async function onSubmit(data: AddRoleFormData) {
     setIsSubmitting(true);
     let newRole: { id: number } | undefined;
@@ -225,7 +213,7 @@ export function AddRoleModal() {
       // Wait for all permission creations to complete
       await Promise.all(permissionPromises);
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       // Error Handling (check for unique constraint, log others)
@@ -249,15 +237,7 @@ export function AddRoleModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">
-            {t("admin.roles.add.button")}
-          </span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -490,7 +470,7 @@ export function AddRoleModal() {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

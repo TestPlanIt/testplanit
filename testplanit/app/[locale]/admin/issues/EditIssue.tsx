@@ -1,6 +1,6 @@
 "use client";
 import { IntegrationProvider, Issue } from "@prisma/client";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useFindUniqueIntegration, useUpdateIssue } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,8 +10,6 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -29,7 +27,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -79,14 +76,15 @@ const EditIssueSchema = z.object({
 
 type EditIssueFormData = z.infer<typeof EditIssueSchema>;
 
-interface EditIssueModalProps {
+interface EditIssueProps {
   issue: Issue;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditIssueModal({ issue }: EditIssueModalProps) {
+export function EditIssue({ issue, open, onClose }: EditIssueProps) {
   const t = useTranslations("admin.issues.edit");
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateIssue } = useUpdateIssue();
 
@@ -96,32 +94,19 @@ export function EditIssueModal({ issue }: EditIssueModalProps) {
       where: { id: issue.integrationId || 0 },
     },
     {
-      enabled: open && !!issue.integrationId,
+      enabled: !!issue.integrationId,
     }
-  );
-
-  const handleCancel = () => setOpen(false);
-
-  const defaultFormValues = useMemo(
-    () => ({
-      name: issue.name,
-      title: issue.title,
-      description: issue.description || "",
-      externalKey: issue.externalKey || "",
-    }),
-    [issue]
   );
 
   const form = useForm<EditIssueFormData>({
     resolver: zodResolver(EditIssueSchema),
-    defaultValues: defaultFormValues,
+    defaultValues: {
+      name: issue.name,
+      title: issue.title,
+      description: issue.description || "",
+      externalKey: issue.externalKey || "",
+    },
   });
-
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-    }
-  }, [open, defaultFormValues, form]);
 
   const {
     formState: { errors },
@@ -152,7 +137,7 @@ export function EditIssueModal({ issue }: EditIssueModalProps) {
           externalUrl: externalUrl,
         },
       });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch {
       form.setError("root", {
@@ -165,12 +150,7 @@ export function EditIssueModal({ issue }: EditIssueModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -253,7 +233,7 @@ export function EditIssueModal({ issue }: EditIssueModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

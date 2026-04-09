@@ -1,7 +1,7 @@
 "use client";
 import {
   AlertDialog,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { TestRuns } from "@prisma/client";
@@ -117,8 +117,10 @@ export function DeleteTestRunModal({
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("title")}
               </AlertDialogTitle>
+              <AlertDialogDescription className="overflow-hidden">
+                {t("description")}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="overflow-hidden">{t("description")}</div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {t("warning")}
             </div>

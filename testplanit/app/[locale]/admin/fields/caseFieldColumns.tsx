@@ -1,10 +1,10 @@
 import { TemplateListDisplay } from "@/components/tables/TemplateListDisplay";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CaseFields, Color, FieldIcon, FieldOptions } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteCaseFieldModal } from "./DeleteCaseField";
-import { EditCaseFieldModal } from "./EditCaseField";
 
 interface ExtendedFieldOptions extends FieldOptions {
   icon?: FieldIcon;
@@ -34,7 +34,9 @@ export const getColumns = (
     id: number,
     key: keyof ExtendedCaseFields,
     value: boolean
-  ) => void
+  ) => void,
+  onEditCaseField?: (casefield: ExtendedCaseFields) => void,
+  onDeleteCaseField?: (casefield: ExtendedCaseFields) => void
 ): ColumnDef<ExtendedCaseFields>[] => [
   {
     id: "displayName",
@@ -145,14 +147,22 @@ export const getColumns = (
     size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <EditCaseFieldModal
-          key={`edit-${row.original.id}`}
-          casefield={row.original}
-        />
-        <DeleteCaseFieldModal
-          key={`delete-${row.original.id}`}
-          casefield={row.original}
-        />
+        <Button
+          variant="ghost"
+          className="px-2 py-1 h-auto"
+          data-testid="edit-case-field-button"
+          onClick={() => onEditCaseField?.(row.original)}
+        >
+          <SquarePen className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="destructive"
+          className="px-2 py-1 h-auto"
+          data-testid="delete-case-field-button"
+          onClick={() => onDeleteCaseField?.(row.original)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
     ),
   },

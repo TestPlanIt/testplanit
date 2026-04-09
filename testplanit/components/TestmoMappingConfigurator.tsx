@@ -4736,62 +4736,56 @@ function TemplateFieldMappingSection({
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
-      <AddCaseFieldModal
-        open={caseModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeFieldEditor();
+      {caseModalOpen && (
+        <AddCaseFieldModal
+          open={caseModalOpen}
+          onClose={closeFieldEditor}
+          submitLabel={t("templateFieldModalSaveButton")}
+          draft={
+            editorDraft
+              ? {
+                  values: editorDraft.values,
+                  options: editorDraft.options,
+                }
+              : undefined
           }
-        }}
-        trigger={null}
-        submitLabel={t("templateFieldModalSaveButton")}
-        draft={
-          caseModalOpen && editorDraft
-            ? {
-                values: editorDraft.values,
-                options: editorDraft.options,
-              }
-            : undefined
-        }
-        onSubmitField={(payload) => {
-          if (!fieldEditorState) {
-            return false;
+          onSubmitField={(payload) => {
+            if (!fieldEditorState) {
+              return false;
+            }
+            return handleFieldDraftSubmit(
+              fieldEditorState.fieldId,
+              "case",
+              payload
+            );
+          }}
+        />
+      )}
+      {resultModalOpen && (
+        <AddResultFieldModal
+          open={resultModalOpen}
+          onClose={closeFieldEditor}
+          submitLabel={t("templateFieldModalSaveButton")}
+          draft={
+            editorDraft
+              ? {
+                  values: editorDraft.values,
+                  options: editorDraft.options,
+                }
+              : undefined
           }
-          return handleFieldDraftSubmit(
-            fieldEditorState.fieldId,
-            "case",
-            payload
-          );
-        }}
-      />
-      <AddResultFieldModal
-        open={resultModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeFieldEditor();
-          }
-        }}
-        trigger={null}
-        submitLabel={t("templateFieldModalSaveButton")}
-        draft={
-          resultModalOpen && editorDraft
-            ? {
-                values: editorDraft.values,
-                options: editorDraft.options,
-              }
-            : undefined
-        }
-        onSubmitField={(payload) => {
-          if (!fieldEditorState) {
-            return false;
-          }
-          return handleFieldDraftSubmit(
-            fieldEditorState.fieldId,
-            "result",
-            payload
-          );
-        }}
-      />
+          onSubmitField={(payload) => {
+            if (!fieldEditorState) {
+              return false;
+            }
+            return handleFieldDraftSubmit(
+              fieldEditorState.fieldId,
+              "result",
+              payload
+            );
+          }}
+        />
+      )}
       <Table>
         <TableHeader>
           <TableRow>

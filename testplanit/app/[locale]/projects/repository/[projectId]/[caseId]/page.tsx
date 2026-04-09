@@ -51,7 +51,7 @@ import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
 import {
   AlertCircle, ArrowLeft, Asterisk, ChevronLeft,
-  CircleSlash2, LockIcon, Save, ScrollText, SquarePen
+  CircleSlash2, LockIcon, Save, ScrollText, SquarePen, Trash2
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -331,6 +331,7 @@ export default function TestCaseDetails() {
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteCaseOpen, setIsDeleteCaseOpen] = useState(false);
 
   const [, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [breadcrumbItems, setBreadcrumbItems] = useState<FolderNode[]>([]);
@@ -1764,10 +1765,22 @@ export default function TestCaseDetails() {
                       {/* Do not allow deletion of automated test cases */}
                       {!isAutomatedCaseSource(testcase.source) && (
                         <div className="w-full">
-                          <DeleteCaseModal
-                            testcase={testcase}
-                            showLabel={true}
-                          />
+                          <Button
+                            variant="destructive"
+                            className="px-2 py-1 h-auto w-full"
+                            type="button"
+                            onClick={() => setIsDeleteCaseOpen(true)}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                            <div>{t("common.actions.delete")}</div>
+                          </Button>
+                          {isDeleteCaseOpen && (
+                            <DeleteCaseModal
+                              testcase={testcase}
+                              open={isDeleteCaseOpen}
+                              onClose={() => setIsDeleteCaseOpen(false)}
+                            />
+                          )}
                         </div>
                       )}
                     </div>
@@ -2300,7 +2313,7 @@ export default function TestCaseDetails() {
           </CardContent>
         </div>
       </form>
-      {isValidProjectId && (
+      {isValidProjectId && isQuickScriptModalOpen && (
         <QuickScriptModal
           isOpen={isQuickScriptModalOpen}
           onClose={() => setIsQuickScriptModalOpen(false)}

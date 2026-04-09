@@ -1,9 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ConfigCategories } from "@prisma/client";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,17 +13,20 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteConfigurationModalProps {
+interface DeleteConfigCategoryProps {
   category: ConfigCategories;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteConfigCategoriesModal({
+export function DeleteConfigCategory({
   category,
-}: DeleteConfigurationModalProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: DeleteConfigCategoryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfigCategories } = useUpdateConfigCategories();
   const { mutateAsync: updateManyConfigurations } =
@@ -35,17 +37,11 @@ export function DeleteConfigCategoriesModal({
   const t = useTranslations("admin.configurations.categories.delete");
   const tCommon = useTranslations("common");
 
-  const handleCancel = () => {
-    setOpen(false);
-    reset();
-  };
-
   const form = useForm();
   const {
     formState: { errors },
     setError,
     handleSubmit,
-    reset,
   } = form;
 
   const { data: variants } = useFindManyConfigVariants({
@@ -99,8 +95,7 @@ export function DeleteConfigCategoriesModal({
         data: { isDeleted: true },
       });
 
-      setOpen(false);
-      reset();
+      onClose();
     } catch {
       setError("root", {
         type: "custom",
@@ -112,20 +107,7 @@ export function DeleteConfigCategoriesModal({
   }
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-          reset();
-        }
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -159,7 +141,7 @@ export function DeleteConfigCategoriesModal({
               )}
               <AlertDialogCancel
                 type="button"
-                onClick={handleCancel}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

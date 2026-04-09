@@ -22,7 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ApplicationArea } from "@prisma/client";
-import { CircleSlash2, Edit, Layers, Save, Search, Trash2 } from "lucide-react";
+import { CircleSlash2, Edit, Layers, PlusCircle, Save, Search, Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { Link } from "~/lib/navigation";
@@ -118,6 +118,8 @@ export default function SharedStepsPage() {
   const updateStepMutation = useUpdateSharedStepItem();
   const deleteStepMutation = useDeleteSharedStepItem();
   const [saving, setSaving] = useState(false);
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [importWizardOpen, setImportWizardOpen] = useState(false);
 
   // Get groupId from URL if present
   const urlGroupId = searchParams.get("groupId");
@@ -325,18 +327,44 @@ export default function SharedStepsPage() {
       <div className="w-1/3 min-w-[280px] max-w-[600px] border-r bg-primary-foreground p-4 flex flex-col">
         {canEdit && (
           <div className="mb-4 flex gap-2 justify-between w-fill">
-            <ManualSharedStepsDialog
-              onComplete={() => {
-                // Refetch groups when manual entry completes
-                window.location.reload();
-              }}
-            />
-            <ImportSharedStepsWizard
-              onImportComplete={() => {
-                // Refetch groups when import completes
-                window.location.reload();
-              }}
-            />
+            <Button
+              variant="outline"
+              className="w-full"
+              data-testid="manual-shared-steps-btn"
+              onClick={() => setManualDialogOpen(true)}
+            >
+              <PlusCircle className="h-4 w-4" />
+              {t("manualEntry.buttonLabel")}
+            </Button>
+            {manualDialogOpen && (
+              <ManualSharedStepsDialog
+                open={manualDialogOpen}
+                onClose={() => setManualDialogOpen(false)}
+                onComplete={() => {
+                  // Refetch groups when manual entry completes
+                  window.location.reload();
+                }}
+              />
+            )}
+            <Button
+              variant="outline"
+              className="w-full"
+              data-testid="import-shared-steps-btn"
+              onClick={() => setImportWizardOpen(true)}
+            >
+              <Upload className="h-4 w-4" />
+              {t("importWizard.title")}
+            </Button>
+            {importWizardOpen && (
+              <ImportSharedStepsWizard
+                open={importWizardOpen}
+                onClose={() => setImportWizardOpen(false)}
+                onImportComplete={() => {
+                  // Refetch groups when import completes
+                  window.location.reload();
+                }}
+              />
+            )}
           </div>
         )}
         <div className="mb-2">

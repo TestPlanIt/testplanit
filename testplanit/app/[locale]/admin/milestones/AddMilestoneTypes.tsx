@@ -13,7 +13,6 @@ import { z } from "zod/v4";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CirclePlus } from "lucide-react";
 
 import {
   Form,
@@ -31,16 +30,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 
-export function AddMilestoneTypeModal() {
+interface AddMilestoneTypeProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
   const t = useTranslations("admin.milestones.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [selectedIconId, setSelectedIconId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,8 +56,6 @@ export function AddMilestoneTypeModal() {
   const { mutateAsync: createMilestoneType } = useCreateMilestoneTypes();
   const { mutateAsync: updateManyMilestoneTypes } =
     useUpdateManyMilestoneTypes();
-
-  const handleCancel = () => setOpen(false);
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -91,7 +91,7 @@ export function AddMilestoneTypeModal() {
           isDefault: data.isDefault,
         },
       });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -111,13 +111,7 @@ export function AddMilestoneTypeModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("button")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -182,7 +176,7 @@ export function AddMilestoneTypeModal() {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>

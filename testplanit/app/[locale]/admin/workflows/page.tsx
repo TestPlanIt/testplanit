@@ -17,16 +17,20 @@ import { performOptimisticReorder } from "~/utils/optimistic-updates";
 import { getColumns } from "./columns";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { CirclePlus } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ItemTypes } from "~/types/dndTypes";
 import { ExtendedWorkflows } from "~/types/Workflows";
-import { AddWorkflowsModal } from "./AddWorkflow";
+import { AddWorkflows } from "./AddWorkflow";
+import { DeleteWorkflows } from "./DeleteWorkflow";
+import { EditWorkflows } from "./EditWorkflow";
 
 import {
   AlertDialog,
@@ -53,6 +57,11 @@ function WorkflowComponent() {
   >([]);
 
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const [addWorkflowOpen, setAddWorkflowOpen] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] =
+    useState<ExtendedWorkflows | null>(null);
+  const [deletingWorkflow, setDeletingWorkflow] =
+    useState<ExtendedWorkflows | null>(null);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<
     number | undefined
   >(undefined);
@@ -180,7 +189,9 @@ function WorkflowComponent() {
     t,
     tCommon,
     handleToggleEnabled,
-    handleToggleDefault
+    handleToggleDefault,
+    setEditingWorkflow,
+    setDeletingWorkflow
   );
 
   const renderWorkflowCard = (
@@ -302,7 +313,16 @@ function WorkflowComponent() {
                   <CardTitle>{tCommon("labels.workflows")}</CardTitle>
                 </div>
                 <div>
-                  <AddWorkflowsModal />
+                  <Button onClick={() => setAddWorkflowOpen(true)}>
+                    <CirclePlus className="w-4" />
+                    <span className="hidden md:inline">{t("add.button")}</span>
+                  </Button>
+                  {addWorkflowOpen && (
+                    <AddWorkflows
+                      open={addWorkflowOpen}
+                      onClose={() => setAddWorkflowOpen(false)}
+                    />
+                  )}
                 </div>
               </div>
               <CardDescription>{t("description")}</CardDescription>
@@ -345,6 +365,21 @@ function WorkflowComponent() {
             </AlertDialogContent>
           </AlertDialog>
         </DndProvider>
+      )}
+      {editingWorkflow && (
+        <EditWorkflows
+          workflows={editingWorkflow}
+          allWorkflows={data || []}
+          open={editingWorkflow !== null}
+          onClose={() => setEditingWorkflow(null)}
+        />
+      )}
+      {deletingWorkflow && (
+        <DeleteWorkflows
+          workflows={deletingWorkflow}
+          open={deletingWorkflow !== null}
+          onClose={() => setDeletingWorkflow(null)}
+        />
       )}
     </main>
   );

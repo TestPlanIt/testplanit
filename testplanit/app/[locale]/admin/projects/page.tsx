@@ -22,6 +22,7 @@ import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DeleteProject } from "./DeleteProject";
 import { EditProjectModal } from "./EditProject";
 
 import {
@@ -104,6 +105,8 @@ function ProjectAdmin() {
   const [editingProject, setEditingProject] = useState<ExtendedProjects | null>(
     null
   );
+  const [deletingProject, setDeletingProject] =
+    useState<ExtendedProjects | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -400,8 +403,14 @@ function ProjectAdmin() {
 
   const columns: CustomColumnDef<ExtendedProjects>[] = useMemo(
     () =>
-      // eslint-disable-next-line react-hooks/refs
-      getColumns(userPreferences, handleToggleCompleted, handleOpenEditModal, tCommon),
+      getColumns(
+        userPreferences,
+        // eslint-disable-next-line react-hooks/refs
+        handleToggleCompleted,
+        handleOpenEditModal,
+        tCommon,
+        setDeletingProject
+      ),
     [userPreferences, handleToggleCompleted, handleOpenEditModal, tCommon]
   );
 
@@ -559,6 +568,14 @@ function ProjectAdmin() {
           project={editingProject}
           isOpen={!!editingProject}
           onClose={handleCloseEditModal}
+        />
+      )}
+
+      {deletingProject && (
+        <DeleteProject
+          project={deletingProject}
+          open={deletingProject !== null}
+          onClose={() => setDeletingProject(null)}
         />
       )}
 

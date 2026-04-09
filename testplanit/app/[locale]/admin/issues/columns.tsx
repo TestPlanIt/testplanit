@@ -6,6 +6,7 @@ import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -14,10 +15,8 @@ import {
 import { Issue } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import DOMPurify from "dompurify";
-import { Plug } from "lucide-react";
+import { Plug, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteIssueModal } from "./DeleteIssue";
-import { EditIssueModal } from "./EditIssue";
 import { SyncIssue } from "./SyncIssue";
 
 // Helper function to strip HTML tags and get plain text
@@ -53,9 +52,13 @@ export interface ExtendedIssue extends Issue {
 export function useIssueColumns({
   tCommon,
   isLoadingCounts = false,
+  onEditIssue,
+  onDeleteIssue,
 }: {
   tCommon: ReturnType<typeof useTranslations<"common">>;
   isLoadingCounts?: boolean;
+  onEditIssue?: (issue: ExtendedIssue) => void;
+  onDeleteIssue?: (issue: ExtendedIssue) => void;
 }): ColumnDef<ExtendedIssue>[] {
 
   return [
@@ -436,14 +439,20 @@ export function useIssueColumns({
       cell: ({ row }) => (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
           <SyncIssue key={`sync-${row.original.id}`} issue={row.original} />
-          <EditIssueModal
-            key={`edit-${row.original.id}`}
-            issue={row.original}
-          />
-          <DeleteIssueModal
-            key={`delete-${row.original.id}`}
-            issue={row.original}
-          />
+          <Button
+            variant="ghost"
+            className="px-2 py-1 h-auto"
+            onClick={() => onEditIssue?.(row.original)}
+          >
+            <SquarePen className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="destructive"
+            className="px-2 py-1 h-auto"
+            onClick={() => onDeleteIssue?.(row.original)}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
         </div>
       ),
     },

@@ -3,7 +3,7 @@ import { Roles, User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useCreateManyGroupAssignment,
   useCreateManyProjectAssignment,
@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { CircleSlash2, SquarePen, Trash2 } from "lucide-react";
+import { CircleSlash2, Trash2 } from "lucide-react";
 
 import {
   Form,
@@ -53,7 +53,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import {
@@ -68,18 +67,19 @@ interface ExtendedUser extends User {
   groups: { groupId: number }[];
 }
 
-interface EditUserModalProps {
+interface EditUserProps {
   user: ExtendedUser;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditUserModal({ user }: EditUserModalProps) {
+export function EditUser({ user, open, onClose }: EditUserProps) {
   const t = useTranslations("admin.users.edit");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tUserAvatar = useTranslations("users.avatar");
   const tUserEdit = useTranslations("users.profile.edit");
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
@@ -168,11 +168,10 @@ export function EditUserModal({ user }: EditUserModalProps) {
     setValue("groups", allGroupIds);
   };
 
-  const handleCancel = () => setOpen(false);
-
-  // Calculate default values based on the user prop
-  const defaultFormValues = useMemo(
-    () => ({
+  // Use the new form-specific validation schema
+  const form = useForm<z.infer<typeof EditUserFormValidationSchema>>({
+    resolver: zodResolver(EditUserFormValidationSchema),
+    defaultValues: {
       name: user.name,
       email: user.email,
       isActive: user.isActive,
@@ -181,26 +180,8 @@ export function EditUserModal({ user }: EditUserModalProps) {
       isApi: user.isApi,
       projects: user.projects.map((project) => project.projectId),
       groups: user.groups.map((group) => group.groupId),
-    }),
-    [user]
-  );
-
-  // Use the new form-specific validation schema
-  const form = useForm<z.infer<typeof EditUserFormValidationSchema>>({
-    resolver: zodResolver(EditUserFormValidationSchema),
-    defaultValues: defaultFormValues,
+    },
   });
-
-  // Reset form when dialog opens or default values change
-  useEffect(() => {
-    if (open) {
-      form.reset(defaultFormValues);
-      setAvatarUrl(null);
-      setRemoveAvatar(false);
-      setShowUpload(false);
-      setShowDeleteAvatarConfirm(false);
-    }
-  }, [open, defaultFormValues, form]);
 
   const {
     setValue,
@@ -302,7 +283,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
         });
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
 
       // Refetch all queries to refresh the table data immediately
@@ -325,12 +306,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
-          <SquarePen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -722,7 +698,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button

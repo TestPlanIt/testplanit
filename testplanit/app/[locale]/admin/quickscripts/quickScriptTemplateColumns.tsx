@@ -2,16 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CaseExportTemplate } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DeleteQuickScriptTemplateModal } from "./DeleteQuickScriptTemplate";
-import { EditQuickScriptTemplateModal } from "./EditQuickScriptTemplate";
 
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"admin.exportTemplates">>,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   handleToggleEnabled: (id: number, isEnabled: boolean) => void,
-  handleToggleDefault: (id: number, isDefault: boolean) => void
+  handleToggleDefault: (id: number, isDefault: boolean) => void,
+  onEditTemplate?: (template: CaseExportTemplate) => void,
+  onDeleteTemplate?: (template: CaseExportTemplate) => void
 ): ColumnDef<CaseExportTemplate>[] => {
   return [
     {
@@ -102,10 +102,14 @@ export const getColumns = (
       size: 80,
       cell: ({ row }) => (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-          <EditQuickScriptTemplateModal
-            key={`edit-${row.original.id}`}
-            template={row.original}
-          />
+          <Button
+            variant="outline"
+            className="px-2 py-1 h-auto"
+            data-testid="edit-export-template-button"
+            onClick={() => onEditTemplate?.(row.original)}
+          >
+            <Pencil className="h-5 w-5" />
+          </Button>
           {row.original.isDefault ? (
             <Button
               variant="ghost"
@@ -115,10 +119,14 @@ export const getColumns = (
               <Trash2 className="h-5 w-5" />
             </Button>
           ) : (
-            <DeleteQuickScriptTemplateModal
-              key={`delete-${row.original.id}`}
-              template={row.original}
-            />
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              data-testid="delete-export-template-button"
+              onClick={() => onDeleteTemplate?.(row.original)}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
           )}
         </div>
       ),

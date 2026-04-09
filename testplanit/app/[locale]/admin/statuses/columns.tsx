@@ -7,8 +7,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
-import { DeleteStatusModal } from "./DeleteStatus";
-import { EditStatusModal } from "./EditStatus";
 
 import {
   Tooltip,
@@ -42,7 +40,9 @@ export const getColumns = (
   handleToggleSuccess: (id: number, isSuccess: boolean) => void,
   handleToggleFailure: (id: number, isFailure: boolean) => void,
   handleToggleCompleted: (id: number, isCompleted: boolean) => void,
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  onEditStatus?: (status: ExtendedStatus) => void,
+  onDeleteStatus?: (status: ExtendedStatus) => void
 ): ColumnDef<ExtendedStatus>[] => {
   return [
     {
@@ -254,16 +254,22 @@ export const getColumns = (
               <SquarePen className="h-5 w-5" />
             </Button>
           ) : (
-            <EditStatusModal
-              key={`edit-${row.original.id}`}
-              status={row.original}
-            />
+            <Button
+              variant="ghost"
+              className="px-2 py-1 h-auto"
+              onClick={() => onEditStatus?.(row.original)}
+            >
+              <SquarePen className="h-5 w-5" />
+            </Button>
           )}
           {row.original.systemName !== "untested" ? (
-            <DeleteStatusModal
-              key={`delete-${row.original.id}`}
-              status={row.original}
-            />
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              onClick={() => onDeleteStatus?.(row.original)}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
           ) : (
             <Button
               variant="ghost"

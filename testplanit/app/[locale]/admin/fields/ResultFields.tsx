@@ -3,13 +3,16 @@
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SquareCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CirclePlus, SquareCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddResultFieldModal } from "./AddResultField";
+import { DeleteResultField } from "./DeleteResultField";
+import { EditResultField } from "./EditResultField";
 import { ExtendedResultFields, getColumns } from "./resultFieldColumns";
 
 export default function ResultFields() {
@@ -87,12 +90,25 @@ export default function ResultFields() {
     }
   );
 
+  const [editingResultField, setEditingResultField] =
+    useState<ExtendedResultFields | null>(null);
+  const [deletingResultField, setDeletingResultField] =
+    useState<ExtendedResultFields | null>(null);
+
   const columns: CustomColumnDef<ExtendedResultFields>[] = useMemo(
-    // eslint-disable-next-line react-hooks/refs
-    () => getColumns(t, tCommon, handleToggle),
+    () =>
+      getColumns(
+        t,
+        tCommon,
+        // eslint-disable-next-line react-hooks/refs
+        handleToggle,
+        setEditingResultField,
+        setDeletingResultField
+      ),
     [handleToggle, t, tCommon]
   );
 
+  const [addResultFieldOpen, setAddResultFieldOpen] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(() => {
@@ -125,7 +141,19 @@ export default function ResultFields() {
               </CardTitle>{" "}
             </div>
             <div>
-              <AddResultFieldModal />
+              <Button
+                data-testid="add-result-field-button"
+                onClick={() => setAddResultFieldOpen(true)}
+              >
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">{t("add.title")}</span>
+              </Button>
+              {addResultFieldOpen && (
+                <AddResultFieldModal
+                  open={addResultFieldOpen}
+                  onClose={() => setAddResultFieldOpen(false)}
+                />
+              )}
             </div>
           </div>
         </CardHeader>
@@ -142,6 +170,20 @@ export default function ResultFields() {
             />
           </div>
         </CardContent>
+        {editingResultField && (
+          <EditResultField
+            resultfield={editingResultField}
+            open={editingResultField !== null}
+            onClose={() => setEditingResultField(null)}
+          />
+        )}
+        {deletingResultField && (
+          <DeleteResultField
+            resultfield={deletingResultField}
+            open={deletingResultField !== null}
+            onClose={() => setDeletingResultField(null)}
+          />
+        )}
       </Card>
     );
   }

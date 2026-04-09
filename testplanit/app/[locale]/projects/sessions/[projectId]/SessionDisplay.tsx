@@ -346,13 +346,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     setAddModalOpen(true);
   };
 
-  const handleAddModalClose = (open: boolean) => {
-    setAddModalOpen(open);
-    if (!open) {
-      setDuplicationPreset(null);
-      setDuplicateSource(null);
-      setAddModalMilestoneId(undefined);
-    }
+  const handleAddModalClose = () => {
+    setAddModalOpen(false);
+    setDuplicationPreset(null);
+    setDuplicateSource(null);
+    setAddModalMilestoneId(undefined);
   };
 
   const _toggleMilestone = (milestoneId: number) => {
@@ -594,12 +592,14 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
         />
       )}
 
-      <AddSessionModal
-        open={addModalOpen}
-        onOpenChange={handleAddModalClose}
-        defaultMilestoneId={addModalMilestoneId}
-        duplicationPreset={duplicationPreset}
-      />
+      {addModalOpen && (
+        <AddSessionModal
+          open={addModalOpen}
+          onClose={handleAddModalClose}
+          defaultMilestoneId={addModalMilestoneId}
+          duplicationPreset={duplicationPreset}
+        />
+      )}
     </div>
   );
 };

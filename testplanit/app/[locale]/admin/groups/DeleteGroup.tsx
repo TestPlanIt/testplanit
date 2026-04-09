@@ -6,26 +6,26 @@ import { useUpdateGroups } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteGroupModalProps {
+interface DeleteGroupProps {
   group: Groups;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
+export function DeleteGroup({ group, open, onClose }: DeleteGroupProps) {
   const t = useTranslations("admin.groups.delete");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateGroup } = useUpdateGroups();
 
@@ -38,7 +38,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
     setIsSubmitting(true);
     try {
       await updateGroup({ where: { id: group.id }, data: { isDeleted: true } });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch {
       form.setError("root", {
@@ -51,12 +51,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -65,8 +60,10 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("deleteGroup")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("deleteGroupDescription")}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>{t("deleteGroupDescription")}</div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {tGlobal("runs.delete.warning")}
             </div>

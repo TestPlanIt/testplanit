@@ -1,7 +1,7 @@
 "use client";
 
 import { CaseExportTemplate } from "@prisma/client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   useFindManyCaseExportTemplate,
   useFindManyCaseFields,
@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Pencil } from "lucide-react";
 import Mustache from "mustache";
 import "prismjs/themes/prism-tomorrow.css";
 import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
@@ -40,20 +39,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 
-interface EditQuickScriptTemplateModalProps {
+interface EditQuickScriptTemplateProps {
   template: CaseExportTemplate;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function EditQuickScriptTemplateModal({
+export function EditQuickScriptTemplate({
   template,
-}: EditQuickScriptTemplateModalProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: EditQuickScriptTemplateProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations("admin.exportTemplates");
   const tCommon = useTranslations("common");
@@ -154,24 +155,6 @@ export function EditQuickScriptTemplateModal({
     },
   });
 
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        name: template.name,
-        description: template.description || "",
-        category: template.category,
-        framework: template.framework,
-        headerBody: template.headerBody || "",
-        templateBody: template.templateBody,
-        footerBody: template.footerBody || "",
-        fileExtension: template.fileExtension,
-        language: template.language,
-        isDefault: template.isDefault,
-        isEnabled: template.isEnabled,
-      });
-    }
-  }, [open, template, form]);
-
   const templateBodyRef = useRef<HTMLTextAreaElement>(null);
   const headerBody = form.watch("headerBody");
   const templateBody = form.watch("templateBody");
@@ -231,7 +214,7 @@ export function EditQuickScriptTemplateModal({
         },
       });
 
-      setOpen(false);
+      onClose();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
@@ -250,16 +233,7 @@ export function EditQuickScriptTemplateModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="px-2 py-1 h-auto"
-          data-testid="edit-export-template-button"
-        >
-          <Pencil className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="sm:max-w-[800px] lg:max-w-[1200px] max-h-[90vh] overflow-y-auto"
         data-testid="edit-export-template-dialog"
@@ -538,7 +512,7 @@ export function EditQuickScriptTemplateModal({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 disabled={isSubmitting}
               >
                 {tCommon("cancel")}

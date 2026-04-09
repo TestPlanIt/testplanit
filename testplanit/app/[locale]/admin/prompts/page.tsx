@@ -24,6 +24,8 @@ import {
 } from "~/lib/hooks/prompt-config";
 import { AddPromptConfig } from "./AddPromptConfig";
 import { ExtendedPromptConfig, getColumns } from "./columns";
+import { DeletePromptConfig } from "./DeletePromptConfig";
+import { EditPromptConfig } from "./EditPromptConfig";
 
 type PageSizeOption = number | "All";
 
@@ -215,8 +217,21 @@ function PromptConfigList() {
     [dateFormat, timezone]
   );
 
+  const [editingConfig, setEditingConfig] =
+    useState<ExtendedPromptConfig | null>(null);
+  const [deletingConfig, setDeletingConfig] =
+    useState<ExtendedPromptConfig | null>(null);
+
   const columns = useMemo(
-    () => getColumns(userPreferences, handleToggleDefault, tCommon, t),
+    () =>
+      getColumns(
+        userPreferences,
+        handleToggleDefault,
+        tCommon,
+        t,
+        setEditingConfig,
+        setDeletingConfig
+      ),
     [userPreferences, handleToggleDefault, tCommon, t]
   );
 
@@ -334,6 +349,20 @@ function PromptConfigList() {
             setShowAddDialog(false);
             refetch();
           }}
+        />
+      )}
+      {editingConfig && (
+        <EditPromptConfig
+          config={editingConfig}
+          open={editingConfig !== null}
+          onClose={() => setEditingConfig(null)}
+        />
+      )}
+      {deletingConfig && (
+        <DeletePromptConfig
+          config={deletingConfig}
+          open={deletingConfig !== null}
+          onClose={() => setDeletingConfig(null)}
         />
       )}
     </main>

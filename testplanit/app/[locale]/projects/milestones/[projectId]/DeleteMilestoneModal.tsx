@@ -1,7 +1,7 @@
 "use client";
 import {
   AlertDialog,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Milestones } from "@prisma/client";
@@ -77,12 +77,12 @@ export function DeleteMilestoneModal({
             <TriangleAlert className="w-6 h-6 mr-2" />
             {t("title")}
           </AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("confirmMessage", {
+              name: milestone.name,
+            })}
+          </AlertDialogDescription>
         </AlertDialogHeader>
-        <div>
-          {t("confirmMessage", {
-            name: milestone.name,
-          })}
-        </div>
         <div className="bg-destructive text-destructive-foreground p-2">
           {t("warning")}
         </div>

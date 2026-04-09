@@ -41,7 +41,7 @@ test.describe("Group Management", () => {
       await page.goto("/en-US/admin/groups");
       await page.waitForLoadState("networkidle");
 
-      // Click the Add Group button (triggers AddGroupModal)
+      // Click the Add Group button (triggers AddGroup dialog)
       const addButton = page.getByRole("button", { name: /add/i }).first();
       await expect(addButton).toBeVisible({ timeout: 10000 });
       await addButton.click();

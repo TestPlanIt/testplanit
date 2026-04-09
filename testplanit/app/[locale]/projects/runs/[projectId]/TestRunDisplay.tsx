@@ -546,11 +546,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         </div>
         {selectedTestRun && (
           <CompleteTestRunDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                {tCommon("actions.complete")}
-              </Button>
-            }
+            open={selectedTestRun !== null}
+            onClose={() => {
+              setIsDialogOpen(false);
+              setSelectedTestRun(null);
+            }}
             testRunId={selectedTestRun.id}
             projectId={selectedTestRun.projectId}
             stateId={selectedTestRun.state.id}
@@ -636,34 +636,32 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             <div className="milestone-dates flex justify-end">
               <div className="grow text-sm text-muted-foreground">
                 {canAddEditRun && (
-                  <AddTestRunModal
-                    defaultMilestoneId={milestone.id}
-                    open={
-                      isAddTestRunModalOpen &&
-                      selectedMilestoneId === milestone.id
-                    }
-                    onOpenChange={(open) => {
-                      setIsAddTestRunModalOpen(open);
-                      if (!open) {
-                        setModalSelectedTestCases([]);
-                        setSelectedMilestoneId(null);
-                      }
-                    }}
-                    initialSelectedCaseIds={modalSelectedTestCases}
-                    onSelectedCasesChange={setModalSelectedTestCases}
-                    trigger={
-                      <Button
-                        variant="link"
-                        className="p-0"
-                        onClick={() => handleAddTestRun(milestone.id)}
-                      >
-                        <CirclePlus className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {t("add.title")}
-                        </span>
-                      </Button>
-                    }
-                  />
+                  <>
+                    <Button
+                      variant="link"
+                      className="p-0"
+                      onClick={() => handleAddTestRun(milestone.id)}
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="hidden md:inline">
+                        {t("add.title")}
+                      </span>
+                    </Button>
+                    {isAddTestRunModalOpen &&
+                      selectedMilestoneId === milestone.id && (
+                        <AddTestRunModal
+                          defaultMilestoneId={milestone.id}
+                          open={isAddTestRunModalOpen}
+                          onClose={() => {
+                            setIsAddTestRunModalOpen(false);
+                            setModalSelectedTestCases([]);
+                            setSelectedMilestoneId(null);
+                          }}
+                          initialSelectedCaseIds={modalSelectedTestCases}
+                          onSelectedCasesChange={setModalSelectedTestCases}
+                        />
+                      )}
+                  </>
                 )}
                 <DateTextDisplay
                   startDate={
@@ -774,25 +772,27 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 <div className="milestone-status"></div>
                 <div className="milestone-dates flex justify-end">
                   {canAddEditRun && (
-                    <AddTestRunModal
-                      open={
-                        isAddTestRunModalOpen && selectedMilestoneId === null
-                      }
-                      onOpenChange={(open) => {
-                        setIsAddTestRunModalOpen(open);
-                        if (!open) {
-                          setModalSelectedTestCases([]);
-                        }
-                      }}
-                      initialSelectedCaseIds={modalSelectedTestCases}
-                      onSelectedCasesChange={setModalSelectedTestCases}
-                      trigger={
-                        <Button size="lg">
-                          <CirclePlus className="h-5 w-5" />
-                          {tCommon("actions.create")}
-                        </Button>
-                      }
-                    />
+                    <>
+                      <Button
+                        size="lg"
+                        onClick={() => handleAddTestRun(null)}
+                      >
+                        <CirclePlus className="h-5 w-5" />
+                        {tCommon("actions.create")}
+                      </Button>
+                      {isAddTestRunModalOpen &&
+                        selectedMilestoneId === null && (
+                          <AddTestRunModal
+                            open={isAddTestRunModalOpen}
+                            onClose={() => {
+                              setIsAddTestRunModalOpen(false);
+                              setModalSelectedTestCases([]);
+                            }}
+                            initialSelectedCaseIds={modalSelectedTestCases}
+                            onSelectedCasesChange={setModalSelectedTestCases}
+                          />
+                        )}
+                    </>
                   )}
                 </div>
               </div>
@@ -880,11 +880,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
       {selectedTestRun && (
         <CompleteTestRunDialog
-          trigger={
-            <Button variant="outline" size="sm">
-              {tCommon("actions.complete")}
-            </Button>
-          }
+          open={selectedTestRun !== null}
+          onClose={() => {
+            setIsDialogOpen(false);
+            setSelectedTestRun(null);
+          }}
           testRunId={selectedTestRun.id}
           projectId={selectedTestRun.projectId}
           stateId={selectedTestRun.state.id}

@@ -8,20 +8,20 @@ import { useForm } from "react-hook-form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
-interface DeleteUserModalProps {
+interface DeleteUserProps {
   user: User;
+  open: boolean;
+  onClose: () => void;
 }
 
-export function DeleteUserModal({ user }: DeleteUserModalProps) {
+export function DeleteUser({ user, open, onClose }: DeleteUserProps) {
   const t = useTranslations();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm();
@@ -45,7 +45,7 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
         throw new Error(error.error || "Failed to delete user");
       }
 
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
 
       // Refetch all queries to refresh the table with soft-deleted user removed
@@ -61,12 +61,7 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -75,10 +70,10 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
                 <TriangleAlert className="w-6 h-6 mr-2" />
                 {t("admin.users.delete.title")}
               </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("common.dialogs.delete.description", { name: user.name })}
+              </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>
-              {t("common.dialogs.delete.description", { name: user.name })}
-            </div>
             <div className="bg-destructive text-destructive-foreground p-2">
               {t("runs.delete.warning")}
             </div>

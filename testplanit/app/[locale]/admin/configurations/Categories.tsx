@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, SquarePen, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -33,6 +33,8 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ConfigCategoryWithVariants, getColumns } from "./categoryColumns";
+import { DeleteConfigCategory } from "./DeleteCategory";
+import { EditCategory } from "./EditCategory";
 import { DeleteVariantModal } from "./DeleteVariantModal";
 import { EditVariantModal } from "./EditVariantModal";
 
@@ -322,7 +324,15 @@ function ConfigCategoriesList() {
     refetch();
   };
 
-  const columns = useMemo(() => getColumns(tCommon), [tCommon]);
+  const [editingCategory, setEditingCategory] =
+    useState<ConfigCategoryWithVariants | null>(null);
+  const [deletingCategory, setDeletingCategory] =
+    useState<ConfigCategoryWithVariants | null>(null);
+
+  const columns = useMemo(
+    () => getColumns(tCommon, setEditingCategory, setDeletingCategory),
+    [tCommon]
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -374,16 +384,20 @@ function ConfigCategoriesList() {
               </Label>
             </div>
             <div className="flex items-center gap-1">
-              <EditVariantModal
-                variant={variant}
-                onClose={() => setVariantToEdit(null)}
-                onSave={handleVariantUpdate}
-              />
-              <DeleteVariantModal
-                variant={variant}
-                onClose={() => setVariantToDelete(null)}
-                onDelete={handleVariantDelete}
-              />
+              <Button
+                variant="link"
+                className="p-0"
+                onClick={() => setVariantToEdit(variant)}
+              >
+                <SquarePen className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="link"
+                className="p-0 ml-2"
+                onClick={() => setVariantToDelete(variant)}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
             </div>
           </li>
         ))}
@@ -544,6 +558,7 @@ function ConfigCategoriesList() {
       {variantToEdit && (
         <EditVariantModal
           variant={variantToEdit}
+          open={variantToEdit !== null}
           onClose={() => setVariantToEdit(null)}
           onSave={handleVariantUpdate}
         />
@@ -552,8 +567,23 @@ function ConfigCategoriesList() {
       {variantToDelete && (
         <DeleteVariantModal
           variant={variantToDelete}
+          open={variantToDelete !== null}
           onClose={() => setVariantToDelete(null)}
           onDelete={handleVariantDelete}
+        />
+      )}
+      {editingCategory && (
+        <EditCategory
+          category={editingCategory}
+          open={editingCategory !== null}
+          onClose={() => setEditingCategory(null)}
+        />
+      )}
+      {deletingCategory && (
+        <DeleteConfigCategory
+          category={deletingCategory}
+          open={deletingCategory !== null}
+          onClose={() => setDeletingCategory(null)}
         />
       )}
     </main>

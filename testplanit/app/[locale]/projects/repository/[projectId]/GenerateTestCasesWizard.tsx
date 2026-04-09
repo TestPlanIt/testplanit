@@ -37,7 +37,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -409,6 +408,8 @@ interface GenerateTestCasesWizardProps {
   folderId: number;
   folderName?: string | null;
   onImportComplete?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 enum WizardStep {
@@ -1164,7 +1165,12 @@ export function GenerateTestCasesWizard({
   folderId,
   folderName,
   onImportComplete,
+  open,
+  onOpenChange,
 }: GenerateTestCasesWizardProps) {
+  // Alias kept for minimal diff — prefer calling onOpenChange directly
+  // for future call sites.
+  const setOpen = onOpenChange;
   const t = useTranslations("repository");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -1173,7 +1179,6 @@ export function GenerateTestCasesWizard({
   const searchParams = useSearchParams();
   const { data: session } = useSession();
 
-  const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(WizardStep.SELECT_ISSUE);
   const [selectedIssue, setSelectedIssue] = useState<ExternalIssue | null>(
     null
@@ -3348,17 +3353,6 @@ export function GenerateTestCasesWizard({
           }
         }}
       >
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-          >
-            <Sparkles className="w-4 h-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-              {t("generateTestCases.buttonText")}
-            </span>
-          </Button>
-        </DialogTrigger>
         <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">

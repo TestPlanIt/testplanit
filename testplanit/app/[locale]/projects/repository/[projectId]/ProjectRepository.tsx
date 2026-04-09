@@ -32,7 +32,10 @@ import {
   ChevronRight,
   ChevronsUpDown,
   CircleCheckBig,
+  CirclePlus,
+  Download,
   FolderDown,
+  FolderPlus,
   FolderTree,
   Hash,
   LayoutTemplate,
@@ -40,6 +43,7 @@ import {
   ListChecks,
   ListOrdered,
   Search,
+  Sparkles,
   SquareCheckBig,
   Tags,
   Type,
@@ -79,8 +83,8 @@ import {
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
-import { AddCaseModal } from "./AddCase";
-import { AddFolderModal } from "./AddFolder";
+import { AddCase } from "./AddCase";
+import { AddFolder } from "./AddFolder";
 import Cases from "./Cases";
 import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
 import { ImportCasesWizard } from "./ImportCasesWizard";
@@ -398,8 +402,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(
     nodeParam ? parseInt(nodeParam, 10) : null
   );
+  const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const [addCaseOpen, setAddCaseOpen] = useState(false);
+  const [generateWizardOpen, setGenerateWizardOpen] = useState(false);
 
-  const [panelWidth, setPanelWidth] = useState<number>(100);
+  const [, setPanelWidth] = useState<number>(100);
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -1341,6 +1348,35 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const tFileDropZone = useTranslations("common.fileDropZone");
 
+  // Keyboard shortcut: Shift+N to open the Add Folder dialog. Lives on the
+  // parent page so the modal can be conditionally mounted (approach B).
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.shiftKey &&
+        e.key === "N" &&
+        !addFolderOpen &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        const target = e.target as HTMLElement;
+        const isInputElement =
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable;
+
+        if (!isInputElement) {
+          e.preventDefault();
+          setAddFolderOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [addFolderOpen]);
+
   const { isDragActive } = usePageFileDrop({
     acceptedExtensions: [".csv"],
     enabled: canAddEdit && !isSelectionMode && !isRunMode && !importDialogOpen,
@@ -1461,35 +1497,52 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           {selectedItem === "folders" &&
                             !hideHeader &&
                             canAddEdit && (
-                              <AddFolderModal
-                                projectId={numericProjectId}
-                                parentId={selectedFolderId}
-                                repositoryId={repository.id}
-                                panelWidth={panelWidth}
-                                onFolderCreated={async (
-                                  newFolderId: number,
-                                  createdParentId: number | null
-                                ) => {
-                                  if (refetchFoldersRef.current) {
-                                    // Wait for refetch to complete before selecting the new folder
-                                    await refetchFoldersRef.current();
-                                  }
-                                  // Small delay to ensure tree has re-rendered with new data
-                                  setTimeout(() => {
-                                    window.dispatchEvent(
-                                      new CustomEvent(
-                                        "folderSelectionChanged",
-                                        {
-                                          detail: {
-                                            folderId: newFolderId,
-                                            expandParentId: createdParentId,
-                                          },
-                                        }
-                                      )
-                                    );
-                                  }, 50);
-                                }}
-                              />
+                              <>
+                                <Button
+                                  className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                  variant="secondary"
+                                  data-testid="add-folder-button"
+                                  title={`${t("repository.addFolder")} (Shift+N)`}
+                                  onClick={() => setAddFolderOpen(true)}
+                                >
+                                  <FolderPlus className="w-4 shrink-0" />
+                                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                    {t("repository.addFolder")}
+                                  </span>
+                                </Button>
+                                {addFolderOpen && (
+                                  <AddFolder
+                                    projectId={numericProjectId}
+                                    parentId={selectedFolderId}
+                                    repositoryId={repository.id}
+                                    open={addFolderOpen}
+                                    onClose={() => setAddFolderOpen(false)}
+                                    onFolderCreated={async (
+                                      newFolderId: number,
+                                      createdParentId: number | null
+                                    ) => {
+                                      if (refetchFoldersRef.current) {
+                                        // Wait for refetch to complete before selecting the new folder
+                                        await refetchFoldersRef.current();
+                                      }
+                                      // Small delay to ensure tree has re-rendered with new data
+                                      setTimeout(() => {
+                                        window.dispatchEvent(
+                                          new CustomEvent(
+                                            "folderSelectionChanged",
+                                            {
+                                              detail: {
+                                                folderId: newFolderId,
+                                                expandParentId: createdParentId,
+                                              },
+                                            }
+                                          )
+                                        );
+                                      }, 50);
+                                    }}
+                                  />
+                                )}
+                              </>
                             )}
                         </div>
                       </div>
@@ -1585,24 +1638,68 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           )}
                           {!isSelectionMode && !isRunMode && canAddEdit && (
                             <div className="flex gap-2 items-center">
-                              <ImportCasesWizard
-                                onImportComplete={refetchFolderStats}
-                                externalOpen={importDialogOpen}
-                                onExternalOpenChange={(v) => {
-                                  setImportDialogOpen(v);
-                                  if (!v) setDroppedFile(null);
-                                }}
-                                initialFile={droppedFile}
-                              />
-                              <GenerateTestCasesWizard
-                                folderId={selectedFolderId ?? 0}
-                                folderName={selectedFolderName}
-                                onImportComplete={refetchFolderStats}
-                              />
+                              <Button
+                                variant="outline"
+                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                onClick={() => setImportDialogOpen(true)}
+                              >
+                                <Download className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("repository.cases.importWizard.title")}
+                                </span>
+                              </Button>
+                              {importDialogOpen && (
+                                <ImportCasesWizard
+                                  onImportComplete={refetchFolderStats}
+                                  open={importDialogOpen}
+                                  onClose={() => {
+                                    setImportDialogOpen(false);
+                                    setDroppedFile(null);
+                                  }}
+                                  initialFile={droppedFile}
+                                />
+                              )}
+                              {generateWizardOpen && (
+                                <GenerateTestCasesWizard
+                                  folderId={selectedFolderId ?? 0}
+                                  folderName={selectedFolderName}
+                                  onImportComplete={refetchFolderStats}
+                                  open={generateWizardOpen}
+                                  onOpenChange={setGenerateWizardOpen}
+                                />
+                              )}
+                              <Button
+                                variant="outline"
+                                onClick={() => setGenerateWizardOpen(true)}
+                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <Sparkles className="w-4 h-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("repository.generateTestCases.buttonText")}
+                                </span>
+                              </Button>
                               <FindDuplicatesButton
                                 projectId={projectIdParam}
                               />
-                              <AddCaseModal folderId={selectedFolderId ?? 0} />
+                              <Button
+                                variant="default"
+                                disabled={!selectedFolderId}
+                                data-testid="add-case-button"
+                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                onClick={() => setAddCaseOpen(true)}
+                              >
+                                <CirclePlus className="w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40 select-none">
+                                  {t("repository.cases.addCase")}
+                                </span>
+                              </Button>
+                              {addCaseOpen && (
+                                <AddCase
+                                  folderId={selectedFolderId ?? 0}
+                                  open={addCaseOpen}
+                                  onClose={() => setAddCaseOpen(false)}
+                                />
+                              )}
                             </div>
                           )}
                         </div>

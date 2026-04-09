@@ -3627,7 +3627,7 @@ export default function Cases({
       )}
 
       {/* QuickScript Modal */}
-      {isValidProjectId && (
+      {isValidProjectId && isQuickScriptModalOpen && (
         <QuickScriptModal
           isOpen={isQuickScriptModalOpen}
           onClose={() => {

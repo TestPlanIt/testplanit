@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CaseExportTemplate } from "@prisma/client";
-import { ScrollText, Search, Trash2 } from "lucide-react";
+import { CirclePlus, Pencil, ScrollText, Search, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -33,9 +33,9 @@ import {
   useUpdateCaseExportTemplate,
   useUpdateManyCaseExportTemplate
 } from "~/lib/hooks";
-import { AddQuickScriptTemplateModal } from "./AddQuickScriptTemplate";
-import { DeleteQuickScriptTemplateModal } from "./DeleteQuickScriptTemplate";
-import { EditQuickScriptTemplateModal } from "./EditQuickScriptTemplate";
+import { AddQuickScriptTemplate } from "./AddQuickScriptTemplate";
+import { DeleteQuickScriptTemplate } from "./DeleteQuickScriptTemplate";
+import { EditQuickScriptTemplate } from "./EditQuickScriptTemplate";
 
 export default function QuickScriptTemplates() {
   const { data: session, status } = useSession();
@@ -48,6 +48,11 @@ export default function QuickScriptTemplates() {
   const [filterLanguage, setFilterLanguage] = useState("__all__");
   const [filterEnabled, setFilterEnabled] = useState("__all__");
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const [addTemplateOpen, setAddTemplateOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] =
+    useState<CaseExportTemplate | null>(null);
+  const [deletingTemplate, setDeletingTemplate] =
+    useState<CaseExportTemplate | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<
     number | undefined
   >(undefined);
@@ -187,7 +192,19 @@ export default function QuickScriptTemplates() {
                 </CardTitle>
               </div>
               <div>
-                <AddQuickScriptTemplateModal />
+                <Button
+                  data-testid="add-export-template-button"
+                  onClick={() => setAddTemplateOpen(true)}
+                >
+                  <CirclePlus className="w-4" />
+                  <span className="hidden md:inline">{t("add.button")}</span>
+                </Button>
+                {addTemplateOpen && (
+                  <AddQuickScriptTemplate
+                    open={addTemplateOpen}
+                    onClose={() => setAddTemplateOpen(false)}
+                  />
+                )}
               </div>
             </div>
           </CardHeader>
@@ -366,10 +383,14 @@ export default function QuickScriptTemplates() {
                                 </td>
                                 <td className="px-4 py-2">
                                   <div className="flex justify-center gap-1">
-                                    <EditQuickScriptTemplateModal
-                                      key={`edit-${tmpl.id}`}
-                                      template={tmpl}
-                                    />
+                                    <Button
+                                      variant="outline"
+                                      className="px-2 py-1 h-auto"
+                                      data-testid="edit-export-template-button"
+                                      onClick={() => setEditingTemplate(tmpl)}
+                                    >
+                                      <Pencil className="h-5 w-5" />
+                                    </Button>
                                     {tmpl.isDefault ? (
                                       <Button
                                         variant="ghost"
@@ -379,10 +400,16 @@ export default function QuickScriptTemplates() {
                                         <Trash2 className="h-5 w-5" />
                                       </Button>
                                     ) : (
-                                      <DeleteQuickScriptTemplateModal
-                                        key={`delete-${tmpl.id}`}
-                                        template={tmpl}
-                                      />
+                                      <Button
+                                        variant="destructive"
+                                        className="px-2 py-1 h-auto"
+                                        data-testid="delete-export-template-button"
+                                        onClick={() =>
+                                          setDeletingTemplate(tmpl)
+                                        }
+                                      >
+                                        <Trash2 className="h-5 w-5" />
+                                      </Button>
                                     )}
                                   </div>
                                 </td>
@@ -424,6 +451,20 @@ export default function QuickScriptTemplates() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        {editingTemplate && (
+          <EditQuickScriptTemplate
+            template={editingTemplate}
+            open={editingTemplate !== null}
+            onClose={() => setEditingTemplate(null)}
+          />
+        )}
+        {deletingTemplate && (
+          <DeleteQuickScriptTemplate
+            template={deletingTemplate}
+            open={deletingTemplate !== null}
+            onClose={() => setDeletingTemplate(null)}
+          />
+        )}
       </>
     );
   }

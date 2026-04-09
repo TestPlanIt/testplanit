@@ -14,14 +14,18 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { CirclePlus } from "lucide-react";
 import { useCountTags, useFindManyTags } from "~/lib/hooks";
-import { AddTagModal } from "./AddTag";
-import { getColumns } from "./columns";
+import { AddTag } from "./AddTag";
+import { ExtendedTags, getColumns } from "./columns";
+import { DeleteTag } from "./DeleteTag";
+import { EditTag } from "./EditTag";
 
 type PageSizeOption = number | "All";
 
@@ -56,6 +60,9 @@ function TagList() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [addTagOpen, setAddTagOpen] = useState(false);
+  const [editingTag, setEditingTag] = useState<ExtendedTags | null>(null);
+  const [deletingTag, setDeletingTag] = useState<ExtendedTags | null>(null);
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
@@ -259,7 +266,7 @@ function TagList() {
   }, [status, session, router]);
 
   const columns = useMemo(
-    () => getColumns(tCommon, isLoadingCounts),
+    () => getColumns(tCommon, isLoadingCounts, setEditingTag, setDeletingTag),
     [tCommon, isLoadingCounts]
   );
   const [columnVisibility, setColumnVisibility] = useState<
@@ -294,7 +301,18 @@ function TagList() {
               </CardTitle>
             </div>
             <div>
-              <AddTagModal />
+              <Button onClick={() => setAddTagOpen(true)}>
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">
+                  {tGlobal("tags.add.button")}
+                </span>
+              </Button>
+              {addTagOpen && (
+                <AddTag
+                  open={addTagOpen}
+                  onClose={() => setAddTagOpen(false)}
+                />
+              )}
             </div>
           </div>
           <CardDescription>{tGlobal("tags.description")}</CardDescription>
@@ -359,6 +377,20 @@ function TagList() {
           </div>
         </CardContent>
       </Card>
+      {editingTag && (
+        <EditTag
+          tag={editingTag}
+          open={editingTag !== null}
+          onClose={() => setEditingTag(null)}
+        />
+      )}
+      {deletingTag && (
+        <DeleteTag
+          tag={deletingTag}
+          open={deletingTag !== null}
+          onClose={() => setDeletingTag(null)}
+        />
+      )}
     </main>
   );
 }

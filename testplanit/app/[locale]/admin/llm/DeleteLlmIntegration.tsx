@@ -10,8 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,16 +19,17 @@ import { useDeleteLlmProviderConfig } from "~/lib/hooks/llm-provider-config";
 
 interface DeleteLlmIntegrationProps {
   integration: any;
-  isOnlyIntegration?: boolean;
+  open: boolean;
+  onClose: () => void;
 }
 
 export function DeleteLlmIntegration({
   integration,
-  isOnlyIntegration = false,
+  open,
+  onClose,
 }: DeleteLlmIntegrationProps) {
   const t = useTranslations("admin.llm.delete");
   const tGlobal = useTranslations();
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { mutateAsync: deleteLlmIntegration } = useDeleteLlmIntegration();
@@ -55,7 +55,7 @@ export function DeleteLlmIntegration({
         description: t("integrationDeletedSuccess"),
       });
 
-      setOpen(false);
+      onClose();
       // ZenStack will automatically invalidate hooks - no manual refresh needed
     } catch (error: any) {
       console.error("Error deleting integration:", error);
@@ -68,44 +68,30 @@ export function DeleteLlmIntegration({
   };
 
   return (
-    <>
-      <Button
-        variant="destructive"
-        size="icon"
-        onClick={() => setOpen(true)}
-        className="px-2 py-1 h-auto"
-        disabled={integration.llmProviderConfig?.isDefault && !isOnlyIntegration}
-        title={integration.llmProviderConfig?.isDefault && !isOnlyIntegration ? t("cannotDeleteDefault") : undefined}
-        data-testid="llm-delete-button"
-      >
-        <Trash2 className="h-8 w-8 shrink-0" />
-      </Button>
-
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent className="border-destructive">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {tGlobal("admin.llm.delete.description", {
-                name: integration?.name,
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpen(false)}>
-              {tGlobal("common.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
-              disabled={loading}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {tGlobal("common.actions.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    <AlertDialog open={open} onOpenChange={onClose}>
+      <AlertDialogContent className="border-destructive">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("title")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {tGlobal("admin.llm.delete.description", {
+              name: integration?.name,
+            })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onClose}>
+            {tGlobal("common.cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {tGlobal("common.actions.delete")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

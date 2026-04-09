@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { EditRoleModal } from "./EditRoles";
+import { EditRole } from "./EditRoles";
 
 // Mock next-intl - supports both default namespace and "enums.ApplicationArea"
 vi.mock("next-intl", () => ({
@@ -106,11 +106,13 @@ function makeQueryClient() {
 
 const renderWithProvider = (role = testRole) => {
   const queryClient = makeQueryClient();
+  const onClose = vi.fn();
   return {
     user: userEvent.setup(),
+    onClose,
     ...render(
       <QueryClientProvider client={queryClient}>
-        <EditRoleModal role={role as any} />
+        <EditRole role={role as any} open={true} onClose={onClose} />
       </QueryClientProvider>
     ),
   };
@@ -124,15 +126,9 @@ beforeEach(() => {
   mockUpsertRolePermission.mockResolvedValue({});
 });
 
-describe("EditRoleModal", () => {
-  test("renders the edit button", () => {
+describe("EditRole", () => {
+  test("renders dialog with role name pre-filled and permissions table", () => {
     renderWithProvider();
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
-
-  test("opens dialog with role name pre-filled and permissions table", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     expect(
       screen.getByRole("heading", { name: "admin.roles.edit.title" })
@@ -146,8 +142,7 @@ describe("EditRoleModal", () => {
   });
 
   test("permissions table shows rows for each ApplicationArea value", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    renderWithProvider();
 
     // Each area name is rendered via tAreas(area) which returns the area key
     await waitFor(() => {
@@ -162,8 +157,7 @@ describe("EditRoleModal", () => {
   });
 
   test("permissions table shows Add/Edit, Delete, and Complete column headers", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    renderWithProvider();
 
     await waitFor(() => {
       expect(
@@ -179,8 +173,7 @@ describe("EditRoleModal", () => {
   });
 
   test("canAddEdit shows '-' for ClosedTestRuns and ClosedSessions rows", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    renderWithProvider();
 
     await waitFor(() => {
       // Table rows - find cells in the ClosedTestRuns row
@@ -196,8 +189,7 @@ describe("EditRoleModal", () => {
   });
 
   test("canDelete shows '-' for Documentation and Tags rows", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    renderWithProvider();
 
     await waitFor(() => {
       const rows = screen.getAllByRole("row");
@@ -217,8 +209,7 @@ describe("EditRoleModal", () => {
   });
 
   test("canClose shown only for TestRuns and Sessions rows", async () => {
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    renderWithProvider();
 
     await waitFor(() => {
       const rows = screen.getAllByRole("row");
@@ -242,8 +233,7 @@ describe("EditRoleModal", () => {
 
   test("loading skeleton renders Skeleton elements when permissions are loading", async () => {
     stableLoadingState.isLoading = true;
-    const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
+    renderWithProvider();
 
     await waitFor(() => {
       // Skeleton elements are rendered instead of the table
@@ -256,8 +246,7 @@ describe("EditRoleModal", () => {
 
   test("isDefault switch is disabled when role is already default", async () => {
     const defaultRole = { ...testRole, isDefault: true };
-    const { user } = renderWithProvider(defaultRole);
-    await user.click(screen.getByRole("button"));
+    renderWithProvider(defaultRole);
 
     await waitFor(() => {
       const switches = screen.getAllByRole("switch");
@@ -269,7 +258,6 @@ describe("EditRoleModal", () => {
 
   test("submit calls updateRole with correct name and isDefault", async () => {
     const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     const submitButton = screen.getByRole("button", {
       name: "common.actions.submit",
@@ -294,7 +282,6 @@ describe("EditRoleModal", () => {
 
   test("validates empty role name - mutation not called", async () => {
     const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     const nameInput = screen.getByDisplayValue("Tester");
     await user.clear(nameInput);
@@ -311,7 +298,6 @@ describe("EditRoleModal", () => {
 
   test("select-all canAddEdit checkbox toggles all relevant area switches", async () => {
     const { user } = renderWithProvider();
-    await user.click(screen.getByRole("button"));
 
     await waitFor(() => {
       expect(screen.getByRole("table")).toBeInTheDocument();

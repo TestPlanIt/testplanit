@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -34,7 +33,8 @@ import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 
 interface CompleteTestRunDialogProps {
-  trigger: React.ReactNode;
+  open: boolean;
+  onClose: () => void;
   testRunId: number;
   projectId: number;
   stateId: number;
@@ -42,7 +42,8 @@ interface CompleteTestRunDialogProps {
 }
 
 const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
-  trigger,
+  open,
+  onClose,
   testRunId,
   projectId,
   stateId,
@@ -52,7 +53,6 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [open, setOpen] = useState(false);
 
   const { mutate: updateTestRun } = useUpdateTestRuns({
     onSuccess: () => {
@@ -60,7 +60,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
         detail: testRunId,
       });
       window.dispatchEvent(event);
-      setOpen(false);
+      onClose();
     },
   });
 
@@ -111,8 +111,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -204,7 +203,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => setOpen(false)}
+            onClick={onClose}
             disabled={isSubmitting}
           >
             {t("common.cancel")}

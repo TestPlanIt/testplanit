@@ -17,12 +17,16 @@ import { ExtendedGroups, getColumns } from "./columns";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import {
   Card, CardContent,
   CardDescription, CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { AddGroupModal } from "./AddGroup";
+import { CirclePlus } from "lucide-react";
+import { AddGroup } from "./AddGroup";
+import { DeleteGroup } from "./DeleteGroup";
+import { EditGroup } from "./EditGroup";
 
 type PageSizeOption = number | "All";
 
@@ -60,6 +64,11 @@ function GroupList() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [addGroupOpen, setAddGroupOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<ExtendedGroups | null>(null);
+  const [deletingGroup, setDeletingGroup] = useState<ExtendedGroups | null>(
+    null
+  );
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -187,7 +196,7 @@ function GroupList() {
   };
 
   const columns: CustomColumnDef<ExtendedGroups>[] = useMemo(
-    () => getColumns(tCommon),
+    () => getColumns(tCommon, setEditingGroup, setDeletingGroup),
     [tCommon]
   );
 
@@ -213,7 +222,17 @@ function GroupList() {
                 <CardTitle>{tGlobal("common.fields.groups")}</CardTitle>
               </div>
               <div>
-                <AddGroupModal />
+                <Button onClick={() => setAddGroupOpen(true)}>
+                  <CirclePlus className="w-4 mr-1" />
+                  <span className="hidden md:inline">{t("add.button")}</span>
+                  <span className="md:hidden">{tCommon("add")}</span>
+                </Button>
+                {addGroupOpen && (
+                  <AddGroup
+                    open={addGroupOpen}
+                    onClose={() => setAddGroupOpen(false)}
+                  />
+                )}
               </div>
             </div>
             <CardDescription>{t("description.groupInfo")}</CardDescription>
@@ -273,6 +292,20 @@ function GroupList() {
             </div>
           </CardContent>
         </Card>
+        {editingGroup && (
+          <EditGroup
+            group={editingGroup}
+            open={editingGroup !== null}
+            onClose={() => setEditingGroup(null)}
+          />
+        )}
+        {deletingGroup && (
+          <DeleteGroup
+            group={deletingGroup}
+            open={deletingGroup !== null}
+            onClose={() => setDeletingGroup(null)}
+          />
+        )}
       </main>
     );
   }

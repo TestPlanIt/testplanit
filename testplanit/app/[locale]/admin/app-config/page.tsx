@@ -5,15 +5,19 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
   PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
 import { useFindManyAppConfig } from "~/lib/hooks";
-import { AddAppConfigModal } from "./AddAppConfig";
+import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
+import { DeleteAppConfig } from "./DeleteAppConfig";
+import { EditAppConfig } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
 type PageSizeOption = number | "All";
@@ -49,6 +53,11 @@ function AppConfigs() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  const [addAppConfigOpen, setAddAppConfigOpen] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<AppConfigRow | null>(null);
+  const [deletingConfig, setDeletingConfig] = useState<AppConfigRow | null>(
+    null
+  );
 
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
@@ -121,14 +130,26 @@ function AppConfigs() {
     setCurrentPage(1);
   };
 
-  const columns = useMemo(() => getColumns(tCommon), [tCommon]);
+  const columns = useMemo(
+    () => getColumns(tCommon, setEditingConfig, setDeletingConfig),
+    [tCommon]
+  );
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
           <CardTitle data-testid="app-config-title">{tGlobal("admin.menu.appConfig")}</CardTitle>
-          <AddAppConfigModal />
+          <Button onClick={() => setAddAppConfigOpen(true)}>
+            <CirclePlus className="h-4 w-4" />
+            {t("addConfig")}
+          </Button>
+          {addAppConfigOpen && (
+            <AddAppConfig
+              open={addAppConfigOpen}
+              onClose={() => setAddAppConfigOpen(false)}
+            />
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -193,6 +214,20 @@ function AppConfigs() {
           />
         </div>
       </CardContent>
+      {editingConfig && (
+        <EditAppConfig
+          config={editingConfig}
+          open={editingConfig !== null}
+          onClose={() => setEditingConfig(null)}
+        />
+      )}
+      {deletingConfig && (
+        <DeleteAppConfig
+          config={deletingConfig}
+          open={deletingConfig !== null}
+          onClose={() => setDeletingConfig(null)}
+        />
+      )}
     </Card>
   );
 }

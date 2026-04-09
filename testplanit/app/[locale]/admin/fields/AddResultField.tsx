@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { emptyEditorContent } from "~/app/constants";
 
-import { CirclePlus, Ellipsis } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 
 import {
   Form,
@@ -37,7 +37,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 
 import {
@@ -107,8 +106,8 @@ const FormSchema = z
   );
 
 export interface AddResultFieldModalProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   onSubmitField?: (payload: {
     values: z.infer<typeof FormSchema>;
     dropdownOptions: FieldOptions[];
@@ -119,27 +118,21 @@ export interface AddResultFieldModalProps {
     values?: Partial<z.infer<typeof FormSchema>>;
     options?: FieldDraftOption[];
   };
-  trigger?: React.ReactNode;
   submitLabel?: string;
 }
 
 export function AddResultFieldModal({
-  open: controlledOpen,
-  onOpenChange,
+  open,
+  onClose,
   onSubmitField,
   draft,
-  trigger,
   submitLabel,
-}: AddResultFieldModalProps = {}) {
+}: AddResultFieldModalProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen! : internalOpen;
   const setOpen = (value: boolean) => {
-    onOpenChange?.(value);
-    if (!isControlled) {
-      setInternalOpen(value);
+    if (!value) {
+      onClose();
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -701,16 +694,6 @@ export function AddResultFieldModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {trigger !== null && (
-        <DialogTrigger asChild>
-          {trigger ?? (
-            <Button data-testid="add-result-field-button">
-              <CirclePlus className="w-4" />
-              <span className="hidden md:inline">{tGlobal("common.fields.resultFields")}</span>
-            </Button>
-          )}
-        </DialogTrigger>
-      )}
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="result-field-dialog">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="result-field-form">

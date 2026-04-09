@@ -28,6 +28,8 @@ import {
 } from "~/lib/hooks/llm-provider-config";
 import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
 import { AddLlmIntegration } from "./AddLlmIntegration";
+import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
+import { EditLlmIntegration } from "./EditLlmIntegration";
 import { ExtendedLlmIntegration, getColumns } from "./columns";
 
 type PageSizeOption = number | "All";
@@ -274,6 +276,11 @@ function LlmIntegrationList() {
     usageByIntegrationIdRef.current = map;
   }, [monthlyUsageGroups]);
 
+  const [editingIntegration, setEditingIntegration] =
+    useState<ExtendedLlmIntegration | null>(null);
+  const [deletingIntegration, setDeletingIntegration] =
+    useState<ExtendedLlmIntegration | null>(null);
+
   const columns = useMemo(
     () =>
       getColumns(
@@ -282,7 +289,9 @@ function LlmIntegrationList() {
         tCommon,
         t,
         usageByIntegrationIdRef,
-        integrations?.length ?? 0
+        integrations?.length ?? 0,
+        setEditingIntegration,
+        setDeletingIntegration
       ),
     [userPreferences, handleToggle, tCommon, t, integrations?.length]
   );
@@ -452,6 +461,23 @@ function LlmIntegrationList() {
             setShowAddDialog(false);
             refetch();
           }}
+        />
+      )}
+      {editingIntegration && (
+        <EditLlmIntegration
+          integration={editingIntegration}
+          currentSpend={
+            usageByIntegrationIdRef.current.get(editingIntegration.id) ?? 0
+          }
+          open={editingIntegration !== null}
+          onClose={() => setEditingIntegration(null)}
+        />
+      )}
+      {deletingIntegration && (
+        <DeleteLlmIntegration
+          integration={deletingIntegration}
+          open={deletingIntegration !== null}
+          onClose={() => setDeletingIntegration(null)}
         />
       )}
     </main>

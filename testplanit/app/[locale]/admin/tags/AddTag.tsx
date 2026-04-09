@@ -10,8 +10,6 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { CirclePlus } from "lucide-react";
-
 import {
   Form,
   FormControl,
@@ -28,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 
@@ -39,11 +36,15 @@ const AddTagSchema = z.object({
 
 type AddTagFormData = z.infer<typeof AddTagSchema>;
 
-export function AddTagModal() {
+interface AddTagProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AddTag({ open, onClose }: AddTagProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tTags = useTranslations("tags.add");
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createTag } = useCreateTags();
   const { mutateAsync: updateTag } = useUpdateTags();
@@ -51,8 +52,6 @@ export function AddTagModal() {
   const { data: allTags } = useFindManyTags({
     select: { id: true, name: true, isDeleted: true },
   });
-
-  const handleCancel = () => setOpen(false);
 
   const form = useForm<AddTagFormData>({
     resolver: zodResolver(AddTagSchema),
@@ -82,7 +81,7 @@ export function AddTagModal() {
             where: { id: existingTag.id },
             data: { isDeleted: false },
           });
-          setOpen(false);
+          onClose();
           setIsSubmitting(false);
           return;
         } catch {
@@ -110,7 +109,7 @@ export function AddTagModal() {
           name: data.name,
         },
       });
-      setOpen(false);
+      onClose();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -130,13 +129,7 @@ export function AddTagModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{tGlobal("tags.add.button")}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -171,7 +164,7 @@ export function AddTagModal() {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
