@@ -1593,13 +1593,24 @@ export function SessionResultsList({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Dialog */}
+      {/* Edit Dialog — conditionally mounted so every open/close cycle
+          produces a fresh useForm + selectedFiles + pendingAttachmentChanges
+          + dynamicFieldValues state. Without this, modifying result A,
+          cancelling, and editing result B would show A's modified values. */}
+      {editDialogOpen && (
       <Dialog
+        key={resultToEdit?.id ?? "edit-session-result"}
         open={editDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             // When closing the dialog, refresh the results list
             setRefreshResults((prev) => prev + 1);
+            // Reset all local dialog state so the next open is clean.
+            setResultToEdit(null);
+            setSelectedFiles([]);
+            setPendingAttachmentChanges({ edits: [], deletes: [] });
+            setDynamicFieldValues({});
+            setEditSelectedIssues([]);
           }
           setEditDialogOpen(open);
         }}
@@ -1852,6 +1863,7 @@ export function SessionResultsList({
           </Form>
         </DialogContent>
       </Dialog>
+      )}
     </div>
   );
 }
