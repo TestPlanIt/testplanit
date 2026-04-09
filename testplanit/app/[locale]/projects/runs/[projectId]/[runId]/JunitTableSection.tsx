@@ -91,6 +91,7 @@ function JunitTableSection({
 }: any) {
   const { data: session } = useSession();
   const [junitFilter, setJunitFilter] = useState("");
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [junitColumnVisibility, setJunitColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -424,24 +425,31 @@ function JunitTableSection({
                           </Button>
                         )}
                         {!testRunData?.isCompleted && canCloseRun && (
-                          <CompleteTestRunDialog
-                            trigger={
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              >
-                                <CircleCheckBig className="h-4 w-4 shrink-0" />
-                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                  {t("common.actions.complete")}
-                                </span>
-                              </Button>
-                            }
-                            testRunId={Number(runId)}
-                            projectId={Number(projectId)}
-                            stateId={testRunData?.stateId || 0}
-                            stateName={testRunData?.state?.name || ""}
-                          />
+                          <>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              onClick={() => setIsCompleteDialogOpen(true)}
+                            >
+                              <CircleCheckBig className="h-4 w-4 shrink-0" />
+                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                {t("common.actions.complete")}
+                              </span>
+                            </Button>
+                            {isCompleteDialogOpen && (
+                              <CompleteTestRunDialog
+                                open={isCompleteDialogOpen}
+                                onClose={() =>
+                                  setIsCompleteDialogOpen(false)
+                                }
+                                testRunId={Number(runId)}
+                                projectId={Number(projectId)}
+                                stateId={testRunData?.stateId || 0}
+                                stateName={testRunData?.state?.name || ""}
+                              />
+                            )}
+                          </>
                         )}
                       </>
                     ) : (

@@ -546,11 +546,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         </div>
         {selectedTestRun && (
           <CompleteTestRunDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                {tCommon("actions.complete")}
-              </Button>
-            }
+            open={selectedTestRun !== null}
+            onClose={() => {
+              setIsDialogOpen(false);
+              setSelectedTestRun(null);
+            }}
             testRunId={selectedTestRun.id}
             projectId={selectedTestRun.projectId}
             stateId={selectedTestRun.state.id}
@@ -880,11 +880,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
       {selectedTestRun && (
         <CompleteTestRunDialog
-          trigger={
-            <Button variant="outline" size="sm">
-              {tCommon("actions.complete")}
-            </Button>
-          }
+          open={selectedTestRun !== null}
+          onClose={() => {
+            setIsDialogOpen(false);
+            setSelectedTestRun(null);
+          }}
           testRunId={selectedTestRun.id}
           projectId={selectedTestRun.projectId}
           stateId={selectedTestRun.state.id}

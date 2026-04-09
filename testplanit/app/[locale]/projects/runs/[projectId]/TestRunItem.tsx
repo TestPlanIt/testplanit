@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyTestRunCases } from "~/lib/hooks";
@@ -100,6 +100,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const tCommon = useTranslations("common");
   const { projectId } = useParams();
   const router = useRouter();
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
   // Fetch permissions
   const numericProjectId = parseInt(projectId as string, 10);
@@ -400,23 +401,16 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                     )}
 
                     {showCompleteItem && (
-                      <CompleteTestRunDialog
-                        trigger={
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault(); // Prevents menu from closing
-                            }}
-                            data-testid={`testrun-complete-trigger-${testRun.id}`}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            {tCommon("actions.complete")}
-                          </DropdownMenuItem>
-                        }
-                        testRunId={testRun.id}
-                        projectId={numericProjectId}
-                        stateId={testRun.state.id}
-                        stateName={testRun.state.name}
-                      />
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault(); // Prevents menu from closing
+                          setIsCompleteDialogOpen(true);
+                        }}
+                        data-testid={`testrun-complete-trigger-${testRun.id}`}
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        {tCommon("actions.complete")}
+                      </DropdownMenuItem>
                     )}
 
                     {showDuplicateItem && (
@@ -438,6 +432,16 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
           </div>
         </div>
       </div>
+      {isCompleteDialogOpen && (
+        <CompleteTestRunDialog
+          open={isCompleteDialogOpen}
+          onClose={() => setIsCompleteDialogOpen(false)}
+          testRunId={testRun.id}
+          projectId={numericProjectId}
+          stateId={testRun.state.id}
+          stateName={testRun.state.name}
+        />
+      )}
     </>
   );
 };
