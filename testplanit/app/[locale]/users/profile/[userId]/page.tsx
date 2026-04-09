@@ -51,7 +51,7 @@ import {
   Theme, TimeFormat
 } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Circle, Moon, PenSquare, Sun, SunMoon, X } from "lucide-react";
+import { Check, Circle, Moon, PenSquare, Sun, SunMoon, UserLock, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -91,6 +91,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editAvatarOpen, setEditAvatarOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const { data: session, update: updateSession } = useSession();
   const t = useTranslations("users.profile");
   const tGlobal = useTranslations();
@@ -555,7 +556,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
                           </Button>
                           {(user?.authMethod === "INTERNAL" ||
                             user?.authMethod === "BOTH") && (
-                            <ChangePasswordModal />
+                            <>
+                              <Button
+                                variant="destructive"
+                                onClick={() => setChangePasswordOpen(true)}
+                              >
+                                <UserLock className="w-4 h-4" />
+                                {tGlobal(
+                                  "users.profile.changePasswordModal.buttonText"
+                                )}
+                              </Button>
+                              {changePasswordOpen && (
+                                <ChangePasswordModal
+                                  open={changePasswordOpen}
+                                  onClose={() =>
+                                    setChangePasswordOpen(false)
+                                  }
+                                />
+                              )}
+                            </>
                           )}
                           {user?.authMethod === "INTERNAL" && (
                             <Button

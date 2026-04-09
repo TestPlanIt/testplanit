@@ -2313,7 +2313,7 @@ export default function TestCaseDetails() {
           </CardContent>
         </div>
       </form>
-      {isValidProjectId && (
+      {isValidProjectId && isQuickScriptModalOpen && (
         <QuickScriptModal
           isOpen={isQuickScriptModalOpen}
           onClose={() => setIsQuickScriptModalOpen(false)}

@@ -8,18 +8,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Asterisk, UserLock } from "lucide-react";
+import { Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function ChangePasswordModal() {
+interface ChangePasswordModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps) {
   const t = useTranslations("users.profile.changePasswordModal");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -29,7 +33,6 @@ export function ChangePasswordModal() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -70,10 +73,7 @@ export function ChangePasswordModal() {
         setError(result.error || tCommon("errors.somethingWentWrong"));
       } else {
         toast.success(t("success.passwordChanged"));
-        setOpen(false);
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
+        onClose();
       }
     } catch {
       setError(tCommon("errors.somethingWentWrong"));
@@ -81,24 +81,8 @@ export function ChangePasswordModal() {
     setIsLoading(false);
   };
 
-  React.useEffect(() => {
-    if (!open) {
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setError(null);
-      setIsLoading(false);
-    }
-  }, [open]);
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="destructive">
-          <UserLock className="w-4 h-4" />
-          {t("buttonText")}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
