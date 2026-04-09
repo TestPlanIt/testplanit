@@ -1327,6 +1327,7 @@ var TestmoStagingService = class {
   constructor(prisma2) {
     this.prisma = prisma2;
   }
+  prisma;
   prepareStagingRow(jobId, datasetName, rowIndex, rowData) {
     let sanitizedData = rowData;
     let fieldName = null;
@@ -1944,6 +1945,7 @@ var TestmoExportAnalyzer = class {
   }) {
     this.defaults = defaults;
   }
+  defaults;
   stagingBatches = /* @__PURE__ */ new Map();
   stagingService = null;
   jobId = null;
