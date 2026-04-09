@@ -42,7 +42,7 @@ import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApplicationArea } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CirclePlus, Maximize2 } from "lucide-react";
+import { CirclePlus, Maximize2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -1017,21 +1017,32 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   <div>
                     {canAddEdit && (
                       <div className="flex flex-row gap-2">
-                        <TestResultsImportDialog
-                          projectId={parseInt(projectId)}
-                          onSuccess={() => {
-                            router.refresh();
-                            refetchIncompleteTestRuns();
-                          }}
-                          externalOpen={importDialogOpen}
-                          onExternalOpenChange={(v) => {
-                            setImportDialogOpen(v);
-                            if (!v) setDroppedFiles([]);
-                          }}
-                          initialFiles={
-                            droppedFiles.length > 0 ? droppedFiles : undefined
-                          }
-                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => setImportDialogOpen(true)}
+                        >
+                          <Upload className="h-4 w-4" />
+                          {tCommon("actions.junit.import.title")}
+                        </Button>
+                        {importDialogOpen && (
+                          <TestResultsImportDialog
+                            projectId={parseInt(projectId)}
+                            onSuccess={() => {
+                              router.refresh();
+                              refetchIncompleteTestRuns();
+                            }}
+                            open={importDialogOpen}
+                            onClose={() => {
+                              setImportDialogOpen(false);
+                              setDroppedFiles([]);
+                            }}
+                            initialFiles={
+                              droppedFiles.length > 0
+                                ? droppedFiles
+                                : undefined
+                            }
+                          />
+                        )}
                         <Button
                           type="button"
                           variant="default"

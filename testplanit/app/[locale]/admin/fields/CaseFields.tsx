@@ -3,7 +3,8 @@
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CirclePlus, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -107,6 +108,7 @@ export default function CaseFields() {
     [handleToggle, t, tCommon]
   );
 
+  const [addCaseFieldOpen, setAddCaseFieldOpen] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(() => {
@@ -139,7 +141,19 @@ export default function CaseFields() {
               </CardTitle>
             </div>
             <div>
-              <AddCaseFieldModal />
+              <Button
+                data-testid="add-case-field-button"
+                onClick={() => setAddCaseFieldOpen(true)}
+              >
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">{t("add.title")}</span>
+              </Button>
+              {addCaseFieldOpen && (
+                <AddCaseFieldModal
+                  open={addCaseFieldOpen}
+                  onClose={() => setAddCaseFieldOpen(false)}
+                />
+              )}
             </div>
           </div>
         </CardHeader>

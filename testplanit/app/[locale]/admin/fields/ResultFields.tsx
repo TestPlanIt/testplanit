@@ -3,7 +3,8 @@
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SquareCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CirclePlus, SquareCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -107,6 +108,7 @@ export default function ResultFields() {
     [handleToggle, t, tCommon]
   );
 
+  const [addResultFieldOpen, setAddResultFieldOpen] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(() => {
@@ -139,7 +141,19 @@ export default function ResultFields() {
               </CardTitle>{" "}
             </div>
             <div>
-              <AddResultFieldModal />
+              <Button
+                data-testid="add-result-field-button"
+                onClick={() => setAddResultFieldOpen(true)}
+              >
+                <CirclePlus className="w-4" />
+                <span className="hidden md:inline">{t("add.title")}</span>
+              </Button>
+              {addResultFieldOpen && (
+                <AddResultFieldModal
+                  open={addResultFieldOpen}
+                  onClose={() => setAddResultFieldOpen(false)}
+                />
+              )}
             </div>
           </div>
         </CardHeader>

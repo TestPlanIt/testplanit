@@ -310,31 +310,28 @@ describe("ImportCasesWizard", () => {
     });
   });
 
-  it("renders the import wizard dialog", () => {
-    render(<ImportCasesWizard />);
+  it("renders the import wizard dialog when open", async () => {
+    render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-    const button = screen.getByText("Import Test Cases");
-    expect(button).toBeInTheDocument();
-  });
-
-  it("opens the wizard when clicking the import button", async () => {
-    render(<ImportCasesWizard />);
-
-    const button = screen.getByText("Import Test Cases");
-    fireEvent.click(button);
-
+    // With approach B, the dialog content is immediately visible
+    // because the parent passes open={true}.
     await waitFor(() => {
       expect(screen.getByText("Upload and Configure")).toBeInTheDocument();
     });
   });
 
+  it("does not render the import wizard dialog when closed", () => {
+    render(<ImportCasesWizard open={false} onClose={vi.fn()} />);
+
+    expect(screen.queryByText("Upload and Configure")).not.toBeInTheDocument();
+  });
+
   describe("Page 1 - Upload and Configure", () => {
     it("allows file selection", async () => {
       const user = userEvent.setup();
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
       });
@@ -351,10 +348,9 @@ describe("ImportCasesWizard", () => {
     });
 
     it("allows import location selection", async () => {
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       const singleFolderRadio = screen.getByLabelText(
         "Import all cases to a single folder"
       );
@@ -375,10 +371,9 @@ describe("ImportCasesWizard", () => {
     });
 
     it("shows folder select when single folder or root folder is selected", async () => {
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Single folder mode - should show folder select
       expect(screen.getByText("Select Folder")).toBeInTheDocument();
 
@@ -390,10 +385,9 @@ describe("ImportCasesWizard", () => {
     });
 
     it("allows delimiter selection", async () => {
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Should have delimiter select (mocked)
       const selects = screen.getAllByTestId("mock-select");
       expect(selects.length).toBeGreaterThan(0);
@@ -401,10 +395,9 @@ describe("ImportCasesWizard", () => {
 
     it("has checkbox for headers", async () => {
       const user = userEvent.setup();
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Upload a CSV file first — the headers checkbox only appears for CSV files
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
@@ -423,10 +416,9 @@ describe("ImportCasesWizard", () => {
 
     it("only accepts CSV files", async () => {
       const user = userEvent.setup();
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Try to upload a non-CSV file
       const nonCsvFile = new File(["test content"], "test.txt", {
         type: "text/plain",
@@ -458,10 +450,9 @@ describe("ImportCasesWizard", () => {
   describe("Basic functionality", () => {
     it("handles CSV parsing", async () => {
       const user = userEvent.setup();
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       const file = new File(
         ["Name,Description,Priority\nTest 1,Desc 1,High"],
         "test.csv",
@@ -480,10 +471,9 @@ describe("ImportCasesWizard", () => {
     });
 
     it("validates required fields before enabling next button", async () => {
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       const nextButton = screen.getByText("Next");
       expect((nextButton as HTMLButtonElement).disabled).toBe(false);
 
@@ -498,10 +488,9 @@ describe("ImportCasesWizard", () => {
 
     it("handles navigation between pages", async () => {
       const user = userEvent.setup();
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Upload file to enable navigation
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
@@ -527,10 +516,9 @@ describe("ImportCasesWizard", () => {
   describe("Import functionality", () => {
     it("shows import button on final page", async () => {
       const user = userEvent.setup();
-      render(<ImportCasesWizard />);
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Setup minimal required data
       const file = new File(["Name\nTest 1"], "test.csv", {
         type: "text/csv",
@@ -561,10 +549,15 @@ describe("ImportCasesWizard", () => {
         json: async () => ({ success: true, importedCount: 1 }),
       });
 
-      render(<ImportCasesWizard onImportComplete={mockOnImportComplete} />);
+      render(
+        <ImportCasesWizard
+          open={true}
+          onClose={vi.fn()}
+          onImportComplete={mockOnImportComplete}
+        />
+      );
 
-      fireEvent.click(screen.getByText("Import Test Cases"));
-
+  
       // Setup minimal data
       const file = new File(["Name\nTest 1"], "test.csv", {
         type: "text/csv",

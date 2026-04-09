@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -43,7 +42,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Download,
   Star,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -67,8 +65,8 @@ import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 
 interface ImportCasesWizardProps {
   onImportComplete?: () => void;
-  externalOpen?: boolean;
-  onExternalOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   initialFile?: File | null;
 }
 
@@ -128,8 +126,8 @@ type Page1ValidationErrors = {
 
 export function ImportCasesWizard({
   onImportComplete,
-  externalOpen,
-  onExternalOpenChange,
+  open,
+  onClose,
   initialFile,
 }: ImportCasesWizardProps) {
   const t = useTranslations("repository.cases");
@@ -139,12 +137,9 @@ export function ImportCasesWizard({
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
 
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = externalOpen !== undefined;
-  const open = isControlled ? externalOpen : internalOpen;
-  const setOpen = isControlled
-    ? (v: boolean) => onExternalOpenChange?.(v)
-    : setInternalOpen;
+  const setOpen = (v: boolean) => {
+    if (!v) onClose();
+  };
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isImporting, setIsImporting] = useState(false);
@@ -1693,17 +1688,6 @@ export function ImportCasesWizard({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-        >
-          <Download className="h-4 w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {t("importWizard.title")}
-          </span>
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>
