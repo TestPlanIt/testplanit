@@ -83,6 +83,8 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
+  const [isEmptyAddSessionOpen, setIsEmptyAddSessionOpen] = useState(false);
   const {
     session: sessionData,
     isLoading: isAuthLoading,
@@ -705,19 +707,24 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                   </div>
                   <div>
                     {canAddEditSession && (
-                      <AddSessionModal
-                        trigger={
-                          <Button
-                            variant="default"
-                            data-testid="new-session-button"
-                          >
-                            <CirclePlus className="h-4 w-4" />
-                            <span className="hidden md:inline">
-                              {t("sessions.actions.add")}
-                            </span>
-                          </Button>
-                        }
-                      />
+                      <>
+                        <Button
+                          variant="default"
+                          data-testid="new-session-button"
+                          onClick={() => setIsAddSessionOpen(true)}
+                        >
+                          <CirclePlus className="h-4 w-4" />
+                          <span className="hidden md:inline">
+                            {t("sessions.actions.add")}
+                          </span>
+                        </Button>
+                        {isAddSessionOpen && (
+                          <AddSessionModal
+                            open={isAddSessionOpen}
+                            onClose={() => setIsAddSessionOpen(false)}
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -954,16 +961,25 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                           {t("common.empty.activeSessions")}
                         </p>
                         {canAddEditSession && (
-                          <AddSessionModal
-                            trigger={
-                              <Button variant="default">
-                                <CirclePlus className="h-4 w-4" />
-                                <span className="hidden md:inline">
-                                  {t("sessions.actions.create")}
-                                </span>
-                              </Button>
-                            }
-                          />
+                          <>
+                            <Button
+                              variant="default"
+                              onClick={() => setIsEmptyAddSessionOpen(true)}
+                            >
+                              <CirclePlus className="h-4 w-4" />
+                              <span className="hidden md:inline">
+                                {t("sessions.actions.create")}
+                              </span>
+                            </Button>
+                            {isEmptyAddSessionOpen && (
+                              <AddSessionModal
+                                open={isEmptyAddSessionOpen}
+                                onClose={() =>
+                                  setIsEmptyAddSessionOpen(false)
+                                }
+                              />
+                            )}
+                          </>
                         )}
                       </div>
                     ) : (
