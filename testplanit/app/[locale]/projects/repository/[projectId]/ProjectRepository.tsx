@@ -406,7 +406,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [addCaseOpen, setAddCaseOpen] = useState(false);
   const [generateWizardOpen, setGenerateWizardOpen] = useState(false);
 
-  const [panelWidth, setPanelWidth] = useState<number>(100);
+  const [, setPanelWidth] = useState<number>(100);
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);

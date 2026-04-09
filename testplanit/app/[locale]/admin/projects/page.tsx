@@ -403,9 +403,9 @@ function ProjectAdmin() {
 
   const columns: CustomColumnDef<ExtendedProjects>[] = useMemo(
     () =>
-      // eslint-disable-next-line react-hooks/refs
       getColumns(
         userPreferences,
+        // eslint-disable-next-line react-hooks/refs
         handleToggleCompleted,
         handleOpenEditModal,
         tCommon,

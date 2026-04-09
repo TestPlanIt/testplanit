@@ -96,11 +96,11 @@ export default function CaseFields() {
     useState<ExtendedCaseFields | null>(null);
 
   const columns: CustomColumnDef<ExtendedCaseFields>[] = useMemo(
-    // eslint-disable-next-line react-hooks/refs
     () =>
       getColumns(
         t,
         tCommon,
+        // eslint-disable-next-line react-hooks/refs
         handleToggle,
         setEditingCaseField,
         setDeletingCaseField

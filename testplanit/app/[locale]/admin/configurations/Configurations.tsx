@@ -126,10 +126,10 @@ function Configurations(): React.ReactElement | null {
     useState<ConfigWithVariants | null>(null);
 
   const columns = useMemo(
-    // eslint-disable-next-line react-hooks/refs
     () =>
       getColumns(
         tCommon,
+        // eslint-disable-next-line react-hooks/refs
         handleToggle,
         setEditingConfiguration,
         setDeletingConfiguration

@@ -142,7 +142,7 @@ describe("EditRole", () => {
   });
 
   test("permissions table shows rows for each ApplicationArea value", async () => {
-    const { user } = renderWithProvider();
+    renderWithProvider();
 
     // Each area name is rendered via tAreas(area) which returns the area key
     await waitFor(() => {
@@ -157,7 +157,7 @@ describe("EditRole", () => {
   });
 
   test("permissions table shows Add/Edit, Delete, and Complete column headers", async () => {
-    const { user } = renderWithProvider();
+    renderWithProvider();
 
     await waitFor(() => {
       expect(
@@ -173,7 +173,7 @@ describe("EditRole", () => {
   });
 
   test("canAddEdit shows '-' for ClosedTestRuns and ClosedSessions rows", async () => {
-    const { user } = renderWithProvider();
+    renderWithProvider();
 
     await waitFor(() => {
       // Table rows - find cells in the ClosedTestRuns row
@@ -189,7 +189,7 @@ describe("EditRole", () => {
   });
 
   test("canDelete shows '-' for Documentation and Tags rows", async () => {
-    const { user } = renderWithProvider();
+    renderWithProvider();
 
     await waitFor(() => {
       const rows = screen.getAllByRole("row");
@@ -209,7 +209,7 @@ describe("EditRole", () => {
   });
 
   test("canClose shown only for TestRuns and Sessions rows", async () => {
-    const { user } = renderWithProvider();
+    renderWithProvider();
 
     await waitFor(() => {
       const rows = screen.getAllByRole("row");
@@ -233,7 +233,7 @@ describe("EditRole", () => {
 
   test("loading skeleton renders Skeleton elements when permissions are loading", async () => {
     stableLoadingState.isLoading = true;
-    const { user } = renderWithProvider();
+    renderWithProvider();
 
     await waitFor(() => {
       // Skeleton elements are rendered instead of the table

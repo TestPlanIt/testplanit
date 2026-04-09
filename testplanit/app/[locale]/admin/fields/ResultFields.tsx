@@ -96,11 +96,11 @@ export default function ResultFields() {
     useState<ExtendedResultFields | null>(null);
 
   const columns: CustomColumnDef<ExtendedResultFields>[] = useMemo(
-    // eslint-disable-next-line react-hooks/refs
     () =>
       getColumns(
         t,
         tCommon,
+        // eslint-disable-next-line react-hooks/refs
         handleToggle,
         setEditingResultField,
         setDeletingResultField

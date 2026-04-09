@@ -137,9 +137,9 @@ export default function TemplateComponent() {
 
   const columns: any[] = useMemo(
     () =>
-      // eslint-disable-next-line react-hooks/refs
       getColumns(
         tCommon,
+        // eslint-disable-next-line react-hooks/refs
         handleToggleEnabled,
         handleToggleDefault,
         setEditingTemplate,

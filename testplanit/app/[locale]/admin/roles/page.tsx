@@ -210,9 +210,14 @@ function RoleList() {
   );
 
   const columns = useMemo(
-    // eslint-disable-next-line react-hooks/refs
     () =>
-      getColumns(handleToggleDefault, tCommon, setEditingRole, setDeletingRole),
+      getColumns(
+        // eslint-disable-next-line react-hooks/refs
+        handleToggleDefault,
+        tCommon,
+        setEditingRole,
+        setDeletingRole
+      ),
     [handleToggleDefault, tCommon]
   );
 
