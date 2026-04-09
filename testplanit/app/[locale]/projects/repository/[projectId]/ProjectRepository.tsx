@@ -33,6 +33,7 @@ import {
   ChevronsUpDown,
   CircleCheckBig,
   CirclePlus,
+  Download,
   FolderDown,
   FolderPlus,
   FolderTree,
@@ -42,6 +43,7 @@ import {
   ListChecks,
   ListOrdered,
   Search,
+  Sparkles,
   SquareCheckBig,
   Tags,
   Type,
@@ -402,6 +404,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addCaseOpen, setAddCaseOpen] = useState(false);
+  const [generateWizardOpen, setGenerateWizardOpen] = useState(false);
 
   const [panelWidth, setPanelWidth] = useState<number>(100);
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
@@ -1635,20 +1638,46 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           )}
                           {!isSelectionMode && !isRunMode && canAddEdit && (
                             <div className="flex gap-2 items-center">
-                              <ImportCasesWizard
-                                onImportComplete={refetchFolderStats}
-                                externalOpen={importDialogOpen}
-                                onExternalOpenChange={(v) => {
-                                  setImportDialogOpen(v);
-                                  if (!v) setDroppedFile(null);
-                                }}
-                                initialFile={droppedFile}
-                              />
-                              <GenerateTestCasesWizard
-                                folderId={selectedFolderId ?? 0}
-                                folderName={selectedFolderName}
-                                onImportComplete={refetchFolderStats}
-                              />
+                              <Button
+                                variant="outline"
+                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                                onClick={() => setImportDialogOpen(true)}
+                              >
+                                <Download className="h-4 w-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("repository.cases.importWizard.title")}
+                                </span>
+                              </Button>
+                              {importDialogOpen && (
+                                <ImportCasesWizard
+                                  onImportComplete={refetchFolderStats}
+                                  open={importDialogOpen}
+                                  onClose={() => {
+                                    setImportDialogOpen(false);
+                                    setDroppedFile(null);
+                                  }}
+                                  initialFile={droppedFile}
+                                />
+                              )}
+                              {generateWizardOpen && (
+                                <GenerateTestCasesWizard
+                                  folderId={selectedFolderId ?? 0}
+                                  folderName={selectedFolderName}
+                                  onImportComplete={refetchFolderStats}
+                                  open={generateWizardOpen}
+                                  onOpenChange={setGenerateWizardOpen}
+                                />
+                              )}
+                              <Button
+                                variant="outline"
+                                onClick={() => setGenerateWizardOpen(true)}
+                                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                              >
+                                <Sparkles className="w-4 h-4 shrink-0" />
+                                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                                  {t("repository.generateTestCases.buttonText")}
+                                </span>
+                              </Button>
                               <FindDuplicatesButton
                                 projectId={projectIdParam}
                               />
