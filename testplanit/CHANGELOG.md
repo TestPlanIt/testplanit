@@ -1,3 +1,10 @@
+## [0.21.4](https://github.com/TestPlanIt/testplanit/compare/v0.21.3...v0.21.4) (2026-04-09)
+
+### Bug Fixes
+
+* **docs:** pin webpackbar to 7.x to satisfy webpack 5.106 ProgressPlugin schema ([#186](https://github.com/TestPlanIt/testplanit/issues/186)) ([e5b3b85](https://github.com/TestPlanIt/testplanit/commit/e5b3b85e8b32c309bb8fdf4b5e35bd34672bd54a))
+* **pagination:** update pagination button text condition ([71262a9](https://github.com/TestPlanIt/testplanit/commit/71262a9aabe221edcbe171e66f28257f2b94371c))
+
 ## [0.21.3](https://github.com/TestPlanIt/testplanit/compare/v0.21.2...v0.21.3) (2026-04-09)
 
 ### Bug Fixes
