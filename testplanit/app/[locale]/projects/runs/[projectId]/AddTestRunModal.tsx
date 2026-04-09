@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -41,7 +40,7 @@ import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { Combine, PlusCircle } from "lucide-react";
+import { Combine } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -810,9 +809,8 @@ interface AddRunModalDuplicationPreset {
 
 interface AddTestRunModalProps {
   defaultMilestoneId?: number;
-  trigger?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   initialSelectedCaseIds: number[];
   onSelectedCasesChange: (cases: number[]) => void;
   duplicationPreset?: AddRunModalDuplicationPreset;
@@ -820,16 +818,12 @@ interface AddTestRunModalProps {
 
 export default function AddTestRunModal({
   defaultMilestoneId,
-  trigger,
-  open: controlledOpen,
-  onOpenChange: controlledOnOpenChange,
+  open,
+  onClose,
   initialSelectedCaseIds,
   onSelectedCasesChange,
   duplicationPreset,
 }: AddTestRunModalProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
-  const onOpenChange = controlledOnOpenChange ?? setInternalOpen;
   const formInitializedRef = useRef(false);
   const [step, setStep] = useState(0);
   const [selectedCaseIds, setSelectedCaseIds] = useState<number[]>(
@@ -909,71 +903,12 @@ export default function AddTestRunModal({
     parentId: m.parentId,
   }));
 
+  // Dialog close handler — the parent conditionally mounts this component,
+  // so React unmounts and discards form/local state on close. No manual reset
+  // is needed; we just tell the parent to unmount us.
   const mainDialogOnOpenChange = (newOpenState: boolean) => {
-    const actualOpenerOrCloser = controlledOnOpenChange ?? setInternalOpen;
-
     if (!newOpenState) {
-      // Dialog is closing, perform cleanup
-      try {
-        setStep(0);
-        // It's important to call onSelectedCasesChange to update parent component if necessary
-        if (typeof onSelectedCasesChange === "function") {
-          onSelectedCasesChange(initialSelectedCaseIds || []); // Reset to initial or empty
-        }
-        setSelectedFiles([]);
-        setLinkedIssueIds([]);
-        setSelectedTags([]); // Reset tags
-
-        // Reset form to initial/duplication preset state or default clean state
-        // This ensures that if the dialog is re-opened, it's in a predictable state.
-        const defaultName = duplicationPreset
-          ? `${duplicationPreset.originalName} - ${tCommon("actions.duplicate")}`
-          : "";
-        const defaultConfigIds = duplicationPreset?.originalConfigId
-          ? [duplicationPreset.originalConfigId]
-          : [];
-        const defaultMilestoneVal = duplicationPreset
-          ? duplicationPreset.originalMilestoneId
-          : defaultMilestoneId;
-        const defaultStateIdVal = duplicationPreset
-          ? duplicationPreset.originalStateId || defaultWorkflow?.id
-          : defaultWorkflow?.id;
-        const defaultNote = duplicationPreset
-          ? duplicationPreset.originalNote
-          : JSON.stringify(emptyEditorContent);
-        const defaultDocs = duplicationPreset
-          ? duplicationPreset.originalDocs
-          : JSON.stringify(emptyEditorContent);
-
-        form.reset({
-          name: defaultName,
-          configIds: defaultConfigIds,
-          milestoneId: defaultMilestoneVal,
-          stateId: defaultStateIdVal,
-          note: defaultNote,
-          docs: defaultDocs,
-          attachments: [], // Always reset attachments on close
-          testCases: initialSelectedCaseIds || [], // Reset test cases to initial state
-        });
-
-        setSelectedAttachmentIndex(null);
-        setSelectedAttachments([]);
-        // setSelectedCaseIds(initialSelectedCaseIds || []); // This might be redundant if parent controls via initialSelectedCaseIds
-      } catch (error) {
-        console.error(
-          "Error during AddTestRunModal cleanup in mainDialogOnOpenChange:",
-          error
-        );
-      }
-      actualOpenerOrCloser(false); // Call the actual function to close the dialog
-    } else {
-      // Dialog is opening
-      // The useEffect hook dependent on 'open' handles detailed form resets for new/duplication.
-      // Ensure step is 0 for a fresh open.
-      setStep(0);
-      // Sync selectedCaseIds with initialSelectedCaseIds from props when opening
-      setSelectedCaseIds(initialSelectedCaseIds || []);
-      actualOpenerOrCloser(true); // Call the actual function to open the dialog
+      onClose();
     }
   };
 
@@ -1348,7 +1283,7 @@ export default function AddTestRunModal({
               })
             : t("success.description", { name: data.name }),
       });
-      onOpenChange(false);
+      onClose();
       router.refresh();
     } catch (error: any) {
       console.error("Failed to create test run:", error);
@@ -1421,15 +1356,6 @@ export default function AddTestRunModal({
 
   return (
     <Dialog open={open} onOpenChange={mainDialogOnOpenChange}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      {!trigger && (
-        <DialogTrigger asChild>
-          <Button type="button">
-            <PlusCircle className="w-4" />
-            <span className="hidden md:inline">{t("title")}</span>
-          </Button>
-        </DialogTrigger>
-      )}
       {DialogContentComponent && open && (
         <DialogContentComponent {...dialogProps} />
       )}

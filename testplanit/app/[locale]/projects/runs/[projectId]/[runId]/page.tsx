@@ -2059,9 +2059,9 @@ export default function TestRunPage() {
         <SimpleDndProvider>
           <AddTestRunModal
             open={isAddRunModalOpenForDuplicate}
-            onOpenChange={(isOpen) => {
-              setIsAddRunModalOpenForDuplicate(isOpen);
-              if (!isOpen) setAddRunModalInitPropsForDuplicate(null); // Clear props when closed
+            onClose={() => {
+              setIsAddRunModalOpenForDuplicate(false);
+              setAddRunModalInitPropsForDuplicate(null);
             }}
             initialSelectedCaseIds={
               addRunModalInitPropsForDuplicate.initialSelectedCaseIds
