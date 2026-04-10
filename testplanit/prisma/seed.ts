@@ -3587,27 +3587,29 @@ async function main() {
     if (process.env.NODE_ENV === "production") {
       try {
         console.log("Seeding production SSO provider...");
-        // Create Magic Link provider (disabled by default to prevent unwanted emails)
+        // Create Magic Link provider if it doesn't exist (disabled by default).
+        // The update block intentionally does NOT touch `enabled` or `forceSso`
+        // because the provisioning script sets those after seeding and we must
+        // not overwrite them on subsequent pod restarts.
         await prisma.ssoProvider.upsert({
           where: {
             name: "Magic Link",
           },
           update: {
             type: "MAGIC_LINK",
-            enabled: false, // Disabled by default - must be manually enabled
-            forceSso: false, // Allow both SSO and regular signup
+            // Do NOT set enabled or forceSso here — preserve runtime config
             config: {},
           },
           create: {
             name: "Magic Link",
             type: "MAGIC_LINK",
-            enabled: false, // Disabled by default - must be manually enabled
-            forceSso: false, // Allow both SSO and regular signup
+            enabled: false, // Disabled by default - provisioning script enables it
+            forceSso: false, // Provisioning script sets this to true
             config: {},
           },
         });
         console.log(
-          `✓ Created Magic Link provider (disabled by default - must be manually enabled in admin settings)`
+          `✓ Magic Link provider ensured (existing settings preserved, new instances start disabled)`
         );
       } catch (error) {
         console.error("Error seeding SSO provider (continuing):", error);
