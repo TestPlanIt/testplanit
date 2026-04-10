@@ -1,3 +1,9 @@
+## [0.21.5](https://github.com/TestPlanIt/testplanit/compare/v0.21.4...v0.21.5) (2026-04-10)
+
+### Bug Fixes
+
+* **auth:** preserve Magic Link provider settings on pod restart ([9780863](https://github.com/TestPlanIt/testplanit/commit/97808630f882856e27d4e6788ea4b44ebd316e2d))
+
 ## [0.21.4](https://github.com/TestPlanIt/testplanit/compare/v0.21.3...v0.21.4) (2026-04-09)
 
 ### Bug Fixes
