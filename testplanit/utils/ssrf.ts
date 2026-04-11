@@ -1,4 +1,5 @@
 import { lookup } from "node:dns/promises";
+import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 
 // Private IP ranges that must be blocked to prevent SSRF attacks
 const PRIVATE_RANGES: RegExp[] = [
@@ -32,22 +33,29 @@ function isPrivateIp(ip: string): boolean {
  * Use this before making any HTTP request to a user-supplied URL
  * (e.g., GitLab self-hosted baseUrl, Azure DevOps organizationUrl).
  */
-export function isSsrfSafe(url: string): boolean {
+export function isSsrfSafe(
+  url: string,
+  allowedHosts?: Set<string>
+): boolean {
   try {
     const parsed = new URL(url);
     // Strip brackets from IPv6 addresses (URL.hostname returns "[::1]" for IPv6)
     const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+
+    // Only allow http/https
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+
+    // If this hostname is in the operator allowlist, skip private-IP checks
+    const allowed = allowedHosts ?? getAllowedPrivateHosts();
+    if (allowed.has(hostname.toLowerCase())) return true;
 
     // Block localhost by name
     if (hostname === "localhost") return false;
 
     // Block if hostname is a private/loopback IP
     if (isPrivateIp(hostname)) return false;
-
-    // Only allow http/https
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return false;
-    }
 
     return true;
   } catch {
@@ -64,9 +72,18 @@ export function isSsrfSafe(url: string): boolean {
  * Call this immediately before fetch() to minimize the TOCTOU window.
  * Throws if the resolved address is private or the hostname cannot be resolved.
  */
-export async function assertSsrfSafeResolved(url: string): Promise<void> {
+export async function assertSsrfSafeResolved(
+  url: string,
+  allowedHosts?: Set<string>
+): Promise<void> {
   const parsed = new URL(url);
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+
+  // If this hostname is in the operator allowlist, skip all private-IP checks
+  const allowed = allowedHosts ?? getAllowedPrivateHosts();
+  if (allowed.has(hostname.toLowerCase())) {
+    return;
+  }
 
   // Skip DNS lookup for raw IP addresses — already checked by isSsrfSafe()
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":")) {
