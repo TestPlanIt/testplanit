@@ -1,3 +1,9 @@
+## [0.21.6](https://github.com/TestPlanIt/testplanit/compare/v0.21.5...v0.21.6) (2026-04-11)
+
+### Bug Fixes
+
+* **ssrf:** respect ALLOWED_PRIVATE_HOSTS in isSsrfSafe and assertSsrfSafeResolved ([#187](https://github.com/TestPlanIt/testplanit/issues/187)) ([167d113](https://github.com/TestPlanIt/testplanit/commit/167d113be9e0615c752d3d44f0fd69e25286c8ab))
+
 ## [0.21.5](https://github.com/TestPlanIt/testplanit/compare/v0.21.4...v0.21.5) (2026-04-10)
 
 ### Bug Fixes
