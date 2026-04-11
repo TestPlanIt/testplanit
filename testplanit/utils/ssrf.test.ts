@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockLookup = vi.hoisted(() => vi.fn());
+const mockGetAllowedPrivateHosts = vi.hoisted(() => vi.fn(() => new Set<string>()));
 
 vi.mock("node:dns/promises", () => ({
   default: { lookup: mockLookup },
   lookup: mockLookup,
+}));
+
+vi.mock("~/lib/utils/ssrf", () => ({
+  getAllowedPrivateHosts: mockGetAllowedPrivateHosts,
 }));
 
 import { assertSsrfSafeResolved, isSsrfSafe } from "./ssrf";
@@ -124,6 +129,33 @@ describe("isSsrfSafe", () => {
       expect(isSsrfSafe("")).toBe(false);
     });
   });
+
+  describe("respects ALLOWED_PRIVATE_HOSTS", () => {
+    it("allows private IP when hostname is in allowlist", () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["192.168.1.100"]));
+      expect(isSsrfSafe("http://192.168.1.100:3000/api")).toBe(true);
+    });
+
+    it("allows localhost when in allowlist", () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["localhost"]));
+      expect(isSsrfSafe("http://localhost:3000/api")).toBe(true);
+    });
+
+    it("still blocks private IP not in allowlist", () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["other.host"]));
+      expect(isSsrfSafe("http://192.168.1.100:3000/api")).toBe(false);
+    });
+
+    it("accepts explicit allowedHosts parameter over env", () => {
+      const explicit = new Set(["10.0.0.5"]);
+      expect(isSsrfSafe("https://10.0.0.5/api", explicit)).toBe(true);
+    });
+
+    it("still blocks non-HTTP protocols even if host is allowed", () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["localhost"]));
+      expect(isSsrfSafe("ftp://localhost/file")).toBe(false);
+    });
+  });
 });
 
 describe("assertSsrfSafeResolved", () => {
@@ -196,6 +228,37 @@ describe("assertSsrfSafeResolved", () => {
       await expect(
         assertSsrfSafeResolved("https://nonexistent.example.com/api")
       ).rejects.toThrow("DNS resolution failed");
+    });
+  });
+
+  describe("respects ALLOWED_PRIVATE_HOSTS", () => {
+    it("skips DNS check when hostname is in allowlist", async () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["gitea.local"]));
+
+      await expect(
+        assertSsrfSafeResolved("http://gitea.local:3000/api")
+      ).resolves.not.toThrow();
+
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("still blocks hostname not in allowlist that resolves to private IP", async () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["other.host"]));
+      mockLookup.mockResolvedValueOnce({ address: "192.168.1.100", family: 4 });
+
+      await expect(
+        assertSsrfSafeResolved("https://gitea.local/api")
+      ).rejects.toThrow("hostname resolves to a private or internal address");
+    });
+
+    it("accepts explicit allowedHosts parameter", async () => {
+      const explicit = new Set(["internal.gitea.corp"]);
+
+      await expect(
+        assertSsrfSafeResolved("https://internal.gitea.corp/api", explicit)
+      ).resolves.not.toThrow();
+
+      expect(mockLookup).not.toHaveBeenCalled();
     });
   });
 });
