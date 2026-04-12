@@ -1,3 +1,9 @@
+## [0.21.7](https://github.com/TestPlanIt/testplanit/compare/v0.21.6...v0.21.7) (2026-04-12)
+
+### Enhancements
+
+* **integration:** enhance IntegrationConfigForm with credential management and UI improvements ([64e8377](https://github.com/TestPlanIt/testplanit/commit/64e8377a3d50fef8b2bfa9fa9d627f08a579bc11))
+
 ## [0.21.6](https://github.com/TestPlanIt/testplanit/compare/v0.21.5...v0.21.6) (2026-04-11)
 
 ### Bug Fixes
