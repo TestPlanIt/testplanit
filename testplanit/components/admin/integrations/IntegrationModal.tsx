@@ -162,9 +162,17 @@ export function IntegrationModal({
     const mutate = integration
       ? updateIntegrationMutation.mutate
       : createIntegrationMutation.mutate;
+
+    // Filter out empty credential values so we don't overwrite encrypted fields
+    const filteredCredentials = Object.fromEntries(
+      Object.entries(values.credentials || {}).filter(([, v]) => v !== "")
+    );
+    // Only include credentials in the update if the user actually entered new values
+    const hasNewCredentials = Object.keys(filteredCredentials).length > 0;
+
     const submitData = {
       ...values,
-      credentials: values.credentials || {},
+      credentials: hasNewCredentials ? filteredCredentials : (integration ? undefined : {}),
       settings: values.settings || {},
       ...(testPassed && !integration && { status: "ACTIVE" }),
     };

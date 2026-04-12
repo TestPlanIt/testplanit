@@ -5,13 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
-  FormDescription, FormItem,
-  FormLabel
+  FormDescription,
+  FormItem,
+  FormLabel,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { IntegrationAuthType, IntegrationProvider } from "@prisma/client";
-import { AlertTriangle, Check, Copy, Lock, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Copy,
+  Lock,
+  Pencil,
+  RefreshCw,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -149,10 +157,13 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
 };
 
 function generateApiKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const array = new Uint8Array(48);
   crypto.getRandomValues(array);
-  return "tpi_forge_" + Array.from(array, (b) => chars[b % chars.length]).join("");
+  return (
+    "tpi_forge_" + Array.from(array, (b) => chars[b % chars.length]).join("")
+  );
 }
 
 export function IntegrationConfigForm({
@@ -167,22 +178,23 @@ export function IntegrationConfigForm({
   const t = useTranslations("admin.integrations");
   const tCommon = useTranslations();
   const [copied, setCopied] = useState(false);
+  const [unlockedFields, setUnlockedFields] = useState<Set<string>>(new Set());
 
   // Get fields based on provider and authType combination, or fall back to provider-only fields
-  const authKey = authType ? `${provider}_${authType}` : '';
+  const authKey = authType ? `${provider}_${authType}` : "";
   const authFields = authTypeFields[authKey] || [];
   const baseFields = providerFields[provider] || [];
 
   // Merge auth-specific fields with base provider fields
   // Use a Set to avoid duplicate fields by name
   const fieldMap = new Map<string, FieldConfig>();
-  [...baseFields, ...authFields].forEach(field => {
+  [...baseFields, ...authFields].forEach((field) => {
     fieldMap.set(field.name, field);
   });
   const fields = Array.from(fieldMap.values());
 
   const getFieldLabel = (label: string): string => {
-    if (label.startsWith('common.')) {
+    if (label.startsWith("common.")) {
       // Type assertion needed for dynamic keys - validated at runtime by startsWith check
       return tCommon(label as Parameters<typeof tCommon>[0]);
     }
@@ -206,7 +218,9 @@ export function IntegrationConfigForm({
   };
 
   // Show warning for API key authentication with Jira
-  const showApiKeyWarning = provider === IntegrationProvider.JIRA && authType === IntegrationAuthType.API_KEY;
+  const showApiKeyWarning =
+    provider === IntegrationProvider.JIRA &&
+    authType === IntegrationAuthType.API_KEY;
 
   return (
     <div className="space-y-4">
@@ -230,7 +244,11 @@ export function IntegrationConfigForm({
       )}
       {fields.map((field) => {
         const value = getFieldValue(field);
-        const isEncrypted = isEdit && field.isCredential && !value;
+        const isEncrypted =
+          isEdit &&
+          field.isCredential &&
+          !value &&
+          !unlockedFields.has(field.name);
 
         return (
           <FormItem key={field.name}>
@@ -239,25 +257,47 @@ export function IntegrationConfigForm({
               {field.required && (
                 <span className="text-destructive ml-1">{"*"}</span>
               )}
-              {field.help && <HelpPopover helpKey={`integration.${field.help.replace('config.', '').replace('Help', '')}`} />}
+              {field.help && (
+                <HelpPopover
+                  helpKey={`integration.${field.help.replace("config.", "").replace("Help", "")}`}
+                />
+              )}
             </FormLabel>
             <FormControl>
               <div className="relative">
                 <Input
                   type={field.type || "text"}
                   placeholder={
-                    isEncrypted ? "••••••••••••" : t(field.placeholder as Parameters<typeof t>[0])
+                    isEncrypted
+                      ? "••••••••••••"
+                      : t(field.placeholder as Parameters<typeof t>[0])
                   }
                   value={value}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
                   disabled={isEncrypted}
                 />
                 {isEncrypted && (
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <Badge variant="secondary" className="text-xs">
                       <Lock className="w-3 h-3 mr-1" />
                       {t("config.encrypted")}
                     </Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        setUnlockedFields((prev) => {
+                          const next = new Set(prev);
+                          next.add(field.name);
+                          return next;
+                        });
+                      }}
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {t("config.changeCredential")}
+                    </Button>
                   </div>
                 )}
               </div>
@@ -301,7 +341,7 @@ export function IntegrationConfigForm({
                     onSettingsChange({ ...settings, forgeApiKey: key });
                   }}
                 >
-                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  <RefreshCw className="h-3.5 w-3.5" />
                   {t("config.forgeApiKeyGenerate")}
                 </Button>
                 {settings.forgeApiKey && (
@@ -316,11 +356,13 @@ export function IntegrationConfigForm({
                     }}
                   >
                     {copied ? (
-                      <Check className="h-3.5 w-3.5 mr-1" />
+                      <Check className="h-3.5 w-3.5" />
                     ) : (
-                      <Copy className="h-3.5 w-3.5 mr-1" />
+                      <Copy className="h-3.5 w-3.5" />
                     )}
-                    {copied ? t("config.forgeApiKeyCopied") : t("config.forgeApiKeyCopy")}
+                    {copied
+                      ? t("config.forgeApiKeyCopied")
+                      : t("config.forgeApiKeyCopy")}
                   </Button>
                 )}
               </div>

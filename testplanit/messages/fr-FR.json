@@ -3874,6 +3874,7 @@
         "organizationUrlHelp": "URL de votre organisation Azure DevOps",
         "encrypted": "Crypté",
         "encryptedHelp": "Ce champ est chiffré et stocké en toute sécurité.",
+        "changeCredential": "Changement",
         "apiKeyWarningTitle": "Avis d'authentification par clé API",
         "apiKeyWarningDescription": "Lors de l'utilisation de l'authentification par clé API, les personnes qui signalent les problèmes sont identifiées automatiquement :",
         "apiKeyWarningPoint1": "Si votre adresse e-mail TestPlanIt correspond à celle d'un utilisateur Jira, vous serez désigné comme rapporteur.",

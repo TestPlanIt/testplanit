@@ -3874,6 +3874,7 @@
         "organizationUrlHelp": "Your Azure DevOps organization URL",
         "encrypted": "Encrypted",
         "encryptedHelp": "This field is encrypted and stored securely",
+        "changeCredential": "Change",
         "apiKeyWarningTitle": "API Key Authentication Notice",
         "apiKeyWarningDescription": "When using API key authentication, issue reporters are determined automatically:",
         "apiKeyWarningPoint1": "If your TestPlanIt email matches a Jira user email, you'll be set as the reporter",
