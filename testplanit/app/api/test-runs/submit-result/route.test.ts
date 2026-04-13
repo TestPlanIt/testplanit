@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
@@ -7,6 +8,10 @@ vi.mock("next-auth", () => ({
 
 vi.mock("~/server/auth", () => ({
   authOptions: {},
+}));
+
+vi.mock("~/lib/api-token-auth", () => ({
+  authenticateRequest: vi.fn(),
 }));
 
 vi.mock("~/lib/prisma", () => ({
@@ -22,6 +27,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 
 describe("Submit Result API Route", () => {
@@ -35,7 +41,7 @@ describe("Submit Result API Route", () => {
   };
 
   const createRequest = (body: unknown) =>
-    new Request("http://localhost/api/test-runs/submit-result", {
+    new NextRequest("http://localhost/api/test-runs/submit-result", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -90,6 +96,10 @@ describe("Submit Result API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue({ user: { id: "user-1" } });
+    (authenticateRequest as any).mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1", access: "USER" },
+    });
     (prisma.user.findUnique as any).mockResolvedValue(baseUser);
     (prisma.testRunCases.findFirst as any).mockResolvedValue(baseRunCase);
 
@@ -113,6 +123,11 @@ describe("Submit Result API Route", () => {
 
   it("returns 401 when user is not authenticated", async () => {
     (getServerSession as any).mockResolvedValue(null);
+    (authenticateRequest as any).mockResolvedValue({
+      authenticated: false,
+      error: "Unauthorized",
+      status: 401,
+    });
 
     const response = await POST(createRequest(validBody));
     const data = await response.json();

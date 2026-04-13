@@ -158,3 +158,60 @@ export function hasBearerToken(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
   return authHeader?.startsWith("Bearer tpi_") ?? false;
 }
+
+export interface AuthenticatedUser {
+  userId: string;
+  access?: string | null;
+}
+
+/**
+ * Authenticate a request using session first, falling back to API token.
+ *
+ * Use this in custom API routes that need to support both browser sessions
+ * and programmatic API token access (CI/CD, load testing, external tools).
+ *
+ * @param request - The Next.js request object (needed for API token extraction)
+ * @param session - The result of getServerSession(authOptions) or getServerAuthSession()
+ * @returns The authenticated user info, or null if neither auth method succeeds
+ */
+export async function authenticateRequest(
+  request: NextRequest,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  session: { user?: { id?: string; access?: string | null; [key: string]: any } } | null
+): Promise<
+  | { authenticated: true; user: AuthenticatedUser }
+  | { authenticated: false; error: string; errorCode?: string; status: number }
+> {
+  // Try session auth first
+  if (session?.user?.id) {
+    return {
+      authenticated: true,
+      user: { userId: session.user.id, access: session.user.access },
+    };
+  }
+
+  // Fall back to API token
+  const token = extractBearerToken(request);
+  if (!token) {
+    return {
+      authenticated: false,
+      error: "Unauthorized",
+      status: 401,
+    };
+  }
+
+  const apiAuth = await authenticateApiToken(request);
+  if (!apiAuth.authenticated) {
+    return {
+      authenticated: false,
+      error: apiAuth.error ?? "Unauthorized",
+      errorCode: apiAuth.errorCode,
+      status: 401,
+    };
+  }
+
+  return {
+    authenticated: true,
+    user: { userId: apiAuth.userId!, access: apiAuth.access },
+  };
+}
