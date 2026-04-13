@@ -21,11 +21,12 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { DynamicJiraField } from "./dynamic-jira-field";
 
 interface JiraField {
@@ -59,7 +60,10 @@ interface CreateIssueJiraFormProps {
   onOpenChange: (open: boolean) => void;
   projectId: number;
   integrationId: number;
-  projectKey: string;
+  projectIntegrationId: string;
+  /** @deprecated Use projectIntegrationId — kept for backward compat */
+  projectKey?: string;
+  /** @deprecated Use projectIntegrationId — kept for backward compat */
   issueTypeId?: string;
   onIssueCreated?: (issue: any) => void;
   defaultValues?: {
@@ -73,8 +77,9 @@ export function CreateIssueJiraForm({
   onOpenChange,
   projectId: _projectId,
   integrationId,
-  projectKey: defaultProjectKey,
-  issueTypeId: defaultIssueTypeId,
+  projectIntegrationId,
+  projectKey: _legacyProjectKey,
+  issueTypeId: _legacyIssueTypeId,
   onIssueCreated,
   defaultValues,
 }: CreateIssueJiraFormProps) {
@@ -86,13 +91,68 @@ export function CreateIssueJiraForm({
   const [issueTypes, setIssueTypes] = useState<
     Array<{ id: string; name: string }>
   >([]);
-  const [selectedIssueType, setSelectedIssueType] = useState<string>(
-    defaultIssueTypeId || ""
-  );
-  const [projects, setProjects] = useState<JiraProject[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(false);
-  const [selectedProjectKey, setSelectedProjectKey] =
-    useState<string>(defaultProjectKey);
+  const [selectedIssueType, setSelectedIssueType] = useState<string>("");
+  const [selectedProjectKey, setSelectedProjectKey] = useState<string>("");
+
+  // Fetch linked IntegrationProject records instead of all external projects
+  const { data: integrationProjects, isLoading: projectsLoading } =
+    useFindManyIntegrationProject(
+      {
+        where: {
+          projectIntegrationId,
+          isActive: true,
+        },
+        orderBy: [
+          { isDefault: "desc" },
+          { externalProjectName: "asc" },
+        ],
+      },
+      { enabled: !!projectIntegrationId }
+    );
+
+  // Convert IntegrationProject records to JiraProject shape for the selector
+  const projects = useMemo<JiraProject[]>(() => {
+    if (!integrationProjects) return [];
+    return integrationProjects.map((ip) => ({
+      id: ip.externalProjectId,
+      key: ip.externalProjectKey,
+      name: ip.externalProjectName,
+    }));
+  }, [integrationProjects]);
+
+  // Auto-select the default project and its issue type when data loads
+  useEffect(() => {
+    if (!open || !integrationProjects || integrationProjects.length === 0) return;
+    if (selectedProjectKey) return; // Already selected
+
+    const defaultProject =
+      integrationProjects.find((ip) => ip.isDefault) || integrationProjects[0];
+    setSelectedProjectKey(defaultProject.externalProjectKey);
+    if (defaultProject.defaultIssueType) {
+      setSelectedIssueType(defaultProject.defaultIssueType);
+    }
+  }, [open, integrationProjects, selectedProjectKey]);
+
+  // When project selection changes, update the default issue type from IntegrationProject
+  useEffect(() => {
+    if (!selectedProjectKey || !integrationProjects) return;
+    const ip = integrationProjects.find(
+      (p) => p.externalProjectKey === selectedProjectKey
+    );
+    if (ip?.defaultIssueType) {
+      setSelectedIssueType(ip.defaultIssueType);
+    }
+  }, [selectedProjectKey, integrationProjects]);
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedProjectKey("");
+      setSelectedIssueType("");
+      setFields([]);
+      setIssueTypes([]);
+    }
+  }, [open]);
 
   // Build dynamic schema based on fields
   const buildSchema = (fields: JiraField[]) => {
@@ -153,31 +213,6 @@ export function CreateIssueJiraForm({
     return z.object(schemaObject);
   };
 
-  // Fetch projects when dialog opens
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!open) return;
-
-      setProjectsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/integrations/${integrationId}/projects`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data.projects || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        setProjectsLoading(false);
-      }
-    };
-
-    fetchProjects();
-  }, [open, integrationId]);
-
   // Fetch issue types when project changes
   useEffect(() => {
     const fetchIssueTypes = async () => {
@@ -192,11 +227,14 @@ export function CreateIssueJiraForm({
           const data = await response.json();
           setIssueTypes(data.issueTypes || []);
 
-          // Reset selected issue type when project changes
-          // Use default if available and it exists in the new project, otherwise use first
+          // Set issue type: use per-project default from IntegrationProject, or first available
           if (data.issueTypes?.length > 0) {
-            const defaultType = defaultIssueTypeId
-              ? data.issueTypes.find((t: any) => t.id === defaultIssueTypeId)
+            const ip = integrationProjects?.find(
+              (p) => p.externalProjectKey === selectedProjectKey
+            );
+            const perProjectDefault = ip?.defaultIssueType;
+            const defaultType = perProjectDefault
+              ? data.issueTypes.find((t: any) => t.id === perProjectDefault)
               : null;
             setSelectedIssueType(defaultType?.id || data.issueTypes[0].id);
           } else {
@@ -209,7 +247,7 @@ export function CreateIssueJiraForm({
     };
 
     fetchIssueTypes();
-  }, [open, selectedProjectKey, integrationId, defaultIssueTypeId]);
+  }, [open, selectedProjectKey, integrationId, integrationProjects]);
 
   // Fetch fields based on issue type
   useEffect(() => {
@@ -480,9 +518,9 @@ export function CreateIssueJiraForm({
               {/* Project Selector */}
               {projects.length > 0 && (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.externalProject")}
-                    <span className="text-destructive ml-1">{"*"}</span>
+                    <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
                   </FormLabel>
                   <Select
                     value={selectedProjectKey}
@@ -513,9 +551,9 @@ export function CreateIssueJiraForm({
               {/* Issue Type Selector */}
               {issueTypes.length > 0 && (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.issueType")}
-                    <span className="text-destructive ml-1">{"*"}</span>
+                    <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
                   </FormLabel>
                   <Select
                     value={selectedIssueType}

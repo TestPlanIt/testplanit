@@ -335,6 +335,10 @@
       "description": "ProjectIntegration operations"
     },
     {
+      "name": "integrationProject",
+      "description": "IntegrationProject operations"
+    },
+    {
       "name": "llmProviderConfig",
       "description": "LlmProviderConfig operations"
     },
@@ -1867,6 +1871,25 @@
           "syncStatus",
           "syncError",
           "issueCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "IntegrationProjectScalarFieldEnum": {
+        "type": "string",
+        "enum": [
+          "id",
+          "projectIntegrationId",
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName",
+          "isActive",
+          "isDefault",
+          "defaultIssueType",
+          "defaultIssueTypeName",
+          "lastSyncAt",
+          "syncStatus",
+          "syncError",
           "createdAt",
           "updatedAt"
         ]
@@ -9108,6 +9131,12 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "integrationProjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationProject"
+            }
           }
         },
         "required": [
@@ -9118,6 +9147,106 @@
           "integration",
           "isActive",
           "issueCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "IntegrationProject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectIntegrationId": {
+            "type": "string"
+          },
+          "projectIntegration": {
+            "$ref": "#/components/schemas/ProjectIntegration"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "projectIntegrationId",
+          "projectIntegration",
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName",
+          "isActive",
+          "isDefault",
           "createdAt",
           "updatedAt"
         ]
@@ -51290,6 +51419,9 @@
                 "$ref": "#/components/schemas/IntegrationWhereInput"
               }
             ]
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectListRelationFilter"
           }
         }
       },
@@ -51372,6 +51504,9 @@
           },
           "integration": {
             "$ref": "#/components/schemas/IntegrationOrderByWithRelationInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectOrderByRelationAggregateInput"
           }
         }
       },
@@ -51543,6 +51678,9 @@
                 "$ref": "#/components/schemas/IntegrationWhereInput"
               }
             ]
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectListRelationFilter"
           }
         }
       },
@@ -51674,6 +51812,692 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeWithAggregatesFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeWithAggregatesFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectWhereInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "projectIntegration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationWhereInput"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectOrderByWithRelationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "projectIntegrationId": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "externalProjectId": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "externalProjectKey": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "externalProjectName": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "isActive": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "isDefault": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "projectIntegration": {
+            "$ref": "#/components/schemas/ProjectIntegrationOrderByWithRelationInput"
+          }
+        }
+      },
+      "IntegrationProjectWhereUniqueInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectIntegrationId_externalProjectId": {
+            "$ref": "#/components/schemas/IntegrationProjectProjectIntegrationIdExternalProjectIdCompoundUniqueInput"
+          },
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+                }
+              }
+            ]
+          },
+          "projectIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "projectIntegration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationWhereInput"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectScalarWhereWithAggregatesInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectScalarWhereWithAggregatesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectScalarWhereWithAggregatesInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationProjectScalarWhereWithAggregatesInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectScalarWhereWithAggregatesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectScalarWhereWithAggregatesInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -85301,6 +86125,9 @@
           },
           "integration": {
             "$ref": "#/components/schemas/IntegrationCreateNestedOneWithoutProjectIntegrationsInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateNestedManyWithoutProjectIntegrationInput"
           }
         },
         "required": [
@@ -85424,6 +86251,9 @@
           },
           "integration": {
             "$ref": "#/components/schemas/IntegrationUpdateOneRequiredWithoutProjectIntegrationsNestedInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithoutProjectIntegrationNestedInput"
           }
         }
       },
@@ -85592,6 +86422,497 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectCreateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projectIntegration": {
+            "$ref": "#/components/schemas/ProjectIntegrationCreateNestedOneWithoutIntegrationProjectsInput"
+          }
+        },
+        "required": [
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName",
+          "projectIntegration"
+        ]
+      },
+      "IntegrationProjectUpdateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "projectIntegration": {
+            "$ref": "#/components/schemas/ProjectIntegrationUpdateOneRequiredWithoutIntegrationProjectsNestedInput"
+          }
+        }
+      },
+      "IntegrationProjectCreateManyInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectIntegrationId": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "projectIntegrationId",
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName"
+        ]
+      },
+      "IntegrationProjectUpdateManyMutationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -100712,6 +102033,28 @@
           }
         }
       },
+      "IntegrationProjectListRelationFilter": {
+        "type": "object",
+        "properties": {
+          "every": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "some": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "none": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          }
+        }
+      },
+      "IntegrationProjectOrderByRelationAggregateInput": {
+        "type": "object",
+        "properties": {
+          "_count": {
+            "$ref": "#/components/schemas/SortOrder"
+          }
+        }
+      },
       "ProjectIntegrationProjectIdIntegrationIdCompoundUniqueInput": {
         "type": "object",
         "properties": {
@@ -100725,6 +102068,32 @@
         "required": [
           "projectId",
           "integrationId"
+        ]
+      },
+      "ProjectIntegrationScalarRelationFilter": {
+        "type": "object",
+        "properties": {
+          "is": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereInput"
+          },
+          "isNot": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereInput"
+          }
+        }
+      },
+      "IntegrationProjectProjectIntegrationIdExternalProjectIdCompoundUniqueInput": {
+        "type": "object",
+        "properties": {
+          "projectIntegrationId": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectIntegrationId",
+          "externalProjectId"
         ]
       },
       "DecimalFilter": {
@@ -191822,6 +193191,118 @@
           }
         }
       },
+      "IntegrationProjectCreateNestedManyWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateManyProjectIntegrationInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectUncheckedCreateNestedManyWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateManyProjectIntegrationInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
       "ProjectsUpdateOneRequiredWithoutProjectIntegrationsNestedInput": {
         "type": "object",
         "properties": {
@@ -191891,6 +193372,358 @@
               },
               {
                 "$ref": "#/components/schemas/IntegrationUncheckedUpdateWithoutProjectIntegrationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectUpdateManyWithoutProjectIntegrationNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpsertWithWhereUniqueWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUpsertWithWhereUniqueWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateManyProjectIntegrationInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateWithWhereUniqueWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUpdateWithWhereUniqueWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithWhereWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithWhereWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectUncheckedUpdateManyWithoutProjectIntegrationNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpsertWithWhereUniqueWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUpsertWithWhereUniqueWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateManyProjectIntegrationInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateWithWhereUniqueWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUpdateWithWhereUniqueWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithWhereWithoutProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithWhereWithoutProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ProjectIntegrationCreateNestedOneWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationCreateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedCreateWithoutIntegrationProjectsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/ProjectIntegrationCreateOrConnectWithoutIntegrationProjectsInput"
+          },
+          "connect": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereUniqueInput"
+          }
+        }
+      },
+      "ProjectIntegrationUpdateOneRequiredWithoutIntegrationProjectsNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationCreateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedCreateWithoutIntegrationProjectsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/ProjectIntegrationCreateOrConnectWithoutIntegrationProjectsInput"
+          },
+          "upsert": {
+            "$ref": "#/components/schemas/ProjectIntegrationUpsertWithoutIntegrationProjectsInput"
+          },
+          "connect": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUpdateToOneWithWhereWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUpdateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedUpdateWithoutIntegrationProjectsInput"
               }
             ]
           }
@@ -229302,6 +231135,9 @@
           },
           "integration": {
             "$ref": "#/components/schemas/IntegrationCreateNestedOneWithoutProjectIntegrationsInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateNestedManyWithoutProjectIntegrationInput"
           }
         },
         "required": [
@@ -229377,6 +231213,9 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateNestedManyWithoutProjectIntegrationInput"
           }
         },
         "required": [
@@ -343088,6 +344927,9 @@
           },
           "project": {
             "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutProjectIntegrationsInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateNestedManyWithoutProjectIntegrationInput"
           }
         },
         "required": [
@@ -343163,6 +345005,9 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateNestedManyWithoutProjectIntegrationInput"
           }
         },
         "required": [
@@ -381028,6 +382873,226 @@
           "create"
         ]
       },
+      "IntegrationProjectCreateWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName"
+        ]
+      },
+      "IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName"
+        ]
+      },
+      "IntegrationProjectCreateOrConnectWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "IntegrationProjectCreateManyProjectIntegrationInputEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateManyProjectIntegrationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateManyProjectIntegrationInput"
+                }
+              }
+            ]
+          },
+          "skipDuplicates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "ProjectsUpsertWithoutProjectIntegrationsInput": {
         "type": "object",
         "properties": {
@@ -381844,6 +383909,763 @@
           },
           "issues": {
             "$ref": "#/components/schemas/IssueUncheckedUpdateManyWithoutIntegrationNestedInput"
+          }
+        }
+      },
+      "IntegrationProjectUpsertWithWhereUniqueWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateWithoutProjectIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedUpdateWithoutProjectIntegrationInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateWithoutProjectIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedCreateWithoutProjectIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "update",
+          "create"
+        ]
+      },
+      "IntegrationProjectUpdateWithWhereUniqueWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateWithoutProjectIntegrationInput"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedUpdateWithoutProjectIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "IntegrationProjectUpdateManyWithWhereWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateManyMutationInput"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectUncheckedUpdateManyWithoutProjectIntegrationInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "IntegrationProjectScalarWhereInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectScalarWhereInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectIntegrationId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "ProjectIntegrationCreateWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "config": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fieldMappings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "issueCount": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectsCreateNestedOneWithoutProjectIntegrationsInput"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationCreateNestedOneWithoutProjectIntegrationsInput"
+          }
+        },
+        "required": [
+          "project",
+          "integration"
+        ]
+      },
+      "ProjectIntegrationUncheckedCreateWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "integer"
+          },
+          "integrationId": {
+            "type": "integer"
+          },
+          "config": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fieldMappings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "issueCount": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "projectId",
+          "integrationId"
+        ]
+      },
+      "ProjectIntegrationCreateOrConnectWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationCreateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedCreateWithoutIntegrationProjectsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "ProjectIntegrationUpsertWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUpdateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedUpdateWithoutIntegrationProjectsInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationCreateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedCreateWithoutIntegrationProjectsInput"
+              }
+            ]
+          },
+          "where": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereInput"
+          }
+        },
+        "required": [
+          "update",
+          "create"
+        ]
+      },
+      "ProjectIntegrationUpdateToOneWithWhereWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/ProjectIntegrationWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUpdateWithoutIntegrationProjectsInput"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationUncheckedUpdateWithoutIntegrationProjectsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ProjectIntegrationUpdateWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "config": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fieldMappings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "issueCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutProjectIntegrationsNestedInput"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationUpdateOneRequiredWithoutProjectIntegrationsNestedInput"
+          }
+        }
+      },
+      "ProjectIntegrationUncheckedUpdateWithoutIntegrationProjectsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "projectId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "integrationId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "config": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fieldMappings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "issueCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
           }
         }
       },
@@ -430343,6 +433165,9 @@
           },
           "integration": {
             "$ref": "#/components/schemas/IntegrationUpdateOneRequiredWithoutProjectIntegrationsNestedInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithoutProjectIntegrationNestedInput"
           }
         }
       },
@@ -430466,6 +433291,9 @@
                 "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
               }
             ]
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUncheckedUpdateManyWithoutProjectIntegrationNestedInput"
           }
         }
       },
@@ -478590,6 +481418,9 @@
           },
           "project": {
             "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutProjectIntegrationsNestedInput"
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUpdateManyWithoutProjectIntegrationNestedInput"
           }
         }
       },
@@ -478713,6 +481544,9 @@
                 "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
               }
             ]
+          },
+          "integrationProjects": {
+            "$ref": "#/components/schemas/IntegrationProjectUncheckedUpdateManyWithoutProjectIntegrationNestedInput"
           }
         }
       },
@@ -486952,6 +489786,552 @@
           }
         }
       },
+      "IntegrationProjectCreateManyProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName"
+        ]
+      },
+      "IntegrationProjectUpdateWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectUncheckedUpdateWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectUncheckedUpdateManyWithoutProjectIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
       "PromptConfigPromptCreateManyPromptConfigInput": {
         "type": "object",
         "properties": {
@@ -488999,6 +492379,17 @@
           },
           "include": {
             "$ref": "#/components/schemas/ShareLinkInclude"
+          }
+        }
+      },
+      "ProjectIntegrationDefaultArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/ProjectIntegrationSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/ProjectIntegrationInclude"
           }
         }
       },
@@ -493515,6 +496906,41 @@
                 "$ref": "#/components/schemas/IntegrationDefaultArgs"
               }
             ]
+          },
+          "integrationProjects": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectFindManyArgs"
+              }
+            ]
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationCountOutputTypeDefaultArgs"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectInclude": {
+        "type": "object",
+        "properties": {
+          "projectIntegration": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationDefaultArgs"
+              }
+            ]
           }
         }
       },
@@ -494734,6 +498160,14 @@
           }
         }
       },
+      "ProjectIntegrationCountOutputTypeSelect": {
+        "type": "object",
+        "properties": {
+          "integrationProjects": {
+            "type": "boolean"
+          }
+        }
+      },
       "PromptConfigCountOutputTypeSelect": {
         "type": "object",
         "properties": {
@@ -495102,6 +498536,14 @@
         "properties": {
           "select": {
             "$ref": "#/components/schemas/ShareLinkCountOutputTypeSelect"
+          }
+        }
+      },
+      "ProjectIntegrationCountOutputTypeDefaultArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/ProjectIntegrationCountOutputTypeSelect"
           }
         }
       },
@@ -501718,6 +505160,83 @@
             "type": "boolean"
           },
           "issueCount": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "boolean"
+          },
+          "integrationProjects": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectFindManyArgs"
+              }
+            ]
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationCountOutputTypeDefaultArgs"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectSelect": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "projectIntegrationId": {
+            "type": "boolean"
+          },
+          "projectIntegration": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectIntegrationDefaultArgs"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "type": "boolean"
+          },
+          "externalProjectKey": {
+            "type": "boolean"
+          },
+          "externalProjectName": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
+          "lastSyncAt": {
+            "type": "boolean"
+          },
+          "syncStatus": {
+            "type": "boolean"
+          },
+          "syncError": {
             "type": "boolean"
           },
           "createdAt": {
@@ -512812,6 +516331,150 @@
             "type": "boolean"
           },
           "issueCount": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IntegrationProjectCountAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "projectIntegrationId": {
+            "type": "boolean"
+          },
+          "externalProjectId": {
+            "type": "boolean"
+          },
+          "externalProjectKey": {
+            "type": "boolean"
+          },
+          "externalProjectName": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
+          "lastSyncAt": {
+            "type": "boolean"
+          },
+          "syncStatus": {
+            "type": "boolean"
+          },
+          "syncError": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "boolean"
+          },
+          "_all": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IntegrationProjectMinAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "projectIntegrationId": {
+            "type": "boolean"
+          },
+          "externalProjectId": {
+            "type": "boolean"
+          },
+          "externalProjectKey": {
+            "type": "boolean"
+          },
+          "externalProjectName": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
+          "lastSyncAt": {
+            "type": "boolean"
+          },
+          "syncStatus": {
+            "type": "boolean"
+          },
+          "syncError": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IntegrationProjectMaxAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "projectIntegrationId": {
+            "type": "boolean"
+          },
+          "externalProjectId": {
+            "type": "boolean"
+          },
+          "externalProjectKey": {
+            "type": "boolean"
+          },
+          "externalProjectName": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
+          "lastSyncAt": {
+            "type": "boolean"
+          },
+          "syncStatus": {
+            "type": "boolean"
+          },
+          "syncError": {
             "type": "boolean"
           },
           "createdAt": {
@@ -528960,6 +532623,167 @@
           "integrationId",
           "isActive",
           "issueCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AggregateIntegrationProject": {
+        "type": "object",
+        "properties": {
+          "_count": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCountAggregateOutputType"
+              }
+            ]
+          },
+          "_min": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectMinAggregateOutputType"
+              }
+            ]
+          },
+          "_max": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectMaxAggregateOutputType"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectGroupByOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectIntegrationId": {
+            "type": "string"
+          },
+          "externalProjectId": {
+            "type": "string"
+          },
+          "externalProjectKey": {
+            "type": "string"
+          },
+          "externalProjectName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCountAggregateOutputType"
+              }
+            ]
+          },
+          "_min": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectMinAggregateOutputType"
+              }
+            ]
+          },
+          "_max": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectMaxAggregateOutputType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "projectIntegrationId",
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName",
+          "isActive",
+          "isDefault",
           "createdAt",
           "updatedAt"
         ]
@@ -556291,6 +560115,369 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectCountAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "projectIntegrationId": {
+            "type": "integer"
+          },
+          "externalProjectId": {
+            "type": "integer"
+          },
+          "externalProjectKey": {
+            "type": "integer"
+          },
+          "externalProjectName": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "integer"
+          },
+          "isDefault": {
+            "type": "integer"
+          },
+          "defaultIssueType": {
+            "type": "integer"
+          },
+          "defaultIssueTypeName": {
+            "type": "integer"
+          },
+          "lastSyncAt": {
+            "type": "integer"
+          },
+          "syncStatus": {
+            "type": "integer"
+          },
+          "syncError": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "integer"
+          },
+          "_all": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "projectIntegrationId",
+          "externalProjectId",
+          "externalProjectKey",
+          "externalProjectName",
+          "isActive",
+          "isDefault",
+          "defaultIssueType",
+          "defaultIssueTypeName",
+          "lastSyncAt",
+          "syncStatus",
+          "syncError",
+          "createdAt",
+          "updatedAt",
+          "_all"
+        ]
+      },
+      "IntegrationProjectMinAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationProjectMaxAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectIntegrationId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectKey": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalProjectName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "isActive": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDefault": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastSyncAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "syncStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "syncError": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },
@@ -591013,6 +595200,325 @@
           },
           "_avg": {
             "$ref": "#/components/schemas/ProjectIntegrationAvgAggregateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectCreateArgs": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectCreateManyArgs": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCreateManyInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectCreateManyInput"
+                }
+              }
+            ]
+          },
+          "skipDuplicates": {
+            "type": "boolean",
+            "description": "Do not insert records with unique fields or ID fields that already exist."
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectFindUniqueArgs": {
+        "type": "object",
+        "required": [
+          "where"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectFindFirstArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectFindManyArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "orderBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProjectOrderByWithRelationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntegrationProjectOrderByWithRelationInput"
+                }
+              }
+            ]
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "take": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectUpdateArgs": {
+        "type": "object",
+        "required": [
+          "where",
+          "data"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IntegrationProjectUpdateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectUpdateManyArgs": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IntegrationProjectUpdateManyMutationInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectUpsertArgs": {
+        "type": "object",
+        "required": [
+          "create",
+          "update",
+          "where"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "create": {
+            "$ref": "#/components/schemas/IntegrationProjectCreateInput"
+          },
+          "update": {
+            "$ref": "#/components/schemas/IntegrationProjectUpdateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectDeleteUniqueArgs": {
+        "type": "object",
+        "required": [
+          "where"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/IntegrationProjectInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectDeleteManyArgs": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectCountArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/IntegrationProjectSelect"
+          },
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectAggregateArgs": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "orderBy": {
+            "$ref": "#/components/schemas/IntegrationProjectOrderByWithRelationInput"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereUniqueInput"
+          },
+          "take": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer"
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCountAggregateInput"
+              }
+            ]
+          },
+          "_min": {
+            "$ref": "#/components/schemas/IntegrationProjectMinAggregateInput"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/IntegrationProjectMaxAggregateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "IntegrationProjectGroupByArgs": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/IntegrationProjectWhereInput"
+          },
+          "orderBy": {
+            "$ref": "#/components/schemas/IntegrationProjectOrderByWithRelationInput"
+          },
+          "by": {
+            "$ref": "#/components/schemas/IntegrationProjectScalarFieldEnum"
+          },
+          "having": {
+            "$ref": "#/components/schemas/IntegrationProjectScalarWhereWithAggregatesInput"
+          },
+          "take": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer"
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/IntegrationProjectCountAggregateInput"
+              }
+            ]
+          },
+          "_min": {
+            "$ref": "#/components/schemas/IntegrationProjectMinAggregateInput"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/IntegrationProjectMaxAggregateInput"
           },
           "meta": {
             "$ref": "#/components/schemas/_Meta"
@@ -686556,6 +691062,1096 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProjectIntegrationGroupByArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/create": {
+      "post": {
+        "operationId": "createIntegrationProject",
+        "description": "Create a new IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationProjectCreateArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/integrationProject/createMany": {
+      "post": {
+        "operationId": "createManyIntegrationProject",
+        "description": "Create several IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BatchPayload",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationProjectCreateManyArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/integrationProject/findUnique": {
+      "get": {
+        "operationId": "findUniqueIntegrationProject",
+        "description": "Find one unique IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectFindUniqueArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/findFirst": {
+      "get": {
+        "operationId": "findFirstIntegrationProject",
+        "description": "Find the first IntegrationProject matching the given condition",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectFindFirstArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/findMany": {
+      "get": {
+        "operationId": "findManyIntegrationProject",
+        "description": "Find a list of IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IntegrationProject"
+                      },
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectFindManyArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/update": {
+      "patch": {
+        "operationId": "updateIntegrationProject",
+        "description": "Update a IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/integrationProject/updateMany": {
+      "patch": {
+        "operationId": "updateManyIntegrationProject",
+        "description": "Update IntegrationProjects matching the given condition",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BatchPayload",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationProjectUpdateManyArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/integrationProject/upsert": {
+      "post": {
+        "operationId": "upsertIntegrationProject",
+        "description": "Upsert a IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationProjectUpsertArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/integrationProject/delete": {
+      "delete": {
+        "operationId": "deleteIntegrationProject",
+        "description": "Delete one unique IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectDeleteUniqueArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/deleteMany": {
+      "delete": {
+        "operationId": "deleteManyIntegrationProject",
+        "description": "Delete IntegrationProjects matching the given condition",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BatchPayload",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectDeleteManyArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/count": {
+      "get": {
+        "operationId": "countIntegrationProject",
+        "description": "Find a list of IntegrationProject",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "oneOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "$ref": "#/components/schemas/IntegrationProjectCountAggregateOutputType"
+                        }
+                      ],
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectCountArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/aggregate": {
+      "get": {
+        "operationId": "aggregateIntegrationProject",
+        "description": "Aggregate IntegrationProjects",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AggregateIntegrationProject",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectAggregateArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/integrationProject/groupBy": {
+      "get": {
+        "operationId": "groupByIntegrationProject",
+        "description": "Group IntegrationProjects by fields",
+        "tags": [
+          "integrationProject"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IntegrationProjectGroupByOutputType"
+                      },
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationProjectGroupByArgs"
                 }
               }
             }

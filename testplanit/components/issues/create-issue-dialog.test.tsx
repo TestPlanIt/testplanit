@@ -7,12 +7,14 @@ const {
   mockUseFindManyProjectIntegration,
   mockUseCreateIssue,
   mockMutateAsync,
+  mockUseFindManyIntegrationProject,
 } = vi.hoisted(() => {
   const mockMutateAsync = vi.fn();
   return {
     mockUseFindManyProjectIntegration: vi.fn(),
     mockUseCreateIssue: vi.fn(),
     mockMutateAsync,
+    mockUseFindManyIntegrationProject: vi.fn(),
   };
 });
 
@@ -20,6 +22,10 @@ const {
 
 vi.mock("@/lib/hooks/project-integration", () => ({
   useFindManyProjectIntegration: mockUseFindManyProjectIntegration,
+}));
+
+vi.mock("~/lib/hooks", () => ({
+  useFindManyIntegrationProject: mockUseFindManyIntegrationProject,
 }));
 
 vi.mock("@/lib/hooks/issue", () => ({
@@ -162,6 +168,9 @@ describe("CreateIssueDialog", () => {
 
     // Default: no active integration
     mockUseFindManyProjectIntegration.mockReturnValue({ data: [] });
+
+    // Default: no integration projects
+    mockUseFindManyIntegrationProject.mockReturnValue({ data: [] });
 
     // Default: createIssue hook
     mockUseCreateIssue.mockReturnValue({ mutateAsync: mockMutateAsync });
