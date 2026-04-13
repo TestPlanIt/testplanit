@@ -300,7 +300,7 @@ describe("CreateIssueJiraForm", () => {
 
   it("passes per-project defaultIssueType for each IntegrationProject record", () => {
     // Verify the mock data has distinct defaultIssueType per project so the logic can be tested
-    const { data: projects } = mockUseFindManyIntegrationProject.mock.results[0]?.value ?? { data: [] };
+    const { data: _projects } = mockUseFindManyIntegrationProject.mock.results[0]?.value ?? { data: [] };
 
     // Re-call after render to check state was passed correctly
     render(<CreateIssueJiraForm {...defaultProps} />);

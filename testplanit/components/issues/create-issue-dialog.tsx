@@ -32,7 +32,7 @@ import { useCreateIssue } from "@/lib/hooks/issue";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, ExternalLink, Loader2 } from "lucide-react";
+import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -741,7 +741,7 @@ export function CreateIssueDialog({
                     <SelectContent>
                       {integrationProjects.map((ip) => (
                         <SelectItem key={ip.id} value={ip.id}>
-                          {ip.externalProjectName} ({ip.externalProjectKey})
+                          {ip.externalProjectName} {"("}{ip.externalProjectKey}{")"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -852,7 +852,7 @@ export function CreateIssueDialog({
                     <Label htmlFor={field.key}>
                       {field.name}
                       {field.required && (
-                        <span className="text-destructive ml-1">{"*"}</span>
+                        <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
                       )}
                     </Label>
                     {renderField(field)}

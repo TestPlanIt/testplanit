@@ -440,8 +440,7 @@ describe("SearchIssuesDialog", () => {
     it("renders filter chips when 2+ IntegrationProject records exist", () => {
       render(<SearchIssuesDialog {...defaultProps} />);
 
-      // "All" chip should appear
-      const allChip = screen.queryByText(/^filterAll$|^All$/i);
+      // "All" chip and project-key chips should appear
       // At minimum, badges should be rendered for the project keys
       const badges = screen.queryAllByTestId("badge");
       // There should be at least the "All" chip plus project-key chips (ABT, LIV)

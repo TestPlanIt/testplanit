@@ -56,11 +56,11 @@ export function ProjectIntegrationSettings({
   const tGlobal = useTranslations();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [_isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [externalProjects, setExternalProjects] = useState<ExternalProject[]>(
     []
   );
-  const [config, setConfig] = useState(
+  const [config, _setConfig] = useState(
     (projectIntegration.config as Record<string, any>) || {}
   );
   const [needsAuth, setNeedsAuth] = useState(false);
@@ -589,7 +589,7 @@ export function ProjectIntegrationSettings({
                         <span>
                           {project.name}{" "}
                           <span className="text-muted-foreground">
-                            ({project.key})
+                            {"("}{project.key}{")"}
                           </span>
                         </span>
                       )}

@@ -21,7 +21,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -78,8 +78,8 @@ export function CreateIssueJiraForm({
   projectId: _projectId,
   integrationId,
   projectIntegrationId,
-  projectKey: legacyProjectKey,
-  issueTypeId: legacyIssueTypeId,
+  projectKey: _legacyProjectKey,
+  issueTypeId: _legacyIssueTypeId,
   onIssueCreated,
   defaultValues,
 }: CreateIssueJiraFormProps) {
@@ -518,9 +518,9 @@ export function CreateIssueJiraForm({
               {/* Project Selector */}
               {projects.length > 0 && (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.externalProject")}
-                    <span className="text-destructive ml-1">{"*"}</span>
+                    <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
                   </FormLabel>
                   <Select
                     value={selectedProjectKey}
@@ -551,9 +551,9 @@ export function CreateIssueJiraForm({
               {/* Issue Type Selector */}
               {issueTypes.length > 0 && (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.issueType")}
-                    <span className="text-destructive ml-1">{"*"}</span>
+                    <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
                   </FormLabel>
                   <Select
                     value={selectedIssueType}
