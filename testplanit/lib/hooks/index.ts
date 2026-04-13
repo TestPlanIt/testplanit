@@ -86,6 +86,7 @@ export * from './notification';
 export * from './share-link';
 export * from './share-link-access-log';
 export * from './project-integration';
+export * from './integration-project';
 export * from './llm-provider-config';
 export * from './prompt-config';
 export * from './prompt-config-prompt';

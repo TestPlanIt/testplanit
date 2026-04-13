@@ -6535,6 +6535,12 @@ const metadata: ModelMeta = {
                     name: "updatedAt",
                     type: "DateTime",
                     attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, integrationProjects: {
+                    name: "integrationProjects",
+                    type: "IntegrationProject",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'projectIntegration',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -6543,6 +6549,74 @@ const metadata: ModelMeta = {
                 }, projectId_integrationId: {
                     name: "projectId_integrationId",
                     fields: ["projectId", "integrationId"]
+                },
+            },
+        },
+        integrationProject: {
+            name: 'IntegrationProject', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, projectIntegrationId: {
+                    name: "projectIntegrationId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'projectIntegration',
+                }, projectIntegration: {
+                    name: "projectIntegration",
+                    type: "ProjectIntegration",
+                    isDataModel: true,
+                    backLink: 'integrationProjects',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectIntegrationId" },
+                }, externalProjectId: {
+                    name: "externalProjectId",
+                    type: "String",
+                }, externalProjectKey: {
+                    name: "externalProjectKey",
+                    type: "String",
+                }, externalProjectName: {
+                    name: "externalProjectName",
+                    type: "String",
+                }, isActive: {
+                    name: "isActive",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, isDefault: {
+                    name: "isDefault",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, lastSyncAt: {
+                    name: "lastSyncAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, syncStatus: {
+                    name: "syncStatus",
+                    type: "String",
+                    isOptional: true,
+                }, syncError: {
+                    name: "syncError",
+                    type: "String",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, projectIntegrationId_externalProjectId: {
+                    name: "projectIntegrationId_externalProjectId",
+                    fields: ["projectIntegrationId", "externalProjectId"]
                 },
             },
         },
@@ -8047,6 +8121,7 @@ const metadata: ModelMeta = {
         jUnitTestResult: ['Attachments'],
         sharedStepGroup: ['SharedStepItem'],
         shareLink: ['ShareLinkAccessLog'],
+        projectIntegration: ['IntegrationProject'],
         promptConfig: ['PromptConfigPrompt'],
         ssoProvider: ['SamlConfiguration'],
         testmoImportJob: ['TestmoImportDataset'],

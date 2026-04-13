@@ -3318,8 +3318,9 @@ model ProjectIntegration {
     syncStatus    String?             // Current sync status (syncing, completed, error, etc.)
     syncError     String?             // Last sync error message
     issueCount    Int         @default(0)
-    createdAt     DateTime    @default(now()) @db.Timestamptz(6)
-    updatedAt     DateTime    @updatedAt
+    createdAt           DateTime             @default(now()) @db.Timestamptz(6)
+    updatedAt           DateTime             @updatedAt
+    integrationProjects IntegrationProject[]
 
     @@unique([projectId, integrationId])
     @@index([integrationId])
@@ -3354,6 +3355,50 @@ model ProjectIntegration {
 
     @@allow('all', auth().access == 'ADMIN')
 }
+
+model IntegrationProject {
+    id                   String             @id @default(cuid())
+    projectIntegrationId String
+    projectIntegration   ProjectIntegration @relation(fields: [projectIntegrationId], references: [id], onDelete: Cascade)
+    externalProjectId    String
+    externalProjectKey   String
+    externalProjectName  String
+    isActive             Boolean            @default(true)
+    isDefault            Boolean            @default(false)
+    lastSyncAt           DateTime?          @db.Timestamptz(6)
+    syncStatus           String?
+    syncError            String?
+    createdAt            DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt            DateTime           @updatedAt
+
+    @@unique([projectIntegrationId, externalProjectId])
+    @@index([projectIntegrationId])
+    @@index([isActive])
+
+    // Access control — mirrors ProjectIntegration pattern
+    @@deny('all', !auth())
+    @@deny('read', projectIntegration.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+    @@allow('read',
+        projectIntegration.project.creator == auth() ||
+        projectIntegration.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        projectIntegration.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        projectIntegration.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (projectIntegration.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (projectIntegration.project.assignedUsers?[user == auth()] &&
+         projectIntegration.project.defaultAccessType == 'SPECIFIC_ROLE' && projectIntegration.project.defaultRole != null)
+    )
+    @@allow('create,update,delete',
+        projectIntegration.project.creator == auth() ||
+        projectIntegration.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        projectIntegration.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+    @@allow('all', auth().access == 'ADMIN')
+}
+
 // LLM Integration Models
 
 model LlmProviderConfig {
