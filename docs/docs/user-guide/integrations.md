@@ -202,14 +202,27 @@ To delete:
 
 After creating an integration, assign it to projects:
 
-1. Go to **Project Settings** → **Integrations**
-2. Select the integration from available options
-3. Choose the external project to link
-4. Configure project-specific settings:
-   - External project mapping
-   - Default issue type (for Jira)
-   - Field mappings
-5. Save settings
+1. Go to **Project Settings** → **Issue Integrations**
+2. Click **Assign** on the integration you want to use
+3. The integration settings panel appears below
+
+### Linking External Projects
+
+A single TestPlanIt project can connect to **multiple external projects** through one integration. For example, one Jira integration can link to three different Jira projects (e.g., a bug tracking project, a feature project, and an ops project).
+
+**To link external projects:**
+
+1. In the integration settings, find the **Linked External Projects** card
+2. Click **Add Projects**
+3. Search and select one or more external projects from the dropdown
+4. Click **Add Selected**
+5. The first linked project automatically becomes the **default** (shown with a filled star)
+
+**Managing linked projects:**
+
+- **Set as default**: Hover over a non-default project's star icon and click to make it the default. The default project is pre-selected when creating new issues.
+- **Per-project default issue type** (Jira): Each linked project can have its own default issue type. Set it using the inline **Default Issue Type** selector on each project row.
+- **Remove a project**: Click the trash icon, then confirm. Removing a project stops syncing issues from it but does not delete previously synced issues. Removed projects can be re-added later.
 
 ### Multiple Integrations
 
@@ -246,6 +259,8 @@ OAuth tokens are automatically refreshed when:
 1. After a test failure, click the **Create Issue** button
 2. Choose between internal issue or external integration
 3. For external issues:
+   - If multiple external projects are linked, select the target project from the **External Project** dropdown (the default project is pre-selected)
+   - The default issue type for the selected project is automatically applied
    - The form dynamically loads fields from the external system
    - Required fields are marked with asterisks
    - Rich text descriptions are automatically converted to the target format
@@ -280,11 +295,10 @@ When creating issues from TestPlanIt:
 
 1. Open any test artifact
 2. Click **Link Existing Issue**
-3. Search for the issue by:
-   - Issue key (e.g., PROJ-123)
-   - Issue title
-   - Description content
-4. Select and link the issue
+3. Search for the issue — when multiple external projects are linked, the search automatically fans out across all projects and merges results into one list
+4. Each result shows a **project-key badge** (e.g., ABT, LIV) so you can see which project it came from
+5. Use the **filter chips** below the search bar to narrow results to a specific project
+6. Select and link the issue
 
 ### Status Synchronization
 
