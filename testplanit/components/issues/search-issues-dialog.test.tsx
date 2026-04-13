@@ -3,10 +3,11 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockUseFindManyIssue, mockUseFindManyProjectIntegration } = vi.hoisted(
+const { mockUseFindManyIssue, mockUseFindManyProjectIntegration, mockUseFindManyIntegrationProject } = vi.hoisted(
   () => ({
     mockUseFindManyIssue: vi.fn(),
     mockUseFindManyProjectIntegration: vi.fn(),
+    mockUseFindManyIntegrationProject: vi.fn(),
   })
 );
 
@@ -18,6 +19,10 @@ vi.mock("@/lib/hooks/issue", () => ({
 
 vi.mock("@/lib/hooks/project-integration", () => ({
   useFindManyProjectIntegration: mockUseFindManyProjectIntegration,
+}));
+
+vi.mock("~/lib/hooks", () => ({
+  useFindManyIntegrationProject: mockUseFindManyIntegrationProject,
 }));
 
 vi.mock("next-intl", () => ({
@@ -149,6 +154,9 @@ describe("SearchIssuesDialog", () => {
 
     // Default: no integration
     mockUseFindManyProjectIntegration.mockReturnValue({ data: [] });
+
+    // Default: no integration projects
+    mockUseFindManyIntegrationProject.mockReturnValue({ data: [] });
 
     // Default: no internal issues
     mockUseFindManyIssue.mockReturnValue({

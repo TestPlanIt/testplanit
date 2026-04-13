@@ -4530,7 +4530,10 @@
     "issueLinkHelp": "Enter the key of an existing issue to link",
     "searchForIssue": "Search for an issue to link",
     "searchUsers": "Search for users",
-    "noTeamsAvailable": "No teams available"
+    "noTeamsAvailable": "No teams available",
+    "filterAll": "All",
+    "fanOutPartialFailure": "{count} project(s) could not be reached. Showing results from {successCount} project(s).",
+    "projectSelectorLabel": "Project"
   },
   "Pages": {
     "Issues": {
