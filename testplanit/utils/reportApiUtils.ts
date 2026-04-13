@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import { authOptions } from "~/server/auth";
 
@@ -79,7 +80,11 @@ export async function handleReportGET(req: NextRequest, config: ReportConfig) {
     const isSharedReportBypass = req.headers.get("x-shared-report-bypass") === "true";
     if (config.requiresAdmin && !isSharedReportBypass) {
       const session = await getServerSession(authOptions);
-      if (!session || session.user.access !== "ADMIN") {
+      const auth = await authenticateRequest(req, session);
+      if (!auth.authenticated) {
+        return Response.json({ error: auth.error }, { status: auth.status });
+      }
+      if (auth.user.access !== "ADMIN") {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
@@ -137,7 +142,11 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
     const isSharedReportBypass = req.headers.get("x-shared-report-bypass") === "true";
     if (config.requiresAdmin && !isSharedReportBypass) {
       const session = await getServerSession(authOptions);
-      if (!session || session.user.access !== "ADMIN") {
+      const auth = await authenticateRequest(req, session);
+      if (!auth.authenticated) {
+        return Response.json({ error: auth.error }, { status: auth.status });
+      }
+      if (auth.user.access !== "ADMIN") {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
     }

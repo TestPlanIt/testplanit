@@ -1,7 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -143,12 +144,17 @@ function hasSubmitResultPermission({
   return false;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await authenticateRequest(req, session);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { error: auth.error, code: auth.errorCode },
+        { status: auth.status }
+      );
     }
+    const authenticatedUserId = auth.user.userId;
 
     const body = await req.json();
     const parsed = submitResultSchema.safeParse(body);
@@ -165,7 +171,7 @@ export async function POST(req: Request) {
     const input = parsed.data;
     const user = await prisma.user.findUnique({
       where: {
-        id: session.user.id,
+        id: authenticatedUserId,
       },
       select: {
         id: true,
