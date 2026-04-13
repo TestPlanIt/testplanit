@@ -1,3 +1,9 @@
+## [0.21.9](https://github.com/TestPlanIt/testplanit/compare/v0.21.8...v0.21.9) (2026-04-13)
+
+### Enhancements
+
+* **llm:** improve test case generation context and add missing translations ([#191](https://github.com/TestPlanIt/testplanit/issues/191)) ([6c071c7](https://github.com/TestPlanIt/testplanit/commit/6c071c73399096e5b493b506bfbcba05629071af))
+
 ## [0.21.8](https://github.com/TestPlanIt/testplanit/compare/v0.21.7...v0.21.8) (2026-04-13)
 
 ### Enhancements
