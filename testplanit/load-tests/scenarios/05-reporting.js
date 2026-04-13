@@ -11,15 +11,14 @@
  * 3. Dashboard loading (multiple report calls in parallel)
  *
  * These are expected to be the slowest endpoints — cross-project
- * queries aggregate across all accessible projects with cartesian
- * dimension × metric products.
+ * queries aggregate across all accessible projects.
  *
  * Run:
  *   k6 run --env BASE_URL=http://... --env API_TOKEN=tpi_... scenarios/05-reporting.js
  */
 
 import { sleep, check } from "k6";
-import { postApi, findMany } from "../helpers/api.js";
+import { postApi } from "../helpers/api.js";
 import { getProfile, thresholds, PROJECT_ID } from "../config.js";
 
 const TAG = "reporting";
@@ -30,30 +29,14 @@ export const options = {
 };
 
 export default function () {
-  // 1. Get accessible projects for cross-project reports
-  const projects = findMany(
-    "projects",
-    {
-      where: { isDeleted: false },
-      select: { id: true },
-      take: 50,
-    },
-    { scenarioTag: TAG }
-  );
-
-  const projectIds = projects?.data?.map((p) => p.id) || [PROJECT_ID];
-
-  sleep(0.5);
-
-  // 2. Single-project: Test execution report
+  // 1. Single-project: Test execution report (status dimension, testResults metric)
   const { res: execRes } = postApi(
     "/api/report-builder/test-execution",
     {
+      reportType: "test-execution",
       projectId: PROJECT_ID,
-      dimensions: [{ id: "status" }],
-      metrics: [{ id: "executionCount", aggregation: "sum" }],
-      filters: {},
-      limit: 100,
+      dimensions: ["status"],
+      metrics: ["testResults"],
     },
     { scenarioTag: TAG }
   );
@@ -63,15 +46,14 @@ export default function () {
 
   sleep(0.5);
 
-  // 3. Single-project: Test case health
+  // 2. Single-project: Test case health (pre-built report, no dims/metrics required)
   const { res: healthRes } = postApi(
     "/api/report-builder/test-case-health",
     {
+      reportType: "test-case-health",
       projectId: PROJECT_ID,
-      dimensions: [{ id: "template" }],
-      metrics: [{ id: "caseCount", aggregation: "sum" }],
-      filters: {},
-      limit: 100,
+      dimensions: [],
+      metrics: [],
     },
     { scenarioTag: TAG }
   );
@@ -81,18 +63,14 @@ export default function () {
 
   sleep(0.5);
 
-  // 4. Single-project: Automation trends
+  // 3. Single-project: Automation trends (pre-built)
   const { res: autoRes } = postApi(
     "/api/report-builder/automation-trends",
     {
+      reportType: "automation-trends",
       projectId: PROJECT_ID,
-      dimensions: [{ id: "month" }],
-      metrics: [
-        { id: "automatedCount", aggregation: "sum" },
-        { id: "manualCount", aggregation: "sum" },
-      ],
-      filters: {},
-      limit: 100,
+      dimensions: [],
+      metrics: [],
     },
     { scenarioTag: TAG }
   );
@@ -102,15 +80,13 @@ export default function () {
 
   sleep(1);
 
-  // 5. Cross-project: Test execution across all projects (HEAVY)
+  // 4. Cross-project: Test execution (HEAVY — aggregates across projects)
   const { res: crossExecRes } = postApi(
     "/api/report-builder/cross-project-test-execution",
     {
-      projectIds,
-      dimensions: [{ id: "project" }, { id: "status" }],
-      metrics: [{ id: "executionCount", aggregation: "sum" }],
-      filters: {},
-      limit: 500,
+      reportType: "cross-project-test-execution",
+      dimensions: ["project", "status"],
+      metrics: ["testResults"],
     },
     { scenarioTag: TAG }
   );
@@ -120,36 +96,29 @@ export default function () {
 
   sleep(0.5);
 
-  // 6. Cross-project: Repository stats (case counts, automation %)
-  const { res: crossRepoRes } = postApi(
-    "/api/report-builder/cross-project-repository-stats",
+  // 5. Cross-project: Test case health (pre-built)
+  const { res: crossHealthRes } = postApi(
+    "/api/report-builder/cross-project-test-case-health",
     {
-      projectIds,
-      dimensions: [{ id: "project" }],
-      metrics: [
-        { id: "totalCases", aggregation: "sum" },
-        { id: "automatedPercentage", aggregation: "avg" },
-      ],
-      filters: {},
-      limit: 500,
+      reportType: "cross-project-test-case-health",
+      dimensions: [],
+      metrics: [],
     },
     { scenarioTag: TAG }
   );
-  check(crossRepoRes, {
-    "cross-project repo stats 200": (r) => r.status === 200,
+  check(crossHealthRes, {
+    "cross-project health 200": (r) => r.status === 200,
   });
 
   sleep(0.5);
 
-  // 7. Cross-project: Flaky tests (complex join)
+  // 6. Cross-project: Flaky tests (pre-built)
   const { res: flakyRes } = postApi(
     "/api/report-builder/cross-project-flaky-tests",
     {
-      projectIds,
-      dimensions: [{ id: "project" }],
-      metrics: [{ id: "flakyCount", aggregation: "sum" }],
-      filters: {},
-      limit: 500,
+      reportType: "cross-project-flaky-tests",
+      dimensions: [],
+      metrics: [],
     },
     { scenarioTag: TAG }
   );
@@ -159,15 +128,13 @@ export default function () {
 
   sleep(0.5);
 
-  // 8. Cross-project: User engagement
+  // 7. Cross-project: User engagement (user dim, execution count metric)
   const { res: engageRes } = postApi(
     "/api/report-builder/cross-project-user-engagement",
     {
-      projectIds,
-      dimensions: [{ id: "user" }],
-      metrics: [{ id: "executionCount", aggregation: "sum" }],
-      filters: {},
-      limit: 100,
+      reportType: "cross-project-user-engagement",
+      dimensions: ["user"],
+      metrics: ["executionCount"],
     },
     { scenarioTag: TAG }
   );

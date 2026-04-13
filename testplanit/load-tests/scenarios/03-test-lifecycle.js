@@ -187,7 +187,7 @@ export default function () {
     {
       where: { id: testRunId },
       include: {
-        testRunCases: {
+        testCases: {
           select: {
             id: true,
             status: { select: { id: true, name: true } },

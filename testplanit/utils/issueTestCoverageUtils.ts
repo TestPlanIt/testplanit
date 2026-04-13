@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { authOptions } from "~/server/auth";
 
 // Flat row structure for grouping-based approach
@@ -96,7 +97,11 @@ export async function handleIssueTestCoveragePOST(
     // Check admin access for cross-project
     if (isCrossProject) {
       const session = await getServerSession(authOptions);
-      if (!session || session.user.access !== "ADMIN") {
+      const auth = await authenticateRequest(req, session);
+      if (!auth.authenticated) {
+        return Response.json({ error: auth.error }, { status: auth.status });
+      }
+      if (auth.user.access !== "ADMIN") {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
