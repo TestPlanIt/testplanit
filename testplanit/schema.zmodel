@@ -1845,40 +1845,40 @@ model Steps {
 }
 
 model Sessions {
-    id                 Int                  @id @default(autoincrement())
-    projectId          Int
-    project            Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    templateId         Int
-    template           Templates            @relation(fields: [templateId], references: [id])
-    name               String               @length(1)
-    note               Json?
-    mission            Json?
-    configId           Int?
-    configuration      Configurations?      @relation(fields: [configId], references: [id], onDelete: SetNull)
-    milestoneId        Int?
-    milestone          Milestones?          @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-    stateId            Int
-    state              Workflows            @relation(fields: [stateId], references: [id])
-    assignedToId       String?
-    assignedTo         User?                @relation("SessionAssignedTo", fields: [assignedToId], references: [id])
-    estimate           Int?
-    forecastManual     Int?
-    forecastAutomated  Float?
-    elapsed            Int?
-    isCompleted        Boolean              @default(false)
-    isDeleted          Boolean              @default(false)
-    completedAt        DateTime?
-    createdAt          DateTime             @default(now()) @db.Timestamptz(6)
-    createdById        String
-    createdBy          User                 @relation("SessionCreatedBy", fields: [createdById], references: [id])
-    currentVersion     Int                  @default(1)
-    sessionResults     SessionResults[]
-    sessionFieldValues SessionFieldValues[]
-    versions           SessionVersions[]
-    attachments        Attachments[]
-    tags               Tags[]
-    issues             Issue[]
-    comments           Comment[]
+    id                   Int                  @id @default(autoincrement())
+    projectId            Int
+    project              Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    templateId           Int
+    template             Templates            @relation(fields: [templateId], references: [id])
+    name                 String               @length(1)
+    note                 Json?
+    mission              Json?
+    configId             Int?
+    configuration        Configurations?      @relation(fields: [configId], references: [id], onDelete: SetNull)
+    milestoneId          Int?
+    milestone            Milestones?          @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    stateId              Int
+    state                Workflows            @relation(fields: [stateId], references: [id])
+    assignedToId         String?
+    assignedTo           User?                @relation("SessionAssignedTo", fields: [assignedToId], references: [id])
+    estimate             Int?
+    forecastManual       Int?
+    forecastAutomated    Float?
+    elapsed              Int?
+    isCompleted          Boolean              @default(false)
+    isDeleted            Boolean              @default(false)
+    completedAt          DateTime?
+    createdAt            DateTime             @default(now()) @db.Timestamptz(6)
+    createdById          String
+    createdBy            User                 @relation("SessionCreatedBy", fields: [createdById], references: [id])
+    currentVersion       Int                  @default(1)
+    sessionResults       SessionResults[]
+    sessionFieldValues   SessionFieldValues[]
+    versions             SessionVersions[]
+    attachments          Attachments[]
+    tags                 Tags[]
+    issues               Issue[]
+    comments             Comment[]
     configurationGroupId String?
 
     @@index([projectId, isDeleted])
@@ -3306,18 +3306,18 @@ model ShareLinkAccessLog {
 }
 
 model ProjectIntegration {
-    id            String      @id @default(cuid())
-    projectId     Int
-    project       Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    integrationId Int
-    integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-    config        Json?               // Project-specific integration configuration
-    fieldMappings Json?               // Custom field mappings for this project
-    isActive      Boolean     @default(true)
-    lastSyncAt    DateTime?   @db.Timestamptz(6)
-    syncStatus    String?             // Current sync status (syncing, completed, error, etc.)
-    syncError     String?             // Last sync error message
-    issueCount    Int         @default(0)
+    id                  String               @id @default(cuid())
+    projectId           Int
+    project             Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    integrationId       Int
+    integration         Integration          @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+    config              Json?               // Project-specific integration configuration
+    fieldMappings       Json?               // Custom field mappings for this project
+    isActive            Boolean              @default(true)
+    lastSyncAt          DateTime?            @db.Timestamptz(6)
+    syncStatus          String?             // Current sync status (syncing, completed, error, etc.)
+    syncError           String?             // Last sync error message
+    issueCount          Int                  @default(0)
     createdAt           DateTime             @default(now()) @db.Timestamptz(6)
     updatedAt           DateTime             @updatedAt
     integrationProjects IntegrationProject[]
@@ -3365,6 +3365,8 @@ model IntegrationProject {
     externalProjectName  String
     isActive             Boolean            @default(true)
     isDefault            Boolean            @default(false)
+    defaultIssueType     String?
+    defaultIssueTypeName String?
     lastSyncAt           DateTime?          @db.Timestamptz(6)
     syncStatus           String?
     syncError            String?

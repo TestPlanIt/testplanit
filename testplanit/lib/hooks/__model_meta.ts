@@ -6589,6 +6589,14 @@ const metadata: ModelMeta = {
                     name: "isDefault",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, defaultIssueType: {
+                    name: "defaultIssueType",
+                    type: "String",
+                    isOptional: true,
+                }, defaultIssueTypeName: {
+                    name: "defaultIssueTypeName",
+                    type: "String",
+                    isOptional: true,
                 }, lastSyncAt: {
                     name: "lastSyncAt",
                     type: "DateTime",

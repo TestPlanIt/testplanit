@@ -327,7 +327,7 @@ export function useSuspenseCountIntegrationProject<TArgs extends Prisma.Integrat
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('IntegrationProject', `${endpoint}/integrationProject/count`, args, options, fetch);
 }
 
-export function useCheckIntegrationProject<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; projectIntegrationId?: string; externalProjectId?: string; externalProjectKey?: string; externalProjectName?: string; isActive?: boolean; isDefault?: boolean; syncStatus?: string; syncError?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckIntegrationProject<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; projectIntegrationId?: string; externalProjectId?: string; externalProjectKey?: string; externalProjectName?: string; isActive?: boolean; isDefault?: boolean; defaultIssueType?: string; defaultIssueTypeName?: string; syncStatus?: string; syncError?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('IntegrationProject', `${endpoint}/integrationProject/check`, args, options, fetch);
 }

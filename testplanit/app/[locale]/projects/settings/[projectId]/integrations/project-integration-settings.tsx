@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
@@ -21,15 +20,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Integration, ProjectIntegration } from "@prisma/client";
-import { AlertCircle, Loader2, Save, Star } from "lucide-react";
+import { AlertCircle, Loader2, Save, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  useCreateIntegrationProject,
   useFindManyIntegrationProject,
   useUpdateIntegrationProject,
   useUpdateProjectIntegration,
+  useUpsertIntegrationProject,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
@@ -65,14 +64,6 @@ export function ProjectIntegrationSettings({
     (projectIntegration.config as Record<string, any>) || {}
   );
   const [needsAuth, setNeedsAuth] = useState(false);
-  const [selectedIssueType, setSelectedIssueType] = useState<IssueType | null>(
-    config.defaultIssueType
-      ? {
-          id: config.defaultIssueType,
-          name: config.defaultIssueTypeName || config.defaultIssueType,
-        }
-      : null
-  );
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [selectedNewProjects, setSelectedNewProjects] = useState<
     ExternalProject[]
@@ -94,8 +85,8 @@ export function ProjectIntegrationSettings({
       orderBy: [{ isDefault: "desc" }, { externalProjectName: "asc" }],
     });
 
-  const { mutateAsync: createIntegrationProject } =
-    useCreateIntegrationProject();
+  const { mutateAsync: upsertIntegrationProject } =
+    useUpsertIntegrationProject();
   const { mutateAsync: updateIntegrationProject } =
     useUpdateIntegrationProject();
 
@@ -147,11 +138,8 @@ export function ProjectIntegrationSettings({
   }, [checkAuthAndLoadProjects, integration.provider]);
 
   const canSave = useMemo(() => {
-    if (integration.provider === "SIMPLE_URL") return true;
-    if (integration.provider === "JIRA" && !config.defaultIssueType)
-      return false;
     return true;
-  }, [config.defaultIssueType, integration.provider]);
+  }, []);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -245,8 +233,14 @@ export function ProjectIntegrationSettings({
       let isFirstProject = !hasExistingLinkedProjects;
 
       for (const project of selectedNewProjects) {
-        await createIntegrationProject({
-          data: {
+        await upsertIntegrationProject({
+          where: {
+            projectIntegrationId_externalProjectId: {
+              projectIntegrationId: projectIntegration.id,
+              externalProjectId: project.id,
+            },
+          },
+          create: {
             projectIntegrationId: projectIntegration.id,
             externalProjectId: project.id,
             externalProjectKey: project.key,
@@ -254,15 +248,23 @@ export function ProjectIntegrationSettings({
             isActive: true,
             isDefault: isFirstProject,
           },
+          update: {
+            isActive: true,
+            isDefault: isFirstProject,
+            externalProjectKey: project.key,
+            externalProjectName: project.name,
+          },
         });
         isFirstProject = false;
       }
 
       setSelectedNewProjects([]);
       setShowAddPanel(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to add projects:", error);
-      toast.error(t("integration.saveSettingsError"));
+      const message =
+        error?.info?.message || error?.message || "Unknown error";
+      toast.error(`${t("integration.saveSettingsError")}: ${message}`);
     } finally {
       setIsAddingProjects(false);
     }
@@ -346,32 +348,30 @@ export function ProjectIntegrationSettings({
                     <div className="h-11 w-full animate-pulse rounded bg-muted" />
                   </div>
                 ) : !integrationProjects || integrationProjects.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 py-6 text-center">
-                    <p className="font-medium text-sm">
-                      {t("integration.noLinkedProjects")}
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      {t("integration.noLinkedProjectsDescription")}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => {
-                        setShowAddPanel(true);
-                        if (externalProjects.length === 0) {
-                          loadExternalProjects();
-                        }
-                      }}
-                    >
-                      {t("integration.addProjects")}
-                    </Button>
+                  <div>
+                    {!showAddPanel && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowAddPanel(true);
+                          if (externalProjects.length === 0) {
+                            loadExternalProjects();
+                          }
+                        }}
+                      >
+                        {t("integration.addProjects")}
+                      </Button>
+                    )}
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {integrationProjects?.map((ip) => (
-                      <div key={ip.id}>
-                        <div className="group flex items-center gap-2 rounded-md px-2 py-2 min-h-[44px]">
+                      <div
+                        key={ip.id}
+                        className="group rounded-md border px-3 py-2 space-y-2"
+                      >
+                        <div className="flex items-center gap-2 min-h-[36px]">
                           <span className="flex-1 text-sm font-medium">
                             {ip.externalProjectName}
                           </span>
@@ -397,9 +397,7 @@ export function ProjectIntegrationSettings({
                                   {t("integration.syncStatusError")}
                                 </Badge>
                               </TooltipTrigger>
-                              <TooltipContent>
-                                {ip.syncError}
-                              </TooltipContent>
+                              <TooltipContent>{ip.syncError}</TooltipContent>
                             </Tooltip>
                           )}
 
@@ -424,19 +422,95 @@ export function ProjectIntegrationSettings({
                           )}
 
                           {/* Remove button */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="shrink-0 text-destructive hover:text-destructive"
-                            onClick={() => setConfirmingRemoveId(ip.id)}
-                          >
-                            {t("integration.removeProject")}
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="h-7 w-7 shrink-0"
+                                onClick={() => setConfirmingRemoveId(ip.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("integration.removeProject")}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
+
+                        {/* Per-project default issue type (Jira only) */}
+                        {integration.provider === "JIRA" && (
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                              {t("integration.defaultIssueType")}
+                            </Label>
+                            <AsyncCombobox<IssueType>
+                              value={
+                                ip.defaultIssueType
+                                  ? {
+                                      id: ip.defaultIssueType,
+                                      name:
+                                        ip.defaultIssueTypeName ||
+                                        ip.defaultIssueType,
+                                    }
+                                  : null
+                              }
+                              onValueChange={(value) => {
+                                updateIntegrationProject({
+                                  where: { id: ip.id },
+                                  data: {
+                                    defaultIssueType: value?.id || null,
+                                    defaultIssueTypeName: value?.name || null,
+                                  },
+                                });
+                              }}
+                              fetchOptions={async (query, page, pageSize) => {
+                                try {
+                                  const response = await fetch(
+                                    `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
+                                  );
+                                  if (response.ok) {
+                                    const data = await response.json();
+                                    const issueTypes = data.issueTypes || [];
+                                    const filtered = query
+                                      ? issueTypes.filter((type: any) =>
+                                          type.name
+                                            .toLowerCase()
+                                            .includes(query.toLowerCase())
+                                        )
+                                      : issueTypes;
+                                    const start = page * pageSize;
+                                    return {
+                                      results: filtered.slice(
+                                        start,
+                                        start + pageSize
+                                      ),
+                                      total: filtered.length,
+                                    };
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Failed to fetch issue types:",
+                                    error
+                                  );
+                                }
+                                return { results: [], total: 0 };
+                              }}
+                              renderOption={(type) => type.name}
+                              getOptionValue={(type) => type.id}
+                              placeholder={t(
+                                "integration.selectDefaultIssueType"
+                              )}
+                              className="flex-1 max-w-xs h-8 text-xs"
+                              dropdownClassName="p-0 min-w-[250px] max-w-[350px]"
+                            />
+                          </div>
+                        )}
 
                         {/* Inline remove confirmation */}
                         {confirmingRemoveId === ip.id && (
-                          <div className="mx-2 mb-2 p-3 bg-muted rounded-md text-sm space-y-2">
+                          <div className="p-3 bg-muted rounded-md text-sm space-y-2">
                             <p>{t("integration.removeProjectConfirmation")}</p>
                             <div className="flex gap-2">
                               <Button
@@ -548,76 +622,6 @@ export function ProjectIntegrationSettings({
                 )}
               </CardContent>
             </Card>
-          )}
-
-          {/* Jira defaultIssueType field */}
-          {integration.provider === "JIRA" && (
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <Label htmlFor="defaultIssueType" className="block">
-                  {t("integration.defaultIssueType")}
-                  <span className="text-destructive ml-1">{"*"}</span>
-                </Label>
-                <HelpPopover helpKey="projects.settings.integrations.defaultIssueTypeHelp" />
-              </div>
-              <AsyncCombobox
-                value={selectedIssueType}
-                onValueChange={(value) => {
-                  setSelectedIssueType(value);
-                  setConfig({
-                    ...config,
-                    defaultIssueType: value?.id || undefined,
-                    defaultIssueTypeName: value?.name || undefined,
-                  });
-                }}
-                fetchOptions={async (query, page, pageSize) => {
-                  try {
-                    // Use the project key from current config state or first linked project
-                    const projectKey =
-                      config.externalProjectKey ||
-                      config.externalProjectId ||
-                      integrationProjects?.[0]?.externalProjectKey;
-                    if (!projectKey) {
-                      return { results: [], total: 0 };
-                    }
-
-                    const response = await fetch(
-                      `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(projectKey)}`
-                    );
-                    if (response.ok) {
-                      const data = await response.json();
-                      const issueTypes = data.issueTypes || [];
-
-                      // Filter by query if provided
-                      const filtered = query
-                        ? issueTypes.filter((type: any) =>
-                            type.name
-                              .toLowerCase()
-                              .includes(query.toLowerCase())
-                          )
-                        : issueTypes;
-
-                      // Paginate results
-                      const start = page * pageSize;
-                      const end = start + pageSize;
-                      return {
-                        results: filtered.slice(start, end),
-                        total: filtered.length,
-                      };
-                    }
-                  } catch (error) {
-                    console.error("Failed to fetch issue types:", error);
-                  }
-                  return { results: [], total: 0 };
-                }}
-                renderOption={(type) => type.name}
-                getOptionValue={(type) => type.id}
-                placeholder={t("integration.selectDefaultIssueType")}
-                className="w-full max-w-xs"
-                dropdownClassName="p-0 min-w-[300px] max-w-[400px]"
-                showTotal
-              />
-            </div>
           )}
 
           {/* Automatic sync via webhooks is not yet implemented - hiding this option

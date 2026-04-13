@@ -1885,6 +1885,8 @@
           "externalProjectName",
           "isActive",
           "isDefault",
+          "defaultIssueType",
+          "defaultIssueTypeName",
           "lastSyncAt",
           "syncStatus",
           "syncError",
@@ -9175,6 +9177,26 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "lastSyncAt": {
             "oneOf": [
@@ -51922,6 +51944,32 @@
               }
             ]
           },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "lastSyncAt": {
             "oneOf": [
               {
@@ -52019,6 +52067,26 @@
           },
           "isDefault": {
             "$ref": "#/components/schemas/SortOrder"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
           },
           "lastSyncAt": {
             "oneOf": [
@@ -52159,6 +52227,32 @@
               },
               {
                 "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -52338,6 +52432,32 @@
               },
               {
                 "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -86350,6 +86470,26 @@
           "isDefault": {
             "type": "boolean"
           },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "lastSyncAt": {
             "oneOf": [
               {
@@ -86463,6 +86603,32 @@
               }
             ]
           },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "lastSyncAt": {
             "oneOf": [
               {
@@ -86553,6 +86719,26 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "lastSyncAt": {
             "oneOf": [
@@ -86661,6 +86847,32 @@
               },
               {
                 "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -382682,6 +382894,26 @@
           "isDefault": {
             "type": "boolean"
           },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "lastSyncAt": {
             "oneOf": [
               {
@@ -382748,6 +382980,26 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "lastSyncAt": {
             "oneOf": [
@@ -383839,6 +384091,32 @@
               },
               {
                 "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -489529,6 +489807,26 @@
           "isDefault": {
             "type": "boolean"
           },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "lastSyncAt": {
             "oneOf": [
               {
@@ -489635,6 +489933,32 @@
               },
               {
                 "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -489765,6 +490089,32 @@
               }
             ]
           },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "lastSyncAt": {
             "oneOf": [
               {
@@ -489889,6 +490239,32 @@
               },
               {
                 "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -504848,6 +505224,12 @@
           "isDefault": {
             "type": "boolean"
           },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
           "lastSyncAt": {
             "type": "boolean"
           },
@@ -515983,6 +516365,12 @@
           "isDefault": {
             "type": "boolean"
           },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
           "lastSyncAt": {
             "type": "boolean"
           },
@@ -516027,6 +516415,12 @@
           "isDefault": {
             "type": "boolean"
           },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
+            "type": "boolean"
+          },
           "lastSyncAt": {
             "type": "boolean"
           },
@@ -516066,6 +516460,12 @@
             "type": "boolean"
           },
           "isDefault": {
+            "type": "boolean"
+          },
+          "defaultIssueType": {
+            "type": "boolean"
+          },
+          "defaultIssueTypeName": {
             "type": "boolean"
           },
           "lastSyncAt": {
@@ -532285,6 +532685,26 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "lastSyncAt": {
             "oneOf": [
@@ -559746,6 +560166,12 @@
           "isDefault": {
             "type": "integer"
           },
+          "defaultIssueType": {
+            "type": "integer"
+          },
+          "defaultIssueTypeName": {
+            "type": "integer"
+          },
           "lastSyncAt": {
             "type": "integer"
           },
@@ -559773,6 +560199,8 @@
           "externalProjectName",
           "isActive",
           "isDefault",
+          "defaultIssueType",
+          "defaultIssueTypeName",
           "lastSyncAt",
           "syncStatus",
           "syncError",
@@ -559851,6 +560279,26 @@
               },
               {
                 "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },
@@ -559979,6 +560427,26 @@
               },
               {
                 "type": "boolean"
+              }
+            ]
+          },
+          "defaultIssueType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "defaultIssueTypeName": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },

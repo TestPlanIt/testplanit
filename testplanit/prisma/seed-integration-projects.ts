@@ -49,6 +49,8 @@ async function migrateIntegrationProjects() {
           externalProjectName: String(config?.externalProjectName || config?.externalProjectKey || externalProjectId),
           isActive: true,
           isDefault: true, // First-and-only project becomes default per D-03
+          defaultIssueType: config?.defaultIssueType || null,
+          defaultIssueTypeName: config?.defaultIssueTypeName || null,
         },
       });
       console.log(`  Migrated ${pi.id} -> ${externalProjectId}`);
