@@ -1780,23 +1780,46 @@ model ShareLinkAccessLog {
 }
 
 model ProjectIntegration {
-  id            String      @id() @default(cuid())
-  projectId     Int
-  project       Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  integrationId Int
-  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  config        Json?
-  fieldMappings Json?
-  isActive      Boolean     @default(true)
-  lastSyncAt    DateTime?   @db.Timestamptz(6)
-  syncStatus    String?
-  syncError     String?
-  issueCount    Int         @default(0)
-  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime    @updatedAt()
+  id                  String               @id() @default(cuid())
+  projectId           Int
+  project             Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  integrationId       Int
+  integration         Integration          @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  config              Json?
+  fieldMappings       Json?
+  isActive            Boolean              @default(true)
+  lastSyncAt          DateTime?            @db.Timestamptz(6)
+  syncStatus          String?
+  syncError           String?
+  issueCount          Int                  @default(0)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime             @updatedAt()
+  integrationProjects IntegrationProject[]
 
   @@unique([projectId, integrationId])
   @@index([integrationId])
+  @@index([isActive])
+}
+
+model IntegrationProject {
+  id                   String             @id() @default(cuid())
+  projectIntegrationId String
+  projectIntegration   ProjectIntegration @relation(fields: [projectIntegrationId], references: [id], onDelete: Cascade)
+  externalProjectId    String
+  externalProjectKey   String
+  externalProjectName  String
+  isActive             Boolean            @default(true)
+  isDefault            Boolean            @default(false)
+  defaultIssueType     String?
+  defaultIssueTypeName String?
+  lastSyncAt           DateTime?          @db.Timestamptz(6)
+  syncStatus           String?
+  syncError            String?
+  createdAt            DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt()
+
+  @@unique([projectIntegrationId, externalProjectId])
+  @@index([projectIntegrationId])
   @@index([isActive])
 }
 

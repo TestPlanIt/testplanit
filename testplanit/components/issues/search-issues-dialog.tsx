@@ -20,8 +20,9 @@ import { useFindManyIssue } from "@/lib/hooks/issue";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { AlertCircle, ExternalLink, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
@@ -41,6 +42,7 @@ interface ExternalIssue {
     name: string;
     email: string;
   };
+  _projectKey?: string; // Project key for multi-project badge (D-06)
 }
 
 type InternalIssue = {
@@ -110,6 +112,12 @@ export function SearchIssuesDialog({
   const [searchExternal, setSearchExternal] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
+  // Filter state: null means "All" (fan-out to all projects)
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string | null>(null);
+
+  // Partial failure tracking
+  const [searchFailures, setSearchFailures] = useState<string[]>([]);
+
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Fetch project integrations
@@ -124,6 +132,23 @@ export function SearchIssuesDialog({
   });
 
   const activeIntegration = projectIntegrations?.[0];
+
+  // Fetch active IntegrationProject records for multi-project fan-out
+  const { data: activeIntegrationProjects } = useFindManyIntegrationProject(
+    {
+      where: {
+        projectIntegrationId: activeIntegration?.id || "",
+        isActive: true,
+      },
+      orderBy: [
+        { isDefault: "desc" },
+        { externalProjectName: "asc" },
+      ],
+    },
+    {
+      enabled: !!activeIntegration?.id,
+    }
+  );
 
   // Automatically enable external search when integration is available
   useEffect(() => {
@@ -189,54 +214,122 @@ export function SearchIssuesDialog({
 
     setIsSearching(true);
     setAuthError(null);
+    setSearchFailures([]);
 
     try {
-      // Get external project ID from integration config (for GitHub this is owner/repo)
-      const integrationConfig = (activeIntegration.config as Record<string, any>) || {};
-      const externalProjectId = integrationConfig.externalProjectId || integrationConfig.externalProjectKey || "";
+      const projectsToSearch = activeIntegrationProjects?.filter(() => true) || [];
 
-      const searchParams = new URLSearchParams({
-        q: debouncedSearchQuery,
-      });
-      if (externalProjectId) {
-        searchParams.set("projectId", externalProjectId);
-      }
+      if (projectsToSearch.length === 0) {
+        // Fallback: legacy single-project search from config
+        const integrationConfig = (activeIntegration.config as Record<string, any>) || {};
+        const externalProjectId = integrationConfig.externalProjectId || integrationConfig.externalProjectKey || "";
 
-      const response = await fetch(
-        `/api/integrations/${activeIntegration.integrationId}/search?${searchParams.toString()}`
-      );
+        const searchParams = new URLSearchParams({ q: debouncedSearchQuery });
+        if (externalProjectId) {
+          searchParams.set("projectId", externalProjectId);
+        }
 
-      if (response.status === 401) {
-        const errorData = await response.json();
-        setAuthError(errorData.authUrl || "Authentication required");
-        setExternalIssues([]);
+        const response = await fetch(
+          `/api/integrations/${activeIntegration.integrationId}/search?${searchParams.toString()}`
+        );
+
+        if (response.status === 401) {
+          const errorData = await response.json();
+          setAuthError(errorData.authUrl || "Authentication required");
+          setExternalIssues([]);
+          return;
+        }
+
+        if (!response.ok) {
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: "Unknown error" }));
+          console.error("Search API error:", errorData);
+          throw new Error(errorData.error || "Failed to search external issues");
+        }
+
+        const data = await response.json();
+        const formattedIssues = data.issues.map((issue: any) => ({
+          id: issue.id,
+          key: issue.key,
+          title: issue.title,
+          description: issue.description,
+          status: issue.status,
+          priority: issue.priority,
+          externalId: issue.id,
+          externalKey: issue.key,
+          externalUrl: issue.url,
+          externalStatus: issue.status,
+          isExternal: true,
+        }));
+        setExternalIssues(formattedIssues);
         return;
       }
 
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Unknown error" }));
-        console.error("Search API error:", errorData);
-        throw new Error(errorData.error || "Failed to search external issues");
+      // Fan-out search: call search API once per IntegrationProject (per D-04)
+      const searchPromises = projectsToSearch.map(async (ip) => {
+        try {
+          const searchParams = new URLSearchParams({
+            q: debouncedSearchQuery,
+            projectId: ip.externalProjectId,
+          });
+
+          const response = await fetch(
+            `/api/integrations/${activeIntegration.integrationId}/search?${searchParams.toString()}`
+          );
+
+          if (response.status === 401) {
+            const errorData = await response.json();
+            setAuthError(errorData.authUrl || "Authentication required");
+            return { success: false, projectKey: ip.externalProjectKey, issues: [] as ExternalIssue[] };
+          }
+
+          if (!response.ok) {
+            return { success: false, projectKey: ip.externalProjectKey, issues: [] as ExternalIssue[] };
+          }
+
+          const data = await response.json();
+          const formattedIssues: ExternalIssue[] = (data.issues || []).map((issue: any) => ({
+            id: issue.id,
+            key: issue.key,
+            title: issue.title,
+            description: issue.description,
+            status: issue.status,
+            priority: issue.priority,
+            externalId: issue.id,
+            externalKey: issue.key,
+            externalUrl: issue.url,
+            externalStatus: issue.status,
+            isExternal: true,
+            _projectKey: ip.externalProjectKey, // Per D-06: badge source
+          }));
+          return { success: true, projectKey: ip.externalProjectKey, issues: formattedIssues };
+        } catch {
+          return { success: false, projectKey: ip.externalProjectKey, issues: [] as ExternalIssue[] };
+        }
+      });
+
+      const results = await Promise.allSettled(searchPromises);
+
+      const allIssues: ExternalIssue[] = [];
+      const failures: string[] = [];
+
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          if (result.value.success) {
+            allIssues.push(...result.value.issues);
+          } else {
+            failures.push(result.value.projectKey);
+          }
+        } else {
+          // Promise itself rejected (shouldn't happen with try/catch, but safety net)
+          failures.push("unknown");
+        }
       }
 
-      const data = await response.json();
-      // Map the IssueData from adapter to ExternalIssue format
-      const formattedIssues = data.issues.map((issue: any) => ({
-        id: issue.id, // Jira's internal ID
-        key: issue.key, // Jira issue key (e.g., "TPI-12")
-        title: issue.title,
-        description: issue.description,
-        status: issue.status,
-        priority: issue.priority,
-        externalId: issue.id, // Use Jira's ID as externalId
-        externalKey: issue.key, // Use Jira's key as externalKey
-        externalUrl: issue.url,
-        externalStatus: issue.status,
-        isExternal: true,
-      }));
-      setExternalIssues(formattedIssues);
+      setExternalIssues(allIssues);
+      setSearchFailures(failures);
+
     } catch (error) {
       console.error("Failed to search external issues:", error);
       setExternalIssues([]);
@@ -244,6 +337,14 @@ export function SearchIssuesDialog({
       setIsSearching(false);
     }
   };
+
+  // Client-side filter derived from full fan-out results
+  const filteredExternalIssues = useMemo(() => {
+    if (selectedProjectFilter === null) return externalIssues;
+    const ip = activeIntegrationProjects?.find((p) => p.id === selectedProjectFilter);
+    if (!ip) return externalIssues;
+    return externalIssues.filter((issue) => issue._projectKey === ip.externalProjectKey);
+  }, [externalIssues, selectedProjectFilter, activeIntegrationProjects]);
 
   const handleIssueToggle = (issue: IssueItem) => {
     if (multiSelect) {
@@ -293,7 +394,7 @@ export function SearchIssuesDialog({
   };
 
   const allIssues: IssueItem[] = searchExternal
-    ? externalIssues.map((issue) => ({ ...issue, isExternal: true as const }))
+    ? filteredExternalIssues.map((issue) => ({ ...issue, isExternal: true as const }))
     : (internalIssues || []).map((issue) => ({
         ...issue,
         isExternal: false as const,
@@ -354,6 +455,42 @@ export function SearchIssuesDialog({
                 className="pl-10"
               />
             </div>
+
+            {/* Project filter chips — only shown when 2+ active IntegrationProject records exist (D-05) */}
+            {activeIntegrationProjects && activeIntegrationProjects.length >= 2 && (
+              <div className="flex flex-wrap gap-1 px-0">
+                <Badge
+                  variant={selectedProjectFilter === null ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedProjectFilter(null)}
+                >
+                  {t("issues.filterAll")}
+                </Badge>
+                {activeIntegrationProjects.map((ip) => (
+                  <Badge
+                    key={ip.id}
+                    variant={selectedProjectFilter === ip.id ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedProjectFilter(ip.id)}
+                  >
+                    {ip.externalProjectKey}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Partial failure alert */}
+            {searchFailures.length > 0 && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {t("issues.fanOutPartialFailure", {
+                    count: searchFailures.length,
+                    successCount: (activeIntegrationProjects?.length || 0) - searchFailures.length,
+                  })}
+                </AlertDescription>
+              </Alert>
+            )}
 
             {authError && (
               <Alert variant="destructive">
@@ -471,6 +608,15 @@ export function SearchIssuesDialog({
                                       {t("issues.alreadyLinked")}
                                     </Badge>
                                   )}
+                                  {/* Project-key badge for multi-project results (D-06) */}
+                                  {issue.isExternal && (issue as ExternalIssue)._projectKey && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs shrink-0"
+                                    >
+                                      {(issue as ExternalIssue)._projectKey}
+                                    </Badge>
+                                  )}
                                 </h4>
                               </div>
                               {issue.description && (
@@ -543,10 +689,7 @@ export function SearchIssuesDialog({
             onOpenChange={setShowCreateDialog}
             projectId={projectId}
             integrationId={activeIntegration.integrationId}
-            projectKey={
-              (activeIntegration.config as any)?.externalProjectKey || ""
-            }
-            issueTypeId={(activeIntegration.config as any)?.defaultIssueType}
+            projectIntegrationId={activeIntegration.id}
             onIssueCreated={(createdIssue) => {
               // Close the create dialog
               setShowCreateDialog(false);

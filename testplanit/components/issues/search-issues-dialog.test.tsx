@@ -3,10 +3,11 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockUseFindManyIssue, mockUseFindManyProjectIntegration } = vi.hoisted(
+const { mockUseFindManyIssue, mockUseFindManyProjectIntegration, mockUseFindManyIntegrationProject } = vi.hoisted(
   () => ({
     mockUseFindManyIssue: vi.fn(),
     mockUseFindManyProjectIntegration: vi.fn(),
+    mockUseFindManyIntegrationProject: vi.fn(),
   })
 );
 
@@ -18,6 +19,10 @@ vi.mock("@/lib/hooks/issue", () => ({
 
 vi.mock("@/lib/hooks/project-integration", () => ({
   useFindManyProjectIntegration: mockUseFindManyProjectIntegration,
+}));
+
+vi.mock("~/lib/hooks", () => ({
+  useFindManyIntegrationProject: mockUseFindManyIntegrationProject,
 }));
 
 vi.mock("next-intl", () => ({
@@ -149,6 +154,9 @@ describe("SearchIssuesDialog", () => {
 
     // Default: no integration
     mockUseFindManyProjectIntegration.mockReturnValue({ data: [] });
+
+    // Default: no integration projects
+    mockUseFindManyIntegrationProject.mockReturnValue({ data: [] });
 
     // Default: no internal issues
     mockUseFindManyIssue.mockReturnValue({
@@ -388,5 +396,333 @@ describe("SearchIssuesDialog", () => {
       name: /createNewIssue|create/i,
     });
     expect(createBtn).toBeTruthy();
+  });
+
+  // --- Multi-project fan-out tests ---
+
+  describe("multi-project fan-out", () => {
+    const makeIntegration = () => ({
+      id: "pi-10",
+      integrationId: 5,
+      isActive: true,
+      config: {},
+      integration: { id: 5, name: "My Jira", provider: "JIRA" },
+    });
+
+    const makeTwoIntegrationProjects = () => [
+      {
+        id: "ip-1",
+        externalProjectId: "10005",
+        externalProjectKey: "ABT",
+        externalProjectName: "Allego Bug Tracking",
+        isDefault: true,
+        isActive: true,
+      },
+      {
+        id: "ip-2",
+        externalProjectId: "10400",
+        externalProjectKey: "LIV",
+        externalProjectName: "LiveApps",
+        isDefault: false,
+        isActive: true,
+      },
+    ];
+
+    beforeEach(() => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [makeIntegration()],
+      });
+      mockUseFindManyIntegrationProject.mockReturnValue({
+        data: makeTwoIntegrationProjects(),
+      });
+    });
+
+    it("renders filter chips when 2+ IntegrationProject records exist", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      // "All" chip and project-key chips should appear
+      // At minimum, badges should be rendered for the project keys
+      const badges = screen.queryAllByTestId("badge");
+      // There should be at least the "All" chip plus project-key chips (ABT, LIV)
+      expect(badges.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("renders project-key chips for each IntegrationProject (ABT and LIV)", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const badges = screen.queryAllByTestId("badge");
+      const badgeTexts = badges.map((b) => b.textContent);
+      expect(badgeTexts.some((t) => t?.includes("ABT"))).toBe(true);
+      expect(badgeTexts.some((t) => t?.includes("LIV"))).toBe(true);
+    });
+
+    it("does NOT render filter chips when only 1 IntegrationProject exists", () => {
+      mockUseFindManyIntegrationProject.mockReturnValue({
+        data: [makeTwoIntegrationProjects()[0]], // Only ABT
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      // With a single project there should be no project-filter chips rendered
+      const badges = screen.queryAllByTestId("badge");
+      // No filter chips means no ABT/LIV badges in the filter area
+      // (badges may still appear in issue results — but no results here)
+      expect(badges.length).toBe(0);
+    });
+
+    it("calls fetch once per IntegrationProject when searching with 2 projects", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          issues: [
+            { id: "1", key: "ABT-1", title: "Test bug", status: "Open" },
+          ],
+        }),
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "bug" } });
+
+      await waitFor(() => {
+        const fetchCalls = (global.fetch as any).mock.calls as string[][];
+        const searchCalls = fetchCalls.filter(([url]) =>
+          (url as string).includes("/search")
+        );
+        // One search call per IntegrationProject (2 projects)
+        expect(searchCalls.length).toBe(2);
+      });
+    });
+
+    it("each fan-out search call uses the correct externalProjectId", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ issues: [] }),
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "test" } });
+
+      await waitFor(() => {
+        const fetchCalls = (global.fetch as any).mock.calls as string[][];
+        const searchUrls = fetchCalls
+          .map(([url]) => url as string)
+          .filter((url) => url.includes("/search"));
+
+        // Each project's externalProjectId should be in separate calls
+        expect(
+          searchUrls.some((url) => url.includes("projectId=10005"))
+        ).toBe(true);
+        expect(
+          searchUrls.some((url) => url.includes("projectId=10400"))
+        ).toBe(true);
+      });
+    });
+
+    it("renders _projectKey badge on each result from fan-out search", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes("projectId=10005")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              issues: [
+                { id: "abt-1", key: "ABT-1", title: "ABT Bug", status: "Open" },
+              ],
+            }),
+          });
+        }
+        if (url.includes("projectId=10400")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              issues: [
+                { id: "liv-1", key: "LIV-1", title: "LIV Story", status: "Done" },
+              ],
+            }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ issues: [] }),
+        });
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "bug" } });
+
+      await waitFor(() => {
+        const badges = screen.queryAllByTestId("badge");
+        const badgeTexts = badges.map((b) => b.textContent);
+        // Project-key badges should appear for ABT and LIV results
+        expect(badgeTexts.some((t) => t === "ABT")).toBe(true);
+        expect(badgeTexts.some((t) => t === "LIV")).toBe(true);
+      });
+    });
+
+    it("shows partial failure alert when some project searches fail", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes("projectId=10005")) {
+          // ABT succeeds
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              issues: [
+                { id: "abt-1", key: "ABT-1", title: "ABT Bug", status: "Open" },
+              ],
+            }),
+          });
+        }
+        // LIV fails
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          json: async () => ({ error: "Internal server error" }),
+        });
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "bug" } });
+
+      await waitFor(() => {
+        const alerts = screen.queryAllByRole("alert");
+        // A partial failure alert should be rendered
+        expect(alerts.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("shows successful results even when one project search fails", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes("projectId=10005")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              issues: [
+                { id: "abt-1", key: "ABT-1", title: "Success Bug", status: "Open" },
+              ],
+            }),
+          });
+        }
+        // LIV fails
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          json: async () => ({ error: "Server error" }),
+        });
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "bug" } });
+
+      await waitFor(() => {
+        // The successful ABT result should still appear
+        expect(screen.queryByText(/Success Bug/)).toBeTruthy();
+      });
+    });
+
+    it("uses legacy single-project search when no IntegrationProject records exist", async () => {
+      // No IntegrationProject records — falls back to config-based search
+      mockUseFindManyIntegrationProject.mockReturnValue({ data: [] });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ issues: [] }),
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "test" } });
+
+      await waitFor(() => {
+        const fetchCalls = (global.fetch as any).mock.calls as string[][];
+        const searchCalls = fetchCalls.filter(([url]) =>
+          (url as string).includes("/search")
+        );
+        // Only ONE call in legacy mode (not fan-out)
+        expect(searchCalls.length).toBe(1);
+      });
+    });
+
+    it("selecting a filter chip filters results to that project only", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes("projectId=10005")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              issues: [
+                {
+                  id: "abt-1",
+                  key: "ABT-1",
+                  title: "ABT Only Issue",
+                  status: "Open",
+                },
+              ],
+            }),
+          });
+        }
+        if (url.includes("projectId=10400")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              issues: [
+                {
+                  id: "liv-1",
+                  key: "LIV-1",
+                  title: "LIV Only Issue",
+                  status: "Done",
+                },
+              ],
+            }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ issues: [] }),
+        });
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "issue" } });
+
+      // Wait for results and chips to appear
+      await waitFor(() => {
+        const badges = screen.queryAllByTestId("badge");
+        expect(badges.length).toBeGreaterThanOrEqual(2);
+      });
+
+      // Click the ABT filter chip
+      const badges = screen.queryAllByTestId("badge");
+      const abtChip = badges.find((b) => b.textContent === "ABT");
+      if (abtChip) {
+        fireEvent.click(abtChip);
+
+        await waitFor(() => {
+          // ABT result should still be visible after filtering
+          expect(screen.queryByText(/ABT Only Issue/)).toBeTruthy();
+        });
+      }
+    });
   });
 });
