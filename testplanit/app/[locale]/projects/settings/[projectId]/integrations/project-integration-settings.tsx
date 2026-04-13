@@ -403,7 +403,14 @@ export function ProjectIntegrationSettings({
 
                           {/* Default star */}
                           {ip.isDefault ? (
-                            <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {t("integration.defaultIndicator")}
+                              </TooltipContent>
+                            </Tooltip>
                           ) : (
                             <Tooltip>
                               <TooltipTrigger asChild>
