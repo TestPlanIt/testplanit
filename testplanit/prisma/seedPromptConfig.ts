@@ -109,7 +109,7 @@ REQUIREMENTS:
 {{TAG_INSTRUCTIONS}}
 - DO NOT create generic test cases - they must validate the specific issue requirements
 - DO NOT leave optional text fields empty - they provide critical context for test execution
-- IMPORTANT: If existing test cases are provided, DO NOT generate duplicates or test cases that cover the same scenarios. Focus on NEW test scenarios not already covered.
+- IMPORTANT: If existing test cases are provided, use them to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement the existing coverage — do NOT duplicate or substantially overlap with them.
 
 Return ONLY the JSON.`,
       userPrompt: `ISSUE TO TEST: {{ISSUE_KEY}} - "{{ISSUE_TITLE}}"

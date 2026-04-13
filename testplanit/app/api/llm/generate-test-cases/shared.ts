@@ -444,7 +444,7 @@ REQUIREMENTS:
 ${tagInstructions}
 - DO NOT create generic test cases - they must validate the specific issue requirements
 - DO NOT leave optional text fields empty - they provide critical context for test execution
-- IMPORTANT: If existing test cases are provided, DO NOT generate duplicates or test cases that cover the same scenarios. Focus on NEW test scenarios not already covered.
+- IMPORTANT: If existing test cases are provided, use them to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement the existing coverage — do NOT duplicate or substantially overlap with them.
 
 Return ONLY the JSON.`;
 }
@@ -457,8 +457,8 @@ export function buildUserPrompt(
   let commentsSection = "";
   if (issue.comments && issue.comments.length > 0) {
     commentsSection = `\n\nRELEVANT COMMENTS:`;
-    issue.comments.slice(0, 3).forEach((c, i) => {
-      commentsSection += `\n${i + 1}. ${c.author}: ${c.body.substring(0, 300)}`;
+    issue.comments.forEach((c, i) => {
+      commentsSection += `\n${i + 1}. ${c.author}: ${c.body}`;
     });
   }
 
@@ -469,7 +469,7 @@ export function buildUserPrompt(
 
   let existingCasesSection = "";
   if (context.existingTestCases && context.existingTestCases.length > 0) {
-    existingCasesSection = `\n\nEXISTING TEST CASES IN FOLDER - DO NOT DUPLICATE THESE:`;
+    existingCasesSection = `\n\nEXISTING TEST CASES IN FOLDER:`;
     context.existingTestCases.forEach((tc, i) => {
       existingCasesSection += `\n${i + 1}. ${tc.name}`;
       if (tc.description) {
@@ -485,7 +485,7 @@ export function buildUserPrompt(
         });
       }
     });
-    existingCasesSection += `\n\nCRITICAL: Do NOT generate test cases that duplicate or substantially overlap with the existing test cases listed above. Each new test case must cover different functionality, scenarios, or edge cases not already tested.`;
+    existingCasesSection += `\n\nUse these existing test cases to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement — not duplicate — the existing coverage. Each new test case must cover different functionality, scenarios, or edge cases not already tested.`;
   }
 
   if (baseTemplate) {
