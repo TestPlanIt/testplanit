@@ -11,10 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Tooltip,
   TooltipContent,
@@ -22,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Integration, ProjectIntegration } from "@prisma/client";
-import { AlertCircle, Loader2, RefreshCw, Save, Star } from "lucide-react";
+import { AlertCircle, Loader2, Save, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -75,9 +74,9 @@ export function ProjectIntegrationSettings({
       : null
   );
   const [showAddPanel, setShowAddPanel] = useState(false);
-  const [selectedNewProjects, setSelectedNewProjects] = useState<Set<string>>(
-    new Set()
-  );
+  const [selectedNewProjects, setSelectedNewProjects] = useState<
+    ExternalProject[]
+  >([]);
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(
     null
   );
@@ -237,7 +236,7 @@ export function ProjectIntegrationSettings({
   };
 
   const handleAddProjects = async () => {
-    if (selectedNewProjects.size === 0) return;
+    if (selectedNewProjects.length === 0) return;
     setIsAddingProjects(true);
 
     try {
@@ -245,10 +244,7 @@ export function ProjectIntegrationSettings({
         integrationProjects && integrationProjects.length > 0;
       let isFirstProject = !hasExistingLinkedProjects;
 
-      for (const projectId of selectedNewProjects) {
-        const project = externalProjects.find((p) => p.id === projectId);
-        if (!project) continue;
-
+      for (const project of selectedNewProjects) {
         await createIntegrationProject({
           data: {
             projectIntegrationId: projectIntegration.id,
@@ -262,7 +258,7 @@ export function ProjectIntegrationSettings({
         isFirstProject = false;
       }
 
-      setSelectedNewProjects(new Set());
+      setSelectedNewProjects([]);
       setShowAddPanel(false);
     } catch (error) {
       console.error("Failed to add projects:", error);
@@ -349,7 +345,7 @@ export function ProjectIntegrationSettings({
                     <div className="h-11 w-full animate-pulse rounded bg-muted" />
                     <div className="h-11 w-full animate-pulse rounded bg-muted" />
                   </div>
-                ) : integrationProjects && integrationProjects.length === 0 ? (
+                ) : !integrationProjects || integrationProjects.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-6 text-center">
                     <p className="font-medium text-sm">
                       {t("integration.noLinkedProjects")}
@@ -486,59 +482,50 @@ export function ProjectIntegrationSettings({
                 {/* Add Projects inline panel */}
                 {showAddPanel && (
                   <div className="border rounded-md p-3 space-y-3">
-                    {isLoadingProjects ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{t("integration.refreshProjects")}</span>
-                      </div>
-                    ) : availableToAdd.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {t("integration.noLinkedProjects")}
-                      </p>
-                    ) : (
-                      <ScrollArea className="h-60">
-                        <div className="space-y-2">
-                          {availableToAdd.map((project) => (
-                            <div
-                              key={project.id}
-                              className="flex items-center gap-2 px-1"
-                            >
-                              <Checkbox
-                                id={`project-${project.id}`}
-                                checked={selectedNewProjects.has(project.id)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedNewProjects((prev) => {
-                                    const next = new Set(prev);
-                                    if (checked) {
-                                      next.add(project.id);
-                                    } else {
-                                      next.delete(project.id);
-                                    }
-                                    return next;
-                                  });
-                                }}
-                              />
-                              <Label
-                                htmlFor={`project-${project.id}`}
-                                className="cursor-pointer text-sm"
-                              >
-                                {project.name}{" "}
-                                <span className="text-muted-foreground">
-                                  ({project.key})
-                                </span>
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    )}
+                    <MultiAsyncCombobox<ExternalProject>
+                      value={selectedNewProjects}
+                      onValueChange={setSelectedNewProjects}
+                      fetchOptions={async (query, page, pageSize) => {
+                        // Load external projects if not already loaded
+                        if (externalProjects.length === 0) {
+                          await loadExternalProjects();
+                        }
+                        const filtered = availableToAdd.filter(
+                          (p) =>
+                            !query ||
+                            p.name
+                              .toLowerCase()
+                              .includes(query.toLowerCase()) ||
+                            p.key.toLowerCase().includes(query.toLowerCase())
+                        );
+                        const start = page * pageSize;
+                        return {
+                          results: filtered.slice(start, start + pageSize),
+                          total: filtered.length,
+                        };
+                      }}
+                      renderOption={(project) => (
+                        <span>
+                          {project.name}{" "}
+                          <span className="text-muted-foreground">
+                            ({project.key})
+                          </span>
+                        </span>
+                      )}
+                      getOptionValue={(project) => project.id}
+                      getOptionLabel={(project) =>
+                        `${project.name} (${project.key})`
+                      }
+                      placeholder={t("integration.addProjects")}
+                      hideSelected
+                    />
 
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         onClick={handleAddProjects}
                         disabled={
-                          selectedNewProjects.size === 0 || isAddingProjects
+                          selectedNewProjects.length === 0 || isAddingProjects
                         }
                       >
                         {isAddingProjects ? (
@@ -551,23 +538,10 @@ export function ProjectIntegrationSettings({
                         size="sm"
                         onClick={() => {
                           setShowAddPanel(false);
-                          setSelectedNewProjects(new Set());
+                          setSelectedNewProjects([]);
                         }}
                       >
                         {tGlobal("common.cancel")}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={loadExternalProjects}
-                        disabled={isLoadingProjects}
-                      >
-                        {isLoadingProjects ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4" />
-                        )}
-                        {t("integration.refreshProjects")}
                       </Button>
                     </div>
                   </div>
