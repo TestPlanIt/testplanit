@@ -21,6 +21,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { ApplicationArea } from "@prisma/client";
 import { CircleSlash2, Edit, Layers, PlusCircle, Save, Search, Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -323,8 +328,10 @@ export default function SharedStepsPage() {
 
   return (
     <div className="flex h-full w-full" data-testid="shared-steps-page">
+      <ResizablePanelGroup direction="horizontal" autoSaveId="shared-steps-panels">
       {/* Left Pane: Group List & Filter */}
-      <div className="w-1/3 min-w-[280px] max-w-[600px] border-r bg-primary-foreground p-4 flex flex-col">
+      <ResizablePanel id="shared-steps-left" defaultSize={30} minSize={15} maxSize={50}>
+      <div className="h-full bg-primary-foreground p-4 flex flex-col">
         {canEdit && (
           <div className="mb-4 flex gap-2 justify-between w-fill">
             <Button
@@ -434,8 +441,11 @@ export default function SharedStepsPage() {
           )}
         </div>
       </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
       {/* Right Pane: Steps Display/Edit */}
-      <div className="flex-1 p-6 overflow-y-auto">
+      <ResizablePanel id="shared-steps-right" defaultSize={70}>
+      <div className="h-full p-6 overflow-y-auto">
         {!selectedGroup ? (
           <div className="text-muted-foreground text-center mt-20">
             {t("selectGroupPrompt")}
@@ -548,6 +558,8 @@ export default function SharedStepsPage() {
           </Card>
         )}
       </div>
+      </ResizablePanel>
+      </ResizablePanelGroup>
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
