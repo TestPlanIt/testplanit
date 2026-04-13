@@ -140,20 +140,18 @@ export function CreateIssueDialog({
   // Track which IntegrationProject the user has selected for issue creation
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-  // Auto-select default project when integrationProjects loads
+  // Auto-select default project when dialog opens or integrationProjects loads.
+  // Also resets selection when dialog closes.
   useEffect(() => {
+    if (!open) {
+      setSelectedProjectId(null);
+      return;
+    }
     if (integrationProjects && integrationProjects.length > 0 && !selectedProjectId) {
       const defaultProject = integrationProjects.find((ip) => ip.isDefault) || integrationProjects[0];
       setSelectedProjectId(defaultProject.id);
     }
-  }, [integrationProjects, selectedProjectId]);
-
-  // Reset selected project when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setSelectedProjectId(null);
-    }
-  }, [open]);
+  }, [open, integrationProjects, selectedProjectId]);
 
   // Derive the selected project record
   const selectedProject = useMemo(() => {

@@ -689,10 +689,7 @@ export function SearchIssuesDialog({
             onOpenChange={setShowCreateDialog}
             projectId={projectId}
             integrationId={activeIntegration.integrationId}
-            projectKey={
-              (activeIntegration.config as any)?.externalProjectKey || ""
-            }
-            issueTypeId={(activeIntegration.config as any)?.defaultIssueType}
+            projectIntegrationId={activeIntegration.id}
             onIssueCreated={(createdIssue) => {
               // Close the create dialog
               setShowCreateDialog(false);
