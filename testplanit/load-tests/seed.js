@@ -24,15 +24,14 @@
  */
 
 import { sleep } from "k6";
-import { create, findMany, postApi } from "./helpers/api.js";
+import { create, findMany } from "./helpers/api.js";
 import {
   projectName,
   folderName,
   testCaseName,
-  testSteps,
   uniqueId,
 } from "./helpers/data.js";
-import { BASE_URL, headers } from "./config.js";
+import { BASE_URL } from "./config.js";
 
 const SEED_PROJECTS = parseInt(__ENV.SEED_PROJECTS || "10");
 const SEED_CASES_PER_PROJECT = parseInt(__ENV.SEED_CASES_PER_PROJECT || "500");

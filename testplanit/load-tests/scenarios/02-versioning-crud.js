@@ -17,9 +17,9 @@
  *   k6 run --env BASE_URL=http://... --env API_TOKEN=tpi_... scenarios/02-versioning-crud.js
  */
 
-import { sleep, check } from "k6";
-import { findMany, findFirst, create, update, postApi } from "../helpers/api.js";
-import { testCaseName, testSteps, uniqueId } from "../helpers/data.js";
+import { sleep } from "k6";
+import { findMany, findFirst, create, update } from "../helpers/api.js";
+import { testCaseName, testSteps } from "../helpers/data.js";
 import { getProfile, thresholds, PROJECT_ID } from "../config.js";
 
 const TAG = "crud";

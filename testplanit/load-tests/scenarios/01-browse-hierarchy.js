@@ -17,7 +17,7 @@
  */
 
 import { sleep } from "k6";
-import { findMany, count, getApi } from "../helpers/api.js";
+import { findMany, count } from "../helpers/api.js";
 import { getProfile, thresholds, PROJECT_ID } from "../config.js";
 
 const TAG = "browse";
@@ -46,7 +46,7 @@ export default function () {
   const projectId =
     projects?.data?.length > 0 ? projects.data[0].id : PROJECT_ID;
 
-  const repos = findMany(
+  findMany(
     "repositories",
     {
       where: { projectId, isDeleted: false },

@@ -20,8 +20,8 @@
 
 import { sleep, check } from "k6";
 import http from "k6/http";
-import { findMany, findFirst, create, update, postApi, getApi } from "./helpers/api.js";
-import { testCaseName, testSteps, junitXml, uniqueId } from "./helpers/data.js";
+import { findMany, create, update, postApi, getApi } from "./helpers/api.js";
+import { testCaseName, junitXml, uniqueId } from "./helpers/data.js";
 import { getProfile, thresholds, PROJECT_ID, BASE_URL, headers } from "./config.js";
 
 export const options = {

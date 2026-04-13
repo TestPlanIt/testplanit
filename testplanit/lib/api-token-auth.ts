@@ -176,8 +176,7 @@ export interface AuthenticatedUser {
  */
 export async function authenticateRequest(
   request: NextRequest,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  session: { user?: { id?: string; access?: string | null; [key: string]: any } } | null
+  session: { user?: { id?: string; access?: string | null; [key: string]: unknown } } | null
 ): Promise<
   | { authenticated: true; user: AuthenticatedUser }
   | { authenticated: false; error: string; errorCode?: string; status: number }

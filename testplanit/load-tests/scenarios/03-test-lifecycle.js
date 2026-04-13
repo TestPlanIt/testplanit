@@ -18,7 +18,6 @@
  */
 
 import { sleep, check } from "k6";
-import http from "k6/http";
 import {
   findMany,
   findFirst,
@@ -27,7 +26,7 @@ import {
   postApi,
 } from "../helpers/api.js";
 import { uniqueId } from "../helpers/data.js";
-import { getProfile, thresholds, PROJECT_ID, BASE_URL, headers } from "../config.js";
+import { getProfile, thresholds, PROJECT_ID } from "../config.js";
 
 const TAG = "test_run";
 
