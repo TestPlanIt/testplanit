@@ -1,3 +1,10 @@
+## [0.21.8](https://github.com/TestPlanIt/testplanit/compare/v0.21.7...v0.21.8) (2026-04-13)
+
+### Enhancements
+
+* **api:** add API token auth to custom endpoints and k6 load test suite ([#189](https://github.com/TestPlanIt/testplanit/issues/189)) ([aef211a](https://github.com/TestPlanIt/testplanit/commit/aef211a2119f429acacae7c4f12af75429a1893a))
+* multi-project integration support ([#188](https://github.com/TestPlanIt/testplanit/issues/188)) ([580b174](https://github.com/TestPlanIt/testplanit/commit/580b174647b15025b3378fa8e489309bbad62f55))
+
 ## [0.21.7](https://github.com/TestPlanIt/testplanit/compare/v0.21.6...v0.21.7) (2026-04-12)
 
 ### Enhancements
