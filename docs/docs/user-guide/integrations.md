@@ -296,7 +296,7 @@ When creating issues from TestPlanIt:
 1. Open any test artifact
 2. Click **Link Existing Issue**
 3. Search for the issue — when multiple external projects are linked, the search automatically fans out across all projects and merges results into one list
-4. Each result shows a **project-key badge** (e.g., ABT, LIV) so you can see which project it came from
+4. Each result shows a **project-key badge** (e.g., PROJ, WEB) so you can see which project it came from
 5. Use the **filter chips** below the search bar to narrow results to a specific project
 6. Select and link the issue
 
