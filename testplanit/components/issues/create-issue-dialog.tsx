@@ -30,6 +30,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateIssue } from "@/lib/hooks/issue";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
+import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -119,6 +120,58 @@ export function CreateIssueDialog({
   const activeIntegration = projectIntegrations?.[0];
   const integrationId = activeIntegration?.integrationId;
 
+  // Fetch active IntegrationProject records for multi-project support (D-09, D-10)
+  const { data: integrationProjects } = useFindManyIntegrationProject(
+    {
+      where: {
+        projectIntegrationId: activeIntegration?.id || "",
+        isActive: true,
+      },
+      orderBy: [
+        { isDefault: "desc" },
+        { externalProjectName: "asc" },
+      ],
+    },
+    {
+      enabled: !!activeIntegration?.id,
+    }
+  );
+
+  // Track which IntegrationProject the user has selected for issue creation
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+  // Auto-select default project when integrationProjects loads
+  useEffect(() => {
+    if (integrationProjects && integrationProjects.length > 0 && !selectedProjectId) {
+      const defaultProject = integrationProjects.find((ip) => ip.isDefault) || integrationProjects[0];
+      setSelectedProjectId(defaultProject.id);
+    }
+  }, [integrationProjects, selectedProjectId]);
+
+  // Reset selected project when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedProjectId(null);
+    }
+  }, [open]);
+
+  // Derive the selected project record
+  const selectedProject = useMemo(() => {
+    if (!integrationProjects || integrationProjects.length === 0) return null;
+    return integrationProjects.find((ip) => ip.id === selectedProjectId) || null;
+  }, [integrationProjects, selectedProjectId]);
+
+  // The effective project key for API calls — from IntegrationProject when available,
+  // falling back to legacy config fields for backward compatibility
+  const effectiveProjectKey = useMemo(() => {
+    if (selectedProject) {
+      return selectedProject.externalProjectKey || selectedProject.externalProjectId || "";
+    }
+    // Backward compat: fall back to config when no IntegrationProject records exist
+    const config = (activeIntegration?.config as Record<string, any>) || {};
+    return config.externalProjectKey || config.externalProjectId || "";
+  }, [selectedProject, activeIntegration]);
+
   // Check if this is a Simple URL integration
   const isSimpleUrlIntegration =
     activeIntegration?.integration?.provider === "SIMPLE_URL";
@@ -128,24 +181,33 @@ export function CreateIssueDialog({
   const useIntegration = !!activeIntegration && !isSimpleUrlIntegration;
 
   // Check if external integration is properly configured
+  // Prefer IntegrationProject records; fall back to legacy config check
   const isIntegrationConfigured = useMemo(() => {
     if (!useIntegration || !activeIntegration) return true; // Not using integration or no integration
+    if (integrationProjects && integrationProjects.length > 0) return true;
+    // Backward compat: check config fields when no IntegrationProject records exist
     const config = activeIntegration.config as Record<string, any>;
     return !!(config?.externalProjectKey || config?.externalProjectId);
-  }, [useIntegration, activeIntegration]);
+  }, [useIntegration, activeIntegration, integrationProjects]);
 
-  // Get default issue type from integration config
+  // Get default issue type — from selected IntegrationProject when available (per Plan 65-02),
+  // falling back to legacy config field for backward compatibility
   const defaultIssueType = useMemo(() => {
+    if (selectedProject?.defaultIssueType) {
+      return {
+        id: selectedProject.defaultIssueType,
+        name: selectedProject.defaultIssueTypeName || selectedProject.defaultIssueType,
+      };
+    }
+    // Backward compat: read from config when no IntegrationProject records exist
     if (!activeIntegration?.config) return null;
-
     const config = activeIntegration.config as Record<string, any>;
     if (!config.defaultIssueType) return null;
-
     return {
       id: config.defaultIssueType,
       name: config.defaultIssueTypeName || config.defaultIssueType,
     };
-  }, [activeIntegration?.config]);
+  }, [selectedProject, activeIntegration?.config]);
 
   // Check authentication status
   const checkAuth = useCallback(async () => {
@@ -228,12 +290,8 @@ export function CreateIssueDialog({
 
     setLoadingFields(true);
     try {
-      const config = activeIntegration.config as Record<string, any>;
-      const projectKey =
-        config?.externalProjectKey || config?.externalProjectId || "";
-
       const response = await fetch(
-        `/api/integrations/${activeIntegration.integrationId}/issue-type-fields?issueTypeId=${selectedIssueType.id}&projectKey=${encodeURIComponent(projectKey)}`
+        `/api/integrations/${activeIntegration.integrationId}/issue-type-fields?issueTypeId=${selectedIssueType.id}&projectKey=${encodeURIComponent(effectiveProjectKey)}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -244,7 +302,7 @@ export function CreateIssueDialog({
     } finally {
       setLoadingFields(false);
     }
-  }, [selectedIssueType, activeIntegration]);
+  }, [selectedIssueType, activeIntegration, effectiveProjectKey]);
 
   // Fetch fields when issue type changes
   useEffect(() => {
@@ -429,14 +487,9 @@ export function CreateIssueDialog({
           testplanitProjectId: projectId,
         };
 
-        // Use the project's configured external project ID from config
-        const integrationConfig =
-          (activeIntegration.config as Record<string, any>) || {};
-        // projectId is the external project identifier (e.g., "owner/repo" for GitHub)
-        payload.projectId =
-          integrationConfig.externalProjectId ||
-          integrationConfig.externalProjectKey ||
-          "";
+        // Use the effective project key — from selected IntegrationProject when available,
+        // falling back to config fields for backward compatibility
+        payload.projectId = effectiveProjectKey;
         // Use the selected issue type (only for providers that support it)
         if (selectedIssueType) {
           payload.issueType = selectedIssueType.id;
@@ -660,38 +713,50 @@ export function CreateIssueDialog({
             {useIntegration &&
               activeIntegration &&
               !authError &&
-              (() => {
-                const config = activeIntegration.config as Record<string, any>;
-                const hasExternalProject =
-                  config?.externalProjectKey || config?.externalProjectId;
+              !isIntegrationConfigured && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>
+                    {t("issues.integrationNotConfigured")}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {t("issues.integrationNotConfiguredDescription")}
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                if (!hasExternalProject) {
-                  return (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>
-                        {t("issues.integrationNotConfigured")}
-                      </AlertTitle>
-                      <AlertDescription>
-                        {t("issues.integrationNotConfiguredDescription")}
-                      </AlertDescription>
-                    </Alert>
-                  );
-                }
-                return null;
-              })()}
+            {/* Project selector — only shown when 2+ active IntegrationProject records exist (D-09) */}
+            {useIntegration &&
+              activeIntegration &&
+              !authError &&
+              integrationProjects &&
+              integrationProjects.length >= 2 && (
+                <div className="space-y-2">
+                  <Label>{t("issues.projectSelectorLabel")}</Label>
+                  <Select
+                    value={selectedProjectId || ""}
+                    onValueChange={(value) => setSelectedProjectId(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("issues.selectProject")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {integrationProjects.map((ip) => (
+                        <SelectItem key={ip.id} value={ip.id}>
+                          {ip.externalProjectName} ({ip.externalProjectKey})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
             {/* Only show issue type selector for providers that support it (not GitHub) */}
             {useIntegration &&
               activeIntegration &&
               !authError &&
               activeIntegration.integration?.provider !== "GITHUB" &&
-              (() => {
-                const config = activeIntegration.config as Record<string, any>;
-                const hasExternalProject =
-                  config?.externalProjectKey || config?.externalProjectId;
-                return hasExternalProject;
-              })() && (
+              isIntegrationConfigured && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
                     {t("issues.issueType")}
