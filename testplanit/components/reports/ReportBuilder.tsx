@@ -151,6 +151,7 @@ function ReportBuilderContent({
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
   const tRuns = useTranslations("runs");
+  const tIssues = useTranslations("issues");
   const customStyles = getCustomStyles({ theme });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -2164,7 +2165,7 @@ function ReportBuilderContent({
                                   className="w-full justify-between"
                                 >
                                   {healthStatusFilter === "all"
-                                    ? tReports("testCaseHealth.all")
+                                    ? tIssues("filterAll")
                                     : healthStatusFilter === "healthy"
                                       ? tReports(
                                           "testCaseHealth.healthStatus.healthy"
@@ -2193,7 +2194,7 @@ function ReportBuilderContent({
                                       setHealthStatusFilter("all")
                                     }
                                   >
-                                    {tReports("testCaseHealth.all")}
+                                    {tIssues("filterAll")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
@@ -2249,7 +2250,7 @@ function ReportBuilderContent({
                                   className="w-full justify-between"
                                 >
                                   {healthStaleFilter === "all"
-                                    ? tReports("testCaseHealth.all")
+                                    ? tIssues("filterAll")
                                     : healthStaleFilter === "stale"
                                       ? tReports("testCaseHealth.stale")
                                       : tReports("testCaseHealth.notStale")}
@@ -2264,7 +2265,7 @@ function ReportBuilderContent({
                                   <DropdownMenuItem
                                     onClick={() => setHealthStaleFilter("all")}
                                   >
-                                    {tReports("testCaseHealth.all")}
+                                    {tIssues("filterAll")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
