@@ -672,6 +672,24 @@ function ReportBuilderContent({
     }
   }, [reportType]);
 
+  // Initialize column visibility for test case health report
+  React.useEffect(() => {
+    if (matchesReportType(reportType, "test-case-health")) {
+      // Set all columns to visible for this report
+      const visibility: Record<string, boolean> = {
+        project: true,
+        testCaseName: true,
+        healthStatus: true,
+        isStale: true,
+        healthScore: true,
+        lastExecutedAt: true,
+        totalExecutions: true,
+        passRate: true,
+      };
+      setColumnVisibility(visibility);
+    }
+  }, [reportType]);
+
   // Set grouping for issue test coverage report when data loads
   React.useEffect(() => {
     if ((matchesReportType(reportType, "issue-test-coverage")) && allResults && allResults.length > 0) {
