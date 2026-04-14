@@ -5391,6 +5391,7 @@
         "lookbackDaysHelp": "Number of days to analyze execution history (30-365).",
         "includeFilter": "Include",
         "staleFilter": "Staleness",
+        "all": "All",
         "stale": "Stale",
         "notStale": "Not Stale",
         "status": "Health Status",

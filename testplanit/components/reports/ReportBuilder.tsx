@@ -2164,7 +2164,7 @@ function ReportBuilderContent({
                                   className="w-full justify-between"
                                 >
                                   {healthStatusFilter === "all"
-                                    ? tRuns("typeFilter.both")
+                                    ? tReports("testCaseHealth.all")
                                     : healthStatusFilter === "healthy"
                                       ? tReports(
                                           "testCaseHealth.healthStatus.healthy"
@@ -2193,7 +2193,7 @@ function ReportBuilderContent({
                                       setHealthStatusFilter("all")
                                     }
                                   >
-                                    {tRuns("typeFilter.both")}
+                                    {tReports("testCaseHealth.all")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
@@ -2249,7 +2249,7 @@ function ReportBuilderContent({
                                   className="w-full justify-between"
                                 >
                                   {healthStaleFilter === "all"
-                                    ? tRuns("typeFilter.both")
+                                    ? tReports("testCaseHealth.all")
                                     : healthStaleFilter === "stale"
                                       ? tReports("testCaseHealth.stale")
                                       : tReports("testCaseHealth.notStale")}
@@ -2264,7 +2264,7 @@ function ReportBuilderContent({
                                   <DropdownMenuItem
                                     onClick={() => setHealthStaleFilter("all")}
                                   >
-                                    {tRuns("typeFilter.both")}
+                                    {tReports("testCaseHealth.all")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
