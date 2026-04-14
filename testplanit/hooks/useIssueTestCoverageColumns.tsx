@@ -24,10 +24,17 @@ interface IssueTestCoverageRow {
   issueName: string;
   issueTitle: string;
   issueStatus: string | null;
+  issueExternalStatus: string | null;
   issuePriority: string | null;
   issueTypeName: string | null;
+  issueTypeIconUrl: string | null;
+  issueData: any;
+  externalId: string | null;
   externalKey: string | null;
   externalUrl: string | null;
+  lastSyncedAt: string | null;
+  integrationId: number | null;
+  integrationProvider: string | null;
 
   // Test case dimension
   testCaseId: number;
@@ -118,14 +125,19 @@ export function useIssueTestCoverageSummaryColumns(
           return (
             <IssuesDisplay
               id={row.issueId}
-              name={row.externalKey || row.issueName}
-              externalId={row.externalKey}
+              name={row.issueName}
+              externalId={row.externalId}
               externalUrl={row.externalUrl}
               title={row.issueTitle}
-              status={row.issueStatus}
+              status={row.issueExternalStatus}
               size="small"
               projectIds={parentProjectId ? [Number(parentProjectId)] : []}
+              data={row.issueData}
+              integrationProvider={row.integrationProvider ?? undefined}
+              integrationId={row.integrationId ?? undefined}
+              lastSyncedAt={row.lastSyncedAt ? new Date(row.lastSyncedAt) : null}
               issueTypeName={row.issueTypeName}
+              issueTypeIconUrl={row.issueTypeIconUrl}
             />
           );
         },
@@ -140,14 +152,21 @@ export function useIssueTestCoverageSummaryColumns(
           return (
             <IssuesDisplay
               id={firstRow.issueId}
-              name={firstRow.externalKey || firstRow.issueName}
-              externalId={firstRow.externalKey}
+              name={firstRow.issueName}
+              externalId={firstRow.externalId}
               externalUrl={firstRow.externalUrl}
               title={firstRow.issueTitle}
-              status={firstRow.issueStatus}
+              status={firstRow.issueExternalStatus}
               size="small"
               projectIds={parentProjectId ? [Number(parentProjectId)] : []}
+              data={firstRow.issueData}
+              integrationProvider={firstRow.integrationProvider ?? undefined}
+              integrationId={firstRow.integrationId ?? undefined}
+              lastSyncedAt={
+                firstRow.lastSyncedAt ? new Date(firstRow.lastSyncedAt) : null
+              }
               issueTypeName={firstRow.issueTypeName}
+              issueTypeIconUrl={firstRow.issueTypeIconUrl}
             />
           );
         },

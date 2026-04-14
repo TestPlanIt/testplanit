@@ -14,10 +14,17 @@ export interface IssueTestCoverageRow {
   issueName: string;
   issueTitle: string;
   issueStatus: string | null;
+  issueExternalStatus: string | null;
   issuePriority: string | null;
   issueTypeName: string | null;
+  issueTypeIconUrl: string | null;
+  issueData: any;
+  externalId: string | null;
   externalKey: string | null;
   externalUrl: string | null;
+  lastSyncedAt: string | null;
+  integrationId: number | null;
+  integrationProvider: string | null;
 
   // Test case dimension (for grouping)
   testCaseId: number;
@@ -72,10 +79,17 @@ interface RawIssueTestCaseResult {
   issue_name: string;
   issue_title: string;
   issue_status: string | null;
+  issue_external_status: string | null;
   issue_priority: string | null;
   issue_type_name: string | null;
+  issue_type_icon_url: string | null;
+  issue_data: any;
+  external_id: string | null;
   external_key: string | null;
   external_url: string | null;
+  last_synced_at: Date | null;
+  integration_id: number | null;
+  integration_provider: string | null;
   test_case_id: number;
   test_case_name: string;
   test_case_source: string;
@@ -221,10 +235,17 @@ export async function handleIssueTestCoveragePOST(
         i.name as issue_name,
         i.title as issue_title,
         i.status as issue_status,
+        i."externalStatus" as issue_external_status,
         i.priority as issue_priority,
         i."issueTypeName" as issue_type_name,
+        i."issueTypeIconUrl" as issue_type_icon_url,
+        i.data as issue_data,
+        i."externalId" as external_id,
         i."externalKey" as external_key,
         i."externalUrl" as external_url,
+        i."lastSyncedAt" as last_synced_at,
+        i."integrationId" as integration_id,
+        ig.provider as integration_provider,
         rc.id as test_case_id,
         rc.name as test_case_name,
         rc.source::text as test_case_source,
@@ -237,6 +258,7 @@ export async function handleIssueTestCoveragePOST(
         ${projectSelectFields}
       FROM "Issue" i
       ${projectJoin}
+      LEFT JOIN "Integration" ig ON ig.id = i."integrationId"
       INNER JOIN "_IssueToRepositoryCases" irc ON irc."A" = i.id
       INNER JOIN "RepositoryCases" rc ON rc.id = irc."B"
         AND rc."isDeleted" = false
@@ -306,10 +328,17 @@ export async function handleIssueTestCoveragePOST(
         issueName: row.issue_name,
         issueTitle: row.issue_title,
         issueStatus: row.issue_status,
+        issueExternalStatus: row.issue_external_status,
         issuePriority: row.issue_priority,
         issueTypeName: row.issue_type_name,
+        issueTypeIconUrl: row.issue_type_icon_url,
+        issueData: row.issue_data,
+        externalId: row.external_id,
         externalKey: row.external_key,
         externalUrl: row.external_url,
+        lastSyncedAt: row.last_synced_at ? row.last_synced_at.toISOString() : null,
+        integrationId: row.integration_id,
+        integrationProvider: row.integration_provider,
 
         // Test case dimension
         testCaseId: row.test_case_id,
