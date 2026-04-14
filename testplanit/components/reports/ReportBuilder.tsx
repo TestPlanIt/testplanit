@@ -653,6 +653,13 @@ function ReportBuilderContent({
     }
   }, [lastUsedDimensions]);
 
+  // Reset column visibility when report type changes so stale keys from a
+  // previous report type do not hide columns on the new one (DataTable defaults
+  // columns missing from a non-empty visibility map to hidden).
+  React.useEffect(() => {
+    setColumnVisibility({});
+  }, [reportType]);
+
   // Initialize column visibility for issue test coverage report
   React.useEffect(() => {
     if (matchesReportType(reportType, "issue-test-coverage")) {
