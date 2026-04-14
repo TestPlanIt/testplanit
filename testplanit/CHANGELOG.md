@@ -1,3 +1,9 @@
+## [0.21.10](https://github.com/TestPlanIt/testplanit/compare/v0.21.9...v0.21.10) (2026-04-14)
+
+### Enhancements
+
+* **api:** add API token auth fallback to remaining report utility handlers ([#192](https://github.com/TestPlanIt/testplanit/issues/192)) ([d978b21](https://github.com/TestPlanIt/testplanit/commit/d978b212e76dd1f1b3dc9279297048fe892d55cc))
+
 ## [0.21.9](https://github.com/TestPlanIt/testplanit/compare/v0.21.8...v0.21.9) (2026-04-13)
 
 ### Enhancements
