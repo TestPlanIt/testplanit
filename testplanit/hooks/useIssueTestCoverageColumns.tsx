@@ -118,56 +118,70 @@ export function useIssueTestCoverageSummaryColumns(
         enableHiding: false,
         enableGrouping: true, // Enable grouping by issue
         header: () => <span>{t("reports.ui.issueTestCoverage.issue")}</span>,
-        cell: (info) => {
-          const row = info.row.original;
-          const parentProjectId = row.project?.id || projectId;
+        cell: ({ row, column }) => {
+          const original = row.original;
+          const parentProjectId = original.project?.id || projectId;
 
           return (
-            <IssuesDisplay
-              id={row.issueId}
-              name={row.issueName}
-              externalId={row.externalId}
-              externalUrl={row.externalUrl}
-              title={row.issueTitle}
-              status={row.issueExternalStatus}
-              size="small"
-              projectIds={parentProjectId ? [Number(parentProjectId)] : []}
-              data={row.issueData}
-              integrationProvider={row.integrationProvider ?? undefined}
-              integrationId={row.integrationId ?? undefined}
-              lastSyncedAt={row.lastSyncedAt ? new Date(row.lastSyncedAt) : null}
-              issueTypeName={row.issueTypeName}
-              issueTypeIconUrl={row.issueTypeIconUrl}
-            />
+            <div
+              data-row-id={original.issueId}
+              style={{ maxWidth: column.getSize() }}
+              className="overflow-hidden"
+            >
+              <IssuesDisplay
+                id={original.issueId}
+                name={original.issueName}
+                externalId={original.externalId}
+                externalUrl={original.externalUrl}
+                title={original.issueTitle}
+                status={original.issueExternalStatus}
+                size="small"
+                projectIds={parentProjectId ? [Number(parentProjectId)] : []}
+                data={original.issueData}
+                integrationProvider={original.integrationProvider ?? undefined}
+                integrationId={original.integrationId ?? undefined}
+                lastSyncedAt={
+                  original.lastSyncedAt ? new Date(original.lastSyncedAt) : null
+                }
+                issueTypeName={original.issueTypeName}
+                issueTypeIconUrl={original.issueTypeIconUrl}
+              />
+            </div>
           );
         },
         aggregationFn: "unique",
-        aggregatedCell: (info) => {
+        aggregatedCell: ({ row, column }) => {
           // When grouped, show the issue info with count
-          const firstRow = info.row.subRows[0]?.original;
+          const firstRow = row.subRows[0]?.original;
           if (!firstRow) return null;
 
           const parentProjectId = firstRow.project?.id || projectId;
 
           return (
-            <IssuesDisplay
-              id={firstRow.issueId}
-              name={firstRow.issueName}
-              externalId={firstRow.externalId}
-              externalUrl={firstRow.externalUrl}
-              title={firstRow.issueTitle}
-              status={firstRow.issueExternalStatus}
-              size="small"
-              projectIds={parentProjectId ? [Number(parentProjectId)] : []}
-              data={firstRow.issueData}
-              integrationProvider={firstRow.integrationProvider ?? undefined}
-              integrationId={firstRow.integrationId ?? undefined}
-              lastSyncedAt={
-                firstRow.lastSyncedAt ? new Date(firstRow.lastSyncedAt) : null
-              }
-              issueTypeName={firstRow.issueTypeName}
-              issueTypeIconUrl={firstRow.issueTypeIconUrl}
-            />
+            <div
+              data-row-id={firstRow.issueId}
+              style={{ maxWidth: column.getSize() }}
+              className="overflow-hidden"
+            >
+              <IssuesDisplay
+                id={firstRow.issueId}
+                name={firstRow.issueName}
+                externalId={firstRow.externalId}
+                externalUrl={firstRow.externalUrl}
+                title={firstRow.issueTitle}
+                status={firstRow.issueExternalStatus}
+                size="small"
+                projectIds={parentProjectId ? [Number(parentProjectId)] : []}
+                data={firstRow.issueData}
+                integrationProvider={firstRow.integrationProvider ?? undefined}
+                integrationId={firstRow.integrationId ?? undefined}
+                lastSyncedAt={
+                  firstRow.lastSyncedAt ? new Date(firstRow.lastSyncedAt) : null
+                }
+                issueTypeName={firstRow.issueTypeName}
+                issueTypeIconUrl={firstRow.issueTypeIconUrl}
+              />
+            </div>
           );
         },
         enableSorting: true,
