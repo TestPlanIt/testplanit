@@ -304,6 +304,12 @@ function ReportBuilderContent({
   const [healthAutomatedFilter, setHealthAutomatedFilter] = useState<
     "all" | "automated" | "manual"
   >("all");
+  const [healthStatusFilter, setHealthStatusFilter] = useState<
+    "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
+  >("all");
+  const [healthStaleFilter, setHealthStaleFilter] = useState<
+    "all" | "stale" | "notStale"
+  >("all");
 
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
@@ -1169,6 +1175,8 @@ function ReportBuilderContent({
           body.minExecutionsForRate = minExecutionsForRate;
           body.lookbackDays = lookbackDays;
           body.automatedFilter = healthAutomatedFilter;
+          body.healthStatusFilter = healthStatusFilter;
+          body.staleFilter = healthStaleFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
           if (isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) {
             const dimValues = selectedDimensions.map((d) => d.value);
@@ -1452,6 +1460,8 @@ function ReportBuilderContent({
       minExecutionsForRate,
       lookbackDays,
       healthAutomatedFilter,
+      healthStatusFilter,
+      healthStaleFilter,
     ]
   );
 
@@ -2135,6 +2145,140 @@ function ReportBuilderContent({
                                     }
                                   >
                                     {tCommon("fields.automated")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+
+                          {/* Health Status Filter */}
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              {tReports("testCaseHealth.status")}
+                            </label>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-between"
+                                >
+                                  {healthStatusFilter === "all"
+                                    ? tRuns("typeFilter.both")
+                                    : healthStatusFilter === "healthy"
+                                      ? tReports(
+                                          "testCaseHealth.healthStatus.healthy"
+                                        )
+                                      : healthStatusFilter === "always_passing"
+                                        ? tReports(
+                                            "testCaseHealth.healthStatus.alwaysPassing"
+                                          )
+                                        : healthStatusFilter === "always_failing"
+                                          ? tReports(
+                                              "testCaseHealth.healthStatus.alwaysFailing"
+                                            )
+                                          : tReports(
+                                              "testCaseHealth.healthStatus.neverExecuted"
+                                            )}
+                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="w-full"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStatusFilter("all")
+                                    }
+                                  >
+                                    {tRuns("typeFilter.both")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStatusFilter("healthy")
+                                    }
+                                  >
+                                    {tReports(
+                                      "testCaseHealth.healthStatus.healthy"
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStatusFilter("always_passing")
+                                    }
+                                  >
+                                    {tReports(
+                                      "testCaseHealth.healthStatus.alwaysPassing"
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStatusFilter("always_failing")
+                                    }
+                                  >
+                                    {tReports(
+                                      "testCaseHealth.healthStatus.alwaysFailing"
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStatusFilter("never_executed")
+                                    }
+                                  >
+                                    {tReports(
+                                      "testCaseHealth.healthStatus.neverExecuted"
+                                    )}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+
+                          {/* Staleness Filter */}
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              {tReports("testCaseHealth.staleFilter")}
+                            </label>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-between"
+                                >
+                                  {healthStaleFilter === "all"
+                                    ? tRuns("typeFilter.both")
+                                    : healthStaleFilter === "stale"
+                                      ? tReports("testCaseHealth.stale")
+                                      : tReports("testCaseHealth.notStale")}
+                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="w-full"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() => setHealthStaleFilter("all")}
+                                  >
+                                    {tRuns("typeFilter.both")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStaleFilter("stale")
+                                    }
+                                  >
+                                    {tReports("testCaseHealth.stale")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthStaleFilter("notStale")
+                                    }
+                                  >
+                                    {tReports("testCaseHealth.notStale")}
                                   </DropdownMenuItem>
                                 </DropdownMenuGroup>
                               </DropdownMenuContent>
