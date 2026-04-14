@@ -306,11 +306,10 @@ function reportingScenario() {
   const { res: execRes } = postApi(
     "/api/report-builder/test-execution",
     {
+      reportType: "test-execution",
       projectId: PROJECT_ID,
-      dimensions: [{ id: "status" }],
-      metrics: [{ id: "executionCount", aggregation: "sum" }],
-      filters: {},
-      limit: 100,
+      dimensions: ["status"],
+      metrics: ["testResults"],
     },
     { scenarioTag: TAG }
   );
@@ -319,22 +318,12 @@ function reportingScenario() {
   sleep(0.5);
 
   // Cross-project report
-  const projects = findMany(
-    "projects",
-    { where: { isDeleted: false }, select: { id: true }, take: 20 },
-    { scenarioTag: TAG }
-  );
-
-  const projectIds = projects?.data?.map((p) => p.id) || [PROJECT_ID];
-
   const { res: crossRes } = postApi(
     "/api/report-builder/cross-project-test-execution",
     {
-      projectIds,
-      dimensions: [{ id: "project" }],
-      metrics: [{ id: "executionCount", aggregation: "sum" }],
-      filters: {},
-      limit: 500,
+      reportType: "cross-project-test-execution",
+      dimensions: ["project"],
+      metrics: ["testResults"],
     },
     { scenarioTag: TAG }
   );
