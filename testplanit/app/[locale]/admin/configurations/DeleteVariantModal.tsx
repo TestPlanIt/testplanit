@@ -2,7 +2,7 @@
 import { useState } from "react";
 import {
   useUpdateConfigVariants,
-  useUpdateManyConfigurations
+  useUpdateManyConfigurations,
 } from "~/lib/hooks";
 import { Variant } from "./Categories";
 
@@ -16,7 +16,12 @@ import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface DeleteVariantModalProps {

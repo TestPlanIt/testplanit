@@ -85,7 +85,11 @@ test.describe("Access Control - Admin Full Access (ACL-01)", () => {
   }) => {
     // Create a case in the project (requires projectId, rootFolderId, name)
     const rootFolderId = await api.getRootFolderId(projectId);
-    caseId = await api.createTestCase(projectId, rootFolderId, `ACL Case ${Date.now()}`);
+    caseId = await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `ACL Case ${Date.now()}`
+    );
     expect(caseId).toBeGreaterThan(0);
 
     // Read back via findMany
@@ -408,14 +412,11 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
   test.beforeAll(async ({ browser, baseURL, api, request }) => {
     // 1. Create a custom role with no TestCaseRepository edit access
     //    (The seeded 'user' role has canAddEdit: true — we need a different role)
-    const roleResp = await request.post(
-      `${baseURL}/api/model/roles/create`,
-      {
-        data: {
-          data: { name: `ReadOnly-${Date.now()}`, isDefault: false },
-        },
-      }
-    );
+    const roleResp = await request.post(`${baseURL}/api/model/roles/create`, {
+      data: {
+        data: { name: `ReadOnly-${Date.now()}`, isDefault: false },
+      },
+    });
     expect(roleResp.status()).toBe(201);
     const roleResult = await roleResp.json();
     restrictedRoleId = roleResult.data.id;
@@ -508,7 +509,11 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     stateId = stateResult.data.id;
 
     // 7. Create a case via admin for the update test
-    caseId = await api.createTestCase(projectId, rootFolderId, `ACL-05 Case ${Date.now()}`);
+    caseId = await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `ACL-05 Case ${Date.now()}`
+    );
 
     // 8. Sign in as the restricted user in a new browser context.
     //    extraHTTPHeaders ensures API requests are treated as same-origin browser requests.
@@ -702,8 +707,17 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
 
     if (response.status() !== 201) {
       const errorBody = await response.json().catch(() => null);
-      console.error("Step create failed:", response.status(), JSON.stringify(errorBody));
-      console.error("Step create caseId:", caseId, "memberUserId:", memberUserId);
+      console.error(
+        "Step create failed:",
+        response.status(),
+        JSON.stringify(errorBody)
+      );
+      console.error(
+        "Step create caseId:",
+        caseId,
+        "memberUserId:",
+        memberUserId
+      );
       // Log member's auth status
       const whoami = await memberCtx.request.get(`${baseURL}/api/auth/session`);
       console.error("Member session:", await whoami.text());

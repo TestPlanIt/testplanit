@@ -77,7 +77,8 @@ export async function handleReportGET(req: NextRequest, config: ReportConfig) {
   try {
     // Check admin access if required
     // Allow bypass for shared reports with special internal header
-    const isSharedReportBypass = req.headers.get("x-shared-report-bypass") === "true";
+    const isSharedReportBypass =
+      req.headers.get("x-shared-report-bypass") === "true";
     if (config.requiresAdmin && !isSharedReportBypass) {
       const session = await getServerSession(authOptions);
       const auth = await authenticateRequest(req, session);
@@ -139,7 +140,8 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
   try {
     // Check admin access if required
     // Allow bypass for shared reports with special internal header
-    const isSharedReportBypass = req.headers.get("x-shared-report-bypass") === "true";
+    const isSharedReportBypass =
+      req.headers.get("x-shared-report-bypass") === "true";
     if (config.requiresAdmin && !isSharedReportBypass) {
       const session = await getServerSession(authOptions);
       const auth = await authenticateRequest(req, session);
@@ -873,14 +875,21 @@ async function handleProjectSpecificAggregation({
         const numComparison = (aVal - bVal) * multiplier;
 
         // If values are equal, use date as secondary sort for stable sorting
-        if (numComparison === 0 && dimensions.includes("date") && sortColumn !== "date") {
+        if (
+          numComparison === 0 &&
+          dimensions.includes("date") &&
+          sortColumn !== "date"
+        ) {
           const dateA = a.date as DimensionDisplayValue | undefined;
           const dateB = b.date as DimensionDisplayValue | undefined;
           const dateAValue = dateA?.executedAt || dateA?.createdAt;
           const dateBValue = dateB?.executedAt || dateB?.createdAt;
 
           if (dateAValue && dateBValue) {
-            return new Date(dateAValue as string).getTime() - new Date(dateBValue as string).getTime();
+            return (
+              new Date(dateAValue as string).getTime() -
+              new Date(dateBValue as string).getTime()
+            );
           }
         }
 
@@ -888,17 +897,25 @@ async function handleProjectSpecificAggregation({
       }
 
       // Handle strings
-      const stringComparison = String(aVal).localeCompare(String(bVal)) * multiplier;
+      const stringComparison =
+        String(aVal).localeCompare(String(bVal)) * multiplier;
 
       // If values are equal, use date as secondary sort for stable sorting
-      if (stringComparison === 0 && dimensions.includes("date") && sortColumn !== "date") {
+      if (
+        stringComparison === 0 &&
+        dimensions.includes("date") &&
+        sortColumn !== "date"
+      ) {
         const dateA = a.date as DimensionDisplayValue | undefined;
         const dateB = b.date as DimensionDisplayValue | undefined;
         const dateAValue = dateA?.executedAt || dateA?.createdAt;
         const dateBValue = dateB?.executedAt || dateB?.createdAt;
 
         if (dateAValue && dateBValue) {
-          return new Date(dateAValue as string).getTime() - new Date(dateBValue as string).getTime();
+          return (
+            new Date(dateAValue as string).getTime() -
+            new Date(dateBValue as string).getTime()
+          );
         }
       }
 

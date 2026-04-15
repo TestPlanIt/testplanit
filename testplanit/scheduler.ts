@@ -1,8 +1,16 @@
 import { getAllTenantIds, isMultiTenantMode } from "./lib/multiTenantPrisma";
-import { FORECAST_QUEUE_NAME, getForecastQueue, getNotificationQueue, getRepoCacheQueue, NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME } from "./lib/queues";
+import {
+  FORECAST_QUEUE_NAME,
+  getForecastQueue,
+  getNotificationQueue,
+  getRepoCacheQueue,
+  NOTIFICATION_QUEUE_NAME,
+  REPO_CACHE_QUEUE_NAME,
+} from "./lib/queues";
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
-  JOB_MILESTONE_DUE_NOTIFICATIONS, JOB_UPDATE_ALL_CASES
+  JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_UPDATE_ALL_CASES,
 } from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
 import { JOB_REFRESH_EXPIRED_CACHES } from "./workers/repoCacheWorker";
@@ -31,7 +39,9 @@ async function scheduleJobs() {
     const tenantIds = multiTenant ? getAllTenantIds() : [undefined];
 
     if (multiTenant) {
-      console.log(`Multi-tenant mode enabled. Scheduling jobs for ${tenantIds.length} tenants.`);
+      console.log(
+        `Multi-tenant mode enabled. Scheduling jobs for ${tenantIds.length} tenants.`
+      );
     }
 
     // Upsert forecast job schedulers for each tenant (or single job if not multi-tenant).

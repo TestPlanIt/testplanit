@@ -3,7 +3,7 @@ import { handleAutomationTrendsPOST } from "~/utils/automationTrendsUtils";
 import { handleReportGET } from "~/utils/reportApiUtils";
 import {
   createAutomationTrendsDimensionRegistry,
-  createAutomationTrendsMetricRegistry
+  createAutomationTrendsMetricRegistry,
 } from "~/utils/reportUtils";
 
 const config = {

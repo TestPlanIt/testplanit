@@ -8,11 +8,12 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import type {
   DrillDownRequest,
-  DrillDownResponse
+  DrillDownResponse,
 } from "~/lib/types/reportDrillDown";
 import { authOptions } from "~/server/auth";
 import {
-  getModelForMetric, getQueryBuilderForMetric
+  getModelForMetric,
+  getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
 
 export async function POST(req: NextRequest) {

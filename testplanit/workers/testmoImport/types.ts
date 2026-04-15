@@ -17,7 +17,10 @@ export interface ActivityMessageEntry {
 
 export type ActivityLogEntry = ActivitySummaryEntry | ActivityMessageEntry;
 
-export type EntitySummaryResult = Omit<ActivitySummaryEntry, "type" | "timestamp">;
+export type EntitySummaryResult = Omit<
+  ActivitySummaryEntry,
+  "type" | "timestamp"
+>;
 
 export interface ImportContext {
   activityLog: ActivityLogEntry[];

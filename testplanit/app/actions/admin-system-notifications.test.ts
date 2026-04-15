@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
-import { createSystemNotification, getSystemNotificationHistory } from "./admin-system-notifications";
+import {
+  createSystemNotification,
+  getSystemNotificationHistory,
+} from "./admin-system-notifications";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({
@@ -67,14 +70,12 @@ describe("admin-system-notifications", () => {
         user: { id: "admin1", access: "ADMIN", name: "Admin User" },
       } as any);
 
-      const mockUsers = [
-        { id: "user1" },
-        { id: "user2" },
-        { id: "user3" },
-      ];
+      const mockUsers = [{ id: "user1" }, { id: "user2" }, { id: "user3" }];
 
       vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any);
-      vi.mocked(NotificationService.createNotification).mockResolvedValue(undefined);
+      vi.mocked(NotificationService.createNotification).mockResolvedValue(
+        undefined
+      );
 
       const result = await createSystemNotification({
         title: "System Update",
@@ -118,8 +119,12 @@ describe("admin-system-notifications", () => {
         user: { id: "admin1", access: "ADMIN", name: "Admin User" },
       } as any);
 
-      vi.mocked(prisma.user.findMany).mockResolvedValue([{ id: "user1" }] as any);
-      vi.mocked(NotificationService.createNotification).mockResolvedValue(undefined);
+      vi.mocked(prisma.user.findMany).mockResolvedValue([
+        { id: "user1" },
+      ] as any);
+      vi.mocked(NotificationService.createNotification).mockResolvedValue(
+        undefined
+      );
 
       const richContent = {
         type: "doc",
@@ -192,13 +197,18 @@ describe("admin-system-notifications", () => {
         },
       ];
 
-      vi.mocked(prisma.notification.findMany).mockResolvedValue(mockNotifications as any);
+      vi.mocked(prisma.notification.findMany).mockResolvedValue(
+        mockNotifications as any
+      );
       vi.mocked(prisma.notification.groupBy).mockResolvedValue([
         { title: "Test 1", message: "Message 1", _count: 5 },
         { title: "Test 2", message: "Message 2", _count: 3 },
       ] as any);
 
-      const result = await getSystemNotificationHistory({ page: 1, pageSize: 10 });
+      const result = await getSystemNotificationHistory({
+        page: 1,
+        pageSize: 10,
+      });
 
       expect(result.success).toBe(true);
       expect(result.notifications).toEqual(mockNotifications);
@@ -237,7 +247,10 @@ describe("admin-system-notifications", () => {
         Array(25).fill({ title: "Test", message: "Message", _count: 1 })
       );
 
-      const result = await getSystemNotificationHistory({ page: 2, pageSize: 10 });
+      const result = await getSystemNotificationHistory({
+        page: 2,
+        pageSize: 10,
+      });
 
       expect(result.totalCount).toBe(25);
       expect(result.currentPage).toBe(2);

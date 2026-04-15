@@ -33,7 +33,7 @@ function shouldUseUploadProxy(): boolean {
 type UploadType = "project-icon" | "avatar" | "docimage" | "attachment";
 
 function getUploadType(presignedEndpoint: string): UploadType | null {
-  const normalized = presignedEndpoint.split('?')[0].replace(/\/$/, '');
+  const normalized = presignedEndpoint.split("?")[0].replace(/\/$/, "");
 
   const endpointMap: Record<string, UploadType> = {
     "/api/get-project-icon-url": "project-icon",

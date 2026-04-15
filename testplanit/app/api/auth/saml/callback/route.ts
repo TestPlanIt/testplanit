@@ -1,7 +1,12 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  checkRateLimit, createTempSessionToken, getSecurityHeaders, sanitizeCallbackUrl, validateSAMLTimestamp, verifyState
+  checkRateLimit,
+  createTempSessionToken,
+  getSecurityHeaders,
+  sanitizeCallbackUrl,
+  validateSAMLTimestamp,
+  verifyState,
 } from "~/lib/auth-security";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
@@ -146,21 +151,29 @@ export async function POST(request: NextRequest) {
       const isDomainAllowed = await isEmailDomainAllowed(email);
       if (!isDomainAllowed) {
         return NextResponse.json(
-          { error: "Registration is restricted to approved email domains. Please contact your administrator." },
+          {
+            error:
+              "Registration is restricted to approved email domains. Please contact your administrator.",
+          },
           { status: 403 }
         );
       }
 
       // Get the default role from database
-      const defaultRole = await db.roles.findFirst({
-        where: { isDefault: true, isDeleted: false },
-      }) ?? await db.roles.findFirst({
-        where: { name: "user", isDeleted: false },
-      });
+      const defaultRole =
+        (await db.roles.findFirst({
+          where: { isDefault: true, isDeleted: false },
+        })) ??
+        (await db.roles.findFirst({
+          where: { name: "user", isDeleted: false },
+        }));
 
       if (!defaultRole) {
         return NextResponse.json(
-          { error: "No default role found. Please ensure a default role exists." },
+          {
+            error:
+              "No default role found. Please ensure a default role exists.",
+          },
           { status: 500 }
         );
       }
@@ -201,7 +214,10 @@ export async function POST(request: NextRequest) {
           "sso"
         );
       } catch (error) {
-        console.error("Failed to send SSO user registration notifications:", error);
+        console.error(
+          "Failed to send SSO user registration notifications:",
+          error
+        );
         // Don't fail the SSO process if notifications fail
       }
     } else if (!user) {
@@ -216,7 +232,7 @@ export async function POST(request: NextRequest) {
       if (name && user.name !== name) updates.name = name;
       if (externalId && user.externalId !== externalId)
         updates.externalId = externalId;
-      
+
       // Update authMethod for existing users
       if (user.authMethod === "INTERNAL") {
         updates.authMethod = "BOTH";

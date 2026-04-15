@@ -4,18 +4,19 @@ test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
 
 test.describe("Tags CRUD", () => {
-  test("should create a tag and read it back", async ({ api, request, baseURL }) => {
+  test("should create a tag and read it back", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
     const tagName = `API Tag ${Date.now()}-1`;
     const tagId = await api.createTag(tagName);
 
-    const response = await request.get(
-      `${baseURL}/api/model/tags/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: tagId } }),
-        },
-      }
-    );
+    const response = await request.get(`${baseURL}/api/model/tags/findFirst`, {
+      params: {
+        q: JSON.stringify({ where: { id: tagId } }),
+      },
+    });
 
     expect(response.ok()).toBe(true);
     const result = await response.json();
@@ -60,27 +61,34 @@ test.describe("Tags CRUD", () => {
 
     await api.deleteTag(tagId);
 
-    const response = await request.get(
-      `${baseURL}/api/model/tags/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: tagId } }),
-        },
-      }
-    );
+    const response = await request.get(`${baseURL}/api/model/tags/findFirst`, {
+      params: {
+        q: JSON.stringify({ where: { id: tagId } }),
+      },
+    });
 
     expect(response.ok()).toBe(true);
     const result = await response.json();
     expect(result.data.isDeleted).toBe(true);
   });
 
-  test("should link a tag to a repository case", async ({ api, request, baseURL }) => {
+  test("should link a tag to a repository case", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
     const tagName = `API Tag ${Date.now()}-link`;
 
     // Create a fresh project with proper setup
-    const projectId = await api.createProject(`API Tag Link Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Tag Link Test Project ${Date.now()}`
+    );
     const folderId = await api.getRootFolderId(projectId);
-    const caseId = await api.createTestCase(projectId, folderId, `Test Case ${Date.now()}`);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Test Case ${Date.now()}`
+    );
     const tagId = await api.createTag(tagName);
 
     // Link tag to case
@@ -116,33 +124,42 @@ test.describe("Tags CRUD", () => {
     expect(readResponse.ok()).toBe(true);
     const result = await readResponse.json();
     expect(result.data.tags).toBeDefined();
-    const linkedTag = result.data.tags.find((t: { id: number }) => t.id === tagId);
+    const linkedTag = result.data.tags.find(
+      (t: { id: number }) => t.id === tagId
+    );
     expect(linkedTag).toBeDefined();
   });
 
-  test("should unlink a tag from a repository case", async ({ api, request, baseURL }) => {
+  test("should unlink a tag from a repository case", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
     const tagName = `API Tag ${Date.now()}-unlink`;
 
     // Create a fresh project with proper setup
-    const projectId = await api.createProject(`API Tag Unlink Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Tag Unlink Test Project ${Date.now()}`
+    );
     const folderId = await api.getRootFolderId(projectId);
-    const caseId = await api.createTestCase(projectId, folderId, `Test Case ${Date.now()}`);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Test Case ${Date.now()}`
+    );
     const tagId = await api.createTag(tagName);
 
     // Link tag to case first
-    await request.patch(
-      `${baseURL}/api/model/repositoryCases/update`,
-      {
+    await request.patch(`${baseURL}/api/model/repositoryCases/update`, {
+      data: {
+        where: { id: caseId },
         data: {
-          where: { id: caseId },
-          data: {
-            tags: {
-              connect: [{ id: tagId }],
-            },
+          tags: {
+            connect: [{ id: tagId }],
           },
         },
-      }
-    );
+      },
+    });
 
     // Unlink tag from case
     const unlinkResponse = await request.patch(
@@ -176,17 +193,29 @@ test.describe("Tags CRUD", () => {
 
     expect(readResponse.ok()).toBe(true);
     const result = await readResponse.json();
-    const linkedTag = result.data.tags.find((t: { id: number }) => t.id === tagId);
+    const linkedTag = result.data.tags.find(
+      (t: { id: number }) => t.id === tagId
+    );
     expect(linkedTag).toBeUndefined();
   });
 
-  test("should link multiple tags to a case", async ({ api, request, baseURL }) => {
+  test("should link multiple tags to a case", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
     const ts = Date.now();
 
     // Create a fresh project with proper setup
-    const projectId = await api.createProject(`API Multi-Tag Test Project ${ts}`);
+    const projectId = await api.createProject(
+      `API Multi-Tag Test Project ${ts}`
+    );
     const folderId = await api.getRootFolderId(projectId);
-    const caseId = await api.createTestCase(projectId, folderId, `Test Case ${ts}`);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Test Case ${ts}`
+    );
 
     // Create 3 tags
     const tagId1 = await api.createTag(`API Tag ${ts}-multi-1`);

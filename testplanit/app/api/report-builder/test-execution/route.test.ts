@@ -91,7 +91,13 @@ describe("POST /api/report-builder/test-execution", () => {
       Response.json({ results: [], totalCount: 0 })
     );
 
-    await POST(createPOSTRequest({ projectId: 1, dimensions: ["status"], metrics: ["testResults"] }));
+    await POST(
+      createPOSTRequest({
+        projectId: 1,
+        dimensions: ["status"],
+        metrics: ["testResults"],
+      })
+    );
 
     expect(handleReportPOST).toHaveBeenCalledOnce();
     const [, config] = (handleReportPOST as any).mock.calls[0];

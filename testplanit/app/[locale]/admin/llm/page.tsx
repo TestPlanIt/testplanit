@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
@@ -20,11 +21,11 @@ import { CirclePlus, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   useFindManyLlmIntegration,
-  useUpdateLlmIntegration
+  useUpdateLlmIntegration,
 } from "~/lib/hooks/llm-integration";
 import {
   useUpdateLlmProviderConfig,
-  useUpdateManyLlmProviderConfig
+  useUpdateManyLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
 import { AddLlmIntegration } from "./AddLlmIntegration";
@@ -128,43 +129,42 @@ function LlmIntegrationList() {
   );
 
   // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } =
-    useFindManyLlmIntegration(
-      {
-        orderBy: sortConfig
-          ? { [sortConfig.column]: sortConfig.direction }
-          : { name: "asc" },
-        include: {
-          llmProviderConfig: true,
-          projectLlmIntegrations: {
-            where: {
-              isActive: true,
-              project: {
-                isDeleted: false,
-              },
-            },
-            select: { projectId: true },
-          },
-        },
-        where: {
-          AND: [
-            {
-              name: {
-                contains: debouncedSearchString,
-                mode: "insensitive",
-              },
-            },
-            {
+  const { data: totalFilteredIntegrations } = useFindManyLlmIntegration(
+    {
+      orderBy: sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { name: "asc" },
+      include: {
+        llmProviderConfig: true,
+        projectLlmIntegrations: {
+          where: {
+            isActive: true,
+            project: {
               isDeleted: false,
             },
-          ],
+          },
+          select: { projectId: true },
         },
       },
-      {
-        enabled: !!session?.user,
-        refetchOnWindowFocus: true,
-      }
-    );
+      where: {
+        AND: [
+          {
+            name: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            isDeleted: false,
+          },
+        ],
+      },
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   // Update total items in pagination context
   useEffect(() => {

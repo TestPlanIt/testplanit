@@ -4,14 +4,15 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import {
   ColumnSelection,
-  CustomColumnDef
+  CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -20,18 +21,29 @@ import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import {
   useCreateManyMilestoneTypesAssignment,
-  useDeleteManyMilestoneTypesAssignment, useFindManyMilestoneTypes, useFindManyProjects, useUpdateManyMilestoneTypes, useUpdateMilestoneTypes
+  useDeleteManyMilestoneTypesAssignment,
+  useFindManyMilestoneTypes,
+  useFindManyProjects,
+  useUpdateManyMilestoneTypes,
+  useUpdateMilestoneTypes,
 } from "~/lib/hooks";
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
 import { AddMilestoneType } from "./AddMilestoneTypes";
@@ -293,9 +305,7 @@ function MilestoneTypes() {
               <AddMilestonesToProjectsWizard />
               <Button onClick={() => setAddMilestoneTypeOpen(true)}>
                 <CirclePlus className="w-4" />
-                <span className="hidden md:inline">
-                  {t("add.button")}
-                </span>
+                <span className="hidden md:inline">{t("add.button")}</span>
               </Button>
               {addMilestoneTypeOpen && (
                 <AddMilestoneType

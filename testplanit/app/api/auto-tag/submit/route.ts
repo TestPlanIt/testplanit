@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     if (!queue) {
       return NextResponse.json(
         { error: "Background job queue is not available" },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     console.error("Auto-tag submit error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

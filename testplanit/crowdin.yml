@@ -9,5 +9,5 @@ files:
     languages_mapping:
       locale:
         # Map Crowdin locale codes to our locale format
-        es-ES: 'es-ES'
-        fr: 'fr-FR'
+        es-ES: "es-ES"
+        fr: "fr-FR"

@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -16,7 +16,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -29,9 +29,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import {
-  useFindManyPromptConfig, useUpdatePromptConfig
+  useFindManyPromptConfig,
+  useUpdatePromptConfig,
 } from "~/lib/hooks/prompt-config";
-import { useCreatePromptConfigPrompt, useUpdatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
+import {
+  useCreatePromptConfigPrompt,
+  useUpdatePromptConfigPrompt,
+} from "~/lib/hooks/prompt-config-prompt";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
 import type { ExtendedPromptConfig } from "./columns";
 import { PromptFeatureSection } from "./PromptFeatureSection";
@@ -169,7 +173,11 @@ export function EditPromptConfig({
               temperature: promptData.temperature,
               maxOutputTokens: promptData.maxOutputTokens,
               ...(promptData.llmIntegrationId
-                ? { llmIntegration: { connect: { id: promptData.llmIntegrationId } } }
+                ? {
+                    llmIntegration: {
+                      connect: { id: promptData.llmIntegrationId },
+                    },
+                  }
                 : { llmIntegration: { disconnect: true } }),
               modelOverride: promptData.modelOverride || null,
             },
@@ -185,7 +193,11 @@ export function EditPromptConfig({
               temperature: promptData.temperature,
               maxOutputTokens: promptData.maxOutputTokens,
               ...(promptData.llmIntegrationId
-                ? { llmIntegration: { connect: { id: promptData.llmIntegrationId } } }
+                ? {
+                    llmIntegration: {
+                      connect: { id: promptData.llmIntegrationId },
+                    },
+                  }
                 : {}),
               modelOverride: promptData.modelOverride || null,
             },
@@ -305,28 +317,27 @@ export function EditPromptConfig({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium leading-none mb-2">{t("features")}</h3>
+                <h3 className="text-sm font-medium leading-none mb-2">
+                  {t("features")}
+                </h3>
                 <div className="border rounded-lg px-4 pb-4 pt-1">
                   <Accordion type="single" collapsible className="w-full">
                     {featureKeys.map((feature) => (
-                      <PromptFeatureSection key={feature} feature={feature as LlmFeature} />
+                      <PromptFeatureSection
+                        key={feature}
+                        feature={feature as LlmFeature}
+                      />
                     ))}
                   </Accordion>
                 </div>
               </div>
 
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                >
+                <Button type="button" variant="outline" onClick={onClose}>
                   {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {tCommon("actions.save")}
                 </Button>
               </DialogFooter>

@@ -31,10 +31,7 @@ export function isPermissionDeniedSubmitResultError(
 
   const submitError = error as SubmitResultError;
 
-  return (
-    submitError.status === 403 ||
-    submitError.code === "PERMISSION_DENIED"
-  );
+  return submitError.status === 403 || submitError.code === "PERMISSION_DENIED";
 }
 
 export async function submitTestRunResult(
@@ -48,9 +45,11 @@ export async function submitTestRunResult(
     body: JSON.stringify(input),
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: string; code?: string; result?: SubmitTestRunResultResponse["result"] }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: string;
+    code?: string;
+    result?: SubmitTestRunResultResponse["result"];
+  } | null;
 
   if (!response.ok || !payload?.result) {
     const error = new Error(

@@ -76,22 +76,35 @@ export function setup() {
   // Need an existing test run with cases to submit results against
   const cases = findMany(
     "repositoryCases",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 100 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 100,
+    },
     {}
   );
   const statuses = findMany(
     "status",
-    { where: { isDeleted: false, isEnabled: true }, select: { id: true, isSuccess: true } },
+    {
+      where: { isDeleted: false, isEnabled: true },
+      select: { id: true, isSuccess: true },
+    },
     {}
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "RUNS" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "RUNS" },
+      select: { id: true },
+      take: 1,
+    },
     {}
   );
 
-  const defaultStatus = statuses?.data?.find((s) => !s.isSuccess) || statuses?.data?.[0];
-  const passedStatus = statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
+  const defaultStatus =
+    statuses?.data?.find((s) => !s.isSuccess) || statuses?.data?.[0];
+  const passedStatus =
+    statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
   const runStateId = workflows?.data?.[0]?.id;
 
   if (!cases?.data?.length || !defaultStatus || !runStateId) {
@@ -122,7 +135,8 @@ export function setup() {
       repositoryCase: { connect: { id: casesToAdd[i].id } },
       status: { connect: { id: defaultStatus.id } },
     });
-    if (trc?.data?.id) testRunCaseIds.push({ id: trc.data.id, version: trc.data.version || 1 });
+    if (trc?.data?.id)
+      testRunCaseIds.push({ id: trc.data.id, version: trc.data.version || 1 });
   }
 
   return {
@@ -134,7 +148,8 @@ export function setup() {
 
 export function submitIndividual(ctx) {
   if (!ctx.testRunCaseIds.length) return;
-  const trc = ctx.testRunCaseIds[Math.floor(Math.random() * ctx.testRunCaseIds.length)];
+  const trc =
+    ctx.testRunCaseIds[Math.floor(Math.random() * ctx.testRunCaseIds.length)];
 
   const start = Date.now();
   const { res } = postApi(

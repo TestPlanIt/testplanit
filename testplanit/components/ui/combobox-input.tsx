@@ -5,12 +5,12 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-  CommandList
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import * as React from "react";

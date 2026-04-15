@@ -107,13 +107,13 @@ k6 run --env BASE_URL=http://... --env API_TOKEN=tpi_... \
 
 Control the VU ramp pattern via the `PROFILE` env var:
 
-| Profile    | VUs    | Duration | Purpose                              |
-|------------|--------|----------|--------------------------------------|
-| `smoke`    | 5      | 2 min    | Verify scripts work correctly        |
-| `baseline` | 10     | 5 min    | Single-user response time baselines  |
-| `load`     | 50-100 | 16 min   | Normal expected traffic              |
-| `stress`   | 50-500 | 16 min   | Find the breaking point              |
-| `soak`     | 100    | 2+ hrs   | Memory leaks, connection exhaustion  |
+| Profile    | VUs    | Duration | Purpose                             |
+| ---------- | ------ | -------- | ----------------------------------- |
+| `smoke`    | 5      | 2 min    | Verify scripts work correctly       |
+| `baseline` | 10     | 5 min    | Single-user response time baselines |
+| `load`     | 50-100 | 16 min   | Normal expected traffic             |
+| `stress`   | 50-500 | 16 min   | Find the breaking point             |
+| `soak`     | 100    | 2+ hrs   | Memory leaks, connection exhaustion |
 
 ```bash
 # Smoke test first
@@ -131,22 +131,23 @@ k6 run --env PROFILE=stress --env BASE_URL=http://... --env API_TOKEN=tpi_... mi
 
 ## Environment Variables
 
-| Variable                   | Required | Default              | Description                        |
-|----------------------------|----------|----------------------|------------------------------------|
-| `BASE_URL`                 | Yes      | `http://localhost:3000` | TestPlanIt instance URL         |
-| `API_TOKEN`                | Yes      | —                    | API token (`tpi_...`)              |
-| `PROJECT_ID`               | No       | `1`                  | Project ID for single-project tests|
-| `PROFILE`                  | No       | `smoke`              | Load profile name                  |
-| `SEED_PROJECTS`            | No       | `10`                 | Seeding: number of projects        |
-| `SEED_CASES_PER_PROJECT`   | No       | `500`                | Seeding: cases per project         |
-| `SEED_FOLDERS_PER_PROJECT` | No       | `20`                 | Seeding: folders per project       |
-| `SEED_RUNS_PER_PROJECT`    | No       | `10`                 | Seeding: runs per project          |
+| Variable                   | Required | Default                 | Description                         |
+| -------------------------- | -------- | ----------------------- | ----------------------------------- |
+| `BASE_URL`                 | Yes      | `http://localhost:3000` | TestPlanIt instance URL             |
+| `API_TOKEN`                | Yes      | —                       | API token (`tpi_...`)               |
+| `PROJECT_ID`               | No       | `1`                     | Project ID for single-project tests |
+| `PROFILE`                  | No       | `smoke`                 | Load profile name                   |
+| `SEED_PROJECTS`            | No       | `10`                    | Seeding: number of projects         |
+| `SEED_CASES_PER_PROJECT`   | No       | `500`                   | Seeding: cases per project          |
+| `SEED_FOLDERS_PER_PROJECT` | No       | `20`                    | Seeding: folders per project        |
+| `SEED_RUNS_PER_PROJECT`    | No       | `10`                    | Seeding: runs per project           |
 
 ## Output and Reporting
 
 ### Console Output
 
 k6 prints a summary with key metrics after each run:
+
 - `http_req_duration` — response time percentiles (p50, p90, p95, p99)
 - `http_req_failed` — error rate
 - `http_reqs` — total requests and throughput (req/s)
@@ -192,14 +193,14 @@ load-tests/
 
 ### Key Metrics to Watch
 
-| Metric | Good | Warning | Critical |
-|--------|------|---------|----------|
-| p95 latency (browse) | < 500ms | 500ms-1s | > 1s |
-| p95 latency (search) | < 300ms | 300ms-1s | > 1s |
-| p95 latency (CRUD) | < 1s | 1s-2s | > 2s |
-| p95 latency (reports) | < 3s | 3s-5s | > 5s |
-| Error rate | < 0.1% | 0.1%-1% | > 1% |
-| Throughput | > 100 req/s | 50-100 req/s | < 50 req/s |
+| Metric                | Good        | Warning      | Critical   |
+| --------------------- | ----------- | ------------ | ---------- |
+| p95 latency (browse)  | < 500ms     | 500ms-1s     | > 1s       |
+| p95 latency (search)  | < 300ms     | 300ms-1s     | > 1s       |
+| p95 latency (CRUD)    | < 1s        | 1s-2s        | > 2s       |
+| p95 latency (reports) | < 3s        | 3s-5s        | > 5s       |
+| Error rate            | < 0.1%      | 0.1%-1%      | > 1%       |
+| Throughput            | > 100 req/s | 50-100 req/s | < 50 req/s |
 
 ### Common Bottlenecks
 

@@ -17,8 +17,12 @@ import { getServerSession } from "next-auth";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { GET } from "./route";
 
-const createRequest = (milestoneId: string): [NextRequest, { params: Promise<{ milestoneId: string }> }] => {
-  const req = new NextRequest(`http://localhost/api/milestones/${milestoneId}/descendants`);
+const createRequest = (
+  milestoneId: string
+): [NextRequest, { params: Promise<{ milestoneId: string }> }] => {
+  const req = new NextRequest(
+    `http://localhost/api/milestones/${milestoneId}/descendants`
+  );
   const params = { params: Promise.resolve({ milestoneId }) };
   return [req, params];
 };
@@ -101,7 +105,9 @@ describe("GET /api/milestones/[milestoneId]/descendants", () => {
   describe("Error handling", () => {
     it("returns 500 when service throws", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (getAllDescendantMilestoneIds as any).mockRejectedValue(new Error("DB error"));
+      (getAllDescendantMilestoneIds as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const [req, ctx] = createRequest("1");
       const response = await GET(req, ctx);

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid request", details: parsed.error.flatten() },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const pairs = await service.findSimilarCases(
       { name, tags: tags?.map((t) => ({ name: t })) },
       projectId,
-      tenantId,
+      tenantId
     );
 
     const top3 = pairs.slice(0, 3);
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     // The new case has no id, so DuplicateScanService sets caseAId=0 and caseBId=candidate.id
     // Collect the candidate IDs (caseBId when caseAId is 0)
     const caseIds = top3.map((pair) =>
-      pair.caseAId === 0 ? pair.caseBId : pair.caseAId,
+      pair.caseAId === 0 ? pair.caseBId : pair.caseAId
     );
 
     const caseRecords = await prisma.repositoryCases.findMany({
@@ -83,10 +83,17 @@ export async function POST(request: Request) {
     if (caseId && cases.length > 0) {
       try {
         for (const c of cases) {
-          const [lowId, highId] = [Math.min(caseId, c.id), Math.max(caseId, c.id)];
+          const [lowId, highId] = [
+            Math.min(caseId, c.id),
+            Math.max(caseId, c.id),
+          ];
           await prisma.duplicateScanResult.upsert({
             where: {
-              caseAId_caseBId_scanJobId: { caseAId: lowId, caseBId: highId, scanJobId: "creation-check" },
+              caseAId_caseBId_scanJobId: {
+                caseAId: lowId,
+                caseBId: highId,
+                scanJobId: "creation-check",
+              },
             },
             update: {
               score: c.score,

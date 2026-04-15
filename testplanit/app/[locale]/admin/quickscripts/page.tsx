@@ -8,7 +8,7 @@ import {
   Card,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import QuickScriptTemplates from "./QuickScriptTemplates";
 

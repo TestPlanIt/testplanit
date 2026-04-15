@@ -4,13 +4,13 @@ import TextFromJson from "@/components/TextFromJson";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
@@ -30,7 +30,15 @@ export interface NotificationHistoryItem {
 }
 
 export const getColumns = (
-  userPreferences: { user: { preferences: { dateFormat?: string; timezone?: string; timeFormat?: string } } },
+  userPreferences: {
+    user: {
+      preferences: {
+        dateFormat?: string;
+        timezone?: string;
+        timeFormat?: string;
+      };
+    };
+  },
   t: ReturnType<typeof useTranslations<"admin.notifications">>,
   tCommon: ReturnType<typeof useTranslations<"common">>
 ): ColumnDef<NotificationHistoryItem>[] => [
@@ -176,10 +184,12 @@ export const getColumns = (
     size: 180,
     cell: ({ getValue }) => {
       const date = getValue() as Date | string;
-      const timezone = userPreferences?.user?.preferences?.timezone || "Etc/UTC";
+      const timezone =
+        userPreferences?.user?.preferences?.timezone || "Etc/UTC";
       const dateFormat =
         userPreferences?.user?.preferences?.dateFormat || "MM_DD_YYYY_DASH";
-      const timeFormat = userPreferences?.user?.preferences?.timeFormat || "HH_MM_24";
+      const timeFormat =
+        userPreferences?.user?.preferences?.timeFormat || "HH_MM_24";
       return (
         <div className="whitespace-nowrap text-sm cursor-default">
           <DateFormatter

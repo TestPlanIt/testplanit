@@ -56,7 +56,9 @@ export function PaginationProvider({
     const size = searchParams.get("pageSize");
     if (size === "All") return "All";
     const urlSize = size ? parseInt(size, 10) : null;
-    return urlSize && !isNaN(urlSize) && urlSize > 0 ? urlSize : defaultPageSize;
+    return urlSize && !isNaN(urlSize) && urlSize > 0
+      ? urlSize
+      : defaultPageSize;
   });
 
   const [totalItems, setTotalItems] = useState(0);
@@ -95,7 +97,10 @@ export function PaginationProvider({
       }
     }
 
-    if (urlSize === "All" || (typeof urlSize === "number" && !isNaN(urlSize) && urlSize > 0)) {
+    if (
+      urlSize === "All" ||
+      (typeof urlSize === "number" && !isNaN(urlSize) && urlSize > 0)
+    ) {
       if (urlSize !== lastSetValues.current.size) {
         lastSetValues.current.size = urlSize;
         setPageSize(urlSize);
@@ -112,9 +117,16 @@ export function PaginationProvider({
         session.user.preferences.itemsPerPage.replace("P", ""),
         10
       );
-      if (!isNaN(preferredSize) && preferredSize > 0 && preferredSize !== lastSetValues.current.size) {
+      if (
+        !isNaN(preferredSize) &&
+        preferredSize > 0 &&
+        preferredSize !== lastSetValues.current.size
+      ) {
         hasAppliedPreferences.current = true;
-        lastSetValues.current = { page: lastSetValues.current.page, size: preferredSize };
+        lastSetValues.current = {
+          page: lastSetValues.current.page,
+          size: preferredSize,
+        };
         setPageSize(preferredSize);
       }
     }

@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
@@ -20,7 +21,7 @@ import { CirclePlus, MessageSquareCode } from "lucide-react";
 import { toast } from "sonner";
 import {
   useFindManyPromptConfig,
-  useUpdatePromptConfig
+  useUpdatePromptConfig,
 } from "~/lib/hooks/prompt-config";
 import { AddPromptConfig } from "./AddPromptConfig";
 import { ExtendedPromptConfig, getColumns } from "./columns";
@@ -270,9 +271,7 @@ function PromptConfigList() {
             <div>
               <Button onClick={() => setShowAddDialog(true)}>
                 <CirclePlus className="w-4" />
-                <span className="hidden md:inline">
-                  {t("addPromptConfig")}
-                </span>
+                <span className="hidden md:inline">{t("addPromptConfig")}</span>
               </Button>
             </div>
           </div>

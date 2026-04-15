@@ -17,7 +17,9 @@ export class TestCasePage extends BasePage {
     // Main elements
     this.caseDetail = page.locator('[data-testid="case-detail"]');
     this.editButton = page.getByTestId("edit-test-case-button");
-    this.saveButton = page.locator('button:has-text("Save"), button[type="submit"]').first();
+    this.saveButton = page
+      .locator('button:has-text("Save"), button[type="submit"]')
+      .first();
     this.cancelButton = page.locator('button:has-text("Cancel")').first();
   }
 
@@ -45,7 +47,11 @@ export class TestCasePage extends BasePage {
     await this.editButton.click();
     await this.page.waitForLoadState("networkidle");
     // Wait for TipTap editors to mount in edit mode
-    await this.page.locator(".tiptap").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+    await this.page
+      .locator(".tiptap")
+      .first()
+      .waitFor({ state: "attached", timeout: 10000 })
+      .catch(() => {});
   }
 
   /**
@@ -96,7 +102,9 @@ export class TestCasePage extends BasePage {
    * Expect field to be visible
    */
   async expectFieldVisible(systemName: string): Promise<void> {
-    await expect(this.getFieldValue(systemName)).toBeVisible({ timeout: 10000 });
+    await expect(this.getFieldValue(systemName)).toBeVisible({
+      timeout: 10000,
+    });
   }
 
   /**
@@ -128,7 +136,10 @@ export class TestCasePage extends BasePage {
     if (isDisabled) {
       // Check if it's restricted (has lock icon)
       const fieldLabel = this.getFieldLabel(systemName);
-      const hasLockIcon = await fieldLabel.locator('svg[class*="lock"]').isVisible().catch(() => false);
+      const hasLockIcon = await fieldLabel
+        .locator('svg[class*="lock"]')
+        .isVisible()
+        .catch(() => false);
 
       if (!hasLockIcon) {
         throw new Error(`Field ${systemName} is disabled but not restricted`);
@@ -149,7 +160,7 @@ export class TestCasePage extends BasePage {
    */
   async expectRequiredIndicator(systemName: string): Promise<void> {
     const fieldLabel = this.getFieldLabel(systemName);
-    const asterisk = fieldLabel.locator('svg, sup');
+    const asterisk = fieldLabel.locator("svg, sup");
     await expect(asterisk).toBeVisible({ timeout: 5000 });
   }
 
@@ -157,7 +168,9 @@ export class TestCasePage extends BasePage {
    * Fill a text string field
    */
   async fillTextString(systemName: string, value: string): Promise<void> {
-    const input = this.page.getByTestId(`field-${systemName}-input`).locator('input');
+    const input = this.page
+      .getByTestId(`field-${systemName}-input`)
+      .locator("input");
     await input.fill(value);
   }
 
@@ -165,7 +178,9 @@ export class TestCasePage extends BasePage {
    * Fill a number field
    */
   async fillNumber(systemName: string, value: number): Promise<void> {
-    const input = this.page.getByTestId(`field-${systemName}-input`).locator('input[type="number"]');
+    const input = this.page
+      .getByTestId(`field-${systemName}-input`)
+      .locator('input[type="number"]');
     await input.fill(value.toString());
   }
 
@@ -173,7 +188,9 @@ export class TestCasePage extends BasePage {
    * Toggle a checkbox field
    */
   async toggleCheckbox(systemName: string): Promise<void> {
-    const switchButton = this.page.getByTestId(`field-${systemName}-input`).locator('button[role="switch"]');
+    const switchButton = this.page
+      .getByTestId(`field-${systemName}-input`)
+      .locator('button[role="switch"]');
     await switchButton.click();
   }
 
@@ -198,7 +215,9 @@ export class TestCasePage extends BasePage {
    * Fill a link field
    */
   async fillLink(systemName: string, url: string): Promise<void> {
-    const input = this.page.getByTestId(`field-${systemName}-input`).locator('input[type="url"]');
+    const input = this.page
+      .getByTestId(`field-${systemName}-input`)
+      .locator('input[type="url"]');
     await input.fill(url);
   }
 
@@ -207,21 +226,28 @@ export class TestCasePage extends BasePage {
    */
   async selectDropdown(systemName: string, optionName: string): Promise<void> {
     // Click the select trigger
-    const selectTrigger = this.page.getByTestId(`field-${systemName}-input`).locator('[role="combobox"]');
+    const selectTrigger = this.page
+      .getByTestId(`field-${systemName}-input`)
+      .locator('[role="combobox"]');
     await selectTrigger.click();
 
     // Wait for options to appear
     await this.page.waitForTimeout(500);
 
     // Click the option
-    const option = this.page.locator(`[role="option"]:has-text("${optionName}")`).first();
+    const option = this.page
+      .locator(`[role="option"]:has-text("${optionName}")`)
+      .first();
     await option.click();
   }
 
   /**
    * Select multiple options in a multi-select field
    */
-  async selectMultiple(systemName: string, optionNames: string[]): Promise<void> {
+  async selectMultiple(
+    systemName: string,
+    optionNames: string[]
+  ): Promise<void> {
     const multiSelect = this.page.getByTestId(`field-${systemName}-input`);
 
     for (const optionName of optionNames) {
@@ -230,7 +256,9 @@ export class TestCasePage extends BasePage {
       await this.page.waitForTimeout(300);
 
       // Select the option
-      const option = this.page.locator(`[class*="menu"] >> text="${optionName}"`).first();
+      const option = this.page
+        .locator(`[class*="menu"] >> text="${optionName}"`)
+        .first();
       await option.click();
       await this.page.waitForTimeout(300);
     }
@@ -239,9 +267,15 @@ export class TestCasePage extends BasePage {
   /**
    * Add a step to a Steps field
    */
-  async addStep(systemName: string, _step: string, _expectedResult: string): Promise<void> {
+  async addStep(
+    systemName: string,
+    _step: string,
+    _expectedResult: string
+  ): Promise<void> {
     // Click "Add Step" button
-    const addStepButton = this.page.getByTestId(`field-${systemName}-input`).locator('button:has-text("Add Step")');
+    const addStepButton = this.page
+      .getByTestId(`field-${systemName}-input`)
+      .locator('button:has-text("Add Step")');
     await addStepButton.click();
 
     // Wait for editors to appear
@@ -257,13 +291,16 @@ export class TestCasePage extends BasePage {
    */
   async getFieldDisplayText(systemName: string): Promise<string> {
     const display = this.getFieldDisplay(systemName);
-    return await display.textContent() || "";
+    return (await display.textContent()) || "";
   }
 
   /**
    * Expect field to have specific value displayed
    */
-  async expectFieldValue(systemName: string, expectedValue: string): Promise<void> {
+  async expectFieldValue(
+    systemName: string,
+    expectedValue: string
+  ): Promise<void> {
     const display = this.getFieldDisplay(systemName);
     await expect(display).toContainText(expectedValue, { timeout: 5000 });
   }

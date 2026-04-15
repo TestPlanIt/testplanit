@@ -3,7 +3,10 @@
  * All three platforms expose a compatible /api/v1/ REST API.
  */
 import {
-  GitRepoAdapter, ListFilesResult, RepoFileEntry, TestConnectionResult
+  GitRepoAdapter,
+  ListFilesResult,
+  RepoFileEntry,
+  TestConnectionResult,
 } from "./GitRepoAdapter";
 
 const MAX_FILES = 10000;
@@ -47,9 +50,10 @@ export class GiteaRepoAdapter extends GitRepoAdapter {
       `${this.baseUrl}/api/v1/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/branches/${encodeURIComponent(branch)}`,
       { headers: this.authHeaders }
     );
-    const treeSha: string = branchData.commit?.commit?.tree?.sha
-      ?? branchData.commit?.id
-      ?? branchData.commit?.sha;
+    const treeSha: string =
+      branchData.commit?.commit?.tree?.sha ??
+      branchData.commit?.id ??
+      branchData.commit?.sha;
 
     if (!treeSha) {
       throw new Error("Could not resolve branch to a tree SHA");

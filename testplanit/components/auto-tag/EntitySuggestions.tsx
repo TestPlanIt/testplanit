@@ -83,11 +83,7 @@ export function EntitySuggestions({
             </h4>
             <div className="flex flex-wrap gap-2">
               {entity.currentTags.map((tagName) => (
-                <Badge
-                  key={tagName}
-                  variant="secondary"
-                  className="opacity-50"
-                >
+                <Badge key={tagName} variant="secondary" className="opacity-50">
                   <Tag className="mr-1 h-3 w-3" />
                   {tagName}
                 </Badge>

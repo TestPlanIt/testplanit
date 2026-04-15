@@ -20,7 +20,17 @@ import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateResultFieldValues, useCreateTestRunStepResults, useFindFirstProjects, useFindFirstRepositoryCases, useFindManyStatus, useFindManyTemplateResultAssignment, useFindManyTestRunResults, useUpdateResultFieldValues, useUpdateTestRunResults, useUpdateTestRunStepResults
+  useCreateAttachments,
+  useCreateResultFieldValues,
+  useCreateTestRunStepResults,
+  useFindFirstProjects,
+  useFindFirstRepositoryCases,
+  useFindManyStatus,
+  useFindManyTemplateResultAssignment,
+  useFindManyTestRunResults,
+  useUpdateResultFieldValues,
+  useUpdateTestRunResults,
+  useUpdateTestRunStepResults,
 } from "~/lib/hooks";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -34,7 +44,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +52,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -50,7 +60,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -58,7 +68,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 
 import type { useTranslations as useTranslationsType } from "next-intl";
@@ -275,8 +285,7 @@ export function EditResultModal({
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [, setSelectedStatusColor] =
-    useState<string>("#3b82f6");
+  const [, setSelectedStatusColor] = useState<string>("#3b82f6");
   const [editorKey] = useState<number>(0);
   const [uploadAttachmentsKey] = useState<number>(0);
   const [, setTrackedSeconds] = useState(0);
@@ -304,9 +313,7 @@ export function EditResultModal({
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
   // Fetch Restricted Fields permission (NEW)
-  const {
-    permissions: restrictedFieldsPermissions,
-  } = useProjectPermissions(
+  const { permissions: restrictedFieldsPermissions } = useProjectPermissions(
     projectId,
     ApplicationArea.TestRunResultRestrictedFields
   );
@@ -1460,7 +1467,9 @@ export function EditResultModal({
                         key={editorKey}
                         content={field.value as any}
                         onUpdate={field.onChange}
-                        placeholder={tCommon("actions.resultDetailsPlaceholder")}
+                        placeholder={tCommon(
+                          "actions.resultDetailsPlaceholder"
+                        )}
                         projectId={projectId.toString()}
                       />
                     </div>
@@ -1583,9 +1592,7 @@ export function EditResultModal({
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>
-                        {tCommon("cancel")}
-                      </AlertDialogCancel>
+                      <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

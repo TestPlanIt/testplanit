@@ -69,8 +69,7 @@ export function extractContent(
   } else {
     // Readability extracts the title separately from article.content.
     // Prepend it as <h1> so it appears in Markdown output with ATX heading style.
-    const titleHtml =
-      article.title ? `<h1>${article.title}</h1>` : "";
+    const titleHtml = article.title ? `<h1>${article.title}</h1>` : "";
     contentHtml = titleHtml + article.content;
     extractionMethod = "readability";
   }

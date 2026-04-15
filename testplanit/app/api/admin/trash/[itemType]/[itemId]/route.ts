@@ -7,7 +7,9 @@ import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
 // Helper to check admin authentication (session or API token)
-async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+async function checkAdminAuth(
+  request: NextRequest
+): Promise<{ error?: NextResponse; userId?: string }> {
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
   let userAccess: string | undefined = session?.user?.access ?? undefined;
@@ -42,7 +44,10 @@ async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextRespo
 
   if (userAccess !== "ADMIN") {
     return {
-      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+      error: NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      ),
     };
   }
 
@@ -136,7 +141,10 @@ const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
   LlmIntegration: { model: db.llmIntegration, modelName: "LlmIntegration" },
   Integration: { model: db.integration, modelName: "Integration" },
   PromptConfig: { model: db.promptConfig, modelName: "PromptConfig" },
-  CaseExportTemplate: { model: db.caseExportTemplate, modelName: "CaseExportTemplate" },
+  CaseExportTemplate: {
+    model: db.caseExportTemplate,
+    modelName: "CaseExportTemplate",
+  },
   SharedStepGroup: { model: db.sharedStepGroup, modelName: "SharedStepGroup" },
   // Ensure all models that can be soft-deleted and purged are in this map with the correct structure.
 };
@@ -231,7 +239,10 @@ export async function PATCH(
       action: "UPDATE",
       entityType: modelMapEntry.modelName,
       entityId: String(idForQuery),
-      entityName: (restoredItem as any).name || (restoredItem as any).title || (restoredItem as any).email,
+      entityName:
+        (restoredItem as any).name ||
+        (restoredItem as any).title ||
+        (restoredItem as any).email,
       metadata: {
         operation: "restore_from_trash",
       },
@@ -372,7 +383,10 @@ export async function DELETE(
       action: "DELETE",
       entityType: modelMapEntry.modelName,
       entityId: String(idForQuery),
-      entityName: (itemToPurge as any).name || (itemToPurge as any).title || (itemToPurge as any).email,
+      entityName:
+        (itemToPurge as any).name ||
+        (itemToPurge as any).title ||
+        (itemToPurge as any).email,
       metadata: {
         operation: "permanent_delete",
         purgedFromTrash: true,

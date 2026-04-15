@@ -5,9 +5,7 @@ import UploadAttachments from "./UploadAttachments";
 // Mock next-intl
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn(
-    () =>
-      (key: string, _args?: any) =>
-        key.split(".").pop() ?? key
+    () => (key: string, _args?: any) => key.split(".").pop() ?? key
   ),
 }));
 
@@ -25,7 +23,12 @@ vi.mock("@/components/ui/button", () => ({
       return <>{children}</>;
     }
     return (
-      <button type={type || "button"} onClick={onClick} disabled={disabled} {...props}>
+      <button
+        type={type || "button"}
+        onClick={onClick}
+        disabled={disabled}
+        {...props}
+      >
         {children}
       </button>
     );
@@ -38,7 +41,9 @@ vi.mock("@/components/ui/card", () => ({
       {children}
     </div>
   ),
-  CardHeader: ({ children }: any) => <div data-testid="card-header">{children}</div>,
+  CardHeader: ({ children }: any) => (
+    <div data-testid="card-header">{children}</div>
+  ),
   CardContent: ({ children, ...props }: any) => (
     <div data-testid="card-content" {...props}>
       {children}
@@ -60,7 +65,11 @@ vi.mock("@/components/ui/scroll-area", () => ({
 global.URL.createObjectURL = vi.fn(() => "blob:mock-url");
 global.URL.revokeObjectURL = vi.fn();
 
-const createMockFile = (name: string, size = 1024, type = "image/png"): File => {
+const createMockFile = (
+  name: string,
+  size = 1024,
+  type = "image/png"
+): File => {
   const file = new File(["mock content"], name, { type });
   Object.defineProperty(file, "size", { value: size });
   return file;
@@ -85,31 +94,45 @@ describe("UploadAttachments", () => {
   });
 
   it("renders in compact mode without Card wrapper", () => {
-    render(<UploadAttachments onFileSelect={mockOnFileSelect} compact={true} />);
+    render(
+      <UploadAttachments onFileSelect={mockOnFileSelect} compact={true} />
+    );
     expect(screen.queryByTestId("card")).not.toBeInTheDocument();
   });
 
   it("file input accepts multiple files by default", () => {
     render(<UploadAttachments onFileSelect={mockOnFileSelect} />);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     expect(fileInput.multiple).toBe(true);
   });
 
   it("file input is single when multiple=false", () => {
-    render(<UploadAttachments onFileSelect={mockOnFileSelect} multiple={false} />);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    render(
+      <UploadAttachments onFileSelect={mockOnFileSelect} multiple={false} />
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     expect(fileInput.multiple).toBe(false);
   });
 
   it("file input is disabled when disabled=true", () => {
-    render(<UploadAttachments onFileSelect={mockOnFileSelect} disabled={true} />);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    render(
+      <UploadAttachments onFileSelect={mockOnFileSelect} disabled={true} />
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     expect(fileInput.disabled).toBe(true);
   });
 
   it("calls onFileSelect when files are selected via input", async () => {
     render(<UploadAttachments onFileSelect={mockOnFileSelect} />);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const file = createMockFile("test-file.png");
     Object.defineProperty(fileInput, "files", {
@@ -123,8 +146,12 @@ describe("UploadAttachments", () => {
   });
 
   it("shows selected file names after file selection", async () => {
-    render(<UploadAttachments onFileSelect={mockOnFileSelect} previews={false} />);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    render(
+      <UploadAttachments onFileSelect={mockOnFileSelect} previews={false} />
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const file = createMockFile("my-report.pdf", 2048, "application/pdf");
     Object.defineProperty(fileInput, "files", {
@@ -137,8 +164,12 @@ describe("UploadAttachments", () => {
   });
 
   it("removes file when remove button is clicked", async () => {
-    render(<UploadAttachments onFileSelect={mockOnFileSelect} previews={false} />);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    render(
+      <UploadAttachments onFileSelect={mockOnFileSelect} previews={false} />
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const file = createMockFile("removable.txt", 512, "text/plain");
     Object.defineProperty(fileInput, "files", {
@@ -158,12 +189,11 @@ describe("UploadAttachments", () => {
 
   it("respects accept prop on file input", () => {
     render(
-      <UploadAttachments
-        onFileSelect={mockOnFileSelect}
-        accept="image/*"
-      />
+      <UploadAttachments onFileSelect={mockOnFileSelect} accept="image/*" />
     );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     expect(fileInput.accept).toBe("image/*");
   });
 
@@ -175,7 +205,9 @@ describe("UploadAttachments", () => {
   });
 
   it("shows compact upload label text in compact mode", () => {
-    render(<UploadAttachments onFileSelect={mockOnFileSelect} compact={true} />);
+    render(
+      <UploadAttachments onFileSelect={mockOnFileSelect} compact={true} />
+    );
     // In compact mode, renders a span with text
     const label = document.querySelector("label");
     expect(label).toBeInTheDocument();
@@ -202,7 +234,9 @@ describe("UploadAttachments", () => {
         allowedTypes={[".pdf"]}
       />
     );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const invalidFile = createMockFile("image.png", 1024, "image/png");
     Object.defineProperty(fileInput, "files", {
@@ -221,7 +255,9 @@ describe("UploadAttachments", () => {
         allowedTypes={[".png"]}
       />
     );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const validFile = createMockFile("image.png", 1024, "image/png");
     Object.defineProperty(fileInput, "files", {

@@ -11,10 +11,7 @@
 
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authenticateApiToken,
-  extractBearerToken
-} from "~/lib/api-token-auth";
+import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -71,10 +68,7 @@ export async function POST(request: NextRequest) {
     // Parse and validate testRunId
     const testRunId = parseInt(testRunIdStr, 10);
     if (isNaN(testRunId) || testRunId <= 0) {
-      return NextResponse.json(
-        { error: "Invalid testRunId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid testRunId" }, { status: 400 });
     }
 
     // Verify the test run exists
@@ -159,7 +153,10 @@ export async function POST(request: NextRequest) {
           url: objectUrl,
         });
       } catch (err) {
-        console.error(`[Test Run Attachments] Error uploading ${fileName}:`, err);
+        console.error(
+          `[Test Run Attachments] Error uploading ${fileName}:`,
+          err
+        );
         results.push({
           fileName,
           success: false,

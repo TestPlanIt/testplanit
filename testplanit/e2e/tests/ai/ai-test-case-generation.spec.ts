@@ -24,15 +24,13 @@ test.describe("AI Test Case Generation Wizard", () => {
     await page.waitForLoadState("networkidle");
 
     // Click the folder so the right panel header renders
-    const folderNode = page
-      .locator('[data-testid^="folder-node-"]')
-      .first();
+    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    await expect(
-      page.locator('[data-testid="repository-layout"]')
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="repository-layout"]')).toBeVisible(
+      { timeout: 10000 }
+    );
 
     await expect(
       page.locator('[data-testid="repository-right-panel-header"]')
@@ -40,7 +38,7 @@ test.describe("AI Test Case Generation Wizard", () => {
 
     // With LLM integration configured, the Sparkles wizard trigger must be visible
     const wizardTrigger = page
-      .locator('button:has(svg.lucide-sparkles)')
+      .locator("button:has(svg.lucide-sparkles)")
       .first();
     await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
 
@@ -70,9 +68,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    const folderNode = page
-      .locator('[data-testid^="folder-node-"]')
-      .first();
+    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
@@ -81,7 +77,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     ).toBeVisible({ timeout: 10000 });
 
     const wizardTrigger = page
-      .locator('button:has(svg.lucide-sparkles)')
+      .locator("button:has(svg.lucide-sparkles)")
       .first();
     await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
     await wizardTrigger.click();
@@ -94,7 +90,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     await expect(infoAlert).toBeVisible({ timeout: 5000 });
 
     // Verify the alert contains an Info icon
-    const infoIcon = dialog.locator('svg.lucide-info').first();
+    const infoIcon = dialog.locator("svg.lucide-info").first();
     await expect(infoIcon).toBeVisible({ timeout: 5000 });
   });
 
@@ -147,9 +143,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    const folderNode = page
-      .locator('[data-testid^="folder-node-"]')
-      .first();
+    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
@@ -158,7 +152,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     ).toBeVisible({ timeout: 10000 });
 
     const wizardTrigger = page
-      .locator('button:has(svg.lucide-sparkles)')
+      .locator("button:has(svg.lucide-sparkles)")
       .first();
     await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
     await wizardTrigger.click();
@@ -197,9 +191,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    const folderNode = page
-      .locator('[data-testid^="folder-node-"]')
-      .first();
+    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
@@ -208,7 +200,7 @@ test.describe("AI Test Case Generation Wizard", () => {
     ).toBeVisible({ timeout: 10000 });
 
     const wizardTrigger = page
-      .locator('button:has(svg.lucide-sparkles)')
+      .locator("button:has(svg.lucide-sparkles)")
       .first();
     await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
     await wizardTrigger.click();
@@ -217,6 +209,8 @@ test.describe("AI Test Case Generation Wizard", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Dialog is already confirmed visible above, verify it has content (wizard tabs)
-    await expect(dialog.locator('[role="tab"], [role="tabpanel"], form').first()).toBeVisible({ timeout: 5000 });
+    await expect(
+      dialog.locator('[role="tab"], [role="tabpanel"], form').first()
+    ).toBeVisible({ timeout: 5000 });
   });
 });

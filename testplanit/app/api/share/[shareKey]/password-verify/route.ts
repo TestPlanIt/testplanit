@@ -2,7 +2,9 @@ import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
-  checkPasswordAttemptLimit, clearPasswordAttempts, recordPasswordAttempt
+  checkPasswordAttemptLimit,
+  clearPasswordAttempts,
+  recordPasswordAttempt,
 } from "~/lib/rate-limit";
 
 export const dynamic = "force-dynamic";

@@ -2,8 +2,19 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // Use vi.hoisted() for stable mock references to prevent infinite useEffect re-renders
-const { mockStandardColumns, mockAutomationTrendsColumns, mockFlakyTestsColumns, mockTestCaseHealthColumns, mockIssueTestCoverageColumns } = vi.hoisted(() => {
-  const col = (id: string) => ({ id, accessorKey: id, header: id, cell: ({ row }: any) => row.getValue(id) ?? "" });
+const {
+  mockStandardColumns,
+  mockAutomationTrendsColumns,
+  mockFlakyTestsColumns,
+  mockTestCaseHealthColumns,
+  mockIssueTestCoverageColumns,
+} = vi.hoisted(() => {
+  const col = (id: string) => ({
+    id,
+    accessorKey: id,
+    header: id,
+    cell: ({ row }: any) => row.getValue(id) ?? "",
+  });
   return {
     mockStandardColumns: [col("name"), col("value")],
     mockAutomationTrendsColumns: [col("date"), col("automated")],
@@ -46,7 +57,9 @@ vi.mock("~/components/tables/DataTable", () => ({
       {data.map((row, i) => (
         <div key={i} data-testid="data-table-row">
           {columns.map((col: any) => (
-            <span key={col.id || col.accessorKey}>{row[col.accessorKey] ?? ""}</span>
+            <span key={col.id || col.accessorKey}>
+              {row[col.accessorKey] ?? ""}
+            </span>
           ))}
         </div>
       ))}
@@ -119,8 +132,17 @@ describe("ReportRenderer", () => {
   });
 
   it("renders 'select dimension and metric' message when no dimensions or metrics", () => {
-    render(<ReportRenderer {...defaultProps} results={[]} dimensions={[]} metrics={[]} />);
-    expect(screen.getByText("selectAtLeastOneDimensionAndMetric")).toBeInTheDocument();
+    render(
+      <ReportRenderer
+        {...defaultProps}
+        results={[]}
+        dimensions={[]}
+        metrics={[]}
+      />
+    );
+    expect(
+      screen.getByText("selectAtLeastOneDimensionAndMetric")
+    ).toBeInTheDocument();
   });
 
   it("renders 'no data matching criteria' when dimensions and metrics provided but no results", () => {
@@ -165,7 +187,12 @@ describe("ReportRenderer", () => {
 
   it("renders with preGeneratedColumns when provided", () => {
     const preGeneratedColumns = [
-      { id: "custom1", accessorKey: "custom1", header: "Custom 1", cell: () => "" },
+      {
+        id: "custom1",
+        accessorKey: "custom1",
+        header: "Custom 1",
+        cell: () => "",
+      },
     ];
     render(
       <ReportRenderer

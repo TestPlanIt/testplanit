@@ -97,13 +97,18 @@ export async function getUserEffectiveProjectAccess(
       },
     });
 
-    if (groupPermission && groupPermission.accessType !== ProjectAccessType.NO_ACCESS) {
+    if (
+      groupPermission &&
+      groupPermission.accessType !== ProjectAccessType.NO_ACCESS
+    ) {
       let effectiveRoleId: number | null = null;
 
       if (groupPermission.accessType === ProjectAccessType.GLOBAL_ROLE) {
         // Use user's global role
         effectiveRoleId = user.roleId;
-      } else if (groupPermission.accessType === ProjectAccessType.SPECIFIC_ROLE) {
+      } else if (
+        groupPermission.accessType === ProjectAccessType.SPECIFIC_ROLE
+      ) {
         // Use the group's specific role
         effectiveRoleId = groupPermission.roleId;
       }
@@ -232,7 +237,10 @@ export async function getBatchUserEffectiveProjectAccess(
     });
 
     // Build a map of userId -> group permission
-    const groupPermissionMap = new Map<string, { accessType: ProjectAccessType; roleId: number | null }>();
+    const groupPermissionMap = new Map<
+      string,
+      { accessType: ProjectAccessType; roleId: number | null }
+    >();
     for (const groupPerm of groupPermissions) {
       for (const assignment of groupPerm.group.assignedUsers) {
         // Only set if not already set (first group permission wins)
@@ -283,14 +291,19 @@ export async function getBatchUserEffectiveProjectAccess(
           effectiveAccessType: permission.accessType,
           effectiveRoleId: effectiveRoleId,
         });
-      } else if (groupPermission && groupPermission.accessType !== ProjectAccessType.NO_ACCESS) {
+      } else if (
+        groupPermission &&
+        groupPermission.accessType !== ProjectAccessType.NO_ACCESS
+      ) {
         // User has group permission
         let effectiveRoleId: number | null = null;
 
         if (groupPermission.accessType === ProjectAccessType.GLOBAL_ROLE) {
           // Use user's global role
           effectiveRoleId = user.roleId;
-        } else if (groupPermission.accessType === ProjectAccessType.SPECIFIC_ROLE) {
+        } else if (
+          groupPermission.accessType === ProjectAccessType.SPECIFIC_ROLE
+        ) {
           // Use the group's specific role
           effectiveRoleId = groupPermission.roleId;
         }

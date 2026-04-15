@@ -42,7 +42,9 @@ async function main() {
   console.log(
     `Enqueued budget check job ${job.id} for integration ${integrationId}`
   );
-  console.log("The budget alert worker will pick this up and check thresholds.");
+  console.log(
+    "The budget alert worker will pick this up and check thresholds."
+  );
 
   await queue.close();
   process.exit(0);

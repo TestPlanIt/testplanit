@@ -15,7 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import { CirclePlus, GitBranch, Trash2 } from "lucide-react";
@@ -32,11 +32,12 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
   useFindManyCodeRepository,
-  useUpdateCodeRepository
+  useUpdateCodeRepository,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { CodeRepositoryRow, getColumns } from "./columns";
@@ -364,9 +365,7 @@ function CodeRepositoryList() {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 py-16 text-center">
               <GitBranch className="h-12 w-12 text-muted-foreground/40" />
               <div>
-                <p className="text-lg font-medium">
-                  {t("noRepos.title")}
-                </p>
+                <p className="text-lg font-medium">{t("noRepos.title")}</p>
                 <p className="mt-1 text-sm text-muted-foreground max-w-sm">
                   {t("noRepos.description")}
                 </p>

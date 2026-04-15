@@ -19,7 +19,7 @@ export class UnifiedSearchPage extends BasePage {
   }
 
   private get noResultsMessage(): Locator {
-    return this.searchDialog.locator('text=/no results/i');
+    return this.searchDialog.locator("text=/no results/i");
   }
 
   /**
@@ -91,7 +91,9 @@ export class UnifiedSearchPage extends BasePage {
       .locator("..")
       .locator("..");
 
-    const highlights = resultCard.locator('.search-highlight, mark[class*="search-highlight"]');
+    const highlights = resultCard.locator(
+      '.search-highlight, mark[class*="search-highlight"]'
+    );
     const count = await highlights.count();
     return count > 0;
   }
@@ -105,7 +107,9 @@ export class UnifiedSearchPage extends BasePage {
       .locator("..")
       .locator("..");
 
-    const highlights = resultCard.locator('.search-highlight, mark[class*="search-highlight"]');
+    const highlights = resultCard.locator(
+      '.search-highlight, mark[class*="search-highlight"]'
+    );
     const count = await highlights.count();
     const texts: string[] = [];
 
@@ -128,7 +132,9 @@ export class UnifiedSearchPage extends BasePage {
       .locator("..")
       .locator("..");
 
-    const yellowBackground = resultCard.locator('.bg-yellow-50, [class*="bg-yellow-50"]');
+    const yellowBackground = resultCard.locator(
+      '.bg-yellow-50, [class*="bg-yellow-50"]'
+    );
     const count = await yellowBackground.count();
     return count > 0;
   }
@@ -174,7 +180,8 @@ export class UnifiedSearchPage extends BasePage {
    */
   async selectEntityType(entityType: string): Promise<void> {
     const entitySelector = this.searchDialog.getByRole("button").filter({
-      hasText: /repository cases|shared steps|test runs|sessions|projects|issues|milestones/i,
+      hasText:
+        /repository cases|shared steps|test runs|sessions|projects|issues|milestones/i,
     });
 
     await entitySelector.click();
@@ -190,7 +197,9 @@ export class UnifiedSearchPage extends BasePage {
    * Toggle "Current project only" filter
    */
   async toggleCurrentProjectOnly(): Promise<void> {
-    const toggle = this.searchDialog.locator('text=/current project only/i').locator("..");
+    const toggle = this.searchDialog
+      .locator("text=/current project only/i")
+      .locator("..");
     await toggle.click();
     await this.page.waitForLoadState("networkidle");
   }
@@ -200,16 +209,21 @@ export class UnifiedSearchPage extends BasePage {
    */
   async openAdvancedFilters(): Promise<void> {
     const filterButton = this.searchDialog.getByRole("button").filter({
-      has: this.page.locator('svg.lucide-funnel'),
+      has: this.page.locator("svg.lucide-funnel"),
     });
     await filterButton.click();
-    await expect(this.page.locator('[data-testid="faceted-filters"]')).toBeVisible();
+    await expect(
+      this.page.locator('[data-testid="faceted-filters"]')
+    ).toBeVisible();
   }
 
   /**
    * Verify that a result contains specific text in its highlights
    */
-  async verifyHighlightContains(resultName: string, expectedText: string): Promise<void> {
+  async verifyHighlightContains(
+    resultName: string,
+    expectedText: string
+  ): Promise<void> {
     const highlights = await this.getHighlightedTexts(resultName);
     const hasExpectedText = highlights.some((text) =>
       text.toLowerCase().includes(expectedText.toLowerCase())

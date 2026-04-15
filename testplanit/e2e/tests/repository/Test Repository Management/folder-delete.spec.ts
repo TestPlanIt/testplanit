@@ -17,7 +17,9 @@ test.describe("Folder Delete", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Delete Empty Folder", async ({ api, page }) => {
@@ -39,7 +41,11 @@ test.describe("Folder Delete", () => {
     await repositoryPage.clickFolderMenuItem("Delete");
 
     // Confirm deletion in dialog
-    const confirmButton = page.locator('[role="alertdialog"] button:has-text("Delete"), button:has-text("Confirm")').first();
+    const confirmButton = page
+      .locator(
+        '[role="alertdialog"] button:has-text("Delete"), button:has-text("Confirm")'
+      )
+      .first();
     await confirmButton.click();
 
     // Wait for deletion to complete
@@ -74,7 +80,9 @@ test.describe("Folder Delete", () => {
 
     // Dialog might mention test cases or items that will be deleted
     // Confirm deletion
-    const confirmButton = dialog.locator('button:has-text("Delete"), button:has-text("Confirm")').first();
+    const confirmButton = dialog
+      .locator('button:has-text("Delete"), button:has-text("Confirm")')
+      .first();
     await confirmButton.click();
 
     // Wait for deletion to complete
@@ -113,7 +121,9 @@ test.describe("Folder Delete", () => {
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Confirm deletion
-    const confirmButton = dialog.locator('button:has-text("Delete"), button:has-text("Confirm")').first();
+    const confirmButton = dialog
+      .locator('button:has-text("Delete"), button:has-text("Confirm")')
+      .first();
     await confirmButton.click();
 
     // Wait for deletion to complete
@@ -147,7 +157,9 @@ test.describe("Folder Delete", () => {
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Cancel deletion
-    const cancelButton = dialog.locator('button:has-text("Cancel"), button:has-text("No")').first();
+    const cancelButton = dialog
+      .locator('button:has-text("Cancel"), button:has-text("No")')
+      .first();
     await cancelButton.click();
 
     // Dialog should close
@@ -157,7 +169,10 @@ test.describe("Folder Delete", () => {
     await repositoryPage.verifyFolderExists(folderName);
   });
 
-  test("Delete Folder Option Requires Delete Permission", async ({ api, page }) => {
+  test("Delete Folder Option Requires Delete Permission", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder
@@ -170,7 +185,10 @@ test.describe("Folder Delete", () => {
     await repositoryPage.openFolderContextMenu(folderId);
 
     // Verify delete option is visible (admin has permissions)
-    const deleteOption = page.locator('[role="menuitem"]').filter({ hasText: "Delete" }).first();
+    const deleteOption = page
+      .locator('[role="menuitem"]')
+      .filter({ hasText: "Delete" })
+      .first();
     await expect(deleteOption).toBeVisible({ timeout: 5000 });
 
     // Close the menu

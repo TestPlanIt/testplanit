@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -42,7 +42,9 @@ export default function TrialExpiredPage() {
               <Link href={websiteUrl}>{t("pricingPlans")}</Link>
             </Button>
             <Button asChild size="lg">
-              <Link href={`mailto:${contactEmail}`}>{tGlobal("Trial.contactSales")}</Link>
+              <Link href={`mailto:${contactEmail}`}>
+                {tGlobal("Trial.contactSales")}
+              </Link>
             </Button>
           </div>
         </CardContent>

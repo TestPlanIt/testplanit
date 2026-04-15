@@ -57,7 +57,8 @@ let tenantConfigs: Map<string, TenantConfig> | null = null;
 /**
  * Path to the tenant config file (can be set via TENANT_CONFIG_FILE env var)
  */
-const TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+const TENANT_CONFIG_FILE =
+  process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
 
 /**
  * Load tenant configurations from file
@@ -68,7 +69,10 @@ function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
   try {
     if (fs.existsSync(filePath)) {
       const fileContent = fs.readFileSync(filePath, "utf-8");
-      const parsed = JSON.parse(fileContent) as Record<string, Omit<TenantConfig, "tenantId">>;
+      const parsed = JSON.parse(fileContent) as Record<
+        string,
+        Omit<TenantConfig, "tenantId">
+      >;
       for (const [tenantId, config] of Object.entries(parsed)) {
         configs.set(tenantId, {
           tenantId,
@@ -78,7 +82,9 @@ function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
           baseUrl: config.baseUrl,
         });
       }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+      console.log(
+        `Loaded ${configs.size} tenant configurations from ${filePath}`
+      );
     }
   } catch (error) {
     console.error(`Failed to load tenant configs from ${filePath}:`, error);
@@ -121,7 +127,10 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
   const configJson = process.env.TENANT_CONFIGS;
   if (configJson) {
     try {
-      const configs = JSON.parse(configJson) as Record<string, Omit<TenantConfig, "tenantId">>;
+      const configs = JSON.parse(configJson) as Record<
+        string,
+        Omit<TenantConfig, "tenantId">
+      >;
       for (const [tenantId, config] of Object.entries(configs)) {
         tenantConfigs.set(tenantId, {
           tenantId,
@@ -131,7 +140,9 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
           baseUrl: config.baseUrl,
         });
       }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+      console.log(
+        `Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`
+      );
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -147,8 +158,10 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
         tenantConfigs.set(tenantId, {
           tenantId,
           databaseUrl: value,
-          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          elasticsearchNode:
+            process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex:
+            process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
           baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`],
         });
       }
@@ -156,7 +169,9 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
   }
 
   if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+    console.warn(
+      "No tenant configurations found. Multi-tenant mode will not work without configurations."
+    );
   }
 
   return tenantConfigs;
@@ -217,9 +232,14 @@ export function getTenantPrismaClient(tenantId: string): PrismaClient {
       return cached.client;
     } else {
       // Credentials changed - disconnect old client and create new one
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      console.log(
+        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+      );
       cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+        console.error(
+          `Error disconnecting stale client for tenant ${tenantId}:`,
+          err
+        );
       });
       tenantClients.delete(tenantId);
     }
@@ -238,7 +258,9 @@ export function getTenantPrismaClient(tenantId: string): PrismaClient {
  * In single-tenant mode, returns the default client
  * In multi-tenant mode, returns tenant-specific client
  */
-export function getPrismaClientForJob(jobData: { tenantId?: string }): PrismaClient {
+export function getPrismaClientForJob(jobData: {
+  tenantId?: string;
+}): PrismaClient {
   if (!isMultiTenantMode()) {
     // Single-tenant mode: use lightweight Prisma client (no ES sync extensions)
     // Import lazily to avoid circular dependencies

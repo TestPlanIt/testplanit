@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   bulkIndexRepositoryCases,
-  deleteRepositoryCase, indexRepositoryCase
+  deleteRepositoryCase,
+  indexRepositoryCase,
 } from "./elasticsearchIndexing";
 import type { RepositoryCaseDocument } from "./elasticsearchService";
 import { getElasticsearchClient } from "./elasticsearchService";
@@ -152,13 +153,13 @@ describe("elasticsearchIndexing", () => {
 
       expect(result).toBe(true);
       expect(mockClient.index).toHaveBeenCalled();
-      
+
       const indexCall = mockClient.index.mock.calls[0][0];
       const searchableContent = indexCall.document.searchableContent;
-      
+
       // Should still contain the name
       expect(searchableContent).toContain("Test Case");
-      
+
       // Should not fail on missing fields
       expect(searchableContent).toBeDefined();
     });
@@ -279,9 +280,15 @@ describe("elasticsearchIndexing", () => {
       expect(mockClient.bulk).toHaveBeenCalledWith({
         operations: expect.arrayContaining([
           { index: { _index: "test-repository-cases", _id: "1" } },
-          expect.objectContaining({ id: 1, searchableContent: expect.any(String) }),
+          expect.objectContaining({
+            id: 1,
+            searchableContent: expect.any(String),
+          }),
           { index: { _index: "test-repository-cases", _id: "2" } },
-          expect.objectContaining({ id: 2, searchableContent: expect.any(String) }),
+          expect.objectContaining({
+            id: 2,
+            searchableContent: expect.any(String),
+          }),
         ]),
         refresh: true,
       });

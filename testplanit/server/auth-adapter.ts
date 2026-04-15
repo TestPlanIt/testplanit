@@ -19,7 +19,9 @@ const ACCOUNT_FIELDS: Record<keyof Prisma.AccountUncheckedCreateInput, true> = {
   session_state: true,
 };
 
-function sanitizeAccountData(account: AdapterAccount): Prisma.AccountUncheckedCreateInput {
+function sanitizeAccountData(
+  account: AdapterAccount
+): Prisma.AccountUncheckedCreateInput {
   const result: Record<string, unknown> = {};
 
   for (const key of Object.keys(ACCOUNT_FIELDS)) {
@@ -50,7 +52,11 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
       }) as unknown as AdapterAccount;
     },
     // Override createVerificationToken to add timing protection
-    async createVerificationToken(data: { identifier: string; expires: Date; token: string }) {
+    async createVerificationToken(data: {
+      identifier: string;
+      expires: Date;
+      token: string;
+    }) {
       // Always create the token (for both existing and non-existing users)
       // This prevents enumeration by making the flow identical
       return baseAdapter.createVerificationToken!(data);
@@ -82,18 +88,23 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
       );
 
       // Get the system default access level from registration settings
-      const registrationSettings = await prisma.registrationSettings.findFirst();
+      const registrationSettings =
+        await prisma.registrationSettings.findFirst();
       const defaultAccess = registrationSettings?.defaultAccess || "USER";
 
       // Get the default role from database
-      const defaultRole = await prisma.roles.findFirst({
-        where: { isDefault: true, isDeleted: false },
-      }) ?? await prisma.roles.findFirst({
-        where: { name: "user", isDeleted: false },
-      });
+      const defaultRole =
+        (await prisma.roles.findFirst({
+          where: { isDefault: true, isDeleted: false },
+        })) ??
+        (await prisma.roles.findFirst({
+          where: { name: "user", isDeleted: false },
+        }));
 
       if (!defaultRole) {
-        throw new Error("No default role found. Please ensure a default role exists.");
+        throw new Error(
+          "No default role found. Please ensure a default role exists."
+        );
       }
 
       // Create user with default preferences
@@ -136,7 +147,10 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
           "sso"
         );
       } catch (error) {
-        console.error("Failed to send OAuth user registration notifications:", error);
+        console.error(
+          "Failed to send OAuth user registration notifications:",
+          error
+        );
         // Don't fail the OAuth process if notifications fail
       }
 

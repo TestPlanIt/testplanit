@@ -62,7 +62,9 @@ vi.mock("@/components/ui/dialog", () => ({
     ) : null,
   DialogContent: ({ children }: any) => <div>{children}</div>,
   DialogHeader: ({ children }: any) => <div>{children}</div>,
-  DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
+  DialogTitle: ({ children }: any) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
   DialogDescription: ({ children }: any) => <p>{children}</p>,
 }));
 
@@ -88,7 +90,12 @@ vi.mock("@/components/ui/form", () => ({
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, type, disabled, ...rest }: any) => (
-    <button type={type || "button"} onClick={onClick} disabled={disabled} {...rest}>
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      disabled={disabled}
+      {...rest}
+    >
       {children}
     </button>
   ),
@@ -118,7 +125,9 @@ vi.mock("./IntegrationConfigForm", () => ({
       </button>
       <button
         data-testid="change-settings"
-        onClick={() => onSettingsChange({ baseUrl: "https://jira.example.com" })}
+        onClick={() =>
+          onSettingsChange({ baseUrl: "https://jira.example.com" })
+        }
       >
         Change Settings
       </button>
@@ -129,10 +138,7 @@ vi.mock("./IntegrationConfigForm", () => ({
 vi.mock("./IntegrationTypeSelector", () => ({
   IntegrationTypeSelector: ({ onSelectType }: any) => (
     <div data-testid="integration-type-selector">
-      <button
-        data-testid="select-jira"
-        onClick={() => onSelectType("JIRA")}
-      >
+      <button data-testid="select-jira" onClick={() => onSelectType("JIRA")}>
         Select JIRA
       </button>
       <button
@@ -174,11 +180,7 @@ describe("IntegrationModal", () => {
 
   it("renders with IntegrationTypeSelector in create mode (no integration prop)", () => {
     render(
-      <IntegrationModal
-        isOpen={true}
-        onClose={vi.fn()}
-        integration={null}
-      />
+      <IntegrationModal isOpen={true} onClose={vi.fn()} integration={null} />
     );
 
     expect(screen.getByTestId("modal")).toBeTruthy();
@@ -187,11 +189,7 @@ describe("IntegrationModal", () => {
 
   it("shows 'Add Integration' title in create mode", () => {
     render(
-      <IntegrationModal
-        isOpen={true}
-        onClose={vi.fn()}
-        integration={null}
-      />
+      <IntegrationModal isOpen={true} onClose={vi.fn()} integration={null} />
     );
 
     const title = screen.getByTestId("dialog-title");
@@ -226,11 +224,7 @@ describe("IntegrationModal", () => {
 
   it("selecting a provider type shows the config form and name input", async () => {
     render(
-      <IntegrationModal
-        isOpen={true}
-        onClose={vi.fn()}
-        integration={null}
-      />
+      <IntegrationModal isOpen={true} onClose={vi.fn()} integration={null} />
     );
 
     // Select JIRA
@@ -273,11 +267,7 @@ describe("IntegrationModal", () => {
 
   it("does not render modal when isOpen=false", () => {
     render(
-      <IntegrationModal
-        isOpen={false}
-        onClose={vi.fn()}
-        integration={null}
-      />
+      <IntegrationModal isOpen={false} onClose={vi.fn()} integration={null} />
     );
 
     expect(screen.queryByTestId("modal")).toBeNull();
@@ -287,11 +277,7 @@ describe("IntegrationModal", () => {
     const onClose = vi.fn();
 
     render(
-      <IntegrationModal
-        isOpen={true}
-        onClose={onClose}
-        integration={null}
-      />
+      <IntegrationModal isOpen={true} onClose={onClose} integration={null} />
     );
 
     // Select provider to show buttons
@@ -308,18 +294,16 @@ describe("IntegrationModal", () => {
 
   it("test connection button triggers fetch to /api/integrations/test-connection", async () => {
     render(
-      <IntegrationModal
-        isOpen={true}
-        onClose={vi.fn()}
-        integration={null}
-      />
+      <IntegrationModal isOpen={true} onClose={vi.fn()} integration={null} />
     );
 
     // Select a provider to show the form with test connection button
     fireEvent.click(screen.getByTestId("select-jira"));
 
     await waitFor(() => {
-      const testBtn = screen.queryByRole("button", { name: /testConnection|test/i });
+      const testBtn = screen.queryByRole("button", {
+        name: /testConnection|test/i,
+      });
       if (testBtn) {
         fireEvent.click(testBtn);
         expect(global.fetch).toHaveBeenCalledWith(

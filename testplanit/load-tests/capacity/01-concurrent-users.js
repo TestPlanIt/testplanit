@@ -49,7 +49,11 @@ export default function concurrentUsers() {
 
 function browseSession() {
   const TAG = "browse";
-  findMany("projects", { select: { id: true, name: true }, take: 50 }, { scenarioTag: TAG });
+  findMany(
+    "projects",
+    { select: { id: true, name: true }, take: 50 },
+    { scenarioTag: TAG }
+  );
   sleep(0.5 + Math.random());
   findMany(
     "repositoryFolders",
@@ -77,13 +81,21 @@ function searchSession() {
 
   postApi(
     "/api/repository-cases/search",
-    { query: q, filters: { projectIds: [PROJECT_ID] }, pagination: { page: 1, size: 25 } },
+    {
+      query: q,
+      filters: { projectIds: [PROJECT_ID] },
+      pagination: { page: 1, size: 25 },
+    },
     { scenarioTag: TAG }
   );
   sleep(0.5 + Math.random());
   postApi(
     "/api/repository-cases/search",
-    { query: q, filters: { projectIds: [PROJECT_ID] }, pagination: { page: 2, size: 25 } },
+    {
+      query: q,
+      filters: { projectIds: [PROJECT_ID] },
+      pagination: { page: 2, size: 25 },
+    },
     { scenarioTag: TAG }
   );
   sleep(1 + Math.random());
@@ -93,7 +105,11 @@ function crudSession() {
   const TAG = "crud";
   const folders = findMany(
     "repositoryFolders",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 5 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 5,
+    },
     { scenarioTag: TAG }
   );
   const folderId = folders?.data?.[0]?.id;
@@ -101,7 +117,11 @@ function crudSession() {
 
   const repos = findMany(
     "repositories",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 1 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 1,
+    },
     { scenarioTag: TAG }
   );
   const templates = findMany(
@@ -111,7 +131,11 @@ function crudSession() {
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "CASES" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "CASES" },
+      select: { id: true },
+      take: 1,
+    },
     { scenarioTag: TAG }
   );
   const repoId = repos?.data?.[0]?.id;

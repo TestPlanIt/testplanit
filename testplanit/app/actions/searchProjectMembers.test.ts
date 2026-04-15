@@ -50,7 +50,12 @@ describe("searchProjectMembers", () => {
   describe("successful queries", () => {
     const mockUsers = [
       { id: "user-1", name: "Alice", email: "alice@test.com", image: null },
-      { id: "user-2", name: "Bob", email: "bob@test.com", image: "/avatar.jpg" },
+      {
+        id: "user-2",
+        name: "Bob",
+        email: "bob@test.com",
+        image: "/avatar.jpg",
+      },
     ];
 
     beforeEach(() => {

@@ -1,11 +1,13 @@
 import { prisma as defaultPrisma } from "../lib/prismaBase";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import {
-  bulkIndexRepositoryCases, deleteRepositoryCase, indexRepositoryCase
+  bulkIndexRepositoryCases,
+  deleteRepositoryCase,
+  indexRepositoryCase,
 } from "./elasticsearchIndexing";
 import {
   createRepositoryCaseIndex,
-  RepositoryCaseDocument
+  RepositoryCaseDocument,
 } from "./elasticsearchService";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
 
@@ -246,7 +248,11 @@ export async function syncRepositoryCaseToElasticsearch(
 export async function syncProjectCasesToElasticsearch(
   projectId: number,
   batchSize: number = 100,
-  progressCallback?: (processed: number, total: number, message: string) => void | Promise<void>,
+  progressCallback?: (
+    processed: number,
+    total: number,
+    message: string
+  ) => void | Promise<void>,
   prismaClient?: PrismaClientType,
   tenantId?: string
 ): Promise<boolean> {
@@ -336,7 +342,9 @@ export async function initializeElasticsearchIndexes(
   try {
     const created = await createRepositoryCaseIndex(prismaClient, tenantId);
     if (created) {
-      console.log(`Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+      console.log(
+        `Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`
+      );
     }
   } catch (error) {
     console.error("Failed to initialize Elasticsearch indexes:", error);

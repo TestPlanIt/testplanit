@@ -66,8 +66,12 @@ export async function POST(
     });
 
     // Audit the password change
-    auditPasswordChange(userId, user.email || session.user.email || "", false).catch(
-      (error) => console.error("[AuditLog] Failed to audit password change:", error)
+    auditPasswordChange(
+      userId,
+      user.email || session.user.email || "",
+      false
+    ).catch((error) =>
+      console.error("[AuditLog] Failed to audit password change:", error)
     );
 
     return NextResponse.json(

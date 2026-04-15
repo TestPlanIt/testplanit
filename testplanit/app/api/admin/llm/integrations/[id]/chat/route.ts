@@ -80,21 +80,27 @@ export async function POST(
     return NextResponse.json({
       success: true,
       response,
-      usage: usage ? {
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
-        totalTokens: usage.totalTokens,
-        inputCost: Number(usage.inputCost),
-        outputCost: Number(usage.outputCost),
-        totalCost: Number(usage.totalCost),
-      } : null,
+      usage: usage
+        ? {
+            promptTokens: usage.promptTokens,
+            completionTokens: usage.completionTokens,
+            totalTokens: usage.totalTokens,
+            inputCost: Number(usage.inputCost),
+            outputCost: Number(usage.outputCost),
+            totalCost: Number(usage.totalCost),
+          }
+        : null,
     });
   } catch (error) {
     console.error("Error in admin chat test:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to process message";
-    return NextResponse.json({
-      success: false,
-      error: errorMessage,
-    }, { status: 500 });
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to process message";
+    return NextResponse.json(
+      {
+        success: false,
+        error: errorMessage,
+      },
+      { status: 500 }
+    );
   }
 }

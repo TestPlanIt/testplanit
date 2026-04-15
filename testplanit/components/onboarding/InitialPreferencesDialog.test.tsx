@@ -3,7 +3,7 @@ import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useFindFirstUserPreferences,
-  useUpdateUserPreferences
+  useUpdateUserPreferences,
 } from "~/lib/hooks";
 import { InitialPreferencesDialog } from "./InitialPreferencesDialog";
 

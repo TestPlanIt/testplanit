@@ -57,9 +57,7 @@ describe("AuditLogDetailModal", () => {
   });
 
   test("renders basic info for a log entry", () => {
-    render(
-      <AuditLogDetailModal log={baseLog} open={true} onClose={vi.fn()} />
-    );
+    render(<AuditLogDetailModal log={baseLog} open={true} onClose={vi.fn()} />);
 
     // Entity type
     expect(screen.getByText("TestCase")).toBeInTheDocument();
@@ -78,9 +76,7 @@ describe("AuditLogDetailModal", () => {
   });
 
   test("renders action badge with CREATE text", () => {
-    render(
-      <AuditLogDetailModal log={baseLog} open={true} onClose={vi.fn()} />
-    );
+    render(<AuditLogDetailModal log={baseLog} open={true} onClose={vi.fn()} />);
 
     // The action badge shows action.replace(/_/g, " ") = "CREATE"
     expect(screen.getByText("CREATE")).toBeInTheDocument();
@@ -123,7 +119,11 @@ describe("AuditLogDetailModal", () => {
     };
 
     render(
-      <AuditLogDetailModal log={logWithMetadata} open={true} onClose={vi.fn()} />
+      <AuditLogDetailModal
+        log={logWithMetadata}
+        open={true}
+        onClose={vi.fn()}
+      />
     );
 
     // Metadata section header
@@ -145,7 +145,9 @@ describe("AuditLogDetailModal", () => {
     );
 
     // Changes section should NOT be present
-    expect(screen.queryByText("admin.auditLogs.changes")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("admin.auditLogs.changes")
+    ).not.toBeInTheDocument();
   });
 
   test("hides changes section when changes is empty object", () => {
@@ -155,11 +157,17 @@ describe("AuditLogDetailModal", () => {
     };
 
     render(
-      <AuditLogDetailModal log={logEmptyChanges} open={true} onClose={vi.fn()} />
+      <AuditLogDetailModal
+        log={logEmptyChanges}
+        open={true}
+        onClose={vi.fn()}
+      />
     );
 
     // Changes section should NOT be present (Object.keys(changes).length === 0)
-    expect(screen.queryByText("admin.auditLogs.changes")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("admin.auditLogs.changes")
+    ).not.toBeInTheDocument();
   });
 
   test("renders project name when project is present", () => {
@@ -180,9 +188,7 @@ describe("AuditLogDetailModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    render(
-      <AuditLogDetailModal log={baseLog} open={true} onClose={onClose} />
-    );
+    render(<AuditLogDetailModal log={baseLog} open={true} onClose={onClose} />);
 
     // Radix Dialog close button (aria-label="Close")
     const closeButton = screen.getByRole("button", { name: /close/i });
@@ -194,9 +200,7 @@ describe("AuditLogDetailModal", () => {
   });
 
   test("renders date formatter for the log timestamp", () => {
-    render(
-      <AuditLogDetailModal log={baseLog} open={true} onClose={vi.fn()} />
-    );
+    render(<AuditLogDetailModal log={baseLog} open={true} onClose={vi.fn()} />);
 
     // DateFormatter should be rendered (mocked to show the date string)
     expect(screen.getByTestId("date-formatter")).toBeInTheDocument();

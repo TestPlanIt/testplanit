@@ -15,13 +15,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "~/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";

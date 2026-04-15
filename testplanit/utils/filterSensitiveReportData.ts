@@ -11,10 +11,7 @@ import { ShareLinkMode } from "@prisma/client";
  * @param mode - Share link mode
  * @returns Filtered report data
  */
-export function filterSensitiveReportData(
-  data: any,
-  mode: ShareLinkMode
-): any {
+export function filterSensitiveReportData(data: any, mode: ShareLinkMode): any {
   // Authenticated users with project access get full data
   if (mode === "AUTHENTICATED") {
     return data;

@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Wand2 } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -4,7 +4,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger
+  SelectTrigger,
 } from "@/components/ui/select";
 import { Ellipsis } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";

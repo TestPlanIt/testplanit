@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const samlResponse = searchParams.get('SAMLResponse');
-    const _relayState = searchParams.get('RelayState');
+    const samlResponse = searchParams.get("SAMLResponse");
+    const _relayState = searchParams.get("RelayState");
 
     if (samlResponse) {
       // Decode and validate the SAML logout response
-      const _decodedResponse = Buffer.from(samlResponse, 'base64').toString('utf-8');
+      const _decodedResponse = Buffer.from(samlResponse, "base64").toString(
+        "utf-8"
+      );
       // SAML logout response received
 
       // In a production environment, you would:
@@ -21,24 +23,28 @@ export async function GET(request: NextRequest) {
     }
 
     // Clear any remaining SAML cookies
-    const response = NextResponse.redirect(new URL('/signin?logout=success', request.url));
-    
+    const response = NextResponse.redirect(
+      new URL("/signin?logout=success", request.url)
+    );
+
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path: '/',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      path: "/",
       maxAge: 0, // Expire immediately
     };
 
-    response.cookies.set('saml-state', '', cookieOptions);
-    response.cookies.set('saml-provider', '', cookieOptions);
-    response.cookies.set('saml-callback-url', '', cookieOptions);
+    response.cookies.set("saml-state", "", cookieOptions);
+    response.cookies.set("saml-provider", "", cookieOptions);
+    response.cookies.set("saml-callback-url", "", cookieOptions);
 
     return response;
   } catch (error) {
-    console.error('SAML logout callback error:', error);
-    return NextResponse.redirect(new URL('/signin?error=logout-callback-failed', request.url));
+    console.error("SAML logout callback error:", error);
+    return NextResponse.redirect(
+      new URL("/signin?error=logout-callback-failed", request.url)
+    );
   }
 }
 
@@ -46,11 +52,13 @@ export async function POST(request: NextRequest) {
   // Handle SAML logout requests initiated by the IdP (Single Logout)
   try {
     const body = await request.text();
-    const samlRequest = new URLSearchParams(body).get('SAMLRequest');
+    const samlRequest = new URLSearchParams(body).get("SAMLRequest");
 
     if (samlRequest) {
       // Decode and process the SAML logout request
-      const _decodedRequest = Buffer.from(samlRequest, 'base64').toString('utf-8');
+      const _decodedRequest = Buffer.from(samlRequest, "base64").toString(
+        "utf-8"
+      );
       // SAML logout request received from IdP
 
       // In a production environment, you would:
@@ -76,9 +84,10 @@ export async function POST(request: NextRequest) {
         </samlp:LogoutResponse>
       `;
 
-      const encodedResponse = Buffer.from(logoutResponse).toString('base64');
-      
-      return new Response(`
+      const encodedResponse = Buffer.from(logoutResponse).toString("base64");
+
+      return new Response(
+        `
         <html>
           <body onload="document.forms[0].submit()">
             <form method="post" action="">
@@ -86,14 +95,22 @@ export async function POST(request: NextRequest) {
             </form>
           </body>
         </html>
-      `, {
-        headers: { 'Content-Type': 'text/html' },
-      });
+      `,
+        {
+          headers: { "Content-Type": "text/html" },
+        }
+      );
     }
 
-    return NextResponse.json({ error: 'Invalid SAML logout request' }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid SAML logout request" },
+      { status: 400 }
+    );
   } catch (error) {
-    console.error('SAML logout request processing error:', error);
-    return NextResponse.json({ error: 'Failed to process logout request' }, { status: 500 });
+    console.error("SAML logout request processing error:", error);
+    return NextResponse.json(
+      { error: "Failed to process logout request" },
+      { status: 500 }
+    );
   }
 }

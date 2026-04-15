@@ -33,10 +33,7 @@ function isPrivateIp(ip: string): boolean {
  * Use this before making any HTTP request to a user-supplied URL
  * (e.g., GitLab self-hosted baseUrl, Azure DevOps organizationUrl).
  */
-export function isSsrfSafe(
-  url: string,
-  allowedHosts?: Set<string>
-): boolean {
+export function isSsrfSafe(url: string, allowedHosts?: Set<string>): boolean {
   try {
     const parsed = new URL(url);
     // Strip brackets from IPv6 addresses (URL.hostname returns "[::1]" for IPv6)

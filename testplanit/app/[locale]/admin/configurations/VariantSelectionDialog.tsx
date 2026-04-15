@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";

@@ -61,17 +61,19 @@ const formatStepContent = (
 // Helper to sanitize text for PDF export by replacing problematic Unicode characters
 const sanitizeTextForPdf = (text: string): string => {
   if (!text) return text;
-  return text
-    // Replace narrow no-break space (U+202F) with regular space
-    .replace(/\u202f/g, " ")
-    // Replace other problematic whitespace characters
-    .replace(/\u00a0/g, " ") // Non-breaking space
-    .replace(/\u2007/g, " ") // Figure space
-    .replace(/\u2008/g, " ") // Punctuation space
-    .replace(/\u2009/g, " ") // Thin space
-    .replace(/\u200a/g, " ") // Hair space
-    .replace(/\u200b/g, "")  // Zero-width space (remove)
-    .replace(/\u2060/g, ""); // Word joiner (remove)
+  return (
+    text
+      // Replace narrow no-break space (U+202F) with regular space
+      .replace(/\u202f/g, " ")
+      // Replace other problematic whitespace characters
+      .replace(/\u00a0/g, " ") // Non-breaking space
+      .replace(/\u2007/g, " ") // Figure space
+      .replace(/\u2008/g, " ") // Punctuation space
+      .replace(/\u2009/g, " ") // Thin space
+      .replace(/\u200a/g, " ") // Hair space
+      .replace(/\u200b/g, "") // Zero-width space (remove)
+      .replace(/\u2060/g, "")
+  ); // Word joiner (remove)
 };
 
 // Image MIME types that can be embedded in PDF
@@ -540,7 +542,9 @@ export function useExportData<
                 textLongFormat: "plainText",
                 // Preserve "embedded" option for PDF, otherwise default to "names"
                 attachmentFormat:
-                  options.attachmentFormat === "embedded" ? "embedded" : "names",
+                  options.attachmentFormat === "embedded"
+                    ? "embedded"
+                    : "names",
                 rowMode: "single", // PDF always uses single row mode
               }
             : options;
@@ -604,7 +608,10 @@ export function useExportData<
               return [{ formatted: formattedBase, rawAttachments }];
             } else {
               // Multi Row Mode
-              const multiRows: { formatted: Record<string, any>; rawAttachments: any[] }[] = [];
+              const multiRows: {
+                formatted: Record<string, any>;
+                rawAttachments: any[];
+              }[] = [];
               if (!activeSteps || activeSteps.length === 0) {
                 multiRows.push({
                   formatted: formatItemData(
@@ -990,7 +997,10 @@ export function useExportData<
                       doc.setFontSize(8);
                       doc.setFont("helvetica", "normal");
                       // Use splitTextToSize to work around jsPDF character spacing issues
-                      const nameLines = doc.splitTextToSize(sanitizeTextForPdf(img.name), contentWidth - 10);
+                      const nameLines = doc.splitTextToSize(
+                        sanitizeTextForPdf(img.name),
+                        contentWidth - 10
+                      );
                       nameLines.forEach((line: string) => {
                         doc.text(line, margin + 5, yPosition);
                         yPosition += 3;
@@ -1004,7 +1014,10 @@ export function useExportData<
                       );
                       doc.setFontSize(8);
                       doc.setFont("helvetica", "normal");
-                      const errorLines = doc.splitTextToSize(sanitizeTextForPdf(`[Failed to embed: ${img.name}]`), contentWidth - 10);
+                      const errorLines = doc.splitTextToSize(
+                        sanitizeTextForPdf(`[Failed to embed: ${img.name}]`),
+                        contentWidth - 10
+                      );
                       errorLines.forEach((line: string) => {
                         doc.text(line, margin + 5, yPosition);
                         yPosition += 3;

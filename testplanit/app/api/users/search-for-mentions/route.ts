@@ -97,11 +97,7 @@ export async function GET(request: NextRequest) {
         access: true,
       },
       take: 10,
-      orderBy: [
-        { isActive: "desc" },
-        { isDeleted: "asc" },
-        { name: "asc" },
-      ],
+      orderBy: [{ isActive: "desc" }, { isDeleted: "asc" }, { name: "asc" }],
     });
 
     // Map users to mention user format and check if they are project members

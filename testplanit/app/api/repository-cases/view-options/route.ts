@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     } = body;
 
     // Use runIds if provided (multi-config), otherwise use single runId
-    const effectiveRunIds = runIds && runIds.length > 0 ? runIds : runId ? [runId] : [];
+    const effectiveRunIds =
+      runIds && runIds.length > 0 ? runIds : runId ? [runId] : [];
 
     if (!projectId || isNaN(projectId)) {
       return NextResponse.json(
@@ -56,21 +57,15 @@ export async function POST(request: Request) {
     });
 
     if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     // Check if user has access to this project
     const accessibleProjects = await getUserAccessibleProjects(session.user.id);
-    const hasAccess = accessibleProjects.some(p => p.projectId === projectId);
+    const hasAccess = accessibleProjects.some((p) => p.projectId === projectId);
 
     if (!hasAccess) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Build the base where clause for repository cases
@@ -98,7 +93,7 @@ export async function POST(request: Request) {
       });
 
       // Keep all IDs for counting (includes duplicates across configs)
-      allTestRunCaseIds = testRunCases.map(trc => trc.repositoryCaseId);
+      allTestRunCaseIds = testRunCases.map((trc) => trc.repositoryCaseId);
 
       // Get unique test case IDs for filtering
       effectiveSelectedTestCases = [...new Set(allTestRunCaseIds)];
@@ -132,7 +127,9 @@ export async function POST(request: Request) {
     // Save baseWhere BEFORE applying dynamic field filters
     // This is used for counting dynamic field options
     // Use JSON parse/stringify for deep copy to avoid reference issues
-    const baseWhereWithoutDynamicFilters = JSON.parse(JSON.stringify(baseWhere));
+    const baseWhereWithoutDynamicFilters = JSON.parse(
+      JSON.stringify(baseWhere)
+    );
 
     // Apply dynamic field filters (custom fields)
     // We need to fetch case IDs that match ALL dynamic field filters
@@ -267,8 +264,14 @@ export async function POST(request: Request) {
         // In run mode, filter by selected test cases from all selected runs
         let result: Array<{ tagId: number; count: bigint }>;
 
-        if (isRunMode && effectiveSelectedTestCases && effectiveSelectedTestCases.length > 0) {
-          result = await prisma.$queryRaw<Array<{ tagId: number; count: bigint }>>`
+        if (
+          isRunMode &&
+          effectiveSelectedTestCases &&
+          effectiveSelectedTestCases.length > 0
+        ) {
+          result = await prisma.$queryRaw<
+            Array<{ tagId: number; count: bigint }>
+          >`
             SELECT rct."B" as "tagId", COUNT(*)::bigint as count
             FROM "public"."_RepositoryCasesToTags" rct
             INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."A"
@@ -281,7 +284,9 @@ export async function POST(request: Request) {
             GROUP BY rct."B"
           `;
         } else {
-          result = await prisma.$queryRaw<Array<{ tagId: number; count: bigint }>>`
+          result = await prisma.$queryRaw<
+            Array<{ tagId: number; count: bigint }>
+          >`
             SELECT rct."B" as "tagId", COUNT(*)::bigint as count
             FROM "public"."_RepositoryCasesToTags" rct
             INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."A"
@@ -294,7 +299,7 @@ export async function POST(request: Request) {
           `;
         }
 
-        return result.map(row => ({
+        return result.map((row) => ({
           tagId: row.tagId,
           count: row.count,
         }));
@@ -305,8 +310,14 @@ export async function POST(request: Request) {
       (async () => {
         let result: Array<{ issueId: number; count: bigint }>;
 
-        if (isRunMode && effectiveSelectedTestCases && effectiveSelectedTestCases.length > 0) {
-          result = await prisma.$queryRaw<Array<{ issueId: number; count: bigint }>>`
+        if (
+          isRunMode &&
+          effectiveSelectedTestCases &&
+          effectiveSelectedTestCases.length > 0
+        ) {
+          result = await prisma.$queryRaw<
+            Array<{ issueId: number; count: bigint }>
+          >`
             SELECT rci."A" as "issueId", COUNT(*)::bigint as count
             FROM "public"."_IssueToRepositoryCases" rci
             INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
@@ -321,7 +332,9 @@ export async function POST(request: Request) {
             GROUP BY rci."A"
           `;
         } else {
-          result = await prisma.$queryRaw<Array<{ issueId: number; count: bigint }>>`
+          result = await prisma.$queryRaw<
+            Array<{ issueId: number; count: bigint }>
+          >`
             SELECT rci."A" as "issueId", COUNT(*)::bigint as count
             FROM "public"."_IssueToRepositoryCases" rci
             INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
@@ -336,7 +349,7 @@ export async function POST(request: Request) {
           `;
         }
 
-        return result.map(row => ({
+        return result.map((row) => ({
           issueId: row.issueId,
           count: row.count,
         }));
@@ -437,83 +450,100 @@ export async function POST(request: Request) {
     ]);
 
     // Fetch template names and state details
-    const [templateDetails, stateDetails, creatorDetails, tagDetails, issueDetails] =
-      await Promise.all([
-        prisma.templates.findMany({
-          where: {
-            id: { in: templates.map((t) => t.templateId) },
-            isDeleted: false,
-          },
-          select: {
-            id: true,
-            templateName: true,
-          },
-        }),
+    const [
+      templateDetails,
+      stateDetails,
+      creatorDetails,
+      tagDetails,
+      issueDetails,
+    ] = await Promise.all([
+      prisma.templates.findMany({
+        where: {
+          id: { in: templates.map((t) => t.templateId) },
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          templateName: true,
+        },
+      }),
 
-        prisma.workflows.findMany({
-          where: {
-            id: { in: states.map((s) => s.stateId) },
-            isDeleted: false,
-          },
-          select: {
-            id: true,
-            name: true,
-            icon: {
-              select: {
-                name: true,
-              },
+      prisma.workflows.findMany({
+        where: {
+          id: { in: states.map((s) => s.stateId) },
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+          icon: {
+            select: {
+              name: true,
             },
-            color: {
-              select: {
-                value: true,
-              },
+          },
+          color: {
+            select: {
+              value: true,
             },
           },
-        }),
+        },
+      }),
 
-        prisma.user.findMany({
-          where: {
-            id: { in: creators.map((c) => c.creatorId) },
-          },
-          select: {
-            id: true,
-            name: true,
-          },
-        }),
+      prisma.user.findMany({
+        where: {
+          id: { in: creators.map((c) => c.creatorId) },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
 
-        tags.length > 0
-          ? prisma.tags.findMany({
-              where: {
-                id: { in: tags.map((t) => t.tagId) },
-                isDeleted: false,
-              },
-              select: {
-                id: true,
-                name: true,
-              },
-            })
-          : Promise.resolve([]),
+      tags.length > 0
+        ? prisma.tags.findMany({
+            where: {
+              id: { in: tags.map((t) => t.tagId) },
+              isDeleted: false,
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          })
+        : Promise.resolve([]),
 
-        issues.length > 0
-          ? prisma.issue.findMany({
-              where: {
-                id: { in: issues.map((i) => i.issueId) },
-                isDeleted: false,
-              },
-              select: {
-                id: true,
-                name: true,
-                title: true,
-              },
-            })
-          : Promise.resolve([]),
-      ]);
+      issues.length > 0
+        ? prisma.issue.findMany({
+            where: {
+              id: { in: issues.map((i) => i.issueId) },
+              isDeleted: false,
+            },
+            select: {
+              id: true,
+              name: true,
+              title: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
     // For multi-config mode, we need to count based on TestRunCases, not unique RepositoryCases
     // Fetch case properties for recounting if in multi-config mode
-    let casePropertiesMap: Map<number, { templateId: number; stateId: number; creatorId: string; automated: boolean }> | null = null;
+    let casePropertiesMap: Map<
+      number,
+      {
+        templateId: number;
+        stateId: number;
+        creatorId: string;
+        automated: boolean;
+      }
+    > | null = null;
 
-    if (isRunMode && allTestRunCaseIds.length > 0 && effectiveRunIds.length > 1) {
+    if (
+      isRunMode &&
+      allTestRunCaseIds.length > 0 &&
+      effectiveRunIds.length > 1
+    ) {
       const caseProperties = await prisma.repositoryCases.findMany({
         where: { id: { in: effectiveSelectedTestCases } },
         select: {
@@ -526,7 +556,15 @@ export async function POST(request: Request) {
       });
 
       casePropertiesMap = new Map(
-        caseProperties.map((c) => [c.id, { templateId: c.templateId, stateId: c.stateId, creatorId: c.creatorId, automated: c.automated }])
+        caseProperties.map((c) => [
+          c.id,
+          {
+            templateId: c.templateId,
+            stateId: c.stateId,
+            creatorId: c.creatorId,
+            automated: c.automated,
+          },
+        ])
       );
     }
 
@@ -539,18 +577,23 @@ export async function POST(request: Request) {
       allTestRunCaseIds.forEach((caseId) => {
         const props = casePropertiesMap!.get(caseId);
         if (props) {
-          templateCountMap.set(props.templateId, (templateCountMap.get(props.templateId) || 0) + 1);
+          templateCountMap.set(
+            props.templateId,
+            (templateCountMap.get(props.templateId) || 0) + 1
+          );
         }
       });
 
-      templatesWithCounts = Array.from(templateCountMap.entries()).map(([templateId, count]) => {
-        const template = templateDetails.find((td) => td.id === templateId);
-        return {
-          id: templateId,
-          name: template?.templateName || "Unknown",
-          count,
-        };
-      });
+      templatesWithCounts = Array.from(templateCountMap.entries()).map(
+        ([templateId, count]) => {
+          const template = templateDetails.find((td) => td.id === templateId);
+          return {
+            id: templateId,
+            name: template?.templateName || "Unknown",
+            count,
+          };
+        }
+      );
     } else {
       // Single config or non-run mode: use original groupBy counts
       templatesWithCounts = templates.map((t) => {
@@ -564,7 +607,13 @@ export async function POST(request: Request) {
     }
 
     // Map states with counts
-    let statesWithCounts: Array<{ id: number; name: string; icon?: any; iconColor?: any; count: number }>;
+    let statesWithCounts: Array<{
+      id: number;
+      name: string;
+      icon?: any;
+      iconColor?: any;
+      count: number;
+    }>;
 
     if (casePropertiesMap && allTestRunCaseIds.length > 0) {
       // Multi-config: count based on all TestRunCases
@@ -572,20 +621,25 @@ export async function POST(request: Request) {
       allTestRunCaseIds.forEach((caseId) => {
         const props = casePropertiesMap!.get(caseId);
         if (props) {
-          stateCountMap.set(props.stateId, (stateCountMap.get(props.stateId) || 0) + 1);
+          stateCountMap.set(
+            props.stateId,
+            (stateCountMap.get(props.stateId) || 0) + 1
+          );
         }
       });
 
-      statesWithCounts = Array.from(stateCountMap.entries()).map(([stateId, count]) => {
-        const state = stateDetails.find((sd) => sd.id === stateId);
-        return {
-          id: stateId,
-          name: state?.name || "Unknown",
-          icon: state?.icon,
-          iconColor: state?.color,
-          count,
-        };
-      });
+      statesWithCounts = Array.from(stateCountMap.entries()).map(
+        ([stateId, count]) => {
+          const state = stateDetails.find((sd) => sd.id === stateId);
+          return {
+            id: stateId,
+            name: state?.name || "Unknown",
+            icon: state?.icon,
+            iconColor: state?.color,
+            count,
+          };
+        }
+      );
     } else {
       // Single config or non-run mode: use original groupBy counts
       statesWithCounts = states.map((s) => {
@@ -609,18 +663,23 @@ export async function POST(request: Request) {
       allTestRunCaseIds.forEach((caseId) => {
         const props = casePropertiesMap!.get(caseId);
         if (props) {
-          creatorCountMap.set(props.creatorId, (creatorCountMap.get(props.creatorId) || 0) + 1);
+          creatorCountMap.set(
+            props.creatorId,
+            (creatorCountMap.get(props.creatorId) || 0) + 1
+          );
         }
       });
 
-      creatorsWithCounts = Array.from(creatorCountMap.entries()).map(([creatorId, count]) => {
-        const creator = creatorDetails.find((cd) => cd.id === creatorId);
-        return {
-          id: creatorId,
-          name: creator?.name || "Unknown",
-          count,
-        };
-      });
+      creatorsWithCounts = Array.from(creatorCountMap.entries()).map(
+        ([creatorId, count]) => {
+          const creator = creatorDetails.find((cd) => cd.id === creatorId);
+          return {
+            id: creatorId,
+            name: creator?.name || "Unknown",
+            count,
+          };
+        }
+      );
     } else {
       // Single config or non-run mode: use original groupBy counts
       creatorsWithCounts = creators.map((c) => {
@@ -634,9 +693,10 @@ export async function POST(request: Request) {
     }
 
     // Calculate effective total count for multi-config
-    const effectiveTotalCount = (casePropertiesMap && allTestRunCaseIds.length > 0)
-      ? allTestRunCaseIds.length
-      : totalCount;
+    const effectiveTotalCount =
+      casePropertiesMap && allTestRunCaseIds.length > 0
+        ? allTestRunCaseIds.length
+        : totalCount;
 
     // Calculate tag counts including special options
     const casesWithTags = await prisma.repositoryCases.count({
@@ -655,17 +715,22 @@ export async function POST(request: Request) {
     if (casePropertiesMap && allTestRunCaseIds.length > 0) {
       // Fetch which cases have tags
       const casesWithTagsSet = new Set(
-        (await prisma.repositoryCases.findMany({
-          where: {
-            id: { in: effectiveSelectedTestCases },
-            tags: { some: {} },
-          },
-          select: { id: true },
-        })).map((c) => c.id)
+        (
+          await prisma.repositoryCases.findMany({
+            where: {
+              id: { in: effectiveSelectedTestCases },
+              tags: { some: {} },
+            },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
       );
 
-      effectiveCasesWithTags = allTestRunCaseIds.filter((id) => casesWithTagsSet.has(id)).length;
-      effectiveCasesWithoutTags = allTestRunCaseIds.length - effectiveCasesWithTags;
+      effectiveCasesWithTags = allTestRunCaseIds.filter((id) =>
+        casesWithTagsSet.has(id)
+      ).length;
+      effectiveCasesWithoutTags =
+        allTestRunCaseIds.length - effectiveCasesWithTags;
     }
 
     // For multi-config, recalculate individual tag counts
@@ -699,10 +764,12 @@ export async function POST(request: Request) {
         }
       });
 
-      tagCountsForList = Array.from(tagCountMap.entries()).map(([tagId, count]) => ({
-        tagId,
-        count,
-      }));
+      tagCountsForList = Array.from(tagCountMap.entries()).map(
+        ([tagId, count]) => ({
+          tagId,
+          count,
+        })
+      );
     }
 
     const tagsWithCounts = [
@@ -745,17 +812,22 @@ export async function POST(request: Request) {
     if (casePropertiesMap && allTestRunCaseIds.length > 0) {
       // Fetch which cases have issues
       const casesWithIssuesSet = new Set(
-        (await prisma.repositoryCases.findMany({
-          where: {
-            id: { in: effectiveSelectedTestCases },
-            issues: { some: { isDeleted: false } },
-          },
-          select: { id: true },
-        })).map((c) => c.id)
+        (
+          await prisma.repositoryCases.findMany({
+            where: {
+              id: { in: effectiveSelectedTestCases },
+              issues: { some: { isDeleted: false } },
+            },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
       );
 
-      effectiveCasesWithIssues = allTestRunCaseIds.filter((id) => casesWithIssuesSet.has(id)).length;
-      effectiveCasesWithoutIssues = allTestRunCaseIds.length - effectiveCasesWithIssues;
+      effectiveCasesWithIssues = allTestRunCaseIds.filter((id) =>
+        casesWithIssuesSet.has(id)
+      ).length;
+      effectiveCasesWithoutIssues =
+        allTestRunCaseIds.length - effectiveCasesWithIssues;
     }
 
     // For multi-config, recalculate individual issue counts
@@ -775,7 +847,10 @@ export async function POST(request: Request) {
       });
 
       const caseIssuesMap = new Map<number, Set<number>>(
-        caseIssueAssociations.map((c) => [c.id, new Set(c.issues.map((i) => i.id))])
+        caseIssueAssociations.map((c) => [
+          c.id,
+          new Set(c.issues.map((i) => i.id)),
+        ])
       );
 
       // Count issues based on TestRunCases
@@ -789,10 +864,12 @@ export async function POST(request: Request) {
         }
       });
 
-      issueCountsForList = Array.from(issueCountMap.entries()).map(([issueId, count]) => ({
-        issueId,
-        count,
-      }));
+      issueCountsForList = Array.from(issueCountMap.entries()).map(
+        ([issueId, count]) => ({
+          issueId,
+          count,
+        })
+      );
     }
 
     const issuesWithCounts = [
@@ -835,7 +912,6 @@ export async function POST(request: Request) {
     >();
 
     dynamicFieldInfo.forEach((template) => {
-
       template.caseFields.forEach((cf) => {
         const field = cf.caseField;
         const fieldType = field.type.type;
@@ -904,7 +980,6 @@ export async function POST(request: Request) {
     const allMatchingCaseIds = allMatchingCases.map((c) => c.id);
 
     for (const [fieldId, fieldInfo] of dynamicFieldsMap) {
-
       if (fieldInfo.options) {
         // For dropdown/multi-select, query field values using Prisma
         const fieldValues = await prisma.caseFieldValues.findMany({
@@ -927,13 +1002,19 @@ export async function POST(request: Request) {
             if (Array.isArray(fv.value)) {
               // Multi-Select field - array of option IDs
               fv.value.forEach((optionId) => {
-                if (typeof optionId === 'number') {
-                  optionCountMap.set(optionId, (optionCountMap.get(optionId) || 0) + 1);
+                if (typeof optionId === "number") {
+                  optionCountMap.set(
+                    optionId,
+                    (optionCountMap.get(optionId) || 0) + 1
+                  );
                 }
               });
-            } else if (typeof fv.value === 'number') {
+            } else if (typeof fv.value === "number") {
               // Dropdown field - single option ID
-              optionCountMap.set(fv.value, (optionCountMap.get(fv.value) || 0) + 1);
+              optionCountMap.set(
+                fv.value,
+                (optionCountMap.get(fv.value) || 0) + 1
+              );
             }
           }
         });
@@ -955,9 +1036,7 @@ export async function POST(request: Request) {
             value: {
               not: Prisma.DbNull,
             },
-            AND: [
-              { value: { not: "" } },
-            ],
+            AND: [{ value: { not: "" } }],
           },
         });
 
@@ -1030,7 +1109,10 @@ export async function POST(request: Request) {
         const valueCounts = new Map<number, number>();
         fieldValues.forEach((fv) => {
           if (fv.value !== null && fv.value !== undefined) {
-            const numValue = typeof fv.value === 'number' ? fv.value : parseFloat(fv.value as string);
+            const numValue =
+              typeof fv.value === "number"
+                ? fv.value
+                : parseFloat(fv.value as string);
             if (!isNaN(numValue)) {
               valueCounts.set(numValue, (valueCounts.get(numValue) || 0) + 1);
             }
@@ -1038,7 +1120,9 @@ export async function POST(request: Request) {
         });
 
         // Sort values numerically and create options array
-        const sortedValues = Array.from(valueCounts.keys()).sort((a, b) => a - b);
+        const sortedValues = Array.from(valueCounts.keys()).sort(
+          (a, b) => a - b
+        );
         const options = sortedValues.map((value) => ({
           id: value,
           name: value.toString(),
@@ -1075,8 +1159,8 @@ export async function POST(request: Request) {
         const withDateCount = fieldValues.filter((fv) => {
           if (fv.value === null || fv.value === undefined) return false;
           // Check if it's a non-empty string
-          if (typeof fv.value === 'string') {
-            return fv.value.trim() !== '';
+          if (typeof fv.value === "string") {
+            return fv.value.trim() !== "";
           }
           return true;
         }).length;
@@ -1089,7 +1173,10 @@ export async function POST(request: Request) {
             noValue: totalCount - withDateCount,
           },
         } as any;
-      } else if (fieldInfo.type === "Text Long" || fieldInfo.type === "Text String") {
+      } else if (
+        fieldInfo.type === "Text Long" ||
+        fieldInfo.type === "Text String"
+      ) {
         // For Text fields, count cases with/without text (excluding empty strings and empty TipTap docs)
         const fieldValues = await prisma.caseFieldValues.findMany({
           where: {
@@ -1109,16 +1196,19 @@ export async function POST(request: Request) {
         fieldValues.forEach((fv) => {
           if (fv.value !== null && fv.value !== undefined) {
             // Check if it's a non-empty string or non-empty TipTap document
-            if (typeof fv.value === 'string') {
-              if (fv.value.trim() !== '') {
+            if (typeof fv.value === "string") {
+              if (fv.value.trim() !== "") {
                 withTextCount++;
               }
-            } else if (typeof fv.value === 'object') {
+            } else if (typeof fv.value === "object") {
               // TipTap JSON format - check if it has content
               const doc = fv.value as any;
               if (doc.content && Array.isArray(doc.content)) {
-                const hasContent = doc.content.some((node: any) =>
-                  node.content && Array.isArray(node.content) && node.content.length > 0
+                const hasContent = doc.content.some(
+                  (node: any) =>
+                    node.content &&
+                    Array.isArray(node.content) &&
+                    node.content.length > 0
                 );
                 if (hasContent) {
                   withTextCount++;
@@ -1212,14 +1302,19 @@ export async function POST(request: Request) {
       allTestRunCaseIds.forEach((caseId) => {
         const props = casePropertiesMap!.get(caseId);
         if (props) {
-          automatedCountMap.set(props.automated, (automatedCountMap.get(props.automated) || 0) + 1);
+          automatedCountMap.set(
+            props.automated,
+            (automatedCountMap.get(props.automated) || 0) + 1
+          );
         }
       });
 
-      automatedWithCounts = Array.from(automatedCountMap.entries()).map(([value, count]) => ({
-        value,
-        count,
-      }));
+      automatedWithCounts = Array.from(automatedCountMap.entries()).map(
+        ([value, count]) => ({
+          value,
+          count,
+        })
+      );
     } else {
       automatedWithCounts = automatedCounts.map((ac) => ({
         value: ac.automated,

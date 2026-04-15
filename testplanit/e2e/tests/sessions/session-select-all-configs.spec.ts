@@ -34,9 +34,7 @@ test.describe("Session Configuration Select All", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open the configurations combobox
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
@@ -63,7 +61,7 @@ test.describe("Session Configuration Select All", () => {
     expect(count).toBeGreaterThanOrEqual(12);
 
     // The page indicator should show "1-10 of N" confirming we're on page 1
-    const paginationText = page.locator('text=/1–10 of/');
+    const paginationText = page.locator("text=/1–10 of/");
     await expect(paginationText).toBeVisible({ timeout: 5000 });
   });
 
@@ -92,9 +90,7 @@ test.describe("Session Configuration Select All", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open the configurations combobox
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');

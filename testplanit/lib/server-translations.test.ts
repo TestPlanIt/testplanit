@@ -1,15 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { formatLocaleForUrl, getServerTranslation } from "./server-translations";
+import {
+  formatLocaleForUrl,
+  getServerTranslation,
+} from "./server-translations";
 
 // Mock fs/promises with a factory function
-vi.mock('fs/promises', () => ({
+vi.mock("fs/promises", () => ({
   default: {
     readFile: vi.fn(),
   },
 }));
 
 // Import the mocked module
-import fs from 'fs/promises';
+import fs from "fs/promises";
 
 describe("server-translations", () => {
   beforeEach(() => {
@@ -17,7 +20,7 @@ describe("server-translations", () => {
 
     // Mock the en-US translations
     vi.mocked(fs.readFile).mockImplementation(async (path) => {
-      if (path.toString().includes('en-US.json')) {
+      if (path.toString().includes("en-US.json")) {
         return JSON.stringify({
           components: {
             notifications: {
@@ -26,24 +29,25 @@ describe("server-translations", () => {
                 assignedTestCase: "assigned you to test case",
                 assignedMultipleTestCases: "assigned you {count} test cases",
                 inProject: "in project",
-                casesInProject: "{count, plural, =1 {# case} other {# cases}} in"
-              }
-            }
-          }
+                casesInProject:
+                  "{count, plural, =1 {# case} other {# cases}} in",
+              },
+            },
+          },
         });
       }
-      if (path.toString().includes('fr-FR.json')) {
-        throw new Error('File not found');
+      if (path.toString().includes("fr-FR.json")) {
+        throw new Error("File not found");
       }
       // Return en-US for any other locale (fallback test)
       return JSON.stringify({
         components: {
           notifications: {
             content: {
-              testCaseAssignmentTitle: "New Test Case Assignment"
-            }
-          }
-        }
+              testCaseAssignmentTitle: "New Test Case Assignment",
+            },
+          },
+        },
       });
     });
   });
@@ -83,10 +87,7 @@ describe("server-translations", () => {
     });
 
     it("should return key if translation not found", async () => {
-      const result = await getServerTranslation(
-        "en-US",
-        "non.existent.key"
-      );
+      const result = await getServerTranslation("en-US", "non.existent.key");
       expect(result).toBe("non.existent.key");
     });
 
@@ -104,7 +105,7 @@ describe("server-translations", () => {
       expect(formatLocaleForUrl("en_US")).toBe("en-US");
       expect(formatLocaleForUrl("es_ES")).toBe("es-ES");
     });
-    
+
     it("should normalize locale in loadTranslations", async () => {
       // This test verifies that es_ES is normalized to es-ES when loading
       const result = await getServerTranslation(

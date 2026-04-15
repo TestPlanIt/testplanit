@@ -2,10 +2,12 @@
 /* eslint-disable react-hooks/incompatible-library */
 import { useEffect, useState } from "react";
 import {
-  useCreateManyProjectWorkflowAssignment, useCreateWorkflows,
+  useCreateManyProjectWorkflowAssignment,
+  useCreateWorkflows,
   useFindFirstColor,
   useFindFirstFieldIcon,
-  useFindManyProjects, useUpdateManyWorkflows
+  useFindManyProjects,
+  useUpdateManyWorkflows,
 } from "~/lib/hooks";
 
 import { Projects, WorkflowType } from "@prisma/client";
@@ -21,9 +23,11 @@ import { FieldIconPicker } from "@/components/FieldIconPicker";
 
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 
 import {
@@ -32,7 +36,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {

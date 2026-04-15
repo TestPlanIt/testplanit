@@ -50,8 +50,10 @@ vi.mock("~/lib/utils/tiptapMentions", () => ({
 }));
 
 import {
-  createComment, deleteComment,
-  getCommentsForEntity, updateComment
+  createComment,
+  deleteComment,
+  getCommentsForEntity,
+  updateComment,
 } from "./comments";
 
 describe("comments actions", () => {
@@ -360,7 +362,9 @@ describe("comments actions", () => {
         mockGetServerAuthSession.mockResolvedValue(mockSession);
         mockDb.comment.create.mockRejectedValue(new Error("Database error"));
 
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
 
         const result = await createComment({
           content: validContent,
@@ -541,7 +545,9 @@ describe("comments actions", () => {
         });
         mockDb.comment.update.mockRejectedValue(new Error("Database error"));
 
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
 
         const result = await updateComment({
           commentId: "comment-1",
@@ -562,7 +568,9 @@ describe("comments actions", () => {
       it("should throw error when user is not authenticated", async () => {
         mockGetServerAuthSession.mockResolvedValue(null);
 
-        await expect(deleteComment("comment-1")).rejects.toThrow("Unauthorized");
+        await expect(deleteComment("comment-1")).rejects.toThrow(
+          "Unauthorized"
+        );
       });
     });
 
@@ -659,7 +667,9 @@ describe("comments actions", () => {
         });
         mockDb.comment.update.mockRejectedValue(new Error("Database error"));
 
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
 
         const result = await deleteComment("comment-1");
 
@@ -774,7 +784,9 @@ describe("comments actions", () => {
         mockGetServerAuthSession.mockResolvedValue(mockSession);
         mockDb.comment.findMany.mockRejectedValue(new Error("Database error"));
 
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
 
         const result = await getCommentsForEntity("repositoryCase", 1);
 

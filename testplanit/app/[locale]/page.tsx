@@ -6,7 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { redirect } from "~/lib/navigation";
 import {
-  ProcessedProject, processProjectsWithEffectiveMembers
+  ProcessedProject,
+  processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
 import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
@@ -20,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { UserDashboard } from "@/components/UserDashboard";
 import { Boxes, ChevronLeft, ChevronRight } from "lucide-react";

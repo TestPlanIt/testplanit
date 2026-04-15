@@ -1,11 +1,12 @@
-import {
-  CustomFieldFilter, SearchableEntityType
-} from "~/types/search";
+import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
 
 /**
  * Build Elasticsearch query from unified filters
  */
-export async function buildElasticsearchQuery(filters: any, user: any): Promise<any> {
+export async function buildElasticsearchQuery(
+  filters: any,
+  user: any
+): Promise<any> {
   const must: any[] = [];
   const filter: any[] = [];
 
@@ -13,10 +14,18 @@ export async function buildElasticsearchQuery(filters: any, user: any): Promise<
   if (filters.query) {
     // Determine which entity types are being searched
     const entityTypes = filters.entityTypes || [];
-    const hasRepositoryCases = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.REPOSITORY_CASE);
-    const hasSharedSteps = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.SHARED_STEP);
-    const hasTestRuns = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.TEST_RUN);
-    const hasSessions = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.SESSION);
+    const hasRepositoryCases =
+      entityTypes.length === 0 ||
+      entityTypes.includes(SearchableEntityType.REPOSITORY_CASE);
+    const hasSharedSteps =
+      entityTypes.length === 0 ||
+      entityTypes.includes(SearchableEntityType.SHARED_STEP);
+    const hasTestRuns =
+      entityTypes.length === 0 ||
+      entityTypes.includes(SearchableEntityType.TEST_RUN);
+    const hasSessions =
+      entityTypes.length === 0 ||
+      entityTypes.includes(SearchableEntityType.SESSION);
 
     // Use bool query with should clauses to search both regular and nested fields
     const searchQueries: any[] = [];
@@ -586,7 +595,10 @@ export function buildSearchAggregations(
 /**
  * Process aggregation results into facets
  */
-export function processFacets(aggregations: any, requestedFacets?: string[]): any {
+export function processFacets(
+  aggregations: any,
+  requestedFacets?: string[]
+): any {
   if (!aggregations || !requestedFacets) return undefined;
 
   const facets: any = {};
@@ -618,15 +630,17 @@ export function processFacets(aggregations: any, requestedFacets?: string[]): an
  * Get entity type from index name.
  * Handles both single-tenant (testplanit-{entity}) and multi-tenant (testplanit-{tenantId}-{entity}) index names.
  */
-export function getEntityTypeFromIndex(indexName: string): SearchableEntityType {
+export function getEntityTypeFromIndex(
+  indexName: string
+): SearchableEntityType {
   const suffixToType: Record<string, SearchableEntityType> = {
     "repository-cases": SearchableEntityType.REPOSITORY_CASE,
     "shared-steps": SearchableEntityType.SHARED_STEP,
     "test-runs": SearchableEntityType.TEST_RUN,
-    "sessions": SearchableEntityType.SESSION,
-    "projects": SearchableEntityType.PROJECT,
-    "issues": SearchableEntityType.ISSUE,
-    "milestones": SearchableEntityType.MILESTONE,
+    sessions: SearchableEntityType.SESSION,
+    projects: SearchableEntityType.PROJECT,
+    issues: SearchableEntityType.ISSUE,
+    milestones: SearchableEntityType.MILESTONE,
   };
 
   for (const [suffix, type] of Object.entries(suffixToType)) {
@@ -650,28 +664,28 @@ export function stripNestedClauses(query: any): any {
 
   // Strip nested clauses from must → bool → should
   if (stripped.bool.must) {
-    stripped.bool.must = stripped.bool.must.map((clause: any) => {
-      if (clause.bool?.should) {
-        const filteredShould = clause.bool.should.filter(
-          (s: any) => !s.nested
-        );
-        if (filteredShould.length === 0) return null;
-        return {
-          bool: {
-            ...clause.bool,
-            should: filteredShould,
-          },
-        };
-      }
-      return clause;
-    }).filter(Boolean);
+    stripped.bool.must = stripped.bool.must
+      .map((clause: any) => {
+        if (clause.bool?.should) {
+          const filteredShould = clause.bool.should.filter(
+            (s: any) => !s.nested
+          );
+          if (filteredShould.length === 0) return null;
+          return {
+            bool: {
+              ...clause.bool,
+              should: filteredShould,
+            },
+          };
+        }
+        return clause;
+      })
+      .filter(Boolean);
   }
 
   // Strip nested clauses from filter
   if (stripped.bool.filter) {
-    stripped.bool.filter = stripped.bool.filter.filter(
-      (f: any) => !f.nested
-    );
+    stripped.bool.filter = stripped.bool.filter.filter((f: any) => !f.nested);
   }
 
   return stripped;

@@ -3,7 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -75,9 +75,7 @@ export function DateTextDisplay({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          {content}
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
         <TooltipContent>
           <p className="text-sm">{tooltipContent}</p>
         </TooltipContent>

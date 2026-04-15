@@ -88,7 +88,8 @@ test.describe("Templates - Create Operations", () => {
     await templatesPage.expectTemplateInTable(templateName);
 
     // Verify the template shows the field count
-    const fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
+    const fieldCount =
+      await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBeGreaterThanOrEqual(1);
   });
 
@@ -114,7 +115,8 @@ test.describe("Templates - Create Operations", () => {
     await templatesPage.expectTemplateInTable(templateName);
 
     // Verify the template shows the field count
-    const fieldCount = await templatesPage.getTemplateResultFieldsCount(templateName);
+    const fieldCount =
+      await templatesPage.getTemplateResultFieldsCount(templateName);
     expect(fieldCount).toBeGreaterThanOrEqual(1);
   });
 
@@ -247,7 +249,10 @@ test.describe("Templates - Edit Operations", () => {
 
     // Wait for case fields table to show the new field (confirms data is loaded)
     await expect(
-      templatesPage.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first()
+      templatesPage.caseFieldsTable
+        .locator("tr")
+        .filter({ hasText: fieldName })
+        .first()
     ).toBeVisible({ timeout: 10000 });
 
     // Edit the template
@@ -258,7 +263,9 @@ test.describe("Templates - Edit Operations", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for dropdown to be ready and select the field
-    const caseFieldSelect = templatesPage.dialog.getByTestId("add-case-field-select");
+    const caseFieldSelect = templatesPage.dialog.getByTestId(
+      "add-case-field-select"
+    );
     await expect(caseFieldSelect).toBeVisible({ timeout: 5000 });
 
     // Wait for the dropdown to have options loaded (the field should be in the available list)
@@ -268,12 +275,18 @@ test.describe("Templates - Edit Operations", () => {
     // Wait for the listbox and select the option
     const listbox = page.locator('[role="listbox"]');
     await expect(listbox).toBeVisible({ timeout: 5000 });
-    const option = listbox.locator('[role="option"]').filter({ hasText: fieldName }).first();
+    const option = listbox
+      .locator('[role="option"]')
+      .filter({ hasText: fieldName })
+      .first();
     await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
     // Wait for the field to appear in the selected list
-    const selectedCaseField = templatesPage.dialog.locator('.cursor-ns-resize').filter({ hasText: fieldName }).first();
+    const selectedCaseField = templatesPage.dialog
+      .locator(".cursor-ns-resize")
+      .filter({ hasText: fieldName })
+      .first();
     await expect(selectedCaseField).toBeVisible({ timeout: 5000 });
 
     // Submit the form
@@ -285,7 +298,8 @@ test.describe("Templates - Edit Operations", () => {
     // Check if UI submission worked - if not, use API fallback
     // This is a workaround for a timing issue where React Query refetches
     // can reset the selectedCaseFields state during form submission
-    let fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
+    let fieldCount =
+      await templatesPage.getTemplateCaseFieldsCount(templateName);
     if (fieldCount === 0) {
       await api.assignCaseFieldToTemplate(templateId, caseFieldId);
       await templatesPage.goto();
@@ -313,7 +327,10 @@ test.describe("Templates - Edit Operations", () => {
 
     // Wait for result fields table to show the new field (confirms data is loaded)
     await expect(
-      templatesPage.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first()
+      templatesPage.resultFieldsTable
+        .locator("tr")
+        .filter({ hasText: fieldName })
+        .first()
     ).toBeVisible({ timeout: 10000 });
 
     // Edit the template
@@ -324,7 +341,9 @@ test.describe("Templates - Edit Operations", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for dropdown to be ready and select the field
-    const resultFieldSelect = templatesPage.dialog.getByTestId("add-result-field-select");
+    const resultFieldSelect = templatesPage.dialog.getByTestId(
+      "add-result-field-select"
+    );
     await expect(resultFieldSelect).toBeVisible({ timeout: 5000 });
 
     // Wait for the dropdown to have options loaded (the field should be in the available list)
@@ -334,12 +353,18 @@ test.describe("Templates - Edit Operations", () => {
     // Wait for the listbox and select the option
     const listbox = page.locator('[role="listbox"]');
     await expect(listbox).toBeVisible({ timeout: 5000 });
-    const option = listbox.locator('[role="option"]').filter({ hasText: fieldName }).first();
+    const option = listbox
+      .locator('[role="option"]')
+      .filter({ hasText: fieldName })
+      .first();
     await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
     // Wait for the field to appear in the selected list
-    const selectedResultField = templatesPage.dialog.locator('.cursor-ns-resize').filter({ hasText: fieldName }).first();
+    const selectedResultField = templatesPage.dialog
+      .locator(".cursor-ns-resize")
+      .filter({ hasText: fieldName })
+      .first();
     await expect(selectedResultField).toBeVisible({ timeout: 5000 });
 
     // Submit the form
@@ -351,11 +376,13 @@ test.describe("Templates - Edit Operations", () => {
     // Check if UI submission worked - if not, use API fallback
     // This is a workaround for a timing issue where React Query refetches
     // can reset the selectedResultFields state during form submission
-    let fieldCount = await templatesPage.getTemplateResultFieldsCount(templateName);
+    let fieldCount =
+      await templatesPage.getTemplateResultFieldsCount(templateName);
     if (fieldCount === 0) {
       await api.assignResultFieldToTemplate(templateId, resultFieldId);
       await templatesPage.goto();
-      fieldCount = await templatesPage.getTemplateResultFieldsCount(templateName);
+      fieldCount =
+        await templatesPage.getTemplateResultFieldsCount(templateName);
     }
 
     // Verify field count increased

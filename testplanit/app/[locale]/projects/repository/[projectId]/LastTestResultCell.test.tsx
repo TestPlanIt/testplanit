@@ -1,5 +1,10 @@
 import {
-  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
 } from "@prisma/client";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -195,7 +200,9 @@ describe("LastTestResultCell via getColumns", () => {
         false // isSelectionMode
       );
 
-      const lastResultColumn = columns.find((col) => col.id === "lastTestResult");
+      const lastResultColumn = columns.find(
+        (col) => col.id === "lastTestResult"
+      );
       expect(lastResultColumn).toBeDefined();
       expect(lastResultColumn?.header).toBe("Last Result");
       expect(lastResultColumn?.enableSorting).toBe(false);
@@ -213,7 +220,9 @@ describe("LastTestResultCell via getColumns", () => {
         false
       );
 
-      const lastResultColumn = columns.find((col) => col.id === "lastTestResult");
+      const lastResultColumn = columns.find(
+        (col) => col.id === "lastTestResult"
+      );
       expect(lastResultColumn).toBeUndefined();
     });
 
@@ -227,7 +236,9 @@ describe("LastTestResultCell via getColumns", () => {
         true // isSelectionMode - IN selection mode
       );
 
-      const lastResultColumn = columns.find((col) => col.id === "lastTestResult");
+      const lastResultColumn = columns.find(
+        (col) => col.id === "lastTestResult"
+      );
       expect(lastResultColumn).toBeUndefined();
     });
   });
@@ -246,7 +257,10 @@ describe("LastTestResultCell via getColumns", () => {
     };
 
     // Helper to render a cell - handles the union type of cell being string | function
-    const renderCell = (column: ReturnType<typeof getLastResultColumn>, mockRow: { original: ExtendedCases }) => {
+    const renderCell = (
+      column: ReturnType<typeof getLastResultColumn>,
+      mockRow: { original: ExtendedCases }
+    ) => {
       const cell = column?.cell;
       if (typeof cell === "function") {
         return render(<div>{cell({ row: mockRow } as any)}</div>);
@@ -384,7 +398,9 @@ describe("LastTestResultCell via getColumns", () => {
 
       // Wait for tooltip to appear - it contains the "Last Tested" text
       // Use getAllByText since Radix may render duplicates
-      const testedOnElements = await screen.findAllByText(/\[t\]repository\.columns\.testedOn/);
+      const testedOnElements = await screen.findAllByText(
+        /\[t\]repository\.columns\.testedOn/
+      );
       expect(testedOnElements.length).toBeGreaterThan(0);
     });
 
@@ -442,7 +458,9 @@ describe("LastTestResultCell via getColumns", () => {
       await user.hover(statusElement);
 
       // Should show the date but not a test run link
-      const testedOnElements = await screen.findAllByText(/\[t\]repository\.columns\.testedOn/);
+      const testedOnElements = await screen.findAllByText(
+        /\[t\]repository\.columns\.testedOn/
+      );
       expect(testedOnElements.length).toBeGreaterThan(0);
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
@@ -523,7 +541,12 @@ describe("LastTestResult computation in Cases", () => {
     }[] = [];
 
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result as any,
@@ -578,7 +601,12 @@ describe("LastTestResult computation in Cases", () => {
 
     for (const trLink of testRuns) {
       // Skip deleted test runs
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -638,7 +666,12 @@ describe("LastTestResult computation in Cases", () => {
     const allResults: any[] = [];
 
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -666,7 +699,12 @@ describe("LastTestResult computation in Cases", () => {
     const allResults: any[] = [];
 
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -698,7 +736,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect manual test run results
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -710,7 +753,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect JUnit results
     for (const junitResult of junitResults) {
-      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+      if (
+        junitResult.executedAt &&
+        junitResult.status &&
+        junitResult.testSuite?.testRun &&
+        !junitResult.testSuite.testRun.isDeleted
+      ) {
         allResults.push({
           result: {
             id: junitResult.id,
@@ -759,7 +807,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect manual results
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -771,7 +824,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect JUnit results
     for (const junitResult of junitResults) {
-      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+      if (
+        junitResult.executedAt &&
+        junitResult.status &&
+        junitResult.testSuite?.testRun &&
+        !junitResult.testSuite.testRun.isDeleted
+      ) {
         allResults.push({
           result: {
             id: junitResult.id,
@@ -827,7 +885,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect manual results
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -839,7 +902,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect JUnit results
     for (const junitResult of junitResults) {
-      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+      if (
+        junitResult.executedAt &&
+        junitResult.status &&
+        junitResult.testSuite?.testRun &&
+        !junitResult.testSuite.testRun.isDeleted
+      ) {
         allResults.push({
           result: {
             id: junitResult.id,
@@ -892,7 +960,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect manual results (none in this test)
     for (const trLink of testRuns) {
-      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+      if (
+        trLink.results &&
+        trLink.results.length > 0 &&
+        trLink.testRun &&
+        !trLink.testRun.isDeleted
+      ) {
         for (const result of trLink.results) {
           allResults.push({
             result: result,
@@ -904,7 +977,12 @@ describe("LastTestResult computation in Cases", () => {
 
     // Collect JUnit results - should skip deleted test runs
     for (const junitResult of junitResults) {
-      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+      if (
+        junitResult.executedAt &&
+        junitResult.status &&
+        junitResult.testSuite?.testRun &&
+        !junitResult.testSuite.testRun.isDeleted
+      ) {
         allResults.push({
           result: {
             id: junitResult.id,
@@ -939,7 +1017,12 @@ describe("LastTestResult computation in Cases", () => {
     const allResults: any[] = [];
 
     for (const junitResult of junitResults) {
-      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+      if (
+        junitResult.executedAt &&
+        junitResult.status &&
+        junitResult.testSuite?.testRun &&
+        !junitResult.testSuite.testRun.isDeleted
+      ) {
         allResults.push({
           result: {
             id: junitResult.id,
@@ -973,7 +1056,12 @@ describe("LastTestResult computation in Cases", () => {
     const allResults: any[] = [];
 
     for (const junitResult of junitResults) {
-      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+      if (
+        junitResult.executedAt &&
+        junitResult.status &&
+        junitResult.testSuite?.testRun &&
+        !junitResult.testSuite.testRun.isDeleted
+      ) {
         allResults.push({
           result: {
             id: junitResult.id,

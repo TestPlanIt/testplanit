@@ -12,8 +12,10 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Table, TableCell,
-  TableHeader, TableRow
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
 } from "~/app/extensions/Table";
 import { TableColumnMenu, TableRowMenu } from "~/app/extensions/Table/menus";
 import { findTable } from "~/app/extensions/Table/utils";
@@ -29,19 +31,23 @@ import { ImageWithResize } from "./ImageWithResize";
 // Import browser-compatible generateJSON from core
 import {
   convertMarkdownToTipTapJSON,
-  isLikelyMarkdown
+  isLikelyMarkdown,
 } from "~/utils/tiptapConversion";
 
 import { Input } from "@/components/ui/input";
 import {
-  Popover, PopoverContent, PopoverTrigger
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 
 import {
   Dialog,
   DialogContent,
-  DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -51,13 +57,39 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BetweenHorizontalEnd, BetweenHorizontalStart, BetweenVerticalEnd, BetweenVerticalStart, Bold, Check, Code as CodeIcon,
-  Code2 as CodeBlockIcon, Columns3, Heading1,
-  Heading2, Heading3, Italic, LinkIcon, List,
-  ListOrdered, Loader2, PanelTop, Pilcrow, QuoteIcon, Redo2, Rows3, Smile, StrikethroughIcon, Table2, Trash2, Underline as UnderlineIcon, Undo2, Upload, Wand2
+  BetweenHorizontalEnd,
+  BetweenHorizontalStart,
+  BetweenVerticalEnd,
+  BetweenVerticalStart,
+  Bold,
+  Check,
+  Code as CodeIcon,
+  Code2 as CodeBlockIcon,
+  Columns3,
+  Heading1,
+  Heading2,
+  Heading3,
+  Italic,
+  LinkIcon,
+  List,
+  ListOrdered,
+  Loader2,
+  PanelTop,
+  Pilcrow,
+  QuoteIcon,
+  Redo2,
+  Rows3,
+  Smile,
+  StrikethroughIcon,
+  Table2,
+  Trash2,
+  Underline as UnderlineIcon,
+  Undo2,
+  Upload,
+  Wand2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
@@ -889,9 +921,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     type="button"
                     variant="ghost"
                     className="w-full flex gap-2 justify-start"
-                    onClick={() =>
-                      editor.chain().focus().addRowBefore().run()
-                    }
+                    onClick={() => editor.chain().focus().addRowBefore().run()}
                     data-testid="tiptap-add-row-before"
                   >
                     <BetweenHorizontalEnd size={16} />
@@ -901,9 +931,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     type="button"
                     variant="ghost"
                     className="w-full flex gap-2 justify-start"
-                    onClick={() =>
-                      editor.chain().focus().addRowAfter().run()
-                    }
+                    onClick={() => editor.chain().focus().addRowAfter().run()}
                     data-testid="tiptap-add-row-after"
                   >
                     <BetweenHorizontalStart size={16} />
@@ -1098,7 +1126,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Smile className="w-4 h-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto" onWheel={(e) => e.stopPropagation()}>
+            <PopoverContent
+              className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto"
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="grid grid-cols-8 gap-2">
                 {gitHubEmojis.map((emoji) => (
                   <button

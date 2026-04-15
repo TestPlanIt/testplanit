@@ -151,11 +151,12 @@ test.describe("Session Lifecycle", () => {
   test("should add a result to a session", async ({ api, page }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Session Results ${ts}`);
-    const sessionId = await api.createSession(projectId, `Result Session ${ts}`);
-
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${sessionId}`
+    const sessionId = await api.createSession(
+      projectId,
+      `Result Session ${ts}`
     );
+
+    await page.goto(`/en-US/projects/sessions/${projectId}/${sessionId}`);
     await page.waitForLoadState("load");
 
     // Wait for session detail card to load
@@ -168,7 +169,7 @@ test.describe("Session Lifecycle", () => {
     await expect(saveButton).toBeVisible({ timeout: 15000 });
 
     // Fill in an elapsed time value
-    const _elapsedInput = page.locator('input[placeholder]').filter({
+    const _elapsedInput = page.locator("input[placeholder]").filter({
       hasText: /elapsed|time/i,
     });
     // Try to find any input for elapsed (it has placeholder text)
@@ -178,7 +179,11 @@ test.describe("Session Lifecycle", () => {
     // Look for elapsed input specifically by finding inputs after status select
     // The elapsed input is one of the text inputs in the result form
     // Use a more direct approach: find inputs with placeholder containing duration hints
-    const elapsedField = page.locator('input[placeholder*="m"], input[placeholder*="min"], input[placeholder*="h"]').first();
+    const elapsedField = page
+      .locator(
+        'input[placeholder*="m"], input[placeholder*="min"], input[placeholder*="h"]'
+      )
+      .first();
     const elapsedFieldCount = await elapsedField.count();
 
     if (elapsedFieldCount > 0) {
@@ -211,9 +216,7 @@ test.describe("Session Lifecycle", () => {
       `Complete Me Session ${ts}`
     );
 
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${sessionId}`
-    );
+    await page.goto(`/en-US/projects/sessions/${projectId}/${sessionId}`);
     await page.waitForLoadState("load");
 
     // Wait for the session detail to load
@@ -240,14 +243,14 @@ test.describe("Session Lifecycle", () => {
     await expect(confirmCompleteButton).toBeVisible({ timeout: 5000 });
 
     // Check if there's a no-workflows warning — if so, close dialog and skip
-    const noWorkflowsText = completeDialog.locator(
-      'p:has-text("no")'
-    );
+    const noWorkflowsText = completeDialog.locator('p:has-text("no")');
     const noWorkflowsCount = await noWorkflowsText.count();
 
     if (noWorkflowsCount > 0) {
       // No workflows configured in test environment — close and verify session is still accessible
-      const cancelButton = completeDialog.getByRole("button", { name: /cancel/i });
+      const cancelButton = completeDialog.getByRole("button", {
+        name: /cancel/i,
+      });
       await cancelButton.click();
       await expect(completeDialog).not.toBeVisible({ timeout: 5000 });
     } else {
@@ -263,9 +266,9 @@ test.describe("Session Lifecycle", () => {
 
       // Completed sessions show a badge with "Completed on" text
       // Look for the completed badge or completed-on text
-      const completedBadge = page.locator(
-        '[class*="badge"]'
-      ).filter({ hasText: /completed/i });
+      const completedBadge = page
+        .locator('[class*="badge"]')
+        .filter({ hasText: /completed/i });
       const completedOnText = page.locator("*").filter({
         hasText: /completed on/i,
       });

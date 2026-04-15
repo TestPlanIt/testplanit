@@ -21,9 +21,7 @@ const connectedStatus = {
   available: true,
   health: "green",
   numberOfNodes: 3,
-  indices: [
-    { name: "test-idx", docs: 1000, size: "5mb", health: "green" },
-  ],
+  indices: [{ name: "test-idx", docs: 1000, size: "5mb", health: "green" }],
 };
 
 const disconnectedStatus = {
@@ -33,7 +31,10 @@ const disconnectedStatus = {
 
 function makeStatusFetch(statusData: any, settingsData?: any) {
   return vi.fn().mockImplementation((url: string) => {
-    if (String(url).includes("/api/admin/elasticsearch/reindex") && !String(url).includes("/reindex/")) {
+    if (
+      String(url).includes("/api/admin/elasticsearch/reindex") &&
+      !String(url).includes("/reindex/")
+    ) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(statusData),
@@ -61,7 +62,9 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin />);
 
     // Should show checking text while loading (loading=true and status=null)
-    expect(screen.getByText("admin.elasticsearch.status.checking")).toBeInTheDocument();
+    expect(
+      screen.getByText("admin.elasticsearch.status.checking")
+    ).toBeInTheDocument();
   });
 
   test("renders connected state with GREEN badge and index info", async () => {
@@ -69,7 +72,9 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.integrations.oauth.connected")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.integrations.oauth.connected")
+      ).toBeInTheDocument();
     });
 
     // Health badge shows GREEN (toUpperCase) — may appear multiple times (status + index)
@@ -87,7 +92,9 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.elasticsearch.status.disconnected")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.elasticsearch.status.disconnected")
+      ).toBeInTheDocument();
     });
 
     // Disconnected message
@@ -97,7 +104,9 @@ describe("ElasticsearchAdmin", () => {
     // Find the Start Reindex button (contains reindex.button.start translation)
     const reindexButton = screen
       .getAllByRole("button")
-      .find((b) => b.textContent?.includes("admin.elasticsearch.reindex.button.start"));
+      .find((b) =>
+        b.textContent?.includes("admin.elasticsearch.reindex.button.start")
+      );
     expect(reindexButton).toBeDefined();
     expect(reindexButton).toBeDisabled();
   });
@@ -107,7 +116,9 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin isMultiTenantMode={true} />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.integrations.oauth.connected")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.integrations.oauth.connected")
+      ).toBeInTheDocument();
     });
 
     // The replica input should NOT be present in multi-tenant mode
@@ -119,7 +130,9 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin isMultiTenantMode={false} />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.integrations.oauth.connected")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.integrations.oauth.connected")
+      ).toBeInTheDocument();
     });
 
     // Replica input (number) should be present
@@ -131,21 +144,23 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.integrations.oauth.connected")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.integrations.oauth.connected")
+      ).toBeInTheDocument();
     });
 
     // Set up fetch to capture the POST
-    const postFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ jobId: "job-123" }),
-      });
+    const postFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ jobId: "job-123" }),
+    });
     global.fetch = postFetch;
 
     const reindexButton = screen
       .getAllByRole("button")
-      .find((b) => b.textContent?.includes("admin.elasticsearch.reindex.button.start"));
+      .find((b) =>
+        b.textContent?.includes("admin.elasticsearch.reindex.button.start")
+      );
     expect(reindexButton).toBeDefined();
     expect(reindexButton).not.toBeDisabled();
 
@@ -186,7 +201,9 @@ describe("ElasticsearchAdmin", () => {
     render(<ElasticsearchAdmin />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.elasticsearch.reindex.warning.title")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.elasticsearch.reindex.warning.title")
+      ).toBeInTheDocument();
     });
   });
 });

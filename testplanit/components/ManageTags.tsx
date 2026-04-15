@@ -8,7 +8,11 @@ import Select, { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { useCreateTags, useFindManyTags, useUpdateTags } from "~/lib/hooks";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { replaceProblematicChars, sanitizeName, type ClassValue } from "~/utils";
+import {
+  replaceProblematicChars,
+  sanitizeName,
+  type ClassValue,
+} from "~/utils";
 
 interface TagOption {
   readonly label: string;

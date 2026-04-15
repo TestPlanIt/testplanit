@@ -426,7 +426,12 @@ export function formatFieldValue(
 
 /** Pre-load all embeddable images from attachments */
 export async function preloadImages(
-  attachments: { url?: string; name?: string; mimeType?: string | null; isDeleted?: boolean }[]
+  attachments: {
+    url?: string;
+    name?: string;
+    mimeType?: string | null;
+    isDeleted?: boolean;
+  }[]
 ): Promise<{ images: LoadedImage[]; nonImageNames: string[] }> {
   const imageAttachments = attachments.filter(
     (att) => !att.isDeleted && isEmbeddableImage(att.mimeType) && att.url

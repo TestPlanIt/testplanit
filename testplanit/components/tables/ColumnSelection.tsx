@@ -3,7 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ColumnDef } from "@tanstack/react-table";
@@ -55,9 +55,17 @@ export function ColumnSelection<TData>({
     const initialVisibility: Record<string, boolean> = {};
 
     metadataSource.forEach((item, index) => {
-      const columnId = ("id" in item ? item.id : (item as CustomColumnDef<TData>).id) as string;
-      const enableHiding = "enableHiding" in item ? item.enableHiding : (item as CustomColumnDef<TData>).enableHiding;
-      const isVisible = "isVisible" in item ? item.isVisible : (item as CustomColumnDef<TData>).meta?.isVisible;
+      const columnId = (
+        "id" in item ? item.id : (item as CustomColumnDef<TData>).id
+      ) as string;
+      const enableHiding =
+        "enableHiding" in item
+          ? item.enableHiding
+          : (item as CustomColumnDef<TData>).enableHiding;
+      const isVisible =
+        "isVisible" in item
+          ? item.isVisible
+          : (item as CustomColumnDef<TData>).meta?.isVisible;
 
       if (!columnId) return;
 
@@ -77,8 +85,13 @@ export function ColumnSelection<TData>({
     if (columnVisibilityQuery) {
       const visibleColumns = columnVisibilityQuery.split(",");
       metadataSource.forEach((item, index) => {
-        const columnId = ("id" in item ? item.id : (item as CustomColumnDef<TData>).id) as string;
-        const enableHiding = "enableHiding" in item ? item.enableHiding : (item as CustomColumnDef<TData>).enableHiding;
+        const columnId = (
+          "id" in item ? item.id : (item as CustomColumnDef<TData>).id
+        ) as string;
+        const enableHiding =
+          "enableHiding" in item
+            ? item.enableHiding
+            : (item as CustomColumnDef<TData>).enableHiding;
 
         if (!columnId) return;
 
@@ -112,13 +125,16 @@ export function ColumnSelection<TData>({
         (key) =>
           columnVisibility[key] &&
           metadataSource.findIndex((item) => {
-            const itemId = "id" in item ? item.id : (item as CustomColumnDef<TData>).id;
+            const itemId =
+              "id" in item ? item.id : (item as CustomColumnDef<TData>).id;
             return itemId === key;
           }) !== 0 &&
           metadataSource.findIndex((item) => {
-            const itemId = "id" in item ? item.id : (item as CustomColumnDef<TData>).id;
+            const itemId =
+              "id" in item ? item.id : (item as CustomColumnDef<TData>).id;
             return itemId === key;
-          }) !== metadataSource.length - 1
+          }) !==
+            metadataSource.length - 1
       )
       .join(",");
 
@@ -150,17 +166,20 @@ export function ColumnSelection<TData>({
   const handleCheckboxChange = (columnId: string, isChecked: boolean) => {
     setColumnVisibility((prev) => {
       const newVisibility = { ...prev, [columnId]: isChecked };
-      const anyVisible = Object.entries(newVisibility).some(
-        ([id, visible]) => {
-          if (!visible) return false;
-          const item = metadataSource.find((item) => {
-            const itemId = "id" in item ? item.id : (item as CustomColumnDef<TData>).id;
-            return itemId === id;
-          });
-          const enableHiding = item && ("enableHiding" in item ? item.enableHiding : (item as CustomColumnDef<TData>).enableHiding);
-          return enableHiding !== false;
-        }
-      );
+      const anyVisible = Object.entries(newVisibility).some(([id, visible]) => {
+        if (!visible) return false;
+        const item = metadataSource.find((item) => {
+          const itemId =
+            "id" in item ? item.id : (item as CustomColumnDef<TData>).id;
+          return itemId === id;
+        });
+        const enableHiding =
+          item &&
+          ("enableHiding" in item
+            ? item.enableHiding
+            : (item as CustomColumnDef<TData>).enableHiding);
+        return enableHiding !== false;
+      });
       if (!anyVisible) {
         newVisibility[columnId] = true; // Ensure at least one column is always visible
       }
@@ -187,12 +206,19 @@ export function ColumnSelection<TData>({
 
   const displayColumns = metadataSource
     .map((item) => {
-      const itemId = ("id" in item ? item.id : (item as CustomColumnDef<TData>).id) as string;
-      const enableHiding = "enableHiding" in item ? item.enableHiding : (item as CustomColumnDef<TData>).enableHiding;
-      const label = "label" in item ? item.label :
-        (typeof (item as CustomColumnDef<TData>).header === "string"
-          ? (item as CustomColumnDef<TData>).header as string
-          : "");
+      const itemId = (
+        "id" in item ? item.id : (item as CustomColumnDef<TData>).id
+      ) as string;
+      const enableHiding =
+        "enableHiding" in item
+          ? item.enableHiding
+          : (item as CustomColumnDef<TData>).enableHiding;
+      const label =
+        "label" in item
+          ? item.label
+          : typeof (item as CustomColumnDef<TData>).header === "string"
+            ? ((item as CustomColumnDef<TData>).header as string)
+            : "";
 
       return {
         id: itemId,
@@ -234,7 +260,8 @@ export function ColumnSelection<TData>({
               <div className="flex flex-col space-y-1 flex-1">
                 {leftColumns.map((column) => {
                   const columnId = column.id;
-                  const isChecked = column.isRequired || (columnVisibility[columnId] ?? false);
+                  const isChecked =
+                    column.isRequired || (columnVisibility[columnId] ?? false);
                   return (
                     <div
                       key={columnId}
@@ -254,7 +281,8 @@ export function ColumnSelection<TData>({
                         htmlFor={columnId}
                         className={`text-sm truncate cursor-pointer flex-1 max-w-[150px] overflow-hidden text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
                       >
-                        {column.label} {column.isRequired && t("table.columns.required")}
+                        {column.label}{" "}
+                        {column.isRequired && t("table.columns.required")}
                       </label>
                     </div>
                   );
@@ -263,7 +291,8 @@ export function ColumnSelection<TData>({
               <div className="flex flex-col space-y-1 flex-1">
                 {rightColumns.map((column) => {
                   const columnId = column.id;
-                  const isChecked = column.isRequired || (columnVisibility[columnId] ?? false);
+                  const isChecked =
+                    column.isRequired || (columnVisibility[columnId] ?? false);
                   return (
                     <div
                       key={columnId}
@@ -283,7 +312,8 @@ export function ColumnSelection<TData>({
                         htmlFor={columnId}
                         className={`text-sm truncate cursor-pointer flex-1 max-w-[150px] overflow-hidden text-ellipsis${column.isRequired ? " text-muted-foreground" : ""}`}
                       >
-                        {column.label} {column.isRequired && t("table.columns.required")}
+                        {column.label}{" "}
+                        {column.isRequired && t("table.columns.required")}
                       </label>
                     </div>
                   );

@@ -6,7 +6,7 @@ import { authOptions } from "~/server/auth";
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ jobId: string }> },
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -19,7 +19,7 @@ export async function POST(
     if (!queue) {
       return NextResponse.json(
         { error: "Background job queue is not available" },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(
       if (!currentTenantId) {
         return NextResponse.json(
           { error: "Multi-tenant mode enabled but tenant ID not configured" },
-          { status: 500 },
+          { status: 500 }
         );
       }
       if (job.data?.tenantId !== currentTenantId) {
@@ -73,7 +73,7 @@ export async function POST(
     console.error("Magic select cancel error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

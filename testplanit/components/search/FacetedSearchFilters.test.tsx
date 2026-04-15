@@ -105,9 +105,7 @@ vi.mock("@/components/ui/accordion", () => ({
   }: {
     children: React.ReactNode;
     value: string;
-  }) => (
-    <div data-testid={`accordion-item-${value}`}>{children}</div>
-  ),
+  }) => <div data-testid={`accordion-item-${value}`}>{children}</div>,
   AccordionTrigger: ({ children }: { children: React.ReactNode }) => (
     <button data-testid="accordion-trigger">{children}</button>
   ),
@@ -160,9 +158,7 @@ describe("FacetedSearchFilters", () => {
   it("renders the filter container", () => {
     render(<FacetedSearchFilters {...defaultProps} />);
 
-    expect(
-      screen.getByTestId("faceted-search-filters")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("faceted-search-filters")).toBeInTheDocument();
   });
 
   it("renders project checkboxes from hook data", () => {
@@ -179,9 +175,7 @@ describe("FacetedSearchFilters", () => {
 
   it("calls onFiltersChange when a project filter checkbox is toggled", () => {
     const onFiltersChange = vi.fn();
-    mockProjectsData.data = [
-      { id: 1, name: "Project A", isCompleted: false },
-    ];
+    mockProjectsData.data = [{ id: 1, name: "Project A", isCompleted: false }];
 
     render(
       <FacetedSearchFilters
@@ -248,9 +242,7 @@ describe("FacetedSearchFilters", () => {
 
     render(<FacetedSearchFilters {...defaultProps} />);
 
-    expect(
-      screen.getByTestId("include-deleted-toggle")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("include-deleted-toggle")).toBeInTheDocument();
   });
 
   it("calls onFiltersChange with includeDeleted when toggle is switched", () => {
@@ -329,8 +321,6 @@ describe("FacetedSearchFilters", () => {
       />
     );
 
-    expect(
-      screen.getByTestId("faceted-search-filters")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("faceted-search-filters")).toBeInTheDocument();
   });
 });

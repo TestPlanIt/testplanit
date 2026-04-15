@@ -1,7 +1,10 @@
 import type {
-  LlmAdapterConfig, LlmModelInfo, LlmRequest,
+  LlmAdapterConfig,
+  LlmModelInfo,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse, RateLimitInfo
+  LlmStreamResponse,
+  RateLimitInfo,
 } from "../types";
 import { BaseLlmAdapter } from "./base.adapter";
 
@@ -81,19 +84,23 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       model: request.model || this.getDefaultModel(),
       messages: request.messages,
       temperature: request.temperature ?? this.config.config.defaultTemperature,
-      max_completion_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
+      max_completion_tokens:
+        request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream: false,
     };
 
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetchLongRunning(this.getChatCompletionsUrl(), {
-        method: "POST",
-        headers: this.getOpenAIHeaders(),
-        body: JSON.stringify(openAIRequest),
-        signal: AbortSignal.timeout(timeout),
-      });
+      const response = await this.safeFetchLongRunning(
+        this.getChatCompletionsUrl(),
+        {
+          method: "POST",
+          headers: this.getOpenAIHeaders(),
+          body: JSON.stringify(openAIRequest),
+          signal: AbortSignal.timeout(timeout),
+        }
+      );
 
       if (!response.ok) {
         await this.handleErrorResponse(response);
@@ -126,7 +133,8 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       model: request.model || this.getDefaultModel(),
       messages: request.messages,
       temperature: request.temperature ?? this.config.config.defaultTemperature,
-      max_completion_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
+      max_completion_tokens:
+        request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream: true,
     };
 
@@ -134,12 +142,15 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     // Use safeFetchLongRunning to bypass undici's 5-min body timeout.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetchLongRunning(this.getChatCompletionsUrl(), {
-      method: "POST",
-      headers: this.getOpenAIHeaders(),
-      body: JSON.stringify(openAIRequest),
-      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
-    });
+    const response = await this.safeFetchLongRunning(
+      this.getChatCompletionsUrl(),
+      {
+        method: "POST",
+        headers: this.getOpenAIHeaders(),
+        body: JSON.stringify(openAIRequest),
+        signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
+      }
+    );
 
     if (!response.ok) {
       await this.handleErrorResponse(response);
@@ -396,11 +407,8 @@ export class OpenAIAdapter extends BaseLlmAdapter {
   }
 
   private getDefaultModels(): LlmModelInfo[] {
-    return [
-      "gpt-4o",
-      "gpt-4o-mini",
-      "gpt-4-turbo-preview",
-      "gpt-4",
-    ].map((id) => this.mapModelInfo(id));
+    return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo-preview", "gpt-4"].map((id) =>
+      this.mapModelInfo(id)
+    );
   }
 }

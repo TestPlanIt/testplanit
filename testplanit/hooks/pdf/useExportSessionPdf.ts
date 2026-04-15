@@ -33,8 +33,18 @@ interface SessionExportData {
   completedAt?: Date | string | null;
   createdAt?: Date | string | null;
   tags?: { id: number; name: string }[];
-  issues?: { name?: string; title?: string | null; externalId?: string | null; externalKey?: string | null }[];
-  attachments?: { url?: string; name?: string; mimeType?: string | null; isDeleted?: boolean }[];
+  issues?: {
+    name?: string;
+    title?: string | null;
+    externalId?: string | null;
+    externalKey?: string | null;
+  }[];
+  attachments?: {
+    url?: string;
+    name?: string;
+    mimeType?: string | null;
+    isDeleted?: boolean;
+  }[];
   sessionFieldValues?: {
     fieldId: number;
     value: any;
@@ -50,8 +60,18 @@ interface SessionExportData {
     createdAt?: Date | string;
     createdBy?: { name?: string | null } | null;
     status?: { name?: string; color?: { value?: string } | null } | null;
-    attachments?: { url?: string; name?: string; mimeType?: string | null; isDeleted?: boolean }[];
-    issues?: { name?: string; title?: string | null; externalId?: string | null; externalKey?: string | null }[];
+    attachments?: {
+      url?: string;
+      name?: string;
+      mimeType?: string | null;
+      isDeleted?: boolean;
+    }[];
+    issues?: {
+      name?: string;
+      title?: string | null;
+      externalId?: string | null;
+      externalKey?: string | null;
+    }[];
     resultFieldValues?: {
       fieldId: number;
       value: any;
@@ -83,14 +103,20 @@ export function useExportSessionPdf({
 
     try {
       const { default: jsPDF } = await import("jspdf");
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
       const pdf = new PdfRenderer(doc);
 
       // --- Title ---
       pdf.renderTitle("Session Export");
       pdf.renderMetaLine(
         `Exported: ${new Date().toLocaleString()}`,
-        sessionData.project?.name ? `Project: ${sessionData.project.name}` : undefined
+        sessionData.project?.name
+          ? `Project: ${sessionData.project.name}`
+          : undefined
       );
       pdf.addSpace(4);
 
@@ -132,10 +158,7 @@ export function useExportSessionPdf({
 
       // --- Tags ---
       if (sessionData.tags && sessionData.tags.length > 0) {
-        pdf.renderField(
-          "Tags",
-          sessionData.tags.map((t) => t.name).join(", ")
-        );
+        pdf.renderField("Tags", sessionData.tags.map((t) => t.name).join(", "));
       }
 
       // --- Issues ---
@@ -154,15 +177,25 @@ export function useExportSessionPdf({
       }
 
       // --- Custom Fields (Session-level) ---
-      if (sessionData.sessionFieldValues && sessionData.sessionFieldValues.length > 0) {
+      if (
+        sessionData.sessionFieldValues &&
+        sessionData.sessionFieldValues.length > 0
+      ) {
         for (const fv of sessionData.sessionFieldValues) {
           if (fv.value === null || fv.value === undefined) continue;
           const fieldDef = sessionData.template?.caseFields?.find(
             (tcf) => tcf.caseField.id === fv.fieldId
           )?.caseField;
-          const displayName = fv.field?.displayName || fieldDef?.displayName || `Field ${fv.fieldId}`;
+          const displayName =
+            fv.field?.displayName ||
+            fieldDef?.displayName ||
+            `Field ${fv.fieldId}`;
           const fieldType = fv.field?.type?.type || fieldDef?.type?.type;
-          const formatted = formatFieldValue(fv.value, fieldType, fieldDef?.fieldOptions);
+          const formatted = formatFieldValue(
+            fv.value,
+            fieldType,
+            fieldDef?.fieldOptions
+          );
           if (formatted) {
             pdf.renderField(displayName, formatted);
           }
@@ -182,11 +215,20 @@ export function useExportSessionPdf({
       }
 
       // --- Session Attachments ---
-      if (embedImages && sessionData.attachments && sessionData.attachments.length > 0) {
-        const { images, nonImageNames } = await preloadImages(sessionData.attachments);
+      if (
+        embedImages &&
+        sessionData.attachments &&
+        sessionData.attachments.length > 0
+      ) {
+        const { images, nonImageNames } = await preloadImages(
+          sessionData.attachments
+        );
         pdf.renderImages(images);
         pdf.renderAttachmentNames(nonImageNames);
-      } else if (sessionData.attachments && sessionData.attachments.length > 0) {
+      } else if (
+        sessionData.attachments &&
+        sessionData.attachments.length > 0
+      ) {
         const names = sessionData.attachments
           .filter((a) => !a.isDeleted && a.name)
           .map((a) => a.name!);
@@ -234,7 +276,10 @@ export function useExportSessionPdf({
             pdf.renderField("Recorded By", result.createdBy.name);
           }
           if (result.createdAt) {
-            pdf.renderField("Date", new Date(result.createdAt).toLocaleString());
+            pdf.renderField(
+              "Date",
+              new Date(result.createdAt).toLocaleString()
+            );
           }
           if (result.elapsed) {
             pdf.renderField(
@@ -253,7 +298,8 @@ export function useExportSessionPdf({
           if (result.resultFieldValues && result.resultFieldValues.length > 0) {
             for (const rfv of result.resultFieldValues) {
               if (rfv.value === null || rfv.value === undefined) continue;
-              const displayName = rfv.field?.displayName || `Field ${rfv.fieldId}`;
+              const displayName =
+                rfv.field?.displayName || `Field ${rfv.fieldId}`;
               const fieldType = rfv.field?.type?.type;
               const formatted = formatFieldValue(rfv.value, fieldType);
               if (formatted) {
@@ -278,8 +324,14 @@ export function useExportSessionPdf({
           }
 
           // Result attachments
-          if (embedImages && result.attachments && result.attachments.length > 0) {
-            const { images, nonImageNames } = await preloadImages(result.attachments);
+          if (
+            embedImages &&
+            result.attachments &&
+            result.attachments.length > 0
+          ) {
+            const { images, nonImageNames } = await preloadImages(
+              result.attachments
+            );
             pdf.renderImages(images);
             pdf.renderAttachmentNames(nonImageNames);
           } else if (result.attachments && result.attachments.length > 0) {

@@ -266,9 +266,7 @@ export const ensureTipTapJSON = (value: any): JSONContent => {
 export const serializeTipTapJSON = (value: any): string => {
   try {
     return JSON.stringify(ensureTipTapJSON(value));
-  } catch (
-    error
-  ) {
+  } catch (error) {
     console.error("Failed to serialize TipTap JSON:", error);
     return JSON.stringify(emptyEditorContent);
   }

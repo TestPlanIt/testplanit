@@ -23,7 +23,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const datasetId = Number(datasetIdParam);
 
     if (!Number.isFinite(datasetId)) {
-      return NextResponse.json({ error: "Invalid dataset id" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid dataset id" },
+        { status: 400 }
+      );
     }
 
     const dataset = await db.testmoImportDataset.findFirst({
@@ -50,9 +53,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Dataset not found" }, { status: 404 });
     }
 
-    const toPlainObject = (
-      value: unknown
-    ): Record<string, unknown> | null => {
+    const toPlainObject = (value: unknown): Record<string, unknown> | null => {
       if (!value || typeof value !== "object" || Array.isArray(value)) {
         return value && typeof value === "object"
           ? (JSON.parse(JSON.stringify(value)) as Record<string, unknown>)

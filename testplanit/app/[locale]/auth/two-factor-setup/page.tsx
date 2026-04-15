@@ -6,12 +6,12 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSlot
+  InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, Check, Copy, Loader2, Shield } from "lucide-react";

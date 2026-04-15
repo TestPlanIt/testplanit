@@ -83,7 +83,8 @@ export async function completeMilestoneCascade(
   if (!hasPermission) {
     return {
       status: "error",
-      message: "You do not have permission to complete milestones in this project.",
+      message:
+        "You do not have permission to complete milestones in this project.",
     };
   }
 
@@ -146,9 +147,8 @@ export async function completeMilestoneCascade(
   }
 
   // --- Database Logic ---
-  const descendantMilestoneIds = await getAllDescendantMilestoneIds(
-    milestoneId
-  );
+  const descendantMilestoneIds =
+    await getAllDescendantMilestoneIds(milestoneId);
   const allRelevantMilestoneIds = [milestoneId, ...descendantMilestoneIds];
 
   const activeTestRuns = await prisma.testRuns.findMany({

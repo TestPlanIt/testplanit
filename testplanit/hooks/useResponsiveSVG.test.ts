@@ -27,7 +27,13 @@ function createResizeObserverClass() {
     }
   }
 
-  return { MockResizeObserver, observeSpy, unobserveSpy, disconnectSpy, triggerResize };
+  return {
+    MockResizeObserver,
+    observeSpy,
+    unobserveSpy,
+    disconnectSpy,
+    triggerResize,
+  };
 }
 
 function createContainerEl(width = 0, height = 0): HTMLElement {
@@ -162,11 +168,17 @@ describe("useResponsiveSVG", () => {
 
     const { unmount } = renderHook(() => useResponsiveSVG(containerRef));
 
-    expect(addEventListenerSpy).toHaveBeenCalledWith("resize", expect.any(Function));
+    expect(addEventListenerSpy).toHaveBeenCalledWith(
+      "resize",
+      expect.any(Function)
+    );
 
     unmount();
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith("resize", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "resize",
+      expect.any(Function)
+    );
 
     addEventListenerSpy.mockRestore();
     removeEventListenerSpy.mockRestore();

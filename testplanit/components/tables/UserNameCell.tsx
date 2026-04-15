@@ -3,7 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LinkIcon, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -67,7 +67,10 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
       />
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger type="button" className="text-left block truncate min-w-0">
+          <TooltipTrigger
+            type="button"
+            className="text-left block truncate min-w-0"
+          >
             <div
               className={cn(
                 "flex items-center truncate",

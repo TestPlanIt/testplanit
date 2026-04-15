@@ -1,7 +1,12 @@
 "use client";
 import {
   AlertDialog,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { TestRuns } from "@prisma/client";
@@ -62,8 +67,10 @@ export function DeleteTestRunModal({
         predicate: (query) => {
           const queryKey = query.queryKey;
           // Remove queries that include this specific test run ID
-          return JSON.stringify(queryKey).includes(`"id":${testRunId}`) ||
-                 JSON.stringify(queryKey).includes(`"id": ${testRunId}`);
+          return (
+            JSON.stringify(queryKey).includes(`"id":${testRunId}`) ||
+            JSON.stringify(queryKey).includes(`"id": ${testRunId}`)
+          );
         },
       });
 
@@ -88,8 +95,10 @@ export function DeleteTestRunModal({
       queryClient.invalidateQueries({
         predicate: (query) => {
           const queryKey = query.queryKey;
-          return JSON.stringify(queryKey).includes("testRuns") ||
-                 JSON.stringify(queryKey).includes("TestRuns");
+          return (
+            JSON.stringify(queryKey).includes("testRuns") ||
+            JSON.stringify(queryKey).includes("TestRuns")
+          );
         },
       });
     } catch {

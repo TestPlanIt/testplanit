@@ -15,5 +15,8 @@ export function isAdmin(session: Session | null): boolean {
  * @returns true if the user has ADMIN or PROJECTADMIN access, false otherwise
  */
 export function isProjectAdmin(session: Session | null): boolean {
-  return session?.user?.access === "ADMIN" || session?.user?.access === "PROJECTADMIN";
+  return (
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN"
+  );
 }

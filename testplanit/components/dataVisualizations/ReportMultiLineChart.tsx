@@ -25,7 +25,6 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useResponsiveSVG(containerRef);
 
-
   useEffect(() => {
     const tooltipElement = document.createElement("div");
     tooltipElement.style.position = "fixed";
@@ -49,7 +48,13 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0 || width === 0 || height === 0) {
+    if (
+      !svgRef.current ||
+      !data ||
+      data.length === 0 ||
+      width === 0 ||
+      height === 0
+    ) {
       if (svgRef.current) d3.select(svgRef.current).selectAll("*").remove();
       return;
     }
@@ -158,9 +163,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
           const formattedDate = `${month}/${day}/${year}`;
           tooltipRef.current.innerHTML = `<strong>${
             d.seriesName
-          }</strong><br/>${formattedDate}<br/>Value: ${
-            d.formattedValue
-          }`;
+          }</strong><br/>${formattedDate}<br/>Value: ${d.formattedValue}`;
         }
       })
       .on("mousemove", (event) => {

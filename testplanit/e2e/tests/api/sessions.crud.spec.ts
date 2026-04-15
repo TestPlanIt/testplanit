@@ -4,9 +4,15 @@ test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
 
 test.describe("Sessions CRUD", () => {
-  test("should create a session and read it back", async ({ api, request: _request, baseURL: _baseURL }) => {
+  test("should create a session and read it back", async ({
+    api,
+    request: _request,
+    baseURL: _baseURL,
+  }) => {
     const sessionName = `API Session ${Date.now()}`;
-    const projectId = await api.createProject(`API Session Create Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Session Create Test Project ${Date.now()}`
+    );
     const sessionId = await api.createSession(projectId, sessionName);
 
     const session = await api.getSession(sessionId);
@@ -23,7 +29,9 @@ test.describe("Sessions CRUD", () => {
   test("should update a session name", async ({ api, request, baseURL }) => {
     const originalName = `API Session ${Date.now()}-orig`;
     const newName = `API Session ${Date.now()}-updated`;
-    const projectId = await api.createProject(`API Session Update Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Session Update Test Project ${Date.now()}`
+    );
     const sessionId = await api.createSession(projectId, originalName);
 
     const updateResponse = await request.patch(
@@ -45,9 +53,15 @@ test.describe("Sessions CRUD", () => {
     await api.deleteSession(sessionId);
   });
 
-  test("should mark a session as completed", async ({ api, request, baseURL }) => {
+  test("should mark a session as completed", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
     const sessionName = `API Session ${Date.now()}-complete`;
-    const projectId = await api.createProject(`API Session Complete Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Session Complete Test Project ${Date.now()}`
+    );
     const sessionId = await api.createSession(projectId, sessionName);
 
     const completedAt = new Date().toISOString();
@@ -76,7 +90,9 @@ test.describe("Sessions CRUD", () => {
 
   test("should soft-delete a session", async ({ api, request, baseURL }) => {
     const sessionName = `API Session ${Date.now()}-delete`;
-    const projectId = await api.createProject(`API Session Delete Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Session Delete Test Project ${Date.now()}`
+    );
     const sessionId = await api.createSession(projectId, sessionName);
 
     // Perform soft-delete explicitly and wait for response
@@ -97,9 +113,15 @@ test.describe("Sessions CRUD", () => {
     expect(session.isDeleted).toBe(true);
   });
 
-  test("should complete full session lifecycle", async ({ api, request, baseURL }) => {
+  test("should complete full session lifecycle", async ({
+    api,
+    request,
+    baseURL,
+  }) => {
     const sessionName = `API Session ${Date.now()}-lifecycle`;
-    const projectId = await api.createProject(`API Session Lifecycle Test Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `API Session Lifecycle Test Project ${Date.now()}`
+    );
     const sessionId = await api.createSession(projectId, sessionName);
 
     // Step 1: Verify initial state (isCompleted=false)

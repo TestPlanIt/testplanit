@@ -29,7 +29,8 @@ function makeResponse(
     statusText: status === 200 ? "OK" : "Error",
     headers: new Headers(headers),
     json: () => Promise.resolve(data),
-    text: () => Promise.resolve(typeof data === "string" ? data : JSON.stringify(data)),
+    text: () =>
+      Promise.resolve(typeof data === "string" ? data : JSON.stringify(data)),
     url: "https://api.github.com/repos/test/test",
   };
 }
@@ -144,7 +145,9 @@ describe("GitRepoAdapter redirect protection", () => {
       ok: false,
       status: 301,
       statusText: "Moved",
-      headers: new Headers({ Location: "https://api.github.com/repos/testorg/testrepo-new" }),
+      headers: new Headers({
+        Location: "https://api.github.com/repos/testorg/testrepo-new",
+      }),
       url: "https://api.github.com/repos/testorg/testrepo",
       json: () => Promise.resolve({}),
       text: () => Promise.resolve(""),

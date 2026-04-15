@@ -23,7 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { LlmFeatureConfig, LlmIntegration, LlmProviderConfig, ProjectLlmIntegration } from "@prisma/client";
+import {
+  LlmFeatureConfig,
+  LlmIntegration,
+  LlmProviderConfig,
+  ProjectLlmIntegration,
+} from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -51,7 +56,12 @@ interface FeatureOverridesProps {
   promptConfigId: string | null;
 }
 
-type SourceType = "projectOverride" | "projectOverrideDisabled" | "promptConfig" | "projectDefault" | "noLlmConfigured";
+type SourceType =
+  | "projectOverride"
+  | "projectOverrideDisabled"
+  | "promptConfig"
+  | "projectDefault"
+  | "noLlmConfigured";
 
 interface EffectiveResolution {
   integration: LlmIntegrationWithConfig | null;
@@ -94,11 +104,17 @@ export function FeatureOverrides({
 
   const getEffectiveResolution = (feature: string): EffectiveResolution => {
     const featureConfig = featureConfigs?.find((c) => c.feature === feature) as
-      | (LlmFeatureConfig & { llmIntegration?: LlmIntegrationWithConfig | null })
+      | (LlmFeatureConfig & {
+          llmIntegration?: LlmIntegrationWithConfig | null;
+        })
       | undefined;
 
     // Explicit "No LLM" override — disabled with no integration
-    if (featureConfig && !featureConfig.enabled && !featureConfig.llmIntegrationId) {
+    if (
+      featureConfig &&
+      !featureConfig.enabled &&
+      !featureConfig.llmIntegrationId
+    ) {
       return {
         integration: null,
         source: "projectOverrideDisabled",
@@ -112,8 +128,14 @@ export function FeatureOverrides({
       };
     }
 
-    const promptPrompt = promptConfigPrompts?.find((p) => p.feature === feature) as
-      | ({ llmIntegrationId?: number | null; llmIntegration?: LlmIntegrationWithConfig | null; feature: string })
+    const promptPrompt = promptConfigPrompts?.find(
+      (p) => p.feature === feature
+    ) as
+      | {
+          llmIntegrationId?: number | null;
+          llmIntegration?: LlmIntegrationWithConfig | null;
+          feature: string;
+        }
       | undefined;
 
     if (promptPrompt?.llmIntegrationId && promptPrompt.llmIntegration) {
@@ -186,22 +208,24 @@ export function FeatureOverrides({
     switch (source) {
       case "projectOverride":
         return (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+          <Badge
+            variant="outline"
+            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+          >
             {t("projectOverride")}
           </Badge>
         );
       case "projectOverrideDisabled":
         return (
-          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800">
+          <Badge
+            variant="outline"
+            className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800"
+          >
             {t("disabledOverride")}
           </Badge>
         );
       case "promptConfig":
-        return (
-          <Badge variant="secondary">
-            {t("promptConfig")}
-          </Badge>
-        );
+        return <Badge variant="secondary">{t("promptConfig")}</Badge>;
       case "projectDefault":
         return (
           <Badge variant="outline" className="text-muted-foreground">
@@ -209,11 +233,7 @@ export function FeatureOverrides({
           </Badge>
         );
       case "noLlmConfigured":
-        return (
-          <Badge variant="destructive">
-            {t("noLlmConfigured")}
-          </Badge>
-        );
+        return <Badge variant="destructive">{t("noLlmConfigured")}</Badge>;
     }
   };
 
@@ -237,11 +257,21 @@ export function FeatureOverrides({
           </TableHeader>
           <TableBody>
             {allFeatures.map((feature) => {
-              const featureConfig = featureConfigs?.find((c) => c.feature === feature);
-              const typedConfig = featureConfig as (LlmFeatureConfig & { llmIntegrationId?: number | null }) | undefined;
-              const isDisabledOverride = typedConfig && !typedConfig.enabled && !typedConfig.llmIntegrationId;
-              const selectValue = isDisabledOverride ? "none" : (typedConfig?.llmIntegrationId?.toString() ?? "default");
-              const { integration: effectiveIntegration, source } = getEffectiveResolution(feature);
+              const featureConfig = featureConfigs?.find(
+                (c) => c.feature === feature
+              );
+              const typedConfig = featureConfig as
+                | (LlmFeatureConfig & { llmIntegrationId?: number | null })
+                | undefined;
+              const isDisabledOverride =
+                typedConfig &&
+                !typedConfig.enabled &&
+                !typedConfig.llmIntegrationId;
+              const selectValue = isDisabledOverride
+                ? "none"
+                : (typedConfig?.llmIntegrationId?.toString() ?? "default");
+              const { integration: effectiveIntegration, source } =
+                getEffectiveResolution(feature);
 
               return (
                 <TableRow key={feature}>
@@ -252,7 +282,9 @@ export function FeatureOverrides({
                     <div className="flex items-center gap-2">
                       <Select
                         value={selectValue}
-                        onValueChange={(val) => handleOverrideChange(feature, val)}
+                        onValueChange={(val) =>
+                          handleOverrideChange(feature, val)
+                        }
                       >
                         <SelectTrigger className="w-48">
                           <SelectValue />
@@ -261,9 +293,7 @@ export function FeatureOverrides({
                           <SelectItem value="default">
                             {t("noOverride")}
                           </SelectItem>
-                          <SelectItem value="none">
-                            {t("noLlm")}
-                          </SelectItem>
+                          <SelectItem value="none">{t("noLlm")}</SelectItem>
                           {integrations.map((integration) => (
                             <SelectItem
                               key={integration.id}
@@ -297,9 +327,7 @@ export function FeatureOverrides({
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    {getSourceBadge(source)}
-                  </TableCell>
+                  <TableCell>{getSourceBadge(source)}</TableCell>
                 </TableRow>
               );
             })}

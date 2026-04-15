@@ -161,7 +161,9 @@ test.describe("Batch Operations - updateMany RepositoryCases (BATCH-02)", () => 
     expect(result.data.length).toBe(3);
 
     // All 3 cases must have isArchived: true
-    expect(result.data.every((c: { isArchived: boolean }) => c.isArchived === true)).toBe(true);
+    expect(
+      result.data.every((c: { isArchived: boolean }) => c.isArchived === true)
+    ).toBe(true);
   });
 });
 

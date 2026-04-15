@@ -38,9 +38,7 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Find the Configurations field's combobox trigger (plural label = multi-select)
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     await expect(configLabel).toBeVisible({ timeout: 5000 });
 
     const configCombobox = configLabel
@@ -80,18 +78,14 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
 
     // Select the configuration
-    await page
-      .locator(`[role="option"]:has-text("${configName}")`)
-      .click();
+    await page.locator(`[role="option"]:has-text("${configName}")`).click();
 
     // Close the popover
     await page.keyboard.press("Escape");
@@ -124,9 +118,7 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
@@ -139,7 +131,7 @@ test.describe("Session Configuration Combobox", () => {
     ).toBeVisible({ timeout: 5000 });
 
     // Type in the search input inside the combobox command palette
-    const searchInput = page.locator('[cmdk-input]');
+    const searchInput = page.locator("[cmdk-input]");
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill("Findable");
 
@@ -178,9 +170,7 @@ test.describe("Session Configuration Combobox", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open config combobox
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
@@ -227,17 +217,13 @@ test.describe("Session Configuration Combobox", () => {
     await nameInput.fill(`E2E Session ${Date.now()}`);
 
     // Select a configuration
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
 
-    await page
-      .locator(`[role="option"]:has-text("${configName}")`)
-      .click();
+    await page.locator(`[role="option"]:has-text("${configName}")`).click();
 
     // Close the popover
     await page.keyboard.press("Escape");

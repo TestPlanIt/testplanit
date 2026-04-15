@@ -4,7 +4,8 @@ import { useState } from "react";
 import {
   useFindFirstTemplates,
   useUpdateManyRepositoryCases,
-  useUpdateManySessions, useUpdateTemplates
+  useUpdateManySessions,
+  useUpdateTemplates,
 } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
@@ -16,7 +17,12 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";
@@ -27,7 +33,11 @@ interface DeleteTemplateProps {
   onClose: () => void;
 }
 
-export function DeleteTemplate({ template, open, onClose }: DeleteTemplateProps) {
+export function DeleteTemplate({
+  template,
+  open,
+  onClose,
+}: DeleteTemplateProps) {
   const t = useTranslations("admin.templates.delete");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");

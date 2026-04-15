@@ -62,13 +62,19 @@ export interface MagicSelectJobResult {
 // ─── Helper functions (migrated from route.ts) ───────────────────────────────
 
 // Helper to parse env var as number with fallback
-const parseEnvInt = (envVar: string | undefined, defaultValue: number): number => {
+const parseEnvInt = (
+  envVar: string | undefined,
+  defaultValue: number
+): number => {
   if (!envVar) return defaultValue;
   const parsed = parseInt(envVar, 10);
   return isNaN(parsed) ? defaultValue : parsed;
 };
 
-const parseEnvFloat = (envVar: string | undefined, defaultValue: number): number => {
+const parseEnvFloat = (
+  envVar: string | undefined,
+  defaultValue: number
+): number => {
   if (!envVar) return defaultValue;
   const parsed = parseFloat(envVar);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -79,15 +85,27 @@ const TRUNCATION_LIMITS = {
   testCaseName: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_CASE_NAME, 80),
   textLongField: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_TEXT_LONG, 100),
   otherField: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_OTHER_FIELD, 100),
-  issueDescription: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_ISSUE_DESC, 250),
+  issueDescription: parseEnvInt(
+    process.env.MAGIC_SELECT_TRUNCATE_ISSUE_DESC,
+    250
+  ),
 };
 
 // Search configuration for pre-filtering test cases (configurable via env vars)
 const SEARCH_CONFIG = {
-  searchPreFilterThreshold: parseEnvInt(process.env.MAGIC_SELECT_SEARCH_THRESHOLD, 250),
+  searchPreFilterThreshold: parseEnvInt(
+    process.env.MAGIC_SELECT_SEARCH_THRESHOLD,
+    250
+  ),
   minKeywordLength: parseEnvInt(process.env.MAGIC_SELECT_MIN_KEYWORD_LENGTH, 3),
-  minSearchScore: parseEnvFloat(process.env.MAGIC_SELECT_MIN_SEARCH_SCORE, 50.0),
-  maxSearchResults: parseEnvInt(process.env.MAGIC_SELECT_MAX_SEARCH_RESULTS, 2000),
+  minSearchScore: parseEnvFloat(
+    process.env.MAGIC_SELECT_MIN_SEARCH_SCORE,
+    50.0
+  ),
+  maxSearchResults: parseEnvInt(
+    process.env.MAGIC_SELECT_MAX_SEARCH_RESULTS,
+    2000
+  ),
 };
 
 // Compressed test case structure for LLM context
@@ -181,7 +199,8 @@ function processFieldValue(
       const names = ids
         .map(
           (id) =>
-            fieldOptions.find((fo) => fo.fieldOption.id === id)?.fieldOption.name
+            fieldOptions.find((fo) => fo.fieldOption.id === id)?.fieldOption
+              .name
         )
         .filter(Boolean);
       return names.length > 0 ? names.join(", ") : null;
@@ -262,16 +281,99 @@ function extractSearchKeywords(
   const combinedText = textParts.join(" ");
 
   const stopWords = new Set([
-    "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-    "of", "with", "by", "from", "as", "is", "was", "are", "were", "been",
-    "be", "have", "has", "had", "do", "does", "did", "will", "would", "could",
-    "should", "may", "might", "must", "shall", "can", "need", "this", "that",
-    "these", "those", "it", "its", "they", "them", "their", "we", "us", "our",
-    "you", "your", "he", "she", "him", "her", "his", "all", "each", "every",
-    "both", "few", "more", "most", "other", "some", "such", "no", "not",
-    "only", "same", "so", "than", "too", "very", "just", "also", "now",
-    "here", "there", "when", "where", "why", "how", "what", "which", "who",
-    "whom", "whose", "test", "case", "cases", "run",
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "as",
+    "is",
+    "was",
+    "are",
+    "were",
+    "been",
+    "be",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "can",
+    "need",
+    "this",
+    "that",
+    "these",
+    "those",
+    "it",
+    "its",
+    "they",
+    "them",
+    "their",
+    "we",
+    "us",
+    "our",
+    "you",
+    "your",
+    "he",
+    "she",
+    "him",
+    "her",
+    "his",
+    "all",
+    "each",
+    "every",
+    "both",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "no",
+    "not",
+    "only",
+    "same",
+    "so",
+    "than",
+    "too",
+    "very",
+    "just",
+    "also",
+    "now",
+    "here",
+    "there",
+    "when",
+    "where",
+    "why",
+    "how",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "whose",
+    "test",
+    "case",
+    "cases",
+    "run",
   ]);
 
   const words = combinedText
@@ -452,10 +554,14 @@ export const processor = async (
       (job.data.tenantId ? ` (tenant: ${job.data.tenantId})` : "")
   );
 
-  const { projectId, testRunMetadata, clarification, excludeCaseIds } = job.data;
+  const { projectId, testRunMetadata, clarification, excludeCaseIds } =
+    job.data;
 
   // Report initial setup phase
-  await job.updateProgress({ phase: "setup", message: "resolving_integration" });
+  await job.updateProgress({
+    phase: "setup",
+    message: "resolving_integration",
+  });
 
   // 1. Validate multi-tenant context
   validateMultiTenantJobData(job.data);
@@ -472,7 +578,10 @@ export const processor = async (
   const prisma = getPrismaClientForJob(job.data);
 
   // 4. Create worker-safe LlmManager (fresh instance per job, not singleton)
-  const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
+  const llmManager = LlmManager.createForWorker(
+    prisma as any,
+    job.data.tenantId
+  );
   const promptResolver = new PromptResolver(prisma as any);
 
   // 4. TOKEN-04 — Fetch provider config for token limits and retry settings
@@ -486,9 +595,11 @@ export const processor = async (
   let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
 
   if (resolved) {
-    const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst({
-      where: { llmIntegrationId: resolved.integrationId },
-    });
+    const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst(
+      {
+        where: { llmIntegrationId: resolved.integrationId },
+      }
+    );
     if (llmProviderConfig) {
       maxTokensPerRequest = llmProviderConfig.maxTokensPerRequest ?? 4096;
       maxTokens = llmProviderConfig.defaultMaxTokens ?? 2000;
@@ -534,7 +645,11 @@ export const processor = async (
 
   // 8. Elasticsearch pre-filter logic
   let searchResultIds: number[] | null = null;
-  const searchKeywords = extractSearchKeywords(testRunMetadata, issues, clarification);
+  const searchKeywords = extractSearchKeywords(
+    testRunMetadata,
+    issues,
+    clarification
+  );
   let searchPreFiltered = false;
 
   const repositoryTotalCount = await (prisma as any).repositoryCases.count({
@@ -545,12 +660,19 @@ export const processor = async (
     },
   });
 
-  if (searchKeywords && repositoryTotalCount > SEARCH_CONFIG.searchPreFilterThreshold) {
-    console.log(`[magic-select] job ${job.id} running ES pre-filter (${repositoryTotalCount} cases, keywords: "${searchKeywords}")`);
+  if (
+    searchKeywords &&
+    repositoryTotalCount > SEARCH_CONFIG.searchPreFilterThreshold
+  ) {
+    console.log(
+      `[magic-select] job ${job.id} running ES pre-filter (${repositoryTotalCount} cases, keywords: "${searchKeywords}")`
+    );
 
     const esClient = getElasticsearchClient();
     if (!esClient) {
-      console.log("[magic-select] Elasticsearch client not available, skipping pre-filter");
+      console.log(
+        "[magic-select] Elasticsearch client not available, skipping pre-filter"
+      );
     } else {
       try {
         const indexName = getRepositoryCaseIndexName(job.data.tenantId);
@@ -562,18 +684,46 @@ export const processor = async (
 
         const searchQuery = {
           bool: {
-            filter: [
-              { term: { projectId } },
-              { term: { isArchived: false } },
-            ],
+            filter: [{ term: { projectId } }, { term: { isArchived: false } }],
             must: [
               {
                 bool: {
                   should: [
-                    { match_phrase: { name: { query: testRunMetadata.name, boost: 20 } } },
-                    { match: { name: { query: nameQuery, operator: "or" as const, minimum_should_match: "1", boost: 10 } } },
-                    { match: { searchableContent: { query: nameQuery, operator: "or" as const, minimum_should_match: "1", boost: 5 } } },
-                    { match: { searchableContent: { query: searchKeywords, operator: "or" as const, minimum_should_match: "1", boost: 1 } } },
+                    {
+                      match_phrase: {
+                        name: { query: testRunMetadata.name, boost: 20 },
+                      },
+                    },
+                    {
+                      match: {
+                        name: {
+                          query: nameQuery,
+                          operator: "or" as const,
+                          minimum_should_match: "1",
+                          boost: 10,
+                        },
+                      },
+                    },
+                    {
+                      match: {
+                        searchableContent: {
+                          query: nameQuery,
+                          operator: "or" as const,
+                          minimum_should_match: "1",
+                          boost: 5,
+                        },
+                      },
+                    },
+                    {
+                      match: {
+                        searchableContent: {
+                          query: searchKeywords,
+                          operator: "or" as const,
+                          minimum_should_match: "1",
+                          boost: 1,
+                        },
+                      },
+                    },
                   ],
                   minimum_should_match: 1,
                 },
@@ -606,19 +756,28 @@ export const processor = async (
               .filter((hit) => hit._id !== undefined)
               .map((hit) => parseInt(hit._id!, 10));
             searchPreFiltered = true;
-            console.log(`[magic-select] ES returned ${searchResultIds.length} cases (min_score: ${minScore})`);
+            console.log(
+              `[magic-select] ES returned ${searchResultIds.length} cases (min_score: ${minScore})`
+            );
             break;
           } else if (minScore === scoreThresholds[scoreThresholds.length - 1]) {
-            console.log("[magic-select] ES returned no results at minimum threshold, using all cases");
+            console.log(
+              "[magic-select] ES returned no results at minimum threshold, using all cases"
+            );
           }
         }
       } catch (searchError) {
-        console.error("[magic-select] Elasticsearch search failed, falling back to database query:", searchError);
+        console.error(
+          "[magic-select] Elasticsearch search failed, falling back to database query:",
+          searchError
+        );
       }
     }
   }
 
-  const effectiveCaseCount = searchResultIds ? searchResultIds.length : repositoryTotalCount;
+  const effectiveCaseCount = searchResultIds
+    ? searchResultIds.length
+    : repositoryTotalCount;
 
   // 9. Fetch repository cases from DB
   const testCaseWhere: {
@@ -696,55 +855,67 @@ export const processor = async (
   }
 
   // 10. Compress test cases for LLM context
-  const compressedCases: CompressedTestCase[] = repositoryCases.map((tc: any) => {
-    const fields: Record<string, string> = {};
-    for (const cfv of tc.caseFieldValues) {
-      const fieldName = cfv.field?.displayName || cfv.field?.systemName;
-      if (!fieldName) continue;
-      const fieldType = cfv.field?.type?.type;
-      const fieldOptions = cfv.field?.fieldOptions;
-      const processedValue = processFieldValue(cfv.value, fieldType, fieldOptions);
-      if (processedValue) {
-        fields[fieldName] = processedValue;
+  const compressedCases: CompressedTestCase[] = repositoryCases.map(
+    (tc: any) => {
+      const fields: Record<string, string> = {};
+      for (const cfv of tc.caseFieldValues) {
+        const fieldName = cfv.field?.displayName || cfv.field?.systemName;
+        if (!fieldName) continue;
+        const fieldType = cfv.field?.type?.type;
+        const fieldOptions = cfv.field?.fieldOptions;
+        const processedValue = processFieldValue(
+          cfv.value,
+          fieldType,
+          fieldOptions
+        );
+        if (processedValue) {
+          fields[fieldName] = processedValue;
+        }
       }
-    }
 
-    return {
-      id: tc.id,
-      name: truncateText(tc.name, TRUNCATION_LIMITS.testCaseName),
-      folderPath: buildFolderPath(tc.folder),
-      tags: tc.tags.map((t: any) => t.name),
-      fields,
-      linksTo: tc.linksFrom.map((l: any) => l.caseBId),
-      linksFrom: tc.linksTo.map((l: any) => l.caseAId),
-    };
-  });
+      return {
+        id: tc.id,
+        name: truncateText(tc.name, TRUNCATION_LIMITS.testCaseName),
+        folderPath: buildFolderPath(tc.folder),
+        tags: tc.tags.map((t: any) => t.name),
+        fields,
+        linksTo: tc.linksFrom.map((l: any) => l.caseBId),
+        linksFrom: tc.linksTo.map((l: any) => l.caseAId),
+      };
+    }
+  );
 
   if (!resolved) {
     throw new Error("No active LLM integration found for this project");
   }
 
   // 11. Estimate tokens for fixed parts (system + test run context overhead)
-  const testRunContext = buildUserPrompt(testRunMetadata, issues, [], clarification);
+  const testRunContext = buildUserPrompt(
+    testRunMetadata,
+    issues,
+    [],
+    clarification
+  );
   const systemPromptTokens =
     Math.ceil(systemPrompt.length / 4) + Math.ceil(testRunContext.length / 4);
 
   // 12. Convert compressed cases to batchable items with token estimates
-  const batchableItems: (CompressedTestCase & BatchableItem)[] = compressedCases.map((tc) => {
-    const serialized = JSON.stringify([
-      tc.id,
-      tc.name,
-      tc.folderPath !== "/" ? tc.folderPath : null,
-      tc.tags.length > 0 ? tc.tags : null,
-      Object.keys(tc.fields).length > 0 ? tc.fields : null,
-      tc.linksTo.length > 0 ? tc.linksTo : null,
-      tc.linksFrom.length > 0 ? tc.linksFrom : null,
-    ]);
-    return {
-      ...tc,
-      estimatedTokens: Math.ceil(serialized.length / 4),
-    };
-  });
+  const batchableItems: (CompressedTestCase & BatchableItem)[] =
+    compressedCases.map((tc) => {
+      const serialized = JSON.stringify([
+        tc.id,
+        tc.name,
+        tc.folderPath !== "/" ? tc.folderPath : null,
+        tc.tags.length > 0 ? tc.tags : null,
+        Object.keys(tc.fields).length > 0 ? tc.fields : null,
+        tc.linksTo.length > 0 ? tc.linksTo : null,
+        tc.linksFrom.length > 0 ? tc.linksFrom : null,
+      ]);
+      return {
+        ...tc,
+        estimatedTokens: Math.ceil(serialized.length / 4),
+      };
+    });
 
   // 13. Create batches using token-aware batch processor
   const batches = createBatches(batchableItems, {
@@ -752,7 +923,9 @@ export const processor = async (
     systemPromptTokens,
   });
 
-  console.log(`[magic-select] job ${job.id} — ${compressedCases.length} cases, ${batches.length} batches`);
+  console.log(
+    `[magic-select] job ${job.id} — ${compressedCases.length} cases, ${batches.length} batches`
+  );
 
   await job.updateProgress({
     phase: "ai",
@@ -782,7 +955,12 @@ export const processor = async (
       }
 
       const batchCases: CompressedTestCase[] = batch;
-      const userPrompt = buildUserPrompt(testRunMetadata, issues, batchCases, clarification);
+      const userPrompt = buildUserPrompt(
+        testRunMetadata,
+        issues,
+        batchCases,
+        clarification
+      );
 
       const llmRequest: LlmRequest = {
         messages: [
@@ -804,7 +982,11 @@ export const processor = async (
         timeout: 240000,
       };
 
-      const response = await llmManager.chat(resolved.integrationId, llmRequest, retryOptions);
+      const response = await llmManager.chat(
+        resolved.integrationId,
+        llmRequest,
+        retryOptions
+      );
 
       if (response.finishReason === "length") {
         console.warn(
@@ -824,7 +1006,9 @@ export const processor = async (
       let jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
 
       if (!jsonMatch) {
-        const codeBlockMatch = cleanContent.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+        const codeBlockMatch = cleanContent.match(
+          /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
+        );
         if (codeBlockMatch) {
           jsonMatch = [codeBlockMatch[1]];
         }
@@ -861,7 +1045,10 @@ export const processor = async (
 
   // 15. Deduplicate, expand linked cases, filter excluded
   const uniqueSuggestedIds = [...new Set(allSuggestedIds)];
-  const expandedCaseIds = expandLinkedCases(uniqueSuggestedIds, compressedCases);
+  const expandedCaseIds = expandLinkedCases(
+    uniqueSuggestedIds,
+    compressedCases
+  );
   const finalCaseIds = excludeCaseIds
     ? expandedCaseIds.filter((id) => !excludeCaseIds.includes(id))
     : expandedCaseIds;
@@ -919,7 +1106,9 @@ export function startMagicSelectWorker() {
     console.error("Magic select worker error:", err);
   });
 
-  console.log(`Magic select worker started for queue "${MAGIC_SELECT_QUEUE_NAME}".`);
+  console.log(
+    `Magic select worker started for queue "${MAGIC_SELECT_QUEUE_NAME}".`
+  );
 
   // Graceful shutdown
   process.on("SIGTERM", async () => {

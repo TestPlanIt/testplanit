@@ -22,13 +22,10 @@ export async function POST(req: NextRequest) {
     });
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const prependString = formData.get("prependString") as string || "";
+    const prependString = (formData.get("prependString") as string) || "";
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     const bucketName = process.env.AWS_BUCKET_NAME;
@@ -68,7 +65,7 @@ export async function POST(req: NextRequest) {
       name: error.name,
     });
     return NextResponse.json(
-      { error: `Failed to upload file: ${error.message || 'Unknown error'}` },
+      { error: `Failed to upload file: ${error.message || "Unknown error"}` },
       { status: 500 }
     );
   }

@@ -33,15 +33,12 @@ test.describe("TestRuns CRUD", () => {
     const testRunId = await api.createTestRun(projectId, uniqueName);
 
     // PATCH to mark completed
-    const updateResponse = await request.patch(
-      `/api/model/testRuns/update`,
-      {
-        data: {
-          where: { id: testRunId },
-          data: { isCompleted: true },
-        },
-      }
-    );
+    const updateResponse = await request.patch(`/api/model/testRuns/update`, {
+      data: {
+        where: { id: testRunId },
+        data: { isCompleted: true },
+      },
+    });
     expect(updateResponse.ok()).toBeTruthy();
 
     // Read back and verify
@@ -57,44 +54,35 @@ test.describe("TestRuns CRUD", () => {
     const testRunId = await api.createTestRun(projectId, uniqueName);
 
     // Soft-delete by setting isDeleted: true
-    const deleteResponse = await request.patch(
-      `/api/model/testRuns/update`,
-      {
-        data: {
-          where: { id: testRunId },
-          data: { isDeleted: true },
-        },
-      }
-    );
+    const deleteResponse = await request.patch(`/api/model/testRuns/update`, {
+      data: {
+        where: { id: testRunId },
+        data: { isDeleted: true },
+      },
+    });
     expect(deleteResponse.ok()).toBeTruthy();
 
     // Read back via findFirst — should show isDeleted: true
-    const findResponse = await request.get(
-      `/api/model/testRuns/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: testRunId },
-          }),
-        },
-      }
-    );
+    const findResponse = await request.get(`/api/model/testRuns/findFirst`, {
+      params: {
+        q: JSON.stringify({
+          where: { id: testRunId },
+        }),
+      },
+    });
     expect(findResponse.ok()).toBeTruthy();
     const found = await findResponse.json();
     expect(found.data).not.toBeNull();
     expect(found.data.isDeleted).toBe(true);
 
     // findMany with isDeleted: false should NOT include it
-    const findManyResponse = await request.get(
-      `/api/model/testRuns/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: testRunId, isDeleted: false },
-          }),
-        },
-      }
-    );
+    const findManyResponse = await request.get(`/api/model/testRuns/findMany`, {
+      params: {
+        q: JSON.stringify({
+          where: { id: testRunId, isDeleted: false },
+        }),
+      },
+    });
     expect(findManyResponse.ok()).toBeTruthy();
     const findMany = await findManyResponse.json();
     expect(findMany.data).toHaveLength(0);
@@ -209,15 +197,12 @@ test.describe("TestRuns CRUD", () => {
     await api.addTestCaseToTestRun(testRunId, caseId2, { order: 2 });
 
     // Soft-delete the test run
-    const deleteResponse = await request.patch(
-      `/api/model/testRuns/update`,
-      {
-        data: {
-          where: { id: testRunId },
-          data: { isDeleted: true },
-        },
-      }
-    );
+    const deleteResponse = await request.patch(`/api/model/testRuns/update`, {
+      data: {
+        where: { id: testRunId },
+        data: { isDeleted: true },
+      },
+    });
     expect(deleteResponse.ok()).toBeTruthy();
 
     // The run cases still exist (soft-delete on run does NOT cascade-delete run cases)

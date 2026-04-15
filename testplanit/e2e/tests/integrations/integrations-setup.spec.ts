@@ -27,21 +27,18 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations`,
-      {
-        data: {
-          name: `E2E Jira Integration ${uniqueId}`,
-          type: "JIRA",
-          authType: "API_KEY",
-          config: {
-            email: "test@example.com",
-            apiToken: "fake-api-token-for-e2e",
-            baseUrl: "https://example.atlassian.net",
-          },
+    const response = await request.post(`${baseURL}/api/integrations`, {
+      data: {
+        name: `E2E Jira Integration ${uniqueId}`,
+        type: "JIRA",
+        authType: "API_KEY",
+        config: {
+          email: "test@example.com",
+          apiToken: "fake-api-token-for-e2e",
+          baseUrl: "https://example.atlassian.net",
         },
-      }
-    );
+      },
+    });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
@@ -56,19 +53,16 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations`,
-      {
-        data: {
-          name: `E2E GitHub Integration ${uniqueId}`,
-          type: "GITHUB",
-          authType: "PERSONAL_ACCESS_TOKEN",
-          config: {
-            personalAccessToken: "ghp_fakePATforE2Etesting1234567890",
-          },
+    const response = await request.post(`${baseURL}/api/integrations`, {
+      data: {
+        name: `E2E GitHub Integration ${uniqueId}`,
+        type: "GITHUB",
+        authType: "PERSONAL_ACCESS_TOKEN",
+        config: {
+          personalAccessToken: "ghp_fakePATforE2Etesting1234567890",
         },
-      }
-    );
+      },
+    });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
@@ -82,20 +76,17 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations`,
-      {
-        data: {
-          name: `E2E Azure Integration ${uniqueId}`,
-          type: "AZURE_DEVOPS",
-          authType: "PERSONAL_ACCESS_TOKEN",
-          config: {
-            personalAccessToken: "fake-azure-pat-for-e2e-testing",
-            organizationUrl: "https://dev.azure.com/fakeorg",
-          },
+    const response = await request.post(`${baseURL}/api/integrations`, {
+      data: {
+        name: `E2E Azure Integration ${uniqueId}`,
+        type: "AZURE_DEVOPS",
+        authType: "PERSONAL_ACCESS_TOKEN",
+        config: {
+          personalAccessToken: "fake-azure-pat-for-e2e-testing",
+          organizationUrl: "https://dev.azure.com/fakeorg",
         },
-      }
-    );
+      },
+    });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
@@ -109,19 +100,16 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations`,
-      {
-        data: {
-          name: `E2E SimpleURL Integration ${uniqueId}`,
-          type: "SIMPLE_URL",
-          authType: "NONE",
-          config: {
-            baseUrl: "https://issues.example.com/{issueId}",
-          },
+    const response = await request.post(`${baseURL}/api/integrations`, {
+      data: {
+        name: `E2E SimpleURL Integration ${uniqueId}`,
+        type: "SIMPLE_URL",
+        authType: "NONE",
+        config: {
+          baseUrl: "https://issues.example.com/{issueId}",
         },
-      }
-    );
+      },
+    });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
@@ -156,7 +144,8 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     expect(listResponse.status()).toBe(200);
     const integrations = await listResponse.json();
     const simpleUrl = integrations.find(
-      (i: { name: string }) => i.name === `E2E SimpleURL Integration ${uniqueId}`
+      (i: { name: string }) =>
+        i.name === `E2E SimpleURL Integration ${uniqueId}`
     );
     expect(simpleUrl).toBeTruthy();
 
@@ -173,21 +162,18 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations`,
-      {
-        data: {
-          name: `E2E Jira Integration ${uniqueId}`,
-          type: "JIRA",
-          authType: "API_KEY",
-          config: {
-            email: "other@example.com",
-            apiToken: "another-fake-token",
-            baseUrl: "https://other.atlassian.net",
-          },
+    const response = await request.post(`${baseURL}/api/integrations`, {
+      data: {
+        name: `E2E Jira Integration ${uniqueId}`,
+        type: "JIRA",
+        authType: "API_KEY",
+        config: {
+          email: "other@example.com",
+          apiToken: "another-fake-token",
+          baseUrl: "https://other.atlassian.net",
         },
-      }
-    );
+      },
+    });
     expect(response.status()).toBe(400);
     const body = await response.json();
     expect(body).toHaveProperty("error");
@@ -381,7 +367,9 @@ test.describe("Integration Setup - Project Integration Linking", () => {
     integrationId = integration.id;
 
     // Create a project
-    projectId = await api.createProject(`E2E Integration Link Project ${uniqueId}`);
+    projectId = await api.createProject(
+      `E2E Integration Link Project ${uniqueId}`
+    );
   });
 
   test("Admin can link a SIMPLE_URL integration to a project", async ({
@@ -540,7 +528,9 @@ test.describe("Integration Setup - Code Repository Integration (INTG-03)", () =>
       });
     }
     if (githubIntegrationId) {
-      await request.delete(`${baseURL}/api/integrations/${githubIntegrationId}`);
+      await request.delete(
+        `${baseURL}/api/integrations/${githubIntegrationId}`
+      );
     }
   });
 });
@@ -550,9 +540,12 @@ test.describe("Integration Setup - Unauthenticated Access Denied", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -570,9 +563,12 @@ test.describe("Integration Setup - Unauthenticated Access Denied", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -598,9 +594,12 @@ test.describe("Integration Setup - Unauthenticated Access Denied", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {

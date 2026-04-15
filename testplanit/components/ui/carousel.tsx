@@ -1,6 +1,6 @@
 import { ArrowLeftIcon, ArrowRightIcon } from "@radix-ui/react-icons";
 import useEmblaCarousel, {
-  type UseEmblaCarouselType
+  type UseEmblaCarouselType,
 } from "embla-carousel-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";

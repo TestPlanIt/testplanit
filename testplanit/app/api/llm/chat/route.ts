@@ -30,33 +30,38 @@ export async function POST(request: NextRequest) {
     });
 
     if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     // Use the same logic as the centralized permission API
     let hasAccess = false;
 
     // Check user-specific permissions first
-    const userProjectPermission = await prisma.userProjectPermission.findUnique({
-      where: {
-        userId_projectId: {
-          userId: session.user.id,
-          projectId: parseInt(projectId),
+    const userProjectPermission = await prisma.userProjectPermission.findUnique(
+      {
+        where: {
+          userId_projectId: {
+            userId: session.user.id,
+            projectId: parseInt(projectId),
+          },
         },
-      },
-    });
+      }
+    );
 
     if (userProjectPermission) {
       if (userProjectPermission.accessType !== "NO_ACCESS") {
         hasAccess = true;
       }
-    } else if (project.defaultAccessType === "GLOBAL_ROLE" && session.user.access) {
+    } else if (
+      project.defaultAccessType === "GLOBAL_ROLE" &&
+      session.user.access
+    ) {
       // Project uses global roles and user has a role
       hasAccess = true;
-    } else if (project.defaultAccessType === "SPECIFIC_ROLE" && project.defaultRoleId) {
+    } else if (
+      project.defaultAccessType === "SPECIFIC_ROLE" &&
+      project.defaultRoleId
+    ) {
       // Project has a specific default role
       hasAccess = true;
     }
@@ -106,8 +111,10 @@ export async function POST(request: NextRequest) {
     );
 
     // Get the configured token limits from the LLM integration
-    const llmProviderConfig = projectLlmIntegration.llmIntegration.llmProviderConfig;
-    const maxTokens = llmProviderConfig?.defaultMaxTokens || resolvedPrompt.maxOutputTokens;
+    const llmProviderConfig =
+      projectLlmIntegration.llmIntegration.llmProviderConfig;
+    const maxTokens =
+      llmProviderConfig?.defaultMaxTokens || resolvedPrompt.maxOutputTokens;
 
     const llmRequest: LlmRequest = {
       messages: [
@@ -141,23 +148,30 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error in LLM chat:", error);
-    
+
     // Handle specific LLM errors with user-friendly messages
     let errorMessage = "Failed to process message";
     let statusCode = 500;
-    
+
     if (error instanceof Error) {
       errorMessage = error.message;
-      
+
       // Handle specific error types
-      if ((error as any).code === 'CONTENT_BLOCKED' || (error as any).code === 'EMPTY_CONTENT' || (error as any).code === 'MAX_TOKENS') {
+      if (
+        (error as any).code === "CONTENT_BLOCKED" ||
+        (error as any).code === "EMPTY_CONTENT" ||
+        (error as any).code === "MAX_TOKENS"
+      ) {
         statusCode = 400;
       }
     }
-    
-    return NextResponse.json({
-      success: false,
-      error: errorMessage,
-    }, { status: statusCode });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: errorMessage,
+      },
+      { status: statusCode }
+    );
   }
 }

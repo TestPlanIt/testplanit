@@ -5,7 +5,7 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { useFindManyUser } from "~/lib/hooks";
 import { cn, type ClassValue } from "~/utils";

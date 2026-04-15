@@ -71,7 +71,9 @@ describe("usePageFileDrop", () => {
       const { result } = renderHook(() => usePageFileDrop(defaultOptions));
 
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(true);
@@ -81,8 +83,12 @@ describe("usePageFileDrop", () => {
       const { result } = renderHook(() => usePageFileDrop(defaultOptions));
 
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       // Still active — counter went from 0→1→2
@@ -93,13 +99,17 @@ describe("usePageFileDrop", () => {
       const { result } = renderHook(() => usePageFileDrop(defaultOptions));
 
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(true);
 
       act(() => {
-        document.dispatchEvent(createDragEvent("dragleave", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragleave", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(false);
@@ -110,20 +120,28 @@ describe("usePageFileDrop", () => {
 
       // Enter twice
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       // Leave once — counter=1, still active
       act(() => {
-        document.dispatchEvent(createDragEvent("dragleave", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragleave", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(true);
 
       // Leave again — counter=0, no longer active
       act(() => {
-        document.dispatchEvent(createDragEvent("dragleave", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragleave", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(false);
@@ -143,13 +161,17 @@ describe("usePageFileDrop", () => {
       const { result } = renderHook(() => usePageFileDrop(defaultOptions));
 
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(true);
 
       act(() => {
-        document.dispatchEvent(createDragEvent("drop", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("drop", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(false);
@@ -163,7 +185,9 @@ describe("usePageFileDrop", () => {
       );
 
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(false);
@@ -176,7 +200,9 @@ describe("usePageFileDrop", () => {
       );
 
       act(() => {
-        document.dispatchEvent(createDragEvent("drop", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("drop", [createFile("test.csv")])
+        );
       });
 
       expect(onDrop).not.toHaveBeenCalled();
@@ -185,14 +211,14 @@ describe("usePageFileDrop", () => {
     it("should not add event listeners when enabled=false", () => {
       const addEventListenerSpy = vi.spyOn(document, "addEventListener");
 
-      renderHook(() =>
-        usePageFileDrop({ ...defaultOptions, enabled: false })
-      );
+      renderHook(() => usePageFileDrop({ ...defaultOptions, enabled: false }));
 
       // Should not add the drag event listeners
       const dragListenerCalls = addEventListenerSpy.mock.calls
         .map((call) => call[0])
-        .filter((type) => ["dragenter", "dragleave", "dragover", "drop"].includes(type));
+        .filter((type) =>
+          ["dragenter", "dragleave", "dragover", "drop"].includes(type)
+        );
 
       expect(dragListenerCalls).toHaveLength(0);
 
@@ -269,7 +295,9 @@ describe("usePageFileDrop", () => {
       );
 
       act(() => {
-        document.dispatchEvent(createDragEvent("drop", [createFile("document.pdf")]));
+        document.dispatchEvent(
+          createDragEvent("drop", [createFile("document.pdf")])
+        );
       });
 
       expect(mockToast.error).toHaveBeenCalledWith(customMessage);
@@ -287,7 +315,9 @@ describe("usePageFileDrop", () => {
       );
 
       act(() => {
-        document.dispatchEvent(createDragEvent("drop", [createFile("document.pdf")]));
+        document.dispatchEvent(
+          createDragEvent("drop", [createFile("document.pdf")])
+        );
       });
 
       expect(mockToast.error).toHaveBeenCalledWith(
@@ -338,7 +368,9 @@ describe("usePageFileDrop", () => {
 
       unmount();
 
-      const removedTypes = removeEventListenerSpy.mock.calls.map((call) => call[0]);
+      const removedTypes = removeEventListenerSpy.mock.calls.map(
+        (call) => call[0]
+      );
       expect(removedTypes).toContain("dragenter");
       expect(removedTypes).toContain("dragleave");
       expect(removedTypes).toContain("dragover");
@@ -357,7 +389,9 @@ describe("usePageFileDrop", () => {
 
       // Set drag active
       act(() => {
-        document.dispatchEvent(createDragEvent("dragenter", [createFile("test.csv")]));
+        document.dispatchEvent(
+          createDragEvent("dragenter", [createFile("test.csv")])
+        );
       });
 
       expect(result.current.isDragActive).toBe(true);

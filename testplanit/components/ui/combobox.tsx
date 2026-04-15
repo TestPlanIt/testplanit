@@ -6,12 +6,12 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";

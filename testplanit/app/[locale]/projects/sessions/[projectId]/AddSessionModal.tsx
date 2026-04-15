@@ -290,11 +290,13 @@ export function AddSessionModal({
       name: duplicationPreset
         ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
         : "",
-      templateId: duplicationPreset?.originalTemplateId || defaultTemplate?.id || 0,
+      templateId:
+        duplicationPreset?.originalTemplateId || defaultTemplate?.id || 0,
       configIds: duplicationPreset?.originalConfigId
         ? [duplicationPreset.originalConfigId]
         : [],
-      milestoneId: duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+      milestoneId:
+        duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
       stateId: duplicationPreset?.originalStateId || defaultWorkflow?.id || 0,
       assignedToId: duplicationPreset?.originalAssignedToId || "",
       estimate: "",
@@ -336,16 +338,26 @@ export function AddSessionModal({
       setSelectedConfigs([]);
       setSelectedFiles([]);
     }
-  }, [defaultTemplate, defaultWorkflow, reset, defaultMilestoneId, duplicationPreset]);
+  }, [
+    defaultTemplate,
+    defaultWorkflow,
+    reset,
+    defaultMilestoneId,
+    duplicationPreset,
+  ]);
 
   useEffect(() => {
     if (open) {
       const initialTemplateId =
         duplicationPreset?.originalTemplateId ||
-        defaultTemplate?.id || (templates && templates[0]?.id) || 0;
+        defaultTemplate?.id ||
+        (templates && templates[0]?.id) ||
+        0;
       const initialWorkflowId =
         duplicationPreset?.originalStateId ||
-        defaultWorkflow?.id || (workflows && workflows[0]?.id) || 0;
+        defaultWorkflow?.id ||
+        (workflows && workflows[0]?.id) ||
+        0;
 
       reset({
         name: duplicationPreset
@@ -360,16 +372,18 @@ export function AddSessionModal({
         estimate: "",
         note: null,
         mission: null,
-        milestoneId: duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+        milestoneId:
+          duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
         attachments: [],
         issueIds: duplicationPreset?.originalIssueIds || [],
       });
       setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
       if (duplicationPreset?.originalNote) {
         try {
-          const parsed = typeof duplicationPreset.originalNote === "string"
-            ? JSON.parse(duplicationPreset.originalNote)
-            : duplicationPreset.originalNote;
+          const parsed =
+            typeof duplicationPreset.originalNote === "string"
+              ? JSON.parse(duplicationPreset.originalNote)
+              : duplicationPreset.originalNote;
           setNoteContent(parsed);
         } catch {
           setNoteContent({});
@@ -379,9 +393,10 @@ export function AddSessionModal({
       }
       if (duplicationPreset?.originalMission) {
         try {
-          const parsed = typeof duplicationPreset.originalMission === "string"
-            ? JSON.parse(duplicationPreset.originalMission)
-            : duplicationPreset.originalMission;
+          const parsed =
+            typeof duplicationPreset.originalMission === "string"
+              ? JSON.parse(duplicationPreset.originalMission)
+              : duplicationPreset.originalMission;
           setMissionContent(parsed);
         } catch {
           setMissionContent(null);
@@ -391,8 +406,14 @@ export function AddSessionModal({
       }
       setSelectedTags(duplicationPreset?.originalTagIds || []);
       setSelectedConfigs(
-        duplicationPreset?.originalConfigId && duplicationPreset?.originalConfigName
-          ? [{ id: duplicationPreset.originalConfigId, name: duplicationPreset.originalConfigName }]
+        duplicationPreset?.originalConfigId &&
+          duplicationPreset?.originalConfigName
+          ? [
+              {
+                id: duplicationPreset.originalConfigId,
+                name: duplicationPreset.originalConfigName,
+              },
+            ]
           : []
       );
       setSelectedFiles([]);
@@ -410,7 +431,9 @@ export function AddSessionModal({
   ]);
 
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [selectedConfigs, setSelectedConfigs] = useState<ConfigurationOption[]>([]);
+  const [selectedConfigs, setSelectedConfigs] = useState<ConfigurationOption[]>(
+    []
+  );
 
   const userName = session?.user?.name || t("common.labels.unknownUser");
 
@@ -512,7 +535,8 @@ export function AddSessionModal({
         : null;
 
       // Determine configs to create sessions for
-      const configsToCreate = data.configIds.length > 0 ? data.configIds : [null];
+      const configsToCreate =
+        data.configIds.length > 0 ? data.configIds : [null];
       const configurationGroupId = configsToCreate.length > 1 ? uuidv4() : null;
 
       const issuesDataForVersion = (linkedIssueIds || [])
@@ -538,9 +562,7 @@ export function AddSessionModal({
             name: data.name,
             currentVersion: 1,
             configurationGroupId,
-            configuration: configId
-              ? { connect: { id: configId } }
-              : undefined,
+            configuration: configId ? { connect: { id: configId } } : undefined,
             milestone: data.milestoneId
               ? { connect: { id: data.milestoneId } }
               : undefined,
@@ -587,7 +609,8 @@ export function AddSessionModal({
             },
             name: data.name,
             staticProjectId: Number(projectId),
-            staticProjectName: project?.name || t("common.labels.unknownProject"),
+            staticProjectName:
+              project?.name || t("common.labels.unknownProject"),
             project: {
               connect: { id: Number(projectId!) },
             },
@@ -602,8 +625,8 @@ export function AddSessionModal({
               milestones?.find((m) => m.id === data.milestoneId)?.name || null,
             stateId: data.stateId,
             stateName:
-              workflows?.find((workflow) => workflow.id === data.stateId)?.name ||
-              "",
+              workflows?.find((workflow) => workflow.id === data.stateId)
+                ?.name || "",
             assignedToId: data.assignedToId || null,
             assignedToName: null,
             createdById: session.user.id,
@@ -669,7 +692,11 @@ export function AddSessionModal({
       setIsSubmitting(false);
       const sessionsCreated = createdSessions.length;
       if (sessionsCreated > 1) {
-        toast.success(t("sessions.messages.createSuccessMultiple", { count: sessionsCreated }));
+        toast.success(
+          t("sessions.messages.createSuccessMultiple", {
+            count: sessionsCreated,
+          })
+        );
       } else {
         toast.success(t("sessions.messages.createSuccess"));
       }
@@ -758,7 +785,11 @@ export function AddSessionModal({
                       <FormControl>
                         <TipTapEditor
                           key={`editing-note-${duplicationPreset ? "dup" : "new"}`}
-                          content={noteContent && Object.keys(noteContent).length > 0 ? noteContent : emptyEditorContent}
+                          content={
+                            noteContent && Object.keys(noteContent).length > 0
+                              ? noteContent
+                              : emptyEditorContent
+                          }
                           onUpdate={(newContent) => {
                             setNoteContent(newContent);
                           }}
@@ -855,7 +886,9 @@ export function AddSessionModal({
                             )}
                             getOptionValue={(config) => config.id}
                             getOptionLabel={(config) => config.name}
-                            placeholder={t("common.placeholders.selectConfigurations")}
+                            placeholder={t(
+                              "common.placeholders.selectConfigurations"
+                            )}
                             showTotal
                           />
                         </FormControl>

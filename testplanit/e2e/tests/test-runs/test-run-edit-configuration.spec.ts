@@ -59,7 +59,7 @@ async function openComboboxAndWait(page: any, configCombobox: any) {
   await page.waitForTimeout(300);
 
   // Check if popover opened
-  let commandList = page.locator('[cmdk-list]').first();
+  let commandList = page.locator("[cmdk-list]").first();
   let isOpen = await commandList.isVisible().catch(() => false);
 
   if (!isOpen) {
@@ -88,9 +88,7 @@ test.describe("Test Run Edit Configuration", () => {
     page,
   }) => {
     // Setup: Create project, configuration, and test run
-    const projectId = await api.createProject(
-      `E2E EditCfg ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E EditCfg ${Date.now()}`);
     const configName = `EditCfg Config ${Date.now()}`;
     await api.createConfiguration(configName);
 
@@ -101,9 +99,7 @@ test.describe("Test Run Edit Configuration", () => {
     );
 
     // Navigate directly to test run detail page in edit mode
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
-    );
+    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}?edit=true`);
     await page.waitForLoadState("load");
 
     const configCombobox = await getConfigCombobox(page);
@@ -125,9 +121,7 @@ test.describe("Test Run Edit Configuration", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E ChangeCfg ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E ChangeCfg ${Date.now()}`);
     const ts = Date.now();
     const config1Name = `Original Config ${ts}`;
     const config2Name = `New Config ${ts}`;
@@ -140,9 +134,7 @@ test.describe("Test Run Edit Configuration", () => {
     );
 
     // Navigate directly in edit mode
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
-    );
+    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}?edit=true`);
     await page.waitForLoadState("load");
 
     const configCombobox = await getConfigCombobox(page);
@@ -165,9 +157,7 @@ test.describe("Test Run Edit Configuration", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E SearchCfg ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E SearchCfg ${Date.now()}`);
     const ts = Date.now();
     const configMatch = `Searchable Edit ${ts}`;
     const configNoMatch = `Other Edit ${ts}`;
@@ -180,16 +170,14 @@ test.describe("Test Run Edit Configuration", () => {
     );
 
     // Navigate directly in edit mode
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
-    );
+    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}?edit=true`);
     await page.waitForLoadState("load");
 
     const configCombobox = await getConfigCombobox(page);
     await openComboboxAndWait(page, configCombobox);
 
     // Type in search — the Command input inside the popover
-    const searchInput = page.locator('[cmdk-input]').first();
+    const searchInput = page.locator("[cmdk-input]").first();
     await searchInput.fill("Searchable");
 
     await page.waitForTimeout(500);

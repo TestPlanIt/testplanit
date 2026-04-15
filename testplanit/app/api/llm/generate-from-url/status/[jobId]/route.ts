@@ -6,7 +6,7 @@ import { authOptions } from "~/server/auth";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ jobId: string }> },
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -19,7 +19,7 @@ export async function GET(
     if (!queue) {
       return NextResponse.json(
         { error: "Background job queue is not available" },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -36,7 +36,7 @@ export async function GET(
       if (!currentTenantId) {
         return NextResponse.json(
           { error: "Multi-tenant mode enabled but tenant ID not configured" },
-          { status: 500 },
+          { status: 500 }
         );
       }
       if (job.data?.tenantId !== currentTenantId) {
@@ -96,7 +96,7 @@ export async function GET(
     console.error("Generate from URL status error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -107,7 +107,7 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ jobId: string }> },
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -117,7 +117,10 @@ export async function PUT(
   try {
     const queue = getGenerateFromUrlQueue();
     if (!queue) {
-      return NextResponse.json({ error: "Queue not available" }, { status: 503 });
+      return NextResponse.json(
+        { error: "Queue not available" },
+        { status: 503 }
+      );
     }
 
     const { jobId } = await params;
@@ -128,7 +131,7 @@ export async function PUT(
       `generate-from-url:generated:${jobId}`,
       JSON.stringify(body),
       "EX",
-      604800, // 7 day TTL
+      604800 // 7 day TTL
     );
 
     return NextResponse.json({ message: "Saved" });
@@ -136,7 +139,7 @@ export async function PUT(
     console.error("Generate from URL save error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -147,7 +150,7 @@ export async function PUT(
  */
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ jobId: string }> },
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -157,14 +160,17 @@ export async function DELETE(
   try {
     const queue = getGenerateFromUrlQueue();
     if (!queue) {
-      return NextResponse.json({ error: "Queue not available" }, { status: 503 });
+      return NextResponse.json(
+        { error: "Queue not available" },
+        { status: 503 }
+      );
     }
 
     const { jobId } = await params;
     const connection = await queue.client;
     await connection.del(
       `generate-from-url:pages:${jobId}`,
-      `generate-from-url:generated:${jobId}`,
+      `generate-from-url:generated:${jobId}`
     );
 
     return NextResponse.json({ message: "Cleaned up" });
@@ -172,7 +178,7 @@ export async function DELETE(
     console.error("Generate from URL cleanup error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

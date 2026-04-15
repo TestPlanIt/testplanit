@@ -10,26 +10,26 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VersionNavigation } from "@/components/VersionNavigation";
 import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
@@ -38,8 +38,10 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  useFindFirstSessionVersions, useFindManyMilestones, useFindManySessionVersions,
-  useFindManyWorkflows
+  useFindFirstSessionVersions,
+  useFindManyMilestones,
+  useFindManySessionVersions,
+  useFindManyWorkflows,
 } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { SessionVersionRenderer } from "./SessionVersionRenderer";
@@ -259,7 +261,12 @@ export default function SessionVersionPage() {
             {versions?.length && versions.length > 1 && (
               <>
                 <Select
-                  value={currentVersionIndex !== undefined && currentVersionIndex >= 0 ? currentVersionIndex.toString() : "0"}
+                  value={
+                    currentVersionIndex !== undefined &&
+                    currentVersionIndex >= 0
+                      ? currentVersionIndex.toString()
+                      : "0"
+                  }
                   onValueChange={(indexStr) => {
                     const idx = parseInt(indexStr, 10);
                     if (versions && idx >= 0 && idx < versions.length) {
@@ -274,7 +281,10 @@ export default function SessionVersionPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {versions?.map((v, index) => (
-                      <SelectItem key={`version-select-${index}`} value={index.toString()}>
+                      <SelectItem
+                        key={`version-select-${index}`}
+                        value={index.toString()}
+                      >
                         <div className="flex items-center space-x-1 whitespace-nowrap">
                           <Badge className="text-primary-foreground text-xs">
                             {t("common.version.prefix")}

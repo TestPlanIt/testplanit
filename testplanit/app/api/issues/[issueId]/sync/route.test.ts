@@ -38,10 +38,9 @@ import { getServerSession } from "next-auth";
 import { POST } from "./route";
 
 const createRequest = (): NextRequest => {
-  return new NextRequest(
-    "http://localhost/api/issues/1/sync",
-    { method: "POST" }
-  );
+  return new NextRequest("http://localhost/api/issues/1/sync", {
+    method: "POST",
+  });
 };
 
 const params = (issueId: string = "1") => ({

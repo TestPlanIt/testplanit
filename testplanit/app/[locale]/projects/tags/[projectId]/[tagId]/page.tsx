@@ -483,7 +483,10 @@ function TagDetail() {
                     className="inline-flex items-center gap-1 cursor-pointer"
                     data-testid="clear-all-filters"
                   >
-                    <Badge variant="secondary" className="h-5 min-w-5 px-1.5 gap-1">
+                    <Badge
+                      variant="secondary"
+                      className="h-5 min-w-5 px-1.5 gap-1"
+                    >
                       {activeFilterCount}
                       <X className="h-3 w-3" />
                     </Badge>

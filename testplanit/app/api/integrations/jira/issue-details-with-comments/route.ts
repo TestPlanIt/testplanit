@@ -27,28 +27,32 @@ export async function GET(request: NextRequest) {
       summary: `Issue ${issueKey}`,
       description: `Detailed description for ${issueKey} would be fetched from Jira here.`,
       status: {
-        name: "Open"
+        name: "Open",
       },
       priority: {
-        name: "Medium"
+        name: "Medium",
       },
       issueType: {
-        name: "Story"
+        name: "Story",
       },
       comments: [
         {
           author: {
-            displayName: "System"
+            displayName: "System",
           },
           body: "This is a placeholder for Jira comments. Full integration coming soon.",
-          created: new Date().toISOString()
-        }
-      ]
+          created: new Date().toISOString(),
+        },
+      ],
     });
   } catch (error) {
-    console.error("Error in GET /api/integrations/jira/issue-details-with-comments:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    
+    console.error(
+      "Error in GET /api/integrations/jira/issue-details-with-comments:",
+      error
+    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+
     return NextResponse.json(
       { error: "Failed to fetch issue details", details: errorMessage },
       { status: 500 }

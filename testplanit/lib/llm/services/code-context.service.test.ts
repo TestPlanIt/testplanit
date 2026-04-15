@@ -138,9 +138,7 @@ describe("applyPathPatterns", () => {
   });
 
   it("handles root-level pattern with empty path", () => {
-    const result = applyPathPatterns(files, [
-      { path: "", pattern: "**/*.md" },
-    ]);
+    const result = applyPathPatterns(files, [{ path: "", pattern: "**/*.md" }]);
     expect(result.map((f) => f.path)).toEqual(["README.md"]);
   });
 });

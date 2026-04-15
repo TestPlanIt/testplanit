@@ -13,10 +13,7 @@ test.describe("Test Run PDF Export", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E RunPdf ${ts}`);
-    const runId = await api.createTestRun(
-      projectId,
-      `PDF Run ${ts}`
-    );
+    const runId = await api.createTestRun(projectId, `PDF Run ${ts}`);
 
     await page.goto(`/en-US/projects/runs/${projectId}/${runId}`);
     await page.waitForLoadState("load");

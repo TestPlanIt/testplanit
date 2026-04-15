@@ -31,7 +31,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("View selector shows available view options", async ({ api, page }) => {
@@ -442,7 +444,9 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Priority custom field appears in view selector", async ({
@@ -642,7 +646,9 @@ test.describe("Custom Fields - Filter Count Display", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Filter options show count of matching test cases", async ({

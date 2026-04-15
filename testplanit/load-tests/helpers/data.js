@@ -17,14 +17,7 @@ export function uniqueId() {
  * Generate a test case name that looks realistic.
  */
 export function testCaseName() {
-  const prefixes = [
-    "Verify",
-    "Validate",
-    "Check",
-    "Ensure",
-    "Confirm",
-    "Test",
-  ];
+  const prefixes = ["Verify", "Validate", "Check", "Ensure", "Confirm", "Test"];
   const actions = [
     "user login",
     "password reset",

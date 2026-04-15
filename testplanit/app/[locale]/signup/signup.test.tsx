@@ -112,10 +112,7 @@ describe("Signup Page", () => {
     });
   }
 
-  function setupFetchMock(options?: {
-    status?: number;
-    response?: object;
-  }) {
+  function setupFetchMock(options?: { status?: number; response?: object }) {
     const status = options?.status ?? 201;
     const response = options?.response ?? {
       data: { id: "user-123", name: "Test User", email: "test@example.com" },
@@ -141,7 +138,9 @@ describe("Signup Page", () => {
     expect(passwordInputs.length).toBeGreaterThanOrEqual(2);
 
     // Submit button
-    expect(screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i })
+    ).toBeInTheDocument();
   });
 
   it("shows a link back to the signin page", async () => {
@@ -168,12 +167,16 @@ describe("Signup Page", () => {
     await user.type(passwordInputs[0] as HTMLElement, "password123");
     await user.type(passwordInputs[1] as HTMLElement, "differentpass");
 
-    const submitButton = screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i });
+    const submitButton = screen.getByRole("button", {
+      name: /sign up|common\.actions\.signUp/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
       // Validation error for password mismatch via FormMessage
-      const formMessages = document.querySelectorAll("[class*='text-destructive'], .text-destructive");
+      const formMessages = document.querySelectorAll(
+        "[class*='text-destructive'], .text-destructive"
+      );
       expect(formMessages.length).toBeGreaterThan(0);
     });
   });
@@ -192,7 +195,9 @@ describe("Signup Page", () => {
     await user.type(passwordInputs[0] as HTMLElement, "password123");
     await user.type(passwordInputs[1] as HTMLElement, "password123");
 
-    const submitButton = screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i });
+    const submitButton = screen.getByRole("button", {
+      name: /sign up|common\.actions\.signUp/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -210,7 +215,8 @@ describe("Signup Page", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 400,
-      json: () => Promise.resolve({ error: "User with this email already exists" }),
+      json: () =>
+        Promise.resolve({ error: "User with this email already exists" }),
     });
 
     render(<Signup />);
@@ -224,7 +230,9 @@ describe("Signup Page", () => {
     await user.type(passwordInputs[0] as HTMLElement, "password123");
     await user.type(passwordInputs[1] as HTMLElement, "password123");
 
-    const submitButton = screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i });
+    const submitButton = screen.getByRole("button", {
+      name: /sign up|common\.actions\.signUp/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -258,7 +266,9 @@ describe("Signup Page", () => {
     await user.type(passwordInputs[0] as HTMLElement, "password123");
     await user.type(passwordInputs[1] as HTMLElement, "password123");
 
-    const submitButton = screen.getByRole("button", { name: /sign up|common\.actions\.signUp/i });
+    const submitButton = screen.getByRole("button", {
+      name: /sign up|common\.actions\.signUp/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {

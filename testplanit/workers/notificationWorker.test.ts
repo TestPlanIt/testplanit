@@ -101,11 +101,14 @@ describe("NotificationWorker", () => {
         },
       });
 
-      expect(mockEmailQueue.add).toHaveBeenCalledWith("send-notification-email", {
-        notificationId: mockNotification.id,
-        userId: jobData.userId,
-        immediate: true,
-      });
+      expect(mockEmailQueue.add).toHaveBeenCalledWith(
+        "send-notification-email",
+        {
+          notificationId: mockNotification.id,
+          userId: jobData.userId,
+          immediate: true,
+        }
+      );
     });
 
     it("should use global settings when user mode is USE_GLOBAL", async () => {
@@ -152,7 +155,9 @@ describe("NotificationWorker", () => {
         value: { defaultMode: "IN_APP" },
       });
 
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
 
       const { processor } = await import("./notificationWorker");
 
@@ -163,7 +168,7 @@ describe("NotificationWorker", () => {
       } as Job;
 
       await processor(mockJob);
-      
+
       expect(mockPrisma.notification.create).not.toHaveBeenCalled();
       expect(consoleLogSpy).toHaveBeenCalledWith(
         "Skipping notification for user user-123 - notifications disabled"
@@ -181,7 +186,7 @@ describe("NotificationWorker", () => {
       };
 
       const error = new Error("Database error");
-      
+
       mockPrisma.userPreferences.findUnique.mockResolvedValue({
         notificationMode: "IN_APP",
       });
@@ -190,7 +195,9 @@ describe("NotificationWorker", () => {
       });
       mockPrisma.notification.create.mockRejectedValue(error);
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const { processor } = await import("./notificationWorker");
 
@@ -201,7 +208,7 @@ describe("NotificationWorker", () => {
       } as Job;
 
       await expect(processor(mockJob)).rejects.toThrow("Database error");
-      
+
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         "Failed to create notification:",
         error
@@ -216,7 +223,11 @@ describe("NotificationWorker", () => {
       const mockUsers = [
         {
           userId: "user-123",
-          user: { id: "user-123", name: "Test User", email: "test@example.com" },
+          user: {
+            id: "user-123",
+            name: "Test User",
+            email: "test@example.com",
+          },
         },
       ];
 
@@ -289,7 +300,11 @@ describe("NotificationWorker", () => {
       const mockUsers = [
         {
           userId: "user-123",
-          user: { id: "user-123", name: "Test User", email: "test@example.com" },
+          user: {
+            id: "user-123",
+            name: "Test User",
+            email: "test@example.com",
+          },
         },
       ];
 
@@ -323,7 +338,9 @@ describe("NotificationWorker", () => {
         data: {},
       } as Job;
 
-      await expect(processor(mockJob)).rejects.toThrow("Unknown job type: unknown-job");
+      await expect(processor(mockJob)).rejects.toThrow(
+        "Unknown job type: unknown-job"
+      );
     });
   });
 });

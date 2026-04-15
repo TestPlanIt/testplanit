@@ -25,9 +25,11 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find admin user row by email and click profile link
-      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
+      const adminRow = page
+        .locator("tr")
+        .filter({ hasText: "admin@example.com" });
       await expect(adminRow).toBeVisible();
-      const adminProfileLink = adminRow.locator('a').first();
+      const adminProfileLink = adminRow.locator("a").first();
       await adminProfileLink.click();
 
       // Wait for profile page
@@ -53,7 +55,9 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify name was updated (page should reload)
-      await expect(page.getByText(newName).first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(newName).first()).toBeVisible({
+        timeout: 10000,
+      });
 
       // Wait for edit button to be visible before reverting (ensures form is not in submitting state)
       const editButtonAfterSave = page.getByRole("button", { name: /edit/i });
@@ -88,9 +92,11 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find admin user row by email and click profile link
-      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
+      const adminRow = page
+        .locator("tr")
+        .filter({ hasText: "admin@example.com" });
       await expect(adminRow).toBeVisible();
-      const adminProfileLink = adminRow.locator('a').first();
+      const adminProfileLink = adminRow.locator("a").first();
       await adminProfileLink.click();
 
       await page.waitForURL(/\/users\/profile\//);
@@ -119,7 +125,10 @@ test.describe("User Update Operations", () => {
       const newTheme = originalTheme === "Light" ? "Dark" : "Light";
 
       // Wait for dropdown to open and click the option
-      const themeOption = page.getByRole("option", { name: newTheme, exact: true });
+      const themeOption = page.getByRole("option", {
+        name: newTheme,
+        exact: true,
+      });
       await expect(themeOption).toBeVisible({ timeout: 5000 });
       await themeOption.click();
 
@@ -144,7 +153,10 @@ test.describe("User Update Operations", () => {
 
       // First select a different theme to trigger form dirty state
       const tempTheme = originalTheme === "Light" ? "Dark" : "Light";
-      const tempThemeOption = page.getByRole("option", { name: tempTheme, exact: true });
+      const tempThemeOption = page.getByRole("option", {
+        name: tempTheme,
+        exact: true,
+      });
       await expect(tempThemeOption).toBeVisible({ timeout: 5000 });
       await tempThemeOption.click();
       await page.waitForTimeout(300);
@@ -153,7 +165,10 @@ test.describe("User Update Operations", () => {
       await themeComboboxRevert.click();
 
       // Now select the original theme
-      const themeOptionRevert = page.getByRole("option", { name: originalTheme, exact: true });
+      const themeOptionRevert = page.getByRole("option", {
+        name: originalTheme,
+        exact: true,
+      });
       await expect(themeOptionRevert).toBeVisible({ timeout: 5000 });
       await themeOptionRevert.click();
 
@@ -171,9 +186,11 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find admin user row by email and click profile link
-      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
+      const adminRow = page
+        .locator("tr")
+        .filter({ hasText: "admin@example.com" });
       await expect(adminRow).toBeVisible();
-      const adminProfileLink = adminRow.locator('a').first();
+      const adminProfileLink = adminRow.locator("a").first();
       await adminProfileLink.click();
 
       await page.waitForURL(/\/users\/profile\//);
@@ -188,11 +205,16 @@ test.describe("User Update Operations", () => {
       await expect(submitButton).toBeVisible();
 
       // Find the items per page combobox (shadcn Select component)
-      const itemsPerPageLabel = page.getByText("Items Per Page", { exact: false }).first();
+      const itemsPerPageLabel = page
+        .getByText("Items Per Page", { exact: false })
+        .first();
       await expect(itemsPerPageLabel).toBeVisible();
 
       // Find the combobox trigger button
-      const itemsPerPageCombobox = page.locator('[role="combobox"]').filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i }).first();
+      const itemsPerPageCombobox = page
+        .locator('[role="combobox"]')
+        .filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i })
+        .first();
       await expect(itemsPerPageCombobox).toBeVisible();
 
       // Get the current value from the combobox text
@@ -206,7 +228,10 @@ test.describe("User Update Operations", () => {
       const newValue = originalValue === "10" ? "25" : "10";
 
       // Wait for dropdown and click the option
-      const itemsPerPageOption = page.getByRole("option", { name: newValue, exact: true });
+      const itemsPerPageOption = page.getByRole("option", {
+        name: newValue,
+        exact: true,
+      });
       await expect(itemsPerPageOption).toBeVisible({ timeout: 5000 });
       await itemsPerPageOption.click();
 
@@ -225,12 +250,18 @@ test.describe("User Update Operations", () => {
       await expect(submitButtonRevert).toBeVisible();
 
       // Find and click the items per page combobox again
-      const itemsPerPageComboboxRevert = page.locator('[role="combobox"]').filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i }).first();
+      const itemsPerPageComboboxRevert = page
+        .locator('[role="combobox"]')
+        .filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i })
+        .first();
       await expect(itemsPerPageComboboxRevert).toBeVisible();
       await itemsPerPageComboboxRevert.click();
 
       // Wait for dropdown and click the original value option
-      const itemsPerPageOptionRevert = page.getByRole("option", { name: originalValue, exact: true });
+      const itemsPerPageOptionRevert = page.getByRole("option", {
+        name: originalValue,
+        exact: true,
+      });
       await expect(itemsPerPageOptionRevert).toBeVisible({ timeout: 5000 });
       await itemsPerPageOptionRevert.click();
 
@@ -255,8 +286,11 @@ test.describe("User Update Operations", () => {
         await page.waitForLoadState("networkidle");
 
         // Enable "Show Inactive" so users remain visible when toggled to inactive
-        const showInactiveSwitch = page.getByRole("switch", { name: "Show Inactive" });
-        const isShowInactiveChecked = await showInactiveSwitch.getAttribute("data-state");
+        const showInactiveSwitch = page.getByRole("switch", {
+          name: "Show Inactive",
+        });
+        const isShowInactiveChecked =
+          await showInactiveSwitch.getAttribute("data-state");
         if (isShowInactiveChecked !== "checked") {
           await showInactiveSwitch.click();
           await page.waitForLoadState("networkidle");
@@ -267,7 +301,9 @@ test.describe("User Update Operations", () => {
         await expect(userRow).toBeVisible();
 
         // Use the test ID to find the active toggle switch
-        const activeSwitch = page.getByTestId(`user-active-toggle-${testUser.data.id}`);
+        const activeSwitch = page.getByTestId(
+          `user-active-toggle-${testUser.data.id}`
+        );
         await expect(activeSwitch).toBeVisible();
         const initialState = await activeSwitch.getAttribute("data-state");
 
@@ -394,7 +430,9 @@ test.describe("User Update Operations", () => {
         await expect(alertDialog).toBeVisible({ timeout: 5000 });
 
         // Confirm deletion - the destructive button is the confirm button
-        const confirmButton = alertDialog.locator('button[class*="destructive"]').last();
+        const confirmButton = alertDialog
+          .locator('button[class*="destructive"]')
+          .last();
         await confirmButton.click();
 
         // Wait for dialog to close
@@ -418,7 +456,10 @@ test.describe("User Update Operations", () => {
       }
     });
 
-    test("Admin can restore soft-deleted user when adding user with same email", async ({ page, api }) => {
+    test("Admin can restore soft-deleted user when adding user with same email", async ({
+      page,
+      api,
+    }) => {
       // Create and delete a test user
       const testEmail = `restore-test-${Date.now()}@example.com`;
       const testUser = await api.createUser({
@@ -443,7 +484,9 @@ test.describe("User Update Operations", () => {
         await addUserButton.click();
 
         // Wait for add user dialog
-        const dialog = page.locator('[role="dialog"]').filter({ hasText: /add new user/i });
+        const dialog = page
+          .locator('[role="dialog"]')
+          .filter({ hasText: /add new user/i });
         await expect(dialog).toBeVisible({ timeout: 5000 });
 
         // Fill in the form with the deleted user's email
@@ -456,7 +499,9 @@ test.describe("User Update Operations", () => {
         const passwordInput = dialog.locator('input[name="password"]');
         await passwordInput.fill("newpassword123");
 
-        const confirmPasswordInput = dialog.locator('input[name="confirmPassword"]');
+        const confirmPasswordInput = dialog.locator(
+          'input[name="confirmPassword"]'
+        );
         await confirmPasswordInput.fill("newpassword123");
 
         // Submit the form
@@ -464,14 +509,18 @@ test.describe("User Update Operations", () => {
         await submitButton.click();
 
         // Wait for restore dialog to appear
-        const restoreDialog = page.locator('[role="dialog"]').filter({ hasText: /restore deleted user/i });
+        const restoreDialog = page
+          .locator('[role="dialog"]')
+          .filter({ hasText: /restore deleted user/i });
         await expect(restoreDialog).toBeVisible({ timeout: 5000 });
 
         // Verify the restore dialog message contains the email
         await expect(restoreDialog.getByText(testEmail)).toBeVisible();
 
         // Click the restore button
-        const restoreButton = restoreDialog.getByRole("button", { name: /restore user/i });
+        const restoreButton = restoreDialog.getByRole("button", {
+          name: /restore user/i,
+        });
         await restoreButton.click();
 
         // Wait for both dialogs to close

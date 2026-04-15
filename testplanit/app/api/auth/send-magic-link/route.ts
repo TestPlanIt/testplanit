@@ -18,10 +18,7 @@ export async function POST(req: NextRequest) {
     const { email, callbackUrl = "/" } = body;
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Check if user exists and is active
@@ -63,12 +60,18 @@ export async function POST(req: NextRequest) {
     });
 
     // Build the magic link URL
-    const protocol = process.env.NEXTAUTH_URL?.startsWith("https") ? "https" : "http";
-    const host = req.headers.get("host") || process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, "");
+    const protocol = process.env.NEXTAUTH_URL?.startsWith("https")
+      ? "https"
+      : "http";
+    const host =
+      req.headers.get("host") ||
+      process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, "");
     const baseUrl = `${protocol}://${host}`;
 
     // Ensure callbackUrl has a trailing slash for proper routing
-    let finalCallbackUrl = callbackUrl.startsWith("http") ? callbackUrl : baseUrl + callbackUrl;
+    let finalCallbackUrl = callbackUrl.startsWith("http")
+      ? callbackUrl
+      : baseUrl + callbackUrl;
     if (!finalCallbackUrl.endsWith("/")) {
       finalCallbackUrl += "/";
     }
@@ -118,7 +121,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to send magic link",
-        details: error.message
+        details: error.message,
       },
       { status: 500 }
     );

@@ -111,7 +111,9 @@ export function getColumns({
         const lastTestedAt = row.original.lastTestedAt;
         if (!lastTestedAt) {
           return (
-            <span className="text-sm text-muted-foreground">{tCommon("never")}</span>
+            <span className="text-sm text-muted-foreground">
+              {tCommon("never")}
+            </span>
           );
         }
         return (
@@ -144,12 +146,9 @@ export function getColumns({
           <DateFormatter
             date={row.original.createdAt}
             formatString={
-              userPreferences?.user.preferences?.dateFormat ??
-              "MM_DD_YYYY_DASH"
+              userPreferences?.user.preferences?.dateFormat ?? "MM_DD_YYYY_DASH"
             }
-            timezone={
-              userPreferences?.user.preferences?.timezone ?? "Etc/UTC"
-            }
+            timezone={userPreferences?.user.preferences?.timezone ?? "Etc/UTC"}
           />
         </div>
       ),

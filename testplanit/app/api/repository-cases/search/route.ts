@@ -4,7 +4,9 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getServerAuthSession } from "~/server/auth";
 import {
-  getSearchSuggestions, searchRepositoryCases, type SearchOptions
+  getSearchSuggestions,
+  searchRepositoryCases,
+  type SearchOptions,
 } from "~/services/repositoryCaseSearch";
 
 // Search request schema

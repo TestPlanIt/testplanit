@@ -6,7 +6,9 @@ import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 
 // Helper to check admin authentication (session or API token)
-async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+async function checkAdminAuth(
+  request: NextRequest
+): Promise<{ error?: NextResponse; userId?: string }> {
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
   let userAccess: string | undefined;
@@ -41,7 +43,10 @@ async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextRespo
 
   if (userAccess !== "ADMIN") {
     return {
-      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+      error: NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      ),
     };
   }
 
@@ -56,11 +61,11 @@ export async function GET(request: NextRequest) {
 
     // Get settings from database
     const config = await prisma.appConfig.findUnique({
-      where: { key: "elasticsearch_replicas" }
+      where: { key: "elasticsearch_replicas" },
     });
 
     return NextResponse.json({
-      numberOfReplicas: config?.value ? (config.value as number) : 0
+      numberOfReplicas: config?.value ? (config.value as number) : 0,
     });
   } catch (error: any) {
     console.error("Error fetching Elasticsearch settings:", error);
@@ -80,7 +85,11 @@ export async function POST(request: NextRequest) {
     const { numberOfReplicas } = await request.json();
 
     // Validate input
-    if (typeof numberOfReplicas !== 'number' || numberOfReplicas < 0 || numberOfReplicas > 10) {
+    if (
+      typeof numberOfReplicas !== "number" ||
+      numberOfReplicas < 0 ||
+      numberOfReplicas > 10
+    ) {
       return NextResponse.json(
         { error: "Invalid number of replicas. Must be between 0 and 10." },
         { status: 400 }
@@ -89,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     // Get old value for audit
     const oldConfig = await prisma.appConfig.findUnique({
-      where: { key: "elasticsearch_replicas" }
+      where: { key: "elasticsearch_replicas" },
     });
     const oldValue = oldConfig?.value ?? null;
 
@@ -99,13 +108,17 @@ export async function POST(request: NextRequest) {
       update: { value: numberOfReplicas },
       create: {
         key: "elasticsearch_replicas",
-        value: numberOfReplicas
-      }
+        value: numberOfReplicas,
+      },
     });
 
     // Audit the config change
-    auditSystemConfigChange("elasticsearch_replicas", oldValue, numberOfReplicas).catch(
-      (error) => console.error("[AuditLog] Failed to audit ES settings change:", error)
+    auditSystemConfigChange(
+      "elasticsearch_replicas",
+      oldValue,
+      numberOfReplicas
+    ).catch((error) =>
+      console.error("[AuditLog] Failed to audit ES settings change:", error)
     );
 
     return NextResponse.json({ success: true, numberOfReplicas });
@@ -127,7 +140,11 @@ export async function PUT(request: NextRequest) {
     const { numberOfReplicas } = await request.json();
 
     // Validate input
-    if (typeof numberOfReplicas !== 'number' || numberOfReplicas < 0 || numberOfReplicas > 10) {
+    if (
+      typeof numberOfReplicas !== "number" ||
+      numberOfReplicas < 0 ||
+      numberOfReplicas > 10
+    ) {
       return NextResponse.json(
         { error: "Invalid number of replicas. Must be between 0 and 10." },
         { status: 400 }
@@ -148,9 +165,9 @@ export async function PUT(request: NextRequest) {
         index: "testplanit-*",
         settings: {
           index: {
-            number_of_replicas: numberOfReplicas
-          }
-        }
+            number_of_replicas: numberOfReplicas,
+          },
+        },
       });
 
       // Get updated health status
@@ -159,14 +176,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({
         success: true,
         numberOfReplicas,
-        clusterHealth: health.status
+        clusterHealth: health.status,
       });
     } catch (esError: any) {
       console.error("Error updating Elasticsearch indices:", esError);
       return NextResponse.json(
-        { 
+        {
           error: "Failed to update Elasticsearch indices",
-          details: esError.message 
+          details: esError.message,
         },
         { status: 500 }
       );

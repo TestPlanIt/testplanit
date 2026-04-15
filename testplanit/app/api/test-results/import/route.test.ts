@@ -142,7 +142,10 @@ describe("Test Results Import API Route", () => {
   const mockSuite = { id: 300, testRunId: 42 };
   const mockStatus = { id: 1, isSuccess: true, color: null };
 
-  const createMockFile = (name: string, content: string = "<testsuite></testsuite>"): File => {
+  const createMockFile = (
+    name: string,
+    content: string = "<testsuite></testsuite>"
+  ): File => {
     const blob = new Blob([content], { type: "text/xml" });
     return new File([blob], name, { type: "text/xml" });
   };
@@ -167,8 +170,12 @@ describe("Test Results Import API Route", () => {
     (prisma.repositoryFolders.findFirst as any).mockResolvedValue(mockFolder);
     (prisma.repositoryFolders.upsert as any).mockResolvedValue(mockFolder);
     (prisma.repositoryCases.findFirst as any).mockResolvedValue(null);
-    (prisma.repositoryCases.create as any).mockResolvedValue(mockRepositoryCase);
-    (prisma.repositoryCases.update as any).mockResolvedValue(mockRepositoryCase);
+    (prisma.repositoryCases.create as any).mockResolvedValue(
+      mockRepositoryCase
+    );
+    (prisma.repositoryCases.update as any).mockResolvedValue(
+      mockRepositoryCase
+    );
     (prisma.testRunCases.upsert as any).mockResolvedValue(mockTestRunCase);
     (prisma.testRunCases.findFirst as any).mockResolvedValue(mockTestRunCase);
     (prisma.testRunCases.update as any).mockResolvedValue(mockTestRunCase);

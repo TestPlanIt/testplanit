@@ -14,14 +14,9 @@ test.describe("Session PDF Export", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E SessPdf ${ts}`);
-    const sessionId = await api.createSession(
-      projectId,
-      `PDF Session ${ts}`
-    );
+    const sessionId = await api.createSession(projectId, `PDF Session ${ts}`);
 
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${sessionId}`
-    );
+    await page.goto(`/en-US/projects/sessions/${projectId}/${sessionId}`);
     await page.waitForLoadState("load");
 
     // The Export PDF button should be visible in the header
@@ -44,9 +39,7 @@ test.describe("Session PDF Export", () => {
       { isCompleted: true, completedAt: new Date() }
     );
 
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${sessionId}`
-    );
+    await page.goto(`/en-US/projects/sessions/${projectId}/${sessionId}`);
     await page.waitForLoadState("load");
 
     // Export PDF should be available even on completed sessions

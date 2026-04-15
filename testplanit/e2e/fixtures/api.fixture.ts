@@ -303,7 +303,9 @@ export class ApiHelper {
   ): Promise<number> {
     const [repositoryId, templateId, stateId] = await Promise.all([
       this.getRepositoryId(projectId),
-      templateIdOverride ? Promise.resolve(templateIdOverride) : this.getTemplateId(projectId),
+      templateIdOverride
+        ? Promise.resolve(templateIdOverride)
+        : this.getTemplateId(projectId),
       this.getStateId(projectId),
     ]);
 
@@ -386,7 +388,9 @@ export class ApiHelper {
 
     if (!versionResponse.ok()) {
       // Log warning but don't fail - version record is needed for version selector
-      console.warn(`Failed to create initial version record for case ${caseId}`);
+      console.warn(
+        `Failed to create initial version record for case ${caseId}`
+      );
     }
 
     return caseId;
@@ -446,7 +450,9 @@ export class ApiHelper {
       );
 
       if (!valueResponse.ok()) {
-        console.warn(`Failed to create field value for field ${fieldId} on case ${caseId}`);
+        console.warn(
+          `Failed to create field value for field ${fieldId} on case ${caseId}`
+        );
       }
     }
 
@@ -919,7 +925,9 @@ export class ApiHelper {
     // Retry on transient connection errors (ECONNRESET)
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const response = await this.request.get(`${this.baseURL}/api/auth/session`);
+        const response = await this.request.get(
+          `${this.baseURL}/api/auth/session`
+        );
 
         if (!response.ok()) {
           throw new Error("Failed to get current user session");
@@ -1060,11 +1068,15 @@ export class ApiHelper {
       // Template assignment is CRITICAL - test cases cannot be created without it
       if (!templateAssignResponse.ok()) {
         const error = await templateAssignResponse.text();
-        throw new Error(`Failed to assign template to project ${projectId}: ${error}`);
+        throw new Error(
+          `Failed to assign template to project ${projectId}: ${error}`
+        );
       }
     } else {
       // No default template - this is CRITICAL since test cases cannot be created
-      throw new Error(`No default template found for project ${projectId}. Test cases cannot be created without templates. Run seed first.`);
+      throw new Error(
+        `No default template found for project ${projectId}. Test cases cannot be created without templates. Run seed first.`
+      );
     }
 
     // Assign all workflows to project (matching setup-db.ts)
@@ -1158,10 +1170,12 @@ export class ApiHelper {
       const milestoneTypes = milestoneTypesResult.data || [];
 
       if (milestoneTypes.length > 0) {
-        const milestoneTypeAssignments = milestoneTypes.map((mt: { id: number }) => ({
-          milestoneTypeId: mt.id,
-          projectId: projectId,
-        }));
+        const milestoneTypeAssignments = milestoneTypes.map(
+          (mt: { id: number }) => ({
+            milestoneTypeId: mt.id,
+            projectId: projectId,
+          })
+        );
 
         const milestoneTypeAssignResponse = await this.request.post(
           `${this.baseURL}/api/model/milestoneTypesAssignment/createMany`,
@@ -1173,7 +1187,9 @@ export class ApiHelper {
         );
 
         if (!milestoneTypeAssignResponse.ok()) {
-          console.warn(`Failed to assign milestone types to project ${projectId}`);
+          console.warn(
+            `Failed to assign milestone types to project ${projectId}`
+          );
         }
       }
     }
@@ -1254,7 +1270,9 @@ export class ApiHelper {
    * Statuses are used for TestRunCases and TestRunResults
    * @param statusType - Optional filter: 'passed', 'failed', 'blocked', or 'any' (default)
    */
-  async getStatusId(statusType: "passed" | "failed" | "blocked" | "any" = "any"): Promise<number> {
+  async getStatusId(
+    statusType: "passed" | "failed" | "blocked" | "any" = "any"
+  ): Promise<number> {
     const cacheKey = statusType;
     if (this.cachedStatusIds.has(cacheKey)) {
       return this.cachedStatusIds.get(cacheKey)!;
@@ -1391,11 +1409,19 @@ export class ApiHelper {
       milestoneId?: number;
       configId?: number;
       configurationGroupId?: string;
-      testRunType?: "REGULAR" | "JUNIT" | "TESTNG" | "XUNIT" | "NUNIT" | "MSTEST" | "MOCHA" | "CUCUMBER";
+      testRunType?:
+        | "REGULAR"
+        | "JUNIT"
+        | "TESTNG"
+        | "XUNIT"
+        | "NUNIT"
+        | "MSTEST"
+        | "MOCHA"
+        | "CUCUMBER";
     }
   ): Promise<number> {
     const userId = await this.getCurrentUserId();
-    const stateId = options?.stateId || await this.getStateId(projectId);
+    const stateId = options?.stateId || (await this.getStateId(projectId));
 
     const data: Record<string, unknown> = {
       name,
@@ -1516,7 +1542,10 @@ export class ApiHelper {
   /**
    * Assign a user to a test run case
    */
-  async assignTestRunCase(testRunCaseId: number, userId: string): Promise<void> {
+  async assignTestRunCase(
+    testRunCaseId: number,
+    userId: string
+  ): Promise<void> {
     const response = await this.request.patch(
       `${this.baseURL}/api/model/testRunCases/update`,
       {
@@ -1538,7 +1567,10 @@ export class ApiHelper {
   /**
    * Set the status of a test run case
    */
-  async setTestRunCaseStatus(testRunCaseId: number, statusId: number): Promise<void> {
+  async setTestRunCaseStatus(
+    testRunCaseId: number,
+    statusId: number
+  ): Promise<void> {
     const response = await this.request.patch(
       `${this.baseURL}/api/model/testRunCases/update`,
       {
@@ -1631,7 +1663,12 @@ export class ApiHelper {
     if (options?.notes) {
       data.notes = JSON.stringify({
         type: "doc",
-        content: [{ type: "paragraph", content: [{ type: "text", text: options.notes }] }],
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: options.notes }],
+          },
+        ],
       });
     }
 
@@ -1658,9 +1695,15 @@ export class ApiHelper {
   /**
    * Get test run cases for a test run
    */
-  async getTestRunCases(
-    testRunId: number
-  ): Promise<Array<{ id: number; repositoryCaseId: number; order: number; statusId: number | null; assignedToId: string | null }>> {
+  async getTestRunCases(testRunId: number): Promise<
+    Array<{
+      id: number;
+      repositoryCaseId: number;
+      order: number;
+      statusId: number | null;
+      assignedToId: string | null;
+    }>
+  > {
     const response = await this.request.get(
       `${this.baseURL}/api/model/testRunCases/findMany`,
       {
@@ -1813,7 +1856,9 @@ export class ApiHelper {
    */
   async getCaseFieldTypeId(typeName: string): Promise<number> {
     const types = await this.getCaseFieldTypes();
-    const type = types.find((t) => t.type.toLowerCase() === typeName.toLowerCase());
+    const type = types.find(
+      (t) => t.type.toLowerCase() === typeName.toLowerCase()
+    );
     if (!type) {
       throw new Error(`Case field type "${typeName}" not found`);
     }
@@ -1840,7 +1885,8 @@ export class ApiHelper {
     const typeId = await this.getCaseFieldTypeId(options.typeName);
 
     // Generate system name from display name if not provided
-    const systemName = options.systemName ||
+    const systemName =
+      options.systemName ||
       options.displayName.replace(/[^a-zA-Z0-9]/g, "_").replace(/^(\d)/, "_$1");
 
     const data: Record<string, unknown> = {
@@ -1854,10 +1900,12 @@ export class ApiHelper {
     };
 
     if (options.hint) data.hint = options.hint;
-    if (options.defaultValue !== undefined) data.defaultValue = options.defaultValue;
+    if (options.defaultValue !== undefined)
+      data.defaultValue = options.defaultValue;
     if (options.minValue !== undefined) data.minValue = options.minValue;
     if (options.maxValue !== undefined) data.maxValue = options.maxValue;
-    if (options.initialHeight !== undefined) data.initialHeight = options.initialHeight;
+    if (options.initialHeight !== undefined)
+      data.initialHeight = options.initialHeight;
     if (options.isChecked !== undefined) data.isChecked = options.isChecked;
 
     const response = await this.request.post(
@@ -1912,7 +1960,8 @@ export class ApiHelper {
     const typeId = await this.getCaseFieldTypeId(options.typeName);
 
     // Generate system name from display name if not provided
-    const systemName = options.systemName ||
+    const systemName =
+      options.systemName ||
       options.displayName.replace(/[^a-zA-Z0-9]/g, "_").replace(/^(\d)/, "_$1");
 
     const data: Record<string, unknown> = {
@@ -1926,10 +1975,12 @@ export class ApiHelper {
     };
 
     if (options.hint) data.hint = options.hint;
-    if (options.defaultValue !== undefined) data.defaultValue = options.defaultValue;
+    if (options.defaultValue !== undefined)
+      data.defaultValue = options.defaultValue;
     if (options.minValue !== undefined) data.minValue = options.minValue;
     if (options.maxValue !== undefined) data.maxValue = options.maxValue;
-    if (options.initialHeight !== undefined) data.initialHeight = options.initialHeight;
+    if (options.initialHeight !== undefined)
+      data.initialHeight = options.initialHeight;
     if (options.isChecked !== undefined) data.isChecked = options.isChecked;
 
     const response = await this.request.post(
@@ -2211,21 +2262,20 @@ export class ApiHelper {
    * breaks parallel tests that depend on a default template existing.
    */
   async ensureTemplateIsDefault(templateId: number): Promise<void> {
-    await this.request.patch(
-      `${this.baseURL}/api/model/templates/update`,
-      {
-        data: {
-          where: { id: templateId },
-          data: { isDefault: true, isEnabled: true },
-        },
-      }
-    );
+    await this.request.patch(`${this.baseURL}/api/model/templates/update`, {
+      data: {
+        where: { id: templateId },
+        data: { isDefault: true, isEnabled: true },
+      },
+    });
   }
 
   /**
    * Verify a template exists and return its isDefault status
    */
-  async verifyTemplate(templateId: number): Promise<{ exists: boolean; isDefault: boolean }> {
+  async verifyTemplate(
+    templateId: number
+  ): Promise<{ exists: boolean; isDefault: boolean }> {
     const response = await this.request.get(
       `${this.baseURL}/api/model/templates/findUnique`,
       {
@@ -2280,7 +2330,10 @@ export class ApiHelper {
   /**
    * Assign a case field to a template
    */
-  async assignFieldToTemplate(templateId: number, caseFieldId: number): Promise<boolean> {
+  async assignFieldToTemplate(
+    templateId: number,
+    caseFieldId: number
+  ): Promise<boolean> {
     // Check if already assigned
     const existingResponse = await this.request.get(
       `${this.baseURL}/api/model/templateCaseAssignment/findFirst`,
@@ -2311,7 +2364,7 @@ export class ApiHelper {
         params: {
           q: JSON.stringify({
             where: { templateId },
-            orderBy: { order: 'desc' },
+            orderBy: { order: "desc" },
             take: 1,
           }),
         },
@@ -2346,7 +2399,9 @@ export class ApiHelper {
   /**
    * Get field options for a case field
    */
-  async getCaseFieldOptions(caseFieldId: number): Promise<Array<{ id: number; name: string; isDefault: boolean }>> {
+  async getCaseFieldOptions(
+    caseFieldId: number
+  ): Promise<Array<{ id: number; name: string; isDefault: boolean }>> {
     const response = await this.request.get(
       `${this.baseURL}/api/model/caseFieldAssignment/findMany`,
       {
@@ -2364,17 +2419,28 @@ export class ApiHelper {
     }
 
     const result = await response.json();
-    return result.data.map((assignment: { fieldOption: { id: number; name: string; isDefault: boolean } }) => ({
-      id: assignment.fieldOption.id,
-      name: assignment.fieldOption.name,
-      isDefault: assignment.fieldOption.isDefault,
-    }));
+    return result.data.map(
+      (assignment: {
+        fieldOption: { id: number; name: string; isDefault: boolean };
+      }) => ({
+        id: assignment.fieldOption.id,
+        name: assignment.fieldOption.name,
+        isDefault: assignment.fieldOption.isDefault,
+      })
+    );
   }
 
   /**
    * Get all templates
    */
-  async getTemplates(): Promise<Array<{ id: number; templateName: string; isDefault: boolean; isEnabled: boolean }>> {
+  async getTemplates(): Promise<
+    Array<{
+      id: number;
+      templateName: string;
+      isDefault: boolean;
+      isEnabled: boolean;
+    }>
+  > {
     const response = await this.request.get(
       `${this.baseURL}/api/model/templates/findMany`,
       {
@@ -2397,7 +2463,11 @@ export class ApiHelper {
   /**
    * Assign a case field to an existing template via API
    */
-  async assignCaseFieldToTemplate(templateId: number, caseFieldId: number, order?: number): Promise<void> {
+  async assignCaseFieldToTemplate(
+    templateId: number,
+    caseFieldId: number,
+    order?: number
+  ): Promise<void> {
     // Get current count to determine order if not provided
     let fieldOrder = order;
     if (fieldOrder === undefined) {
@@ -2441,7 +2511,11 @@ export class ApiHelper {
   /**
    * Assign a result field to an existing template via API
    */
-  async assignResultFieldToTemplate(templateId: number, resultFieldId: number, order?: number): Promise<void> {
+  async assignResultFieldToTemplate(
+    templateId: number,
+    resultFieldId: number,
+    order?: number
+  ): Promise<void> {
     // Get current count to determine order if not provided
     let fieldOrder = order;
     if (fieldOrder === undefined) {
@@ -2485,7 +2559,10 @@ export class ApiHelper {
   /**
    * Get the default template
    */
-  async getDefaultTemplate(): Promise<{ id: number; templateName: string } | null> {
+  async getDefaultTemplate(): Promise<{
+    id: number;
+    templateName: string;
+  } | null> {
     const response = await this.request.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
@@ -2508,7 +2585,14 @@ export class ApiHelper {
   /**
    * Get all case fields
    */
-  async getCaseFields(): Promise<Array<{ id: number; displayName: string; systemName: string; typeId: number }>> {
+  async getCaseFields(): Promise<
+    Array<{
+      id: number;
+      displayName: string;
+      systemName: string;
+      typeId: number;
+    }>
+  > {
     const response = await this.request.get(
       `${this.baseURL}/api/model/caseFields/findMany`,
       {
@@ -2531,7 +2615,14 @@ export class ApiHelper {
   /**
    * Get all result fields
    */
-  async getResultFields(): Promise<Array<{ id: number; displayName: string; systemName: string; typeId: number }>> {
+  async getResultFields(): Promise<
+    Array<{
+      id: number;
+      displayName: string;
+      systemName: string;
+      typeId: number;
+    }>
+  > {
     const response = await this.request.get(
       `${this.baseURL}/api/model/resultFields/findMany`,
       {
@@ -2654,17 +2745,14 @@ export class ApiHelper {
       // Assign each status to the project
       const assignments = statuses.map((status: any) =>
         this.request
-          .post(
-            `${this.baseURL}/api/model/projectStatusAssignment/create`,
-            {
+          .post(`${this.baseURL}/api/model/projectStatusAssignment/create`, {
+            data: {
               data: {
-                data: {
-                  project: { connect: { id: projectId } },
-                  status: { connect: { id: status.id } },
-                },
+                project: { connect: { id: projectId } },
+                status: { connect: { id: status.id } },
               },
-            }
-          )
+            },
+          })
           .catch(() => {
             // Silently ignore individual assignment errors
           })
@@ -2713,14 +2801,11 @@ export class ApiHelper {
     }>
   ): Promise<void> {
     // Delete existing steps
-    await this.request.post(
-      `${this.baseURL}/api/model/steps/deleteMany`,
-      {
-        data: {
-          where: { testCaseId },
-        },
-      }
-    );
+    await this.request.post(`${this.baseURL}/api/model/steps/deleteMany`, {
+      data: {
+        where: { testCaseId },
+      },
+    });
 
     // Add new steps
     await this.addStepsToTestCase(testCaseId, steps);
@@ -2895,7 +2980,9 @@ export class ApiHelper {
   ): Promise<number> {
     const userId = await this.getCurrentUserId();
     const [stateId, templateId] = await Promise.all([
-      options?.stateId ? Promise.resolve(options.stateId) : this.getStateId(projectId),
+      options?.stateId
+        ? Promise.resolve(options.stateId)
+        : this.getStateId(projectId),
       this.getTemplateId(projectId),
     ]);
 
@@ -3072,7 +3159,10 @@ export class ApiHelper {
   /**
    * Link an LLM integration to a project via ProjectLlmIntegration.
    */
-  async linkLlmToProject(projectId: number, llmIntegrationId: number): Promise<string> {
+  async linkLlmToProject(
+    projectId: number,
+    llmIntegrationId: number
+  ): Promise<string> {
     const response = await this.request.post(
       `${this.baseURL}/api/model/projectLlmIntegration/create`,
       {
@@ -3127,7 +3217,7 @@ export class ApiHelper {
     caseAId: number,
     caseBId: number,
     score: number = 0.9,
-    matchedFields: string[] = ["name"],
+    matchedFields: string[] = ["name"]
   ): Promise<number> {
     const response = await this.request.post(
       `${this.baseURL}/api/model/duplicateScanResult/create`,
@@ -3143,7 +3233,7 @@ export class ApiHelper {
             scanJobId: `e2e-${Date.now()}`,
           },
         },
-      },
+      }
     );
     if (!response.ok()) {
       const error = await response.text();
@@ -3165,7 +3255,7 @@ export class ApiHelper {
       startStepId: number;
       endStepId: number;
     }>,
-    stepCount: number = 3,
+    stepCount: number = 3
   ): Promise<number> {
     const fingerprint = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const response = await this.request.post(
@@ -3188,7 +3278,7 @@ export class ApiHelper {
             },
           },
         },
-      },
+      }
     );
     if (!response.ok()) {
       const error = await response.text();
@@ -3313,7 +3403,9 @@ export class ApiHelper {
     roleId?: number;
     isActive?: boolean;
     emailVerified?: boolean; // Set to false only when testing email verification
-  }): Promise<{ data: { id: string; name: string; email: string; access: string } }> {
+  }): Promise<{
+    data: { id: string; name: string; email: string; access: string };
+  }> {
     // Use dedicated signup API endpoint instead of ZenStack
     // (ZenStack 2.21+ has issues with unauthenticated nested creates)
     const payload = {
@@ -3353,7 +3445,10 @@ export class ApiHelper {
       } catch (error) {
         // If the endpoint doesn't exist or fails, log but continue
         // This allows tests to run even if email verification doesn't work
-        console.warn(`Could not verify email for user ${result.data.id}:`, error);
+        console.warn(
+          `Could not verify email for user ${result.data.id}:`,
+          error
+        );
       }
     }
 

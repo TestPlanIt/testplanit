@@ -7,13 +7,18 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
-type TextOperator = "contains" | "startsWith" | "endsWith" | "equals" | "notContains";
+type TextOperator =
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "equals"
+  | "notContains";
 
 interface TextFilterInputProps {
   fieldId: number;
@@ -74,7 +79,10 @@ export function TextFilterInput({
     return value.trim().length > 0;
   };
 
-  const hasActiveFilter = currentFilter !== null && currentFilter !== undefined && currentFilter !== "";
+  const hasActiveFilter =
+    currentFilter !== null &&
+    currentFilter !== undefined &&
+    currentFilter !== "";
 
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
@@ -91,7 +99,8 @@ export function TextFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")}{" "}
+            {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -110,7 +119,10 @@ export function TextFilterInput({
         </div>
       )}
 
-      <Select value={operator} onValueChange={(val) => setOperator(val as TextOperator)}>
+      <Select
+        value={operator}
+        onValueChange={(val) => setOperator(val as TextOperator)}
+      >
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Select operator" />
         </SelectTrigger>

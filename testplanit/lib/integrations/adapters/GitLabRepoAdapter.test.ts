@@ -53,18 +53,14 @@ describe("GitLabRepoAdapter", () => {
 
   describe("getDefaultBranch", () => {
     it("returns default branch", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       const branch = await adapter.getDefaultBranch();
       expect(branch).toBe("main");
     });
 
     it("URL-encodes the project path", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       await adapter.getDefaultBranch();
 
@@ -120,11 +116,9 @@ describe("GitLabRepoAdapter", () => {
     it("paginates when X-Next-Page header is present", async () => {
       mockFetch
         .mockResolvedValueOnce(
-          makeResponse(
-            [{ path: "a.ts", type: "blob" }],
-            200,
-            { "X-Next-Page": "2" }
-          )
+          makeResponse([{ path: "a.ts", type: "blob" }], 200, {
+            "X-Next-Page": "2",
+          })
         )
         .mockResolvedValueOnce(
           makeResponse(
@@ -141,9 +135,7 @@ describe("GitLabRepoAdapter", () => {
 
   describe("testConnection", () => {
     it("returns success with default branch", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       const result = await adapter.testConnection();
       expect(result.success).toBe(true);

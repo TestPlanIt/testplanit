@@ -111,7 +111,12 @@ export abstract class GitRepoAdapter {
 
         // If the server redirects, validate the target before following
         if (response.status >= 300 && response.status < 400) {
-          return this.followSafeRedirect<T>(response, options, controller.signal, "json");
+          return this.followSafeRedirect<T>(
+            response,
+            options,
+            controller.signal,
+            "json"
+          );
         }
 
         // Track rate limit state from response headers for adaptive throttling
@@ -133,24 +138,25 @@ export abstract class GitRepoAdapter {
             this.rateLimitRemaining = 0;
             if (!this.rateLimitResetAt) {
               // No reset header — default to 60s from now
-              this.rateLimitResetAt =
-                Math.floor(Date.now() / 1000) + 60;
+              this.rateLimitResetAt = Math.floor(Date.now() / 1000) + 60;
             }
 
             let suffix = "";
             if (retryAfter) {
               const secs = parseInt(retryAfter);
-              suffix = secs >= 60
-                ? ` Try again in ${Math.ceil(secs / 60)} minute${Math.ceil(secs / 60) !== 1 ? "s" : ""}.`
-                : ` Try again in ${secs} seconds.`;
+              suffix =
+                secs >= 60
+                  ? ` Try again in ${Math.ceil(secs / 60)} minute${Math.ceil(secs / 60) !== 1 ? "s" : ""}.`
+                  : ` Try again in ${secs} seconds.`;
             } else if (reset) {
               const resetDate = new Date(parseInt(reset) * 1000);
               const minutesLeft = Math.ceil(
                 (resetDate.getTime() - Date.now()) / 60_000
               );
-              suffix = minutesLeft > 0
-                ? ` Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.`
-                : ` Try again shortly.`;
+              suffix =
+                minutesLeft > 0
+                  ? ` Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.`
+                  : ` Try again shortly.`;
             } else {
               suffix = " Try again in a few minutes.";
             }
@@ -197,7 +203,12 @@ export abstract class GitRepoAdapter {
         });
 
         if (response.status >= 300 && response.status < 400) {
-          return this.followSafeRedirect<string>(response, options, controller.signal, "text");
+          return this.followSafeRedirect<string>(
+            response,
+            options,
+            controller.signal,
+            "text"
+          );
         }
 
         // Track rate limit state from response headers
@@ -245,7 +256,7 @@ export abstract class GitRepoAdapter {
       if (!allowedPrivateHosts.has(parsed.hostname.toLowerCase())) {
         throw new Error(
           `Request blocked: URL targets a private or internal address. ` +
-          `To allow this, add "${parsed.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`
+            `To allow this, add "${parsed.hostname}" to the ALLOWED_PRIVATE_HOSTS environment variable.`
         );
       }
     }
@@ -271,15 +282,11 @@ export abstract class GitRepoAdapter {
   ): Promise<T> {
     const location = response.headers.get("Location");
     if (!location) {
-      throw new Error(
-        `Redirect (${response.status}) with no Location header`
-      );
+      throw new Error(`Redirect (${response.status}) with no Location header`);
     }
 
     // Resolve relative redirects against the original request URL
-    const redirectUrl = this.sanitizeUrl(
-      new URL(location, response.url).href
-    );
+    const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
     await assertSsrfSafeResolved(redirectUrl);
 
     const redirectResponse = await fetch(redirectUrl, {
@@ -298,8 +305,8 @@ export abstract class GitRepoAdapter {
     }
 
     return mode === "json"
-      ? (await redirectResponse.json()) as T
-      : (await redirectResponse.text()) as T;
+      ? ((await redirectResponse.json()) as T)
+      : ((await redirectResponse.text()) as T);
   }
 
   /**

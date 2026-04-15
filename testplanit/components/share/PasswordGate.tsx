@@ -9,7 +9,11 @@ interface PasswordGateProps {
   projectName: string;
 }
 
-export function PasswordGate({ shareKey, onVerified, projectName }: PasswordGateProps) {
+export function PasswordGate({
+  shareKey,
+  onVerified,
+  projectName,
+}: PasswordGateProps) {
   const [hasValidToken, setHasValidToken] = useState(false);
   const hasCalledOnVerified = useRef(false);
 
@@ -48,10 +52,7 @@ export function PasswordGate({ shareKey, onVerified, projectName }: PasswordGate
     const tokenKey = `share_token_${shareKey}`;
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
-    sessionStorage.setItem(
-      tokenKey,
-      JSON.stringify({ token, expiresAt })
-    );
+    sessionStorage.setItem(tokenKey, JSON.stringify({ token, expiresAt }));
 
     hasCalledOnVerified.current = true;
     setHasValidToken(true);

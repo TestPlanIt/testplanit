@@ -2,7 +2,10 @@ import { LLM_FEATURES } from "~/lib/llm/constants";
 import type { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import type { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
 import type { SimilarCasePair } from "~/lib/services/duplicateScanService";
-import { createBatches, executeBatches } from "~/lib/llm/services/batch-processor";
+import {
+  createBatches,
+  executeBatches,
+} from "~/lib/llm/services/batch-processor";
 
 /**
  * Input type: SimilarCasePair enriched with case content for LLM prompt building.
@@ -54,7 +57,7 @@ interface LlmDuplicateResponse {
 export class DuplicateAnalysisService {
   constructor(
     private llmManager: LlmManager,
-    private promptResolver: PromptResolver,
+    private promptResolver: PromptResolver
   ) {}
 
   /**
@@ -73,7 +76,7 @@ export class DuplicateAnalysisService {
     userId: string,
     maxTokensPerRequest: number,
     retryOptions?: { maxRetries?: number; baseDelayMs?: number },
-    onProgress?: (analyzed: number, total: number) => Promise<void>,
+    onProgress?: (analyzed: number, total: number) => Promise<void>
   ): Promise<AnnotatedPair[]> {
     // 1. Empty input fast path
     if (pairs.length === 0) {
@@ -83,11 +86,13 @@ export class DuplicateAnalysisService {
     // 2. Resolve LLM integration — graceful no-op if not configured
     const resolved = await this.llmManager.resolveIntegration(
       LLM_FEATURES.DUPLICATE_DETECTION,
-      projectId,
+      projectId
     );
 
     if (!resolved) {
-      return pairs.map((p) => this.stripContentFields({ ...p, detectionMethod: "fuzzy" }));
+      return pairs.map((p) =>
+        this.stripContentFields({ ...p, detectionMethod: "fuzzy" })
+      );
     }
 
     const integrationId = resolved.integrationId;
@@ -97,7 +102,7 @@ export class DuplicateAnalysisService {
       ...p,
       id: index,
       estimatedTokens: Math.ceil(
-        (p.caseAName + p.caseASteps + p.caseBName + p.caseBSteps).length / 4,
+        (p.caseAName + p.caseASteps + p.caseBName + p.caseBSteps).length / 4
       ),
     }));
 
@@ -125,10 +130,10 @@ export class DuplicateAnalysisService {
               item.caseASteps.slice(0, halfChars) +
               item.caseBName +
               item.caseBSteps.slice(0, halfChars)
-            ).length / 4,
+            ).length / 4
           ),
         };
-      },
+      }
     );
 
     // 6. Cap at MAX_BATCHES; overflow returned as fuzzy without LLM analysis
@@ -155,7 +160,7 @@ export class DuplicateAnalysisService {
 
     const processWithRetry = async (
       batch: PairBatchableItem[],
-      depth: number = 0,
+      depth: number = 0
     ): Promise<void> => {
       // Pre-split if we already know a smaller size works
       if (batch.length > maxWorkingBatchSize) {
@@ -185,7 +190,7 @@ export class DuplicateAnalysisService {
             projectId,
             feature: LLM_FEATURES.DUPLICATE_DETECTION,
           } as any,
-          retryOptions,
+          retryOptions
         );
       } catch (error: any) {
         // Timeout: split and retry if batch > 1 and depth < 3
@@ -197,7 +202,7 @@ export class DuplicateAnalysisService {
           const mid = Math.ceil(batch.length / 2);
           maxWorkingBatchSize = Math.min(maxWorkingBatchSize, mid);
           console.warn(
-            `[duplicate-detection] Timeout for batch of ${batch.length}, retrying as 2 sub-batches of ${mid} (maxWorkingBatchSize now ${maxWorkingBatchSize})`,
+            `[duplicate-detection] Timeout for batch of ${batch.length}, retrying as 2 sub-batches of ${mid} (maxWorkingBatchSize now ${maxWorkingBatchSize})`
           );
           await processWithRetry(batch.slice(0, mid), depth + 1);
           await processWithRetry(batch.slice(mid), depth + 1);
@@ -211,7 +216,7 @@ export class DuplicateAnalysisService {
       if (response.finishReason === "length" && batch.length > 1 && depth < 3) {
         const mid = Math.ceil(batch.length / 2);
         console.warn(
-          `[duplicate-detection] Truncated response for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`,
+          `[duplicate-detection] Truncated response for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`
         );
         await processWithRetry(batch.slice(0, mid), depth + 1);
         await processWithRetry(batch.slice(mid), depth + 1);
@@ -226,7 +231,7 @@ export class DuplicateAnalysisService {
         if (batch.length > 1 && depth < 3) {
           const mid = Math.ceil(batch.length / 2);
           console.warn(
-            `[duplicate-detection] Parse failed for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`,
+            `[duplicate-detection] Parse failed for batch of ${batch.length}, retrying as 2 sub-batches (depth ${depth + 1})`
           );
           await processWithRetry(batch.slice(0, mid), depth + 1);
           await processWithRetry(batch.slice(mid), depth + 1);
@@ -234,14 +239,16 @@ export class DuplicateAnalysisService {
         }
         // Can't split further — fall back to fuzzy for remaining pairs
         processedPairs.push(
-          ...batch.map((p) => this.stripContentFields({ ...p, detectionMethod: "fuzzy" })),
+          ...batch.map((p) =>
+            this.stripContentFields({ ...p, detectionMethod: "fuzzy" })
+          )
         );
         return;
       }
 
       // Build verdict map and annotate pairs
       const verdictMap = new Map<number, string>(
-        verdicts.map((v) => [v.pairIndex, v.verdict]),
+        verdicts.map((v) => [v.pairIndex, v.verdict])
       );
 
       for (let i = 0; i < batch.length; i++) {
@@ -250,7 +257,11 @@ export class DuplicateAnalysisService {
 
         if (verdict === "YES") {
           processedPairs.push(
-            this.stripContentFields({ ...pair, confidence: "HIGH", detectionMethod: "semantic" }),
+            this.stripContentFields({
+              ...pair,
+              confidence: "HIGH",
+              detectionMethod: "semantic",
+            })
           );
         } else if (verdict === "NO") {
           // Rejected — exclude from results
@@ -258,7 +269,7 @@ export class DuplicateAnalysisService {
         } else {
           // Missing from response — conservative fuzzy fallback
           processedPairs.push(
-            this.stripContentFields({ ...pair, detectionMethod: "fuzzy" }),
+            this.stripContentFields({ ...pair, detectionMethod: "fuzzy" })
           );
         }
       }
@@ -284,7 +295,7 @@ export class DuplicateAnalysisService {
       for (const p of pairsWithTokens) {
         if (failedPairSet.has(p.id)) {
           processedPairs.push(
-            this.stripContentFields({ ...p, detectionMethod: "fuzzy" }),
+            this.stripContentFields({ ...p, detectionMethod: "fuzzy" })
           );
         }
       }
@@ -335,7 +346,7 @@ export class DuplicateAnalysisService {
    * Returns null if parsing fails.
    */
   private parseResponse(
-    content: string,
+    content: string
   ): Array<{ pairIndex: number; verdict: string }> | null {
     try {
       let jsonStr = content.trim();
@@ -364,9 +375,15 @@ export class DuplicateAnalysisService {
    * Returns a clean AnnotatedPair (SimilarCasePair + detectionMethod only).
    */
   private stripContentFields(
-    pair: PairWithCaseContent & { detectionMethod: string },
+    pair: PairWithCaseContent & { detectionMethod: string }
   ): AnnotatedPair {
-    const { caseAName: _a, caseASteps: _b, caseBName: _c, caseBSteps: _d, ...rest } = pair;
+    const {
+      caseAName: _a,
+      caseASteps: _b,
+      caseBName: _c,
+      caseBSteps: _d,
+      ...rest
+    } = pair;
     return rest;
   }
 }

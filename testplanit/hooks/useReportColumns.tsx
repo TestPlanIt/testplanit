@@ -3,7 +3,9 @@ import { Compass } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import {
-  DIMENSION_LABEL_KEYS, getDimensionHelpKey, getMetricHelpKey
+  DIMENSION_LABEL_KEYS,
+  getDimensionHelpKey,
+  getMetricHelpKey,
 } from "~/lib/constants/reportConstants";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
@@ -215,17 +217,11 @@ export function useReportColumns(
                 if (!userId) {
                   // Check if the name is "None" from the API and translate it
                   const displayName =
-                    userName === "None"
-                      ? tCommon("access.none")
-                      : userName;
-                  return (
-                    <span>{displayName || tCommon("access.none")}</span>
-                  );
+                    userName === "None" ? tCommon("access.none") : userName;
+                  return <span>{displayName || tCommon("access.none")}</span>;
                 }
 
-                return (
-                  <UserNameCell userId={userId} hideLink={true} />
-                );
+                return <UserNameCell userId={userId} hideLink={true} />;
               }
               case "status": {
                 // Get the full status object from the row data
@@ -255,10 +251,14 @@ export function useReportColumns(
                   // Use UTC components to avoid timezone conversion issues
                   // The backend normalizes dates to UTC midnight for grouping
                   const year = date.getUTCFullYear();
-                  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                  const day = String(date.getUTCDate()).padStart(2, '0');
-                  const formattedDate = new Date(`${year}-${month}-${day}T12:00:00.000Z`);
-                  return <span>{formattedDate.toLocaleDateString(locale)}</span>;
+                  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+                  const day = String(date.getUTCDate()).padStart(2, "0");
+                  const formattedDate = new Date(
+                    `${year}-${month}-${day}T12:00:00.000Z`
+                  );
+                  return (
+                    <span>{formattedDate.toLocaleDateString(locale)}</span>
+                  );
                 } catch {
                   return <span>-</span>;
                 }
@@ -305,9 +305,7 @@ export function useReportColumns(
                 } else if (sourceValue === "API") {
                   return <span>{t("common.fields.API")}</span>;
                 }
-                return (
-                  <span>{sourceValue || tCommon("labels.unknown")}</span>
-                );
+                return <span>{sourceValue || tCommon("labels.unknown")}</span>;
               case "template": {
                 // Get the full template object from the row data
                 const templateData = info.row.original[dimensionId];
@@ -342,11 +340,12 @@ export function useReportColumns(
                 // Ensure milestoneType exists with proper structure
                 const milestoneWithType = {
                   ...milestoneData,
-                  milestoneType: milestoneData.milestoneType || { icon: null }
+                  milestoneType: milestoneData.milestoneType || { icon: null },
                 };
 
                 // Get project ID from the row if available
-                const projectId = info.row.original.projectId || info.row.original.project?.id;
+                const projectId =
+                  info.row.original.projectId || info.row.original.project?.id;
                 return (
                   <MilestoneIconAndName
                     milestone={milestoneWithType}
@@ -431,7 +430,8 @@ export function useReportColumns(
               case "issueStatus": {
                 // For issue tracking reports, issueStatus is the issue status
                 const issueStatusData = info.row.original[dimensionId];
-                const issueStatusName = issueStatusData?.name || issueStatusData;
+                const issueStatusName =
+                  issueStatusData?.name || issueStatusData;
                 return <IssueStatusDisplay status={issueStatusName} />;
               }
               default:
@@ -527,10 +527,17 @@ export function useReportColumns(
                     if (isNaN(date.getTime())) return "-";
                     // Use UTC components to avoid timezone conversion issues
                     const year = date.getUTCFullYear();
-                    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                    const day = String(date.getUTCDate()).padStart(2, '0');
-                    const formattedDate = new Date(`${year}-${month}-${day}T12:00:00.000Z`);
-                    return <span>{formattedDate.toLocaleDateString(locale)}</span>;
+                    const month = String(date.getUTCMonth() + 1).padStart(
+                      2,
+                      "0"
+                    );
+                    const day = String(date.getUTCDate()).padStart(2, "0");
+                    const formattedDate = new Date(
+                      `${year}-${month}-${day}T12:00:00.000Z`
+                    );
+                    return (
+                      <span>{formattedDate.toLocaleDateString(locale)}</span>
+                    );
                   } catch {
                     return "-";
                   }
@@ -574,9 +581,7 @@ export function useReportColumns(
                     return <span>{t("common.fields.API")}</span>;
                   }
                   return (
-                    <span>
-                      {sourceValue || tCommon("labels.unknown")}
-                    </span>
+                    <span>{sourceValue || tCommon("labels.unknown")}</span>
                   );
                 },
                 t("common.fields.multipleValues" as any)
@@ -617,7 +622,9 @@ export function useReportColumns(
               return getAggregatedDimensionDisplay(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
-                (configData) => <ConfigurationNameDisplay configuration={configData} />,
+                (configData) => (
+                  <ConfigurationNameDisplay configuration={configData} />
+                ),
                 t("common.fields.multipleValues" as any)
               );
             }
@@ -632,8 +639,9 @@ export function useReportColumns(
                     return <span>{tCommon("labels.unknown")}</span>;
                   }
                   // Try to get project ID from the first subrow that has it
-                  const projectId = info.row.subRows[0]?.original?.projectId ||
-                                   info.row.subRows[0]?.original?.project?.id;
+                  const projectId =
+                    info.row.subRows[0]?.original?.projectId ||
+                    info.row.subRows[0]?.original?.project?.id;
                   return (
                     <MilestoneIconAndName
                       milestone={milestoneData}
@@ -835,10 +843,11 @@ export function useReportColumns(
               }
 
               // avgElapsedTime and totalElapsedTime metrics return values in seconds
-              const isSecondsFormat = metricId === "avgElapsedTime" ||
-                                     metricId === "avgElapsed" ||
-                                     metricId === "totalElapsedTime" ||
-                                     metricId === "averageElapsed";
+              const isSecondsFormat =
+                metricId === "avgElapsedTime" ||
+                metricId === "avgElapsed" ||
+                metricId === "totalElapsedTime" ||
+                metricId === "averageElapsed";
 
               const humanReadableDuration = toHumanReadable(value, {
                 isSeconds: isSecondsFormat,
@@ -904,7 +913,9 @@ export function useReportColumns(
               return (
                 <span
                   className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
-                    isClickable ? "text-primary hover:underline cursor-pointer" : ""
+                    isClickable
+                      ? "text-primary hover:underline cursor-pointer"
+                      : ""
                   }`}
                   onClick={isClickable ? handleClick : undefined}
                 >
@@ -946,7 +957,9 @@ export function useReportColumns(
               return (
                 <span
                   className={`inline-flex items-center px-2 py-1 text-xs font-medium bg-primary/10 rounded-full ${
-                    isClickable ? "text-primary hover:underline cursor-pointer" : "text-primary"
+                    isClickable
+                      ? "text-primary hover:underline cursor-pointer"
+                      : "text-primary"
                   }`}
                   onClick={isClickable ? handleClick : undefined}
                 >
@@ -977,7 +990,9 @@ export function useReportColumns(
               return (
                 <span
                   className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
-                    isClickable ? "text-primary hover:underline cursor-pointer" : ""
+                    isClickable
+                      ? "text-primary hover:underline cursor-pointer"
+                      : ""
                   }`}
                   onClick={isClickable ? handleClick : undefined}
                 >
@@ -991,7 +1006,9 @@ export function useReportColumns(
             return (
               <span
                 className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
-                  isClickable ? "text-primary hover:underline cursor-pointer" : ""
+                  isClickable
+                    ? "text-primary hover:underline cursor-pointer"
+                    : ""
                 }`}
                 onClick={isClickable ? handleClick : undefined}
               >

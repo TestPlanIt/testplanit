@@ -1,18 +1,38 @@
 import type {
   Access,
   TestmoImportDataset,
-  TestmoImportJob
+  TestmoImportJob,
 } from "@prisma/client";
 import { db } from "~/server/db";
 import type {
-  TestmoCaseFieldType, TestmoConfigurationSuggestion, TestmoExistingCaseField, TestmoExistingConfigCategory, TestmoExistingConfiguration, TestmoExistingConfigVariant, TestmoExistingGroup, TestmoExistingMilestoneType, TestmoExistingResultField, TestmoExistingRole,
-  TestmoExistingStatus, TestmoExistingTag, TestmoExistingTemplate, TestmoExistingUser, TestmoExistingWorkflow, TestmoFieldOptionConfig, TestmoGroupSuggestion, TestmoIssueTargetSuggestion,
+  TestmoCaseFieldType,
+  TestmoConfigurationSuggestion,
+  TestmoExistingCaseField,
+  TestmoExistingConfigCategory,
+  TestmoExistingConfiguration,
+  TestmoExistingConfigVariant,
+  TestmoExistingGroup,
+  TestmoExistingMilestoneType,
+  TestmoExistingResultField,
+  TestmoExistingRole,
+  TestmoExistingStatus,
+  TestmoExistingTag,
+  TestmoExistingTemplate,
+  TestmoExistingUser,
+  TestmoExistingWorkflow,
+  TestmoFieldOptionConfig,
+  TestmoGroupSuggestion,
+  TestmoIssueTargetSuggestion,
   TestmoMappingAnalysis,
   TestmoMilestoneTypeSuggestion,
   TestmoRolePermissions,
   TestmoRoleSuggestion,
-  TestmoStatusSuggestion, TestmoTagSuggestion, TestmoTemplateFieldSuggestion, TestmoTemplateSuggestion, TestmoUserSuggestion,
-  TestmoWorkflowSuggestion
+  TestmoStatusSuggestion,
+  TestmoTagSuggestion,
+  TestmoTemplateFieldSuggestion,
+  TestmoTemplateSuggestion,
+  TestmoUserSuggestion,
+  TestmoWorkflowSuggestion,
 } from "./types";
 
 const DATASETS_FOR_CONFIGURATION = [
@@ -764,16 +784,13 @@ export async function buildMappingAnalysis(
 
           entries.push({
             name,
-            iconId:
-              typeof record.iconId === "number" ? record.iconId : null,
+            iconId: typeof record.iconId === "number" ? record.iconId : null,
             iconColorId:
               typeof record.iconColorId === "number"
                 ? record.iconColorId
                 : null,
             isEnabled:
-              typeof record.isEnabled === "boolean"
-                ? record.isEnabled
-                : true,
+              typeof record.isEnabled === "boolean" ? record.isEnabled : true,
             isDefault:
               typeof record.isDefault === "boolean"
                 ? record.isDefault
@@ -1534,12 +1551,10 @@ export async function buildMappingAnalysis(
     })
   );
 
-  const existingTagEntities: TestmoExistingTag[] = existingTags.map(
-    (tag) => ({
-      id: tag.id,
-      name: tag.name,
-    })
-  );
+  const existingTagEntities: TestmoExistingTag[] = existingTags.map((tag) => ({
+    id: tag.id,
+    name: tag.name,
+  }));
 
   const existingUserEntities: TestmoExistingUser[] = existingUsers.map(
     (user) => ({

@@ -20,7 +20,9 @@ describe("jaroWinkler", () => {
   });
 
   it("returns >= 0.85 for very similar strings", () => {
-    expect(jaroWinkler("Login Happy Path", "Login Happy Path v2")).toBeGreaterThanOrEqual(0.85);
+    expect(
+      jaroWinkler("Login Happy Path", "Login Happy Path v2")
+    ).toBeGreaterThanOrEqual(0.85);
   });
 
   it("returns < 0.85 but > 0.0 for partially similar strings", () => {
@@ -59,8 +61,14 @@ describe("levenshteinRatio", () => {
 
   it("scores lower than Jaro-Winkler for strings differing by a few words", () => {
     // "login" vs "logout" = 2 edits in a ~25 char string
-    const lev = levenshteinRatio("Verify user can login successfully", "Verify user can logout successfully");
-    const jw = jaroWinkler("Verify user can login successfully", "Verify user can logout successfully");
+    const lev = levenshteinRatio(
+      "Verify user can login successfully",
+      "Verify user can logout successfully"
+    );
+    const jw = jaroWinkler(
+      "Verify user can login successfully",
+      "Verify user can logout successfully"
+    );
     expect(lev).toBeLessThan(jw);
     expect(lev).toBeLessThan(0.95);
   });
@@ -100,7 +108,9 @@ describe("jaccardSimilarity", () => {
 
 describe("combineScores", () => {
   it("returns 1.0 when all signals are 1.0", () => {
-    expect(combineScores({ name: 1.0, steps: 1.0, tags: 1.0, fields: 1.0 })).toBe(1.0);
+    expect(
+      combineScores({ name: 1.0, steps: 1.0, tags: 1.0, fields: 1.0 })
+    ).toBe(1.0);
   });
 
   it("returns 0 when all signals are 0", () => {
@@ -109,32 +119,38 @@ describe("combineScores", () => {
 
   it("computes weighted average correctly", () => {
     // 0.8*0.5 + 0.6*0.3 + 0.4*0.1 + 0.2*0.1 = 0.40 + 0.18 + 0.04 + 0.02 = 0.64
-    expect(combineScores({ name: 0.8, steps: 0.6, tags: 0.4, fields: 0.2 })).toBeCloseTo(0.64);
+    expect(
+      combineScores({ name: 0.8, steps: 0.6, tags: 0.4, fields: 0.2 })
+    ).toBeCloseTo(0.64);
   });
 
   it("weights name signal at 0.5", () => {
-    expect(combineScores({ name: 1.0, steps: 0, tags: 0, fields: 0 })).toBeCloseTo(0.5);
+    expect(
+      combineScores({ name: 1.0, steps: 0, tags: 0, fields: 0 })
+    ).toBeCloseTo(0.5);
   });
 
   it("weights steps signal at 0.3", () => {
-    expect(combineScores({ name: 0, steps: 1.0, tags: 0, fields: 0 })).toBeCloseTo(0.3);
+    expect(
+      combineScores({ name: 0, steps: 1.0, tags: 0, fields: 0 })
+    ).toBeCloseTo(0.3);
   });
 });
 
 describe("scoreToConfidence", () => {
   it("returns HIGH for score >= 0.90", () => {
     expect(scoreToConfidence(0.95)).toBe("HIGH");
-    expect(scoreToConfidence(0.90)).toBe("HIGH");
+    expect(scoreToConfidence(0.9)).toBe("HIGH");
   });
 
   it("returns MEDIUM for score >= 0.80 and < 0.90", () => {
     expect(scoreToConfidence(0.85)).toBe("MEDIUM");
-    expect(scoreToConfidence(0.80)).toBe("MEDIUM");
+    expect(scoreToConfidence(0.8)).toBe("MEDIUM");
   });
 
   it("returns LOW for score >= 0.70 and < 0.80", () => {
     expect(scoreToConfidence(0.75)).toBe("LOW");
-    expect(scoreToConfidence(0.70)).toBe("LOW");
+    expect(scoreToConfidence(0.7)).toBe("LOW");
   });
 
   it("returns null for score < 0.70", () => {
@@ -171,8 +187,8 @@ describe("stepsEqual", () => {
     expect(
       stepsEqual(
         { step: "Click the login button", expectedResult: "" },
-        { step: "Click the login button", expectedResult: "" },
-      ),
+        { step: "Click the login button", expectedResult: "" }
+      )
     ).toBe(true);
   });
 
@@ -180,8 +196,8 @@ describe("stepsEqual", () => {
     expect(
       stepsEqual(
         { step: "Click login", expectedResult: "Page loads" },
-        { step: "Click login", expectedResult: "Page loads" },
-      ),
+        { step: "Click login", expectedResult: "Page loads" }
+      )
     ).toBe(true);
   });
 
@@ -190,8 +206,8 @@ describe("stepsEqual", () => {
     expect(
       stepsEqual(
         { step: "Click the login button", expectedResult: "" },
-        { step: "Click the login button", expectedResult: "Dashboard visible" },
-      ),
+        { step: "Click the login button", expectedResult: "Dashboard visible" }
+      )
     ).toBe(true);
   });
 
@@ -201,8 +217,8 @@ describe("stepsEqual", () => {
     expect(
       stepsEqual(
         { step: "Click login", expectedResult: "Page loads" },
-        { step: "Click login", expectedResult: "Error shown" },
-      ),
+        { step: "Click login", expectedResult: "Error shown" }
+      )
     ).toBe(false);
   });
 
@@ -210,8 +226,8 @@ describe("stepsEqual", () => {
     expect(
       stepsEqual(
         { step: "abc", expectedResult: "" },
-        { step: "xyz", expectedResult: "" },
-      ),
+        { step: "xyz", expectedResult: "" }
+      )
     ).toBe(false);
   });
 
@@ -221,15 +237,15 @@ describe("stepsEqual", () => {
       stepsEqual(
         { step: "abcdef", expectedResult: "" },
         { step: "abcxyz", expectedResult: "" },
-        0.5,
-      ),
+        0.5
+      )
     ).toBe(true);
     expect(
       stepsEqual(
         { step: "abcdef", expectedResult: "" },
         { step: "abcxyz", expectedResult: "" },
-        0.85,
-      ),
+        0.85
+      )
     ).toBe(false);
   });
 
@@ -238,8 +254,8 @@ describe("stepsEqual", () => {
     expect(
       stepsEqual(
         { step: "Click the login button", expectedResult: "   " },
-        { step: "Click the login button", expectedResult: "Dashboard visible" },
-      ),
+        { step: "Click the login button", expectedResult: "Dashboard visible" }
+      )
     ).toBe(true);
   });
 });

@@ -51,9 +51,9 @@ test.describe("Test Case Execution", () => {
     await expect(sheet).toBeVisible({ timeout: 15000 });
 
     // The case name should be visible in the sheet
-    await expect(
-      sheet.locator(`text="${caseName}"`).first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(sheet.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should display case details and execution controls in the panel", async ({
@@ -80,9 +80,9 @@ test.describe("Test Case Execution", () => {
 
     // The execution panel should show:
     // 1. The case name
-    await expect(
-      sheet.locator(`text="${caseName}"`).first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(sheet.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // 2. The "Add Result" button for recording results
     const addResultButton = sheet
@@ -127,13 +127,17 @@ test.describe("Test Case Execution", () => {
 
     // Alternative: look for the dropdown trigger by content (colored dot + status name)
     const statusButton = sheet
-      .locator("div.flex.items-center.space-x-1 button, button:has(.rounded-full)")
+      .locator(
+        "div.flex.items-center.space-x-1 button, button:has(.rounded-full)"
+      )
       .first();
 
     // Try opening the status dropdown
     let statusDropdownOpened = false;
     if (
-      await statusDropdownTrigger.isVisible({ timeout: 3000 }).catch(() => false)
+      await statusDropdownTrigger
+        .isVisible({ timeout: 3000 })
+        .catch(() => false)
     ) {
       await statusDropdownTrigger.click();
       statusDropdownOpened = true;
@@ -147,9 +151,7 @@ test.describe("Test Case Execution", () => {
     if (statusDropdownOpened) {
       // Look for status options in the dropdown menu
       const dropdownMenu = page.locator('[role="menu"]');
-      if (
-        await dropdownMenu.isVisible({ timeout: 5000 }).catch(() => false)
-      ) {
+      if (await dropdownMenu.isVisible({ timeout: 5000 }).catch(() => false)) {
         // Click the first status option (e.g., "Passed" or whatever is available)
         const firstStatusOption = dropdownMenu
           .locator('[role="menuitem"]')
@@ -170,7 +172,9 @@ test.describe("Test Case Execution", () => {
           // Check if AddResultModal appeared
           const addResultDialog = page.locator('[role="dialog"]');
           if (
-            await addResultDialog.isVisible({ timeout: 3000 }).catch(() => false)
+            await addResultDialog
+              .isVisible({ timeout: 3000 })
+              .catch(() => false)
           ) {
             // Close it — the test verified that clicking status opens the modal
             await page.keyboard.press("Escape");
@@ -224,7 +228,9 @@ test.describe("Test Case Execution", () => {
     // The pass action should have worked — verify success toast or case transition
     // A toast is shown on success
     const successToast = page
-      .locator('[data-sonner-toast], [role="status"], text=/result added|passed/i')
+      .locator(
+        '[data-sonner-toast], [role="status"], text=/result added|passed/i'
+      )
       .first();
 
     // Or verify the sheet still shows case details (pass & next moved to case 2)
@@ -263,29 +269,25 @@ test.describe("Test Case Execution", () => {
     await expect(sheet).toBeVisible({ timeout: 15000 });
 
     // First case should be shown in the sheet
-    await expect(
-      sheet.locator(`text="${case1Name}"`).first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(sheet.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // There should be a Next button (chevron right) in the panel header
     const nextCaseButton = sheet
-      .locator(
-        'button[aria-label*="next" i], button[aria-label*="Next" i]'
-      )
+      .locator('button[aria-label*="next" i], button[aria-label*="Next" i]')
       .first();
 
-    if (
-      await nextCaseButton.isVisible({ timeout: 5000 }).catch(() => false)
-    ) {
+    if (await nextCaseButton.isVisible({ timeout: 5000 }).catch(() => false)) {
       await nextCaseButton.click();
 
       // Wait for transition
       await page.waitForTimeout(2000);
 
       // The second case should now be displayed
-      await expect(
-        sheet.locator(`text="${case2Name}"`).first()
-      ).toBeVisible({ timeout: 10000 });
+      await expect(sheet.locator(`text="${case2Name}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
     } else {
       // Navigation arrows might have different labels - check panel structure
       // Check that the index indicator shows "1 of 2" for case 1

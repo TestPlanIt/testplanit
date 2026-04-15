@@ -6,11 +6,18 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CalendarClock, CheckCircle2, Clock, FlaskConical, HelpCircle, ListChecks, MessageSquare, SquarePlay
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  FlaskConical,
+  HelpCircle,
+  ListChecks,
+  MessageSquare,
+  SquarePlay,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

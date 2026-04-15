@@ -17,7 +17,8 @@ function constantTimeCompare(a: string, b: string): boolean {
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Forge-Api-Key",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Forge-Api-Key",
 };
 
 export async function GET(request: NextRequest) {
@@ -56,10 +57,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: true },
-      { headers }
-    );
+    return NextResponse.json({ success: true }, { headers });
   } catch (error) {
     console.error("Error in test-connection:", error);
     return NextResponse.json(

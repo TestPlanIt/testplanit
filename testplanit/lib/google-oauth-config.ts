@@ -27,7 +27,7 @@ export async function getGoogleOAuthConfig(): Promise<GoogleOAuthConfig | null> 
     }
 
     const config = googleProvider.config as any;
-    
+
     // Validate that both clientId and clientSecret exist
     if (!config.clientId || !config.clientSecret) {
       return null;
@@ -42,4 +42,3 @@ export async function getGoogleOAuthConfig(): Promise<GoogleOAuthConfig | null> 
     return null;
   }
 }
-

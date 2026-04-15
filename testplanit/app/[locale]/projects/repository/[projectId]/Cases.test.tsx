@@ -1,4 +1,12 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 // ---- Mocks (must come before imports) ----
 
@@ -72,15 +80,32 @@ vi.mock("next-auth/react", async (importOriginal) => {
 vi.mock("~/lib/hooks", () => ({
   useCountProjects: vi.fn(() => ({ data: 2, isLoading: false })),
   useFindManyRepositoryFolders: vi.fn(() => ({ data: [], isLoading: false })),
-  useCountRepositoryCases: vi.fn(() => ({ data: 0, isLoading: false, refetch: vi.fn() })),
+  useCountRepositoryCases: vi.fn(() => ({
+    data: 0,
+    isLoading: false,
+    refetch: vi.fn(),
+  })),
   useFindManyTemplates: vi.fn(() => ({ data: [], isLoading: false })),
   useFindUniqueProjects: vi.fn(() => ({ data: null, isLoading: false })),
-  useFindManyProjectLlmIntegration: vi.fn(() => ({ data: [], isLoading: false })),
+  useFindManyProjectLlmIntegration: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+  })),
   useFindFirstTestRuns: vi.fn(() => ({ data: null, isLoading: false })),
   useCountTestRunCases: vi.fn(() => ({ data: 0, isLoading: false })),
-  useFindManyTestRunCases: vi.fn(() => ({ data: [], isLoading: false, refetch: vi.fn() })),
-  useUpdateRepositoryCases: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
-  useUpdateTestRunCases: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useFindManyTestRunCases: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    refetch: vi.fn(),
+  })),
+  useUpdateRepositoryCases: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+  useUpdateTestRunCases: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({
@@ -140,7 +165,11 @@ vi.mock("sonner", () => ({
 // Mock complex child components as simple stubs
 vi.mock("@/components/tables/DataTable", () => ({
   DataTable: vi.fn(({ data, isLoading }: any) => (
-    <div data-testid="data-table" data-loading={isLoading} data-count={data?.length ?? 0}>
+    <div
+      data-testid="data-table"
+      data-loading={isLoading}
+      data-count={data?.length ?? 0}
+    >
       DataTable stub ({data?.length ?? 0} rows)
     </div>
   )),
@@ -200,7 +229,9 @@ vi.mock("./AddResultModal", () => ({
 
 vi.mock("@/components/SelectedTestCasesDrawer", () => ({
   SelectedTestCasesDrawer: vi.fn(() => (
-    <div data-testid="selected-test-cases-drawer">SelectedTestCasesDrawer stub</div>
+    <div data-testid="selected-test-cases-drawer">
+      SelectedTestCasesDrawer stub
+    </div>
   )),
 }));
 
@@ -381,7 +412,9 @@ describe("Cases component", () => {
   });
 
   it("renders DataTable with case data when loaded", async () => {
-    setupMocks({ data: [mockCase, { ...mockCase, id: 2, name: "Test Case 2" }] });
+    setupMocks({
+      data: [mockCase, { ...mockCase, id: 2, name: "Test Case 2" }],
+    });
 
     render(<Cases {...defaultProps} />);
 
@@ -484,7 +517,9 @@ describe("Cases component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("selected-test-cases-drawer")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("selected-test-cases-drawer")
+      ).toBeInTheDocument();
     });
   });
 
@@ -506,7 +541,9 @@ describe("Cases component", () => {
       expect(screen.getByTestId("data-table")).toBeInTheDocument();
     });
 
-    expect(screen.queryByTestId("selected-test-cases-drawer")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("selected-test-cases-drawer")
+    ).not.toBeInTheDocument();
   });
 
   it("renders BulkEditModal and ExportModal when project is valid", async () => {
@@ -568,13 +605,7 @@ describe("Cases component", () => {
     // With no runId in params and empty testRunCases, the empty run state is shown.
     setupMocks({ data: [] });
 
-    render(
-      <Cases
-        {...defaultProps}
-        isRunMode={true}
-        canAddEditRun={true}
-      />
-    );
+    render(<Cases {...defaultProps} isRunMode={true} canAddEditRun={true} />);
 
     // The card structure with filter and column selection should still render
     await waitFor(() => {
@@ -616,7 +647,13 @@ describe("Cases component", () => {
         viewType="folders"
         showDescendants={true}
         descendantFolderIds={[10, 20, 30]}
-        folderPathMap={new Map([[10, "Parent"], [20, "Parent > Child"], [30, "Parent > Other"]])}
+        folderPathMap={
+          new Map([
+            [10, "Parent"],
+            [20, "Parent > Child"],
+            [30, "Parent > Other"],
+          ])
+        }
       />
     );
 
@@ -629,13 +666,7 @@ describe("Cases component", () => {
   it("renders without descendant props (default behavior)", async () => {
     setupMocks({ data: [mockCase] });
 
-    render(
-      <Cases
-        {...defaultProps}
-        folderId={10}
-        viewType="folders"
-      />
-    );
+    render(<Cases {...defaultProps} folderId={10} viewType="folders" />);
 
     const dataTable = await screen.findByTestId("data-table");
     expect(dataTable).toBeInTheDocument();

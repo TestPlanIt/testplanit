@@ -3,19 +3,16 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const {
-  mockFindMany,
-  mockUpdate,
-  mockUpsert,
-  mockUpdatePI,
-} = vi.hoisted(() => {
-  return {
-    mockFindMany: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockUpsert: vi.fn(),
-    mockUpdatePI: vi.fn(),
-  };
-});
+const { mockFindMany, mockUpdate, mockUpsert, mockUpdatePI } = vi.hoisted(
+  () => {
+    return {
+      mockFindMany: vi.fn(),
+      mockUpdate: vi.fn(),
+      mockUpsert: vi.fn(),
+      mockUpdatePI: vi.fn(),
+    };
+  }
+);
 
 // --- Mocks ---
 
@@ -124,9 +121,7 @@ vi.mock("@/components/ui/multi-async-combobox", () => ({
       <button
         data-testid="mock-select-project"
         onClick={() =>
-          onValueChange?.([
-            { id: "ext-99", key: "NEW", name: "New Project" },
-          ])
+          onValueChange?.([{ id: "ext-99", key: "NEW", name: "New Project" }])
         }
       >
         Select project
@@ -303,7 +298,9 @@ describe("ProjectIntegrationSettings", () => {
     expect(screen.queryByText("addProjects")).toBeNull();
 
     // The skeleton divs have animate-pulse class
-    const { container } = render(<ProjectIntegrationSettings {...defaultProps} />);
+    const { container } = render(
+      <ProjectIntegrationSettings {...defaultProps} />
+    );
     const skeletons = container.querySelectorAll(".animate-pulse");
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -363,7 +360,9 @@ describe("ProjectIntegrationSettings", () => {
   it("confirming remove calls updateIntegrationProject with isActive:false", async () => {
     mockUpdate.mockResolvedValue({});
 
-    const { container } = render(<ProjectIntegrationSettings {...defaultProps} />);
+    const { container } = render(
+      <ProjectIntegrationSettings {...defaultProps} />
+    );
 
     // Click remove button for first project (destructive icon buttons have no accessible name)
     const removeButtons = container.querySelectorAll(

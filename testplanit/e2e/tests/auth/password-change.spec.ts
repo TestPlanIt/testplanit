@@ -71,7 +71,10 @@ test.describe("Password Change", () => {
       await confirmPasswordInput.fill(newPassword);
 
       // Submit the form
-      await dialog.getByRole("button", { name: /change.*password|save|submit/i }).first().click();
+      await dialog
+        .getByRole("button", { name: /change.*password|save|submit/i })
+        .first()
+        .click();
 
       // Assert success: dialog closes or success toast appears
       await expect(dialog).not.toBeVisible({ timeout: 10000 });
@@ -152,11 +155,7 @@ test.describe("Password Change", () => {
     }
   });
 
-  test("Wrong current password is rejected", async ({
-    page,
-    api,
-    baseURL,
-  }) => {
+  test("Wrong current password is rejected", async ({ page, api, baseURL }) => {
     const timestamp = Date.now();
     const testEmail = `pw-wrong-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const correctPassword = "Password123!";
@@ -204,12 +203,17 @@ test.describe("Password Change", () => {
       await confirmPasswordInput.fill("NewPassword456!");
 
       // Submit
-      await dialog.getByRole("button", { name: /change.*password|save|submit/i }).first().click();
+      await dialog
+        .getByRole("button", { name: /change.*password|save|submit/i })
+        .first()
+        .click();
 
       // Assert error message is visible in the dialog
       await expect(
         dialog
-          .getByText(/invalid.*password|incorrect.*password|wrong.*password|current.*password/i)
+          .getByText(
+            /invalid.*password|incorrect.*password|wrong.*password|current.*password/i
+          )
           .first()
       ).toBeVisible({ timeout: 10000 });
 

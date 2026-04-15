@@ -45,7 +45,7 @@ export async function getUserAccessibleProjects(userId: string) {
         where: { isDeleted: false },
         select: { id: true },
       });
-      return allProjects.map(p => ({ projectId: p.id }));
+      return allProjects.map((p) => ({ projectId: p.id }));
     }
 
     const projectIds = new Set<number>();
@@ -58,7 +58,7 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       select: { id: true },
     });
-    createdProjects.forEach(p => projectIds.add(p.id));
+    createdProjects.forEach((p) => projectIds.add(p.id));
 
     // 2. Projects with explicit user permissions (not NO_ACCESS)
     const userPermissions = await prisma.userProjectPermission.findMany({
@@ -73,7 +73,7 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       select: { projectId: true },
     });
-    userPermissions.forEach(p => projectIds.add(p.projectId));
+    userPermissions.forEach((p) => projectIds.add(p.projectId));
 
     // 3. Projects user is explicitly assigned to
     const assignments = await prisma.projectAssignment.findMany({
@@ -85,13 +85,17 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       select: { projectId: true },
     });
-    assignments.forEach(p => projectIds.add(p.projectId));
+    assignments.forEach((p) => projectIds.add(p.projectId));
 
     // 4. Projects accessible through groups (if user doesn't have explicit NO_ACCESS)
     const groupProjectIds = new Set<number>();
     for (const userGroup of user.groups) {
       for (const groupPerm of userGroup.group.projectPermissions) {
-        if (groupPerm.accessType !== "NO_ACCESS" && groupPerm.project && !groupPerm.project.isDeleted) {
+        if (
+          groupPerm.accessType !== "NO_ACCESS" &&
+          groupPerm.project &&
+          !groupPerm.project.isDeleted
+        ) {
           groupProjectIds.add(groupPerm.projectId);
         }
       }
@@ -105,10 +109,10 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       select: { projectId: true },
     });
-    const deniedProjectIds = new Set(explicitDenials.map(d => d.projectId));
+    const deniedProjectIds = new Set(explicitDenials.map((d) => d.projectId));
 
     // Add group projects that aren't explicitly denied
-    groupProjectIds.forEach(id => {
+    groupProjectIds.forEach((id) => {
       if (!deniedProjectIds.has(id)) {
         projectIds.add(id);
       }
@@ -123,9 +127,9 @@ export async function getUserAccessibleProjects(userId: string) {
         },
         select: { id: true },
       });
-      
+
       // Only add if not explicitly denied
-      globalRoleProjects.forEach(p => {
+      globalRoleProjects.forEach((p) => {
         if (!deniedProjectIds.has(p.id)) {
           projectIds.add(p.id);
         }
@@ -143,9 +147,9 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       select: { id: true },
     });
-    
+
     // Only add if not explicitly denied
-    specificRoleProjects.forEach(p => {
+    specificRoleProjects.forEach((p) => {
       if (!deniedProjectIds.has(p.id)) {
         projectIds.add(p.id);
       }
@@ -159,9 +163,9 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       select: { id: true },
     });
-    
+
     // DEFAULT means everyone has access unless explicitly denied
-    defaultProjects.forEach(p => {
+    defaultProjects.forEach((p) => {
       if (!deniedProjectIds.has(p.id)) {
         projectIds.add(p.id);
       }
@@ -171,7 +175,7 @@ export async function getUserAccessibleProjects(userId: string) {
     // They require explicit permissions via user permissions, assignments, or groups
     // which are already handled above
 
-    return Array.from(projectIds).map(id => ({ projectId: id }));
+    return Array.from(projectIds).map((id) => ({ projectId: id }));
   } catch (error) {
     console.error("Error getting user accessible projects:", error);
     return [];

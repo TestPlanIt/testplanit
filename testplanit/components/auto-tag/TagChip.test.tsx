@@ -216,27 +216,21 @@ describe("TagChip", () => {
   });
 
   it("existing accepted tag shows tooltipAssign in tooltip content", () => {
-    render(
-      <TagChip {...baseProps} isExisting={true} isAccepted={true} />
-    );
+    render(<TagChip {...baseProps} isExisting={true} isAccepted={true} />);
     expect(screen.getByTestId("tooltip-content")).toHaveTextContent(
       "tooltipAssign"
     );
   });
 
   it("existing rejected tag shows tooltipExisting in tooltip content", () => {
-    render(
-      <TagChip {...baseProps} isExisting={true} isAccepted={false} />
-    );
+    render(<TagChip {...baseProps} isExisting={true} isAccepted={false} />);
     expect(screen.getByTestId("tooltip-content")).toHaveTextContent(
       "tooltipExisting"
     );
   });
 
   it("new tag shows tooltipNew in tooltip content", () => {
-    render(
-      <TagChip {...baseProps} isExisting={false} isAccepted={true} />
-    );
+    render(<TagChip {...baseProps} isExisting={false} isAccepted={true} />);
     expect(screen.getByTestId("tooltip-content")).toHaveTextContent(
       "tooltipNew"
     );

@@ -71,7 +71,8 @@ export async function GET(
       }
 
       const config = projectIntegration.config as Record<string, any> | null;
-      projectKey = config?.externalProjectKey || config?.externalProjectId || null;
+      projectKey =
+        config?.externalProjectKey || config?.externalProjectId || null;
     }
 
     if (!projectKey) {

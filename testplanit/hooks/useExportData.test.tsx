@@ -417,19 +417,19 @@ describe("useExportData", () => {
 
   it("should fetch all data when selected items are not in currentData", async () => {
     // currentData only has items with id 1 and 2
-    const { result } = renderExportHook({ 
+    const { result } = renderExportHook({
       selectedIds: [1, 3, 4], // 3 and 4 are not in currentData
-      currentData: sampleData // sampleData only has items with id 1 and 2
+      currentData: sampleData, // sampleData only has items with id 1 and 2
     });
-    
+
     // Mock fetchAllData to return additional items
     const allData = [
       ...sampleData,
       { ...sampleData[0], id: 3, name: "Test Case Three" },
-      { ...sampleData[0], id: 4, name: "Test Case Four" }
+      { ...sampleData[0], id: 4, name: "Test Case Four" },
     ];
     mockFetchAllData.mockResolvedValue(allData);
-    
+
     const options: ExportOptions = {
       format: "csv",
       scope: "selected",
@@ -440,16 +440,19 @@ describe("useExportData", () => {
       textLongFormat: "json",
       attachmentFormat: "json",
     };
-    
+
     await act(async () => {
       await result.current.handleExport(options);
     });
-    
+
     // Should call fetchAllData since not all selected items are in currentData
     expect(mockFetchAllData).toHaveBeenCalledTimes(1);
-    expect(mockFetchAllData).toHaveBeenCalledWith({ ...options, scope: "allFiltered" });
+    expect(mockFetchAllData).toHaveBeenCalledWith({
+      ...options,
+      scope: "allFiltered",
+    });
     expect(mockUnparse).toHaveBeenCalledTimes(1);
-    
+
     // Check if only selected data was processed
     const unparseData = mockUnparse.mock.calls[0][0];
     expect(unparseData).toHaveLength(3); // Only 3 items (1, 3, 4) should be exported

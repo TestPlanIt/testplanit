@@ -20,8 +20,12 @@ describe("elasticsearchSyncMiddleware", () => {
     vi.clearAllMocks();
     middleware = elasticsearchSyncMiddleware();
     // Set up default mock return values
-    vi.mocked(repositoryCaseSync.syncRepositoryCaseToElasticsearch).mockResolvedValue(true);
-    vi.mocked(elasticsearchIndexing.deleteRepositoryCase).mockResolvedValue(true);
+    vi.mocked(
+      repositoryCaseSync.syncRepositoryCaseToElasticsearch
+    ).mockResolvedValue(true);
+    vi.mocked(elasticsearchIndexing.deleteRepositoryCase).mockResolvedValue(
+      true
+    );
   });
 
   afterEach(() => {
@@ -40,7 +44,9 @@ describe("elasticsearchSyncMiddleware", () => {
       await middleware(params, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(params);
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(123);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(123);
     });
 
     it("should sync repository case to Elasticsearch on update", async () => {
@@ -54,7 +60,9 @@ describe("elasticsearchSyncMiddleware", () => {
       await middleware(params, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(params);
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(456);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(456);
     });
 
     it("should sync repository case to Elasticsearch on upsert", async () => {
@@ -68,7 +76,9 @@ describe("elasticsearchSyncMiddleware", () => {
       await middleware(params, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(params);
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(789);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(789);
     });
 
     it("should sync repository case to Elasticsearch on delete", async () => {
@@ -82,7 +92,9 @@ describe("elasticsearchSyncMiddleware", () => {
       await middleware(params, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(params);
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(999);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(999);
     });
 
     it("should handle sync errors gracefully", async () => {
@@ -92,9 +104,13 @@ describe("elasticsearchSyncMiddleware", () => {
       };
       const result = { id: 123 };
       mockNext.mockResolvedValue(result);
-      
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      vi.mocked(repositoryCaseSync.syncRepositoryCaseToElasticsearch).mockRejectedValue(new Error("Sync failed"));
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      vi.mocked(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).mockRejectedValue(new Error("Sync failed"));
 
       await middleware(params, mockNext);
 
@@ -114,9 +130,10 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).not.toHaveBeenCalled();
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).not.toHaveBeenCalled();
     });
-
   });
 
   describe("Steps operations", () => {
@@ -131,7 +148,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(100);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(100);
     });
 
     it("should sync parent repository case when step is updated", async () => {
@@ -144,7 +163,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(200);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(200);
     });
 
     it("should sync parent repository case when step is deleted", async () => {
@@ -157,7 +178,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(300);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(300);
     });
 
     it("should handle step errors gracefully", async () => {
@@ -167,9 +190,13 @@ describe("elasticsearchSyncMiddleware", () => {
       };
       const result = { testCaseId: 123 };
       mockNext.mockResolvedValue(result);
-      
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      vi.mocked(repositoryCaseSync.syncRepositoryCaseToElasticsearch).mockRejectedValue(new Error("Sync failed"));
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      vi.mocked(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).mockRejectedValue(new Error("Sync failed"));
 
       await middleware(params, mockNext);
 
@@ -197,8 +224,12 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(111);
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(222);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(111);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(222);
     });
 
     it("should sync repository cases when tags are disconnected", async () => {
@@ -217,7 +248,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(333);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(333);
     });
 
     it("should handle tag errors gracefully", async () => {
@@ -233,9 +266,13 @@ describe("elasticsearchSyncMiddleware", () => {
         },
       };
       mockNext.mockResolvedValue({});
-      
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      vi.mocked(repositoryCaseSync.syncRepositoryCaseToElasticsearch).mockRejectedValue(new Error("Sync failed"));
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      vi.mocked(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).mockRejectedValue(new Error("Sync failed"));
 
       await middleware(params, mockNext);
 
@@ -257,7 +294,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(555);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(555);
     });
 
     it("should sync repository case when custom field is updated", async () => {
@@ -271,7 +310,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(666);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(666);
     });
 
     it("should sync repository case when custom field is deleted", async () => {
@@ -284,7 +325,9 @@ describe("elasticsearchSyncMiddleware", () => {
 
       await middleware(params, mockNext);
 
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(777);
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).toHaveBeenCalledWith(777);
     });
 
     it("should handle custom field errors gracefully", async () => {
@@ -294,9 +337,13 @@ describe("elasticsearchSyncMiddleware", () => {
       };
       const result = { caseId: 888 };
       mockNext.mockResolvedValue(result);
-      
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      vi.mocked(repositoryCaseSync.syncRepositoryCaseToElasticsearch).mockRejectedValue(new Error("Sync failed"));
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      vi.mocked(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).mockRejectedValue(new Error("Sync failed"));
 
       await middleware(params, mockNext);
 
@@ -319,7 +366,9 @@ describe("elasticsearchSyncMiddleware", () => {
       await middleware(params, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(params);
-      expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).not.toHaveBeenCalled();
+      expect(
+        repositoryCaseSync.syncRepositoryCaseToElasticsearch
+      ).not.toHaveBeenCalled();
       expect(elasticsearchIndexing.deleteRepositoryCase).not.toHaveBeenCalled();
     });
   });

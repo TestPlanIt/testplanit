@@ -5,10 +5,13 @@ import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import {
   normalizeMappingConfiguration,
-  serializeMappingConfiguration
+  serializeMappingConfiguration,
 } from "~/services/imports/testmo/configuration";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
-import type { TestmoImportStatus, TestmoMappingConfiguration } from "~/services/imports/testmo/types";
+import type {
+  TestmoImportStatus,
+  TestmoMappingConfiguration,
+} from "~/services/imports/testmo/types";
 
 interface RouteContext {
   params: Promise<{
@@ -40,13 +43,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (job.createdById !== session.user.id && session.user.access !== "ADMIN") {
+    if (
+      job.createdById !== session.user.id &&
+      session.user.access !== "ADMIN"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (job.status !== "READY" && job.status !== "RUNNING") {
       return NextResponse.json(
-        { error: "Configuration can only be saved while the job is in READY status." },
+        {
+          error:
+            "Configuration can only be saved while the job is in READY status.",
+        },
         { status: 400 }
       );
     }

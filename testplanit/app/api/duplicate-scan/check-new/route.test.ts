@@ -142,13 +142,30 @@ describe("POST /api/duplicate-scan/check-new", () => {
     ]);
 
     const { POST } = await import("./route");
-    const res = await POST(makeRequest({ projectId: 1, name: "Login Test Variant" }));
+    const res = await POST(
+      makeRequest({ projectId: 1, name: "Login Test Variant" })
+    );
     const data = await res.json();
 
     expect(data.cases).toHaveLength(3);
-    expect(data.cases[0]).toMatchObject({ id: 10, name: "Login Test", score: 0.95, confidence: "HIGH" });
-    expect(data.cases[1]).toMatchObject({ id: 20, name: "Auth Test", score: 0.88, confidence: "MEDIUM" });
-    expect(data.cases[2]).toMatchObject({ id: 30, name: "Sign In Test", score: 0.82, confidence: "MEDIUM" });
+    expect(data.cases[0]).toMatchObject({
+      id: 10,
+      name: "Login Test",
+      score: 0.95,
+      confidence: "HIGH",
+    });
+    expect(data.cases[1]).toMatchObject({
+      id: 20,
+      name: "Auth Test",
+      score: 0.88,
+      confidence: "MEDIUM",
+    });
+    expect(data.cases[2]).toMatchObject({
+      id: 30,
+      name: "Sign In Test",
+      score: 0.82,
+      confidence: "MEDIUM",
+    });
   });
 
   describe("persistence of DuplicateScanResult records", () => {
@@ -173,11 +190,13 @@ describe("POST /api/duplicate-scan/check-new", () => {
       ]);
 
       const { POST } = await import("./route");
-      const res = await POST(makeRequest({
-        projectId: 5,
-        caseId: 99,
-        name: "Login Test Variant",
-      }));
+      const res = await POST(
+        makeRequest({
+          projectId: 5,
+          caseId: 99,
+          name: "Login Test Variant",
+        })
+      );
       const data = await res.json();
 
       // Should still return the cases
@@ -249,14 +268,18 @@ describe("POST /api/duplicate-scan/check-new", () => {
       mockFindMany.mockResolvedValue([{ id: 10, name: "Login Test" }]);
       mockUpsert.mockRejectedValue(new Error("DB connection failed"));
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const { POST } = await import("./route");
-      const res = await POST(makeRequest({
-        projectId: 1,
-        caseId: 50,
-        name: "Login Test Variant",
-      }));
+      const res = await POST(
+        makeRequest({
+          projectId: 1,
+          caseId: 50,
+          name: "Login Test Variant",
+        })
+      );
       const data = await res.json();
 
       // Cases should still be returned despite persistence failure

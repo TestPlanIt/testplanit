@@ -22,7 +22,10 @@ test.describe("Session Duplication", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Dup Menu ${ts}`);
-    const sessionId = await api.createSession(projectId, `Dup Menu Session ${ts}`);
+    const sessionId = await api.createSession(
+      projectId,
+      `Dup Menu Session ${ts}`
+    );
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -32,7 +35,7 @@ test.describe("Session Duplication", () => {
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
     // Click the three-dot menu
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
 
     // The "Duplicate" menu item should be visible
@@ -60,7 +63,7 @@ test.describe("Session Duplication", () => {
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
     // Click the three-dot menu and then Duplicate
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
 
     const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
@@ -107,7 +110,7 @@ test.describe("Session Duplication", () => {
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
     // Open context menu and click Duplicate
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
     const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
     await duplicateItem.click();

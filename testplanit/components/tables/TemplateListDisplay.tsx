@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Templates } from "@prisma/client";
 import { LayoutTemplate } from "lucide-react";

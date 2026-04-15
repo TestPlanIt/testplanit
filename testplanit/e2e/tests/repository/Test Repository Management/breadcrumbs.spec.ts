@@ -17,7 +17,9 @@ test.describe("Breadcrumbs", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("View Folder Breadcrumbs", async ({ api, page }) => {
@@ -76,7 +78,9 @@ test.describe("Breadcrumbs", () => {
 
     // Click on parent in breadcrumb to navigate back
     // The breadcrumb uses buttons inside links, so find the button with the parent name
-    const parentBreadcrumb = breadcrumbs.getByRole('button', { name: parentName }).first();
+    const parentBreadcrumb = breadcrumbs
+      .getByRole("button", { name: parentName })
+      .first();
     await expect(parentBreadcrumb).toBeVisible({ timeout: 5000 });
     await expect(parentBreadcrumb).toBeEnabled({ timeout: 5000 });
     // Use force click to handle potential DOM re-renders
@@ -94,7 +98,11 @@ test.describe("Breadcrumbs", () => {
     const grandparentName = `Grandparent ${Date.now()}`;
     const grandparentId = await api.createFolder(projectId, grandparentName);
     const parentName = `Parent ${Date.now()}`;
-    const parentId = await api.createFolder(projectId, parentName, grandparentId);
+    const parentId = await api.createFolder(
+      projectId,
+      parentName,
+      grandparentId
+    );
     const childName = `Child ${Date.now()}`;
     const childId = await api.createFolder(projectId, childName, parentId);
 
@@ -103,11 +111,15 @@ test.describe("Breadcrumbs", () => {
     // Navigate to deepest folder - expand each level and wait for children to appear
     await repositoryPage.expandFolder(grandparentId);
     // Wait for parent folder to be visible before expanding it
-    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 10000 });
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({
+      timeout: 10000,
+    });
 
     await repositoryPage.expandFolder(parentId);
     // Wait for child folder to be visible before selecting it
-    await expect(repositoryPage.getFolderById(childId)).toBeVisible({ timeout: 10000 });
+    await expect(repositoryPage.getFolderById(childId)).toBeVisible({
+      timeout: 10000,
+    });
 
     await repositoryPage.selectFolder(childId);
     await page.waitForLoadState("networkidle");
@@ -115,7 +127,9 @@ test.describe("Breadcrumbs", () => {
     // Verify breadcrumbs show full path
     const breadcrumbs = page.locator('nav[aria-label="breadcrumb"]');
     await expect(breadcrumbs).toBeVisible({ timeout: 5000 });
-    await expect(breadcrumbs).toContainText(grandparentName, { timeout: 10000 });
+    await expect(breadcrumbs).toContainText(grandparentName, {
+      timeout: 10000,
+    });
     await expect(breadcrumbs).toContainText(parentName, { timeout: 10000 });
     await expect(breadcrumbs).toContainText(childName, { timeout: 10000 });
   });

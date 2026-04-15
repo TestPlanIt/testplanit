@@ -12,8 +12,12 @@ const {
   mockSyncSharedStepToElasticsearch,
 } = vi.hoisted(() => {
   const mockCreateTestCaseVersionInTransaction = vi.fn();
-  const mockSyncRepositoryCaseToElasticsearch = vi.fn().mockResolvedValue(undefined);
-  const mockSyncSharedStepToElasticsearch = vi.fn().mockResolvedValue(undefined);
+  const mockSyncRepositoryCaseToElasticsearch = vi
+    .fn()
+    .mockResolvedValue(undefined);
+  const mockSyncSharedStepToElasticsearch = vi
+    .fn()
+    .mockResolvedValue(undefined);
 
   const mockTx = {
     stepSequenceMatch: {
@@ -86,20 +90,42 @@ function makeStep(id: number, order: number) {
     order,
     isDeleted: false,
     sharedStepGroupId: null,
-    step: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: `Step ${id}` }] }] },
-    expectedResult: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: `Expected ${id}` }] }] },
+    step: {
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: `Step ${id}` }] },
+      ],
+    },
+    expectedResult: {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: `Expected ${id}` }],
+        },
+      ],
+    },
   };
 }
 
-function makeMatch(overrides: Partial<{
-  id: number;
-  projectId: number;
-  status: string;
-  isDeleted: boolean;
-  fingerprint: string;
-  stepCount: number;
-  members: Array<{ id: number; matchId: number; caseId: number; startStepId: number; endStepId: number; isDeleted: boolean }>;
-}> = {}) {
+function makeMatch(
+  overrides: Partial<{
+    id: number;
+    projectId: number;
+    status: string;
+    isDeleted: boolean;
+    fingerprint: string;
+    stepCount: number;
+    members: Array<{
+      id: number;
+      matchId: number;
+      caseId: number;
+      startStepId: number;
+      endStepId: number;
+      isDeleted: boolean;
+    }>;
+  }> = {}
+) {
   return {
     id: 1,
     projectId: 10,
@@ -108,8 +134,22 @@ function makeMatch(overrides: Partial<{
     fingerprint: "step-text-hash",
     stepCount: 2,
     members: [
-      { id: 1, matchId: 1, caseId: 1, startStepId: 11, endStepId: 12, isDeleted: false },
-      { id: 2, matchId: 1, caseId: 2, startStepId: 21, endStepId: 22, isDeleted: false },
+      {
+        id: 1,
+        matchId: 1,
+        caseId: 1,
+        startStepId: 11,
+        endStepId: 12,
+        isDeleted: false,
+      },
+      {
+        id: 2,
+        matchId: 1,
+        caseId: 2,
+        startStepId: 21,
+        endStepId: 22,
+        isDeleted: false,
+      },
     ],
     ...overrides,
   };
@@ -122,11 +162,19 @@ function setupDefaultMocks() {
   mockTx.stepSequenceMatch.findUnique.mockResolvedValue(match);
   mockTx.repositoryCases.update.mockResolvedValue({ id: 1, currentVersion: 2 });
   mockCreateTestCaseVersionInTransaction.mockResolvedValue({ success: true });
-  mockTx.sharedStepGroup.create.mockResolvedValue({ id: 100, name: "Login Steps", projectId: 10, createdById: "user-1" });
+  mockTx.sharedStepGroup.create.mockResolvedValue({
+    id: 100,
+    name: "Login Steps",
+    projectId: 10,
+    createdById: "user-1",
+  });
   mockTx.sharedStepItem.create.mockResolvedValue({ id: 200 });
   mockTx.steps.updateMany.mockResolvedValue({ count: 2 });
   mockTx.steps.create.mockResolvedValue({ id: 50 });
-  mockTx.stepSequenceMatch.update.mockResolvedValue({ id: 1, status: "CONVERTED" });
+  mockTx.stepSequenceMatch.update.mockResolvedValue({
+    id: 1,
+    status: "CONVERTED",
+  });
 
   // First case: steps exist for startStepId and endStepId
   // findMany is called multiple times: first to validate step IDs, then to get matched range

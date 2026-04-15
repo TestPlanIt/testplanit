@@ -64,17 +64,29 @@ export const options = {
 export function setup() {
   const folders = findMany(
     "repositoryFolders",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 10 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 10,
+    },
     {}
   );
   const cases = findMany(
     "repositoryCases",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 500 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 500,
+    },
     {}
   );
   const repos = findMany(
     "repositories",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 1 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 1,
+    },
     {}
   );
   const templates = findMany(
@@ -84,7 +96,11 @@ export function setup() {
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "CASES" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "CASES" },
+      select: { id: true },
+      take: 1,
+    },
     {}
   );
 
@@ -105,7 +121,8 @@ export function doMutation(ctx) {
 
   if (rand < 0.6 || ctx.existingCaseIds.length === 0) {
     // CREATE
-    const folderId = ctx.folderIds[Math.floor(Math.random() * ctx.folderIds.length)];
+    const folderId =
+      ctx.folderIds[Math.floor(Math.random() * ctx.folderIds.length)];
     const res = create(
       "repositoryCases",
       {
@@ -123,7 +140,10 @@ export function doMutation(ctx) {
     check(res, { "create ok": (r) => r?.data?.id != null });
   } else {
     // UPDATE
-    const caseId = ctx.existingCaseIds[Math.floor(Math.random() * ctx.existingCaseIds.length)];
+    const caseId =
+      ctx.existingCaseIds[
+        Math.floor(Math.random() * ctx.existingCaseIds.length)
+      ];
     const res = update(
       "repositoryCases",
       caseId,

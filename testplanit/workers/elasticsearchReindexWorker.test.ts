@@ -180,9 +180,8 @@ describe("Elasticsearch sync services", () => {
   });
 
   it("should have elasticsearch client getter mocked", async () => {
-    const elasticsearchService = await import(
-      "~/services/elasticsearchService"
-    );
+    const elasticsearchService =
+      await import("~/services/elasticsearchService");
     expect(elasticsearchService.getElasticsearchClient).toBeDefined();
   });
 });
@@ -237,8 +236,8 @@ describe("Prisma queries for reindex", () => {
     expect(await mockPrisma.issue.count({ where: { isDeleted: false } })).toBe(
       25
     );
-    expect(
-      await mockPrisma.milestones.count({ where: { projectId: 1 } })
-    ).toBe(5);
+    expect(await mockPrisma.milestones.count({ where: { projectId: 1 } })).toBe(
+      5
+    );
   });
 });

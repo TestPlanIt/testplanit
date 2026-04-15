@@ -9,7 +9,9 @@
  *
  * For self-hosted instances with public S3/MinIO, URLs are returned unchanged.
  */
-export function getStorageUrl(minioUrl: string | null | undefined): string | null {
+export function getStorageUrl(
+  minioUrl: string | null | undefined
+): string | null {
   if (!minioUrl) return null;
 
   // Check if this is a hosted instance without public MinIO access
@@ -53,7 +55,9 @@ export function getStorageUrl(minioUrl: string | null | undefined): string | nul
  * This is used in browser components to convert URLs before rendering.
  * Works for both hosted instances (trials and paid) where MinIO is not publicly accessible.
  */
-export function getStorageUrlClient(minioUrl: string | null | undefined): string | null {
+export function getStorageUrlClient(
+  minioUrl: string | null | undefined
+): string | null {
   if (!minioUrl) return null;
 
   // Client-side detection: check if URL points to internal MinIO hostname
@@ -61,7 +65,7 @@ export function getStorageUrlClient(minioUrl: string | null | undefined): string
   const isInternalMinioUrl =
     minioUrl.includes("testplanit-shared-minio") ||
     minioUrl.includes("minio:9000") ||
-    minioUrl.startsWith("http://") && minioUrl.includes(":9000");
+    (minioUrl.startsWith("http://") && minioUrl.includes(":9000"));
 
   // If it's an internal MinIO URL, convert to proxy URL
   if (isInternalMinioUrl) {

@@ -1,6 +1,9 @@
 import { encrypt } from "@/utils/encryption";
 import { syncIssueToElasticsearch } from "../services/issueSearch";
-import { syncChildMilestonesToElasticsearch, syncMilestoneToElasticsearch } from "../services/milestoneSearch";
+import {
+  syncChildMilestonesToElasticsearch,
+  syncMilestoneToElasticsearch,
+} from "../services/milestoneSearch";
 import { syncProjectToElasticsearch } from "../services/projectSearch";
 import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSync";
 import { syncSessionToElasticsearch } from "../services/sessionSearch";
@@ -17,12 +20,19 @@ export function elasticsearchSyncMiddleware() {
       const result = await next(params);
 
       // After successful create or update, sync to Elasticsearch
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const caseId = result?.id;
         if (caseId) {
           // Run sync asynchronously to avoid blocking the response
           syncRepositoryCaseToElasticsearch(caseId).catch((error: any) => {
-            console.error(`Failed to sync repository case ${caseId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync repository case ${caseId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -33,7 +43,10 @@ export function elasticsearchSyncMiddleware() {
         if (caseId) {
           // Run sync asynchronously - sync function will determine if item should be removed
           syncRepositoryCaseToElasticsearch(caseId).catch((error: any) => {
-            console.error(`Failed to sync repository case ${caseId} to Elasticsearch after delete:`, error);
+            console.error(
+              `Failed to sync repository case ${caseId} to Elasticsearch after delete:`,
+              error
+            );
           });
         }
       }
@@ -49,12 +62,19 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "Steps") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "delete") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "delete"
+      ) {
         const testCaseId = params.args?.where?.testCaseId || result?.testCaseId;
         if (testCaseId) {
           // Sync the parent test case when steps change
           syncRepositoryCaseToElasticsearch(testCaseId).catch((error: any) => {
-            console.error(`Failed to sync repository case ${testCaseId} after step change:`, error);
+            console.error(
+              `Failed to sync repository case ${testCaseId} after step change:`,
+              error
+            );
           });
         }
       }
@@ -65,30 +85,35 @@ export function elasticsearchSyncMiddleware() {
     // Handle Tags operations (when tags are added/removed from entities)
     if (params.model === "Tags" && params.action === "update") {
       const result = await next(params);
-      
+
       // If tags are connected/disconnected from repository cases, sync those cases
       const connectCases = params.args?.data?.repositoryCases?.connect;
       const disconnectCases = params.args?.data?.repositoryCases?.disconnect;
-      
+
       if (connectCases || disconnectCases) {
         const caseIds: number[] = [];
-        
+
         if (Array.isArray(connectCases)) {
           caseIds.push(...connectCases.map((c: any) => c.id).filter(Boolean));
         } else if (connectCases?.id) {
           caseIds.push(connectCases.id);
         }
-        
+
         if (Array.isArray(disconnectCases)) {
-          caseIds.push(...disconnectCases.map((c: any) => c.id).filter(Boolean));
+          caseIds.push(
+            ...disconnectCases.map((c: any) => c.id).filter(Boolean)
+          );
         } else if (disconnectCases?.id) {
           caseIds.push(disconnectCases.id);
         }
-        
+
         // Sync affected cases asynchronously
         caseIds.forEach((caseId) => {
           syncRepositoryCaseToElasticsearch(caseId).catch((error) => {
-            console.error(`Failed to sync repository case ${caseId} after tag change:`, error);
+            console.error(
+              `Failed to sync repository case ${caseId} after tag change:`,
+              error
+            );
           });
         });
       }
@@ -96,26 +121,33 @@ export function elasticsearchSyncMiddleware() {
       // If tags are connected/disconnected from test runs, sync those test runs
       const connectTestRuns = params.args?.data?.testRuns?.connect;
       const disconnectTestRuns = params.args?.data?.testRuns?.disconnect;
-      
+
       if (connectTestRuns || disconnectTestRuns) {
         const testRunIds: number[] = [];
-        
+
         if (Array.isArray(connectTestRuns)) {
-          testRunIds.push(...connectTestRuns.map((tr: any) => tr.id).filter(Boolean));
+          testRunIds.push(
+            ...connectTestRuns.map((tr: any) => tr.id).filter(Boolean)
+          );
         } else if (connectTestRuns?.id) {
           testRunIds.push(connectTestRuns.id);
         }
-        
+
         if (Array.isArray(disconnectTestRuns)) {
-          testRunIds.push(...disconnectTestRuns.map((tr: any) => tr.id).filter(Boolean));
+          testRunIds.push(
+            ...disconnectTestRuns.map((tr: any) => tr.id).filter(Boolean)
+          );
         } else if (disconnectTestRuns?.id) {
           testRunIds.push(disconnectTestRuns.id);
         }
-        
+
         // Sync affected test runs asynchronously
         testRunIds.forEach((testRunId) => {
           syncTestRunToElasticsearch(testRunId).catch((error) => {
-            console.error(`Failed to sync test run ${testRunId} after tag change:`, error);
+            console.error(
+              `Failed to sync test run ${testRunId} after tag change:`,
+              error
+            );
           });
         });
       }
@@ -123,30 +155,37 @@ export function elasticsearchSyncMiddleware() {
       // If tags are connected/disconnected from sessions, sync those sessions
       const connectSessions = params.args?.data?.sessions?.connect;
       const disconnectSessions = params.args?.data?.sessions?.disconnect;
-      
+
       if (connectSessions || disconnectSessions) {
         const sessionIds: number[] = [];
-        
+
         if (Array.isArray(connectSessions)) {
-          sessionIds.push(...connectSessions.map((s: any) => s.id).filter(Boolean));
+          sessionIds.push(
+            ...connectSessions.map((s: any) => s.id).filter(Boolean)
+          );
         } else if (connectSessions?.id) {
           sessionIds.push(connectSessions.id);
         }
-        
+
         if (Array.isArray(disconnectSessions)) {
-          sessionIds.push(...disconnectSessions.map((s: any) => s.id).filter(Boolean));
+          sessionIds.push(
+            ...disconnectSessions.map((s: any) => s.id).filter(Boolean)
+          );
         } else if (disconnectSessions?.id) {
           sessionIds.push(disconnectSessions.id);
         }
-        
+
         // Sync affected sessions asynchronously
         sessionIds.forEach((sessionId) => {
           syncSessionToElasticsearch(sessionId).catch((error) => {
-            console.error(`Failed to sync session ${sessionId} after tag change:`, error);
+            console.error(
+              `Failed to sync session ${sessionId} after tag change:`,
+              error
+            );
           });
         });
       }
-      
+
       return result;
     }
 
@@ -154,12 +193,19 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "CaseFieldValues") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "delete") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "delete"
+      ) {
         const caseId = params.args?.where?.caseId || result?.caseId;
         if (caseId) {
           // Sync the parent test case when custom fields change
           syncRepositoryCaseToElasticsearch(caseId).catch((error) => {
-            console.error(`Failed to sync repository case ${caseId} after custom field change:`, error);
+            console.error(
+              `Failed to sync repository case ${caseId} after custom field change:`,
+              error
+            );
           });
         }
       }
@@ -171,11 +217,18 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "TestRuns") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const testRunId = result?.id;
         if (testRunId) {
           syncTestRunToElasticsearch(testRunId).catch((error: any) => {
-            console.error(`Failed to sync test run ${testRunId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync test run ${testRunId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -184,7 +237,10 @@ export function elasticsearchSyncMiddleware() {
         const testRunId = result?.id;
         if (testRunId) {
           syncTestRunToElasticsearch(testRunId).catch((error: any) => {
-            console.error(`Failed to sync test run ${testRunId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync test run ${testRunId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -196,11 +252,18 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "Sessions") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const sessionId = result?.id;
         if (sessionId) {
           syncSessionToElasticsearch(sessionId).catch((error: any) => {
-            console.error(`Failed to sync session ${sessionId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync session ${sessionId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -209,7 +272,10 @@ export function elasticsearchSyncMiddleware() {
         const sessionId = result?.id;
         if (sessionId) {
           syncSessionToElasticsearch(sessionId).catch((error: any) => {
-            console.error(`Failed to sync session ${sessionId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync session ${sessionId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -221,11 +287,18 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "SharedStepGroup") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const stepGroupId = result?.id;
         if (stepGroupId) {
           syncSharedStepToElasticsearch(stepGroupId).catch((error: any) => {
-            console.error(`Failed to sync shared step ${stepGroupId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync shared step ${stepGroupId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -234,7 +307,10 @@ export function elasticsearchSyncMiddleware() {
         const stepGroupId = result?.id;
         if (stepGroupId) {
           syncSharedStepToElasticsearch(stepGroupId).catch((error: any) => {
-            console.error(`Failed to sync shared step ${stepGroupId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync shared step ${stepGroupId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -246,11 +322,19 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "SharedStepItem") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "delete") {
-        const stepGroupId = params.args?.where?.sharedStepGroupId || result?.sharedStepGroupId;
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "delete"
+      ) {
+        const stepGroupId =
+          params.args?.where?.sharedStepGroupId || result?.sharedStepGroupId;
         if (stepGroupId) {
           syncSharedStepToElasticsearch(stepGroupId).catch((error: any) => {
-            console.error(`Failed to sync shared step ${stepGroupId} after item change:`, error);
+            console.error(
+              `Failed to sync shared step ${stepGroupId} after item change:`,
+              error
+            );
           });
         }
       }
@@ -262,11 +346,18 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "Issue") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const issueId = result?.id;
         if (issueId) {
           syncIssueToElasticsearch(issueId).catch((error: any) => {
-            console.error(`Failed to sync issue ${issueId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync issue ${issueId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -275,7 +366,10 @@ export function elasticsearchSyncMiddleware() {
         const issueId = result?.id;
         if (issueId) {
           syncIssueToElasticsearch(issueId).catch((error: any) => {
-            console.error(`Failed to sync issue ${issueId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync issue ${issueId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -287,18 +381,30 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "Milestones") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const milestoneId = result?.id;
         if (milestoneId) {
           syncMilestoneToElasticsearch(milestoneId).catch((error: any) => {
-            console.error(`Failed to sync milestone ${milestoneId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync milestone ${milestoneId} to Elasticsearch:`,
+              error
+            );
           });
-          
+
           // If parent name changed, sync children
           if (params.action === "update" && params.args?.data?.name) {
-            syncChildMilestonesToElasticsearch(milestoneId).catch((error: any) => {
-              console.error(`Failed to sync child milestones of ${milestoneId}:`, error);
-            });
+            syncChildMilestonesToElasticsearch(milestoneId).catch(
+              (error: any) => {
+                console.error(
+                  `Failed to sync child milestones of ${milestoneId}:`,
+                  error
+                );
+              }
+            );
           }
         }
       }
@@ -307,7 +413,10 @@ export function elasticsearchSyncMiddleware() {
         const milestoneId = result?.id;
         if (milestoneId) {
           syncMilestoneToElasticsearch(milestoneId).catch((error: any) => {
-            console.error(`Failed to sync milestone ${milestoneId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync milestone ${milestoneId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -319,17 +428,30 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "Projects") {
       const result = await next(params);
 
-      if (params.action === "create" || params.action === "update" || params.action === "upsert") {
+      if (
+        params.action === "create" ||
+        params.action === "update" ||
+        params.action === "upsert"
+      ) {
         const projectId = result?.id;
         if (projectId) {
           syncProjectToElasticsearch(projectId).catch((error: any) => {
-            console.error(`Failed to sync project ${projectId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync project ${projectId} to Elasticsearch:`,
+              error
+            );
           });
 
           // If project name or icon changed, we need to reindex all entities in that project
-          if (params.action === "update" && (params.args?.data?.name || params.args?.data?.iconUrl)) {
+          if (
+            params.action === "update" &&
+            (params.args?.data?.name || params.args?.data?.iconUrl)
+          ) {
             reindexProjectEntities(projectId).catch((error: any) => {
-              console.error(`Failed to reindex entities for project ${projectId}:`, error);
+              console.error(
+                `Failed to reindex entities for project ${projectId}:`,
+                error
+              );
             });
           }
         }
@@ -339,7 +461,10 @@ export function elasticsearchSyncMiddleware() {
         const projectId = result?.id;
         if (projectId) {
           syncProjectToElasticsearch(projectId).catch((error: any) => {
-            console.error(`Failed to sync project ${projectId} to Elasticsearch:`, error);
+            console.error(
+              `Failed to sync project ${projectId} to Elasticsearch:`,
+              error
+            );
           });
         }
       }
@@ -351,11 +476,19 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "Workflows") {
       const result = await next(params);
 
-      if (params.action === "update" && (params.args?.data?.name || params.args?.data?.icon || params.args?.data?.color)) {
+      if (
+        params.action === "update" &&
+        (params.args?.data?.name ||
+          params.args?.data?.icon ||
+          params.args?.data?.color)
+      ) {
         const workflowId = result?.id || params.args?.where?.id;
         if (workflowId) {
           reindexEntitiesWithWorkflow(workflowId).catch((error: any) => {
-            console.error(`Failed to reindex entities with workflow ${workflowId}:`, error);
+            console.error(
+              `Failed to reindex entities with workflow ${workflowId}:`,
+              error
+            );
           });
         }
       }
@@ -371,7 +504,10 @@ export function elasticsearchSyncMiddleware() {
         const configId = result?.id || params.args?.where?.id;
         if (configId) {
           reindexEntitiesWithConfiguration(configId).catch((error: any) => {
-            console.error(`Failed to reindex entities with configuration ${configId}:`, error);
+            console.error(
+              `Failed to reindex entities with configuration ${configId}:`,
+              error
+            );
           });
         }
       }
@@ -387,7 +523,10 @@ export function elasticsearchSyncMiddleware() {
         const templateId = result?.id || params.args?.where?.id;
         if (templateId) {
           reindexEntitiesWithTemplate(templateId).catch((error: any) => {
-            console.error(`Failed to reindex entities with template ${templateId}:`, error);
+            console.error(
+              `Failed to reindex entities with template ${templateId}:`,
+              error
+            );
           });
         }
       }
@@ -399,11 +538,17 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "MilestoneTypes") {
       const result = await next(params);
 
-      if (params.action === "update" && (params.args?.data?.name || params.args?.data?.icon)) {
+      if (
+        params.action === "update" &&
+        (params.args?.data?.name || params.args?.data?.icon)
+      ) {
         const typeId = result?.id || params.args?.where?.id;
         if (typeId) {
           reindexMilestonesWithType(typeId).catch((error: any) => {
-            console.error(`Failed to reindex milestones with type ${typeId}:`, error);
+            console.error(
+              `Failed to reindex milestones with type ${typeId}:`,
+              error
+            );
           });
         }
       }
@@ -419,13 +564,21 @@ export function elasticsearchSyncMiddleware() {
       // Skip reindexing for profile updates that include userPreferences
       const updateData = params.args?.data;
       const isProfileUpdate = updateData?.userPreferences !== undefined;
-      const hasSearchableFieldChanges = updateData?.name !== undefined || updateData?.image !== undefined;
+      const hasSearchableFieldChanges =
+        updateData?.name !== undefined || updateData?.image !== undefined;
 
-      if (params.action === "update" && hasSearchableFieldChanges && !isProfileUpdate) {
+      if (
+        params.action === "update" &&
+        hasSearchableFieldChanges &&
+        !isProfileUpdate
+      ) {
         const userId = result?.id || params.args?.where?.id;
         if (userId) {
           reindexEntitiesWithUser(userId).catch((error: any) => {
-            console.error(`Failed to reindex entities with user ${userId}:`, error);
+            console.error(
+              `Failed to reindex entities with user ${userId}:`,
+              error
+            );
           });
         }
       }
@@ -437,11 +590,17 @@ export function elasticsearchSyncMiddleware() {
     if (params.model === "RepositoryFolders") {
       const result = await next(params);
 
-      if (params.action === "update" && (params.args?.data?.name || params.args?.data?.fullPath)) {
+      if (
+        params.action === "update" &&
+        (params.args?.data?.name || params.args?.data?.fullPath)
+      ) {
         const folderId = result?.id || params.args?.where?.id;
         if (folderId) {
           reindexCasesInFolder(folderId).catch((error: any) => {
-            console.error(`Failed to reindex cases in folder ${folderId}:`, error);
+            console.error(
+              `Failed to reindex cases in folder ${folderId}:`,
+              error
+            );
           });
         }
       }
@@ -467,7 +626,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
       where: { projectId },
       select: { id: true },
     });
-    
+
     for (const caseItem of cases) {
       await syncRepositoryCaseToElasticsearch(caseItem.id).catch(console.error);
     }
@@ -477,7 +636,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
       where: { projectId },
       select: { id: true },
     });
-    
+
     for (const testRun of testRuns) {
       await syncTestRunToElasticsearch(testRun.id).catch(console.error);
     }
@@ -487,7 +646,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
       where: { projectId },
       select: { id: true },
     });
-    
+
     for (const session of sessions) {
       await syncSessionToElasticsearch(session.id).catch(console.error);
     }
@@ -497,7 +656,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
       where: { projectId },
       select: { id: true },
     });
-    
+
     for (const step of sharedSteps) {
       await syncSharedStepToElasticsearch(step.id).catch(console.error);
     }
@@ -513,7 +672,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
       },
       select: { id: true },
     });
-    
+
     for (const issue of issues) {
       await syncIssueToElasticsearch(issue.id).catch(console.error);
     }
@@ -523,7 +682,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
       where: { projectId },
       select: { id: true },
     });
-    
+
     for (const milestone of milestones) {
       await syncMilestoneToElasticsearch(milestone.id).catch(console.error);
     }
@@ -545,7 +704,7 @@ async function reindexEntitiesWithWorkflow(workflowId: number): Promise<void> {
       where: { stateId: workflowId },
       select: { id: true },
     });
-    
+
     for (const caseItem of cases) {
       await syncRepositoryCaseToElasticsearch(caseItem.id).catch(console.error);
     }
@@ -555,7 +714,7 @@ async function reindexEntitiesWithWorkflow(workflowId: number): Promise<void> {
       where: { stateId: workflowId },
       select: { id: true },
     });
-    
+
     for (const testRun of testRuns) {
       await syncTestRunToElasticsearch(testRun.id).catch(console.error);
     }
@@ -565,7 +724,7 @@ async function reindexEntitiesWithWorkflow(workflowId: number): Promise<void> {
       where: { stateId: workflowId },
       select: { id: true },
     });
-    
+
     for (const session of sessions) {
       await syncSessionToElasticsearch(session.id).catch(console.error);
     }
@@ -577,7 +736,9 @@ async function reindexEntitiesWithWorkflow(workflowId: number): Promise<void> {
 /**
  * Reindex all entities that use a specific configuration
  */
-async function reindexEntitiesWithConfiguration(configId: number): Promise<void> {
+async function reindexEntitiesWithConfiguration(
+  configId: number
+): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
 
@@ -587,7 +748,7 @@ async function reindexEntitiesWithConfiguration(configId: number): Promise<void>
       where: { configId },
       select: { id: true },
     });
-    
+
     for (const testRun of testRuns) {
       await syncTestRunToElasticsearch(testRun.id).catch(console.error);
     }
@@ -597,7 +758,7 @@ async function reindexEntitiesWithConfiguration(configId: number): Promise<void>
       where: { configId },
       select: { id: true },
     });
-    
+
     for (const session of sessions) {
       await syncSessionToElasticsearch(session.id).catch(console.error);
     }
@@ -619,7 +780,7 @@ async function reindexEntitiesWithTemplate(templateId: number): Promise<void> {
       where: { templateId },
       select: { id: true },
     });
-    
+
     for (const caseItem of cases) {
       await syncRepositoryCaseToElasticsearch(caseItem.id).catch(console.error);
     }
@@ -629,7 +790,7 @@ async function reindexEntitiesWithTemplate(templateId: number): Promise<void> {
       where: { templateId },
       select: { id: true },
     });
-    
+
     for (const session of sessions) {
       await syncSessionToElasticsearch(session.id).catch(console.error);
     }
@@ -650,7 +811,7 @@ async function reindexMilestonesWithType(typeId: number): Promise<void> {
       where: { milestoneTypesId: typeId },
       select: { id: true },
     });
-    
+
     for (const milestone of milestones) {
       await syncMilestoneToElasticsearch(milestone.id).catch(console.error);
     }
@@ -672,7 +833,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
       where: { creatorId: userId },
       select: { id: true },
     });
-    
+
     for (const caseItem of cases) {
       await syncRepositoryCaseToElasticsearch(caseItem.id).catch(console.error);
     }
@@ -682,7 +843,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
       where: { createdById: userId },
       select: { id: true },
     });
-    
+
     for (const testRun of testRuns) {
       await syncTestRunToElasticsearch(testRun.id).catch(console.error);
     }
@@ -690,14 +851,11 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
     // Sessions created by or assigned to this user
     const sessions = await prisma.sessions.findMany({
       where: {
-        OR: [
-          { createdById: userId },
-          { assignedToId: userId },
-        ],
+        OR: [{ createdById: userId }, { assignedToId: userId }],
       },
       select: { id: true },
     });
-    
+
     for (const session of sessions) {
       await syncSessionToElasticsearch(session.id).catch(console.error);
     }
@@ -707,7 +865,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
       where: { createdById: userId },
       select: { id: true },
     });
-    
+
     for (const step of sharedSteps) {
       await syncSharedStepToElasticsearch(step.id).catch(console.error);
     }
@@ -717,7 +875,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
       where: { createdBy: userId },
       select: { id: true },
     });
-    
+
     for (const project of projects) {
       await syncProjectToElasticsearch(project.id).catch(console.error);
     }
@@ -727,7 +885,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
       where: { createdById: userId },
       select: { id: true },
     });
-    
+
     for (const issue of issues) {
       await syncIssueToElasticsearch(issue.id).catch(console.error);
     }
@@ -737,7 +895,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
       where: { createdBy: userId },
       select: { id: true },
     });
-    
+
     for (const milestone of milestones) {
       await syncMilestoneToElasticsearch(milestone.id).catch(console.error);
     }
@@ -758,7 +916,7 @@ async function reindexCasesInFolder(folderId: number): Promise<void> {
       where: { folderId },
       select: { id: true },
     });
-    
+
     for (const caseItem of cases) {
       await syncRepositoryCaseToElasticsearch(caseItem.id).catch(console.error);
     }
@@ -779,17 +937,24 @@ export function integrationEncryptionMiddleware() {
         const credentials = params.args.data.credentials;
         if (typeof credentials === "object" && !("encrypted" in credentials)) {
           // Encrypt the entire credentials object
-          const encryptedCredentials = await encrypt(JSON.stringify(credentials));
+          const encryptedCredentials = await encrypt(
+            JSON.stringify(credentials)
+          );
           params.args.data.credentials = { encrypted: encryptedCredentials };
         }
       }
 
       // Encrypt credentials on update
-      if ((params.action === "update" || params.action === "updateMany") && params.args?.data?.credentials) {
+      if (
+        (params.action === "update" || params.action === "updateMany") &&
+        params.args?.data?.credentials
+      ) {
         const credentials = params.args.data.credentials;
         if (typeof credentials === "object" && !("encrypted" in credentials)) {
           // Encrypt the entire credentials object
-          const encryptedCredentials = await encrypt(JSON.stringify(credentials));
+          const encryptedCredentials = await encrypt(
+            JSON.stringify(credentials)
+          );
           params.args.data.credentials = { encrypted: encryptedCredentials };
         }
       }
@@ -798,16 +963,30 @@ export function integrationEncryptionMiddleware() {
       if (params.action === "upsert") {
         if (params.args?.create?.credentials) {
           const credentials = params.args.create.credentials;
-          if (typeof credentials === "object" && !("encrypted" in credentials)) {
-            const encryptedCredentials = await encrypt(JSON.stringify(credentials));
-            params.args.create.credentials = { encrypted: encryptedCredentials };
+          if (
+            typeof credentials === "object" &&
+            !("encrypted" in credentials)
+          ) {
+            const encryptedCredentials = await encrypt(
+              JSON.stringify(credentials)
+            );
+            params.args.create.credentials = {
+              encrypted: encryptedCredentials,
+            };
           }
         }
         if (params.args?.update?.credentials) {
           const credentials = params.args.update.credentials;
-          if (typeof credentials === "object" && !("encrypted" in credentials)) {
-            const encryptedCredentials = await encrypt(JSON.stringify(credentials));
-            params.args.update.credentials = { encrypted: encryptedCredentials };
+          if (
+            typeof credentials === "object" &&
+            !("encrypted" in credentials)
+          ) {
+            const encryptedCredentials = await encrypt(
+              JSON.stringify(credentials)
+            );
+            params.args.update.credentials = {
+              encrypted: encryptedCredentials,
+            };
           }
         }
       }

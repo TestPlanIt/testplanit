@@ -6,24 +6,27 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
-  FormControl, FormField,
+  FormControl,
+  FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   useCreateIntegration,
-  useUpdateIntegration
+  useUpdateIntegration,
 } from "@/lib/hooks/integration";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Integration, IntegrationAuthType, IntegrationProvider
+  Integration,
+  IntegrationAuthType,
+  IntegrationProvider,
 } from "@prisma/client";
 import { Activity, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -172,7 +175,11 @@ export function IntegrationModal({
 
     const submitData = {
       ...values,
-      credentials: hasNewCredentials ? filteredCredentials : (integration ? undefined : {}),
+      credentials: hasNewCredentials
+        ? filteredCredentials
+        : integration
+          ? undefined
+          : {},
       settings: values.settings || {},
       ...(testPassed && !integration && { status: "ACTIVE" }),
     };
@@ -214,7 +221,9 @@ export function IntegrationModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {integration ? tGlobal("admin.integrations.editIntegration") : tGlobal("admin.integrations.addIntegration")}
+            {integration
+              ? tGlobal("admin.integrations.editIntegration")
+              : tGlobal("admin.integrations.addIntegration")}
           </DialogTitle>
           <DialogDescription>
             {integration ? t("edit.description") : t("add.description")}

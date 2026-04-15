@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
   decryptSecret,
-  generateBackupCodes, verifyTOTP
+  generateBackupCodes,
+  verifyTOTP,
 } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
 

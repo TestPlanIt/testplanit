@@ -307,7 +307,9 @@ describe("OpenAIAdapter", () => {
       });
 
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const result = await adapter.testConnection();
 
@@ -321,7 +323,9 @@ describe("OpenAIAdapter", () => {
 
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const result = await adapter.testConnection();
 
@@ -362,7 +366,9 @@ describe("OpenAIAdapter", () => {
 
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const models = await adapter.getAvailableModels();
 

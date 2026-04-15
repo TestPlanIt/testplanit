@@ -13,15 +13,24 @@ test.describe("Page Titles", () => {
     const adminPages = [
       { path: "/admin/users", expected: /Admin.*Users.*TestPlanIt/ },
       { path: "/admin/projects", expected: /Admin.*Projects.*TestPlanIt/ },
-      { path: "/admin/fields", expected: /Admin.*Templates.*Fields.*TestPlanIt/ },
+      {
+        path: "/admin/fields",
+        expected: /Admin.*Templates.*Fields.*TestPlanIt/,
+      },
       { path: "/admin/workflows", expected: /Admin.*Workflows.*TestPlanIt/ },
       { path: "/admin/statuses", expected: /Admin.*Statuses.*TestPlanIt/ },
       { path: "/admin/roles", expected: /Admin.*Roles.*TestPlanIt/ },
       { path: "/admin/groups", expected: /Admin.*Groups.*TestPlanIt/ },
       { path: "/admin/tags", expected: /Admin.*Tags.*TestPlanIt/ },
       { path: "/admin/issues", expected: /Admin.*Issues.*TestPlanIt/ },
-      { path: "/admin/integrations", expected: /Admin.*Integrations.*TestPlanIt/ },
-      { path: "/admin/notifications", expected: /Admin.*Notifications.*TestPlanIt/ },
+      {
+        path: "/admin/integrations",
+        expected: /Admin.*Integrations.*TestPlanIt/,
+      },
+      {
+        path: "/admin/notifications",
+        expected: /Admin.*Notifications.*TestPlanIt/,
+      },
       { path: "/admin/llm", expected: /Admin.*AI Models.*TestPlanIt/ },
       { path: "/admin/sso", expected: /Admin.*Authentication.*TestPlanIt/ },
       { path: "/admin/trash", expected: /Admin.*Trash.*TestPlanIt/ },
@@ -95,5 +104,4 @@ test.describe("Page Titles", () => {
       expect(title).not.toBe("TestPlanIt - Modern Test Management Platform");
     });
   });
-
 });

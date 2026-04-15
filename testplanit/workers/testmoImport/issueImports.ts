@@ -1,7 +1,17 @@
-import { IntegrationAuthType, IntegrationProvider, IntegrationStatus, Prisma, PrismaClient } from "@prisma/client";
+import {
+  IntegrationAuthType,
+  IntegrationProvider,
+  IntegrationStatus,
+  Prisma,
+  PrismaClient,
+} from "@prisma/client";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import { toNumberValue, toStringValue } from "./helpers";
-import type { EntitySummaryResult, ImportContext, PersistProgressFn } from "./types";
+import type {
+  EntitySummaryResult,
+  ImportContext,
+  PersistProgressFn,
+} from "./types";
 
 const PROGRESS_UPDATE_INTERVAL = 500;
 
@@ -39,7 +49,10 @@ export const importIssueTargets = async (
   configuration: TestmoMappingConfiguration,
   context: ImportContext,
   persistProgress: PersistProgressFn
-): Promise<{ summary: EntitySummaryResult; integrationIdMap: Map<number, number> }> => {
+): Promise<{
+  summary: EntitySummaryResult;
+  integrationIdMap: Map<number, number>;
+}> => {
   const summary: EntitySummaryResult = {
     entity: "issueTargets",
     total: 0,
@@ -50,7 +63,9 @@ export const importIssueTargets = async (
   const integrationIdMap = new Map<number, number>();
   let processedSinceLastPersist = 0;
 
-  for (const [key, config] of Object.entries(configuration.issueTargets ?? {})) {
+  for (const [key, config] of Object.entries(
+    configuration.issueTargets ?? {}
+  )) {
     const sourceId = Number(key);
     if (!Number.isFinite(sourceId) || !config) {
       continue;
@@ -200,7 +215,10 @@ export const importIssues = async (
   createdById: string,
   context: ImportContext,
   persistProgress: PersistProgressFn
-): Promise<{ summary: EntitySummaryResult; issueIdMap: Map<number, number> }> => {
+): Promise<{
+  summary: EntitySummaryResult;
+  issueIdMap: Map<number, number>;
+}> => {
   const summary: EntitySummaryResult = {
     entity: "issues",
     total: 0,
@@ -219,7 +237,10 @@ export const importIssues = async (
   let processedSinceLastPersist = 0;
 
   // Cache integrations to avoid repeated queries
-  const integrationCache = new Map<number, { provider: IntegrationProvider; baseUrl?: string }>();
+  const integrationCache = new Map<
+    number,
+    { provider: IntegrationProvider; baseUrl?: string }
+  >();
 
   for (const row of issueRows) {
     const record = row as Record<string, unknown>;
@@ -238,7 +259,8 @@ export const importIssues = async (
       continue;
     }
 
-    const projectId = projectSourceId !== null ? projectIdMap.get(projectSourceId) : null;
+    const projectId =
+      projectSourceId !== null ? projectIdMap.get(projectSourceId) : null;
 
     // Check if issue already exists with this external ID and integration
     const existing = await tx.issue.findFirst({
@@ -269,7 +291,11 @@ export const importIssues = async (
 
       const integrationInfo = integrationCache.get(integrationId);
       const externalUrl = integrationInfo
-        ? constructExternalUrl(integrationInfo.provider, integrationInfo.baseUrl, displayId)
+        ? constructExternalUrl(
+            integrationInfo.provider,
+            integrationInfo.baseUrl,
+            displayId
+          )
         : null;
 
       // Create new issue
@@ -337,8 +363,8 @@ export const importMilestoneIssues = async (
   if (milestoneIssueRows.length > 0) {
     console.warn(
       `Skipping import of ${milestoneIssueRows.length} milestone-issue relationships - ` +
-      `Milestones model does not have an issues relation. ` +
-      `Add 'issues Issue[]' to the Milestones model in schema.zmodel to enable this feature.`
+        `Milestones model does not have an issues relation. ` +
+        `Add 'issues Issue[]' to the Milestones model in schema.zmodel to enable this feature.`
     );
   }
 
@@ -368,7 +394,8 @@ export const importRepositoryCaseIssues = async (
     mapped: 0,
   };
 
-  const repositoryCaseIssueRows = datasetRows.get("repository_case_issues") ?? [];
+  const repositoryCaseIssueRows =
+    datasetRows.get("repository_case_issues") ?? [];
 
   if (repositoryCaseIssueRows.length === 0) {
     return summary;
@@ -378,7 +405,11 @@ export const importRepositoryCaseIssues = async (
   const chunkSize = Math.max(1, options?.chunkSize ?? 1000);
   let processedCount = 0;
 
-  for (let index = 0; index < repositoryCaseIssueRows.length; index += chunkSize) {
+  for (
+    let index = 0;
+    index < repositoryCaseIssueRows.length;
+    index += chunkSize
+  ) {
     const chunk = repositoryCaseIssueRows.slice(index, index + chunkSize);
 
     await prisma.$transaction(
@@ -706,7 +737,11 @@ export const importSessionResultIssues = async (
   const chunkSize = Math.max(1, options?.chunkSize ?? 1000);
   let processedCount = 0;
 
-  for (let index = 0; index < sessionResultIssueRows.length; index += chunkSize) {
+  for (
+    let index = 0;
+    index < sessionResultIssueRows.length;
+    index += chunkSize
+  ) {
     const chunk = sessionResultIssueRows.slice(index, index + chunkSize);
 
     await prisma.$transaction(

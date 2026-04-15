@@ -1,9 +1,11 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import React from "react";

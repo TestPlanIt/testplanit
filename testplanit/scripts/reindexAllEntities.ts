@@ -5,17 +5,19 @@ import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
 import { syncProjectMilestonesToElasticsearch } from "../services/milestoneSearch";
 import { syncAllProjectsToElasticsearch } from "../services/projectSearch";
 import {
-  initializeElasticsearchIndexes, syncProjectCasesToElasticsearch
+  initializeElasticsearchIndexes,
+  syncProjectCasesToElasticsearch,
 } from "../services/repositoryCaseSync";
 import { syncProjectSessionsToElasticsearch } from "../services/sessionSearch";
 import { syncProjectSharedStepsToElasticsearch } from "../services/sharedStepSearch";
 import { syncProjectTestRunsToElasticsearch } from "../services/testRunSearch";
 import {
-  createAllEntityIndices, ENTITY_INDICES, getElasticsearchClient
+  createAllEntityIndices,
+  ENTITY_INDICES,
+  getElasticsearchClient,
 } from "../services/unifiedElasticsearchService";
 
 const prisma = new PrismaClient();
-
 
 async function deleteAllIndices(): Promise<void> {
   const client = getElasticsearchClient();
@@ -36,11 +38,6 @@ async function deleteAllIndices(): Promise<void> {
     }
   }
 }
-
-
-
-
-
 
 async function reindexAllEntities() {
   console.log("Starting comprehensive Elasticsearch reindexing...");
@@ -78,7 +75,9 @@ async function reindexAllEntities() {
     // Index projects using new sync function
     console.log("\n=== Indexing Projects ===");
     await syncAllProjectsToElasticsearch();
-    results.projects = await prisma.projects.count({ where: { isDeleted: false } });
+    results.projects = await prisma.projects.count({
+      where: { isDeleted: false },
+    });
 
     // Index repository cases (using existing function)
     console.log("\n=== Indexing Repository Cases ===");

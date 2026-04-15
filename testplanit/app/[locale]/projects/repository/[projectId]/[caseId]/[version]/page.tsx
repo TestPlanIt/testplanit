@@ -17,29 +17,34 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import {
-  Select, SelectContent,
-  SelectItem, SelectTrigger,
-  SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VersionNavigation } from "@/components/VersionNavigation";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import {
-  Attachments, Prisma, RepositoryCaseVersions, Steps
+  Attachments,
+  Prisma,
+  RepositoryCaseVersions,
+  Steps,
 } from "@prisma/client";
 import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -48,7 +53,11 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { emptyEditorContent } from "~/app/constants";
 import {
-  useFindFirstRepositoryCaseVersions, useFindFirstWorkflows, useFindManyIssue, useFindManyRepositoryCaseVersions, useFindManyTemplates
+  useFindFirstRepositoryCaseVersions,
+  useFindFirstWorkflows,
+  useFindManyIssue,
+  useFindManyRepositoryCaseVersions,
+  useFindManyTemplates,
 } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
@@ -85,12 +94,8 @@ export default function TestCaseVersions() {
   const [isCollapsedRight, setIsCollapsedRight] = useState<boolean>(false);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const [, setSelectedAttachmentIndex] = useState<
-    number | null
-  >(null);
-  const [, setSelectedAttachments] = useState<Attachments[]>(
-    []
-  );
+  const [, setSelectedAttachmentIndex] = useState<number | null>(null);
+  const [, setSelectedAttachments] = useState<Attachments[]>([]);
   const locale = useLocale();
 
   // Issue IDs from current and previous version snapshots, used to fetch only relevant issues
@@ -171,9 +176,14 @@ export default function TestCaseVersions() {
     const parseIds = (issuesData: any): number[] => {
       if (!issuesData) return [];
       try {
-        const parsed = typeof issuesData === "string" ? JSON.parse(issuesData) : issuesData;
-        return Array.isArray(parsed) ? parsed.map((i: any) => i.id).filter(Boolean) : [];
-      } catch { return []; }
+        const parsed =
+          typeof issuesData === "string" ? JSON.parse(issuesData) : issuesData;
+        return Array.isArray(parsed)
+          ? parsed.map((i: any) => i.id).filter(Boolean)
+          : [];
+      } catch {
+        return [];
+      }
     };
     const ids = [
       ...parseIds(testcase?.issues),
@@ -514,7 +524,9 @@ export default function TestCaseVersions() {
         key={tag}
       >
         {type !== "common" && (
-          <div className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`} />
+          <div
+            className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
+          />
         )}
         {prefix && <span className="relative mr-1">{prefix}</span>}
         <div className="relative">
@@ -564,26 +576,28 @@ export default function TestCaseVersions() {
         key={issue.id}
       >
         {type !== "common" && (
-          <div className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`} />
+          <div
+            className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
+          />
         )}
         {prefix && <span className="relative mr-1">{prefix}</span>}
         <div className="relative">
           <IssuesDisplay
-          id={issue.id}
-          name={issue.name}
-          externalId={issue.externalId || currentIssueData?.externalId}
-          externalUrl={currentIssueData?.externalUrl}
-          title={currentIssueData?.title}
-          status={currentIssueData?.externalStatus}
-          size="large"
-          projectIds={[testcase.projectId]}
-          data={currentIssueData?.data}
-          integrationProvider={currentIssueData?.integration?.provider}
-          integrationId={currentIssueData?.integrationId || undefined}
-          lastSyncedAt={currentIssueData?.lastSyncedAt}
-          issueTypeName={currentIssueData?.issueTypeName}
-          issueTypeIconUrl={currentIssueData?.issueTypeIconUrl}
-        />
+            id={issue.id}
+            name={issue.name}
+            externalId={issue.externalId || currentIssueData?.externalId}
+            externalUrl={currentIssueData?.externalUrl}
+            title={currentIssueData?.title}
+            status={currentIssueData?.externalStatus}
+            size="large"
+            projectIds={[testcase.projectId]}
+            data={currentIssueData?.data}
+            integrationProvider={currentIssueData?.integration?.provider}
+            integrationId={currentIssueData?.integrationId || undefined}
+            lastSyncedAt={currentIssueData?.lastSyncedAt}
+            issueTypeName={currentIssueData?.issueTypeName}
+            issueTypeIconUrl={currentIssueData?.issueTypeIconUrl}
+          />
         </div>
       </div>
     );
@@ -620,7 +634,12 @@ export default function TestCaseVersions() {
                 {versions?.length && versions.length > 1 && (
                   <>
                     <Select
-                      value={currentVersionIndex !== undefined && currentVersionIndex >= 0 ? currentVersionIndex.toString() : "0"}
+                      value={
+                        currentVersionIndex !== undefined &&
+                        currentVersionIndex >= 0
+                          ? currentVersionIndex.toString()
+                          : "0"
+                      }
                       onValueChange={(indexStr) => {
                         const idx = parseInt(indexStr, 10);
                         if (versions && idx >= 0 && idx < versions.length) {
@@ -910,10 +929,16 @@ export default function TestCaseVersions() {
               collapsible
               onCollapse={() => setIsCollapsedRight(true)}
               onExpand={() => setIsCollapsedRight(false)}
-              className={isTransitioning ? "transition-all duration-300 ease-in-out" : ""}
+              className={
+                isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+              }
             >
               <div
-                className={isTransitioning ? "transition-all duration-300 ease-in-out" : ""}
+                className={
+                  isTransitioning
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
+                }
                 role="region"
                 aria-label={t("repository.version.metadataRegion")}
               >
@@ -947,19 +972,33 @@ export default function TestCaseVersions() {
                     {testcase && previousTestcase
                       ? renderFieldValue(
                           "automated",
-                          <Badge variant={testcase.automated ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              testcase.automated ? "default" : "secondary"
+                            }
+                          >
                             {testcase.automated
                               ? t("common.fields.automated")
                               : t("common.fields.manual")}
                           </Badge>,
-                          <Badge variant={previousTestcase.automated ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              previousTestcase.automated
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
                             {previousTestcase.automated
                               ? t("common.fields.automated")
                               : t("common.fields.manual")}
                           </Badge>
                         )
                       : testcase && (
-                          <Badge variant={testcase.automated ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              testcase.automated ? "default" : "secondary"
+                            }
+                          >
                             {testcase.automated
                               ? t("common.fields.automated")
                               : t("common.fields.manual")}

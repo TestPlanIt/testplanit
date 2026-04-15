@@ -184,7 +184,9 @@ describe("AutoTagWorker", () => {
   describe("successful tag analysis", () => {
     it("should process repositoryCase entities and return grouped suggestions", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob() as Job);
@@ -203,7 +205,9 @@ describe("AutoTagWorker", () => {
 
     it("should include entity with no suggestions (analyzed but LLM returned no tags)", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-2" }) as Job);
@@ -217,7 +221,9 @@ describe("AutoTagWorker", () => {
 
     it("should calculate stats correctly", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-3" }) as Job);
@@ -240,13 +246,21 @@ describe("AutoTagWorker", () => {
         await params.onBatchComplete(3, 3);
         return baseAnalysisResult;
       });
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-4" }) as Job);
 
-      expect(mockUpdateProgress).toHaveBeenCalledWith({ analyzed: 2, total: 3 });
-      expect(mockUpdateProgress).toHaveBeenCalledWith({ analyzed: 3, total: 3 });
+      expect(mockUpdateProgress).toHaveBeenCalledWith({
+        analyzed: 2,
+        total: 3,
+      });
+      expect(mockUpdateProgress).toHaveBeenCalledWith({
+        analyzed: 3,
+        total: 3,
+      });
       // Final "finalizing" progress update
       expect(mockUpdateProgress).toHaveBeenCalledWith({
         analyzed: 3,
@@ -296,7 +310,9 @@ describe("AutoTagWorker", () => {
         return baseAnalysisResult;
       });
 
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
 
@@ -322,7 +338,9 @@ describe("AutoTagWorker", () => {
         errors: ["LLM API timeout"],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithFailures);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(
@@ -356,7 +374,9 @@ describe("AutoTagWorker", () => {
         truncatedEntityIds: [2],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithTruncation);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(
@@ -500,7 +520,9 @@ describe("AutoTagWorker", () => {
         errors: ["Batch 1 failed: timeout", "Batch 2 failed: rate limit"],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithErrors);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+        mockRepositoryCases
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-12" }) as Job);

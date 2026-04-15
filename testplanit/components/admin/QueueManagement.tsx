@@ -8,7 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -24,13 +24,18 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Activity, AlertTriangle,
-  CheckCircle2, Loader2,
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
   Pause,
-  Play, RefreshCw, Trash2, XCircle
+  Play,
+  RefreshCw,
+  Trash2,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -57,7 +62,6 @@ interface QueueInfo {
 export function QueueManagement() {
   const t = useTranslations("admin.queues");
   const tGlobal = useTranslations();
-
 
   const [queues, setQueues] = useState<QueueInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,7 +188,11 @@ export function QueueManagement() {
   const getStatusBadge = (queue: QueueInfo) => {
     if (queue.error) {
       return (
-        <Badge variant="destructive" className="flex items-center gap-1" title={queue.error}>
+        <Badge
+          variant="destructive"
+          className="flex items-center gap-1"
+          title={queue.error}
+        >
           <XCircle className="h-3 w-3" />
           {tGlobal("common.errors.error")}
         </Badge>

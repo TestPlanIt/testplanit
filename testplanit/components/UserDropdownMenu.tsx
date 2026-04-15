@@ -1,7 +1,13 @@
 import { Locale, Theme } from "@prisma/client";
 import {
-  Check, Circle, Globe, LogOut, Moon, Sun, SunMoon,
-  User
+  Check,
+  Circle,
+  Globe,
+  LogOut,
+  Moon,
+  Sun,
+  SunMoon,
+  User,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -24,7 +30,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function UserDropdownMenu() {

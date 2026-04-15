@@ -23,7 +23,9 @@ import { prisma } from "~/lib/prisma";
 
 import { GET } from "./route";
 
-const createMockRequest = (searchParams: Record<string, string>): NextRequest => {
+const createMockRequest = (
+  searchParams: Record<string, string>
+): NextRequest => {
   const url = new URL("http://localhost/api/admin/prompt-configs/export");
   for (const [key, value] of Object.entries(searchParams)) {
     url.searchParams.set(key, value);
@@ -141,7 +143,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);
@@ -158,7 +162,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);
@@ -172,7 +178,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);
@@ -188,7 +196,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);
@@ -202,7 +212,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);
@@ -216,7 +228,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);
@@ -234,7 +248,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(mockPromptConfig);
+      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+        mockPromptConfig
+      );
 
       const request = createMockRequest({ id: "config-1" });
       await GET(request);
@@ -259,7 +275,9 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockRejectedValue(new Error("DB error"));
+      (prisma.promptConfig.findUnique as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const request = createMockRequest({ id: "config-1" });
       const response = await GET(request);

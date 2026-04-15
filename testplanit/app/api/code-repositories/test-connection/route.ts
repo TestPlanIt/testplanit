@@ -64,8 +64,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Invalid base URL: private/loopback addresses are not allowed",
+          error: "Invalid base URL: private/loopback addresses are not allowed",
         },
         { status: 400 }
       );

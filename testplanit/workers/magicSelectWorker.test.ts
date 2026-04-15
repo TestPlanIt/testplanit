@@ -125,7 +125,10 @@ vi.mock("../services/elasticsearchService", () => ({
 // ─── Mock batch-processor ────────────────────────────────────────────────────
 
 vi.mock("../lib/llm/services/batch-processor", async (importOriginal) => {
-  const original = await importOriginal<typeof import("../lib/llm/services/batch-processor")>();
+  const original =
+    await importOriginal<
+      typeof import("../lib/llm/services/batch-processor")
+    >();
   return {
     ...original,
     createBatches: (...args: any[]) => mockCreateBatches(...args),
@@ -219,7 +222,20 @@ describe("MagicSelectWorker", () => {
     mockChat.mockResolvedValue(defaultChatResponse);
 
     // createBatches returns 1 batch with the case
-    mockCreateBatches.mockReturnValue([[{ id: 1, estimatedTokens: 100, name: "Login Test", folderPath: "/", tags: [], fields: {}, linksTo: [], linksFrom: [] }]]);
+    mockCreateBatches.mockReturnValue([
+      [
+        {
+          id: 1,
+          estimatedTokens: 100,
+          name: "Login Test",
+          folderPath: "/",
+          tags: [],
+          fields: {},
+          linksTo: [],
+          linksFrom: [],
+        },
+      ],
+    ]);
 
     // executeBatches calls processBatch and returns results
     mockExecuteBatches.mockImplementation(async (options: any) => {
@@ -235,7 +251,14 @@ describe("MagicSelectWorker", () => {
           await options.onBatchComplete(i + 1, options.batches.length);
         }
       }
-      return { results, batchCount: options.batches.length, failedBatchCount: 0, errors: [], failedItemIds: [], cancelled: false };
+      return {
+        results,
+        batchCount: options.batches.length,
+        failedBatchCount: 0,
+        errors: [],
+        failedItemIds: [],
+        cancelled: false,
+      };
     });
   });
 
@@ -294,7 +317,9 @@ describe("MagicSelectWorker", () => {
       });
 
       const { processor } = await loadWorker();
-      const result = await processor(makeMockJob({ id: "job-truncation-1" }) as Job);
+      const result = await processor(
+        makeMockJob({ id: "job-truncation-1" }) as Job
+      );
 
       expect(result.truncatedBatches).toContain(0); // batch index 0 (first batch)
     });
@@ -306,7 +331,9 @@ describe("MagicSelectWorker", () => {
       });
 
       const { processor } = await loadWorker();
-      const result = await processor(makeMockJob({ id: "job-truncation-2" }) as Job);
+      const result = await processor(
+        makeMockJob({ id: "job-truncation-2" }) as Job
+      );
 
       expect(result.truncatedBatches).toEqual([]);
     });

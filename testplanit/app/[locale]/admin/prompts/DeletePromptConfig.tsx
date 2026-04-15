@@ -8,7 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { PromptConfig } from "@prisma/client";
 import { Loader2 } from "lucide-react";
@@ -58,7 +58,8 @@ export function DeletePromptConfig({
     } catch (error: any) {
       console.error("Error deleting prompt config:", error);
       toast.error(tCommon("errors.error"), {
-        description: error?.info?.message || error?.message || tCommon("errors.error"),
+        description:
+          error?.info?.message || error?.message || tCommon("errors.error"),
       });
     } finally {
       setLoading(false);

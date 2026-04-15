@@ -158,41 +158,52 @@ export async function POST(request: Request) {
         ]);
 
         // Fetch project IDs from session IDs and test run IDs
-        const sessionIdsFromResults = sessionResultProjectIds.map(sr => sr.sessionId);
-        const testRunIdsFromResults = runResultProjectIds.map(rr => rr.testRunId);
-        const testRunResultIdsFromStepResults = stepResultProjectIds.map(srr => srr.testRunResultId);
+        const sessionIdsFromResults = sessionResultProjectIds.map(
+          (sr) => sr.sessionId
+        );
+        const testRunIdsFromResults = runResultProjectIds.map(
+          (rr) => rr.testRunId
+        );
+        const testRunResultIdsFromStepResults = stepResultProjectIds.map(
+          (srr) => srr.testRunResultId
+        );
 
         // Fetch sessions to get their project IDs
-        const sessionsFromResults = sessionIdsFromResults.length > 0
-          ? await prisma.sessions.findMany({
-              where: { id: { in: sessionIdsFromResults } },
-              select: { projectId: true },
-            })
-          : [];
+        const sessionsFromResults =
+          sessionIdsFromResults.length > 0
+            ? await prisma.sessions.findMany({
+                where: { id: { in: sessionIdsFromResults } },
+                select: { projectId: true },
+              })
+            : [];
 
         // Fetch test runs to get their project IDs
-        const testRunsFromResults = testRunIdsFromResults.length > 0
-          ? await prisma.testRuns.findMany({
-              where: { id: { in: testRunIdsFromResults } },
-              select: { projectId: true },
-            })
-          : [];
+        const testRunsFromResults =
+          testRunIdsFromResults.length > 0
+            ? await prisma.testRuns.findMany({
+                where: { id: { in: testRunIdsFromResults } },
+                select: { projectId: true },
+              })
+            : [];
 
         // Fetch test run results to get test run IDs, then get their project IDs
-        const testRunsFromStepResults = testRunResultIdsFromStepResults.length > 0
-          ? await prisma.testRunResults.findMany({
-              where: { id: { in: testRunResultIdsFromStepResults } },
-              select: { testRunId: true },
-            }).then(async (results) => {
-              const testRunIds = results.map(r => r.testRunId);
-              return testRunIds.length > 0
-                ? await prisma.testRuns.findMany({
-                    where: { id: { in: testRunIds } },
-                    select: { projectId: true },
-                  })
-                : [];
-            })
-          : [];
+        const testRunsFromStepResults =
+          testRunResultIdsFromStepResults.length > 0
+            ? await prisma.testRunResults
+                .findMany({
+                  where: { id: { in: testRunResultIdsFromStepResults } },
+                  select: { testRunId: true },
+                })
+                .then(async (results) => {
+                  const testRunIds = results.map((r) => r.testRunId);
+                  return testRunIds.length > 0
+                    ? await prisma.testRuns.findMany({
+                        where: { id: { in: testRunIds } },
+                        select: { projectId: true },
+                      })
+                    : [];
+                })
+            : [];
 
         // Combine and deduplicate project IDs
         const uniqueProjectIds = [

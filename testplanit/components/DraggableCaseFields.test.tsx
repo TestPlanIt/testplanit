@@ -5,7 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 // Mock @dnd-kit/core
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children, onDragEnd }: any) => (
-    <div data-testid="dnd-context" data-on-drag-end={onDragEnd ? "true" : "false"}>
+    <div
+      data-testid="dnd-context"
+      data-on-drag-end={onDragEnd ? "true" : "false"}
+    >
       {children}
     </div>
   ),
@@ -130,9 +133,13 @@ describe("DraggableCaseFields", () => {
         <DraggableList items={[]} setItems={setItems} onRemove={onRemove} />
       );
 
-      expect(screen.queryByTestId("grip-vertical-icon")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("grip-vertical-icon")
+      ).not.toBeInTheDocument();
       // DndContext and SortableContext should still be present
-      expect(container.querySelector('[data-testid="dnd-context"]')).toBeInTheDocument();
+      expect(
+        container.querySelector('[data-testid="dnd-context"]')
+      ).toBeInTheDocument();
     });
 
     it("wraps items in DndContext and SortableContext", () => {
@@ -221,7 +228,10 @@ describe("DraggableCaseFields", () => {
   describe("Field labels", () => {
     it("renders long field labels correctly", () => {
       const items: DraggableField[] = [
-        { id: "1", label: "This is a very long field label that might overflow" },
+        {
+          id: "1",
+          label: "This is a very long field label that might overflow",
+        },
       ];
       const setItems = vi.fn();
       const onRemove = vi.fn();

@@ -2,10 +2,7 @@ import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
-import {
-  getTestmoImportQueue,
-  TESTMO_IMPORT_QUEUE_NAME
-} from "~/lib/queues";
+import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
@@ -36,7 +33,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const { jobId } = await context.params;
-    const { options } = await request.json().catch(() => ({ options: undefined }));
+    const { options } = await request
+      .json()
+      .catch(() => ({ options: undefined }));
 
     const job = await db.testmoImportJob.findUnique({ where: { id: jobId } });
 
@@ -44,20 +43,28 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (job.createdById !== session.user.id && session.user.access !== "ADMIN") {
+    if (
+      job.createdById !== session.user.id &&
+      session.user.access !== "ADMIN"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (job.status !== "READY") {
       return NextResponse.json(
-        { error: "Background import can only be started when the job is ready." },
+        {
+          error: "Background import can only be started when the job is ready.",
+        },
         { status: 400 }
       );
     }
 
     if (!job.configuration) {
       return NextResponse.json(
-        { error: "Please configure mapping before starting the background import." },
+        {
+          error:
+            "Please configure mapping before starting the background import.",
+        },
         { status: 400 }
       );
     }

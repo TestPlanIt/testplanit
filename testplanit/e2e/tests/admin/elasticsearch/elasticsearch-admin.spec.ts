@@ -34,7 +34,9 @@ test.describe("Elasticsearch Admin - Page Display", () => {
     const connectedOrDisconnected = page.locator(
       "text=/Connected|Disconnected|Failed to connect/i"
     );
-    await expect(connectedOrDisconnected.first()).toBeVisible({ timeout: 15000 });
+    await expect(connectedOrDisconnected.first()).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("Admin can see settings/configuration section", async ({ page }) => {
@@ -49,7 +51,9 @@ test.describe("Elasticsearch Admin - Page Display", () => {
     expect(cardCount).toBeGreaterThanOrEqual(2);
   });
 
-  test("Admin can see reindex section with entity type selector", async ({ page }) => {
+  test("Admin can see reindex section with entity type selector", async ({
+    page,
+  }) => {
     await page.goto("/en-US/admin/elasticsearch");
     await page.waitForLoadState("networkidle");
 
@@ -126,9 +130,19 @@ test.describe("Elasticsearch Admin - Reindex Operation", () => {
       await page.waitForTimeout(2000);
 
       // Look for any response: progress, toast, or state change
-      const hasProgress = await page.locator('[role="progressbar"]').isVisible().catch(() => false);
-      const hasToast = await page.locator('[data-sonner-toast]').isVisible().catch(() => false);
-      const buttonChanged = await page.locator("button").filter({ hasText: /Indexing/i }).isVisible().catch(() => false);
+      const hasProgress = await page
+        .locator('[role="progressbar"]')
+        .isVisible()
+        .catch(() => false);
+      const hasToast = await page
+        .locator("[data-sonner-toast]")
+        .isVisible()
+        .catch(() => false);
+      const buttonChanged = await page
+        .locator("button")
+        .filter({ hasText: /Indexing/i })
+        .isVisible()
+        .catch(() => false);
 
       // Accept any UI response as valid
       expect(hasProgress || hasToast || buttonChanged || true).toBe(true);
@@ -138,7 +152,9 @@ test.describe("Elasticsearch Admin - Reindex Operation", () => {
     }
   });
 
-  test("Admin can use refresh button to recheck ES status", async ({ page }) => {
+  test("Admin can use refresh button to recheck ES status", async ({
+    page,
+  }) => {
     await page.goto("/en-US/admin/elasticsearch");
     await page.waitForLoadState("networkidle");
 
@@ -160,6 +176,8 @@ test.describe("Elasticsearch Admin - Reindex Operation", () => {
     await page.waitForTimeout(1000);
 
     // The page should still be functional after refresh
-    await expect(page.locator('[role="combobox"]').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[role="combobox"]').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

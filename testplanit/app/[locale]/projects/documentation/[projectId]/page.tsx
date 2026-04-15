@@ -5,8 +5,9 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useFindFirstAppConfig, useFindFirstProjects,
-  useUpdateProjects
+  useFindFirstAppConfig,
+  useFindFirstProjects,
+  useUpdateProjects,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
@@ -15,8 +16,10 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { CircleSlash2, Save, SquarePen } from "lucide-react";
 import { useSession } from "next-auth/react";

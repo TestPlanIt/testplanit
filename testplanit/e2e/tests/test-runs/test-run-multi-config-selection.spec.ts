@@ -20,21 +20,27 @@ test.describe("Multi-Config Test Run Selection", () => {
     page,
   }) => {
     // Setup: Create project with two configurations and two sibling test runs
-    const projectId = await api.createProject(
-      `E2E MultiConfig ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E MultiConfig ${Date.now()}`);
     const config1Id = await api.createConfiguration(`Chrome ${Date.now()}`);
     const config2Id = await api.createConfiguration(`Firefox ${Date.now()}`);
 
     const groupId = randomUUID();
-    const run1Id = await api.createTestRun(projectId, `Chrome Run ${Date.now()}`, {
-      configId: config1Id,
-      configurationGroupId: groupId,
-    });
-    const _run2Id = await api.createTestRun(projectId, `Firefox Run ${Date.now()}`, {
-      configId: config2Id,
-      configurationGroupId: groupId,
-    });
+    const run1Id = await api.createTestRun(
+      projectId,
+      `Chrome Run ${Date.now()}`,
+      {
+        configId: config1Id,
+        configurationGroupId: groupId,
+      }
+    );
+    const _run2Id = await api.createTestRun(
+      projectId,
+      `Firefox Run ${Date.now()}`,
+      {
+        configId: config2Id,
+        configurationGroupId: groupId,
+      }
+    );
 
     // Create a test case and add it to both runs
     const folderId = await api.createFolder(projectId, "MultiConfig Folder");
@@ -53,12 +59,16 @@ test.describe("Multi-Config Test Run Selection", () => {
     // The configuration selector (MultiAsyncCombobox) should be visible
     // It shows because configurationGroupId is set and there are 2+ sibling runs
     // The "Configurations:" label should be visible (rendered next to the combobox)
-    const configurationsLabel = page.locator('span:has-text("Configurations:")').first();
+    const configurationsLabel = page
+      .locator('span:has-text("Configurations:")')
+      .first();
     await expect(configurationsLabel).toBeVisible({ timeout: 15000 });
 
     // Find the combobox within the same container as the "Configurations:" label
     const configContainer = configurationsLabel.locator("../..");
-    const configSelector = configContainer.locator('button[role="combobox"]').first();
+    const configSelector = configContainer
+      .locator('button[role="combobox"]')
+      .first();
     await expect(configSelector).toBeVisible({ timeout: 5000 });
   });
 
@@ -66,15 +76,19 @@ test.describe("Multi-Config Test Run Selection", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E SingleConfig ${Date.now()}`
+    const projectId = await api.createProject(`E2E SingleConfig ${Date.now()}`);
+    const configId = await api.createConfiguration(
+      `SingleConfig ${Date.now()}`
     );
-    const configId = await api.createConfiguration(`SingleConfig ${Date.now()}`);
 
     // Create a single test run (no configurationGroupId)
-    const runId = await api.createTestRun(projectId, `Single Run ${Date.now()}`, {
-      configId,
-    });
+    const runId = await api.createTestRun(
+      projectId,
+      `Single Run ${Date.now()}`,
+      {
+        configId,
+      }
+    );
 
     const folderId = await api.createFolder(projectId, "Single Folder");
     const caseId = await api.createTestCase(
@@ -91,18 +105,16 @@ test.describe("Multi-Config Test Run Selection", () => {
     await page.waitForTimeout(3000);
 
     // The "Configurations:" label should NOT be visible for single-config runs
-    await expect(
-      page.locator('text="Configurations:"')
-    ).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text="Configurations:"')).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("should open configuration combobox and show sibling run configs", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E OpenCombo ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E OpenCombo ${Date.now()}`);
     const ts = Date.now();
     const config1Name = `Safari ${ts}`;
     const config2Name = `Edge ${ts}`;
@@ -132,10 +144,14 @@ test.describe("Multi-Config Test Run Selection", () => {
     await page.waitForLoadState("load");
 
     // Wait for the "Configurations:" label and find the combobox next to it
-    const configurationsLabel = page.locator('span:has-text("Configurations:")').first();
+    const configurationsLabel = page
+      .locator('span:has-text("Configurations:")')
+      .first();
     await expect(configurationsLabel).toBeVisible({ timeout: 15000 });
     const configContainer = configurationsLabel.locator("../..");
-    const configCombobox = configContainer.locator('button[role="combobox"]').first();
+    const configCombobox = configContainer
+      .locator('button[role="combobox"]')
+      .first();
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
     await configCombobox.click();
 
@@ -156,9 +172,7 @@ test.describe("Multi-Config Test Run Selection", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E EditDrawer ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E EditDrawer ${Date.now()}`);
     const runId = await api.createTestRun(
       projectId,
       `Drawer Run ${Date.now()}`
@@ -174,26 +188,26 @@ test.describe("Multi-Config Test Run Selection", () => {
     await api.addTestCaseToTestRun(runId, caseId);
 
     // Navigate to run detail page in edit mode
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${runId}?edit=true`
-    );
+    await page.goto(`/en-US/projects/runs/${projectId}/${runId}?edit=true`);
     await page.waitForLoadState("load");
 
     // In edit mode with selected test cases, the SelectedTestCasesDrawer button
     // should be visible. It shows the count of selected cases.
     // The drawer trigger is typically a button with the case count
-    const _drawerTrigger = page.locator(
-      'button:has-text("Selected"), button:has-text("case"), [data-testid="selected-cases-drawer"]'
-    ).first();
+    const _drawerTrigger = page
+      .locator(
+        'button:has-text("Selected"), button:has-text("case"), [data-testid="selected-cases-drawer"]'
+      )
+      .first();
 
     // Wait for the page to be fully loaded in edit mode
     await page.waitForTimeout(3000);
 
     // The drawer or some indication of selected cases should be present
     // This is a soft assertion since the exact UI varies
-    const editModeIndicator = page.locator(
-      'button:has-text("Save"), button:has-text("Cancel")'
-    ).first();
+    const editModeIndicator = page
+      .locator('button:has-text("Save"), button:has-text("Cancel")')
+      .first();
     await expect(editModeIndicator).toBeVisible({ timeout: 10000 });
   });
 
@@ -203,9 +217,7 @@ test.describe("Multi-Config Test Run Selection", () => {
   }) => {
     // Use a project name that does NOT contain the word "Edit" to avoid
     // false positives when locating the Edit button by text
-    const projectId = await api.createProject(
-      `E2E HidBtn ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E HidBtn ${Date.now()}`);
     const ts = Date.now();
     const config1Id = await api.createConfiguration(`Config1 ${ts}`);
     const config2Id = await api.createConfiguration(`Config2 ${ts}`);
@@ -234,10 +246,14 @@ test.describe("Multi-Config Test Run Selection", () => {
     await page.waitForLoadState("load");
 
     // Wait for the multi-config selector to appear via "Configurations:" label
-    const configurationsLabel = page.locator('span:has-text("Configurations:")').first();
+    const configurationsLabel = page
+      .locator('span:has-text("Configurations:")')
+      .first();
     await expect(configurationsLabel).toBeVisible({ timeout: 15000 });
     const configContainer = configurationsLabel.locator("../..");
-    const configCombobox = configContainer.locator('button[role="combobox"]').first();
+    const configCombobox = configContainer
+      .locator('button[role="combobox"]')
+      .first();
     await expect(configCombobox).toBeVisible({ timeout: 5000 });
 
     // By default, the current run is already selected (single config).
@@ -246,7 +262,9 @@ test.describe("Multi-Config Test Run Selection", () => {
     const editButton = page.getByRole("button", { name: "Edit", exact: true });
 
     // Check initial state - with single config selected, Edit should be visible
-    const isEditVisible = await editButton.isVisible({ timeout: 5000 }).catch(() => false);
+    const isEditVisible = await editButton
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
 
     if (isEditVisible) {
       // Edit is visible with single config - now select the second config

@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -17,7 +17,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,14 +37,20 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import {
-  useFindManyLlmIntegration, useUpdateLlmIntegration
+  useFindManyLlmIntegration,
+  useUpdateLlmIntegration,
 } from "~/lib/hooks/llm-integration";
 import {
-  useFindManyLlmProviderConfig, useUpdateLlmProviderConfig
+  useFindManyLlmProviderConfig,
+  useUpdateLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 import { useDeleteManyLlmUsage } from "~/lib/hooks/llm-usage";
 
-const createFormSchema = (t: any, existingNames: string[], currentName: string) =>
+const createFormSchema = (
+  t: any,
+  existingNames: string[],
+  currentName: string
+) =>
   z.object({
     name: z
       .string()
@@ -130,7 +136,11 @@ export function EditLlmIntegration({
   });
 
   const existingNames = (existingIntegrations ?? []).map((i) => i.name);
-  const formSchema = createFormSchema(t, existingNames, integration?.name ?? "");
+  const formSchema = createFormSchema(
+    t,
+    existingNames,
+    integration?.name ?? ""
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -452,7 +462,12 @@ export function EditLlmIntegration({
           if (!resettingSpend && !value) onClose();
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => { if (resettingSpend) e.preventDefault(); }}>
+        <DialogContent
+          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          onInteractOutside={(e) => {
+            if (resettingSpend) e.preventDefault();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
@@ -488,10 +503,7 @@ export function EditLlmIntegration({
                       {tCommon("fields.provider")}
                       <HelpPopover helpKey="llm.provider" />
                     </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={tAdd("selectProvider")} />
@@ -573,9 +585,14 @@ export function EditLlmIntegration({
                       <HelpPopover helpKey="llm.endpoint" />
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder={tAdd("endpointPlaceholder")} {...field} />
+                      <Input
+                        placeholder={tAdd("endpointPlaceholder")}
+                        {...field}
+                      />
                     </FormControl>
-                    <FormDescription>{tAdd("endpointDescription")}</FormDescription>
+                    <FormDescription>
+                      {tAdd("endpointDescription")}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -610,9 +627,7 @@ export function EditLlmIntegration({
                         {tLlm("defaultModel")}
                         <HelpPopover helpKey="llm.defaultModel" />
                       </span>
-                      {PROVIDERS_WITH_DYNAMIC_MODELS.includes(
-                        provider
-                      ) &&
+                      {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                         fetchingModels && (
                           <div className="flex items-center text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin mr-1" />
@@ -621,9 +636,8 @@ export function EditLlmIntegration({
                         )}
                     </FormLabel>
                     <FormControl>
-                      {PROVIDERS_WITH_DYNAMIC_MODELS.includes(
-                        provider
-                      ) && availableModels.length > 0 ? (
+                      {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
+                      availableModels.length > 0 ? (
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
@@ -643,25 +657,20 @@ export function EditLlmIntegration({
                         <Input {...field} />
                       )}
                     </FormControl>
-                    {PROVIDERS_WITH_DYNAMIC_MODELS.includes(
-                      provider
-                    ) &&
+                    {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                       modelsError && (
                         <div className="text-sm text-destructive mt-1">
                           {modelsError}
                         </div>
                       )}
-                    {PROVIDERS_WITH_DYNAMIC_MODELS.includes(
-                      provider
-                    ) &&
+                    {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                       availableModels.length === 0 &&
                       !fetchingModels &&
                       !modelsError && (
                         <FormDescription className="text-muted-foreground">
                           {provider === "GEMINI"
                             ? "Enter your API key and endpoint above. Models will be fetched automatically."
-                            : provider === "OPENAI" ||
-                                provider === "ANTHROPIC"
+                            : provider === "OPENAI" || provider === "ANTHROPIC"
                               ? "Enter your API key above. We'll fetch the available models automatically."
                               : "Models will be fetched automatically from your Ollama instance."}
                         </FormDescription>
@@ -824,7 +833,9 @@ export function EditLlmIntegration({
                           <div className="flex items-center gap-2">
                             <span
                               className={
-                                percentage > 100 ? "text-destructive font-medium" : ""
+                                percentage > 100
+                                  ? "text-destructive font-medium"
+                                  : ""
                               }
                             >
                               {tBudgetAlert("spendOfBudget", {
@@ -1026,11 +1037,7 @@ export function EditLlmIntegration({
                   )}
                   {tIntegrations("testConnection")}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                >
+                <Button type="button" variant="outline" onClick={onClose}>
                   {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={loading}>

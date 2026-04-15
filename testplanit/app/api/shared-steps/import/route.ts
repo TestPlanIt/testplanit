@@ -9,7 +9,7 @@ import { db } from "~/server/db";
 import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import {
   convertTextToTipTapJSON,
-  ensureTipTapJSON
+  ensureTipTapJSON,
 } from "~/utils/tiptapConversion";
 
 // Helper function to safely parse JSON

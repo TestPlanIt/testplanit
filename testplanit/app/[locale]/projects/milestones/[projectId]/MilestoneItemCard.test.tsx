@@ -143,33 +143,36 @@ const mockColorMap: ColorMap = {
 };
 
 // Helper to create a base milestone
-const createMilestone = (overrides: Partial<MilestonesWithTypes> = {}): MilestonesWithTypes => ({
-  id: 1,
-  name: "Test Milestone",
-  note: null,
-  isStarted: false,
-  isCompleted: false,
-  startedAt: null,
-  completedAt: null,
-  parentId: null,
-  projectId: 42,
-  milestoneTypeId: 1,
-  isDeleted: false,
-  createdAt: new Date("2024-01-01"),
-  updatedAt: new Date("2024-01-01"),
-  milestoneType: {
+const createMilestone = (
+  overrides: Partial<MilestonesWithTypes> = {}
+): MilestonesWithTypes =>
+  ({
     id: 1,
-    name: "Sprint",
+    name: "Test Milestone",
+    note: null,
+    isStarted: false,
+    isCompleted: false,
+    startedAt: null,
+    completedAt: null,
+    parentId: null,
     projectId: 42,
+    milestoneTypeId: 1,
     isDeleted: false,
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-01-01"),
-    icon: null,
-    iconId: null,
-  },
-  children: [],
-  ...overrides,
-} as any);
+    milestoneType: {
+      id: 1,
+      name: "Sprint",
+      projectId: 42,
+      isDeleted: false,
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      icon: null,
+      iconId: null,
+    },
+    children: [],
+    ...overrides,
+  }) as any;
 
 // Default callback mocks
 const mockCallbacks = () => ({
@@ -327,7 +330,10 @@ describe("MilestoneItemCard", () => {
 
   describe("dropdown actions for not-started milestone", () => {
     it("shows Start action when milestone is not started and not completed", () => {
-      const milestone = createMilestone({ isStarted: false, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: false,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -345,7 +351,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("does not show Complete or Stop actions when milestone is not started", () => {
-      const milestone = createMilestone({ isStarted: false, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: false,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -364,7 +373,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("shows Edit and Delete actions for not-started milestone", () => {
-      const milestone = createMilestone({ isStarted: false, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: false,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -383,7 +395,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("calls onStartMilestone when Start is clicked", () => {
-      const milestone = createMilestone({ isStarted: false, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: false,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -428,7 +443,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("does not show Start action when milestone is started", () => {
-      const milestone = createMilestone({ isStarted: true, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: true,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -446,7 +464,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("calls onOpenCompleteDialog when Complete is clicked", () => {
-      const milestone = createMilestone({ isStarted: true, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: true,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -459,13 +480,18 @@ describe("MilestoneItemCard", () => {
       );
 
       const items = screen.getAllByTestId("dropdown-item");
-      const completeItem = items.find((el) => el.textContent?.includes("complete"));
+      const completeItem = items.find((el) =>
+        el.textContent?.includes("complete")
+      );
       fireEvent.click(completeItem!);
       expect(cbs.onOpenCompleteDialog).toHaveBeenCalledWith(milestone);
     });
 
     it("calls onStopMilestone when Stop is clicked", () => {
-      const milestone = createMilestone({ isStarted: true, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: true,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -508,7 +534,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("does not show Start or Stop actions for completed milestone", () => {
-      const milestone = createMilestone({ isCompleted: true, isStarted: false });
+      const milestone = createMilestone({
+        isCompleted: true,
+        isStarted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -527,7 +556,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("calls onReopenMilestone when Reopen is clicked", () => {
-      const milestone = createMilestone({ isCompleted: true, isStarted: false });
+      const milestone = createMilestone({
+        isCompleted: true,
+        isStarted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -571,7 +603,10 @@ describe("MilestoneItemCard", () => {
 
   describe("callback invocations", () => {
     it("calls onOpenEditModal when Edit is clicked", () => {
-      const milestone = createMilestone({ isStarted: false, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: false,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard
@@ -590,7 +625,10 @@ describe("MilestoneItemCard", () => {
     });
 
     it("calls onOpenDeleteModal when Delete is clicked", () => {
-      const milestone = createMilestone({ isStarted: false, isCompleted: false });
+      const milestone = createMilestone({
+        isStarted: false,
+        isCompleted: false,
+      });
       const cbs = mockCallbacks();
       render(
         <MilestoneItemCard

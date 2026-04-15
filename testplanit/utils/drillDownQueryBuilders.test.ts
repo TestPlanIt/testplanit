@@ -2,12 +2,23 @@ import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
-  buildIssuesQuery, buildMilestoneCompletionQuery, buildMilestonesQuery, buildRepositoryStatsQuery, buildSessionResultsQuery, buildSessionsQuery, buildTestCasesQuery, buildTestExecutionQuery,
-  buildTestRunsQuery, getModelForMetric, getQueryBuilderForMetric
+  buildIssuesQuery,
+  buildMilestoneCompletionQuery,
+  buildMilestonesQuery,
+  buildRepositoryStatsQuery,
+  buildSessionResultsQuery,
+  buildSessionsQuery,
+  buildTestCasesQuery,
+  buildTestExecutionQuery,
+  buildTestRunsQuery,
+  getModelForMetric,
+  getQueryBuilderForMetric,
 } from "./drillDownQueryBuilders";
 
 // Helper to create a base context
-function createBaseContext(overrides: Partial<DrillDownContext> = {}): DrillDownContext {
+function createBaseContext(
+  overrides: Partial<DrillDownContext> = {}
+): DrillDownContext {
   return {
     metricId: "testResults",
     metricLabel: "Test Results",
@@ -372,7 +383,9 @@ describe("drillDownQueryBuilders", () => {
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.executedById).toBe("exec-user");
+      expect(result.where?.testRuns?.some?.results?.some?.executedById).toBe(
+        "exec-user"
+      );
     });
 
     it("should apply status dimension filter", () => {
@@ -400,7 +413,9 @@ describe("drillDownQueryBuilders", () => {
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.executedAt).toBeDefined();
+      expect(
+        result.where?.testRuns?.some?.results?.some?.executedAt
+      ).toBeDefined();
     });
   });
 
@@ -678,12 +693,18 @@ describe("drillDownQueryBuilders", () => {
       });
 
       it("should return buildRepositoryStatsQuery for repository-stats reports", () => {
-        const builder = getQueryBuilderForMetric("testCaseCount", "repository-stats");
+        const builder = getQueryBuilderForMetric(
+          "testCaseCount",
+          "repository-stats"
+        );
         expect(builder).toBe(buildRepositoryStatsQuery);
       });
 
       it("should return buildRepositoryStatsQuery for user-engagement reports", () => {
-        const builder = getQueryBuilderForMetric("createdCaseCount", "user-engagement");
+        const builder = getQueryBuilderForMetric(
+          "createdCaseCount",
+          "user-engagement"
+        );
         expect(builder).toBe(buildRepositoryStatsQuery);
       });
     });
@@ -754,9 +775,12 @@ describe("drillDownQueryBuilders", () => {
     });
 
     describe("test run metrics", () => {
-      it.each(["testRuns", "testRunCount"])("should return testRuns for %s", (metricId) => {
-        expect(getModelForMetric(metricId)).toBe("testRuns");
-      });
+      it.each(["testRuns", "testRunCount"])(
+        "should return testRuns for %s",
+        (metricId) => {
+          expect(getModelForMetric(metricId)).toBe("testRuns");
+        }
+      );
     });
 
     describe("repository case metrics", () => {
@@ -792,9 +816,12 @@ describe("drillDownQueryBuilders", () => {
     });
 
     describe("issue metrics", () => {
-      it.each(["issues", "issueCount"])("should return issue for %s", (metricId) => {
-        expect(getModelForMetric(metricId)).toBe("issue");
-      });
+      it.each(["issues", "issueCount"])(
+        "should return issue for %s",
+        (metricId) => {
+          expect(getModelForMetric(metricId)).toBe("issue");
+        }
+      );
     });
 
     it("should default to testRunResults for unknown metrics", () => {

@@ -3,13 +3,15 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import * as d3 from "d3";
 import {
-  Activity, AlertTriangle,
+  Activity,
+  AlertTriangle,
   CheckCircle2,
-  Clock, HelpCircle
+  Clock,
+  HelpCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
@@ -96,7 +98,11 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
     };
 
     for (const test of data) {
-      if (test && test.healthStatus && counts[test.healthStatus] !== undefined) {
+      if (
+        test &&
+        test.healthStatus &&
+        counts[test.healthStatus] !== undefined
+      ) {
         counts[test.healthStatus]++;
       }
     }
@@ -245,7 +251,8 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
     const barWidth = Math.max(chartWidth + margin.left - barStartX - 80, 50); // Leave space for count/percentage on right
     const barHeight = 28;
     const barGap = 12;
-    const totalBarsHeight = healthStatusOrder.length * (barHeight + barGap) - barGap;
+    const totalBarsHeight =
+      healthStatusOrder.length * (barHeight + barGap) - barGap;
     const barStartY = margin.top + (chartHeight - totalBarsHeight) / 2;
 
     const barG = svg.append("g");
@@ -312,23 +319,29 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
   // Calculate additional summary metrics
   const summaryMetrics = useMemo(() => {
     // Filter to only valid test data entries
-    const validData = data.filter((d) => d && typeof d.healthScore === "number");
+    const validData = data.filter(
+      (d) => d && typeof d.healthScore === "number"
+    );
     // Count stale tests separately (isStale is now a boolean flag)
     const staleCount = validData.filter((d) => d.isStale).length;
     const needsAttention =
-      summaryStats.always_failing +
-      summaryStats.never_executed +
-      staleCount;
+      summaryStats.always_failing + summaryStats.never_executed + staleCount;
     const healthyCount = summaryStats.healthy + summaryStats.always_passing;
     const avgHealthScore =
       validData.length > 0
-        ? Math.round(validData.reduce((sum, d) => sum + d.healthScore, 0) / validData.length)
+        ? Math.round(
+            validData.reduce((sum, d) => sum + d.healthScore, 0) /
+              validData.length
+          )
         : 0;
 
-    const needsAttentionPct = data.length > 0 ? Math.round((needsAttention / data.length) * 100) : 0;
-    const healthyPct = data.length > 0 ? Math.round((healthyCount / data.length) * 100) : 0;
+    const needsAttentionPct =
+      data.length > 0 ? Math.round((needsAttention / data.length) * 100) : 0;
+    const healthyPct =
+      data.length > 0 ? Math.round((healthyCount / data.length) * 100) : 0;
 
-    const stalePct = data.length > 0 ? Math.round((staleCount / data.length) * 100) : 0;
+    const stalePct =
+      data.length > 0 ? Math.round((staleCount / data.length) * 100) : 0;
 
     return {
       total: data.length,
@@ -361,7 +374,9 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           </div>
           <div>
             <p className="text-2xl font-bold">{summaryMetrics.total}</p>
-            <p className="text-xs text-muted-foreground">{t("stats.totalTests")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.totalTests")}
+            </p>
           </div>
         </div>
 
@@ -373,10 +388,16 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div>
             <p className="text-2xl font-bold text-destructive">
               {summaryMetrics.needsAttention}
-              <span className="text-sm font-normal ml-1">{"("}{summaryMetrics.needsAttentionPct}{"%)"}</span>
+              <span className="text-sm font-normal ml-1">
+                {"("}
+                {summaryMetrics.needsAttentionPct}
+                {"%)"}
+              </span>
             </p>
             <div className="flex items-center gap-1">
-              <p className="text-xs text-muted-foreground">{t("stats.needsAttention")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("stats.needsAttention")}
+              </p>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -401,9 +422,15 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div>
             <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
               {summaryMetrics.staleCount}
-              <span className="text-sm font-normal ml-1">{"("}{summaryMetrics.stalePct}{"%)"}</span>
+              <span className="text-sm font-normal ml-1">
+                {"("}
+                {summaryMetrics.stalePct}
+                {"%)"}
+              </span>
             </p>
-            <p className="text-xs text-muted-foreground">{t("healthStatus.stale")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("healthStatus.stale")}
+            </p>
           </div>
         </div>
 
@@ -415,19 +442,23 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div>
             <p className="text-2xl font-bold text-success">
               {summaryMetrics.healthy}
-              <span className="text-sm font-normal ml-1">{"("}{summaryMetrics.healthyPct}{"%)"}</span>
+              <span className="text-sm font-normal ml-1">
+                {"("}
+                {summaryMetrics.healthyPct}
+                {"%)"}
+              </span>
             </p>
             <div className="flex items-center gap-1">
-              <p className="text-xs text-muted-foreground">{t("stats.healthy")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("stats.healthy")}
+              </p>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <HelpCircle className="h-3 w-3 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs">
-                      {t("stats.healthyTooltip")}
-                    </div>
+                    <div className="text-xs">{t("stats.healthyTooltip")}</div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -441,9 +472,13 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
             <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <p className="text-2xl font-bold">{summaryMetrics.avgHealthScore}</p>
+            <p className="text-2xl font-bold">
+              {summaryMetrics.avgHealthScore}
+            </p>
             <div className="flex items-center gap-1">
-              <p className="text-xs text-muted-foreground">{t("stats.avgScore")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("stats.avgScore")}
+              </p>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -451,7 +486,9 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-xs">
                     <div className="text-xs space-y-1">
-                      <p className="font-semibold">{t("healthScoreTooltip.title")}</p>
+                      <p className="font-semibold">
+                        {t("healthScoreTooltip.title")}
+                      </p>
                       <ul className="list-disc pl-3 space-y-0.5">
                         <li>{t("healthScoreTooltip.neverExecuted")}</li>
                         <li>{t("healthScoreTooltip.stale90")}</li>

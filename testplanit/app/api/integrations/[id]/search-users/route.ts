@@ -13,13 +13,18 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const { id } = await params;
     const integrationId = parseInt(id);
     const query = request.nextUrl.searchParams.get("query") || "";
-    const projectKey = request.nextUrl.searchParams.get("projectKey") || undefined;
-    const startAt = parseInt(request.nextUrl.searchParams.get("startAt") || "0");
-    const maxResults = parseInt(request.nextUrl.searchParams.get("maxResults") || "50");
+    const projectKey =
+      request.nextUrl.searchParams.get("projectKey") || undefined;
+    const startAt = parseInt(
+      request.nextUrl.searchParams.get("startAt") || "0"
+    );
+    const maxResults = parseInt(
+      request.nextUrl.searchParams.get("maxResults") || "50"
+    );
 
     const integration = await prisma.integration.findUnique({
       where: {
@@ -48,7 +53,12 @@ export async function GET(
 
     // For Jira, search users
     if (integration.provider === "JIRA" && adapter.searchUsers) {
-      const result = await adapter.searchUsers(query, projectKey, startAt, maxResults);
+      const result = await adapter.searchUsers(
+        query,
+        projectKey,
+        startAt,
+        maxResults
+      );
       // Handle both old format (array) and new format (object with users and total)
       if (Array.isArray(result)) {
         return NextResponse.json({ users: result, total: result.length });
@@ -60,7 +70,10 @@ export async function GET(
   } catch (error) {
     console.error("Error searching users:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to search users" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to search users",
+      },
       { status: 500 }
     );
   }

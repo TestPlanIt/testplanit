@@ -12,22 +12,34 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Popover, PopoverContent, PopoverTrigger
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ApplicationArea, CaseFields as PrismaCaseField, Prisma } from "@prisma/client";
+import {
+  ApplicationArea,
+  CaseFields as PrismaCaseField,
+  Prisma,
+} from "@prisma/client";
 import { isEqual } from "lodash";
 import {
-  AlertCircle, ArrowRightLeft, ChevronLeft,
-  ChevronRight, CircleSlash2, Info, Loader2, LockIcon,
-  Trash2
+  AlertCircle,
+  ArrowRightLeft,
+  ChevronLeft,
+  ChevronRight,
+  CircleSlash2,
+  Info,
+  Loader2,
+  LockIcon,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -38,7 +50,10 @@ import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useFindManyTags, useFindManyWorkflows, useUpdateManyRepositoryCases, useUpdateRepositoryCases
+  useFindManyTags,
+  useFindManyWorkflows,
+  useUpdateManyRepositoryCases,
+  useUpdateRepositoryCases,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -283,8 +298,7 @@ export function BulkEditModal({
 
   // Issue names are resolved from casesData (which includes issues: true) instead of fetching all issues
 
-  const { isPending: isUpdating } =
-    useUpdateRepositoryCases();
+  const { isPending: isUpdating } = useUpdateRepositoryCases();
   const { mutateAsync: updateManyRepositoryCases, isPending: isDeleting } =
     useUpdateManyRepositoryCases();
 
@@ -812,10 +826,7 @@ export function BulkEditModal({
         const allCaseIssues = casesData?.flatMap((c) => c.issues || []) || [];
         return (
           firstValue
-            .map(
-              (issueId) =>
-                allCaseIssues.find((i) => i.id === issueId)?.name
-            )
+            .map((issueId) => allCaseIssues.find((i) => i.id === issueId)?.name)
             .filter(Boolean)
             .join(", ") || "-"
         );
@@ -2031,9 +2042,7 @@ export function BulkEditModal({
                     onClick={handleBulkDelete}
                     disabled={isDeleting}
                   >
-                    {isDeleting && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
+                    {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
                     <Trash2 className="h-4 w-4" />
                     {tCommon("actions.delete")}
                   </Button>

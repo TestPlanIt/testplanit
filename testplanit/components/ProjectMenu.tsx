@@ -2,8 +2,10 @@
 
 import { ProjectDropdownMenu } from "@/components/ProjectDropdownMenu";
 import {
-  Accordion, AccordionContent, AccordionItem,
-  AccordionTrigger
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +13,26 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "@prisma/client";
 import {
-  BookText as DocumentationIcon, Bug as IssuesIcon, ChartNoAxesCombined, Compass as SessionsIcon, FolderKanban, Home, Layers, ListTree as RepositoryIcon, Milestone, PlayCircle as RunsIcon, Plug, ScrollText,
-  Settings, Share2, Sparkles, Tags as TagsIcon
+  BookText as DocumentationIcon,
+  Bug as IssuesIcon,
+  ChartNoAxesCombined,
+  Compass as SessionsIcon,
+  FolderKanban,
+  Home,
+  Layers,
+  ListTree as RepositoryIcon,
+  Milestone,
+  PlayCircle as RunsIcon,
+  Plug,
+  ScrollText,
+  Settings,
+  Share2,
+  Sparkles,
+  Tags as TagsIcon,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -125,8 +141,10 @@ export default function ProjectsMenu({
 
   // Permission check for Shared Steps
   const safeProjectId = projectId ? String(projectId) : "";
-  const { permissions: sharedStepsPerms } =
-    useProjectPermissions(safeProjectId, ApplicationArea.SharedSteps);
+  const { permissions: sharedStepsPerms } = useProjectPermissions(
+    safeProjectId,
+    ApplicationArea.SharedSteps
+  );
   const canSeeSharedSteps =
     sharedStepsPerms &&
     (sharedStepsPerms.canAddEdit || sharedStepsPerms.canDelete);
@@ -134,8 +152,10 @@ export default function ProjectsMenu({
   // Issues are accessible to all users - no permission check needed
 
   // Permission check for Reporting
-  const { permissions: reportingPerms } =
-    useProjectPermissions(safeProjectId, ApplicationArea.Reporting);
+  const { permissions: reportingPerms } = useProjectPermissions(
+    safeProjectId,
+    ApplicationArea.Reporting
+  );
   const canSeeReports =
     reportingPerms && (reportingPerms.canAddEdit || reportingPerms.canDelete);
 
@@ -144,8 +164,10 @@ export default function ProjectsMenu({
   // 1. System ADMIN users (always have access to all projects)
   // 2. System PROJECTADMIN users (have access to settings for any project they can access)
   // 3. Users with Settings area permissions (Project Admin role)
-  const { permissions: settingsPerms } =
-    useProjectPermissions(safeProjectId, ApplicationArea.Settings);
+  const { permissions: settingsPerms } = useProjectPermissions(
+    safeProjectId,
+    ApplicationArea.Settings
+  );
   const canSeeSettings =
     session?.user?.access === "ADMIN" || // System admins always have access
     session?.user?.access === "PROJECTADMIN" || // PROJECTADMIN users always see settings for accessible projects

@@ -20,7 +20,9 @@ test.describe("Public Share Flow", () => {
       dimensions: "testCase",
       metrics: "testCaseCount",
     });
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
 
     // Wait for Run Report button to become enabled
@@ -38,7 +40,7 @@ test.describe("Public Share Flow", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for results to be visible
-    const resultsCard = page.locator('text=/Results/i');
+    const resultsCard = page.locator("text=/Results/i");
     await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
   }
 
@@ -52,8 +54,16 @@ test.describe("Public Share Flow", () => {
 
     // Create test cases for the report
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Test Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, rootFolderId, `Test Case 2 ${timestamp}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Test Case 1 ${timestamp}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Test Case 2 ${timestamp}`
+    );
 
     // Navigate to report builder
     await navigateToRepositoryStatsReport(page, projectId);
@@ -128,26 +138,36 @@ test.describe("Public Share Flow", () => {
       console.log(`[TEST] Current URL after navigation: ${currentUrl}`);
 
       // Take a screenshot for debugging
-      await incognitoPage.screenshot({ path: `/tmp/share-test-${timestamp}.png` });
+      await incognitoPage.screenshot({
+        path: `/tmp/share-test-${timestamp}.png`,
+      });
 
       // Verify the shared report viewer is displayed
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
 
       // Verify the report title is displayed
       const reportTitle = incognitoPage.getByTestId("shared-report-title");
       await expect(reportTitle).toBeVisible({ timeout: 5000 });
-      await expect(reportTitle).toContainText(`Public Test Report ${timestamp}`);
+      await expect(reportTitle).toContainText(
+        `Public Test Report ${timestamp}`
+      );
 
       // Verify the report content is displayed (table should be visible)
       const reportTable = incognitoPage.locator("table").first();
       await expect(reportTable).toBeVisible({ timeout: 10000 });
 
       // Verify test cases are in the report
-      await expect(incognitoPage.locator(`text=Test Case 1 ${timestamp}`).first()).toBeVisible({
+      await expect(
+        incognitoPage.locator(`text=Test Case 1 ${timestamp}`).first()
+      ).toBeVisible({
         timeout: 5000,
       });
-      await expect(incognitoPage.locator(`text=Test Case 2 ${timestamp}`).first()).toBeVisible({
+      await expect(
+        incognitoPage.locator(`text=Test Case 2 ${timestamp}`).first()
+      ).toBeVisible({
         timeout: 5000,
       });
 
@@ -216,7 +236,9 @@ test.describe("Public Share Flow", () => {
       await incognitoPage.waitForLoadState("networkidle");
 
       // Wait for report to load
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
 
       // Wait a moment for the view count API call to complete
@@ -307,10 +329,7 @@ test.describe("Public Share Flow", () => {
     }
   });
 
-  test("Copy share URL to clipboard", async ({
-    api,
-    page,
-  }) => {
+  test("Copy share URL to clipboard", async ({ api, page }) => {
     const timestamp = Date.now();
     const projectId = await api.createProject(`Copy URL Test ${timestamp}`);
 
@@ -354,10 +373,7 @@ test.describe("Public Share Flow", () => {
     // The important thing is that the copy action completes without error and the button is present
   });
 
-  test("Public share with expiration date", async ({
-    api,
-    page,
-  }) => {
+  test("Public share with expiration date", async ({ api, page }) => {
     const timestamp = Date.now();
     const projectId = await api.createProject(`Expiration Test ${timestamp}`);
 
@@ -383,7 +399,9 @@ test.describe("Public Share Flow", () => {
     // Note: The actual calendar component may have different selectors
     // For now, just verify that the share can be created with or without expiration
     const expirationButton = page.locator('button:has-text("No expiration")');
-    const expirationVisible = await expirationButton.isVisible({ timeout: 3000 }).catch(() => false);
+    const expirationVisible = await expirationButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
 
     if (expirationVisible) {
       // Try to click expiration button if present

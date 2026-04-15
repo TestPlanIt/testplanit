@@ -8,27 +8,25 @@ import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import {
-  useFindManyCaseFields,
-} from "~/lib/hooks";
+import { useFindManyCaseFields } from "~/lib/hooks";
 import {
   CustomFieldFilter,
   CustomFieldOperator,
-  SearchableEntityType
+  SearchableEntityType,
 } from "~/types/search";
 import { cn } from "~/utils";
 
@@ -357,11 +355,7 @@ export function CustomFieldFilters({
         <Label className="text-sm font-medium">
           {t("search.customFields")}
         </Label>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={addFilter}
-        >
+        <Button variant="outline" size="sm" onClick={addFilter}>
           <Plus className="h-3 w-3" />
           {t("search.addFilter")}
         </Button>

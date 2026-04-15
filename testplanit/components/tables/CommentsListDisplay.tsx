@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -60,7 +60,11 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
     <div className="space-y-1 pb-3 border-b last:border-b-0 last:pb-0">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center min-w-0 flex-1">
-          <UserNameCell userId={comment.creator.id} hideLink className="text-xs font-medium" />
+          <UserNameCell
+            userId={comment.creator.id}
+            hideLink
+            className="text-xs font-medium"
+          />
         </div>
         <span className="text-xs text-muted-foreground shrink-0">
           {formatDistanceToNow(new Date(comment.createdAt), {
@@ -152,7 +156,10 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
               <Skeleton className="h-16 w-full" />
             </div>
           ) : comments && comments.length > 0 ? (
-            <div className="space-y-3 max-h-[300px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
+            <div
+              className="space-y-3 max-h-[300px] overflow-y-auto"
+              onWheel={(e) => e.stopPropagation()}
+            >
               {comments.map((comment) => (
                 <CommentItem key={comment.id} comment={comment} />
               ))}

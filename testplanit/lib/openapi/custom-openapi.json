@@ -12,10 +12,16 @@
     }
   ],
   "tags": [
-    { "name": "Authentication", "description": "Authentication and authorization endpoints" },
+    {
+      "name": "Authentication",
+      "description": "Authentication and authorization endpoints"
+    },
     { "name": "JUnit Import", "description": "Import JUnit XML test results" },
     { "name": "Search", "description": "Search functionality" },
-    { "name": "File Upload", "description": "File upload and attachment endpoints" },
+    {
+      "name": "File Upload",
+      "description": "File upload and attachment endpoints"
+    },
     { "name": "Users", "description": "User management endpoints" },
     { "name": "Test Runs", "description": "Test run management" },
     { "name": "Sessions", "description": "Exploratory testing sessions" },
@@ -24,7 +30,10 @@
     { "name": "Tags", "description": "Tag management" },
     { "name": "Repository", "description": "Test case repository" },
     { "name": "Admin", "description": "Administrative endpoints" },
-    { "name": "Integrations", "description": "External integrations (Jira, etc.)" }
+    {
+      "name": "Integrations",
+      "description": "External integrations (Jira, etc.)"
+    }
   ],
   "paths": {
     "/junit/import": {
@@ -139,7 +148,10 @@
                     "properties": {
                       "type": {
                         "type": "array",
-                        "items": { "type": "string", "enum": ["repository_cases", "sessions", "test_runs"] }
+                        "items": {
+                          "type": "string",
+                          "enum": ["repository_cases", "sessions", "test_runs"]
+                        }
                       },
                       "projectId": { "type": "string" },
                       "tags": {
@@ -378,9 +390,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "assignedTestCases": { "type": "array", "items": { "type": "object" } },
-                    "assignedSessions": { "type": "array", "items": { "type": "object" } },
-                    "recentActivity": { "type": "array", "items": { "type": "object" } }
+                    "assignedTestCases": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    },
+                    "assignedSessions": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    },
+                    "recentActivity": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
                   }
                 }
               }
@@ -509,7 +530,10 @@
                       "folderId": { "type": "integer" },
                       "stateId": { "type": "integer" },
                       "templateId": { "type": "integer" },
-                      "tags": { "type": "array", "items": { "type": "integer" } }
+                      "tags": {
+                        "type": "array",
+                        "items": { "type": "integer" }
+                      }
                     }
                   }
                 }
@@ -646,7 +670,14 @@
             "required": true,
             "schema": {
               "type": "string",
-              "enum": ["projects", "testCases", "testRuns", "sessions", "milestones", "users"]
+              "enum": [
+                "projects",
+                "testCases",
+                "testRuns",
+                "sessions",
+                "milestones",
+                "users"
+              ]
             }
           }
         ],
@@ -821,8 +852,5 @@
       }
     }
   },
-  "security": [
-    { "cookieAuth": [] },
-    { "bearerAuth": [] }
-  ]
+  "security": [{ "cookieAuth": [] }, { "bearerAuth": [] }]
 }

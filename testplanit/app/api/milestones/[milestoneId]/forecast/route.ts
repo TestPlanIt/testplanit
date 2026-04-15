@@ -19,7 +19,8 @@ export async function GET(
 
   try {
     // 1. Get the current milestone ID and all its descendant IDs
-    const descendantIds = await getAllDescendantMilestoneIds(numericMilestoneId);
+    const descendantIds =
+      await getAllDescendantMilestoneIds(numericMilestoneId);
     const allRelevantMilestoneIds = [numericMilestoneId, ...descendantIds];
 
     // 2. Fetch non-deleted TestRuns for all relevant milestones

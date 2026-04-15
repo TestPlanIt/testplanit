@@ -12,7 +12,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApplicationArea } from "@prisma/client";
@@ -24,26 +24,30 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import {
-  defaultPageSizeOptions, PaginationProvider,
-  usePagination
+  defaultPageSizeOptions,
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
-  useFindFirstProjects, useFindFirstSessionResults, useFindManyMilestones,
-  useFindManySessionResults, useFindManySessions
+  useFindFirstProjects,
+  useFindFirstSessionResults,
+  useFindManyMilestones,
+  useFindManySessionResults,
+  useFindManySessions,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddSessionModal } from "./AddSessionModal";
 import SessionDisplay from "./SessionDisplay";
 
 import CompletedRunsLineChart, {
-  type MonthlyCount
+  type MonthlyCount,
 } from "@/components/dataVisualizations/CompletedRunsLineChart";
 import RecentResultsDonut, {
-  type RecentResultStatusItem
+  type RecentResultStatusItem,
 } from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
   type SunburstHierarchyNode,
-  type SunburstLegendItem
+  type SunburstLegendItem,
 } from "@/components/dataVisualizations/SummarySunburstChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "~/components/LoadingSpinner";
@@ -54,7 +58,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 interface ProjectSessionsProps {
@@ -404,9 +408,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     })) || [];
 
   // --- Data for Work Distribution Sunburst Chart (Replaces Session States) ---
-  const [, setSunburstLegendData] = useState<
-    SunburstLegendItem[]
-  >([]);
+  const [, setSunburstLegendData] = useState<SunburstLegendItem[]>([]);
   const [totalSunburstEstimate, setTotalSunburstEstimate] = useState(0);
 
   const workDistributionChartData = useMemo(() => {
@@ -522,26 +524,25 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     useState<{ first?: Date; last?: Date }>({});
 
   // Query 1: Get the most recent session result to determine the date range
-  const { data: latestSessionResult } =
-    useFindFirstSessionResults(
-      {
-        where: {
-          session: { projectId: numericProjectId ?? undefined },
-          isDeleted: false,
-          status: {
-            systemName: { not: "untested" },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          createdAt: true,
+  const { data: latestSessionResult } = useFindFirstSessionResults(
+    {
+      where: {
+        session: { projectId: numericProjectId ?? undefined },
+        isDeleted: false,
+        status: {
+          systemName: { not: "untested" },
         },
       },
-      {
-        enabled: !!numericProjectId,
-        staleTime: 30000, // Cache for 30 seconds
-      }
-    );
+      orderBy: { createdAt: "desc" },
+      select: {
+        createdAt: true,
+      },
+    },
+    {
+      enabled: !!numericProjectId,
+      staleTime: 30000, // Cache for 30 seconds
+    }
+  );
 
   // Calculate 90 days before the latest result
   const ninetyDaysBeforeLatest = useMemo(() => {
@@ -974,9 +975,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                             {isEmptyAddSessionOpen && (
                               <AddSessionModal
                                 open={isEmptyAddSessionOpen}
-                                onClose={() =>
-                                  setIsEmptyAddSessionOpen(false)
-                                }
+                                onClose={() => setIsEmptyAddSessionOpen(false)}
                               />
                             )}
                           </>

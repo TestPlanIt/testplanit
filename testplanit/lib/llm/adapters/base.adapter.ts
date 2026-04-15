@@ -3,9 +3,13 @@
  */
 
 import type {
-  LlmAdapterConfig, LlmError, LlmModelInfo, LlmRequest,
+  LlmAdapterConfig,
+  LlmError,
+  LlmModelInfo,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse, RateLimitInfo
+  LlmStreamResponse,
+  RateLimitInfo,
 } from "../types";
 
 /**
@@ -118,10 +122,7 @@ export abstract class BaseLlmAdapter {
    * Hostname comparisons are inlined with explicit `===` checks so that
    * CodeQL's HostnameSanitizerGuard recognises them as barrier guards.
    */
-  protected safeFetch(
-    url: string,
-    init?: RequestInit
-  ): Promise<Response> {
+  protected safeFetch(url: string, init?: RequestInit): Promise<Response> {
     const parsed = new URL(url);
 
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {

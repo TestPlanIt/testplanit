@@ -11,7 +11,8 @@ import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useFindManyAppConfig } from "~/lib/hooks";
 import { AddAppConfig } from "./AddAppConfig";
@@ -34,13 +35,8 @@ function AppConfigs() {
   const t = useTranslations("admin.appConfig");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-  } = usePagination();
+  const { currentPage, setCurrentPage, pageSize, setPageSize, totalItems } =
+    usePagination();
   const [searchString, setSearchString] = useState("");
   const [valueSearchString, setValueSearchString] = useState("");
   const [sortConfig, setSortConfig] = useState<{
@@ -139,7 +135,9 @@ function AppConfigs() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-          <CardTitle data-testid="app-config-title">{tGlobal("admin.menu.appConfig")}</CardTitle>
+          <CardTitle data-testid="app-config-title">
+            {tGlobal("admin.menu.appConfig")}
+          </CardTitle>
           <Button onClick={() => setAddAppConfigOpen(true)}>
             <CirclePlus className="h-4 w-4" />
             {t("addConfig")}

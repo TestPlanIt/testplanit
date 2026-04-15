@@ -66,9 +66,8 @@ describe("ForecastWorker", () => {
     });
 
     it("should export correct job name constants", async () => {
-      const { JOB_UPDATE_SINGLE_CASE, JOB_UPDATE_ALL_CASES } = await import(
-        "./forecastWorker"
-      );
+      const { JOB_UPDATE_SINGLE_CASE, JOB_UPDATE_ALL_CASES } =
+        await import("./forecastWorker");
 
       expect(JOB_UPDATE_SINGLE_CASE).toBe("update-single-case-forecast");
       expect(JOB_UPDATE_ALL_CASES).toBe("update-all-cases-forecast");
@@ -108,7 +107,8 @@ describe("ForecastWorker job constants", () => {
   });
 
   it("should export JOB_MILESTONE_DUE_NOTIFICATIONS constant", async () => {
-    const { JOB_MILESTONE_DUE_NOTIFICATIONS } = await import("./forecastWorker");
+    const { JOB_MILESTONE_DUE_NOTIFICATIONS } =
+      await import("./forecastWorker");
     expect(typeof JOB_MILESTONE_DUE_NOTIFICATIONS).toBe("string");
     expect(JOB_MILESTONE_DUE_NOTIFICATIONS).toBe("milestone-due-notifications");
   });

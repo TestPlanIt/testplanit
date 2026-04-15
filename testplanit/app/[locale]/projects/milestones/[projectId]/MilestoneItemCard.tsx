@@ -13,21 +13,27 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { parseISO } from "date-fns";
 import {
-  CheckCircle, MoreVertical, RotateCcw,
-  SquarePen, SquarePlay,
-  StopCircle, Trash2
+  CheckCircle,
+  MoreVertical,
+  RotateCcw,
+  SquarePen,
+  SquarePlay,
+  StopCircle,
+  Trash2,
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import {
-  ColorMap, getStatus,
-  getStatusStyle, MilestonesWithTypes
+  ColorMap,
+  getStatus,
+  getStatusStyle,
+  MilestonesWithTypes,
 } from "~/utils/milestoneUtils";
 
 interface MilestoneForecastData {
@@ -131,20 +137,23 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
       }}
     >
       {/* Mobile: flex row with name+badge+actions. Desktop: children become grid columns via sm:contents */}
-      <div className={`flex items-center gap-2 ${compact ? "" : "sm:contents"}`}>
+      <div
+        className={`flex items-center gap-2 ${compact ? "" : "sm:contents"}`}
+      >
         {/* Column 1: Details, Dates */}
         <div className="flex items-start flex-1 min-w-0">
           {startDate && (
-            <div className={`${compact ? "hidden" : "hidden sm:block"} mr-4 pt-1`}>
+            <div
+              className={`${compact ? "hidden" : "hidden sm:block"} mr-4 pt-1`}
+            >
               <CalendarDisplay date={startDate} />
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <MilestoneIconAndName
-              milestone={milestone}
-              projectId={projectId}
-            />
-            <p className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ml-7`}>
+            <MilestoneIconAndName milestone={milestone} projectId={projectId} />
+            <p
+              className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ml-7`}
+            >
               <TextFromJson
                 jsonString={milestone.note as string}
                 format="text"
@@ -163,7 +172,9 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         </div>
 
         {/* Column 2: Status Badge */}
-        <div className={`flex shrink-0 ${compact ? "" : "sm:w-24"} justify-center`}>
+        <div
+          className={`flex shrink-0 ${compact ? "" : "sm:w-24"} justify-center`}
+        >
           <Badge
             style={{ backgroundColor: badge }}
             className="text-foreground border-2 border-secondary-foreground text-sm"
@@ -173,7 +184,9 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         </div>
 
         {/* Column 3: End Date Calendar, Actions */}
-        <div className={`flex items-center shrink-0 ${compact ? "" : "sm:justify-end sm:space-x-2"}`}>
+        <div
+          className={`flex items-center shrink-0 ${compact ? "" : "sm:justify-end sm:space-x-2"}`}
+        >
           {endDate && (
             <div className={compact ? "hidden" : "hidden sm:block"}>
               <CalendarDisplay
@@ -229,9 +242,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                       {t("status.reopen")}
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    onSelect={() => onOpenEditModal(milestone)}
-                  >
+                  <DropdownMenuItem onSelect={() => onOpenEditModal(milestone)}>
                     <div className="flex items-center">
                       <SquarePen className="w-5 h-5 mr-2" />
                       {tCommon("actions.edit")}

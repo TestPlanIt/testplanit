@@ -8,9 +8,9 @@
  * - fetchRobots: fetch and parse robots.txt for a given origin
  */
 
-import * as cheerio from 'cheerio';
-import { createHash } from 'node:crypto';
-import robotsParser from 'robots-parser';
+import * as cheerio from "cheerio";
+import { createHash } from "node:crypto";
+import robotsParser from "robots-parser";
 
 /**
  * Extract same-domain links from HTML.
@@ -29,13 +29,13 @@ export function extractLinks(
   const $ = cheerio.load(html);
   const links: string[] = [];
 
-  $('a[href]').each((_, el) => {
-    const href = $(el).attr('href');
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href");
     if (!href) return;
     try {
       const resolved = new URL(href, baseUrl);
       if (
-        (resolved.protocol === 'https:' || resolved.protocol === 'http:') &&
+        (resolved.protocol === "https:" || resolved.protocol === "http:") &&
         resolved.hostname === allowedHostname
       ) {
         links.push(resolved.href);
@@ -59,7 +59,7 @@ export function extractLinks(
 export function normalizeUrl(url: string): string {
   try {
     const u = new URL(url);
-    u.hash = '';
+    u.hash = "";
     return u.toString();
   } catch {
     return url;
@@ -75,7 +75,7 @@ export function normalizeUrl(url: string): string {
  * @returns     64-character lowercase hex string
  */
 export function hashContent(text: string): string {
-  return createHash('sha256').update(text).digest('hex');
+  return createHash("sha256").update(text).digest("hex");
 }
 
 /**

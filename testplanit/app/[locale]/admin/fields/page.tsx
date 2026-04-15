@@ -8,7 +8,7 @@ import {
   Card,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import CaseFields from "./CaseFields";
 import ResultFields from "./ResultFields";

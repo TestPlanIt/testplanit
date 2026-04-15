@@ -8,7 +8,12 @@ import type { AutoTagJobState } from "./types";
 
 interface AutoTagProgressProps {
   status: AutoTagJobState;
-  progress: { analyzed: number; total: number; streaming?: boolean; sizing?: number } | null;
+  progress: {
+    analyzed: number;
+    total: number;
+    streaming?: boolean;
+    sizing?: number;
+  } | null;
   error: string | null;
   onReview: () => void;
   onCancel: () => void;

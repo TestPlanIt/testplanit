@@ -29,9 +29,7 @@ describe("Avatar Component", () => {
 
   it("should use backgroundColor prop", () => {
     const customBg = "#ff0000";
-    render(
-      <Avatar image={null} alt={defaultAlt} backgroundColor={customBg} />
-    );
+    render(<Avatar image={null} alt={defaultAlt} backgroundColor={customBg} />);
     const textElement = screen.getByText(defaultAlt);
     expect(textElement).toHaveStyle({ backgroundColor: customBg });
   });

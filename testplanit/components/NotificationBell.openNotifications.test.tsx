@@ -42,8 +42,8 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en-US",
   useTranslations: () => (key: string, values?: any) => {
     const translations: Record<string, string> = {
-      "title": "Notifications",
-      "empty": "No notifications",
+      title: "Notifications",
+      empty: "No notifications",
       "aria.notifications": `Notifications (${values?.count || 0} unread)`,
       "actions.menu": "Actions",
       "actions.markRead": "Mark as read",
@@ -93,9 +93,9 @@ describe("NotificationBell - openNotifications parameter", () => {
 
   it("should open notification panel when openNotifications=true in URL", async () => {
     mockSearchParams.get.mockReturnValue("true");
-    
+
     render(<NotificationBell />);
-    
+
     // Wait for the dropdown to be visible
     await waitFor(() => {
       expect(screen.getByText("Notifications")).toBeInTheDocument();
@@ -105,9 +105,9 @@ describe("NotificationBell - openNotifications parameter", () => {
 
   it("should remove openNotifications parameter from URL after opening", async () => {
     mockSearchParams.get.mockReturnValue("true");
-    
+
     render(<NotificationBell />);
-    
+
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith("/");
     });
@@ -115,9 +115,9 @@ describe("NotificationBell - openNotifications parameter", () => {
 
   it("should not open panel when openNotifications parameter is not present", () => {
     mockSearchParams.get.mockReturnValue(null);
-    
+
     render(<NotificationBell />);
-    
+
     // Dropdown should not be visible
     expect(screen.queryByText("Notifications")).not.toBeInTheDocument();
     expect(screen.queryByText("Test Notification 1")).not.toBeInTheDocument();
@@ -125,10 +125,12 @@ describe("NotificationBell - openNotifications parameter", () => {
 
   it("should preserve other query parameters when removing openNotifications", async () => {
     mockSearchParams.get.mockReturnValue("true");
-    mockSearchParams.toString.mockReturnValue("openNotifications=true&someOther=value");
-    
+    mockSearchParams.toString.mockReturnValue(
+      "openNotifications=true&someOther=value"
+    );
+
     render(<NotificationBell />);
-    
+
     await waitFor(() => {
       // Should be called with the pathname + remaining params
       expect(mockReplace).toHaveBeenCalledWith("/?someOther=value");

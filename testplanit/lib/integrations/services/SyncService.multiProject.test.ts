@@ -175,11 +175,26 @@ describe("SyncService — multi-project sync (65-03)", () => {
     ]);
 
     mockSyncIssue
-      .mockResolvedValueOnce({ id: "1", key: "TPI-1", title: "TPI Issue", status: "open", priority: "medium", customFields: {} })
-      .mockResolvedValueOnce({ id: "2", key: "CORE-1", title: "CORE Issue", status: "open", priority: "medium", customFields: {} });
+      .mockResolvedValueOnce({
+        id: "1",
+        key: "TPI-1",
+        title: "TPI Issue",
+        status: "open",
+        priority: "medium",
+        customFields: {},
+      })
+      .mockResolvedValueOnce({
+        id: "2",
+        key: "CORE-1",
+        title: "CORE Issue",
+        status: "open",
+        priority: "medium",
+        customFields: {},
+      });
 
     // updateExistingIssue needs issue.findFirst for each — mock it
-    const mockFindFirst = vi.fn()
+    const mockFindFirst = vi
+      .fn()
       .mockResolvedValueOnce({ id: "local-1" })
       .mockResolvedValueOnce({ id: "local-2" });
     const mockIssueUpdate = vi.fn().mockResolvedValue({});
@@ -197,8 +212,12 @@ describe("SyncService — multi-project sync (65-03)", () => {
 
     // Both projects should have been marked syncing then completed
     const updateCalls = mockIntegrationProjectUpdate.mock.calls;
-    const syncingCalls = updateCalls.filter((c) => c[0]?.data?.syncStatus === "syncing");
-    const completedCalls = updateCalls.filter((c) => c[0]?.data?.syncStatus === "completed");
+    const syncingCalls = updateCalls.filter(
+      (c) => c[0]?.data?.syncStatus === "syncing"
+    );
+    const completedCalls = updateCalls.filter(
+      (c) => c[0]?.data?.syncStatus === "completed"
+    );
 
     expect(syncingCalls).toHaveLength(2);
     expect(completedCalls).toHaveLength(2);
@@ -233,7 +252,9 @@ describe("SyncService — multi-project sync (65-03)", () => {
 
     // Patch prisma.issue with findFirst + update
     const { prisma } = await import("@/lib/prismaBase");
-    (prisma.issue as any).findFirst = vi.fn().mockResolvedValue({ id: "local-2" });
+    (prisma.issue as any).findFirst = vi
+      .fn()
+      .mockResolvedValue({ id: "local-2" });
     (prisma.issue as any).update = vi.fn().mockResolvedValue({});
 
     // project1 (FAIL prefix) — syncIssue throws
@@ -255,11 +276,14 @@ describe("SyncService — multi-project sync (65-03)", () => {
       (c) => c[0]?.where?.id === "ip-1" && c[0]?.data?.syncStatus === "error"
     );
     expect(errorCalls).toHaveLength(1);
-    expect(errorCalls[0][0].data.syncError).toContain("External API unavailable");
+    expect(errorCalls[0][0].data.syncError).toContain(
+      "External API unavailable"
+    );
 
     // project2 should have syncStatus "completed"
     const completedCalls = mockIntegrationProjectUpdate.mock.calls.filter(
-      (c) => c[0]?.where?.id === "ip-2" && c[0]?.data?.syncStatus === "completed"
+      (c) =>
+        c[0]?.where?.id === "ip-2" && c[0]?.data?.syncStatus === "completed"
     );
     expect(completedCalls).toHaveLength(1);
 
@@ -300,7 +324,8 @@ describe("SyncService — multi-project sync (65-03)", () => {
 
     // Completed project should have lastSyncAt as a Date
     const completedCall = mockIntegrationProjectUpdate.mock.calls.find(
-      (c) => c[0]?.where?.id === "ip-ok" && c[0]?.data?.syncStatus === "completed"
+      (c) =>
+        c[0]?.where?.id === "ip-ok" && c[0]?.data?.syncStatus === "completed"
     );
     expect(completedCall).toBeDefined();
     expect(completedCall![0].data.lastSyncAt).toBeInstanceOf(Date);
@@ -324,13 +349,19 @@ describe("SyncService — multi-project sync (65-03)", () => {
     mockIntegrationProjectFindMany.mockResolvedValue([]);
 
     // Legacy path: issues are fetched by integrationId
-    const legacyIssue = makeIssue({ id: "legacy-1", externalKey: "LEGACY-1", externalId: "leg1" });
+    const legacyIssue = makeIssue({
+      id: "legacy-1",
+      externalKey: "LEGACY-1",
+      externalId: "leg1",
+    });
     mockIssueCount.mockResolvedValue(1);
     mockIssueFindMany.mockResolvedValue([legacyIssue]);
 
     // Patch prisma.issue with findFirst + update for updateExistingIssue
     const { prisma } = await import("@/lib/prismaBase");
-    (prisma.issue as any).findFirst = vi.fn().mockResolvedValue({ id: "legacy-1" });
+    (prisma.issue as any).findFirst = vi
+      .fn()
+      .mockResolvedValue({ id: "legacy-1" });
     (prisma.issue as any).update = vi.fn().mockResolvedValue({});
 
     mockSyncIssue.mockResolvedValue({

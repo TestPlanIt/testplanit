@@ -1,15 +1,20 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetApiCategories, mockLoadSpecByCategory, mockApiCategories } = vi.hoisted(() => ({
-  mockGetApiCategories: vi.fn(),
-  mockLoadSpecByCategory: vi.fn(),
-  mockApiCategories: {
-    custom: { title: "Custom API Endpoints", description: "...", tags: [] },
-    projects: { title: "Projects & Folders", description: "...", tags: [] },
-    testCases: { title: "Test Cases & Repository", description: "...", tags: [] },
-  },
-}));
+const { mockGetApiCategories, mockLoadSpecByCategory, mockApiCategories } =
+  vi.hoisted(() => ({
+    mockGetApiCategories: vi.fn(),
+    mockLoadSpecByCategory: vi.fn(),
+    mockApiCategories: {
+      custom: { title: "Custom API Endpoints", description: "...", tags: [] },
+      projects: { title: "Projects & Folders", description: "...", tags: [] },
+      testCases: {
+        title: "Test Cases & Repository",
+        description: "...",
+        tags: [],
+      },
+    },
+  }));
 
 vi.mock("~/lib/openapi/merge-specs", () => ({
   get API_CATEGORIES() {
@@ -85,7 +90,11 @@ describe("GET /api/docs", () => {
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Invalid category");
-      expect(data.availableCategories).toEqual(["custom", "projects", "testCases"]);
+      expect(data.availableCategories).toEqual([
+        "custom",
+        "projects",
+        "testCases",
+      ]);
     });
 
     it("returns 400 with available categories listed for unknown category", async () => {

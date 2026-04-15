@@ -64,7 +64,7 @@
     @apply h-auto w-full max-w-full;
   }
 
-  [data-type='horizontalRule'] {
+  [data-type="horizontalRule"] {
     @apply my-8 py-4 transition-all duration-100 ease-in-out cursor-pointer;
 
     &.ProseMirror-selectednode {

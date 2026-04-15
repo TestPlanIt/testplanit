@@ -15,7 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
@@ -27,9 +27,12 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronLeft,
-  ChevronRight, Clock,
+  ChevronRight,
+  Clock,
   CloudSunRain,
-  Combine, LayoutTemplate, Plus
+  Combine,
+  LayoutTemplate,
+  Plus,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -40,11 +43,15 @@ import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import { useFindFirstWorkflows, useFindManyStatus, useUpdateTestRunCases } from "~/lib/hooks";
+import {
+  useFindFirstWorkflows,
+  useFindManyStatus,
+  useUpdateTestRunCases,
+} from "~/lib/hooks";
 import { useFindManyTemplates } from "~/lib/hooks/templates";
 import {
   isPermissionDeniedSubmitResultError,
-  submitTestRunResult
+  submitTestRunResult,
 } from "~/lib/test-run-result-submit";
 import { IconName } from "~/types/globals";
 import { ForecastDisplay } from "./ForecastDisplay";

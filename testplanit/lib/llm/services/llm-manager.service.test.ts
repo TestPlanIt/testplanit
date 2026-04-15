@@ -20,9 +20,9 @@ vi.mock("../adapters", () => ({
       yield { delta: " world", done: true };
     });
     testConnection = vi.fn().mockResolvedValue(true);
-    getAvailableModels = vi.fn().mockResolvedValue([
-      { id: "gpt-4", name: "GPT-4" },
-    ]);
+    getAvailableModels = vi
+      .fn()
+      .mockResolvedValue([{ id: "gpt-4", name: "GPT-4" }]);
     constructor(public config: any) {}
   },
   AnthropicAdapter: class AnthropicAdapter {
@@ -39,9 +39,9 @@ vi.mock("../adapters", () => ({
       yield { delta: " world", done: true };
     });
     testConnection = vi.fn().mockResolvedValue(true);
-    getAvailableModels = vi.fn().mockResolvedValue([
-      { id: "claude-3-opus", name: "Claude 3 Opus" },
-    ]);
+    getAvailableModels = vi
+      .fn()
+      .mockResolvedValue([{ id: "claude-3-opus", name: "Claude 3 Opus" }]);
     constructor(public config: any) {}
   },
   AzureOpenAIAdapter: class AzureOpenAIAdapter {
@@ -204,7 +204,9 @@ describe("LlmManager", () => {
 
   describe("getAdapter", () => {
     it("should create and cache OpenAI adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
 
       const adapter1 = await manager.getAdapter(1);
       const adapter2 = await manager.getAdapter(1);
@@ -327,7 +329,9 @@ describe("LlmManager", () => {
 
   describe("chat", () => {
     it("should make chat request and track usage", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         mockLlmIntegration.llmProviderConfig
       );
@@ -358,7 +362,9 @@ describe("LlmManager", () => {
 
     it("should track error on failed chat request", async () => {
       const mockError = new Error("API error");
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
       mockPrisma.llmUsage.create.mockResolvedValue({});
 
       // Get the adapter first
@@ -386,7 +392,9 @@ describe("LlmManager", () => {
 
   describe("chatStream", () => {
     it("should stream chat response and track usage", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         mockLlmIntegration.llmProviderConfig
       );
@@ -480,7 +488,9 @@ describe("LlmManager", () => {
 
   describe("testConnection", () => {
     it("should return true when connection succeeds", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
 
       const result = await manager.testConnection(1);
 
@@ -488,7 +498,9 @@ describe("LlmManager", () => {
     });
 
     it("should return false when connection fails", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
 
       // Get the adapter and spy on testConnection to make it fail
       const adapter = await manager.getAdapter(1);
@@ -496,7 +508,9 @@ describe("LlmManager", () => {
         new Error("Connection failed")
       );
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       const result = await manager.testConnection(1);
 
       expect(result).toBe(false);
@@ -506,7 +520,9 @@ describe("LlmManager", () => {
 
   describe("getAvailableModels", () => {
     it("should return available models from adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
 
       const result = await manager.getAvailableModels(1);
 
@@ -592,7 +608,9 @@ describe("LlmManager", () => {
 
   describe("clearCache", () => {
     it("should clear specific adapter from cache", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
 
       const adapter1 = await manager.getAdapter(1);
       manager.clearCache(1);
@@ -602,7 +620,9 @@ describe("LlmManager", () => {
     });
 
     it("should clear all adapters from cache", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
+        mockLlmIntegration
+      );
 
       const adapter1 = await manager.getAdapter(1);
       manager.clearCache();

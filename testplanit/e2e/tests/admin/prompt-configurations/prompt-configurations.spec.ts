@@ -52,8 +52,12 @@ test.describe("Prompt Configurations - Navigation and Display", () => {
 
     // The prompts link is in the "Tools & Integrations" section which may be collapsed
     // Expand it if needed
-    const toolsSection = page.getByTestId("admin-menu-section-toolsAndIntegrations");
-    const toolsTrigger = toolsSection.locator('[data-radix-collection-item]').first();
+    const toolsSection = page.getByTestId(
+      "admin-menu-section-toolsAndIntegrations"
+    );
+    const toolsTrigger = toolsSection
+      .locator("[data-radix-collection-item]")
+      .first();
     // Check if the section content is visible by looking for any link inside
     const promptsLink = page.locator("#admin-menu-prompts");
     if (!(await promptsLink.isVisible({ timeout: 1000 }).catch(() => false))) {
@@ -96,9 +100,9 @@ test.describe("Prompt Configurations - Create Operations", () => {
 
     // Verify the dialog has accordion sections for each feature
     // The accordion may be inside a scrollable container, so scroll to find it
-    const accordion = promptsPage.dialog.locator(
-      '[data-orientation="vertical"]'
-    ).first();
+    const accordion = promptsPage.dialog
+      .locator('[data-orientation="vertical"]')
+      .first();
     await expect(accordion).toBeVisible({ timeout: 10000 });
 
     // Verify at least one feature section exists (e.g., "Test Case Generation")
@@ -106,7 +110,9 @@ test.describe("Prompt Configurations - Create Operations", () => {
     await testCaseGen.scrollIntoViewIfNeeded();
     await expect(testCaseGen).toBeVisible({ timeout: 5000 });
 
-    const editorAssistant = promptsPage.dialog.locator("text=Editor Writing Assistant");
+    const editorAssistant = promptsPage.dialog.locator(
+      "text=Editor Writing Assistant"
+    );
     await editorAssistant.scrollIntoViewIfNeeded();
     await expect(editorAssistant).toBeVisible({ timeout: 5000 });
   });
@@ -164,8 +170,13 @@ test.describe("Prompt Configurations - Edit Operations", () => {
     // so we must create PromptConfigPrompts for every feature.
     const apiBase = baseURL || "http://localhost:3002";
     const features = [
-      "markdown_parsing", "test_case_generation", "magic_select_cases",
-      "editor_assistant", "llm_test", "export_code_generation", "auto_tag",
+      "markdown_parsing",
+      "test_case_generation",
+      "magic_select_cases",
+      "editor_assistant",
+      "llm_test",
+      "export_code_generation",
+      "auto_tag",
       "duplicate_detection",
     ];
 
@@ -194,7 +205,9 @@ test.describe("Prompt Configurations - Edit Operations", () => {
 
     if (!response.ok()) {
       const errorText = await response.text();
-      console.error(`Failed to create prompt config: ${response.status()} - ${errorText}`);
+      console.error(
+        `Failed to create prompt config: ${response.status()} - ${errorText}`
+      );
     }
 
     await promptsPage.goto();
@@ -248,7 +261,9 @@ test.describe("Prompt Configurations - Delete Operations", () => {
 
     if (!response.ok()) {
       const errorText = await response.text();
-      console.error(`Failed to create prompt config: ${response.status()} - ${errorText}`);
+      console.error(
+        `Failed to create prompt config: ${response.status()} - ${errorText}`
+      );
     }
 
     await promptsPage.goto();

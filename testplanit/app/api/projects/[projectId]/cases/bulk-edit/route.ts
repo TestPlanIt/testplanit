@@ -188,69 +188,80 @@ export async function POST(
     }
 
     // Perform bulk update in a transaction with extended timeout (60 seconds)
-    const result = await prisma.$transaction(async (tx) => {
-      const updateResults = {
-        casesUpdated: 0,
-        versionsCreated: 0,
-        customFieldsUpdated: 0,
-        stepsUpdated: 0,
-      };
-
-      // Process each case for updates
-      for (const caseItem of cases) {
-        const caseId = caseItem.id;
-
-        // Build update data for standard fields
-        const updateData: any = {
-          currentVersion: { increment: 1 },
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const updateResults = {
+          casesUpdated: 0,
+          versionsCreated: 0,
+          customFieldsUpdated: 0,
+          stepsUpdated: 0,
         };
 
-        if (validatedData.updates.name !== undefined) {
-          updateData.name = validatedData.updates.name;
-        }
-        if (validatedData.updates.state !== undefined) {
-          updateData.stateId = validatedData.updates.state;
-        }
-        if (validatedData.updates.automated !== undefined) {
-          updateData.automated = validatedData.updates.automated;
-        }
-        if (validatedData.updates.estimate !== undefined) {
-          updateData.estimate = validatedData.updates.estimate;
-        }
-        if (validatedData.updates.tags) {
-          updateData.tags = validatedData.updates.tags;
-        }
-        if (validatedData.updates.issues) {
-          updateData.issues = validatedData.updates.issues;
-        }
+        // Process each case for updates
+        for (const caseItem of cases) {
+          const caseId = caseItem.id;
 
-        // Update the case
-        await tx.repositoryCases.update({
-          where: { id: caseId },
-          data: updateData,
-        });
-        updateResults.casesUpdated++;
+          // Build update data for standard fields
+          const updateData: any = {
+            currentVersion: { increment: 1 },
+          };
 
-        // Handle custom field updates
-        if (validatedData.customFieldUpdates) {
-          for (const fieldUpdate of validatedData.customFieldUpdates) {
-            const existingFieldValue = caseItem.caseFieldValues.find(
-              (cfv) => cfv.fieldId === fieldUpdate.fieldId
-            );
+          if (validatedData.updates.name !== undefined) {
+            updateData.name = validatedData.updates.name;
+          }
+          if (validatedData.updates.state !== undefined) {
+            updateData.stateId = validatedData.updates.state;
+          }
+          if (validatedData.updates.automated !== undefined) {
+            updateData.automated = validatedData.updates.automated;
+          }
+          if (validatedData.updates.estimate !== undefined) {
+            updateData.estimate = validatedData.updates.estimate;
+          }
+          if (validatedData.updates.tags) {
+            updateData.tags = validatedData.updates.tags;
+          }
+          if (validatedData.updates.issues) {
+            updateData.issues = validatedData.updates.issues;
+          }
 
-            if (fieldUpdate.operation === "delete" && existingFieldValue) {
-              await tx.caseFieldValues.delete({
-                where: { id: existingFieldValue.id },
-              });
-              updateResults.customFieldsUpdated++;
-            } else if (fieldUpdate.operation === "update") {
-              // Upsert: update if exists, create if doesn't
-              if (existingFieldValue) {
-                await tx.caseFieldValues.update({
+          // Update the case
+          await tx.repositoryCases.update({
+            where: { id: caseId },
+            data: updateData,
+          });
+          updateResults.casesUpdated++;
+
+          // Handle custom field updates
+          if (validatedData.customFieldUpdates) {
+            for (const fieldUpdate of validatedData.customFieldUpdates) {
+              const existingFieldValue = caseItem.caseFieldValues.find(
+                (cfv) => cfv.fieldId === fieldUpdate.fieldId
+              );
+
+              if (fieldUpdate.operation === "delete" && existingFieldValue) {
+                await tx.caseFieldValues.delete({
                   where: { id: existingFieldValue.id },
-                  data: { value: fieldUpdate.value },
                 });
-              } else {
+                updateResults.customFieldsUpdated++;
+              } else if (fieldUpdate.operation === "update") {
+                // Upsert: update if exists, create if doesn't
+                if (existingFieldValue) {
+                  await tx.caseFieldValues.update({
+                    where: { id: existingFieldValue.id },
+                    data: { value: fieldUpdate.value },
+                  });
+                } else {
+                  await tx.caseFieldValues.create({
+                    data: {
+                      testCaseId: caseId,
+                      fieldId: fieldUpdate.fieldId,
+                      value: fieldUpdate.value,
+                    },
+                  });
+                }
+                updateResults.customFieldsUpdated++;
+              } else if (fieldUpdate.operation === "create") {
                 await tx.caseFieldValues.create({
                   data: {
                     testCaseId: caseId,
@@ -258,136 +269,132 @@ export async function POST(
                     value: fieldUpdate.value,
                   },
                 });
+                updateResults.customFieldsUpdated++;
               }
-              updateResults.customFieldsUpdated++;
-            } else if (fieldUpdate.operation === "create") {
-              await tx.caseFieldValues.create({
-                data: {
-                  testCaseId: caseId,
-                  fieldId: fieldUpdate.fieldId,
-                  value: fieldUpdate.value,
-                },
-              });
-              updateResults.customFieldsUpdated++;
             }
           }
-        }
 
-        // Handle steps updates
-        if (validatedData.stepsUpdates) {
-          if (validatedData.stepsUpdates.operation === "replace") {
-            // Delete existing steps
-            await tx.steps.deleteMany({
-              where: { testCaseId: caseId },
-            });
+          // Handle steps updates
+          if (validatedData.stepsUpdates) {
+            if (validatedData.stepsUpdates.operation === "replace") {
+              // Delete existing steps
+              await tx.steps.deleteMany({
+                where: { testCaseId: caseId },
+              });
 
-            // Create new steps
-            if (validatedData.stepsUpdates.newSteps) {
-              for (const stepData of validatedData.stepsUpdates.newSteps) {
-                await tx.steps.create({
+              // Create new steps
+              if (validatedData.stepsUpdates.newSteps) {
+                for (const stepData of validatedData.stepsUpdates.newSteps) {
+                  await tx.steps.create({
+                    data: {
+                      testCaseId: caseId,
+                      step: JSON.stringify(stepData.step),
+                      expectedResult: JSON.stringify(stepData.expectedResult),
+                      order: stepData.order,
+                    },
+                  });
+                }
+                updateResults.stepsUpdated++;
+              }
+            } else if (
+              validatedData.stepsUpdates.operation === "search-replace"
+            ) {
+              // For search-replace, we need to update each step individually
+              const searchPattern =
+                validatedData.stepsUpdates.searchPattern || "";
+              const replacePattern =
+                validatedData.stepsUpdates.replacePattern || "";
+              const useRegex =
+                validatedData.stepsUpdates.searchOptions?.useRegex || false;
+              const caseSensitive =
+                validatedData.stepsUpdates.searchOptions?.caseSensitive ||
+                false;
+
+              for (const step of caseItem.steps) {
+                let updatedStep = step.step;
+                let updatedExpectedResult = step.expectedResult;
+
+                // Apply search/replace transformation
+                if (step.step && typeof step.step === "string") {
+                  updatedStep = applySearchReplace(
+                    step.step,
+                    searchPattern,
+                    replacePattern,
+                    useRegex,
+                    caseSensitive
+                  );
+                }
+                if (
+                  step.expectedResult &&
+                  typeof step.expectedResult === "string"
+                ) {
+                  updatedExpectedResult = applySearchReplace(
+                    step.expectedResult,
+                    searchPattern,
+                    replacePattern,
+                    useRegex,
+                    caseSensitive
+                  );
+                }
+
+                await tx.steps.update({
+                  where: { id: step.id },
                   data: {
-                    testCaseId: caseId,
-                    step: JSON.stringify(stepData.step),
-                    expectedResult: JSON.stringify(stepData.expectedResult),
-                    order: stepData.order,
+                    step: updatedStep as any,
+                    expectedResult: updatedExpectedResult as any,
                   },
                 });
               }
               updateResults.stepsUpdated++;
             }
-          } else if (
-            validatedData.stepsUpdates.operation === "search-replace"
-          ) {
-            // For search-replace, we need to update each step individually
-            const searchPattern =
-              validatedData.stepsUpdates.searchPattern || "";
-            const replacePattern =
-              validatedData.stepsUpdates.replacePattern || "";
-            const useRegex =
-              validatedData.stepsUpdates.searchOptions?.useRegex || false;
-            const caseSensitive =
-              validatedData.stepsUpdates.searchOptions?.caseSensitive || false;
+          }
 
-            for (const step of caseItem.steps) {
-              let updatedStep = step.step;
-              let updatedExpectedResult = step.expectedResult;
+          // Create version snapshot if requested
+          // Note: The test case was already updated with currentVersion incremented above
+          if (validatedData.createVersions) {
+            const tagNames = caseItem.tags.map((t) => t.name);
+            const issuesData = caseItem.issues.map((i) => ({
+              id: i.id,
+              name: i.name,
+              ...(i.externalId && { externalId: i.externalId }),
+            }));
+            const stepsData = caseItem.steps.map((s) => ({
+              step: s.step,
+              expectedResult: s.expectedResult,
+            }));
 
-              // Apply search/replace transformation
-              if (step.step && typeof step.step === "string") {
-                updatedStep = applySearchReplace(
-                  step.step,
-                  searchPattern,
-                  replacePattern,
-                  useRegex,
-                  caseSensitive
-                );
-              }
-              if (step.expectedResult && typeof step.expectedResult === "string") {
-                updatedExpectedResult = applySearchReplace(
-                  step.expectedResult,
-                  searchPattern,
-                  replacePattern,
-                  useRegex,
-                  caseSensitive
-                );
-              }
-
-              await tx.steps.update({
-                where: { id: step.id },
-                data: {
-                  step: updatedStep as any,
-                  expectedResult: updatedExpectedResult as any,
-                },
-              });
-            }
-            updateResults.stepsUpdated++;
+            await createTestCaseVersionInTransaction(tx, caseId, {
+              // Preserve original creator metadata
+              creatorId: caseItem.creatorId,
+              creatorName: caseItem.creator?.name || "",
+              createdAt: caseItem.createdAt,
+              overrides: {
+                // Apply any changes from the bulk edit
+                name: updateData.name ?? caseItem.name,
+                stateId: updateData.stateId ?? caseItem.stateId,
+                stateName:
+                  updateData.stateId !== undefined
+                    ? caseItem.state?.name || ""
+                    : undefined,
+                automated: updateData.automated ?? caseItem.automated,
+                estimate: updateData.estimate ?? caseItem.estimate,
+                steps: stepsData,
+                tags: tagNames,
+                issues: issuesData,
+                isArchived: caseItem.isArchived,
+                order: caseItem.order,
+              },
+            });
+            updateResults.versionsCreated++;
           }
         }
 
-        // Create version snapshot if requested
-        // Note: The test case was already updated with currentVersion incremented above
-        if (validatedData.createVersions) {
-          const tagNames = caseItem.tags.map((t) => t.name);
-          const issuesData = caseItem.issues.map((i) => ({
-            id: i.id,
-            name: i.name,
-            ...(i.externalId && { externalId: i.externalId }),
-          }));
-          const stepsData = caseItem.steps.map((s) => ({
-            step: s.step,
-            expectedResult: s.expectedResult,
-          }));
-
-          await createTestCaseVersionInTransaction(tx, caseId, {
-            // Preserve original creator metadata
-            creatorId: caseItem.creatorId,
-            creatorName: caseItem.creator?.name || "",
-            createdAt: caseItem.createdAt,
-            overrides: {
-              // Apply any changes from the bulk edit
-              name: updateData.name ?? caseItem.name,
-              stateId: updateData.stateId ?? caseItem.stateId,
-              stateName:
-                updateData.stateId !== undefined
-                  ? caseItem.state?.name || ""
-                  : undefined,
-              automated: updateData.automated ?? caseItem.automated,
-              estimate: updateData.estimate ?? caseItem.estimate,
-              steps: stepsData,
-              tags: tagNames,
-              issues: issuesData,
-              isArchived: caseItem.isArchived,
-              order: caseItem.order,
-            },
-          });
-          updateResults.versionsCreated++;
-        }
+        return updateResults;
+      },
+      {
+        timeout: 60000, // 60 seconds timeout for large bulk operations
       }
-
-      return updateResults;
-    }, {
-      timeout: 60000, // 60 seconds timeout for large bulk operations
-    });
+    );
 
     // Audit the bulk update
     if (result.casesUpdated > 0) {
@@ -441,7 +448,9 @@ function applySearchReplace(
           const regex = new RegExp(searchPattern, flags);
           text = text.replace(regex, replacePattern);
         } else {
-          const search = caseSensitive ? searchPattern : searchPattern.toLowerCase();
+          const search = caseSensitive
+            ? searchPattern
+            : searchPattern.toLowerCase();
           const target = caseSensitive ? text : text.toLowerCase();
 
           if (target.includes(search)) {

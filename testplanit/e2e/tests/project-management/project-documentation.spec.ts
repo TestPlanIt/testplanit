@@ -24,7 +24,9 @@ test.describe("Project Documentation Editor", () => {
 
     // Verify page loaded with project name in the header
     // The project name may appear in both the header and the breadcrumb
-    await expect(page.getByText(projectName).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(projectName).first()).toBeVisible({
+      timeout: 15000,
+    });
 
     // The "Edit Documentation" button should be present for editors
     await expect(
@@ -36,9 +38,7 @@ test.describe("Project Documentation Editor", () => {
     page,
     api,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Docs Edit ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E Docs Edit ${Date.now()}`);
 
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -51,26 +51,24 @@ test.describe("Project Documentation Editor", () => {
     await editButton.click();
 
     // Save and Cancel buttons should appear
-    await expect(
-      page.getByRole("button", { name: /Save/i })
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.getByRole("button", { name: /Cancel/i })
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /Save/i })).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.getByRole("button", { name: /Cancel/i })).toBeVisible({
+      timeout: 5000,
+    });
 
     // The editor should be in editable mode (contenteditable="true")
-    await expect(
-      page.locator('[contenteditable="true"]')
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[contenteditable="true"]')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("should save typed content and persist it on reload", async ({
     page,
     api,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Docs Save ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E Docs Save ${Date.now()}`);
 
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -95,9 +93,9 @@ test.describe("Project Documentation Editor", () => {
     await page.getByRole("button", { name: /Save/i }).click();
 
     // Edit mode should end (Save button disappears)
-    await expect(
-      page.getByRole("button", { name: /Save/i })
-    ).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /Save/i })).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Reload page and verify content persists
     await page.reload();
@@ -111,9 +109,7 @@ test.describe("Project Documentation Editor", () => {
     page,
     api,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Docs Cancel ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E Docs Cancel ${Date.now()}`);
 
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -137,9 +133,9 @@ test.describe("Project Documentation Editor", () => {
     await page.getByRole("button", { name: /Cancel/i }).click();
 
     // Edit mode should end — Save button should not be visible
-    await expect(
-      page.getByRole("button", { name: /Save/i })
-    ).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /Save/i })).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // The discarded text should not appear in the readonly content
     await expect(page.getByText("Content to be discarded")).not.toBeVisible({
@@ -147,13 +143,8 @@ test.describe("Project Documentation Editor", () => {
     });
   });
 
-  test("should show the TipTap toolbar in edit mode", async ({
-    page,
-    api,
-  }) => {
-    const projectId = await api.createProject(
-      `E2E Docs Toolbar ${Date.now()}`
-    );
+  test("should show the TipTap toolbar in edit mode", async ({ page, api }) => {
+    const projectId = await api.createProject(`E2E Docs Toolbar ${Date.now()}`);
 
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -166,21 +157,19 @@ test.describe("Project Documentation Editor", () => {
     await editButton.click();
 
     // TipTap toolbar buttons should be visible (verify common formatting buttons)
-    await expect(
-      page.getByTestId("tiptap-bold")
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.getByTestId("tiptap-italic")
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("tiptap-bold")).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.getByTestId("tiptap-italic")).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("should have the AI writing assistant button visible in edit mode", async ({
     page,
     api,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Docs AI ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E Docs AI ${Date.now()}`);
 
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -193,15 +182,17 @@ test.describe("Project Documentation Editor", () => {
     await editButton.click();
 
     // Wait for editor to be editable
-    await expect(
-      page.locator('[contenteditable="true"]')
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[contenteditable="true"]')).toBeVisible({
+      timeout: 5000,
+    });
 
     // Look for an AI assistant button in the TipTap toolbar.
     // The button may be labelled "AI", "Write", "Magic", or use a test-id.
     // We check for any button in the toolbar area containing an AI-related label.
     const aiButton = page
-      .locator('[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")')
+      .locator(
+        '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")'
+      )
       .first();
 
     // If an AI button exists, verify it is visible; otherwise pass (the feature may

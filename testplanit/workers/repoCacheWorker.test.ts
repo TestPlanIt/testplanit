@@ -75,7 +75,12 @@ describe("RepoCacheWorker", () => {
       const result = await processor(mockJob);
 
       expect(mockRefreshRepoCache).not.toHaveBeenCalled();
-      expect(result).toMatchObject({ status: "completed", skippedCount: 2, successCount: 0, failCount: 0 });
+      expect(result).toMatchObject({
+        status: "completed",
+        skippedCount: 2,
+        successCount: 0,
+        failCount: 0,
+      });
     });
 
     it("should refresh cache when files are empty (cache expired)", async () => {
@@ -182,7 +187,11 @@ describe("RepoCacheWorker", () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
       mockRefreshRepoCache
-        .mockResolvedValueOnce({ success: true, fileCount: 3, contentCached: 2 })
+        .mockResolvedValueOnce({
+          success: true,
+          fileCount: 3,
+          contentCached: 2,
+        })
         .mockResolvedValueOnce({ success: false, error: "Token expired" });
 
       const { processor } = await import("./repoCacheWorker");

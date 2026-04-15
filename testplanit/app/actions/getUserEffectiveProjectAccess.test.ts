@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Use vi.hoisted to ensure mocks are available before the vi.mock factory runs
-const { mockProjects, mockUser, mockUserProjectPermission, mockGroupProjectPermission, mockProjectAssignment } = vi.hoisted(() => ({
+const {
+  mockProjects,
+  mockUser,
+  mockUserProjectPermission,
+  mockGroupProjectPermission,
+  mockProjectAssignment,
+} = vi.hoisted(() => ({
   mockProjects: { findUnique: vi.fn() },
   mockUser: { findUnique: vi.fn(), findMany: vi.fn() },
   mockUserProjectPermission: { findUnique: vi.fn(), findMany: vi.fn() },
@@ -33,7 +39,8 @@ vi.mock("@prisma/client", () => ({
 // Import after mocking
 import { ProjectAccessType } from "@prisma/client";
 import {
-  getBatchUserEffectiveProjectAccess, getUserEffectiveProjectAccess
+  getBatchUserEffectiveProjectAccess,
+  getUserEffectiveProjectAccess,
 } from "./getUserEffectiveProjectAccess";
 
 describe("getUserEffectiveProjectAccess", () => {
@@ -70,7 +77,10 @@ describe("getUserEffectiveProjectAccess", () => {
         mockProjects.findUnique.mockResolvedValue(mockProject);
         mockUser.findUnique.mockResolvedValue(null);
 
-        const result = await getUserEffectiveProjectAccess(1, "nonexistent-user");
+        const result = await getUserEffectiveProjectAccess(
+          1,
+          "nonexistent-user"
+        );
 
         expect(result).toBeNull();
       });
@@ -184,7 +194,9 @@ describe("getUserEffectiveProjectAccess", () => {
           accessType: ProjectAccessType.NO_ACCESS,
           roleId: null,
         });
-        mockProjectAssignment.findUnique.mockResolvedValue({ userId: "user-123" });
+        mockProjectAssignment.findUnique.mockResolvedValue({
+          userId: "user-123",
+        });
 
         const result = await getUserEffectiveProjectAccess(1, "user-123");
 
@@ -202,7 +214,9 @@ describe("getUserEffectiveProjectAccess", () => {
         mockUser.findUnique.mockResolvedValue(mockUserData);
         mockUserProjectPermission.findUnique.mockResolvedValue(null);
         mockGroupProjectPermission.findFirst.mockResolvedValue(null);
-        mockProjectAssignment.findUnique.mockResolvedValue({ userId: "user-123" });
+        mockProjectAssignment.findUnique.mockResolvedValue({
+          userId: "user-123",
+        });
 
         const result = await getUserEffectiveProjectAccess(1, "user-123");
 
@@ -223,7 +237,9 @@ describe("getUserEffectiveProjectAccess", () => {
         mockUser.findUnique.mockResolvedValue(mockUserData);
         mockUserProjectPermission.findUnique.mockResolvedValue(null);
         mockGroupProjectPermission.findFirst.mockResolvedValue(null);
-        mockProjectAssignment.findUnique.mockResolvedValue({ userId: "user-123" });
+        mockProjectAssignment.findUnique.mockResolvedValue({
+          userId: "user-123",
+        });
 
         const result = await getUserEffectiveProjectAccess(1, "user-123");
 
@@ -244,7 +260,9 @@ describe("getUserEffectiveProjectAccess", () => {
         mockUser.findUnique.mockResolvedValue(mockUserData);
         mockUserProjectPermission.findUnique.mockResolvedValue(null);
         mockGroupProjectPermission.findFirst.mockResolvedValue(null);
-        mockProjectAssignment.findUnique.mockResolvedValue({ userId: "user-123" });
+        mockProjectAssignment.findUnique.mockResolvedValue({
+          userId: "user-123",
+        });
 
         const result = await getUserEffectiveProjectAccess(1, "user-123");
 
@@ -274,7 +292,9 @@ describe("getUserEffectiveProjectAccess", () => {
 
     describe("error handling", () => {
       it("should return null and log error on exception", async () => {
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
         mockProjects.findUnique.mockRejectedValue(new Error("Database error"));
 
         const result = await getUserEffectiveProjectAccess(1, "user-123");
@@ -338,7 +358,10 @@ describe("getUserEffectiveProjectAccess", () => {
       it("should return empty map when project does not exist", async () => {
         mockProjects.findUnique.mockResolvedValue(null);
 
-        const result = await getBatchUserEffectiveProjectAccess(999, ["user-1", "user-2"]);
+        const result = await getBatchUserEffectiveProjectAccess(999, [
+          "user-1",
+          "user-2",
+        ]);
 
         expect(result.size).toBe(0);
       });
@@ -349,7 +372,11 @@ describe("getUserEffectiveProjectAccess", () => {
         mockProjects.findUnique.mockResolvedValue(mockProject);
         mockUser.findMany.mockResolvedValue(mockUsers);
         mockUserProjectPermission.findMany.mockResolvedValue([
-          { userId: "user-1", accessType: ProjectAccessType.SPECIFIC_ROLE, roleId: 20 },
+          {
+            userId: "user-1",
+            accessType: ProjectAccessType.SPECIFIC_ROLE,
+            roleId: 20,
+          },
         ]);
         mockGroupProjectPermission.findMany.mockResolvedValue([
           {
@@ -362,7 +389,11 @@ describe("getUserEffectiveProjectAccess", () => {
           { userId: "user-3" },
         ]);
 
-        const result = await getBatchUserEffectiveProjectAccess(1, ["user-1", "user-2", "user-3"]);
+        const result = await getBatchUserEffectiveProjectAccess(1, [
+          "user-1",
+          "user-2",
+          "user-3",
+        ]);
 
         expect(result.size).toBe(3);
 
@@ -398,7 +429,11 @@ describe("getUserEffectiveProjectAccess", () => {
         mockProjects.findUnique.mockResolvedValue(mockProject);
         mockUser.findMany.mockResolvedValue([mockUsers[0]]);
         mockUserProjectPermission.findMany.mockResolvedValue([
-          { userId: "user-1", accessType: ProjectAccessType.GLOBAL_ROLE, roleId: null },
+          {
+            userId: "user-1",
+            accessType: ProjectAccessType.GLOBAL_ROLE,
+            roleId: null,
+          },
         ]);
         mockGroupProjectPermission.findMany.mockResolvedValue([]);
         mockProjectAssignment.findMany.mockResolvedValue([]);
@@ -413,9 +448,14 @@ describe("getUserEffectiveProjectAccess", () => {
         mockUser.findMany.mockResolvedValue([mockUsers[0]]); // Only user-1 exists
         mockUserProjectPermission.findMany.mockResolvedValue([]);
         mockGroupProjectPermission.findMany.mockResolvedValue([]);
-        mockProjectAssignment.findMany.mockResolvedValue([{ userId: "user-1" }]);
+        mockProjectAssignment.findMany.mockResolvedValue([
+          { userId: "user-1" },
+        ]);
 
-        const result = await getBatchUserEffectiveProjectAccess(1, ["user-1", "user-nonexistent"]);
+        const result = await getBatchUserEffectiveProjectAccess(1, [
+          "user-1",
+          "user-nonexistent",
+        ]);
 
         expect(result.size).toBe(1);
         expect(result.has("user-nonexistent")).toBe(false);
@@ -428,7 +468,11 @@ describe("getUserEffectiveProjectAccess", () => {
         mockGroupProjectPermission.findMany.mockResolvedValue([]);
         mockProjectAssignment.findMany.mockResolvedValue([]); // No assignments
 
-        const result = await getBatchUserEffectiveProjectAccess(1, ["user-1", "user-2", "user-3"]);
+        const result = await getBatchUserEffectiveProjectAccess(1, [
+          "user-1",
+          "user-2",
+          "user-3",
+        ]);
 
         expect(result.size).toBe(0);
       });
@@ -470,7 +514,9 @@ describe("getUserEffectiveProjectAccess", () => {
             group: { assignedUsers: [{ userId: "user-1" }] },
           },
         ]);
-        mockProjectAssignment.findMany.mockResolvedValue([{ userId: "user-1" }]);
+        mockProjectAssignment.findMany.mockResolvedValue([
+          { userId: "user-1" },
+        ]);
 
         const result = await getBatchUserEffectiveProjectAccess(1, ["user-1"]);
 
@@ -506,7 +552,9 @@ describe("getUserEffectiveProjectAccess", () => {
         mockUser.findMany.mockResolvedValue([mockUsers[0]]);
         mockUserProjectPermission.findMany.mockResolvedValue([]);
         mockGroupProjectPermission.findMany.mockResolvedValue([]);
-        mockProjectAssignment.findMany.mockResolvedValue([{ userId: "user-1" }]);
+        mockProjectAssignment.findMany.mockResolvedValue([
+          { userId: "user-1" },
+        ]);
 
         const result = await getBatchUserEffectiveProjectAccess(1, ["user-1"]);
 
@@ -522,7 +570,9 @@ describe("getUserEffectiveProjectAccess", () => {
 
     describe("error handling", () => {
       it("should return empty map and log error on exception", async () => {
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
         mockProjects.findUnique.mockRejectedValue(new Error("Database error"));
 
         const result = await getBatchUserEffectiveProjectAccess(1, ["user-1"]);

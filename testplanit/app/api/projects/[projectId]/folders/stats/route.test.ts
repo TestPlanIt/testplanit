@@ -57,11 +57,7 @@ describe("Folder Stats API Route", () => {
     { id: 30, parentId: 10 },
   ];
 
-  const mockCases = [
-    { folderId: 10 },
-    { folderId: 10 },
-    { folderId: 20 },
-  ];
+  const mockCases = [{ folderId: 10 }, { folderId: 10 }, { folderId: 20 }];
 
   const createRequest = (
     projectId: string = "1",

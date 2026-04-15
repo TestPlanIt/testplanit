@@ -14,7 +14,11 @@ export function UpgradeNotificationChecker() {
 
   useEffect(() => {
     // Only check once per session, when authenticated
-    if (status === "authenticated" && session?.user?.id && !hasChecked.current) {
+    if (
+      status === "authenticated" &&
+      session?.user?.id &&
+      !hasChecked.current
+    ) {
       hasChecked.current = true;
 
       // Check for upgrade notifications in the background

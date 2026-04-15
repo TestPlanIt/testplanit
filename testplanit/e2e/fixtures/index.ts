@@ -52,7 +52,9 @@ export const test = base.extend<TestFixtures>({
 
     if (!response.ok()) {
       const errorText = await response.text();
-      throw new Error(`Failed to fetch admin user ID: ${response.status} - ${errorText}`);
+      throw new Error(
+        `Failed to fetch admin user ID: ${response.status} - ${errorText}`
+      );
     }
 
     const result = await response.json();
@@ -61,7 +63,9 @@ export const test = base.extend<TestFixtures>({
     const userId = result.data?.id || result.id;
 
     if (!userId) {
-      throw new Error(`No admin user found in database. Response: ${JSON.stringify(result)}`);
+      throw new Error(
+        `No admin user found in database. Response: ${JSON.stringify(result)}`
+      );
     }
 
     // eslint-disable-next-line react-hooks/rules-of-hooks

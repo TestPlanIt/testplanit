@@ -233,12 +233,8 @@ describe("fetchCasesForQuickScript", () => {
       await fetchCasesForQuickScript({ caseIds: [1], projectId: 1 });
 
       expect(mockExtractTextFromNode).toHaveBeenCalledWith("Go to login");
-      expect(mockExtractTextFromNode).toHaveBeenCalledWith(
-        "Login page shown"
-      );
-      expect(mockExtractTextFromNode).toHaveBeenCalledWith(
-        "Enter credentials"
-      );
+      expect(mockExtractTextFromNode).toHaveBeenCalledWith("Login page shown");
+      expect(mockExtractTextFromNode).toHaveBeenCalledWith("Enter credentials");
       expect(mockExtractTextFromNode).toHaveBeenCalledWith("Fields filled");
     });
   });

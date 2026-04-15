@@ -71,7 +71,9 @@ describe("Search Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getCurrentTenantId as any).mockReturnValue(null);
-    (getIndicesForEntityTypes as any).mockReturnValue(["testplanit-repository-cases"]);
+    (getIndicesForEntityTypes as any).mockReturnValue([
+      "testplanit-repository-cases",
+    ]);
     (buildElasticsearchQuery as any).mockResolvedValue({ match_all: {} });
     (buildSort as any).mockReturnValue([]);
     (buildSearchAggregations as any).mockReturnValue({});
@@ -315,8 +317,12 @@ describe("Search Route", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(data.hits[0].highlights["steps.step"]).toEqual(["<mark>click</mark>"]);
-      expect(data.hits[0].highlights["steps.expectedResult"]).toEqual(["<mark>success</mark>"]);
+      expect(data.hits[0].highlights["steps.step"]).toEqual([
+        "<mark>click</mark>",
+      ]);
+      expect(data.hits[0].highlights["steps.expectedResult"]).toEqual([
+        "<mark>success</mark>",
+      ]);
     });
   });
 });

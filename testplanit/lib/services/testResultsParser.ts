@@ -569,9 +569,7 @@ function parseXmlForExtendedData(
       const classNameMatch = caseAttrs.match(
         /classname\s*=\s*["']([^"']*)["']/
       );
-      const assertionsMatch = caseAttrs.match(
-        /assertions\s*=\s*["'](\d+)["']/
-      );
+      const assertionsMatch = caseAttrs.match(/assertions\s*=\s*["'](\d+)["']/);
 
       const testName = testNameMatch ? decodeXmlEntities(testNameMatch[1]) : "";
       const className = classNameMatch
@@ -624,8 +622,7 @@ function parseTestcasesFromContent(
   defaultSuiteName: string,
   dataMap: ExtendedTestCaseDataMap
 ): void {
-  const testcaseRegex =
-    /<testcase\s+([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/gi;
+  const testcaseRegex = /<testcase\s+([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/gi;
   let caseMatch;
 
   while ((caseMatch = testcaseRegex.exec(content)) !== null) {

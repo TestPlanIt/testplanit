@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid query parameters", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -40,8 +40,12 @@ export async function GET(request: Request) {
       take,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
-        caseA: { select: { id: true, name: true, source: true, automated: true } },
-        caseB: { select: { id: true, name: true, source: true, automated: true } },
+        caseA: {
+          select: { id: true, name: true, source: true, automated: true },
+        },
+        caseB: {
+          select: { id: true, name: true, source: true, automated: true },
+        },
       },
     });
 
@@ -55,7 +59,7 @@ export async function GET(request: Request) {
     console.error("Duplicate scan candidates error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

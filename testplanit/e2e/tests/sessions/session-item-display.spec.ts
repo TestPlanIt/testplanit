@@ -146,10 +146,7 @@ test.describe("Session Item Display", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E ItemDupMenu ${ts}`);
-    const sessionId = await api.createSession(
-      projectId,
-      `Menu Session ${ts}`
-    );
+    const sessionId = await api.createSession(projectId, `Menu Session ${ts}`);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -158,13 +155,11 @@ test.describe("Session Item Display", () => {
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
     // Open the three-dot menu
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
 
     // Duplicate option should be visible
-    const duplicateItem = page.getByTestId(
-      `session-duplicate-${sessionId}`
-    );
+    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
     await expect(duplicateItem).toBeVisible({ timeout: 5000 });
     await expect(duplicateItem).toContainText("Duplicate", { timeout: 3000 });
 

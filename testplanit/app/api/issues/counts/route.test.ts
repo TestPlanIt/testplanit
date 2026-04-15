@@ -145,7 +145,9 @@ describe("Issues Counts Route", () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
       (prisma.repositoryCases.count as any).mockResolvedValue(3);
       (prisma.sessions.count as any).mockResolvedValue(2);
-      (prisma.sessionResults.groupBy as any).mockResolvedValue([{ sessionId: 1 }]);
+      (prisma.sessionResults.groupBy as any).mockResolvedValue([
+        { sessionId: 1 },
+      ]);
       (prisma.testRuns.count as any).mockResolvedValue(1);
       (prisma.testRunResults.groupBy as any).mockResolvedValue([]);
       (prisma.testRunStepResults.findMany as any).mockResolvedValue([]);
@@ -189,8 +191,16 @@ describe("Issues Counts Route", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.counts[1]).toEqual({ repositoryCases: 5, sessions: 1, testRuns: 3 });
-      expect(data.counts[2]).toEqual({ repositoryCases: 2, sessions: 0, testRuns: 1 });
+      expect(data.counts[1]).toEqual({
+        repositoryCases: 5,
+        sessions: 1,
+        testRuns: 3,
+      });
+      expect(data.counts[2]).toEqual({
+        repositoryCases: 2,
+        sessions: 0,
+        testRuns: 1,
+      });
     });
 
     it("filters by issueId when counting entities", async () => {
@@ -315,7 +325,9 @@ describe("Issues Counts Route", () => {
   describe("Error handling", () => {
     it("returns 500 when database query fails", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockRejectedValue(new Error("DB error"));
+      (prisma.repositoryCases.count as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const request = createMockRequest({ issueIds: [1] });
       const response = await POST(request);
@@ -328,7 +340,9 @@ describe("Issues Counts Route", () => {
     it("handles malformed request body gracefully", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
       const request = {
-        json: async () => { throw new Error("Invalid JSON"); },
+        json: async () => {
+          throw new Error("Invalid JSON");
+        },
       } as unknown as Request;
 
       const response = await POST(request);

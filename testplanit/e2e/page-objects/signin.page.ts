@@ -14,16 +14,22 @@ export class SigninPage extends BasePage {
     super(page, locale);
 
     // Use multiple selectors to be resilient to implementation changes
-    this.emailInput = page.locator(
-      '[data-testid="email-input"], input[type="email"], input[name="email"]'
-    ).first();
-    this.passwordInput = page.locator(
-      '[data-testid="password-input"], input[type="password"], input[name="password"]'
-    ).first();
-    this.submitButton = page.locator(
-      '[data-testid="signin-button"], button[type="submit"]'
-    ).first();
-    this.errorMessage = page.locator('[role="alert"], .text-destructive').first();
+    this.emailInput = page
+      .locator(
+        '[data-testid="email-input"], input[type="email"], input[name="email"]'
+      )
+      .first();
+    this.passwordInput = page
+      .locator(
+        '[data-testid="password-input"], input[type="password"], input[name="password"]'
+      )
+      .first();
+    this.submitButton = page
+      .locator('[data-testid="signin-button"], button[type="submit"]')
+      .first();
+    this.errorMessage = page
+      .locator('[role="alert"], .text-destructive')
+      .first();
   }
 
   /**

@@ -12,7 +12,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -113,7 +113,9 @@ export function SearchIssuesDialog({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Filter state: null means "All" (fan-out to all projects)
-  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string | null>(null);
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState<
+    string | null
+  >(null);
 
   // Partial failure tracking
   const [searchFailures, setSearchFailures] = useState<string[]>([]);
@@ -140,10 +142,7 @@ export function SearchIssuesDialog({
         projectIntegrationId: activeIntegration?.id || "",
         isActive: true,
       },
-      orderBy: [
-        { isDefault: "desc" },
-        { externalProjectName: "asc" },
-      ],
+      orderBy: [{ isDefault: "desc" }, { externalProjectName: "asc" }],
     },
     {
       enabled: !!activeIntegration?.id,
@@ -217,12 +216,17 @@ export function SearchIssuesDialog({
     setSearchFailures([]);
 
     try {
-      const projectsToSearch = activeIntegrationProjects?.filter(() => true) || [];
+      const projectsToSearch =
+        activeIntegrationProjects?.filter(() => true) || [];
 
       if (projectsToSearch.length === 0) {
         // Fallback: legacy single-project search from config
-        const integrationConfig = (activeIntegration.config as Record<string, any>) || {};
-        const externalProjectId = integrationConfig.externalProjectId || integrationConfig.externalProjectKey || "";
+        const integrationConfig =
+          (activeIntegration.config as Record<string, any>) || {};
+        const externalProjectId =
+          integrationConfig.externalProjectId ||
+          integrationConfig.externalProjectKey ||
+          "";
 
         const searchParams = new URLSearchParams({ q: debouncedSearchQuery });
         if (externalProjectId) {
@@ -245,7 +249,9 @@ export function SearchIssuesDialog({
             .json()
             .catch(() => ({ error: "Unknown error" }));
           console.error("Search API error:", errorData);
-          throw new Error(errorData.error || "Failed to search external issues");
+          throw new Error(
+            errorData.error || "Failed to search external issues"
+          );
         }
 
         const data = await response.json();
@@ -281,31 +287,49 @@ export function SearchIssuesDialog({
           if (response.status === 401) {
             const errorData = await response.json();
             setAuthError(errorData.authUrl || "Authentication required");
-            return { success: false, projectKey: ip.externalProjectKey, issues: [] as ExternalIssue[] };
+            return {
+              success: false,
+              projectKey: ip.externalProjectKey,
+              issues: [] as ExternalIssue[],
+            };
           }
 
           if (!response.ok) {
-            return { success: false, projectKey: ip.externalProjectKey, issues: [] as ExternalIssue[] };
+            return {
+              success: false,
+              projectKey: ip.externalProjectKey,
+              issues: [] as ExternalIssue[],
+            };
           }
 
           const data = await response.json();
-          const formattedIssues: ExternalIssue[] = (data.issues || []).map((issue: any) => ({
-            id: issue.id,
-            key: issue.key,
-            title: issue.title,
-            description: issue.description,
-            status: issue.status,
-            priority: issue.priority,
-            externalId: issue.id,
-            externalKey: issue.key,
-            externalUrl: issue.url,
-            externalStatus: issue.status,
-            isExternal: true,
-            _projectKey: ip.externalProjectKey, // Per D-06: badge source
-          }));
-          return { success: true, projectKey: ip.externalProjectKey, issues: formattedIssues };
+          const formattedIssues: ExternalIssue[] = (data.issues || []).map(
+            (issue: any) => ({
+              id: issue.id,
+              key: issue.key,
+              title: issue.title,
+              description: issue.description,
+              status: issue.status,
+              priority: issue.priority,
+              externalId: issue.id,
+              externalKey: issue.key,
+              externalUrl: issue.url,
+              externalStatus: issue.status,
+              isExternal: true,
+              _projectKey: ip.externalProjectKey, // Per D-06: badge source
+            })
+          );
+          return {
+            success: true,
+            projectKey: ip.externalProjectKey,
+            issues: formattedIssues,
+          };
         } catch {
-          return { success: false, projectKey: ip.externalProjectKey, issues: [] as ExternalIssue[] };
+          return {
+            success: false,
+            projectKey: ip.externalProjectKey,
+            issues: [] as ExternalIssue[],
+          };
         }
       });
 
@@ -329,7 +353,6 @@ export function SearchIssuesDialog({
 
       setExternalIssues(allIssues);
       setSearchFailures(failures);
-
     } catch (error) {
       console.error("Failed to search external issues:", error);
       setExternalIssues([]);
@@ -341,9 +364,13 @@ export function SearchIssuesDialog({
   // Client-side filter derived from full fan-out results
   const filteredExternalIssues = useMemo(() => {
     if (selectedProjectFilter === null) return externalIssues;
-    const ip = activeIntegrationProjects?.find((p) => p.id === selectedProjectFilter);
+    const ip = activeIntegrationProjects?.find(
+      (p) => p.id === selectedProjectFilter
+    );
     if (!ip) return externalIssues;
-    return externalIssues.filter((issue) => issue._projectKey === ip.externalProjectKey);
+    return externalIssues.filter(
+      (issue) => issue._projectKey === ip.externalProjectKey
+    );
   }, [externalIssues, selectedProjectFilter, activeIntegrationProjects]);
 
   const handleIssueToggle = (issue: IssueItem) => {
@@ -394,13 +421,15 @@ export function SearchIssuesDialog({
   };
 
   const allIssues: IssueItem[] = searchExternal
-    ? filteredExternalIssues.map((issue) => ({ ...issue, isExternal: true as const }))
+    ? filteredExternalIssues.map((issue) => ({
+        ...issue,
+        isExternal: true as const,
+      }))
     : (internalIssues || []).map((issue) => ({
         ...issue,
         isExternal: false as const,
       }));
   const isLoading = searchExternal ? isSearching : loadingInternal;
-
 
   return (
     <>
@@ -457,27 +486,32 @@ export function SearchIssuesDialog({
             </div>
 
             {/* Project filter chips — only shown when 2+ active IntegrationProject records exist (D-05) */}
-            {activeIntegrationProjects && activeIntegrationProjects.length >= 2 && (
-              <div className="flex flex-wrap gap-1 px-0">
-                <Badge
-                  variant={selectedProjectFilter === null ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedProjectFilter(null)}
-                >
-                  {t("issues.filterAll")}
-                </Badge>
-                {activeIntegrationProjects.map((ip) => (
+            {activeIntegrationProjects &&
+              activeIntegrationProjects.length >= 2 && (
+                <div className="flex flex-wrap gap-1 px-0">
                   <Badge
-                    key={ip.id}
-                    variant={selectedProjectFilter === ip.id ? "default" : "outline"}
+                    variant={
+                      selectedProjectFilter === null ? "default" : "outline"
+                    }
                     className="cursor-pointer"
-                    onClick={() => setSelectedProjectFilter(ip.id)}
+                    onClick={() => setSelectedProjectFilter(null)}
                   >
-                    {ip.externalProjectKey}
+                    {t("issues.filterAll")}
                   </Badge>
-                ))}
-              </div>
-            )}
+                  {activeIntegrationProjects.map((ip) => (
+                    <Badge
+                      key={ip.id}
+                      variant={
+                        selectedProjectFilter === ip.id ? "default" : "outline"
+                      }
+                      className="cursor-pointer"
+                      onClick={() => setSelectedProjectFilter(ip.id)}
+                    >
+                      {ip.externalProjectKey}
+                    </Badge>
+                  ))}
+                </div>
+              )}
 
             {/* Partial failure alert */}
             {searchFailures.length > 0 && (
@@ -486,7 +520,9 @@ export function SearchIssuesDialog({
                 <AlertDescription>
                   {t("issues.fanOutPartialFailure", {
                     count: searchFailures.length,
-                    successCount: (activeIntegrationProjects?.length || 0) - searchFailures.length,
+                    successCount:
+                      (activeIntegrationProjects?.length || 0) -
+                      searchFailures.length,
                   })}
                 </AlertDescription>
               </Alert>
@@ -609,14 +645,15 @@ export function SearchIssuesDialog({
                                     </Badge>
                                   )}
                                   {/* Project-key badge for multi-project results (D-06) */}
-                                  {issue.isExternal && (issue as ExternalIssue)._projectKey && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs shrink-0"
-                                    >
-                                      {(issue as ExternalIssue)._projectKey}
-                                    </Badge>
-                                  )}
+                                  {issue.isExternal &&
+                                    (issue as ExternalIssue)._projectKey && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs shrink-0"
+                                      >
+                                        {(issue as ExternalIssue)._projectKey}
+                                      </Badge>
+                                    )}
                                 </h4>
                               </div>
                               {issue.description && (
@@ -626,11 +663,15 @@ export function SearchIssuesDialog({
                               )}
                               <div className="flex items-center gap-2 text-xs flex-wrap">
                                 {issue.priority && (
-                                  <IssuePriorityDisplay priority={issue.priority} />
+                                  <IssuePriorityDisplay
+                                    priority={issue.priority}
+                                  />
                                 )}
                                 {(issue.externalStatus || issue.status) && (
                                   <IssueStatusDisplay
-                                    status={issue.externalStatus || issue.status}
+                                    status={
+                                      issue.externalStatus || issue.status
+                                    }
                                   />
                                 )}
                                 {issue.createdBy && (

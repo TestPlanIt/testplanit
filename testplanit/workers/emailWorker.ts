@@ -1,16 +1,22 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  sendDigestEmail, sendNotificationEmail
+  sendDigestEmail,
+  sendNotificationEmail,
 } from "../lib/email/notificationTemplates";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob, getTenantConfig, isMultiTenantMode,
-  MultiTenantJobData, validateMultiTenantJobData
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
+  getTenantConfig,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { EMAIL_QUEUE_NAME } from "../lib/queues";
 import {
-  formatLocaleForUrl, getServerTranslation,
-  getServerTranslations
+  formatLocaleForUrl,
+  getServerTranslation,
+  getServerTranslations,
 } from "../lib/server-translations";
 import valkeyConnection from "../lib/valkey";
 import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
@@ -33,7 +39,9 @@ interface SendDigestEmailJobData extends MultiTenantJobData {
 }
 
 const processor = async (job: Job) => {
-  console.log(`Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
 
   // Validate multi-tenant job data if in multi-tenant mode
   validateMultiTenantJobData(job.data);
@@ -66,8 +74,13 @@ const processor = async (job: Job) => {
         // Build notification URL based on type and data
         let notificationUrl: string | undefined;
         // In multi-tenant mode, use the tenant's baseUrl from config; otherwise fall back to NEXTAUTH_URL
-        const tenantConfig = notificationData.tenantId ? getTenantConfig(notificationData.tenantId) : undefined;
-        const baseUrl = tenantConfig?.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
+        const tenantConfig = notificationData.tenantId
+          ? getTenantConfig(notificationData.tenantId)
+          : undefined;
+        const baseUrl =
+          tenantConfig?.baseUrl ||
+          process.env.NEXTAUTH_URL ||
+          "http://localhost:3000";
         const userLocale = notification.user.userPreferences?.locale || "en_US";
         const urlLocale = formatLocaleForUrl(userLocale);
 
@@ -162,14 +175,20 @@ const processor = async (job: Job) => {
               : "components.notifications.content.milestoneDueSoonTitle"
           );
           const formattedDueDate = data.dueDate
-            ? new Date(data.dueDate).toLocaleDateString(userLocale.replace("_", "-"))
+            ? new Date(data.dueDate).toLocaleDateString(
+                userLocale.replace("_", "-")
+              )
             : "";
           translatedMessage = await getServerTranslation(
             userLocale,
             isOverdue
               ? "components.notifications.content.milestoneOverdue"
               : "components.notifications.content.milestoneDueSoon",
-            { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
+            {
+              milestoneName: data.milestoneName,
+              projectName: data.projectName,
+              dueDate: formattedDueDate,
+            }
           );
         } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
           if (data.error) {
@@ -186,7 +205,11 @@ const processor = async (job: Job) => {
             translatedMessage = await getServerTranslation(
               userLocale,
               "components.notifications.content.generateFromUrlCompleteMessage",
-              { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+              {
+                pages: data.pagesProcessed ?? 0,
+                url: data.url ?? "",
+                projectName: data.projectName ?? "",
+              }
             );
           }
         }
@@ -265,8 +288,13 @@ const processor = async (job: Job) => {
 
         // Build URLs and translate content for each notification
         // In multi-tenant mode, use the tenant's baseUrl from config
-        const digestTenantConfig = digestData.tenantId ? getTenantConfig(digestData.tenantId) : undefined;
-        const digestBaseUrl = digestTenantConfig?.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
+        const digestTenantConfig = digestData.tenantId
+          ? getTenantConfig(digestData.tenantId)
+          : undefined;
+        const digestBaseUrl =
+          digestTenantConfig?.baseUrl ||
+          process.env.NEXTAUTH_URL ||
+          "http://localhost:3000";
         const notificationsWithUrls = await Promise.all(
           fullNotifications.map(async (notification: any) => {
             const baseUrl = digestBaseUrl;
@@ -289,13 +317,19 @@ const processor = async (job: Job) => {
             } else if (notification.type === "COMMENT_MENTION") {
               // Build URL based on entity type
               if (data.projectId && data.hasProjectAccess) {
-                if (data.entityType === "RepositoryCase" && data.repositoryCaseId) {
+                if (
+                  data.entityType === "RepositoryCase" &&
+                  data.repositoryCaseId
+                ) {
                   url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}/${data.repositoryCaseId}`;
                 } else if (data.entityType === "TestRun" && data.testRunId) {
                   url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
                 } else if (data.entityType === "Session" && data.sessionId) {
                   url = `${baseUrl}/${urlLocale}/projects/sessions/${data.projectId}/${data.sessionId}`;
-                } else if (data.entityType === "Milestone" && data.milestoneId) {
+                } else if (
+                  data.entityType === "Milestone" &&
+                  data.milestoneId
+                ) {
                   url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
                 }
               }
@@ -353,14 +387,20 @@ const processor = async (job: Job) => {
                   : "components.notifications.content.milestoneDueSoonTitle"
               );
               const formattedDueDate = data.dueDate
-                ? new Date(data.dueDate).toLocaleDateString(userLocale.replace("_", "-"))
+                ? new Date(data.dueDate).toLocaleDateString(
+                    userLocale.replace("_", "-")
+                  )
                 : "";
               translatedMessage = await getServerTranslation(
                 userLocale,
                 isOverdue
                   ? "components.notifications.content.milestoneOverdue"
                   : "components.notifications.content.milestoneDueSoon",
-                { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
+                {
+                  milestoneName: data.milestoneName,
+                  projectName: data.projectName,
+                  dueDate: formattedDueDate,
+                }
               );
             } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
               if (data.error) {
@@ -376,7 +416,11 @@ const processor = async (job: Job) => {
                 translatedMessage = await getServerTranslation(
                   userLocale,
                   "components.notifications.content.generateFromUrlCompleteMessage",
-                  { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+                  {
+                    pages: data.pagesProcessed ?? 0,
+                    url: data.url ?? "",
+                    projectName: data.projectName ?? "",
+                  }
                 );
               }
             }
@@ -457,7 +501,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(EMAIL_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.EMAIL_CONCURRENCY || '3', 10),
+      concurrency: parseInt(process.env.EMAIL_CONCURRENCY || "3", 10),
     });
 
     worker.on("completed", (job) => {
@@ -498,8 +542,8 @@ const startWorker = async () => {
 if (
   (typeof import.meta !== "undefined" &&
     import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  (typeof import.meta === "undefined" ||
-    (import.meta as any).url === undefined)
+  typeof import.meta === "undefined" ||
+  (import.meta as any).url === undefined
 ) {
   console.log("Email worker running...");
   startWorker().catch((err) => {

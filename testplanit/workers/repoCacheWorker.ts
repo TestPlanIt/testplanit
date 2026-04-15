@@ -2,8 +2,10 @@ import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import { repoFileCache } from "../lib/integrations/cache/RepoFileCache";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
-  isMultiTenantMode, validateMultiTenantJobData
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { REPO_CACHE_QUEUE_NAME } from "../lib/queueNames";
 import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
@@ -29,75 +31,79 @@ const processor = async (job: Job) => {
   }
 
   try {
-  // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+    // Get the appropriate Prisma client (tenant-specific or default)
+    const prisma = getPrismaClientForJob(job.data);
 
-  let successCount = 0;
-  let failCount = 0;
-  let skippedCount = 0;
+    let successCount = 0;
+    let failCount = 0;
+    let skippedCount = 0;
 
-  switch (job.name) {
-    case JOB_REFRESH_EXPIRED_CACHES: {
-      console.log(`Job ${job.id}: Checking for expired code repository caches.`);
+    switch (job.name) {
+      case JOB_REFRESH_EXPIRED_CACHES: {
+        console.log(
+          `Job ${job.id}: Checking for expired code repository caches.`
+        );
 
-      // Find all configs where caching is enabled
-      const configs = await (prisma as any).projectCodeRepositoryConfig.findMany({
-        where: { cacheEnabled: true },
-        select: { id: true, projectId: true, cacheTtlDays: true },
-      });
+        // Find all configs where caching is enabled
+        const configs = await (
+          prisma as any
+        ).projectCodeRepositoryConfig.findMany({
+          where: { cacheEnabled: true },
+          select: { id: true, projectId: true, cacheTtlDays: true },
+        });
 
-      console.log(
-        `Job ${job.id}: Found ${configs.length} cache-enabled code repository configs.`
-      );
+        console.log(
+          `Job ${job.id}: Found ${configs.length} cache-enabled code repository configs.`
+        );
 
-      for (const config of configs) {
-        try {
-          // Check if the Valkey cache still exists (non-expired)
-          const cached = await repoFileCache.getFiles(config.id);
-          if (cached && cached.length > 0) {
-            skippedCount++;
-            continue; // Cache is still valid, skip
-          }
+        for (const config of configs) {
+          try {
+            // Check if the Valkey cache still exists (non-expired)
+            const cached = await repoFileCache.getFiles(config.id);
+            if (cached && cached.length > 0) {
+              skippedCount++;
+              continue; // Cache is still valid, skip
+            }
 
-          // Cache is missing or expired — refresh it
-          console.log(
-            `Job ${job.id}: Refreshing expired cache for config ${config.id} (project ${config.projectId})`
-          );
-
-          const result = await refreshRepoCache(config.id, prisma);
-
-          if (result.success) {
-            successCount++;
+            // Cache is missing or expired — refresh it
             console.log(
-              `Job ${job.id}: Refreshed cache for config ${config.id} — ${result.fileCount} files, ${result.contentCached} contents cached`
+              `Job ${job.id}: Refreshing expired cache for config ${config.id} (project ${config.projectId})`
             );
-          } else {
+
+            const result = await refreshRepoCache(config.id, prisma);
+
+            if (result.success) {
+              successCount++;
+              console.log(
+                `Job ${job.id}: Refreshed cache for config ${config.id} — ${result.fileCount} files, ${result.contentCached} contents cached`
+              );
+            } else {
+              failCount++;
+              console.warn(
+                `Job ${job.id}: Failed to refresh cache for config ${config.id}: ${result.error}`
+              );
+            }
+          } catch (error) {
             failCount++;
-            console.warn(
-              `Job ${job.id}: Failed to refresh cache for config ${config.id}: ${result.error}`
+            console.error(
+              `Job ${job.id}: Error refreshing cache for config ${config.id}:`,
+              error
             );
+            // Continue processing other configs
           }
-        } catch (error) {
-          failCount++;
-          console.error(
-            `Job ${job.id}: Error refreshing cache for config ${config.id}:`,
-            error
-          );
-          // Continue processing other configs
         }
+
+        console.log(
+          `Job ${job.id} completed: ${successCount} refreshed, ${skippedCount} still valid, ${failCount} failed (of ${configs.length} total)`
+        );
+        break;
       }
 
-      console.log(
-        `Job ${job.id} completed: ${successCount} refreshed, ${skippedCount} still valid, ${failCount} failed (of ${configs.length} total)`
-      );
-      break;
+      default:
+        throw new Error(`Unknown job type: ${job.name}`);
     }
 
-    default:
-      throw new Error(`Unknown job type: ${job.name}`);
-  }
-
-  return { status: "completed", successCount, failCount, skippedCount };
+    return { status: "completed", successCount, failCount, skippedCount };
   } finally {
     // Restore original INSTANCE_TENANT_ID
     if (previousTenantId !== undefined) {

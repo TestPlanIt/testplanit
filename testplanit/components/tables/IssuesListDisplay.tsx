@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Bug } from "lucide-react";
 import React from "react";
@@ -46,12 +46,27 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
   return (
     <Popover modal={false}>
       <PopoverTrigger asChild>
-        <Badge className={size === "small" ? "cursor-pointer text-xs px-1.5 py-0" : "cursor-pointer"}>
-          <Bug className={size === "small" ? "w-3 h-3 mr-0.5 shrink-0" : "w-4 h-4 mr-1 shrink-0"} />
+        <Badge
+          className={
+            size === "small"
+              ? "cursor-pointer text-xs px-1.5 py-0"
+              : "cursor-pointer"
+          }
+        >
+          <Bug
+            className={
+              size === "small"
+                ? "w-3 h-3 mr-0.5 shrink-0"
+                : "w-4 h-4 mr-1 shrink-0"
+            }
+          />
           {issues.length}
         </Badge>
       </PopoverTrigger>
-      <PopoverContent className="w-auto max-w-md p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent
+        className="w-auto max-w-md p-2"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <div className="flex flex-wrap gap-1 max-w-full">
           {issues.map((issue) => {
             return (
@@ -66,7 +81,10 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
                 projectIds={issue.projectIds}
                 size="small"
                 data={issue.data}
-                integrationProvider={issue.integration?.provider || (issue.integrationId ? "JIRA" : undefined)}
+                integrationProvider={
+                  issue.integration?.provider ||
+                  (issue.integrationId ? "JIRA" : undefined)
+                }
                 integrationId={issue.integrationId || issue.integration?.id}
                 lastSyncedAt={issue.lastSyncedAt}
                 issueTypeName={issue.issueTypeName}

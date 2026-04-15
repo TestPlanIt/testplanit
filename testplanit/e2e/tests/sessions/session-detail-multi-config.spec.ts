@@ -35,9 +35,7 @@ test.describe("Session Detail Multi-Config Selector", () => {
     });
 
     // Navigate to session1's detail page
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${session1Id}`
-    );
+    await page.goto(`/en-US/projects/sessions/${projectId}/${session1Id}`);
     await page.waitForLoadState("load");
 
     // The "Configurations:" label should be visible
@@ -71,24 +69,20 @@ test.describe("Session Detail Multi-Config Selector", () => {
     const configId = await api.createConfiguration(`Solo Config ${ts}`);
 
     // Create a single session (no configurationGroupId)
-    const sessionId = await api.createSession(
-      projectId,
-      `Solo Session ${ts}`,
-      { configId }
-    );
+    const sessionId = await api.createSession(projectId, `Solo Session ${ts}`, {
+      configId,
+    });
 
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${sessionId}`
-    );
+    await page.goto(`/en-US/projects/sessions/${projectId}/${sessionId}`);
     await page.waitForLoadState("load");
 
     // Wait for the page to fully load
     await page.waitForTimeout(3000);
 
     // The "Configurations:" label should NOT be visible
-    await expect(
-      page.locator('text="Configurations:"')
-    ).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text="Configurations:"')).not.toBeVisible({
+      timeout: 5000,
+    });
 
     // Cleanup
     await api.deleteSession(sessionId);
@@ -118,9 +112,7 @@ test.describe("Session Detail Multi-Config Selector", () => {
     );
 
     // Navigate to session1
-    await page.goto(
-      `/en-US/projects/sessions/${projectId}/${session1Id}`
-    );
+    await page.goto(`/en-US/projects/sessions/${projectId}/${session1Id}`);
     await page.waitForLoadState("load");
 
     // Wait for the configuration selector

@@ -45,7 +45,10 @@ export async function GET(
     }
 
     // Check authentication based on integration type
-    if (integration.authType === "API_KEY" || integration.authType === "PERSONAL_ACCESS_TOKEN") {
+    if (
+      integration.authType === "API_KEY" ||
+      integration.authType === "PERSONAL_ACCESS_TOKEN"
+    ) {
       // For API key/PAT integrations, authentication is stored in the integration itself
       if (!integration.credentials) {
         return Response.json(
@@ -90,7 +93,10 @@ export async function GET(
     }
 
     // Set authentication based on integration type
-    if (integration.authType === "API_KEY" || integration.authType === "PERSONAL_ACCESS_TOKEN") {
+    if (
+      integration.authType === "API_KEY" ||
+      integration.authType === "PERSONAL_ACCESS_TOKEN"
+    ) {
       // For API key/PAT auth, the adapter is already authenticated via IntegrationManager
       // No need to set access token
     } else if (integration.userIntegrationAuths[0]) {

@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -25,18 +25,17 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { WorkflowType } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { scopeDisplayData } from "~/app/constants";
 import {
-  AddCaseFieldModal, type FieldDraftOption
+  AddCaseFieldModal,
+  type FieldDraftOption,
 } from "~/app/[locale]/admin/fields/AddCaseField";
-import {
-  AddResultFieldModal
-} from "~/app/[locale]/admin/fields/AddResultField";
+import { AddResultFieldModal } from "~/app/[locale]/admin/fields/AddResultField";
 import { generateRandomPassword } from "~/utils/randomPassword";
 
 import DynamicIcon from "@/components/DynamicIcon";
@@ -47,25 +46,45 @@ import {
   BetweenHorizontalStart,
   EqualNot,
   FilePlus2,
-  SquareDashed
+  SquareDashed,
 } from "lucide-react";
 import { useFindManyColor, useFindManyStatusScope } from "~/lib/hooks";
 import type {
   TestmoConfigurationMappingConfig,
-  TestmoConfigurationSuggestion, TestmoConfigVariantMappingConfig, TestmoExistingCaseField, TestmoExistingConfigCategory, TestmoExistingConfiguration, TestmoExistingConfigVariant, TestmoExistingResultField, TestmoExistingStatus, TestmoExistingTemplate, TestmoExistingWorkflow, TestmoFieldOptionConfig, TestmoGroupMappingConfig,
+  TestmoConfigurationSuggestion,
+  TestmoConfigVariantMappingConfig,
+  TestmoExistingCaseField,
+  TestmoExistingConfigCategory,
+  TestmoExistingConfiguration,
+  TestmoExistingConfigVariant,
+  TestmoExistingResultField,
+  TestmoExistingStatus,
+  TestmoExistingTemplate,
+  TestmoExistingWorkflow,
+  TestmoFieldOptionConfig,
+  TestmoGroupMappingConfig,
   TestmoGroupSuggestion,
   TestmoIssueTargetMappingConfig,
-  TestmoIssueTargetSuggestion, TestmoMappingAnalysis,
-  TestmoMappingConfiguration, TestmoMilestoneTypeMappingConfig,
-  TestmoMilestoneTypeSuggestion, TestmoRoleMappingConfig,
+  TestmoIssueTargetSuggestion,
+  TestmoMappingAnalysis,
+  TestmoMappingConfiguration,
+  TestmoMilestoneTypeMappingConfig,
+  TestmoMilestoneTypeSuggestion,
+  TestmoRoleMappingConfig,
   TestmoRolePermissions,
-  TestmoRoleSuggestion, TestmoStatusMappingConfig,
-  TestmoStatusSuggestion, TestmoTemplateFieldAction,
+  TestmoRoleSuggestion,
+  TestmoStatusMappingConfig,
+  TestmoStatusSuggestion,
+  TestmoTemplateFieldAction,
   TestmoTemplateFieldMappingConfig,
-  TestmoTemplateFieldSuggestion, TestmoTemplateFieldTargetType, TestmoTemplateMappingConfig, TestmoTemplateSuggestion, TestmoUserMappingConfig,
+  TestmoTemplateFieldSuggestion,
+  TestmoTemplateFieldTargetType,
+  TestmoTemplateMappingConfig,
+  TestmoTemplateSuggestion,
+  TestmoUserMappingConfig,
   TestmoUserSuggestion,
   TestmoWorkflowMappingConfig,
-  TestmoWorkflowSuggestion
+  TestmoWorkflowSuggestion,
 } from "~/services/imports/testmo/types";
 import { Separator } from "./ui/separator";
 

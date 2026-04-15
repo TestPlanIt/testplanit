@@ -13,7 +13,10 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { issueIds, projectId } = body as { issueIds: number[]; projectId?: number };
+    const { issueIds, projectId } = body as {
+      issueIds: number[];
+      projectId?: number;
+    };
 
     if (!Array.isArray(issueIds) || issueIds.length === 0) {
       return NextResponse.json({ counts: {} });
@@ -75,9 +78,7 @@ export async function POST(request: Request) {
         };
 
     // If projectId is provided, scope counts to that project only
-    const projectFilter = projectId !== undefined
-      ? { projectId }
-      : {};
+    const projectFilter = projectId !== undefined ? { projectId } : {};
 
     // Fetch counts for each issue using individual queries
     const counts = await Promise.all(
@@ -109,21 +110,23 @@ export async function POST(request: Request) {
             },
           }),
           // Sessions - from session results
-          prisma.sessionResults.groupBy({
-            by: ["sessionId"],
-            where: {
-              issues: {
-                some: {
-                  id: issueId,
+          prisma.sessionResults
+            .groupBy({
+              by: ["sessionId"],
+              where: {
+                issues: {
+                  some: {
+                    id: issueId,
+                  },
+                },
+                session: {
+                  isDeleted: false,
+                  ...projectFilter,
+                  ...projectAccessWhere,
                 },
               },
-              session: {
-                isDeleted: false,
-                ...projectFilter,
-                ...projectAccessWhere,
-              },
-            },
-          }).then(results => results.length),
+            })
+            .then((results) => results.length),
           // Test runs - direct
           prisma.testRuns.count({
             where: {
@@ -134,21 +137,23 @@ export async function POST(request: Request) {
             },
           }),
           // Test runs - from test run results
-          prisma.testRunResults.groupBy({
-            by: ["testRunId"],
-            where: {
-              issues: {
-                some: {
-                  id: issueId,
+          prisma.testRunResults
+            .groupBy({
+              by: ["testRunId"],
+              where: {
+                issues: {
+                  some: {
+                    id: issueId,
+                  },
+                },
+                testRun: {
+                  isDeleted: false,
+                  ...projectFilter,
+                  ...projectAccessWhere,
                 },
               },
-              testRun: {
-                isDeleted: false,
-                ...projectFilter,
-                ...projectAccessWhere,
-              },
-            },
-          }).then(results => results.length),
+            })
+            .then((results) => results.length),
           // Test runs - from test run step results
           prisma.testRunStepResults.findMany({
             where: {
@@ -176,7 +181,9 @@ export async function POST(request: Request) {
         const totalSessionsCount = directSessionsCount + sessionResultsCount;
 
         // To get test run IDs from step results, we need to fetch the test run results
-        const uniqueTestRunResultIds = testRunStepResultsCount.map(r => r.testRunResultId);
+        const uniqueTestRunResultIds = testRunStepResultsCount.map(
+          (r) => r.testRunResultId
+        );
         let stepResultsTestRunsCount = 0;
         if (uniqueTestRunResultIds.length > 0) {
           // Fetch the test runs for these results
@@ -191,7 +198,8 @@ export async function POST(request: Request) {
         }
 
         // Total unique test runs
-        const totalTestRunsCount = directTestRunsCount + testRunResultsCount + stepResultsTestRunsCount;
+        const totalTestRunsCount =
+          directTestRunsCount + testRunResultsCount + stepResultsTestRunsCount;
 
         return {
           issueId,

@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useTranslations } from "next-intl";
@@ -17,7 +17,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import {
-  notifyBulkTestCaseAssignment, notifyTestCaseAssignment
+  notifyBulkTestCaseAssignment,
+  notifyTestCaseAssignment,
 } from "~/app/actions/test-run-notifications";
 import { useUpdateTestRunCases } from "~/lib/hooks";
 import { ExtendedCases } from "./columns";
@@ -209,7 +210,9 @@ export function AssignTestCaseModal({
                 fetchOptions={(query, page, pageSize) =>
                   searchProjectMembers(projectId, query, page, pageSize)
                 }
-                renderOption={(user) => <UserNameCell userId={user.id} hideLink />}
+                renderOption={(user) => (
+                  <UserNameCell userId={user.id} hideLink />
+                )}
                 getOptionValue={(user) => user.id}
                 placeholder={t("sessions.placeholders.selectUser")}
                 disabled={isSubmitting}

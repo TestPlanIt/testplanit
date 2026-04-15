@@ -82,7 +82,9 @@ vi.mock("d3", () => {
       fn.tickSize = vi.fn().mockReturnThis();
       return fn;
     }),
-    interpolateRdYlGn: vi.fn((t: number) => `rgba(${Math.round(t * 255)},100,100,1)`),
+    interpolateRdYlGn: vi.fn(
+      (t: number) => `rgba(${Math.round(t * 255)},100,100,1)`
+    ),
     easeBackOut: { overshoot: vi.fn(() => (t: number) => t) },
     easeQuadOut: vi.fn((t: number) => t),
   };
@@ -90,9 +92,33 @@ vi.mock("d3", () => {
 
 describe("FlakyTestsBubbleChart", () => {
   const executionBase = [
-    { resultId: 1, testRunId: 1, statusName: "Failed", statusColor: "#ef4444", isSuccess: false, isFailure: true, executedAt: "2024-01-15T10:00:00Z" },
-    { resultId: 2, testRunId: 2, statusName: "Passed", statusColor: "#22c55e", isSuccess: true, isFailure: false, executedAt: "2024-01-14T10:00:00Z" },
-    { resultId: 3, testRunId: 3, statusName: "Failed", statusColor: "#ef4444", isSuccess: false, isFailure: true, executedAt: "2024-01-13T10:00:00Z" },
+    {
+      resultId: 1,
+      testRunId: 1,
+      statusName: "Failed",
+      statusColor: "#ef4444",
+      isSuccess: false,
+      isFailure: true,
+      executedAt: "2024-01-15T10:00:00Z",
+    },
+    {
+      resultId: 2,
+      testRunId: 2,
+      statusName: "Passed",
+      statusColor: "#22c55e",
+      isSuccess: true,
+      isFailure: false,
+      executedAt: "2024-01-14T10:00:00Z",
+    },
+    {
+      resultId: 3,
+      testRunId: 3,
+      statusName: "Failed",
+      statusColor: "#ef4444",
+      isSuccess: false,
+      isFailure: true,
+      executedAt: "2024-01-13T10:00:00Z",
+    },
   ];
 
   const mockFlakyData = [
@@ -109,8 +135,24 @@ describe("FlakyTestsBubbleChart", () => {
       testCaseSource: "automated",
       flipCount: 3,
       executions: [
-        { resultId: 4, testRunId: 4, statusName: "Failed", statusColor: "#ef4444", isSuccess: false, isFailure: true, executedAt: "2024-01-16T10:00:00Z" },
-        { resultId: 5, testRunId: 5, statusName: "Passed", statusColor: "#22c55e", isSuccess: true, isFailure: false, executedAt: "2024-01-15T10:00:00Z" },
+        {
+          resultId: 4,
+          testRunId: 4,
+          statusName: "Failed",
+          statusColor: "#ef4444",
+          isSuccess: false,
+          isFailure: true,
+          executedAt: "2024-01-16T10:00:00Z",
+        },
+        {
+          resultId: 5,
+          testRunId: 5,
+          statusName: "Passed",
+          statusColor: "#22c55e",
+          isSuccess: true,
+          isFailure: false,
+          executedAt: "2024-01-15T10:00:00Z",
+        },
       ],
     },
   ];
@@ -131,9 +173,7 @@ describe("FlakyTestsBubbleChart", () => {
   });
 
   it("renders 'no flaky tests' message when data is empty array", () => {
-    render(
-      <FlakyTestsBubbleChart data={[]} consecutiveRuns={10} />
-    );
+    render(<FlakyTestsBubbleChart data={[]} consecutiveRuns={10} />);
     // FlakyTestsBubbleChart renders a div message when data.length === 0
     expect(screen.getByText("noFlakyTests")).toBeInTheDocument();
   });
@@ -154,7 +194,15 @@ describe("FlakyTestsBubbleChart", () => {
         testCaseSource: "manual",
         flipCount: 0,
         executions: [
-          { resultId: 6, testRunId: 6, statusName: "Passed", statusColor: "#22c55e", isSuccess: true, isFailure: false, executedAt: "2024-01-10T10:00:00Z" },
+          {
+            resultId: 6,
+            testRunId: 6,
+            statusName: "Passed",
+            statusColor: "#22c55e",
+            isSuccess: true,
+            isFailure: false,
+            executedAt: "2024-01-10T10:00:00Z",
+          },
         ],
       },
     ];

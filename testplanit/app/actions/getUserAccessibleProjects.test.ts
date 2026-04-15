@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Use vi.hoisted to ensure mocks are available before the vi.mock factory runs
-const { mockUser, mockProjects, mockUserProjectPermission, mockProjectAssignment } = vi.hoisted(() => ({
+const {
+  mockUser,
+  mockProjects,
+  mockUserProjectPermission,
+  mockProjectAssignment,
+} = vi.hoisted(() => ({
   mockUser: { findUnique: vi.fn() },
   mockProjects: { findMany: vi.fn() },
   mockUserProjectPermission: { findMany: vi.fn() },
@@ -467,7 +472,9 @@ describe("getUserAccessibleProjects", () => {
 
   describe("error handling", () => {
     it("should return empty array and log error on exception", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockUser.findUnique.mockRejectedValue(new Error("Database error"));
 
       const result = await getUserAccessibleProjects("user-123");

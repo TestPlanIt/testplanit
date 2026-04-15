@@ -94,7 +94,11 @@ function resetMocks() {
   mockTx.attachments.updateMany.mockResolvedValue({ count: 0 });
 
   // Survivor has currentVersion = 3
-  mockTx.repositoryCases.findUnique.mockResolvedValue({ currentVersion: 3, tags: [], issues: [] });
+  mockTx.repositoryCases.findUnique.mockResolvedValue({
+    currentVersion: 3,
+    tags: [],
+    issues: [],
+  });
   mockTx.repositoryCases.update.mockResolvedValue({});
 
   // No victim versions by default
@@ -111,7 +115,12 @@ function resetMocks() {
   mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
     if (where.id === 2) {
       // victim
-      return Promise.resolve({ id: 2, currentVersion: 2, tags: [], issues: [] });
+      return Promise.resolve({
+        id: 2,
+        currentVersion: 2,
+        tags: [],
+        issues: [],
+      });
     }
     // survivor
     return Promise.resolve({ id: 1, currentVersion: 3 });
@@ -203,14 +212,13 @@ describe("mergeService", () => {
       await mergeCases(1, 2, "user-123");
       // At least two updateMany calls on duplicateScanResult:
       // 1st = resolved pair, 2nd = stale pending results
-      expect(mockTx.duplicateScanResult.updateMany.mock.calls.length).toBeGreaterThanOrEqual(2);
+      expect(
+        mockTx.duplicateScanResult.updateMany.mock.calls.length
+      ).toBeGreaterThanOrEqual(2);
       const secondCall = mockTx.duplicateScanResult.updateMany.mock.calls[1];
       expect(secondCall[0]).toMatchObject({
         where: {
-          OR: expect.arrayContaining([
-            { caseAId: 2 },
-            { caseBId: 2 },
-          ]),
+          OR: expect.arrayContaining([{ caseAId: 2 }, { caseBId: 2 }]),
           status: "PENDING",
         },
         data: { status: "MERGED" },
@@ -303,8 +311,7 @@ describe("mergeService", () => {
       const updateCalls = mockTx.repositoryCases.update.mock.calls;
       const survivorVersionUpdate = updateCalls.find(
         (call: any) =>
-          call[0].where.id === 1 &&
-          call[0].data.currentVersion !== undefined
+          call[0].where.id === 1 && call[0].data.currentVersion !== undefined
       );
       expect(survivorVersionUpdate).toBeDefined();
       expect(survivorVersionUpdate![0].data.currentVersion).toBe(5);
@@ -318,8 +325,7 @@ describe("mergeService", () => {
       // No call with currentVersion change, or it's set to offset itself (3)
       const survivorVersionUpdate = updateCalls.find(
         (call: any) =>
-          call[0].where.id === 1 &&
-          call[0].data.currentVersion !== undefined
+          call[0].where.id === 1 && call[0].data.currentVersion !== undefined
       );
       if (survivorVersionUpdate) {
         // If called, currentVersion should be 3 (unchanged = offset)
@@ -409,19 +415,27 @@ describe("mergeService", () => {
   // ----------------------------------------------------------------
   describe("mergeCases - victim link rerouting", () => {
     it("reroutes victim caseA links to survivor using createMany skipDuplicates", async () => {
-      mockTx.repositoryCaseLink.findMany.mockImplementation(({ where }: any) => {
-        if (where.caseAId === 2) {
-          return Promise.resolve([{ id: 50, caseBId: 99, type: "DEPENDS_ON" }]);
+      mockTx.repositoryCaseLink.findMany.mockImplementation(
+        ({ where }: any) => {
+          if (where.caseAId === 2) {
+            return Promise.resolve([
+              { id: 50, caseBId: 99, type: "DEPENDS_ON" },
+            ]);
+          }
+          return Promise.resolve([]);
         }
-        return Promise.resolve([]);
-      });
+      );
 
       await mergeCases(1, 2, "user-123");
 
       expect(mockTx.repositoryCaseLink.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.arrayContaining([
-            expect.objectContaining({ caseAId: 1, caseBId: 99, type: "DEPENDS_ON" }),
+            expect.objectContaining({
+              caseAId: 1,
+              caseBId: 99,
+              type: "DEPENDS_ON",
+            }),
           ]),
           skipDuplicates: true,
         })
@@ -429,19 +443,27 @@ describe("mergeService", () => {
     });
 
     it("reroutes victim caseB links to survivor using createMany skipDuplicates", async () => {
-      mockTx.repositoryCaseLink.findMany.mockImplementation(({ where }: any) => {
-        if (where.caseBId === 2) {
-          return Promise.resolve([{ id: 51, caseAId: 77, type: "SAME_TEST_DIFFERENT_SOURCE" }]);
+      mockTx.repositoryCaseLink.findMany.mockImplementation(
+        ({ where }: any) => {
+          if (where.caseBId === 2) {
+            return Promise.resolve([
+              { id: 51, caseAId: 77, type: "SAME_TEST_DIFFERENT_SOURCE" },
+            ]);
+          }
+          return Promise.resolve([]);
         }
-        return Promise.resolve([]);
-      });
+      );
 
       await mergeCases(1, 2, "user-123");
 
       expect(mockTx.repositoryCaseLink.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.arrayContaining([
-            expect.objectContaining({ caseAId: 77, caseBId: 1, type: "SAME_TEST_DIFFERENT_SOURCE" }),
+            expect.objectContaining({
+              caseAId: 77,
+              caseBId: 1,
+              type: "SAME_TEST_DIFFERENT_SOURCE",
+            }),
           ]),
           skipDuplicates: true,
         })
@@ -468,8 +490,8 @@ describe("mergeService", () => {
   // ----------------------------------------------------------------
   describe("linkCases", () => {
     it("upserts a RepositoryCaseLink with SAME_TEST_DIFFERENT_SOURCE", async () => {
-      mockPrisma.$transaction.mockImplementation(
-        (ops: any[]) => Promise.all(ops)
+      mockPrisma.$transaction.mockImplementation((ops: any[]) =>
+        Promise.all(ops)
       );
       mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
@@ -496,8 +518,8 @@ describe("mergeService", () => {
     });
 
     it("updates DuplicateScanResult status to LINKED", async () => {
-      mockPrisma.$transaction.mockImplementation(
-        (ops: any[]) => Promise.all(ops)
+      mockPrisma.$transaction.mockImplementation((ops: any[]) =>
+        Promise.all(ops)
       );
       mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
@@ -518,8 +540,8 @@ describe("mergeService", () => {
     });
 
     it("returns { linked: true }", async () => {
-      mockPrisma.$transaction.mockImplementation(
-        (ops: any[]) => Promise.all(ops)
+      mockPrisma.$transaction.mockImplementation((ops: any[]) =>
+        Promise.all(ops)
       );
       mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });

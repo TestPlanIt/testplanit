@@ -9,7 +9,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,12 +29,17 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle, Check, Copy, KeyRound, Loader2, Plus,
-  Trash2
+  AlertTriangle,
+  Check,
+  Copy,
+  KeyRound,
+  Loader2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -249,9 +254,7 @@ export function ApiTokenSettings({
                         />
                       </Badge>
                     ) : (
-                      <Badge variant="outline">
-                        {tGlobal("common.never")}
-                      </Badge>
+                      <Badge variant="outline">{tGlobal("common.never")}</Badge>
                     )}
                   </TableCell>
                   <TableCell>

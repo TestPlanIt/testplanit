@@ -4,7 +4,7 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
 import {
   countRepositoryCases,
-  type SearchOptions
+  type SearchOptions,
 } from "~/services/repositoryCaseSearch";
 
 // Count request schema

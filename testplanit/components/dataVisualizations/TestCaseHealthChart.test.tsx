@@ -82,9 +82,19 @@ vi.mock("lucide-react", () => ({
 // Mock shadcn tooltip to avoid pointer-events complexity
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children, asChild: _asChild }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  TooltipTrigger: ({
+    children,
+    asChild: _asChild,
+  }: {
+    children: React.ReactNode;
+    asChild?: boolean;
+  }) => <>{children}</>,
 }));
 
 // Mock testCaseHealthUtils (only need the type)

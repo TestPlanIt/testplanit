@@ -96,9 +96,7 @@ async function setupAndOpenAddResultModal(
   await page.waitForLoadState("networkidle");
 
   // 7. Click "Add Result"
-  const addResultButton = page
-    .locator('button:has-text("Add Result")')
-    .first();
+  const addResultButton = page.locator('button:has-text("Add Result")').first();
   await expect(addResultButton).toBeVisible({ timeout: 15000 });
   await addResultButton.click();
 
@@ -112,7 +110,10 @@ async function setupAndOpenAddResultModal(
 /**
  * Helper to find a field's input element by display name within the modal.
  */
-function getFieldInput(modal: ReturnType<Page["getByRole"]>, displayName: string) {
+function getFieldInput(
+  modal: ReturnType<Page["getByRole"]>,
+  displayName: string
+) {
   const fieldLabel = modal.getByText(displayName).first();
   const formItem = fieldLabel.locator("..");
   return formItem.locator("input").first();
@@ -121,9 +122,7 @@ function getFieldInput(modal: ReturnType<Page["getByRole"]>, displayName: string
 /**
  * Helper to submit the Add Result form and verify success (dialog closes).
  */
-async function submitAndExpectSuccess(
-  modal: ReturnType<Page["getByRole"]>
-) {
+async function submitAndExpectSuccess(modal: ReturnType<Page["getByRole"]>) {
   const saveButton = modal.getByRole("button", { name: "Save" });
   await saveButton.click();
   await expect(modal).not.toBeVisible({ timeout: 15000 });
@@ -181,10 +180,7 @@ test.describe("Result Creation - Text String Fields", () => {
     await submitAndExpectSuccess(modal);
   });
 
-  test("Default value auto-applied for text string", async ({
-    page,
-    api,
-  }) => {
+  test("Default value auto-applied for text string", async ({ page, api }) => {
     const displayName = `Text Default ${Date.now()}`;
     const systemName = `result_text_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const defaultValue = "Default result text";

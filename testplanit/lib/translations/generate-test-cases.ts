@@ -3,7 +3,7 @@
 
 export const generateTestCasesKeys = {
   buttonText: "generateTestCases.buttonText",
-  title: "generateTestCases.title", 
+  title: "generateTestCases.title",
   description: "generateTestCases.description",
   steps: {
     selectIssue: "generateTestCases.steps.selectIssue",

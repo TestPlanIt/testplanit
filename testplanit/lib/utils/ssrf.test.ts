@@ -46,7 +46,11 @@ function setupMockRequest(
     body?: string | null;
   }
 ) {
-  const { status = 200, headers = { "content-type": "text/html; charset=utf-8" }, body = "Hello" } = opts;
+  const {
+    status = 200,
+    headers = { "content-type": "text/html; charset=utf-8" },
+    body = "Hello",
+  } = opts;
 
   const mockRes = new EventEmitter() as EventEmitter & {
     statusCode: number;
@@ -65,19 +69,21 @@ function setupMockRequest(
   mockReq.destroy = vi.fn();
 
   const requestMock = protocol === "https" ? mockHttpsRequest : mockHttpRequest;
-  requestMock.mockImplementation((_url: unknown, _opts: unknown, callback: unknown) => {
-    // Fire callback asynchronously to simulate real behavior
-    process.nextTick(() => {
-      (callback as (res: typeof mockRes) => void)(mockRes);
-      // Emit body data
-      if (body !== null) {
-        const encoder = new TextEncoder();
-        mockRes.emit("data", Buffer.from(encoder.encode(body)));
-      }
-      mockRes.emit("end");
-    });
-    return mockReq as unknown as ReturnType<typeof https.request>;
-  });
+  requestMock.mockImplementation(
+    (_url: unknown, _opts: unknown, callback: unknown) => {
+      // Fire callback asynchronously to simulate real behavior
+      process.nextTick(() => {
+        (callback as (res: typeof mockRes) => void)(mockRes);
+        // Emit body data
+        if (body !== null) {
+          const encoder = new TextEncoder();
+          mockRes.emit("data", Buffer.from(encoder.encode(body)));
+        }
+        mockRes.emit("end");
+      });
+      return mockReq as unknown as ReturnType<typeof https.request>;
+    }
+  );
 
   return { mockReq, mockRes };
 }
@@ -106,20 +112,22 @@ function setupLargeStreamRequest(
   mockReq.destroy = vi.fn();
 
   const requestMock = protocol === "https" ? mockHttpsRequest : mockHttpRequest;
-  requestMock.mockImplementation((_url: unknown, _opts: unknown, callback: unknown) => {
-    process.nextTick(() => {
-      (callback as (res: typeof mockRes) => void)(mockRes);
-      // Stream data in 1KB chunks
-      const chunkSize = 1024;
-      const chunk = Buffer.alloc(chunkSize, 65); // 'A' repeated
-      const totalChunks = Math.ceil(sizeBytes / chunkSize);
-      for (let i = 0; i < totalChunks; i++) {
-        mockRes.emit("data", chunk);
-      }
-      mockRes.emit("end");
-    });
-    return mockReq as unknown as ReturnType<typeof https.request>;
-  });
+  requestMock.mockImplementation(
+    (_url: unknown, _opts: unknown, callback: unknown) => {
+      process.nextTick(() => {
+        (callback as (res: typeof mockRes) => void)(mockRes);
+        // Stream data in 1KB chunks
+        const chunkSize = 1024;
+        const chunk = Buffer.alloc(chunkSize, 65); // 'A' repeated
+        const totalChunks = Math.ceil(sizeBytes / chunkSize);
+        for (let i = 0; i < totalChunks; i++) {
+          mockRes.emit("data", chunk);
+        }
+        mockRes.emit("end");
+      });
+      return mockReq as unknown as ReturnType<typeof https.request>;
+    }
+  );
 
   return { mockReq, mockRes };
 }
@@ -283,12 +291,18 @@ describe("ssrfSafeFetch - redirect handling", () => {
     mockDnsLookup
       .mockResolvedValueOnce({ address: "93.184.216.34", family: 4 } as never)
       // Second DNS lookup for redirect target — returns private IP (cloud metadata)
-      .mockResolvedValueOnce({ address: "169.254.169.254", family: 4 } as never);
+      .mockResolvedValueOnce({
+        address: "169.254.169.254",
+        family: 4,
+      } as never);
 
     // First request returns a redirect
     setupMockRequest("https", {
       status: 302,
-      headers: { "content-type": "text/html", location: "https://metadata.internal/" },
+      headers: {
+        "content-type": "text/html",
+        location: "https://metadata.internal/",
+      },
       body: null,
     });
 
@@ -307,33 +321,35 @@ describe("ssrfSafeFetch - redirect handling", () => {
 
     // Each call returns a redirect
     let callCount = 0;
-    mockHttpsRequest.mockImplementation((_url: unknown, _opts: unknown, callback: unknown) => {
-      callCount++;
-      const mockRes = new EventEmitter() as EventEmitter & {
-        statusCode: number;
-        statusMessage: string;
-        headers: Record<string, string>;
-      };
-      mockRes.statusCode = 302;
-      mockRes.statusMessage = "Found";
-      mockRes.headers = {
-        "content-type": "text/html",
-        location: `https://example.com/redirect-${callCount}`,
-      };
+    mockHttpsRequest.mockImplementation(
+      (_url: unknown, _opts: unknown, callback: unknown) => {
+        callCount++;
+        const mockRes = new EventEmitter() as EventEmitter & {
+          statusCode: number;
+          statusMessage: string;
+          headers: Record<string, string>;
+        };
+        mockRes.statusCode = 302;
+        mockRes.statusMessage = "Found";
+        mockRes.headers = {
+          "content-type": "text/html",
+          location: `https://example.com/redirect-${callCount}`,
+        };
 
-      const mockReq = new EventEmitter() as EventEmitter & {
-        end: ReturnType<typeof vi.fn>;
-        destroy: ReturnType<typeof vi.fn>;
-      };
-      mockReq.end = vi.fn();
-      mockReq.destroy = vi.fn();
+        const mockReq = new EventEmitter() as EventEmitter & {
+          end: ReturnType<typeof vi.fn>;
+          destroy: ReturnType<typeof vi.fn>;
+        };
+        mockReq.end = vi.fn();
+        mockReq.destroy = vi.fn();
 
-      process.nextTick(() => {
-        (callback as (res: typeof mockRes) => void)(mockRes);
-        mockRes.emit("end");
-      });
-      return mockReq as unknown as ReturnType<typeof https.request>;
-    });
+        process.nextTick(() => {
+          (callback as (res: typeof mockRes) => void)(mockRes);
+          mockRes.emit("end");
+        });
+        return mockReq as unknown as ReturnType<typeof https.request>;
+      }
+    );
 
     await expect(ssrfSafeFetch("https://example.com")).rejects.toSatisfy(
       (err: unknown) =>
@@ -484,10 +500,13 @@ describe("getAllowedPrivateHosts", () => {
 
   it("parses comma-separated hostnames into a lowercase set", () => {
     const original = process.env.ALLOWED_PRIVATE_HOSTS;
-    process.env.ALLOWED_PRIVATE_HOSTS = " Localhost , 192.168.1.100 , ollama.internal ";
+    process.env.ALLOWED_PRIVATE_HOSTS =
+      " Localhost , 192.168.1.100 , ollama.internal ";
     try {
       const hosts = getAllowedPrivateHosts();
-      expect(hosts).toEqual(new Set(["localhost", "192.168.1.100", "ollama.internal"]));
+      expect(hosts).toEqual(
+        new Set(["localhost", "192.168.1.100", "ollama.internal"])
+      );
     } finally {
       process.env.ALLOWED_PRIVATE_HOSTS = original;
     }
@@ -549,7 +568,10 @@ describe("ssrfSafeFetch - ALLOWED_PRIVATE_HOSTS allowlist", () => {
 
     setupMockRequest("https", {
       status: 302,
-      headers: { "content-type": "text/html", location: "https://internal.corp/" },
+      headers: {
+        "content-type": "text/html",
+        location: "https://internal.corp/",
+      },
       body: null,
     });
 

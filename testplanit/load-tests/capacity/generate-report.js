@@ -72,15 +72,17 @@ lines.push("");
 // so the report is self-contained and reviewers can see at a glance what
 // dataset the numbers came from.
 const TIER_DATASETS = {
-  small:  { projects: 5,  cases: 2500,  runs: 100, folders: 50 },
+  small: { projects: 5, cases: 2500, runs: 100, folders: 50 },
   medium: { projects: 20, cases: 20000, runs: 2000, folders: 200 },
-  large:  { projects: 50, cases: 100000, runs: 10000, folders: 500 },
+  large: { projects: 50, cases: 100000, runs: 10000, folders: 500 },
 };
 const seed = TIER_DATASETS[tier];
 if (seed) {
   lines.push("## Test Dataset");
   lines.push("");
-  lines.push(`Seeded baseline for the \`${tier}\` tier (volume before the suite runs):`);
+  lines.push(
+    `Seeded baseline for the \`${tier}\` tier (volume before the suite runs):`
+  );
   lines.push("");
   lines.push(`- **Projects:** ${seed.projects.toLocaleString()}`);
   lines.push(`- **Repository folders:** ${seed.folders.toLocaleString()}`);
@@ -89,8 +91,8 @@ if (seed) {
   lines.push("");
   lines.push(
     "Note: `02-import-rate` and `03-result-ingestion-rate` grow this dataset " +
-    "significantly while they run (tens of thousands of additional cases and results), " +
-    "so later tests (`04`-`08`) actually execute against a larger corpus than the seed above."
+      "significantly while they run (tens of thousands of additional cases and results), " +
+      "so later tests (`04`-`08`) actually execute against a larger corpus than the seed above."
   );
   lines.push("");
 }
@@ -109,7 +111,9 @@ lines.push("");
 // ---------------------------------------------------------------------------
 lines.push("## Summary");
 lines.push("");
-lines.push("| Test | Verdict | Peak VUs | Throughput | p95 latency | Error rate |");
+lines.push(
+  "| Test | Verdict | Peak VUs | Throughput | p95 latency | Error rate |"
+);
 lines.push("|---|---|---|---|---|---|");
 
 for (const s of summaries) {
@@ -118,7 +122,9 @@ for (const s of summaries) {
   const rps = `${s.http_req_rate.toFixed(1)} req/s`;
   const p95 = `${s.http_req_duration.p95.toFixed(0)}ms`;
   const errPct = `${(s.http_req_failed_rate * 100).toFixed(2)}%`;
-  lines.push(`| ${s.testId} | ${verdict} | ${vu} | ${rps} | ${p95} | ${errPct} |`);
+  lines.push(
+    `| ${s.testId} | ${verdict} | ${vu} | ${rps} | ${p95} | ${errPct} |`
+  );
 }
 lines.push("");
 
@@ -138,16 +144,22 @@ for (const s of summaries) {
   lines.push(`- **Total requests:** ${s.http_reqs.toLocaleString()}`);
   lines.push(`- **Throughput:** ${s.http_req_rate.toFixed(2)} req/s`);
   lines.push(`- **Error rate:** ${(s.http_req_failed_rate * 100).toFixed(3)}%`);
-  lines.push(`- **Latency (ms):** median=${s.http_req_duration.med.toFixed(0)}, p95=${s.http_req_duration.p95.toFixed(0)}, p99=${s.http_req_duration.p99.toFixed(0)}, max=${s.http_req_duration.max.toFixed(0)}`);
+  lines.push(
+    `- **Latency (ms):** median=${s.http_req_duration.med.toFixed(0)}, p95=${s.http_req_duration.p95.toFixed(0)}, p99=${s.http_req_duration.p99.toFixed(0)}, max=${s.http_req_duration.max.toFixed(0)}`
+  );
 
   if (s.custom_metrics && Object.keys(s.custom_metrics).length > 0) {
     lines.push("");
     lines.push(`**Custom metrics:**`);
     for (const [name, v] of Object.entries(s.custom_metrics)) {
       if (v.avg !== undefined) {
-        lines.push(`- \`${name}\`: avg=${v.avg?.toFixed(0)}ms, p95=${v["p(95)"]?.toFixed(0)}ms, max=${v.max?.toFixed(0)}ms`);
+        lines.push(
+          `- \`${name}\`: avg=${v.avg?.toFixed(0)}ms, p95=${v["p(95)"]?.toFixed(0)}ms, max=${v.max?.toFixed(0)}ms`
+        );
       } else if (v.count !== undefined) {
-        lines.push(`- \`${name}\`: count=${v.count}, rate=${v.rate?.toFixed(2)}/s`);
+        lines.push(
+          `- \`${name}\`: count=${v.count}, rate=${v.rate?.toFixed(2)}/s`
+        );
       } else {
         lines.push(`- \`${name}\`: ${JSON.stringify(v)}`);
       }
@@ -155,8 +167,9 @@ for (const s of summaries) {
   }
 
   if (s.thresholds && Object.keys(s.thresholds).length > 0) {
-    const failing = Object.entries(s.thresholds)
-      .flatMap(([metric, rules]) => rules.filter((r) => !r.ok).map((r) => `${metric}: ${r.rule}`));
+    const failing = Object.entries(s.thresholds).flatMap(([metric, rules]) =>
+      rules.filter((r) => !r.ok).map((r) => `${metric}: ${r.rule}`)
+    );
     if (failing.length > 0) {
       lines.push("");
       lines.push(`**Failing thresholds:**`);
@@ -198,14 +211,18 @@ function evaluateVerdict(summary) {
   const reasons = [];
 
   if (summary.http_req_failed_rate > thresholds.error_rate_max) {
-    reasons.push(`error rate ${(summary.http_req_failed_rate * 100).toFixed(2)}% > ${thresholds.error_rate_max * 100}%`);
+    reasons.push(
+      `error rate ${(summary.http_req_failed_rate * 100).toFixed(2)}% > ${thresholds.error_rate_max * 100}%`
+    );
   }
 
   // Check if any p95 threshold violated (we can't tell per-scenario from aggregate summary,
   // so we use the global p95 against the most lenient threshold)
   const maxP95 = Math.max(...Object.values(thresholds.latency_p95_ms));
   if (summary.http_req_duration.p95 > maxP95) {
-    reasons.push(`p95 ${summary.http_req_duration.p95.toFixed(0)}ms > ${maxP95}ms`);
+    reasons.push(
+      `p95 ${summary.http_req_duration.p95.toFixed(0)}ms > ${maxP95}ms`
+    );
   }
 
   // Check k6-level thresholds that failed
@@ -231,7 +248,9 @@ function buildHistoricalData(tier) {
 
   for (const f of files) {
     try {
-      const data = JSON.parse(fs.readFileSync(path.join(RESULTS_DIR, f), "utf8"));
+      const data = JSON.parse(
+        fs.readFileSync(path.join(RESULTS_DIR, f), "utf8")
+      );
       // Derive runId from filename prefix
       const runIdMatch = f.match(/^([^_]+)_/);
       out.push({

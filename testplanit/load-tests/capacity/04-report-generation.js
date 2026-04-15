@@ -21,20 +21,98 @@ const TEST_ID = "04-report-generation";
 
 // One Trend per report type so we get per-report latency stats
 const reports = [
-  { name: "test-execution", path: "/api/report-builder/test-execution", body: { reportType: "test-execution", projectId: PROJECT_ID, dimensions: ["status"], metrics: ["testResults"] } },
-  { name: "test-case-health", path: "/api/report-builder/test-case-health", body: { reportType: "test-case-health", projectId: PROJECT_ID, dimensions: [], metrics: [] } },
-  { name: "automation-trends", path: "/api/report-builder/automation-trends", body: { reportType: "automation-trends", projectId: PROJECT_ID, dimensions: [], metrics: [] } },
-  { name: "flaky-tests", path: "/api/report-builder/flaky-tests", body: { reportType: "flaky-tests", projectId: PROJECT_ID, dimensions: [], metrics: [] } },
-  { name: "cross-test-execution", path: "/api/report-builder/cross-project-test-execution", body: { reportType: "cross-project-test-execution", dimensions: ["project", "status"], metrics: ["testResults"] } },
-  { name: "cross-test-case-health", path: "/api/report-builder/cross-project-test-case-health", body: { reportType: "cross-project-test-case-health", dimensions: [], metrics: [] } },
-  { name: "cross-flaky-tests", path: "/api/report-builder/cross-project-flaky-tests", body: { reportType: "cross-project-flaky-tests", dimensions: [], metrics: [] } },
-  { name: "cross-user-engagement", path: "/api/report-builder/cross-project-user-engagement", body: { reportType: "cross-project-user-engagement", dimensions: ["user"], metrics: ["executionCount"] } },
+  {
+    name: "test-execution",
+    path: "/api/report-builder/test-execution",
+    body: {
+      reportType: "test-execution",
+      projectId: PROJECT_ID,
+      dimensions: ["status"],
+      metrics: ["testResults"],
+    },
+  },
+  {
+    name: "test-case-health",
+    path: "/api/report-builder/test-case-health",
+    body: {
+      reportType: "test-case-health",
+      projectId: PROJECT_ID,
+      dimensions: [],
+      metrics: [],
+    },
+  },
+  {
+    name: "automation-trends",
+    path: "/api/report-builder/automation-trends",
+    body: {
+      reportType: "automation-trends",
+      projectId: PROJECT_ID,
+      dimensions: [],
+      metrics: [],
+    },
+  },
+  {
+    name: "flaky-tests",
+    path: "/api/report-builder/flaky-tests",
+    body: {
+      reportType: "flaky-tests",
+      projectId: PROJECT_ID,
+      dimensions: [],
+      metrics: [],
+    },
+  },
+  {
+    name: "cross-test-execution",
+    path: "/api/report-builder/cross-project-test-execution",
+    body: {
+      reportType: "cross-project-test-execution",
+      dimensions: ["project", "status"],
+      metrics: ["testResults"],
+    },
+  },
+  {
+    name: "cross-test-case-health",
+    path: "/api/report-builder/cross-project-test-case-health",
+    body: {
+      reportType: "cross-project-test-case-health",
+      dimensions: [],
+      metrics: [],
+    },
+  },
+  {
+    name: "cross-flaky-tests",
+    path: "/api/report-builder/cross-project-flaky-tests",
+    body: {
+      reportType: "cross-project-flaky-tests",
+      dimensions: [],
+      metrics: [],
+    },
+  },
+  {
+    name: "cross-user-engagement",
+    path: "/api/report-builder/cross-project-user-engagement",
+    body: {
+      reportType: "cross-project-user-engagement",
+      dimensions: ["user"],
+      metrics: ["executionCount"],
+    },
+  },
   // Custom/user-defined reports with multiple dimensions (more complex query)
-  { name: "custom-multi-dim", path: "/api/report-builder/test-execution", body: { reportType: "test-execution", projectId: PROJECT_ID, dimensions: ["status", "user", "testCase"], metrics: ["testResults", "avgElapsedTime"] } },
+  {
+    name: "custom-multi-dim",
+    path: "/api/report-builder/test-execution",
+    body: {
+      reportType: "test-execution",
+      projectId: PROJECT_ID,
+      dimensions: ["status", "user", "testCase"],
+      metrics: ["testResults", "avgElapsedTime"],
+    },
+  },
 ];
 
 const trends = {};
-for (const r of reports) trends[r.name] = new Trend(`report_${r.name.replace(/-/g, "_")}_ms`);
+for (const r of reports)
+  trends[r.name] = new Trend(`report_${r.name.replace(/-/g, "_")}_ms`);
 
 export const options = {
   // Fixed 1 VU, 50 iterations — each run hits every report once
@@ -54,7 +132,9 @@ export const options = {
 export default function reportGeneration() {
   for (const report of reports) {
     const start = Date.now();
-    const { res } = postApi(report.path, report.body, { scenarioTag: "reporting" });
+    const { res } = postApi(report.path, report.body, {
+      scenarioTag: "reporting",
+    });
     const duration = Date.now() - start;
     trends[report.name].add(duration);
     check(res, {

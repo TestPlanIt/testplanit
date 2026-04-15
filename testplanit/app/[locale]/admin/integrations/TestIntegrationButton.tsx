@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Integration } from "@prisma/client";
 import { Activity } from "lucide-react";
@@ -16,7 +16,10 @@ interface TestIntegrationButtonProps {
   onTest: (integration: Integration) => void;
 }
 
-export function TestIntegrationButton({ integration, onTest }: TestIntegrationButtonProps) {
+export function TestIntegrationButton({
+  integration,
+  onTest,
+}: TestIntegrationButtonProps) {
   const t = useTranslations("admin.integrations");
 
   return (

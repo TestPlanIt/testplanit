@@ -1,9 +1,15 @@
 import type { ITestCase, ITestResult, ITestSuite } from "test-results-parser";
 import { describe, expect, it } from "vitest";
 import {
-  countTotalTestCases, detectFormat,
-  detectFormatFromFiles, extractClassName, FORMAT_TO_RUN_TYPE,
-  FORMAT_TO_SOURCE, isValidFormat, normalizeStatus, TEST_RESULT_FORMATS
+  countTotalTestCases,
+  detectFormat,
+  detectFormatFromFiles,
+  extractClassName,
+  FORMAT_TO_RUN_TYPE,
+  FORMAT_TO_SOURCE,
+  isValidFormat,
+  normalizeStatus,
+  TEST_RESULT_FORMATS,
 } from "./testResultsParser";
 
 describe("testResultsParser", () => {
@@ -360,7 +366,9 @@ describe("testResultsParser", () => {
       } as unknown as ITestCase;
       const suite = { name: "TestSuite" } as ITestSuite;
 
-      expect(extractClassName(testCase, suite)).toBe("com.example.AnotherClass");
+      expect(extractClassName(testCase, suite)).toBe(
+        "com.example.AnotherClass"
+      );
     });
 
     it("should extract class from metadata.class", () => {
@@ -419,12 +427,17 @@ describe("testResultsParser", () => {
   });
 
   describe("isValidFormat", () => {
-    it.each(["junit", "testng", "xunit", "nunit", "mstest", "mocha", "cucumber"])(
-      'should return true for valid format "%s"',
-      (format) => {
-        expect(isValidFormat(format)).toBe(true);
-      }
-    );
+    it.each([
+      "junit",
+      "testng",
+      "xunit",
+      "nunit",
+      "mstest",
+      "mocha",
+      "cucumber",
+    ])('should return true for valid format "%s"', (format) => {
+      expect(isValidFormat(format)).toBe(true);
+    });
 
     it("should return false for invalid format", () => {
       expect(isValidFormat("invalid")).toBe(false);
@@ -435,10 +448,7 @@ describe("testResultsParser", () => {
 
   describe("countTotalTestCases", () => {
     // Helper to create minimal valid ITestSuite
-    const createMockSuite = (
-      name: string,
-      cases: ITestCase[]
-    ): ITestSuite =>
+    const createMockSuite = (name: string, cases: ITestCase[]): ITestSuite =>
       ({
         name,
         total: cases.length,

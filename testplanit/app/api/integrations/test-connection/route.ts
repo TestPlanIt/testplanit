@@ -28,20 +28,18 @@ async function testJiraConnection(
       if (!email || !apiToken || !baseUrl) {
         return {
           success: false,
-          error: "Missing required Jira API key configuration (email, apiToken, baseUrl)",
+          error:
+            "Missing required Jira API key configuration (email, apiToken, baseUrl)",
         };
       }
 
       // Test connection using API key
-      const response = await fetch(
-        `${baseUrl}/rest/api/3/myself`,
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`,
-            Accept: "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${baseUrl}/rest/api/3/myself`, {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`,
+          Accept: "application/json",
+        },
+      });
 
       if (!response.ok) {
         return {
@@ -252,12 +250,15 @@ export async function POST(req: NextRequest) {
         typeof integration.credentials === "object"
       ) {
         // Check if credentials are stored with an 'encrypted' key (PUT route format)
-        if ('encrypted' in integration.credentials && typeof integration.credentials.encrypted === 'string') {
+        if (
+          "encrypted" in integration.credentials &&
+          typeof integration.credentials.encrypted === "string"
+        ) {
           try {
             const decrypted = await decrypt(integration.credentials.encrypted);
             Object.assign(testCredentials, JSON.parse(decrypted));
           } catch (e) {
-            console.error('Failed to decrypt credentials:', e);
+            console.error("Failed to decrypt credentials:", e);
           }
         } else {
           // Handle individual field encryption or plain text
@@ -277,7 +278,9 @@ export async function POST(req: NextRequest) {
                 }
               } catch {
                 // If decryption fails, use the value as-is
-                console.warn(`Failed to decrypt credential ${key}, using as-is`);
+                console.warn(
+                  `Failed to decrypt credential ${key}, using as-is`
+                );
                 testCredentials[key] = value;
               }
             }
@@ -302,7 +305,11 @@ export async function POST(req: NextRequest) {
 
     switch (testProvider) {
       case IntegrationProvider.JIRA:
-        result = await testJiraConnection(testCredentials, testSettings, authType);
+        result = await testJiraConnection(
+          testCredentials,
+          testSettings,
+          authType
+        );
         break;
       case IntegrationProvider.GITHUB:
         result = await testGithubConnection(testCredentials);

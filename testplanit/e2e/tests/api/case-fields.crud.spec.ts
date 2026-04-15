@@ -118,11 +118,7 @@ test.describe("CaseFields CRUD", () => {
     expect(result.data.displayName).toBe(updatedDisplay);
   });
 
-  test("should soft-delete a case field", async ({
-    request,
-    baseURL,
-    api,
-  }) => {
+  test("should soft-delete a case field", async ({ request, baseURL, api }) => {
     const timestamp = Date.now();
     const displayName = `API Delete Field ${timestamp}`;
 
@@ -168,7 +164,9 @@ test.describe("CaseFieldValues CRUD", () => {
 
   test.beforeAll(async ({ request: _request, baseURL: _baseURL, api }) => {
     // Create a fresh project so we get a root folder with parentId === null
-    projectId = await api.createProject(`API FieldValues Project ${Date.now()}`);
+    projectId = await api.createProject(
+      `API FieldValues Project ${Date.now()}`
+    );
     folderId = await api.getRootFolderId(projectId);
   });
 
@@ -235,11 +233,7 @@ test.describe("CaseFieldValues CRUD", () => {
     });
   });
 
-  test("should update a field value", async ({
-    request,
-    baseURL,
-    api,
-  }) => {
+  test("should update a field value", async ({ request, baseURL, api }) => {
     const timestamp = Date.now();
 
     const fieldId = await api.createCaseField({
@@ -304,11 +298,7 @@ test.describe("CaseFieldValues CRUD", () => {
     });
   });
 
-  test("should delete a field value", async ({
-    request,
-    baseURL,
-    api,
-  }) => {
+  test("should delete a field value", async ({ request, baseURL, api }) => {
     const timestamp = Date.now();
 
     const fieldId = await api.createCaseField({

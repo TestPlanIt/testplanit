@@ -85,7 +85,9 @@ describe("milestoneActions", () => {
       });
 
       it("should return error when session has no user", async () => {
-        vi.mocked(getServerAuthSession).mockResolvedValue({ user: null } as any);
+        vi.mocked(getServerAuthSession).mockResolvedValue({
+          user: null,
+        } as any);
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -153,12 +155,17 @@ describe("milestoneActions", () => {
     describe("confirmation required", () => {
       it("should require confirmation when there are active test runs", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 1 }, { id: 2 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 1 },
+          { id: 2 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const result = await completeMilestoneCascade({
@@ -176,13 +183,19 @@ describe("milestoneActions", () => {
 
       it("should require confirmation when there are active sessions", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 1 }, { id: 2 }, { id: 3 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+        ] as any);
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -199,7 +212,9 @@ describe("milestoneActions", () => {
 
       it("should require confirmation when there are descendant milestones to complete", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -207,7 +222,10 @@ describe("milestoneActions", () => {
         // Shared utility returns descendant IDs
         vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2, 3]);
         // Incomplete descendants query
-        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }, { id: 3 }] as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([
+          { id: 2 },
+          { id: 3 },
+        ] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
@@ -223,7 +241,9 @@ describe("milestoneActions", () => {
 
       it("should require confirmation when there are multiple types of dependencies", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -231,10 +251,17 @@ describe("milestoneActions", () => {
         // Shared utility returns descendant IDs
         vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2]);
         // Incomplete descendants query
-        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }] as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([
+          { id: 2 },
+        ] as any);
 
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+          { id: 21 },
+        ] as any);
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -253,7 +280,9 @@ describe("milestoneActions", () => {
     describe("successful completion", () => {
       it("should complete milestone without dependencies", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -274,12 +303,16 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        expect(result.message).toBe("Milestone and dependencies completed successfully.");
+        expect(result.message).toBe(
+          "Milestone and dependencies completed successfully."
+        );
       });
 
       it("should complete milestone with force flag despite dependencies", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -289,8 +322,12 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce([])
           .mockResolvedValueOnce([{ id: 2 }] as any);
 
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+        ] as any);
 
         const mockUpdate = vi.fn();
         const mockUpdateMany = vi.fn();
@@ -389,10 +426,14 @@ describe("milestoneActions", () => {
 
     describe("workflow state handling", () => {
       it("should handle missing DONE workflow for test runs gracefully", async () => {
-        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(null) // No DONE workflow for runs
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -421,10 +462,14 @@ describe("milestoneActions", () => {
       });
 
       it("should handle missing DONE workflow for sessions gracefully", async () => {
-        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(null); // No DONE workflow for sessions
@@ -456,7 +501,9 @@ describe("milestoneActions", () => {
     describe("descendant milestone traversal", () => {
       it("should find all levels of descendant milestones", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -464,7 +511,11 @@ describe("milestoneActions", () => {
         // Shared utility returns all descendant IDs (3 levels deep)
         vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2, 3, 4]);
         // Incomplete descendants query
-        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }, { id: 3 }, { id: 4 }] as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+        ] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
@@ -480,7 +531,9 @@ describe("milestoneActions", () => {
 
       it("should exclude deleted milestones from descendants", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -511,17 +564,23 @@ describe("milestoneActions", () => {
 
     describe("error handling", () => {
       it("should handle database error during transaction", async () => {
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
 
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.$transaction).mockRejectedValue(new Error("Database connection failed"));
+        vi.mocked(prisma.$transaction).mockRejectedValue(
+          new Error("Database connection failed")
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -536,10 +595,14 @@ describe("milestoneActions", () => {
       });
 
       it("should handle non-Error exceptions during transaction", async () => {
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
 
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
@@ -563,12 +626,17 @@ describe("milestoneActions", () => {
     describe("transaction updates", () => {
       it("should update test runs with stateId when workflow exists", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+          { id: 11 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
@@ -599,13 +667,18 @@ describe("milestoneActions", () => {
 
       it("should update sessions with stateId when workflow exists", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+          { id: 21 },
+        ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -635,14 +708,19 @@ describe("milestoneActions", () => {
 
       it("should update descendant milestones", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
 
         vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2, 3]);
         // Incomplete descendants query
-        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }, { id: 3 }] as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([
+          { id: 2 },
+          { id: 3 },
+        ] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
@@ -650,7 +728,10 @@ describe("milestoneActions", () => {
         const mockMilestonesUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
-            milestones: { update: vi.fn(), updateMany: mockMilestonesUpdateMany },
+            milestones: {
+              update: vi.fn(),
+              updateMany: mockMilestonesUpdateMany,
+            },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
           } as any);
@@ -680,12 +761,17 @@ describe("milestoneActions", () => {
     describe("optional test run completion", () => {
       it("should NOT complete test runs when completeTestRuns is false", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+          { id: 11 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
@@ -710,12 +796,17 @@ describe("milestoneActions", () => {
 
       it("should complete test runs when completeTestRuns is true (default)", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+          { id: 11 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
@@ -740,12 +831,16 @@ describe("milestoneActions", () => {
 
       it("should complete test runs by default when flag is not provided", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
@@ -772,13 +867,18 @@ describe("milestoneActions", () => {
     describe("optional session completion", () => {
       it("should NOT complete sessions when completeSessions is false", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+          { id: 21 },
+        ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -802,13 +902,18 @@ describe("milestoneActions", () => {
 
       it("should complete sessions when completeSessions is true (default)", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+          { id: 21 },
+        ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -832,13 +937,17 @@ describe("milestoneActions", () => {
 
       it("should complete sessions by default when flag is not provided", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+        ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -864,12 +973,16 @@ describe("milestoneActions", () => {
     describe("custom workflow state IDs", () => {
       it("should use provided testRunStateId instead of default workflow", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
@@ -901,13 +1014,17 @@ describe("milestoneActions", () => {
 
       it("should use provided sessionStateId instead of default workflow", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+        ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -938,12 +1055,16 @@ describe("milestoneActions", () => {
 
       it("should not set stateId when completeTestRuns is false even if testRunStateId is provided", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+        ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
@@ -971,13 +1092,19 @@ describe("milestoneActions", () => {
     describe("combined optional completion scenarios", () => {
       it("should complete only milestone when both test runs and sessions are disabled", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+        ] as any);
 
         const mockMilestoneUpdate = vi.fn();
         const mockTestRunsUpdateMany = vi.fn();
@@ -1007,13 +1134,20 @@ describe("milestoneActions", () => {
 
       it("should return impact data even when completion flags are false", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
-        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
-        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 10 },
+          { id: 11 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([
+          { id: 20 },
+        ] as any);
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,

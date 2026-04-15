@@ -182,8 +182,12 @@ test.describe("Shared Steps Management", () => {
     await expect(nameInput).toBeVisible({ timeout: 10000 });
 
     // Verify existing steps are loaded in edit mode (the form resets with current items)
-    await expect(page.getByTestId("step-editor-0")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId("step-editor-1")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("step-editor-0")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByTestId("step-editor-1")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Update the group name
     await nameInput.clear();
@@ -220,7 +224,9 @@ test.describe("Shared Steps Management", () => {
 
     // Wait for save to complete — edit mode should exit
     await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("edit-group-name-input-main")).not.toBeVisible({
+    await expect(
+      page.getByTestId("edit-group-name-input-main")
+    ).not.toBeVisible({
       timeout: 15000,
     });
 
@@ -343,7 +349,10 @@ test.describe("Shared Steps Management", () => {
     });
 
     // Create folder, test case, and shared step group via API
-    const folderId = await api.createFolder(projectId, `Usage Folder ${uniqueId}`);
+    const folderId = await api.createFolder(
+      projectId,
+      `Usage Folder ${uniqueId}`
+    );
     const testCaseId = await api.createTestCase(
       projectId,
       folderId,
@@ -377,10 +386,9 @@ test.describe("Shared Steps Management", () => {
     ]);
 
     // Navigate to test case detail page
-    await page.goto(
-      `/en-US/projects/repository/${projectId}/${testCaseId}`,
-      { waitUntil: "networkidle" }
-    );
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`, {
+      waitUntil: "networkidle",
+    });
 
     // Wait for the Edit button to confirm the page loaded
     const editButton = page.getByTestId("edit-test-case-button");
@@ -394,7 +402,7 @@ test.describe("Shared Steps Management", () => {
     // Click "Add Shared Steps" button to open the selection dialog
     // This button is rendered in StepsForm when hideSharedStepsButtons is false
     const addSharedStepsButton = page
-      .locator('button')
+      .locator("button")
       .filter({ hasText: /add shared steps/i });
     await expect(addSharedStepsButton.first()).toBeVisible({ timeout: 15000 });
     await addSharedStepsButton.first().click();
@@ -410,7 +418,7 @@ test.describe("Shared Steps Management", () => {
 
     // Wait for the popover with CommandInput to open
     // CommandInput renders as an input with cmdk-input attribute
-    const commandInput = page.locator('[cmdk-input]');
+    const commandInput = page.locator("[cmdk-input]");
     await expect(commandInput).toBeVisible({ timeout: 10000 });
     await commandInput.fill(sharedGroupName);
     await page.waitForTimeout(800); // Wait for async fetch to complete
@@ -450,7 +458,9 @@ test.describe("Shared Steps Management", () => {
     // Expand left panel for visibility (pattern from steps-display.spec.ts)
     await page.waitForTimeout(500);
     try {
-      const resizeHandle = page.locator('[data-panel-resize-handle-id]').first();
+      const resizeHandle = page
+        .locator("[data-panel-resize-handle-id]")
+        .first();
       await resizeHandle.waitFor({ state: "visible", timeout: 3000 });
       const handleBox = await resizeHandle.boundingBox();
       if (handleBox) {
@@ -572,9 +582,9 @@ test.describe("Shared Steps Management", () => {
 
     // Wait for the group steps to load in the right pane before entering edit mode
     // The StepsDisplay renders after items are fetched
-    await expect(
-      page.getByTestId("selected-group-name")
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("selected-group-name")).toBeVisible({
+      timeout: 10000,
+    });
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1000); // Extra wait for items query to complete
 
@@ -585,8 +595,12 @@ test.describe("Shared Steps Management", () => {
     await expect(cancelEditBtn).toBeVisible({ timeout: 10000 });
 
     // Verify the 2 existing steps are visible in edit mode before adding a new one
-    await expect(page.getByTestId("step-editor-0")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId("step-editor-1")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("step-editor-0")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByTestId("step-editor-1")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Add one more step
     const addStepButton = page.getByTestId("add-step-button");
@@ -610,7 +624,9 @@ test.describe("Shared Steps Management", () => {
 
     // Wait for edit mode to exit
     await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("edit-group-name-input-main")).not.toBeVisible({
+    await expect(
+      page.getByTestId("edit-group-name-input-main")
+    ).not.toBeVisible({
       timeout: 15000,
     });
 

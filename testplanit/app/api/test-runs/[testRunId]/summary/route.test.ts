@@ -71,9 +71,7 @@ describe("Test Run Summary API Route", () => {
     testRunId: string = "1",
     searchParams: Record<string, string> = {}
   ): [NextRequest, { params: Promise<{ testRunId: string }> }] => {
-    const url = new URL(
-      `http://localhost/api/test-runs/${testRunId}/summary`
-    );
+    const url = new URL(`http://localhost/api/test-runs/${testRunId}/summary`);
     for (const [key, value] of Object.entries(searchParams)) {
       url.searchParams.set(key, value);
     }
@@ -233,7 +231,9 @@ describe("Test Run Summary API Route", () => {
         ...mockTestRun,
         forecastManual: 9999,
       };
-      (prisma.testRuns.findUnique as any).mockResolvedValue(testRunWithForecast);
+      (prisma.testRuns.findUnique as any).mockResolvedValue(
+        testRunWithForecast
+      );
 
       const [request, context] = createRequest();
       const response = await GET(request, context);

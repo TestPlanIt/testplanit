@@ -5,7 +5,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
-  useCreateGroups, useCreateManyGroupAssignment, useFindManyUser
+  useCreateGroups,
+  useCreateManyGroupAssignment,
+  useFindManyUser,
 } from "~/lib/hooks";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 
@@ -24,7 +26,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import { UserNameCell } from "@/components/tables/UserNameCell";

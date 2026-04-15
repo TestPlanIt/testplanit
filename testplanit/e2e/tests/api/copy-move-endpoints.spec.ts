@@ -101,7 +101,10 @@ test.describe("Copy-Move API Endpoints", () => {
       expect(body.details).toBeDefined();
     });
 
-    test("returns 400 for empty caseIds array", async ({ request, baseURL }) => {
+    test("returns 400 for empty caseIds array", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(
         `${baseURL}/api/repository/copy-move/preflight`,
         {
@@ -124,12 +127,8 @@ test.describe("Copy-Move API Endpoints", () => {
       baseURL: _baseURL,
     }) => {
       const ts = Date.now();
-      sourceProjectId = await api.createProject(
-        `E2E CopyMove Source ${ts}`
-      );
-      targetProjectId = await api.createProject(
-        `E2E CopyMove Target ${ts}`
-      );
+      sourceProjectId = await api.createProject(`E2E CopyMove Source ${ts}`);
+      targetProjectId = await api.createProject(`E2E CopyMove Target ${ts}`);
 
       sourceFolderId = await api.getRootFolderId(sourceProjectId);
       targetFolderId = await api.getRootFolderId(targetProjectId);
@@ -146,14 +145,46 @@ test.describe("Copy-Move API Endpoints", () => {
 
       await api.addStepsToTestCase(sourceCaseId, [
         {
-          step: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Step 1" }] }] },
-          expectedResult: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Expected 1" }] }] },
+          step: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Step 1" }],
+              },
+            ],
+          },
+          expectedResult: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Expected 1" }],
+              },
+            ],
+          },
           order: 1,
           sharedStepGroupId: null,
         },
         {
-          step: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Step 2" }] }] },
-          expectedResult: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Expected 2" }] }] },
+          step: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Step 2" }],
+              },
+            ],
+          },
+          expectedResult: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Expected 2" }],
+              },
+            ],
+          },
           order: 2,
           sharedStepGroupId: null,
         },
@@ -201,7 +232,11 @@ test.describe("Copy-Move API Endpoints", () => {
       api,
     }) => {
       // Create a case in the target project with the same name as the source case
-      const collisionCaseId = await api.createTestCase(targetProjectId, targetFolderId, sourceCaseName);
+      const collisionCaseId = await api.createTestCase(
+        targetProjectId,
+        targetFolderId,
+        sourceCaseName
+      );
       expect(collisionCaseId).toBeGreaterThan(0);
 
       const response = await request.post(
@@ -468,7 +503,10 @@ test.describe("Copy-Move API Endpoints", () => {
     });
 
     test("copied case has steps in target", async ({ request, baseURL }) => {
-      test.skip(!copyJobId || !copiedCaseId, "Queue unavailable — skipping data verification");
+      test.skip(
+        !copyJobId || !copiedCaseId,
+        "Queue unavailable — skipping data verification"
+      );
 
       const stepsResponse = await request.get(
         `${baseURL}/api/model/steps/findMany`,
@@ -781,11 +819,7 @@ test.describe("Copy-Move API Endpoints", () => {
         expect(jobId).toBeTruthy();
 
         // Poll until done
-        const { state, result } = await pollUntilDone(
-          request,
-          baseURL!,
-          jobId
-        );
+        const { state, result } = await pollUntilDone(request, baseURL!, jobId);
         expect(state).toBe("completed");
         expect(result.copiedCount).toBe(2);
 
@@ -885,11 +919,7 @@ test.describe("Copy-Move API Endpoints", () => {
 
       if (submitRes.status() === 200) {
         const { jobId } = await submitRes.json();
-        const { state, result } = await pollUntilDone(
-          request,
-          baseURL!,
-          jobId
-        );
+        const { state, result } = await pollUntilDone(request, baseURL!, jobId);
         expect(state).toBe("completed");
         expect(result.movedCount).toBe(1);
 

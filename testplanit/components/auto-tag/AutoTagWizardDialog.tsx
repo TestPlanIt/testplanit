@@ -481,7 +481,7 @@ export function AutoTagWizardDialog({
         }
       }
     },
-    [allJobs],
+    [allJobs]
   );
 
   // Find which job owns a given entity for toggle/edit/apply
@@ -556,7 +556,8 @@ export function AutoTagWizardDialog({
   // Reset filters when entering review step
   const prevStepRef = useRef(step);
   useEffect(() => {
-    const enteringReview = step === "review" && prevStepRef.current !== "review";
+    const enteringReview =
+      step === "review" && prevStepRef.current !== "review";
     prevStepRef.current = step;
     if (enteringReview) {
       setReviewSearch("");

@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -16,7 +16,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ import * as z from "zod";
 import {
   useCreatePromptConfig,
   useFindManyPromptConfig,
-  useUpdatePromptConfig
+  useUpdatePromptConfig,
 } from "~/lib/hooks/prompt-config";
 import { useCreatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
@@ -162,8 +162,12 @@ export function AddPromptConfig({
               userPrompt: promptData.userPrompt || "",
               temperature: promptData.temperature,
               maxOutputTokens: promptData.maxOutputTokens,
-              ...(promptData.llmIntegrationId ? { llmIntegrationId: promptData.llmIntegrationId } : {}),
-              ...(promptData.modelOverride ? { modelOverride: promptData.modelOverride } : {}),
+              ...(promptData.llmIntegrationId
+                ? { llmIntegrationId: promptData.llmIntegrationId }
+                : {}),
+              ...(promptData.modelOverride
+                ? { modelOverride: promptData.modelOverride }
+                : {}),
             },
           });
         }
@@ -219,10 +223,7 @@ export function AddPromptConfig({
                     <HelpPopover helpKey="promptConfig.description" />
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Optional description..."
-                      {...field}
-                    />
+                    <Input placeholder="Optional description..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -281,7 +282,10 @@ export function AddPromptConfig({
               <h3 className="text-sm font-medium mb-3">{t("features")}</h3>
               <Accordion type="single" collapsible className="w-full">
                 {featureKeys.map((feature) => (
-                  <PromptFeatureSection key={feature} feature={feature as LlmFeature} />
+                  <PromptFeatureSection
+                    key={feature}
+                    feature={feature as LlmFeature}
+                  />
                 ))}
               </Accordion>
             </div>

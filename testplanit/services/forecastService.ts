@@ -66,21 +66,24 @@ export async function updateRepositoryCaseForecast(
       ...caseAndLinks.linksTo.map((l) => l.caseAId),
     ];
     const uniqueCaseIds = Array.from(new Set(linkedIds));
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] Group case IDs:", uniqueCaseIds);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] Group case IDs:", uniqueCaseIds);
 
     // 2. Fetch all cases in the group with their source
     const allCases = await prisma.repositoryCases.findMany({
       where: { id: { in: uniqueCaseIds } },
       select: { id: true, source: true },
     });
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] allCases:", allCases);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] allCases:", allCases);
 
     // 3. Gather all manual and JUNIT result durations
     // Manual: TestRunResults (isDeleted: false, elapsed > 0)
     const manualCaseIds = allCases
       .filter((c) => c.source === "MANUAL")
       .map((c) => c.id);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualCaseIds:", manualCaseIds);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] manualCaseIds:", manualCaseIds);
     let manualResults: { elapsed: number | null }[] = [];
     if (manualCaseIds.length) {
       // 1. Find all TestRunCase IDs for these repositoryCaseIds
@@ -102,17 +105,20 @@ export async function updateRepositoryCaseForecast(
           })
         : [];
     }
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualResults:", manualResults);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] manualResults:", manualResults);
     const manualDurations = manualResults
       .map((r) => r.elapsed)
       .filter((v) => v != null);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualDurations:", manualDurations);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] manualDurations:", manualDurations);
 
     // Automated sources (JUNIT, TESTNG, etc.): JUnitTestResult (statusId not null, time > 0)
     const junitCaseIds = allCases
       .filter((c) => isAutomatedCaseSource(c.source))
       .map((c) => c.id);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitCaseIds:", junitCaseIds);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] junitCaseIds:", junitCaseIds);
     const junitResults = junitCaseIds.length
       ? await prisma.jUnitTestResult.findMany({
           where: {
@@ -122,11 +128,13 @@ export async function updateRepositoryCaseForecast(
           select: { time: true },
         })
       : [];
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitResults:", junitResults);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] junitResults:", junitResults);
     const junitDurations = junitResults
       .map((r) => r.time)
       .filter((v) => v != null);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitDurations:", junitDurations);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] junitDurations:", junitDurations);
 
     // 4. Compute averages
     const avgManual =
@@ -143,7 +151,8 @@ export async function updateRepositoryCaseForecast(
             ).toFixed(3)
           )
         : null;
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
 
     // 5. Update only cases whose forecast values have actually changed
     const currentForecasts = await prisma.repositoryCases.findMany({
@@ -151,7 +160,10 @@ export async function updateRepositoryCaseForecast(
       select: { id: true, forecastManual: true, forecastAutomated: true },
     });
     for (const current of currentForecasts) {
-      if (current.forecastManual !== avgManual || current.forecastAutomated !== avgJunit) {
+      if (
+        current.forecastManual !== avgManual ||
+        current.forecastAutomated !== avgJunit
+      ) {
         await prisma.repositoryCases.update({
           where: { id: current.id },
           data: {
@@ -194,7 +206,9 @@ export async function updateRepositoryCaseForecast(
 
     return {
       updatedCaseIds: uniqueCaseIds,
-      affectedTestRunIds: options.collectAffectedTestRuns ? uniqueAffectedTestRunIds : [],
+      affectedTestRunIds: options.collectAffectedTestRuns
+        ? uniqueAffectedTestRunIds
+        : [],
     };
   } catch (error) {
     console.error(
@@ -215,7 +229,8 @@ export async function updateTestRunForecast(
 ): Promise<void> {
   const prisma = options.prismaClient || defaultPrisma;
 
-  if (process.env.DEBUG_FORECAST) console.log(`Updating forecast for TestRun ID: ${testRunId}`);
+  if (process.env.DEBUG_FORECAST)
+    console.log(`Updating forecast for TestRun ID: ${testRunId}`);
   try {
     // 1. Fetch all TestRunCases for this TestRun, including their status system name
     let testRunCasesWithDetails = await prisma.testRunCases.findMany({
@@ -249,10 +264,10 @@ export async function updateTestRunForecast(
           continue;
         }
 
-        const result = await updateRepositoryCaseForecast(
-          repositoryCaseId,
-          { skipTestRunUpdate: true, prismaClient: prisma }
-        );
+        const result = await updateRepositoryCaseForecast(repositoryCaseId, {
+          skipTestRunUpdate: true,
+          prismaClient: prisma,
+        });
 
         if (result.updatedCaseIds.length > 0) {
           refreshedAnyCase = true;
@@ -291,7 +306,11 @@ export async function updateTestRunForecast(
         where: { id: testRunId },
         select: { forecastManual: true, forecastAutomated: true },
       });
-      if (currentRun && (currentRun.forecastManual !== null || currentRun.forecastAutomated !== null)) {
+      if (
+        currentRun &&
+        (currentRun.forecastManual !== null ||
+          currentRun.forecastAutomated !== null)
+      ) {
         await prisma.testRuns.update({
           where: { id: testRunId },
           data: {
@@ -380,7 +399,8 @@ export async function getActiveRepositoryCaseIds(
 ): Promise<number[]> {
   const prisma = options.prismaClient || defaultPrisma;
 
-  if (process.env.DEBUG_FORECAST) console.log("Fetching active repository case IDs...");
+  if (process.env.DEBUG_FORECAST)
+    console.log("Fetching active repository case IDs...");
   try {
     const cases = await prisma.repositoryCases.findMany({
       where: {
@@ -392,7 +412,8 @@ export async function getActiveRepositoryCaseIds(
       },
     });
     const ids = cases.map((c) => c.id);
-    if (process.env.DEBUG_FORECAST) console.log(`Found ${ids.length} active repository cases.`);
+    if (process.env.DEBUG_FORECAST)
+      console.log(`Found ${ids.length} active repository cases.`);
     return ids;
   } catch (error) {
     console.error("Error fetching active repository case IDs:", error);
@@ -412,7 +433,8 @@ export async function getUniqueCaseGroupIds(
 ): Promise<number[]> {
   const prisma = options.prismaClient || defaultPrisma;
 
-  if (process.env.DEBUG_FORECAST) console.log("Fetching unique case group representatives...");
+  if (process.env.DEBUG_FORECAST)
+    console.log("Fetching unique case group representatives...");
   try {
     const BATCH_SIZE = 1000;
     const processedCaseIds = new Set<number>();
@@ -430,7 +452,10 @@ export async function getUniqueCaseGroupIds(
     });
 
     const totalCases = allCaseIds.length;
-    if (process.env.DEBUG_FORECAST) console.log(`Processing ${totalCases} active cases in batches of ${BATCH_SIZE}...`);
+    if (process.env.DEBUG_FORECAST)
+      console.log(
+        `Processing ${totalCases} active cases in batches of ${BATCH_SIZE}...`
+      );
 
     // Process in batches to avoid bind variable limit
     for (let i = 0; i < allCaseIds.length; i += BATCH_SIZE) {
@@ -475,7 +500,9 @@ export async function getUniqueCaseGroupIds(
       }
 
       if (process.env.DEBUG_FORECAST) {
-        console.log(`Processed batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(totalCases / BATCH_SIZE)}: ${uniqueRepresentatives.length} unique groups so far`);
+        console.log(
+          `Processed batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(totalCases / BATCH_SIZE)}: ${uniqueRepresentatives.length} unique groups so far`
+        );
       }
     }
 

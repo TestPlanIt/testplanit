@@ -39,7 +39,12 @@ describe("POST /api/report-builder/flaky-tests", () => {
 
   it("delegates to handleFlakyTestsPOST with isCrossProject=false", async () => {
     (handleFlakyTestsPOST as any).mockResolvedValue(
-      Response.json({ data: [], total: 0, consecutiveRuns: 10, flipThreshold: 5 })
+      Response.json({
+        data: [],
+        total: 0,
+        consecutiveRuns: 10,
+        flipThreshold: 5,
+      })
     );
 
     await POST(createPOSTRequest({ projectId: 1 }));
@@ -81,8 +86,24 @@ describe("POST /api/report-builder/flaky-tests", () => {
         testCaseSource: "MANUAL",
         flipCount: 3,
         executions: [
-          { resultId: 1, testRunId: 1, statusName: "Passed", statusColor: "#22c55e", isSuccess: true, isFailure: false, executedAt: "2024-01-01T00:00:00Z" },
-          { resultId: 2, testRunId: 1, statusName: "Failed", statusColor: "#ef4444", isSuccess: false, isFailure: true, executedAt: "2024-01-02T00:00:00Z" },
+          {
+            resultId: 1,
+            testRunId: 1,
+            statusName: "Passed",
+            statusColor: "#22c55e",
+            isSuccess: true,
+            isFailure: false,
+            executedAt: "2024-01-01T00:00:00Z",
+          },
+          {
+            resultId: 2,
+            testRunId: 1,
+            statusName: "Failed",
+            statusColor: "#ef4444",
+            isSuccess: false,
+            isFailure: true,
+            executedAt: "2024-01-02T00:00:00Z",
+          },
         ],
       },
     ];

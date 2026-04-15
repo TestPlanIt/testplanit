@@ -11,7 +11,7 @@ import {
   TestmoDatasetSummary,
   TestmoExportAnalyzerOptions,
   TestmoExportSummary,
-  TestmoReadableSource
+  TestmoReadableSource,
 } from "./types";
 
 const DEFAULT_SAMPLE_ROW_LIMIT = 5;
@@ -70,8 +70,7 @@ type InternalDatasetSummary = TestmoDatasetSummary & {
   preserveAllRows: boolean;
 };
 
-export interface TestmoExportAnalyzerOptionsWithStaging
-  extends TestmoExportAnalyzerOptions {
+export interface TestmoExportAnalyzerOptionsWithStaging extends TestmoExportAnalyzerOptions {
   jobId: string;
   prisma: PrismaClient | Prisma.TransactionClient;
   onProgress?: (
@@ -146,7 +145,12 @@ function createProgressTracker(
         console.log(
           `[ProgressTracker] Progress: ${percentage}% (${bytesRead}/${totalBytes} bytes)${etaMessage}`
         );
-        const result = onProgress(bytesRead, totalBytes, percentage, etaSeconds);
+        const result = onProgress(
+          bytesRead,
+          totalBytes,
+          percentage,
+          etaSeconds
+        );
         if (result instanceof Promise) {
           result.then(() => callback(null, chunk)).catch(callback);
         } else {
@@ -681,7 +685,7 @@ export class TestmoExportAnalyzer {
 
   /**
    * Stage a row to the database batch
-  */
+   */
   private async stageRow(datasetName: string, rowIndex: number, rowData: any) {
     if (ATTACHMENT_DATASET_PATTERN.test(datasetName)) {
       return;

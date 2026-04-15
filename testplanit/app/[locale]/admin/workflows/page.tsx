@@ -10,7 +10,10 @@ import { scopeDisplayData } from "~/app/constants";
 import {
   useCreateManyProjectWorkflowAssignment,
   useDeleteManyProjectWorkflowAssignment,
-  useFindManyProjects, useFindManyWorkflows, useUpdateManyWorkflows, useUpdateWorkflows
+  useFindManyProjects,
+  useFindManyWorkflows,
+  useUpdateManyWorkflows,
+  useUpdateWorkflows,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
@@ -19,9 +22,11 @@ import { getColumns } from "./columns";
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { DndProvider } from "react-dnd";
@@ -35,7 +40,12 @@ import { EditWorkflows } from "./EditWorkflow";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 export default function WorkflowsList() {

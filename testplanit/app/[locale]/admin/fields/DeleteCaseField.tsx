@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   useFindFirstCaseFields,
   useUpdateCaseFields,
-  useUpdateManyFieldOptions
+  useUpdateManyFieldOptions,
 } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
@@ -16,7 +16,12 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";

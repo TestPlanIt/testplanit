@@ -9,7 +9,10 @@ interface Project {
   name: string;
 }
 
-export function useAutomationTrendsColumns(projects: Project[] = [], dateGrouping: string = "weekly") {
+export function useAutomationTrendsColumns(
+  projects: Project[] = [],
+  dateGrouping: string = "weekly"
+) {
   const t = useTranslations();
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
@@ -35,7 +38,8 @@ export function useAutomationTrendsColumns(projects: Project[] = [], dateGroupin
             const startDate = new Date(startValue);
             const endDate = new Date(endValue);
 
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return "-";
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()))
+              return "-";
 
             // Format based on grouping - use UTC to avoid timezone issues
             let formatString = "PPP";
@@ -52,15 +56,28 @@ export function useAutomationTrendsColumns(projects: Project[] = [], dateGroupin
             }
 
             // Format dates in UTC to match the UTC periods from backend
-            const formattedStart = formatInTimeZone(startDate, 'UTC', formatString, {
-              locale: dateFnsLocale
-            });
-            const formattedEnd = formatInTimeZone(endDate, 'UTC', formatString, {
-              locale: dateFnsLocale
-            });
+            const formattedStart = formatInTimeZone(
+              startDate,
+              "UTC",
+              formatString,
+              {
+                locale: dateFnsLocale,
+              }
+            );
+            const formattedEnd = formatInTimeZone(
+              endDate,
+              "UTC",
+              formatString,
+              {
+                locale: dateFnsLocale,
+              }
+            );
 
             // For single-day periods or same format output, show just one date
-            if (formattedStart === formattedEnd || dateGrouping === "annually") {
+            if (
+              formattedStart === formattedEnd ||
+              dateGrouping === "annually"
+            ) {
               return <span>{formattedStart}</span>;
             }
 

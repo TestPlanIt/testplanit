@@ -8,7 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";

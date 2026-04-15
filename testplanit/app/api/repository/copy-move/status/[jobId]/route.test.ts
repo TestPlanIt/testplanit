@@ -24,8 +24,7 @@ import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 
 import { GET } from "./route";
 
-const createMockParams = (jobId: string) =>
-  Promise.resolve({ jobId });
+const createMockParams = (jobId: string) => Promise.resolve({ jobId });
 
 const createMockJob = (overrides: Record<string, any> = {}) => ({
   id: "job-123",
@@ -50,7 +49,9 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
   it("returns 401 when no session", async () => {
     (getServerSession as any).mockResolvedValue(null);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -61,7 +62,9 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     (getServerSession as any).mockResolvedValue({ user: { id: "user-1" } });
     (getCopyMoveQueue as any).mockReturnValue(null);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(503);
@@ -73,7 +76,9 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(null) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -85,11 +90,15 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     (isMultiTenantMode as any).mockReturnValue(true);
     (getCurrentTenantId as any).mockReturnValue("tenant-2");
 
-    const mockJob = createMockJob({ data: { tenantId: "tenant-1", userId: "user-1" } });
+    const mockJob = createMockJob({
+      data: { tenantId: "tenant-1", userId: "user-1" },
+    });
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -106,7 +115,9 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -130,7 +141,9 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -150,7 +163,9 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await GET({} as Request, { params: createMockParams("job-123") });
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);

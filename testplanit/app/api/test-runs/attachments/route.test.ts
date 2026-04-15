@@ -57,14 +57,15 @@ describe("Test Run Attachments API Route", () => {
     size: BigInt(100),
   };
 
-  const createMockFile = (name: string, content: string = "test content"): File => {
+  const createMockFile = (
+    name: string,
+    content: string = "test content"
+  ): File => {
     const blob = new Blob([content], { type: "text/plain" });
     return new File([blob], name, { type: "text/plain" });
   };
 
-  const createFormDataRequest = (
-    formData: FormData
-  ): NextRequest => {
+  const createFormDataRequest = (formData: FormData): NextRequest => {
     return {
       formData: async () => formData,
       headers: new Headers(),

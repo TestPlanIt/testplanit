@@ -208,7 +208,10 @@ async function loadWorker() {
   return mod;
 }
 
-type JobData = Omit<typeof baseCopyJobData, "operation" | "sharedStepGroupResolution"> & {
+type JobData = Omit<
+  typeof baseCopyJobData,
+  "operation" | "sharedStepGroupResolution"
+> & {
   operation: "copy" | "move";
   sharedStepGroupResolution: "reuse" | "create_new";
 };
@@ -395,20 +398,22 @@ describe("CopyMoveWorker", () => {
         }
       );
 
-      mockPrisma.caseFieldAssignment.findMany.mockImplementation((args: any) => {
-        const caseFieldId = args?.where?.caseFieldId;
-        if (caseFieldId === 5) {
-          return Promise.resolve([
-            { fieldOption: { id: 500, name: "High", isDeleted: false } },
-          ]);
-        } else if (caseFieldId === 7) {
-          // Target has different option name — no match for "High"
-          return Promise.resolve([
-            { fieldOption: { id: 700, name: "Critical", isDeleted: false } },
-          ]);
+      mockPrisma.caseFieldAssignment.findMany.mockImplementation(
+        (args: any) => {
+          const caseFieldId = args?.where?.caseFieldId;
+          if (caseFieldId === 5) {
+            return Promise.resolve([
+              { fieldOption: { id: 500, name: "High", isDeleted: false } },
+            ]);
+          } else if (caseFieldId === 7) {
+            // Target has different option name — no match for "High"
+            return Promise.resolve([
+              { fieldOption: { id: 700, name: "Critical", isDeleted: false } },
+            ]);
+          }
+          return Promise.resolve([]);
         }
-        return Promise.resolve([]);
-      });
+      );
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -1033,9 +1038,7 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
 
       await expect(
-        processor(
-          makeMockJob({ id: "job-cancel-2", data: jobData }) as Job
-        )
+        processor(makeMockJob({ id: "job-cancel-2", data: jobData }) as Job)
       ).rejects.toThrow("Job cancelled by user");
 
       // Only 1 transaction should have completed (the first case)
@@ -1056,7 +1059,9 @@ describe("CopyMoveWorker", () => {
         processor(makeMockJob({ id: "job-cancel-3" }) as Job)
       ).rejects.toThrow("Job cancelled by user");
 
-      expect(mockRedisDel).toHaveBeenCalledWith("copy-move:cancel:job-cancel-3");
+      expect(mockRedisDel).toHaveBeenCalledWith(
+        "copy-move:cancel:job-cancel-3"
+      );
     });
   });
 
@@ -1140,12 +1145,34 @@ describe("CopyMoveWorker", () => {
     // Sample folder tree: root folder (100) with one child (101)
     // case 1 is in folder 100, case 2 is in folder 101
     const sampleFolderTree = [
-      { localKey: "100", sourceFolderId: 100, name: "Root Folder", parentLocalKey: null, caseIds: [1] },
-      { localKey: "101", sourceFolderId: 101, name: "Child Folder", parentLocalKey: "100", caseIds: [2] },
+      {
+        localKey: "100",
+        sourceFolderId: 100,
+        name: "Root Folder",
+        parentLocalKey: null,
+        caseIds: [1],
+      },
+      {
+        localKey: "101",
+        sourceFolderId: 101,
+        name: "Child Folder",
+        parentLocalKey: "100",
+        caseIds: [2],
+      },
     ];
 
     const sourceCase1 = { ...mockSourceCase, id: 1, folderId: 100 };
-    const sourceCase2 = { ...mockSourceCase, id: 2, folderId: 101, tags: [], issues: [], attachments: [], caseFieldValues: [], steps: [], comments: [] };
+    const sourceCase2 = {
+      ...mockSourceCase,
+      id: 2,
+      folderId: 101,
+      tags: [],
+      issues: [],
+      attachments: [],
+      caseFieldValues: [],
+      steps: [],
+      comments: [],
+    };
 
     const folderTreeJobData = {
       ...baseCopyJobData,
@@ -1154,7 +1181,10 @@ describe("CopyMoveWorker", () => {
     };
 
     beforeEach(() => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([sourceCase1, sourceCase2]);
+      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+        sourceCase1,
+        sourceCase2,
+      ]);
 
       // Folder creation: root → id 5001, child → id 5002
       let folderCreateCount = 0;
@@ -1173,7 +1203,9 @@ describe("CopyMoveWorker", () => {
 
     it("recreates folders in target project in BFS order and places cases in corresponding folders", async () => {
       const { processor } = await loadWorker();
-      await processor(makeMockJob({ id: "job-tree-1", data: folderTreeJobData }) as Job);
+      await processor(
+        makeMockJob({ id: "job-tree-1", data: folderTreeJobData }) as Job
+      );
 
       // Root folder created with parentId = targetFolderId (2000)
       expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
@@ -1221,18 +1253,25 @@ describe("CopyMoveWorker", () => {
     it("merges into existing folder when a folder with the same name exists under the same parent", async () => {
       // Simulate root folder already existing in target
       mockPrisma.repositoryFolders.findFirst.mockImplementation((args: any) => {
-        if (args?.where?.name === "Root Folder" && args?.where?.parentId === 2000) {
+        if (
+          args?.where?.name === "Root Folder" &&
+          args?.where?.parentId === 2000
+        ) {
           return Promise.resolve({ id: 9999 }); // existing folder
         }
         return Promise.resolve(null);
       });
 
       const { processor } = await loadWorker();
-      await processor(makeMockJob({ id: "job-tree-merge", data: folderTreeJobData }) as Job);
+      await processor(
+        makeMockJob({ id: "job-tree-merge", data: folderTreeJobData }) as Job
+      );
 
       // Only child folder should be created; root was merged (reused existing id 9999)
       const createCalls = mockPrisma.repositoryFolders.create.mock.calls;
-      const rootCreateCall = createCalls.find((call: any[]) => call[0]?.data?.name === "Root Folder");
+      const rootCreateCall = createCalls.find(
+        (call: any[]) => call[0]?.data?.name === "Root Folder"
+      );
       expect(rootCreateCall).toBeUndefined();
 
       // Child folder created with parentId = 9999 (the merged root folder)
@@ -1255,7 +1294,9 @@ describe("CopyMoveWorker", () => {
       mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
       const { processor } = await loadWorker();
-      await processor(makeMockJob({ id: "job-tree-move", data: moveTreeJobData }) as Job);
+      await processor(
+        makeMockJob({ id: "job-tree-move", data: moveTreeJobData }) as Job
+      );
 
       // Source folders should be soft-deleted
       expect(mockPrisma.repositoryFolders.updateMany).toHaveBeenCalledWith({
@@ -1271,25 +1312,49 @@ describe("CopyMoveWorker", () => {
       };
 
       const mockVersionForCase1 = {
-        id: 10, version: 1, repositoryCaseId: 1,
-        projectId: 10, repositoryId: 100, folderId: 100,
-        staticProjectId: 10, staticProjectName: "Source",
-        folderName: "Root Folder", templateId: 30, templateName: "Default",
-        name: "Test Case 1", stateId: 5, stateName: "Draft",
-        estimate: null, forecastManual: null, forecastAutomated: null,
-        order: 0, createdAt: new Date("2024-01-01"),
-        creatorId: "user-1", creatorName: "User One",
-        automated: false, isArchived: false, isDeleted: false,
-        steps: [], tags: [], issues: [], links: [], attachments: [],
+        id: 10,
+        version: 1,
+        repositoryCaseId: 1,
+        projectId: 10,
+        repositoryId: 100,
+        folderId: 100,
+        staticProjectId: 10,
+        staticProjectName: "Source",
+        folderName: "Root Folder",
+        templateId: 30,
+        templateName: "Default",
+        name: "Test Case 1",
+        stateId: 5,
+        stateName: "Draft",
+        estimate: null,
+        forecastManual: null,
+        forecastAutomated: null,
+        order: 0,
+        createdAt: new Date("2024-01-01"),
+        creatorId: "user-1",
+        creatorName: "User One",
+        automated: false,
+        isArchived: false,
+        isDeleted: false,
+        steps: [],
+        tags: [],
+        issues: [],
+        links: [],
+        attachments: [],
       };
 
-      mockPrisma.repositoryCaseVersions.findMany.mockImplementation((args: any) => {
-        if (args?.where?.repositoryCaseId === 1) return Promise.resolve([mockVersionForCase1]);
-        return Promise.resolve([]);
-      });
+      mockPrisma.repositoryCaseVersions.findMany.mockImplementation(
+        (args: any) => {
+          if (args?.where?.repositoryCaseId === 1)
+            return Promise.resolve([mockVersionForCase1]);
+          return Promise.resolve([]);
+        }
+      );
 
       const { processor } = await loadWorker();
-      await processor(makeMockJob({ id: "job-tree-ver", data: moveTreeJobData }) as Job);
+      await processor(
+        makeMockJob({ id: "job-tree-ver", data: moveTreeJobData }) as Job
+      );
 
       // Version row for case 1 should have folderId = 5001 (target root folder), not 2000 (flat targetFolderId)
       expect(mockTx.repositoryCaseVersions.create).toHaveBeenCalledWith(

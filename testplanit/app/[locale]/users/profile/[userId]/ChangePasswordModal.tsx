@@ -23,7 +23,10 @@ interface ChangePasswordModalProps {
   onClose: () => void;
 }
 
-export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps) {
+export function ChangePasswordModal({
+  open,
+  onClose,
+}: ChangePasswordModalProps) {
   const t = useTranslations("users.profile.changePasswordModal");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -86,7 +89,9 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
       <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-destructive">{tGlobal("users.profile.changePasswordModal.buttonText")}</DialogTitle>
+            <DialogTitle className="text-destructive">
+              {tGlobal("users.profile.changePasswordModal.buttonText")}
+            </DialogTitle>
             <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -146,7 +151,9 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? tCommon("actions.submitting") : tGlobal("users.profile.changePasswordModal.buttonText")}
+              {isLoading
+                ? tCommon("actions.submitting")
+                : tGlobal("users.profile.changePasswordModal.buttonText")}
             </Button>
           </DialogFooter>
         </form>

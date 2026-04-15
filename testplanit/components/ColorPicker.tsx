@@ -1,6 +1,8 @@
 import {
-  Select, SelectContent,
-  SelectItem, SelectTrigger
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
 } from "@/components/ui/select";
 import { Color } from "@prisma/client";
 import { Ellipsis } from "lucide-react";

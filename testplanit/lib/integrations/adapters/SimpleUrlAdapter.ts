@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prismaBase";
 import { BaseAdapter } from "./BaseAdapter";
 import {
-  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
+  AuthenticationData,
+  CreateIssueData,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
 } from "./IssueAdapter";
 
 /**
@@ -16,10 +21,10 @@ export class SimpleUrlAdapter extends BaseAdapter {
     return {
       createIssue: false, // Simple URL adapters typically can't create issues
       updateIssue: false, // Simple URL adapters typically can't update issues
-      linkIssue: true,    // Can link to existing issues via URL
-      syncIssue: false,   // Can't sync since no API access
+      linkIssue: true, // Can link to existing issues via URL
+      syncIssue: false, // Can't sync since no API access
       searchIssues: true, // Can provide basic search functionality
-      webhooks: false,    // No webhook support
+      webhooks: false, // No webhook support
       customFields: false, // No custom field support
       attachments: false, // No attachment support
     };
@@ -43,7 +48,9 @@ export class SimpleUrlAdapter extends BaseAdapter {
    * Create a new issue - not supported by Simple URL adapters
    */
   async createIssue(_data: CreateIssueData): Promise<IssueData> {
-    throw new Error("Creating issues is not supported by Simple URL integration");
+    throw new Error(
+      "Creating issues is not supported by Simple URL integration"
+    );
   }
 
   /**
@@ -53,7 +60,9 @@ export class SimpleUrlAdapter extends BaseAdapter {
     _issueId: string,
     _data: UpdateIssueData
   ): Promise<IssueData> {
-    throw new Error("Updating issues is not supported by Simple URL integration");
+    throw new Error(
+      "Updating issues is not supported by Simple URL integration"
+    );
   }
 
   /**
@@ -66,7 +75,9 @@ export class SimpleUrlAdapter extends BaseAdapter {
     }
 
     // Generate URL by replacing {issueId} placeholder
-    const url = baseUrl.replace("{issueId}", issueId).replace("'{issueId}'", issueId);
+    const url = baseUrl
+      .replace("{issueId}", issueId)
+      .replace("'{issueId}'", issueId);
 
     return {
       id: issueId,
@@ -89,7 +100,7 @@ export class SimpleUrlAdapter extends BaseAdapter {
     hasMore: boolean;
   }> {
     const { query = "", limit = 10 } = options;
-    
+
     // For Simple URL integrations, we search the internal TestPlanIt database
     // for issues that are linked to this integration
     const baseUrl = this.authData?.baseUrl || this.config.baseUrl;
@@ -148,8 +159,11 @@ export class SimpleUrlAdapter extends BaseAdapter {
       // Use existing external URL if available, otherwise generate from pattern
       let url = dbIssue.externalUrl;
       if (!url && (dbIssue.externalId || dbIssue.externalKey)) {
-        const issueId = dbIssue.externalId || dbIssue.externalKey || dbIssue.id.toString();
-        url = baseUrl.replace("{issueId}", issueId).replace("'{issueId}'", issueId);
+        const issueId =
+          dbIssue.externalId || dbIssue.externalKey || dbIssue.id.toString();
+        url = baseUrl
+          .replace("{issueId}", issueId)
+          .replace("'{issueId}'", issueId);
       }
 
       return {
@@ -186,8 +200,10 @@ export class SimpleUrlAdapter extends BaseAdapter {
       throw new Error("Base URL not configured");
     }
 
-    const url = baseUrl.replace("{issueId}", issueId).replace("'{issueId}'", issueId);
-    
+    const url = baseUrl
+      .replace("{issueId}", issueId)
+      .replace("'{issueId}'", issueId);
+
     // Basic URL validation
     try {
       new URL(url);
@@ -219,7 +235,9 @@ export class SimpleUrlAdapter extends BaseAdapter {
 
       // Try to validate URL format
       try {
-        const testUrl = baseUrl.replace("{issueId}", "TEST-1").replace("'{issueId}'", "TEST-1");
+        const testUrl = baseUrl
+          .replace("{issueId}", "TEST-1")
+          .replace("'{issueId}'", "TEST-1");
         new URL(testUrl);
       } catch {
         errors.push("Base URL pattern is not a valid URL format");

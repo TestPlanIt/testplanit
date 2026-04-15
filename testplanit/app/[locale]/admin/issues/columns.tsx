@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Issue } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -60,7 +60,6 @@ export function useIssueColumns({
   onEditIssue?: (issue: ExtendedIssue) => void;
   onDeleteIssue?: (issue: ExtendedIssue) => void;
 }): ColumnDef<ExtendedIssue>[] {
-
   return [
     {
       id: "name",
@@ -270,7 +269,9 @@ export function useIssueColumns({
       maxSize: 200,
       cell: ({ row }) => {
         const priority = row.original.priority;
-        return <IssuePriorityDisplay priority={priority} className="capitalize" />;
+        return (
+          <IssuePriorityDisplay priority={priority} className="capitalize" />
+        );
       },
     },
     {

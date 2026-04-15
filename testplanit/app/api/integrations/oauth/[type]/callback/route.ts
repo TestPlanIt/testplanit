@@ -118,10 +118,7 @@ export async function GET(
     }
   } catch (error) {
     const { type } = await params;
-    console.error(
-      `Error in OAuth callback endpoint for ${type}:`,
-      error
-    );
+    console.error(`Error in OAuth callback endpoint for ${type}:`, error);
     return NextResponse.redirect(
       "/projects/settings?error=oauth_callback_failed"
     );

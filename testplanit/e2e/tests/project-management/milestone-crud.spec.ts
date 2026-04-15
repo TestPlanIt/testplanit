@@ -49,7 +49,10 @@ test.describe("Milestone CRUD", () => {
     // If no milestone types exist (empty dropdown), the form can still submit
     // with milestoneTypeId=undefined — the backend allows it.
     try {
-      await expect(milestoneTypeSelect).not.toHaveText(/select milestone type/i, { timeout: 10000 });
+      await expect(milestoneTypeSelect).not.toHaveText(
+        /select milestone type/i,
+        { timeout: 10000 }
+      );
     } catch {
       // No default was auto-selected. Try to manually pick one.
       await milestoneTypeSelect.click();
@@ -69,14 +72,13 @@ test.describe("Milestone CRUD", () => {
     await saveButton.click();
 
     // Dialog should close after successful creation
-    await expect(page.getByRole("dialog").first()).not.toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("dialog").first()).not.toBeVisible({
+      timeout: 30000,
+    });
     await expect(page.getByText(milestoneName)).toBeVisible({ timeout: 10000 });
   });
 
-  test("should edit a milestone via the detail page", async ({
-    page,
-    api,
-  }) => {
+  test("should edit a milestone via the detail page", async ({ page, api }) => {
     const projectId = await api.createProject(
       `E2E Milestone Edit ${Date.now()}`
     );
@@ -136,9 +138,9 @@ test.describe("Milestone CRUD", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for page to fully render
-    await expect(
-      page.getByRole("button", { name: /Edit/i })
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: /Edit/i })).toBeVisible({
+      timeout: 15000,
+    });
 
     // The child milestone section should show the child
     await expect(page.getByText(childName)).toBeVisible({ timeout: 10000 });
@@ -169,8 +171,10 @@ test.describe("Milestone CRUD", () => {
     // Locate the milestone text first, then find the closest card container and its menu button.
     const milestoneText = page.getByText(milestoneName);
     // The card is a parent div with border/rounded styling. Navigate up to find the dropdown.
-    const milestoneCard = milestoneText.locator("xpath=ancestor::div[contains(@class, 'rounded-lg')]").first();
-    const menuButton = milestoneCard.locator('button:has(svg)').last();
+    const milestoneCard = milestoneText
+      .locator("xpath=ancestor::div[contains(@class, 'rounded-lg')]")
+      .first();
+    const menuButton = milestoneCard.locator("button:has(svg)").last();
     await menuButton.click();
 
     // Click Complete
@@ -192,7 +196,9 @@ test.describe("Milestone CRUD", () => {
 
     // If a confirmation step appeared, click the confirm/complete button again
     try {
-      const confirmButton = dialog.getByRole("button", { name: /Confirm|Complete/i });
+      const confirmButton = dialog.getByRole("button", {
+        name: /Confirm|Complete/i,
+      });
       await expect(confirmButton).toBeVisible({ timeout: 5000 });
       await confirmButton.click();
     } catch {
@@ -248,8 +254,10 @@ test.describe("Milestone CRUD", () => {
 
     // Find the 3-dot dropdown trigger near this milestone
     const parentText = page.getByText(parentName);
-    const parentCard = parentText.locator("xpath=ancestor::div[contains(@class, 'rounded-lg')]").first();
-    const menuButton = parentCard.locator('button:has(svg)').last();
+    const parentCard = parentText
+      .locator("xpath=ancestor::div[contains(@class, 'rounded-lg')]")
+      .first();
+    const menuButton = parentCard.locator("button:has(svg)").last();
     await menuButton.click();
 
     // Click Delete
@@ -299,9 +307,9 @@ test.describe("Milestone CRUD", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for edit mode (Save button visible)
-    await expect(
-      page.getByRole("button", { name: /Save/i })
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: /Save/i })).toBeVisible({
+      timeout: 15000,
+    });
 
     // Click the Delete button (visible in edit mode)
     const deleteButton = page.getByRole("button", { name: /Delete/i });

@@ -15,7 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +23,11 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
-  useDeleteIntegration, useFindManyIntegration
+  useDeleteIntegration,
+  useFindManyIntegration,
 } from "@/lib/hooks/integration";
 import { Integration } from "@prisma/client";
 import { CirclePlus, Plug, Trash2 } from "lucide-react";
@@ -35,7 +36,8 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIntegration, getColumns } from "./columns";
@@ -90,37 +92,36 @@ function IntegrationList() {
   const skip = (currentPage - 1) * effectivePageSize;
 
   // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } =
-    useFindManyIntegration(
-      {
-        orderBy: sortConfig
-          ? { [sortConfig.column]: sortConfig.direction }
-          : { name: "asc" },
-        include: {
-          projectIntegrations: {
-            where: { isActive: true, project: { isDeleted: false } },
-            select: { projectId: true },
-          },
-        },
-        where: {
-          AND: [
-            {
-              name: {
-                contains: debouncedSearchString,
-                mode: "insensitive",
-              },
-            },
-            {
-              isDeleted: false,
-            },
-          ],
+  const { data: totalFilteredIntegrations } = useFindManyIntegration(
+    {
+      orderBy: sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { name: "asc" },
+      include: {
+        projectIntegrations: {
+          where: { isActive: true, project: { isDeleted: false } },
+          select: { projectId: true },
         },
       },
-      {
-        enabled: !!session?.user,
-        refetchOnWindowFocus: true,
-      }
-    );
+      where: {
+        AND: [
+          {
+            name: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            isDeleted: false,
+          },
+        ],
+      },
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   // Update total items in pagination context
   useEffect(() => {

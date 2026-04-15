@@ -21,7 +21,13 @@ import { sleep, check } from "k6";
 import http from "k6/http";
 import { findMany } from "../helpers/api.js";
 import { junitXml, uniqueId } from "../helpers/data.js";
-import { getProfile, thresholds, PROJECT_ID, BASE_URL, headers } from "../config.js";
+import {
+  getProfile,
+  thresholds,
+  PROJECT_ID,
+  BASE_URL,
+  headers,
+} from "../config.js";
 
 const TAG = "cicd";
 

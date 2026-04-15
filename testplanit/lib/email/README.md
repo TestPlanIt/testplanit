@@ -35,12 +35,12 @@ lib/email/
 1. **Use the template** in your code:
 
 ```typescript
-import { renderEmailTemplate } from './lib/email/template-service';
+import { renderEmailTemplate } from "./lib/email/template-service";
 
-const { html, subject } = await renderEmailTemplate('welcome', {
-  userName: 'John Doe',
+const { html, subject } = await renderEmailTemplate("welcome", {
+  userName: "John Doe",
   appUrl: process.env.NEXTAUTH_URL,
-  subject: 'Welcome to TestPlanIt!'
+  subject: "Welcome to TestPlanIt!",
 });
 ```
 

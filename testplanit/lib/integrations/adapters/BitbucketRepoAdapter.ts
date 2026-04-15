@@ -1,5 +1,8 @@
 import {
-  GitRepoAdapter, ListFilesResult, RepoFileEntry, TestConnectionResult
+  GitRepoAdapter,
+  ListFilesResult,
+  RepoFileEntry,
+  TestConnectionResult,
 } from "./GitRepoAdapter";
 
 const MAX_FILES = 10000;
@@ -23,9 +26,9 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
   }
 
   private get authHeaders() {
-    const encoded = Buffer.from(
-      `${this.email}:${this.apiToken}`
-    ).toString("base64");
+    const encoded = Buffer.from(`${this.email}:${this.apiToken}`).toString(
+      "base64"
+    );
     return { Authorization: `Basic ${encoded}` };
   }
 
@@ -59,7 +62,8 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
 
     while (queue.length > 0 && files.length < MAX_FILES) {
       const path = queue.shift()!;
-      let url: string | null = `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}?pagelen=100&max_depth=${MAX_DEPTH}`;
+      let url: string | null =
+        `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}?pagelen=100&max_depth=${MAX_DEPTH}`;
 
       while (url && files.length < MAX_FILES) {
         const data: any = await this.makeRequest<any>(url, {

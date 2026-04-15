@@ -25,7 +25,6 @@ export default function Providers({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-
   const content = mounted ? (
     <ThemeProvider
       attribute="class"
@@ -39,12 +38,9 @@ export default function Providers({ children }: { children: ReactNode }) {
     <SearchStateProvider>{children}</SearchStateProvider>
   );
 
-
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        {content}
-      </SessionProvider>
+      <SessionProvider>{content}</SessionProvider>
     </QueryClientProvider>
   );
 }

@@ -1,5 +1,12 @@
 import {
-  afterEach, beforeAll, beforeEach, describe, expect, it, Mock, vi
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  Mock,
+  vi,
 } from "vitest";
 
 // Mock the extractTextFromNode utility to prevent issues
@@ -157,11 +164,21 @@ vi.mock("~/lib/hooks/project-llm-integration", () => ({
 
 // Now import everything else after the mocks
 import {
-  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat, WorkflowScope
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+  WorkflowScope,
 } from "@prisma/client";
 import {
-  act, fireEvent, render,
-  screen, waitFor, within
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Session } from "next-auth";
@@ -170,8 +187,19 @@ import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import {
-  useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateRepositoryCaseVersions, useCreateSteps,
-  useDeleteManySteps, useFindManyIssue, useFindManyRepositoryCases, useFindManyTags, useFindManyWorkflows, useUpdateCaseFieldValues, useUpdateManyRepositoryCases, useUpdateRepositoryCases, useUpdateSteps
+  useCreateCaseFieldValues,
+  useCreateCaseFieldVersionValues,
+  useCreateRepositoryCaseVersions,
+  useCreateSteps,
+  useDeleteManySteps,
+  useFindManyIssue,
+  useFindManyRepositoryCases,
+  useFindManyTags,
+  useFindManyWorkflows,
+  useUpdateCaseFieldValues,
+  useUpdateManyRepositoryCases,
+  useUpdateRepositoryCases,
+  useUpdateSteps,
 } from "~/lib/hooks";
 import { BulkEditModal } from "./BulkEditModal";
 
@@ -1040,15 +1068,11 @@ describe("BulkEditModal", () => {
       });
 
       expect(screen.getByText("[t]common.name")).toBeInTheDocument();
-      expect(
-        screen.getByText("[t]common.fields.state")
-      ).toBeInTheDocument();
+      expect(screen.getByText("[t]common.fields.state")).toBeInTheDocument();
       expect(
         screen.getByText("[t]common.fields.automated")
       ).toBeInTheDocument();
-      expect(
-        screen.getByText("[t]common.fields.estimate")
-      ).toBeInTheDocument();
+      expect(screen.getByText("[t]common.fields.estimate")).toBeInTheDocument();
       expect(screen.getByText("[t]common.fields.tags")).toBeInTheDocument();
       expect(screen.getByText("[t]common.fields.issues")).toBeInTheDocument();
     });
@@ -1638,9 +1662,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]common.fields.tags")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.fields.tags")).toBeInTheDocument();
       });
 
       // Enable editing for tags field
@@ -2097,9 +2119,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]common.fields.tags")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.fields.tags")).toBeInTheDocument();
       });
 
       // Tags field should still be visible but editing behavior may be restricted

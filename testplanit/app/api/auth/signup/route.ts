@@ -52,20 +52,27 @@ export async function POST(req: NextRequest) {
     // Check if email verification is required
     // Email verification is automatically disabled if no email server is configured
     const registrationSettings = await db.registrationSettings.findFirst();
-    const requireEmailVerification = isEmailServerConfigured() && (registrationSettings?.requireEmailVerification ?? true);
+    const requireEmailVerification =
+      isEmailServerConfigured() &&
+      (registrationSettings?.requireEmailVerification ?? true);
 
     // Resolve roleId: use provided value, or look up default role by isDefault flag / name
     let roleId = validatedData.roleId;
     if (!roleId) {
-      const defaultRole = await db.roles.findFirst({
-        where: { isDefault: true, isDeleted: false },
-      }) ?? await db.roles.findFirst({
-        where: { name: "user", isDeleted: false },
-      });
+      const defaultRole =
+        (await db.roles.findFirst({
+          where: { isDefault: true, isDeleted: false },
+        })) ??
+        (await db.roles.findFirst({
+          where: { name: "user", isDeleted: false },
+        }));
 
       if (!defaultRole) {
         return NextResponse.json(
-          { error: "No default role found. Please ensure a default role exists." },
+          {
+            error:
+              "No default role found. Please ensure a default role exists.",
+          },
           { status: 500 }
         );
       }
@@ -79,7 +86,9 @@ export async function POST(req: NextRequest) {
           name: validatedData.name,
           email: validatedData.email,
           password: hashedPassword,
-          emailVerifToken: requireEmailVerification ? validatedData.emailVerifToken : null,
+          emailVerifToken: requireEmailVerification
+            ? validatedData.emailVerifToken
+            : null,
           emailVerified: requireEmailVerification ? null : new Date(),
           access: validatedData.access,
           roleId,
@@ -108,10 +117,7 @@ export async function POST(req: NextRequest) {
       return newUser;
     });
 
-    return NextResponse.json(
-      { data: user },
-      { status: 201 }
-    );
+    return NextResponse.json({ data: user }, { status: 201 });
   } catch (error: any) {
     console.error("[Signup API] Error creating user:", error);
 

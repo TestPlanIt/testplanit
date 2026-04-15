@@ -1,19 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
 import {
-  addCustomFieldFilters, addDateRangeFilter, addIssueFilters,
-  addMilestoneFilters, addProjectFilters, addRepositoryCaseFilters, addSessionFilters,
-  addSharedStepFilters, addTestRunFilters, buildCustomFieldQuery, buildElasticsearchQuery, buildSearchAggregations, buildSort, getEntityTypeCounts, getEntityTypeFromIndex, processFacets, stripNestedClauses
+  addCustomFieldFilters,
+  addDateRangeFilter,
+  addIssueFilters,
+  addMilestoneFilters,
+  addProjectFilters,
+  addRepositoryCaseFilters,
+  addSessionFilters,
+  addSharedStepFilters,
+  addTestRunFilters,
+  buildCustomFieldQuery,
+  buildElasticsearchQuery,
+  buildSearchAggregations,
+  buildSort,
+  getEntityTypeCounts,
+  getEntityTypeFromIndex,
+  processFacets,
+  stripNestedClauses,
 } from "./searchQueryBuilder";
 
 // Mock the server/db module for buildElasticsearchQuery tests
 vi.mock("~/server/db", () => ({
   db: {
     projectAssignment: {
-      findMany: vi.fn().mockResolvedValue([
-        { projectId: 1 },
-        { projectId: 2 },
-      ]),
+      findMany: vi.fn().mockResolvedValue([{ projectId: 1 }, { projectId: 2 }]),
     },
   },
 }));
@@ -38,7 +49,10 @@ describe("getEntityTypeFromIndex", () => {
 
   describe("multi-tenant index names", () => {
     it.each([
-      ["testplanit-abc123-repository-cases", SearchableEntityType.REPOSITORY_CASE],
+      [
+        "testplanit-abc123-repository-cases",
+        SearchableEntityType.REPOSITORY_CASE,
+      ],
       ["testplanit-tenant-xyz-shared-steps", SearchableEntityType.SHARED_STEP],
       ["testplanit-my-org-test-runs", SearchableEntityType.TEST_RUN],
       ["testplanit-t1-sessions", SearchableEntityType.SESSION],
@@ -144,9 +158,7 @@ describe("stripNestedClauses", () => {
   it("preserves non-nested queries in both must and filter", () => {
     const query = {
       bool: {
-        must: [
-          { match: { name: "test" } },
-        ],
+        must: [{ match: { name: "test" } }],
         filter: [
           { term: { isDeleted: false } },
           { terms: { projectId: [1, 2] } },
@@ -206,7 +218,9 @@ describe("stripNestedClauses", () => {
 // buildCustomFieldQuery
 // ============================================================
 describe("buildCustomFieldQuery", () => {
-  const makeCf = (overrides: Partial<CustomFieldFilter>): CustomFieldFilter => ({
+  const makeCf = (
+    overrides: Partial<CustomFieldFilter>
+  ): CustomFieldFilter => ({
     fieldId: 1,
     fieldName: "Test Field",
     fieldType: "Text String",
@@ -217,7 +231,9 @@ describe("buildCustomFieldQuery", () => {
 
   describe("Checkbox", () => {
     it("returns term query on valueBoolean", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Checkbox", value: true }))).toEqual({
+      expect(
+        buildCustomFieldQuery(makeCf({ fieldType: "Checkbox", value: true }))
+      ).toEqual({
         term: { "customFields.valueBoolean": true },
       });
     });
@@ -225,130 +241,206 @@ describe("buildCustomFieldQuery", () => {
 
   describe("Date", () => {
     it("equals returns term query", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Date", operator: "equals", value: "2024-01-01" }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "Date", operator: "equals", value: "2024-01-01" })
+        )
+      ).toEqual({
         term: { "customFields.valueDate": "2024-01-01" },
       });
     });
 
     it("gt returns range query", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Date", operator: "gt", value: "2024-01-01" }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "Date", operator: "gt", value: "2024-01-01" })
+        )
+      ).toEqual({
         range: { "customFields.valueDate": { gt: "2024-01-01" } },
       });
     });
 
     it("lt returns range query", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Date", operator: "lt", value: "2024-12-31" }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "Date", operator: "lt", value: "2024-12-31" })
+        )
+      ).toEqual({
         range: { "customFields.valueDate": { lt: "2024-12-31" } },
       });
     });
 
     it("between returns range query with gte and lte", () => {
-      expect(buildCustomFieldQuery(makeCf({
-        fieldType: "Date",
-        operator: "between",
-        value: "2024-01-01",
-        value2: "2024-12-31",
-      }))).toEqual({
-        range: { "customFields.valueDate": { gte: "2024-01-01", lte: "2024-12-31" } },
+      expect(
+        buildCustomFieldQuery(
+          makeCf({
+            fieldType: "Date",
+            operator: "between",
+            value: "2024-01-01",
+            value2: "2024-12-31",
+          })
+        )
+      ).toEqual({
+        range: {
+          "customFields.valueDate": { gte: "2024-01-01", lte: "2024-12-31" },
+        },
       });
     });
 
     it("unknown operator returns null", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Date", operator: "contains" }))).toBeNull();
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "Date", operator: "contains" })
+        )
+      ).toBeNull();
     });
   });
 
   describe("Number", () => {
     it("equals returns term query", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Number", operator: "equals", value: 42 }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "Number", operator: "equals", value: 42 })
+        )
+      ).toEqual({
         term: { "customFields.valueNumeric": 42 },
       });
     });
 
-    it.each(["gt", "lt", "gte", "lte"] as const)("%s returns range query", (op) => {
-      const result = buildCustomFieldQuery(makeCf({ fieldType: "Number", operator: op, value: 100 }));
-      expect(result).toEqual({
-        range: { "customFields.valueNumeric": { [op]: 100 } },
-      });
-    });
+    it.each(["gt", "lt", "gte", "lte"] as const)(
+      "%s returns range query",
+      (op) => {
+        const result = buildCustomFieldQuery(
+          makeCf({ fieldType: "Number", operator: op, value: 100 })
+        );
+        expect(result).toEqual({
+          range: { "customFields.valueNumeric": { [op]: 100 } },
+        });
+      }
+    );
 
     it("between returns range query with gte and lte", () => {
-      expect(buildCustomFieldQuery(makeCf({
-        fieldType: "Number",
-        operator: "between",
-        value: 10,
-        value2: 100,
-      }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({
+            fieldType: "Number",
+            operator: "between",
+            value: 10,
+            value2: 100,
+          })
+        )
+      ).toEqual({
         range: { "customFields.valueNumeric": { gte: 10, lte: 100 } },
       });
     });
 
     it("unknown operator returns null", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Number", operator: "contains" }))).toBeNull();
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "Number", operator: "contains" })
+        )
+      ).toBeNull();
     });
   });
 
   describe("Multi-Select", () => {
     it("in operator with array returns terms query on valueArray", () => {
-      expect(buildCustomFieldQuery(makeCf({
-        fieldType: "Multi-Select",
-        operator: "in",
-        value: ["a", "b", "c"],
-      }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({
+            fieldType: "Multi-Select",
+            operator: "in",
+            value: ["a", "b", "c"],
+          })
+        )
+      ).toEqual({
         terms: { "customFields.valueArray": ["a", "b", "c"] },
       });
     });
 
     it("in operator with non-array returns null", () => {
-      expect(buildCustomFieldQuery(makeCf({
-        fieldType: "Multi-Select",
-        operator: "in",
-        value: "not-an-array",
-      }))).toBeNull();
+      expect(
+        buildCustomFieldQuery(
+          makeCf({
+            fieldType: "Multi-Select",
+            operator: "in",
+            value: "not-an-array",
+          })
+        )
+      ).toBeNull();
     });
 
     it("non-in operator returns null", () => {
-      expect(buildCustomFieldQuery(makeCf({
-        fieldType: "Multi-Select",
-        operator: "equals",
-        value: ["a"],
-      }))).toBeNull();
+      expect(
+        buildCustomFieldQuery(
+          makeCf({
+            fieldType: "Multi-Select",
+            operator: "equals",
+            value: ["a"],
+          })
+        )
+      ).toBeNull();
     });
   });
 
   describe("Select", () => {
     it("returns term query on valueKeyword", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "Select", value: "HIGH" }))).toEqual({
+      expect(
+        buildCustomFieldQuery(makeCf({ fieldType: "Select", value: "HIGH" }))
+      ).toEqual({
         term: { "customFields.valueKeyword": "HIGH" },
       });
     });
   });
 
   describe("Text String / Link", () => {
-    it.each(["Text String", "Link"])("%s with contains returns match query", (fieldType) => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType, operator: "contains", value: "hello" }))).toEqual({
-        match: { "customFields.value": "hello" },
-      });
-    });
+    it.each(["Text String", "Link"])(
+      "%s with contains returns match query",
+      (fieldType) => {
+        expect(
+          buildCustomFieldQuery(
+            makeCf({ fieldType, operator: "contains", value: "hello" })
+          )
+        ).toEqual({
+          match: { "customFields.value": "hello" },
+        });
+      }
+    );
 
-    it.each(["Text String", "Link"])("%s with equals returns term on valueKeyword", (fieldType) => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType, operator: "equals", value: "exact" }))).toEqual({
-        term: { "customFields.valueKeyword": "exact" },
-      });
-    });
+    it.each(["Text String", "Link"])(
+      "%s with equals returns term on valueKeyword",
+      (fieldType) => {
+        expect(
+          buildCustomFieldQuery(
+            makeCf({ fieldType, operator: "equals", value: "exact" })
+          )
+        ).toEqual({
+          term: { "customFields.valueKeyword": "exact" },
+        });
+      }
+    );
   });
 
   describe("Text Long / Steps", () => {
-    it.each(["Text Long", "Steps"])("%s returns match query on value", (fieldType) => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType, value: "long text" }))).toEqual({
-        match: { "customFields.value": "long text" },
-      });
-    });
+    it.each(["Text Long", "Steps"])(
+      "%s returns match query on value",
+      (fieldType) => {
+        expect(
+          buildCustomFieldQuery(makeCf({ fieldType, value: "long text" }))
+        ).toEqual({
+          match: { "customFields.value": "long text" },
+        });
+      }
+    );
   });
 
   describe("Unknown field type", () => {
     it("returns match query on value as default", () => {
-      expect(buildCustomFieldQuery(makeCf({ fieldType: "UnknownType", value: "val" }))).toEqual({
+      expect(
+        buildCustomFieldQuery(
+          makeCf({ fieldType: "UnknownType", value: "val" })
+        )
+      ).toEqual({
         match: { "customFields.value": "val" },
       });
     });
@@ -360,7 +452,10 @@ describe("buildCustomFieldQuery", () => {
 // ============================================================
 describe("buildSearchAggregations", () => {
   it("includes tags nested aggregation when entity types include repository cases", () => {
-    const aggs = buildSearchAggregations(["tags"], [SearchableEntityType.REPOSITORY_CASE]);
+    const aggs = buildSearchAggregations(
+      ["tags"],
+      [SearchableEntityType.REPOSITORY_CASE]
+    );
     expect(aggs.tags).toBeDefined();
     expect(aggs.tags.nested).toEqual({ path: "tags" });
     // Must NOT have ignore_unmapped (not valid for nested aggs)
@@ -487,13 +582,12 @@ describe("buildSort", () => {
   });
 
   it("transforms multiple sort fields", () => {
-    expect(buildSort([
-      { field: "name", order: "asc" },
-      { field: "createdAt", order: "desc" },
-    ])).toEqual([
-      { name: { order: "asc" } },
-      { createdAt: { order: "desc" } },
-    ]);
+    expect(
+      buildSort([
+        { field: "name", order: "asc" },
+        { field: "createdAt", order: "desc" },
+      ])
+    ).toEqual([{ name: { order: "asc" } }, { createdAt: { order: "desc" } }]);
   });
 
   it("returns empty array for empty input", () => {
@@ -583,7 +677,13 @@ describe("addCustomFieldFilters", () => {
   it("wraps each filter in nested with ignore_unmapped", () => {
     const filter: any[] = [];
     addCustomFieldFilters(filter, [
-      { fieldId: 1, fieldName: "Priority", fieldType: "Select", operator: "equals", value: "HIGH" },
+      {
+        fieldId: 1,
+        fieldName: "Priority",
+        fieldType: "Select",
+        operator: "equals",
+        value: "HIGH",
+      },
     ]);
 
     expect(filter).toHaveLength(1);
@@ -597,7 +697,13 @@ describe("addCustomFieldFilters", () => {
   it("skips filters where buildCustomFieldQuery returns null", () => {
     const filter: any[] = [];
     addCustomFieldFilters(filter, [
-      { fieldId: 1, fieldName: "Count", fieldType: "Number", operator: "contains" as any, value: "x" },
+      {
+        fieldId: 1,
+        fieldName: "Count",
+        fieldType: "Number",
+        operator: "contains" as any,
+        value: "x",
+      },
     ]);
     // Number with "contains" operator returns null
     expect(filter).toHaveLength(0);
@@ -606,8 +712,20 @@ describe("addCustomFieldFilters", () => {
   it("handles multiple custom field filters", () => {
     const filter: any[] = [];
     addCustomFieldFilters(filter, [
-      { fieldId: 1, fieldName: "F1", fieldType: "Checkbox", operator: "equals", value: true },
-      { fieldId: 2, fieldName: "F2", fieldType: "Select", operator: "equals", value: "LOW" },
+      {
+        fieldId: 1,
+        fieldName: "F1",
+        fieldType: "Checkbox",
+        operator: "equals",
+        value: true,
+      },
+      {
+        fieldId: 2,
+        fieldName: "F2",
+        fieldType: "Select",
+        operator: "equals",
+        value: "LOW",
+      },
     ]);
     expect(filter).toHaveLength(2);
   });
@@ -655,7 +773,9 @@ describe("addSessionFilters", () => {
   it("adds assignedToIds filter", () => {
     const filter: any[] = [];
     addSessionFilters(filter, { assignedToIds: ["user1", "user2"] });
-    expect(filter).toContainEqual({ terms: { assignedToId: ["user1", "user2"] } });
+    expect(filter).toContainEqual({
+      terms: { assignedToId: ["user1", "user2"] },
+    });
   });
 
   it("adds templateIds filter", () => {
@@ -712,7 +832,9 @@ describe("addIssueFilters", () => {
   it("adds externalIds filter", () => {
     const filter: any[] = [];
     addIssueFilters(filter, { externalIds: ["JIRA-123", "GH-456"] });
-    expect(filter).toContainEqual({ terms: { externalId: ["JIRA-123", "GH-456"] } });
+    expect(filter).toContainEqual({
+      terms: { externalId: ["JIRA-123", "GH-456"] },
+    });
   });
 });
 
@@ -745,7 +867,11 @@ describe("addMilestoneFilters", () => {
 describe("addDateRangeFilter", () => {
   it("adds range filter with both from and to", () => {
     const filter: any[] = [];
-    addDateRangeFilter(filter, { field: "createdAt", from: "2024-01-01", to: "2024-12-31" });
+    addDateRangeFilter(filter, {
+      field: "createdAt",
+      from: "2024-01-01",
+      to: "2024-12-31",
+    });
     expect(filter).toContainEqual({
       range: { createdAt: { gte: "2024-01-01", lte: "2024-12-31" } },
     });
@@ -802,7 +928,9 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    const stepsNested = shouldClauses.find((s: any) => s.nested?.path === "steps");
+    const stepsNested = shouldClauses.find(
+      (s: any) => s.nested?.path === "steps"
+    );
     expect(stepsNested).toBeDefined();
     expect(stepsNested.nested.ignore_unmapped).toBe(true);
   });
@@ -814,7 +942,9 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    const stepsNested = shouldClauses.find((s: any) => s.nested?.path === "steps");
+    const stepsNested = shouldClauses.find(
+      (s: any) => s.nested?.path === "steps"
+    );
     expect(stepsNested).toBeUndefined();
   });
 
@@ -825,7 +955,9 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    const itemsNested = shouldClauses.find((s: any) => s.nested?.path === "items");
+    const itemsNested = shouldClauses.find(
+      (s: any) => s.nested?.path === "items"
+    );
     expect(itemsNested).toBeDefined();
     expect(itemsNested.nested.ignore_unmapped).toBe(true);
   });
@@ -837,7 +969,9 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    const itemsNested = shouldClauses.find((s: any) => s.nested?.path === "items");
+    const itemsNested = shouldClauses.find(
+      (s: any) => s.nested?.path === "items"
+    );
     expect(itemsNested).toBeUndefined();
   });
 
@@ -848,7 +982,9 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    const cfNested = shouldClauses.find((s: any) => s.nested?.path === "customFields");
+    const cfNested = shouldClauses.find(
+      (s: any) => s.nested?.path === "customFields"
+    );
     expect(cfNested).toBeDefined();
     expect(cfNested.nested.ignore_unmapped).toBe(true);
   });
@@ -867,7 +1003,9 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    const cfNested = shouldClauses.find((s: any) => s.nested?.path === "customFields");
+    const cfNested = shouldClauses.find(
+      (s: any) => s.nested?.path === "customFields"
+    );
     expect(cfNested).toBeUndefined();
   });
 
@@ -878,9 +1016,15 @@ describe("buildElasticsearchQuery", () => {
     );
 
     const shouldClauses = result.bool.must[0].bool.should;
-    expect(shouldClauses.find((s: any) => s.nested?.path === "steps")).toBeDefined();
-    expect(shouldClauses.find((s: any) => s.nested?.path === "items")).toBeDefined();
-    expect(shouldClauses.find((s: any) => s.nested?.path === "customFields")).toBeDefined();
+    expect(
+      shouldClauses.find((s: any) => s.nested?.path === "steps")
+    ).toBeDefined();
+    expect(
+      shouldClauses.find((s: any) => s.nested?.path === "items")
+    ).toBeDefined();
+    expect(
+      shouldClauses.find((s: any) => s.nested?.path === "customFields")
+    ).toBeDefined();
   });
 
   it("admin user does not get project access restriction", async () => {
@@ -972,7 +1116,8 @@ describe("buildElasticsearchQuery", () => {
 describe("getEntityTypeCounts", () => {
   it("returns counts per entity type", async () => {
     const mockClient = {
-      count: vi.fn()
+      count: vi
+        .fn()
         .mockResolvedValueOnce({ count: 100 })
         .mockResolvedValueOnce({ count: 50 }),
     };
@@ -1026,7 +1171,8 @@ describe("getEntityTypeCounts", () => {
 
   it("handles count errors gracefully", async () => {
     const mockClient = {
-      count: vi.fn()
+      count: vi
+        .fn()
         .mockResolvedValueOnce({ count: 100 })
         .mockRejectedValueOnce(new Error("index not found")),
     };

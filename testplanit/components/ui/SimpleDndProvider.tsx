@@ -19,9 +19,5 @@ interface SimpleDndProviderProps {
 //    so you may need a SimpleDndProvider there too - but ensure only
 //    one is active at a time by conditionally rendering.
 export function SimpleDndProvider({ children }: SimpleDndProviderProps) {
-  return (
-    <DndProvider backend={HTML5Backend}>
-      {children}
-    </DndProvider>
-  );
+  return <DndProvider backend={HTML5Backend}>{children}</DndProvider>;
 }

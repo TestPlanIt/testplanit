@@ -20,9 +20,21 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     const projectId = await api.createProject(`E2E BulkStatus ${ts}`);
     const folderId = await api.createFolder(projectId, "Bulk Folder");
 
-    const case1Id = await api.createTestCase(projectId, folderId, `Bulk Case 1 ${ts}`);
-    const case2Id = await api.createTestCase(projectId, folderId, `Bulk Case 2 ${ts}`);
-    const case3Id = await api.createTestCase(projectId, folderId, `Bulk Case 3 ${ts}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Case 1 ${ts}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Case 2 ${ts}`
+    );
+    const case3Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Case 3 ${ts}`
+    );
 
     const runId = await api.createTestRun(projectId, `Bulk Run ${ts}`);
     const [rc1Id, rc2Id, rc3Id] = await api.addTestCasesToTestRun(runId, [
@@ -48,7 +60,9 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     }
 
     // Cross-verify via the summary API endpoint
-    const summaryResponse = await request.get(`/api/test-runs/${runId}/summary`);
+    const summaryResponse = await request.get(
+      `/api/test-runs/${runId}/summary`
+    );
     expect(summaryResponse.ok()).toBeTruthy();
     const summary = await summaryResponse.json();
     expect(summary.totalCases).toBe(3);
@@ -63,7 +77,11 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Assign ${ts}`);
     const folderId = await api.createFolder(projectId, "Assign Folder");
-    const caseId = await api.createTestCase(projectId, folderId, `Assign Case ${ts}`);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Assign Case ${ts}`
+    );
     const runId = await api.createTestRun(projectId, `Assign Run ${ts}`);
     const [testRunCaseId] = await api.addTestCasesToTestRun(runId, [caseId]);
 
@@ -84,7 +102,11 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Complete ${ts}`);
     const folderId = await api.createFolder(projectId, "RunCompletion Folder");
-    const caseId = await api.createTestCase(projectId, folderId, `Run Complete Case ${ts}`);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Run Complete Case ${ts}`
+    );
     const runId = await api.createTestRun(projectId, `Complete Run ${ts}`);
     await api.addTestCasesToTestRun(runId, [caseId]);
 
@@ -100,13 +122,18 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     // It appears alongside the "Duplicate" button in the card header.
     // Since we renamed the folder/case away from "Complete*", no other buttons match.
     // The button is only shown when canCloseRun=true and run is not completed.
-    const completeButton = page.locator('button:has-text("Complete")').filter({
-      hasNotText: "Test Run",
-    }).first();
+    const completeButton = page
+      .locator('button:has-text("Complete")')
+      .filter({
+        hasNotText: "Test Run",
+      })
+      .first();
 
     // If the Complete button is not visible after waiting, it means the user doesn't have
     // canClose permission on this project. Fall back to API-based completion verification.
-    const isCompleteButtonVisible = await completeButton.isVisible({ timeout: 15000 }).catch(() => false);
+    const isCompleteButtonVisible = await completeButton
+      .isVisible({ timeout: 15000 })
+      .catch(() => false);
 
     if (!isCompleteButtonVisible) {
       // The canCloseRun permission may not be available for fresh projects.
@@ -128,13 +155,16 @@ test.describe("Test Run Bulk Operations and Completion", () => {
       await page.waitForTimeout(2000);
 
       // Verify the completed badge appears
-      const _completedBadge = page.locator('text="Completed On"').or(
-        page.locator('[class*="badge"]').filter({ hasText: /completed/i })
-      );
+      const _completedBadge = page
+        .locator('text="Completed On"')
+        .or(page.locator('[class*="badge"]').filter({ hasText: /completed/i }));
       // Just verify via API since UI varies
       const testRunResponse = await request.get(
         `/api/model/testRuns/findFirst?q=${encodeURIComponent(
-          JSON.stringify({ where: { id: runId }, select: { id: true, isCompleted: true } })
+          JSON.stringify({
+            where: { id: runId },
+            select: { id: true, isCompleted: true },
+          })
         )}`
       );
       const testRunData = await testRunResponse.json();
@@ -147,12 +177,14 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     // The CompleteTestRunDialog should now be open.
     // Check if dialog appeared; if not, fall back to API completion (permission edge case).
     const dialog = page.locator('[role="dialog"]').first();
-    const isDialogVisible = await dialog.isVisible({ timeout: 8000 }).catch(() => false);
+    const isDialogVisible = await dialog
+      .isVisible({ timeout: 8000 })
+      .catch(() => false);
 
     if (isDialogVisible) {
       // The dialog confirm button text is "Complete Test Run" (dialogs.complete.title)
       const confirmButton = dialog
-        .locator('button')
+        .locator("button")
         .filter({ hasText: /Complete Test Run/i })
         .first();
       await expect(confirmButton).toBeVisible({ timeout: 5000 });
@@ -210,12 +242,17 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     await expect(runItem).toBeVisible({ timeout: 15000 });
 
     // Click the three-dot menu button on the run item
-    const _moreMenuButton = runItem.locator('button[variant="ghost"]').or(
-      runItem.locator('button').filter({ has: page.locator('[data-lucide="more-vertical"]') })
-    ).first();
+    const _moreMenuButton = runItem
+      .locator('button[variant="ghost"]')
+      .or(
+        runItem
+          .locator("button")
+          .filter({ has: page.locator('[data-lucide="more-vertical"]') })
+      )
+      .first();
 
     // Try to find the menu trigger within the run item
-    const menuTrigger = runItem.locator('button').last();
+    const menuTrigger = runItem.locator("button").last();
     await menuTrigger.click();
 
     // Find the complete trigger in the dropdown
@@ -231,7 +268,7 @@ test.describe("Test Run Bulk Operations and Completion", () => {
 
     // Click the confirm button inside the dialog
     const confirmButton = dialog
-      .locator('button')
+      .locator("button")
       .filter({ hasText: "Complete" })
       .first();
     await expect(confirmButton).toBeVisible({ timeout: 5000 });
@@ -290,9 +327,9 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     await page.waitForLoadState("load");
 
     // The "Configurations:" label and combobox appear for multi-config runs.
-    await expect(
-      page.locator('span:has-text("Configurations")')
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('span:has-text("Configurations")')).toBeVisible({
+      timeout: 15000,
+    });
 
     // Find the config combobox by locating it near the "Configurations:" text.
     // The structure renders the span and combobox button as siblings in the same flex container.
@@ -334,7 +371,9 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     await configSelector.click();
     await page.waitForTimeout(500);
 
-    const option1Again = page.locator(`[role="option"]:has-text("${config1Name}")`);
+    const option1Again = page.locator(
+      `[role="option"]:has-text("${config1Name}")`
+    );
     await expect(option1Again).toBeVisible({ timeout: 5000 });
     await option1Again.click();
 
@@ -357,25 +396,45 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     const config2Id = await api.createConfiguration(`CaseCount Edge ${ts}`);
 
     const groupId = randomUUID();
-    const run1Id = await api.createTestRun(projectId, `CaseCount Safari Run ${ts}`, {
-      configId: config1Id,
-      configurationGroupId: groupId,
-    });
-    const run2Id = await api.createTestRun(projectId, `CaseCount Edge Run ${ts}`, {
-      configId: config2Id,
-      configurationGroupId: groupId,
-    });
+    const run1Id = await api.createTestRun(
+      projectId,
+      `CaseCount Safari Run ${ts}`,
+      {
+        configId: config1Id,
+        configurationGroupId: groupId,
+      }
+    );
+    const run2Id = await api.createTestRun(
+      projectId,
+      `CaseCount Edge Run ${ts}`,
+      {
+        configId: config2Id,
+        configurationGroupId: groupId,
+      }
+    );
 
     const folderId = await api.createFolder(projectId, "CaseCount Folder");
 
     // Add 2 cases to run1
-    const case1Id = await api.createTestCase(projectId, folderId, `CaseCount Case A ${ts}`);
-    const case2Id = await api.createTestCase(projectId, folderId, `CaseCount Case B ${ts}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `CaseCount Case A ${ts}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `CaseCount Case B ${ts}`
+    );
     await api.addTestCaseToTestRun(run1Id, case1Id);
     await api.addTestCaseToTestRun(run1Id, case2Id);
 
     // Add 1 case to run2
-    const case3Id = await api.createTestCase(projectId, folderId, `CaseCount Case C ${ts}`);
+    const case3Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `CaseCount Case C ${ts}`
+    );
     await api.addTestCaseToTestRun(run2Id, case3Id);
 
     // Navigate to run1 — should show 2 cases
@@ -385,7 +444,9 @@ test.describe("Test Run Bulk Operations and Completion", () => {
 
     // The case count label should reflect run1's 2 cases
     // The label is "X cases in run" pattern
-    const caseCountLabel1 = page.locator('span.text-md.font-semibold, span[class*="font-semibold"]').first();
+    const caseCountLabel1 = page
+      .locator('span.text-md.font-semibold, span[class*="font-semibold"]')
+      .first();
     await expect(caseCountLabel1).toBeVisible({ timeout: 10000 });
     const label1Text = await caseCountLabel1.textContent();
     expect(label1Text).toMatch(/2/);
@@ -395,7 +456,9 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     await page.waitForLoadState("load");
     await page.waitForTimeout(3000);
 
-    const caseCountLabel2 = page.locator('span.text-md.font-semibold, span[class*="font-semibold"]').first();
+    const caseCountLabel2 = page
+      .locator('span.text-md.font-semibold, span[class*="font-semibold"]')
+      .first();
     await expect(caseCountLabel2).toBeVisible({ timeout: 10000 });
     const label2Text = await caseCountLabel2.textContent();
     expect(label2Text).toMatch(/1/);

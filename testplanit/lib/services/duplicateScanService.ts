@@ -66,7 +66,7 @@ type EsHit = {
 export class DuplicateScanService {
   constructor(
     private prisma: PrismaClient,
-    private esClient: Client | null,
+    private esClient: Client | null
   ) {}
 
   /**
@@ -84,7 +84,7 @@ export class DuplicateScanService {
   async findSimilarCases(
     caseData: CaseSearchInput,
     projectId: number,
-    tenantId?: string,
+    tenantId?: string
   ): Promise<SimilarCasePair[]> {
     if (!this.esClient) return [];
 
@@ -133,7 +133,7 @@ export class DuplicateScanService {
     const sourceId = caseData.id;
     const sourceTags = (caseData.tags ?? []).map((t) => t.name);
     const sourceFieldValues = (caseData.customFieldValues ?? []).map(
-      (f) => `${f.fieldName}:${f.value}`,
+      (f) => `${f.fieldName}:${f.value}`
     );
 
     for (const hit of hits) {
@@ -154,10 +154,16 @@ export class DuplicateScanService {
       if (nameLevenshtein < 0.85) continue;
 
       // Token-level check: split into words and compare overlap
-      const sourceWords = caseData.name.toLowerCase().split(/\s+/).filter(Boolean);
-      const candidateWords = candidate.name.toLowerCase().split(/\s+/).filter(Boolean);
+      const sourceWords = caseData.name
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+      const candidateWords = candidate.name
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
       const nameTokenJaccard = jaccardSimilarity(sourceWords, candidateWords);
-      if (nameTokenJaccard < 0.80) continue;
+      if (nameTokenJaccard < 0.8) continue;
 
       // Use Jaro-Winkler as the name signal in the combined score (better gradient)
       const nameScore = jaroWinkler(caseData.name, candidate.name);
@@ -167,9 +173,12 @@ export class DuplicateScanService {
       const candidateTags = (candidate.tags ?? []).map((t) => t.name);
       const tagsScore = jaccardSimilarity(sourceTags, candidateTags);
       const candidateFieldValues = (candidate.customFields ?? []).map(
-        (f) => `${f.fieldName}:${f.value}`,
+        (f) => `${f.fieldName}:${f.value}`
       );
-      const fieldsScore = jaccardSimilarity(sourceFieldValues, candidateFieldValues);
+      const fieldsScore = jaccardSimilarity(
+        sourceFieldValues,
+        candidateFieldValues
+      );
 
       // Combine with weights: name=0.5, steps=0.3, tags=0.1, fields=0.1
       const combined = combineScores({

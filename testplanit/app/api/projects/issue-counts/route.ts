@@ -20,7 +20,9 @@ export async function POST(request: Request) {
 
     // Use a single optimized query with UNION to find all issues related to projects
     // This is much faster than N separate queries with complex OR conditions
-    const results = await prisma.$queryRaw<{ projectId: number; issueCount: bigint }[]>`
+    const results = await prisma.$queryRaw<
+      { projectId: number; issueCount: bigint }[]
+    >`
       SELECT
         project_id as "projectId",
         COUNT(DISTINCT issue_id) as "issueCount"

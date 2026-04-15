@@ -104,7 +104,9 @@ test.describe("Project Overview Dashboard", () => {
     // After collapsing, react-resizable-panels sets the panel size to 0.
     // Verify via the data-panel-size attribute that the panel collapsed.
     // The value may be "0", "0.0", or "0.00" depending on the library version.
-    await expect(leftPanel).toHaveAttribute("data-panel-size", /^0(\.0+)?$/, { timeout: 10000 });
+    await expect(leftPanel).toHaveAttribute("data-panel-size", /^0(\.0+)?$/, {
+      timeout: 10000,
+    });
 
     // Click the same button (now acts as expand) to re-expand
     await collapseLeftBtn.click();
@@ -192,11 +194,11 @@ test.describe("Project Overview Dashboard", () => {
     // The ResizablePanelGroup renders with the data-panel-group attribute.
     // Note: autoSaveId is not the same as id — data-panel-group-id uses the id prop,
     // which is auto-generated. Use the data-panel-group attribute instead.
-    const panelGroup = page.locator('[data-panel-group]');
+    const panelGroup = page.locator("[data-panel-group]");
     await expect(panelGroup).toBeVisible({ timeout: 15000 });
 
     // Verify there are resize handles present (indicating a resizable layout)
-    const resizeHandles = page.locator('[data-panel-resize-handle-id]');
+    const resizeHandles = page.locator("[data-panel-resize-handle-id]");
     await expect(resizeHandles.first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -5,22 +5,27 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  ResizableHandle, ResizablePanel, ResizablePanelGroup
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  ChevronLeft, Compass, ListTree,
-  PlayCircle, TagsIcon
+  ChevronLeft,
+  Compass,
+  ListTree,
+  PlayCircle,
+  TagsIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { use, useRef, useState } from "react";

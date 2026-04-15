@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import {
   getServerSession,
   type DefaultSession,
-  type NextAuthOptions
+  type NextAuthOptions,
 } from "next-auth";
 import AppleProvider from "next-auth/providers/apple";
 import AzureADProvider from "next-auth/providers/azure-ad";
@@ -456,7 +456,8 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
 
           // Check if 2FA verification is required for SSO logins
           if (account && account.provider !== "credentials") {
-            const registrationSettings = await db.registrationSettings.findFirst();
+            const registrationSettings =
+              await db.registrationSettings.findFirst();
             if (registrationSettings?.force2FAAllLogins) {
               // Check if user has 2FA enabled
               if (user?.twoFactorEnabled) {
@@ -697,7 +698,8 @@ export const authOptions: NextAuthOptions = {
 
         // Check if 2FA verification is required for SSO logins
         if (account && account.provider !== "credentials") {
-          const registrationSettings = await db.registrationSettings.findFirst();
+          const registrationSettings =
+            await db.registrationSettings.findFirst();
           if (registrationSettings?.force2FAAllLogins) {
             // Check if user has 2FA enabled
             if (user?.twoFactorEnabled) {
@@ -767,7 +769,12 @@ export const authOptions: NextAuthOptions = {
 
 function authorize(prisma: PrismaClient) {
   return async (
-    credentials: Record<"email" | "password" | "twoFactorToken" | "pendingAuthToken", string> | undefined
+    credentials:
+      | Record<
+          "email" | "password" | "twoFactorToken" | "pendingAuthToken",
+          string
+        >
+      | undefined
   ) => {
     if (!credentials) throw new Error("Missing credentials");
 
@@ -800,14 +807,18 @@ function authorize(prisma: PrismaClient) {
         }
 
         // Verify TOTP token - dynamic import to avoid circular deps
-        const { verifyTOTP, decryptSecret, verifyBackupCode } = await import("~/lib/two-factor");
+        const { verifyTOTP, decryptSecret, verifyBackupCode } =
+          await import("~/lib/two-factor");
         const secret = decryptSecret(user.twoFactorSecret);
         let verified = await verifyTOTP(credentials.twoFactorToken, secret);
 
         // Try backup code if TOTP failed
         if (!verified && user.twoFactorBackupCodes) {
           const hashedCodes = JSON.parse(user.twoFactorBackupCodes) as string[];
-          const codeIndex = verifyBackupCode(credentials.twoFactorToken, hashedCodes);
+          const codeIndex = verifyBackupCode(
+            credentials.twoFactorToken,
+            hashedCodes
+          );
           if (codeIndex !== -1) {
             verified = true;
             // Remove used backup code
@@ -889,7 +900,10 @@ function authorize(prisma: PrismaClient) {
 
     // Check system 2FA settings
     const registrationSettings = await prisma.registrationSettings.findFirst();
-    const force2FANonSSO = registrationSettings?.force2FANonSSO || registrationSettings?.force2FAAllLogins || false;
+    const force2FANonSSO =
+      registrationSettings?.force2FANonSSO ||
+      registrationSettings?.force2FAAllLogins ||
+      false;
 
     // Check if 2FA is enabled for this user
     if (maybeUser.twoFactorEnabled) {

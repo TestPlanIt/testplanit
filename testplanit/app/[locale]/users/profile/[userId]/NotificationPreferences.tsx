@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent, CardDescription, CardHeader,
-  CardTitle
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -56,7 +58,11 @@ export function NotificationPreferences({
 
           // If email server is not configured and user has an email-based notification mode,
           // fall back to IN_APP mode
-          if (!data.configured && (notificationMode === "IN_APP_EMAIL_IMMEDIATE" || notificationMode === "IN_APP_EMAIL_DAILY")) {
+          if (
+            !data.configured &&
+            (notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
+              notificationMode === "IN_APP_EMAIL_DAILY")
+          ) {
             setNotificationMode("IN_APP");
           }
         }
@@ -169,7 +175,9 @@ export function NotificationPreferences({
                     id="in-app-email-immediate"
                   />
                   <Label htmlFor="in-app-email-immediate">
-                    {tGlobal("admin.notifications.defaultMode.inAppEmailImmediate")}
+                    {tGlobal(
+                      "admin.notifications.defaultMode.inAppEmailImmediate"
+                    )}
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">

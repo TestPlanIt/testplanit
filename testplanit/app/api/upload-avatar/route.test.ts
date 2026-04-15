@@ -17,7 +17,10 @@ vi.mock("@aws-sdk/client-s3", () => {
 
 import { POST } from "./route";
 
-function createUploadRequest(file: File | null, prependString?: string): NextRequest {
+function createUploadRequest(
+  file: File | null,
+  prependString?: string
+): NextRequest {
   const formData = new FormData();
   if (file) {
     formData.set("file", file);

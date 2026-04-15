@@ -1235,7 +1235,15 @@ function cartesianProduct(arrays: any[][]): any[][] {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { projectId, dimensions, metrics, page = 1, pageSize, sortColumn, sortDirection } = body;
+    const {
+      projectId,
+      dimensions,
+      metrics,
+      page = 1,
+      pageSize,
+      sortColumn,
+      sortDirection,
+    } = body;
 
     const validation = reportRequestSchema.safeParse({
       ...body,
@@ -1570,7 +1578,11 @@ export async function POST(req: NextRequest) {
         const multiplier = sortDirection === "asc" ? 1 : -1;
 
         // Handle dates
-        if (sortColumn === "date" || aVal instanceof Date || bVal instanceof Date) {
+        if (
+          sortColumn === "date" ||
+          aVal instanceof Date ||
+          bVal instanceof Date
+        ) {
           const aTime = new Date(aVal).getTime();
           const bTime = new Date(bVal).getTime();
           return (aTime - bTime) * multiplier;

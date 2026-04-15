@@ -15,15 +15,17 @@ function makeMockEsClient(hits: any[] = []) {
   };
 }
 
-function makeHit(overrides: Partial<{
-  _score: number;
-  id: number;
-  name: string;
-  projectId: number;
-  tags: Array<{ name: string }>;
-  customFields: Array<{ fieldName: string; value?: any }>;
-  steps: Array<{ step: string; expectedResult: string }>;
-}> = {}) {
+function makeHit(
+  overrides: Partial<{
+    _score: number;
+    id: number;
+    name: string;
+    projectId: number;
+    tags: Array<{ name: string }>;
+    customFields: Array<{ fieldName: string; value?: any }>;
+    steps: Array<{ step: string; expectedResult: string }>;
+  }> = {}
+) {
   return {
     _score: overrides._score ?? 5.0,
     _source: {
@@ -148,10 +150,17 @@ describe("DuplicateScanService", () => {
     it("returns HIGH confidence for very similar cases", async () => {
       // Very similar name + high ES score
       const esClient = makeMockEsClient([
-        makeHit({ id: 100, name: "Login with valid credentials", _score: 10.0 }),
+        makeHit({
+          id: 100,
+          name: "Login with valid credentials",
+          _score: 10.0,
+        }),
       ]);
       const service = new DuplicateScanService(mockPrisma, esClient as any);
-      const input: CaseSearchInput = { id: 1, name: "Login with valid credentials" };
+      const input: CaseSearchInput = {
+        id: 1,
+        name: "Login with valid credentials",
+      };
 
       const result = await service.findSimilarCases(input, 1);
       expect(result.length).toBe(1);
@@ -165,7 +174,10 @@ describe("DuplicateScanService", () => {
         makeHit({ id: 100, name: "Login with valid credentials", _score: 5.0 }),
       ]);
       const service = new DuplicateScanService(mockPrisma, esClient as any);
-      const input: CaseSearchInput = { id: 1, name: "Login with valid credentials" };
+      const input: CaseSearchInput = {
+        id: 1,
+        name: "Login with valid credentials",
+      };
 
       const result = await service.findSimilarCases(input, 1);
       expect(result.length).toBeGreaterThan(0);
@@ -260,7 +272,10 @@ describe("DuplicateScanService", () => {
         makeHit({ id: 103, name: "Login with valid credentials", _score: 5.0 }),
       ]);
       const service = new DuplicateScanService(mockPrisma, esClient as any);
-      const input: CaseSearchInput = { id: 1, name: "Login with valid credentials" };
+      const input: CaseSearchInput = {
+        id: 1,
+        name: "Login with valid credentials",
+      };
 
       const result = await service.findSimilarCases(input, 1);
       // Sort should be descending

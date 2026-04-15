@@ -71,9 +71,7 @@ vi.mock("@/components/TimeTracker", () => ({
 }));
 
 vi.mock("@/components/issues/UnifiedIssueManager", () => ({
-  SimpleUnifiedIssueManager: () => (
-    <div data-testid="issue-manager" />
-  ),
+  SimpleUnifiedIssueManager: () => <div data-testid="issue-manager" />,
 }));
 
 vi.mock("@/components/LoadingSpinner", () => ({
@@ -91,7 +89,9 @@ vi.mock("~/lib/navigation", () => ({
 
 // --- Utility mocks ---
 vi.mock("~/utils/colorUtils", () => ({
-  getBackgroundStyle: vi.fn(() => ({ backgroundColor: "rgba(59,130,246,0.1)" })),
+  getBackgroundStyle: vi.fn(() => ({
+    backgroundColor: "rgba(59,130,246,0.1)",
+  })),
 }));
 
 vi.mock("~/utils/duration", () => ({
@@ -194,7 +194,9 @@ beforeEach(() => {
     data: mockSessionData,
     isLoading: false,
   });
-  (useFindManyTemplateResultAssignment as ReturnType<typeof vi.fn>).mockReturnValue({
+  (
+    useFindManyTemplateResultAssignment as ReturnType<typeof vi.fn>
+  ).mockReturnValue({
     data: [],
     isLoading: false,
   });
@@ -202,18 +204,14 @@ beforeEach(() => {
 
 describe("SessionResultForm", () => {
   it("renders the form with status selector when session data is loaded", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     // Status select trigger should be present
     expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 
   it("renders the notes editor (TipTapEditor)", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     // TipTapEditor mocked component
     const editors = screen.getAllByTestId("tiptap-editor");
@@ -221,9 +219,7 @@ describe("SessionResultForm", () => {
   });
 
   it("renders the elapsed duration input field", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     // Elapsed input (text type)
     const inputs = screen.getAllByRole("textbox");
@@ -231,17 +227,13 @@ describe("SessionResultForm", () => {
   });
 
   it("renders the TimeTracker component", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("time-tracker")).toBeInTheDocument();
   });
 
   it("renders the save/submit button", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     // The button contains save icon + translation key "actions.save"
     const button = screen.getByRole("button", { name: /actions\.save/i });
@@ -254,9 +246,7 @@ describe("SessionResultForm", () => {
       isLoading: true,
     });
 
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
   });
@@ -267,9 +257,7 @@ describe("SessionResultForm", () => {
       isLoading: true,
     });
 
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
   });
@@ -280,9 +268,7 @@ describe("SessionResultForm", () => {
       isLoading: true,
     });
 
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
   });
@@ -294,25 +280,19 @@ describe("SessionResultForm", () => {
       update: vi.fn(),
     });
 
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
   });
 
   it("renders the attachments upload component", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("upload-attachments")).toBeInTheDocument();
   });
 
   it("renders the issue manager component", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     expect(screen.getByTestId("issue-manager")).toBeInTheDocument();
   });
@@ -338,23 +318,21 @@ describe("SessionResultForm", () => {
       },
     ];
 
-    (useFindManyTemplateResultAssignment as ReturnType<typeof vi.fn>).mockReturnValue({
+    (
+      useFindManyTemplateResultAssignment as ReturnType<typeof vi.fn>
+    ).mockReturnValue({
       data: mockTemplateFields,
       isLoading: false,
     });
 
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     // The dynamic field label should appear
     expect(screen.getByText("Bug Severity")).toBeInTheDocument();
   });
 
   it("renders the status options from the statuses list", () => {
-    renderWithQueryClient(
-      <SessionResultForm sessionId={1} projectId="1" />
-    );
+    renderWithQueryClient(<SessionResultForm sessionId={1} projectId="1" />);
 
     // The first status should be auto-selected (value shown in trigger)
     // The combobox trigger should be present with a status value

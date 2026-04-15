@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  BARREL_PENALTY, BARREL_THRESHOLD, bfsRank, buildImportGraph, detectLanguage, extractImportSpecifiers, isBarrelFile, resolveSpecifier
+  BARREL_PENALTY,
+  BARREL_THRESHOLD,
+  bfsRank,
+  buildImportGraph,
+  detectLanguage,
+  extractImportSpecifiers,
+  isBarrelFile,
+  resolveSpecifier,
 } from "./import-analyzer";
 
 // ---------------------------------------------------------------------------
@@ -52,12 +59,18 @@ describe("detectLanguage", () => {
 describe("extractImportSpecifiers", () => {
   describe("TypeScript / JavaScript", () => {
     it("extracts named import", () => {
-      const result = extractImportSpecifiers('import { foo } from "./bar"', "ts");
+      const result = extractImportSpecifiers(
+        'import { foo } from "./bar"',
+        "ts"
+      );
       expect(result).toContain("./bar");
     });
 
     it("extracts type import", () => {
-      const result = extractImportSpecifiers('import type { Foo } from "../types"', "ts");
+      const result = extractImportSpecifiers(
+        'import type { Foo } from "../types"',
+        "ts"
+      );
       expect(result).toContain("../types");
     });
 
@@ -72,7 +85,10 @@ describe("extractImportSpecifiers", () => {
     });
 
     it("extracts require()", () => {
-      const result = extractImportSpecifiers('const x = require("./module")', "ts");
+      const result = extractImportSpecifiers(
+        'const x = require("./module")',
+        "ts"
+      );
       expect(result).toContain("./module");
     });
 
@@ -104,14 +120,20 @@ export * from "./baz";
     });
 
     it("returns empty array for content with no imports", () => {
-      const result = extractImportSpecifiers("const x = 1;\nconst y = 2;", "ts");
+      const result = extractImportSpecifiers(
+        "const x = 1;\nconst y = 2;",
+        "ts"
+      );
       expect(result).toEqual([]);
     });
   });
 
   describe("Python", () => {
     it("extracts 'from x import y'", () => {
-      const result = extractImportSpecifiers("from os.path import join", "python");
+      const result = extractImportSpecifiers(
+        "from os.path import join",
+        "python"
+      );
       expect(result).toContain("os.path");
     });
 
@@ -121,7 +143,10 @@ export * from "./baz";
     });
 
     it("extracts relative python imports", () => {
-      const result = extractImportSpecifiers("from .utils import helper", "python");
+      const result = extractImportSpecifiers(
+        "from .utils import helper",
+        "python"
+      );
       expect(result).toContain(".utils");
     });
   });
@@ -142,7 +167,10 @@ export * from "./baz";
 
   describe("unknown language", () => {
     it("returns empty array for unknown language", () => {
-      const result = extractImportSpecifiers("import stuff from 'place'", "unknown");
+      const result = extractImportSpecifiers(
+        "import stuff from 'place'",
+        "unknown"
+      );
       expect(result).toEqual([]);
     });
   });
@@ -153,42 +181,68 @@ export * from "./baz";
 // ---------------------------------------------------------------------------
 describe("resolveSpecifier", () => {
   it("returns null for external (non-relative) specifiers", () => {
-    expect(resolveSpecifier("react", "src/a.ts", new Set(["react"]))).toBeNull();
-    expect(resolveSpecifier("lodash", "src/a.ts", new Set(["lodash"]))).toBeNull();
+    expect(
+      resolveSpecifier("react", "src/a.ts", new Set(["react"]))
+    ).toBeNull();
+    expect(
+      resolveSpecifier("lodash", "src/a.ts", new Set(["lodash"]))
+    ).toBeNull();
   });
 
   it("resolves by extension elision (adds .ts)", () => {
-    expect(resolveSpecifier("./bar", "src/login.ts", new Set(["src/bar.ts"]))).toBe("src/bar.ts");
+    expect(
+      resolveSpecifier("./bar", "src/login.ts", new Set(["src/bar.ts"]))
+    ).toBe("src/bar.ts");
   });
 
   it("resolves by extension elision (adds .tsx)", () => {
-    expect(resolveSpecifier("./Button", "src/components/index.ts", new Set(["src/components/Button.tsx"]))).toBe(
-      "src/components/Button.tsx"
-    );
+    expect(
+      resolveSpecifier(
+        "./Button",
+        "src/components/index.ts",
+        new Set(["src/components/Button.tsx"])
+      )
+    ).toBe("src/components/Button.tsx");
   });
 
   it("resolves by extension elision (adds .js)", () => {
-    expect(resolveSpecifier("./helper", "src/a.ts", new Set(["src/helper.js"]))).toBe("src/helper.js");
+    expect(
+      resolveSpecifier("./helper", "src/a.ts", new Set(["src/helper.js"]))
+    ).toBe("src/helper.js");
   });
 
   it("resolves index file", () => {
-    expect(resolveSpecifier("./utils", "src/a.ts", new Set(["src/utils/index.ts"]))).toBe("src/utils/index.ts");
+    expect(
+      resolveSpecifier("./utils", "src/a.ts", new Set(["src/utils/index.ts"]))
+    ).toBe("src/utils/index.ts");
   });
 
   it("resolves index.tsx", () => {
     expect(
-      resolveSpecifier("./components", "src/page.ts", new Set(["src/components/index.tsx"]))
+      resolveSpecifier(
+        "./components",
+        "src/page.ts",
+        new Set(["src/components/index.tsx"])
+      )
     ).toBe("src/components/index.tsx");
   });
 
   it("resolves exact match first", () => {
     const available = new Set(["src/bar.ts", "src/bar.tsx"]);
     // If exact match is "src/bar" — not in set; extension elision finds .ts first
-    expect(resolveSpecifier("./bar", "src/login.ts", available)).toBe("src/bar.ts");
+    expect(resolveSpecifier("./bar", "src/login.ts", available)).toBe(
+      "src/bar.ts"
+    );
   });
 
   it("resolves parent directory traversal", () => {
-    expect(resolveSpecifier("../shared", "src/auth/login.ts", new Set(["src/shared.ts"]))).toBe("src/shared.ts");
+    expect(
+      resolveSpecifier(
+        "../shared",
+        "src/auth/login.ts",
+        new Set(["src/shared.ts"])
+      )
+    ).toBe("src/shared.ts");
   });
 
   it("returns null when specifier not found in available paths", () => {
@@ -196,7 +250,9 @@ describe("resolveSpecifier", () => {
   });
 
   it("returns null when specifier with extensions not in available paths", () => {
-    expect(resolveSpecifier("./nofile", "src/a.ts", new Set(["src/other.ts"]))).toBeNull();
+    expect(
+      resolveSpecifier("./nofile", "src/a.ts", new Set(["src/other.ts"]))
+    ).toBeNull();
   });
 });
 
@@ -307,7 +363,9 @@ describe("bfsRank", () => {
     const result = bfsRank("A", graph, allPaths, new Set<string>());
 
     // A = distance 0, B and C = distance 1, D = distance 2
-    const byPath = Object.fromEntries(result.map((r) => [r.path, r.effectiveDistance]));
+    const byPath = Object.fromEntries(
+      result.map((r) => [r.path, r.effectiveDistance])
+    );
     expect(byPath["A"]).toBe(0);
     expect(byPath["B"]).toBe(1);
     expect(byPath["C"]).toBe(1);
@@ -315,7 +373,9 @@ describe("bfsRank", () => {
 
     // Verify sorted ascending
     for (let i = 0; i < result.length - 1; i++) {
-      expect(result[i].effectiveDistance).toBeLessThanOrEqual(result[i + 1].effectiveDistance);
+      expect(result[i].effectiveDistance).toBeLessThanOrEqual(
+        result[i + 1].effectiveDistance
+      );
     }
   });
 
@@ -329,7 +389,9 @@ describe("bfsRank", () => {
     const result = bfsRank("A", graph, allPaths, new Set<string>());
     expect(result).toHaveLength(2);
 
-    const byPath = Object.fromEntries(result.map((r) => [r.path, r.effectiveDistance]));
+    const byPath = Object.fromEntries(
+      result.map((r) => [r.path, r.effectiveDistance])
+    );
     expect(byPath["A"]).toBe(0);
     expect(byPath["B"]).toBe(1);
   });
@@ -353,9 +415,7 @@ describe("bfsRank", () => {
   });
 
   it("appends unreachable files at the end with Infinity distance", () => {
-    const graph = new Map<string, Set<string>>([
-      ["A", new Set()],
-    ]);
+    const graph = new Map<string, Set<string>>([["A", new Set()]]);
     const allPaths = ["A", "B", "C"];
     const result = bfsRank("A", graph, allPaths, new Set<string>());
 
@@ -367,8 +427,12 @@ describe("bfsRank", () => {
     expect(unreachable.map((r) => r.path)).toContain("C");
 
     // Reachable always comes before unreachable
-    const lastReachableIndex = result.findLastIndex((r) => r.effectiveDistance !== Infinity);
-    const firstUnreachableIndex = result.findIndex((r) => r.effectiveDistance === Infinity);
+    const lastReachableIndex = result.findLastIndex(
+      (r) => r.effectiveDistance !== Infinity
+    );
+    const firstUnreachableIndex = result.findIndex(
+      (r) => r.effectiveDistance === Infinity
+    );
     if (lastReachableIndex !== -1 && firstUnreachableIndex !== -1) {
       expect(lastReachableIndex).toBeLessThan(firstUnreachableIndex);
     }

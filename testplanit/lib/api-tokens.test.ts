@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   generateApiToken,
-  hashToken, isValidTokenFormat,
-  maskToken, verifyToken
+  hashToken,
+  isValidTokenFormat,
+  maskToken,
+  verifyToken,
 } from "./api-tokens";
 
 describe("API Token Utilities", () => {

@@ -99,24 +99,27 @@ export async function notifyBulkTestCaseAssignment(
     }
 
     // Group by test run for better notification structure
-    const testRunGroups = testRunCases.reduce((acc, trc) => {
-      const runId = trc.testRun.id;
-      if (!acc[runId]) {
-        acc[runId] = {
-          testRunId: runId,
-          testRunName: trc.testRun.name,
-          projectId: trc.testRun.project.id,
-          projectName: trc.testRun.project.name,
-          testCases: [],
-        };
-      }
-      acc[runId].testCases.push({
-        testRunCaseId: trc.id,
-        testCaseId: trc.repositoryCaseId,
-        testCaseName: trc.repositoryCase.name,
-      });
-      return acc;
-    }, {} as Record<number, any>);
+    const testRunGroups = testRunCases.reduce(
+      (acc, trc) => {
+        const runId = trc.testRun.id;
+        if (!acc[runId]) {
+          acc[runId] = {
+            testRunId: runId,
+            testRunName: trc.testRun.name,
+            projectId: trc.testRun.project.id,
+            projectName: trc.testRun.project.name,
+            testCases: [],
+          };
+        }
+        acc[runId].testCases.push({
+          testRunCaseId: trc.id,
+          testCaseId: trc.repositoryCaseId,
+          testCaseName: trc.repositoryCase.name,
+        });
+        return acc;
+      },
+      {} as Record<number, any>
+    );
 
     // Create a single notification for bulk assignment
     await NotificationService.createNotification({

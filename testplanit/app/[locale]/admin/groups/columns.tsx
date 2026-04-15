@@ -57,9 +57,7 @@ export const getColumns = (
     size: 100,
     cell: ({ row }) => (
       <div className="text-center">
-        <ProjectListDisplay
-          projects={row.original.projectPermissions}
-        />
+        <ProjectListDisplay projects={row.original.projectPermissions} />
       </div>
     ),
   },

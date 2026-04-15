@@ -162,8 +162,16 @@ describe("Tags Counts Route", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.counts[1]).toEqual({ repositoryCases: 5, sessions: 2, testRuns: 1 });
-      expect(data.counts[2]).toEqual({ repositoryCases: 10, sessions: 4, testRuns: 3 });
+      expect(data.counts[1]).toEqual({
+        repositoryCases: 5,
+        sessions: 2,
+        testRuns: 1,
+      });
+      expect(data.counts[2]).toEqual({
+        repositoryCases: 10,
+        sessions: 4,
+        testRuns: 3,
+      });
     });
 
     it("filters by tagId when counting entities", async () => {
@@ -234,7 +242,9 @@ describe("Tags Counts Route", () => {
   describe("Error handling", () => {
     it("returns 500 when database query fails", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockRejectedValue(new Error("DB error"));
+      (prisma.repositoryCases.count as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const request = createMockRequest({ tagIds: [1] });
       const response = await POST(request);

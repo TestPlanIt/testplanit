@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
   decryptSecret,
-  generateBackupCodes, verifyTOTP
+  generateBackupCodes,
+  verifyTOTP,
 } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
 
@@ -23,10 +24,7 @@ export async function POST(request: NextRequest) {
     const { token } = body;
 
     if (!token || typeof token !== "string") {
-      return NextResponse.json(
-        { error: "Token is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Token is required" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({

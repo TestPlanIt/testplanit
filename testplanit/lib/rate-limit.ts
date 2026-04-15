@@ -12,14 +12,17 @@ interface RateLimitEntry {
 const attemptStore = new Map<string, RateLimitEntry>();
 
 // Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of attemptStore.entries()) {
-    if (now > entry.resetAt) {
-      attemptStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of attemptStore.entries()) {
+      if (now > entry.resetAt) {
+        attemptStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 export interface RateLimitResult {
   allowed: boolean;

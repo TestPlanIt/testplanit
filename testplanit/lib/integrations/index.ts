@@ -5,16 +5,21 @@ export { BaseAdapter } from "./adapters/BaseAdapter";
 export { GitHubAdapter } from "./adapters/GitHubAdapter";
 // Types
 export type {
-  AuthenticationData, CreateIssueData, FieldMapping, IssueAdapter,
-  IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData, WebhookData
+  AuthenticationData,
+  CreateIssueData,
+  FieldMapping,
+  IssueAdapter,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
+  WebhookData,
 } from "./adapters/IssueAdapter";
 export { JiraAdapter } from "./adapters/JiraAdapter";
 export { AuthenticationService } from "./AuthenticationService";
 export { IssueCache, issueCache } from "./cache/IssueCache";
 export { IntegrationManager, integrationManager } from "./IntegrationManager";
 export { SyncService, syncService } from "./services/SyncService";
-
-
 
 // Helper function to get an integration client
 export async function getIntegrationClient(

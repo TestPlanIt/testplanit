@@ -1,14 +1,19 @@
 import { SessionResultsSummary } from "@/components/SessionResultsSummary";
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import type {
-  Prisma, Projects, Sessions, TestRunCases,
+  Prisma,
+  Projects,
+  Sessions,
+  TestRunCases,
   TestRunResults,
-  TestRuns
+  TestRuns,
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
@@ -18,12 +23,14 @@ import { useCallback, useMemo } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import { DateFormatter } from "~/components/DateFormatter";
 import {
-  useFindManySessions, useFindManyTestRunCases, useFindManyTestRuns
+  useFindManySessions,
+  useFindManyTestRunCases,
+  useFindManyTestRuns,
 } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import UserWorkGanttChart, {
-  type PlotTask
+  type PlotTask,
 } from "./dataVisualizations/UserWorkGanttChart";
 import LoadingSpinner from "./LoadingSpinner";
 // import UserWorkChart from "./dataVisualizations/UserWorkChart"; // Will be replaced

@@ -122,9 +122,7 @@ describe("Project Issue Counts API Route", () => {
 
   describe("Issue Count Queries", () => {
     it("returns correct counts for single project with issues", async () => {
-      const mockResults = [
-        { projectId: 1, issueCount: BigInt(5) },
-      ];
+      const mockResults = [{ projectId: 1, issueCount: BigInt(5) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
@@ -194,9 +192,7 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("converts bigint to number correctly", async () => {
-      const mockResults = [
-        { projectId: 1, issueCount: BigInt(999999) },
-      ];
+      const mockResults = [{ projectId: 1, issueCount: BigInt(999999) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
@@ -314,7 +310,7 @@ describe("Project Issue Counts API Route", () => {
       const queryCall = (prisma.$queryRaw as any).mock.calls[0][0];
       const queryString = queryCall.join("");
 
-      expect(queryString).toContain('isDeleted');
+      expect(queryString).toContain("isDeleted");
     });
   });
 
@@ -331,8 +327,12 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("logs error when query fails", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      (prisma.$queryRaw as any).mockRejectedValue(new Error("DB connection lost"));
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (prisma.$queryRaw as any).mockRejectedValue(
+        new Error("DB connection lost")
+      );
 
       const request = createRequest({ projectIds: [1] });
       await POST(request);
@@ -362,9 +362,7 @@ describe("Project Issue Counts API Route", () => {
 
   describe("Edge Cases", () => {
     it("handles projectIds with duplicate values", async () => {
-      const mockResults = [
-        { projectId: 1, issueCount: BigInt(5) },
-      ];
+      const mockResults = [{ projectId: 1, issueCount: BigInt(5) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 1, 1] });
@@ -378,9 +376,7 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("handles zero count correctly", async () => {
-      const mockResults = [
-        { projectId: 1, issueCount: BigInt(0) },
-      ];
+      const mockResults = [{ projectId: 1, issueCount: BigInt(0) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
@@ -413,9 +409,7 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("handles very large issue count", async () => {
-      const mockResults = [
-        { projectId: 1, issueCount: BigInt(999999999) },
-      ];
+      const mockResults = [{ projectId: 1, issueCount: BigInt(999999999) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
@@ -446,9 +440,7 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("uses projectId as key and count as value", async () => {
-      const mockResults = [
-        { projectId: 42, issueCount: BigInt(7) },
-      ];
+      const mockResults = [{ projectId: 42, issueCount: BigInt(7) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [42] });
@@ -460,9 +452,7 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("includes all requested projects in response", async () => {
-      const mockResults = [
-        { projectId: 1, issueCount: BigInt(5) },
-      ];
+      const mockResults = [{ projectId: 1, issueCount: BigInt(5) }];
       (prisma.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2, 3, 4, 5] });

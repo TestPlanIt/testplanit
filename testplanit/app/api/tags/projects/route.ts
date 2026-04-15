@@ -142,7 +142,10 @@ export async function POST(request: Request) {
         acc[item.tagId] = item.projects;
         return acc;
       },
-      {} as Record<number, Array<{ id: number; name: string; iconUrl: string | null }>>
+      {} as Record<
+        number,
+        Array<{ id: number; name: string; iconUrl: string | null }>
+      >
     );
 
     return NextResponse.json({ projects: projectsMap });

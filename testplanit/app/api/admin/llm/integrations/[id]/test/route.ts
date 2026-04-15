@@ -31,7 +31,8 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error testing LLM integration:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to test connection";
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to test connection";
     return NextResponse.json({
       success: false,
       error: errorMessage,

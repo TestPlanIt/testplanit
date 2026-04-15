@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
     body = parsed.data;
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   if (!queue) {
     return NextResponse.json(
       { error: "Background job queue is not available" },
-      { status: 503 },
+      { status: 503 }
     );
   }
 
@@ -63,19 +63,23 @@ export async function POST(request: Request) {
     if (!project) {
       return NextResponse.json(
         { error: "No access to project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
     // 6. If folderId provided: validate it belongs to the project
     if (body.folderId !== undefined) {
       const folder = await enhancedDb.repositoryFolders.findFirst({
-        where: { id: body.folderId, projectId: body.projectId, isDeleted: false },
+        where: {
+          id: body.folderId,
+          projectId: body.projectId,
+          isDeleted: false,
+        },
       });
       if (!folder) {
         return NextResponse.json(
           { error: "Folder not found in project" },
-          { status: 404 },
+          { status: 404 }
         );
       }
     }
@@ -97,7 +101,7 @@ export async function POST(request: Request) {
     console.error("[step-scan/submit] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

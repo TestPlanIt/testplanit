@@ -34,7 +34,10 @@ export async function generateQRCodeDataURL(
 /**
  * Verify a TOTP token against a secret
  */
-export async function verifyTOTP(token: string, secret: string): Promise<boolean> {
+export async function verifyTOTP(
+  token: string,
+  secret: string
+): Promise<boolean> {
   try {
     const result = await verify({
       token,
@@ -79,10 +82,7 @@ export function hashBackupCode(code: string): string {
  * Verify a backup code against stored hashed codes
  * Returns the index of the matching code, or -1 if not found
  */
-export function verifyBackupCode(
-  code: string,
-  hashedCodes: string[]
-): number {
+export function verifyBackupCode(code: string, hashedCodes: string[]): number {
   const hashedInput = hashBackupCode(code);
   return hashedCodes.findIndex((hashed) => hashed === hashedInput);
 }
@@ -94,7 +94,8 @@ export function verifyBackupCode(
 export function encryptSecret(secret: string): string {
   // For simplicity, we're using base64 encoding with a prefix
   // In production, use proper AES encryption with a key from env
-  const key = process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
+  const key =
+    process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
   if (!key) {
     throw new Error("Encryption key not configured");
   }
@@ -116,7 +117,8 @@ export function encryptSecret(secret: string): string {
  * Decrypt a secret from database storage
  */
 export function decryptSecret(encryptedSecret: string): string {
-  const key = process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
+  const key =
+    process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
   if (!key) {
     throw new Error("Encryption key not configured");
   }

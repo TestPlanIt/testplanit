@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
@@ -22,7 +23,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { AuditAction } from "@prisma/client";
 import { format } from "date-fns";
@@ -217,23 +218,22 @@ function AuditLogsContent({ session }: { session: Session }) {
   }, []);
 
   // Fetch all logs for export (no pagination)
-  const { refetch: refetchAllLogs } =
-    useFindManyAuditLog(
-      {
-        orderBy: sortConfig
-          ? { [sortConfig.column]: sortConfig.direction }
-          : { timestamp: "desc" },
-        include: {
-          project: {
-            select: { name: true },
-          },
+  const { refetch: refetchAllLogs } = useFindManyAuditLog(
+    {
+      orderBy: sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { timestamp: "desc" },
+      include: {
+        project: {
+          select: { name: true },
         },
-        where: whereClause,
       },
-      {
-        enabled: false, // Don't fetch automatically, only when exporting
-      }
-    );
+      where: whereClause,
+    },
+    {
+      enabled: false, // Don't fetch automatically, only when exporting
+    }
+  );
 
   const handleExportCsv = useCallback(async () => {
     setIsExporting(true);

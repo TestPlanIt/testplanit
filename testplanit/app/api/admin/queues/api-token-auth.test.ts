@@ -61,10 +61,12 @@ describe("Admin Queue Routes - API Token Authentication", () => {
     });
   });
 
-  const createMockRequest = (options: {
-    authHeader?: string;
-    method?: string;
-  } = {}): NextRequest => {
+  const createMockRequest = (
+    options: {
+      authHeader?: string;
+      method?: string;
+    } = {}
+  ): NextRequest => {
     const headers = new Headers();
     if (options.authHeader) {
       headers.set("authorization", options.authHeader);
@@ -337,10 +339,10 @@ describe("Admin Route Authentication Pattern", () => {
 
   // Simulates the checkAdminAuth function pattern
   const checkAdminAuth = async (
-    getSession: () => Promise<{ user?: { id: string; access?: string } } | null>,
-    authenticateToken: (
-      req: NextRequest
-    ) => Promise<{
+    getSession: () => Promise<{
+      user?: { id: string; access?: string };
+    } | null>,
+    authenticateToken: (req: NextRequest) => Promise<{
       authenticated: boolean;
       userId?: string;
       access?: string;
@@ -413,7 +415,11 @@ describe("Admin Route Authentication Pattern", () => {
   it("returns userId for valid admin API token", async () => {
     const result = await checkAdminAuth(
       async () => null,
-      async () => ({ authenticated: true, userId: "api-admin", access: "ADMIN" }),
+      async () => ({
+        authenticated: true,
+        userId: "api-admin",
+        access: "ADMIN",
+      }),
       async () => undefined,
       createMockRequest("Bearer tpi_token")
     );
@@ -473,7 +479,11 @@ describe("Admin Route Authentication Pattern", () => {
 
     const result = await checkAdminAuth(
       async () => null,
-      async () => ({ authenticated: true, userId: "api-user", access: "ADMIN" }),
+      async () => ({
+        authenticated: true,
+        userId: "api-user",
+        access: "ADMIN",
+      }),
       getUserAccess,
       createMockRequest("Bearer tpi_token")
     );

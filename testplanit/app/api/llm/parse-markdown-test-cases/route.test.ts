@@ -48,7 +48,8 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
     },
     llmProviderConfig: {
-      findFirst: (...args: any[]) => mockPrismaLlmProviderConfigFindFirst(...args),
+      findFirst: (...args: any[]) =>
+        mockPrismaLlmProviderConfigFindFirst(...args),
     },
   },
 }));
@@ -199,7 +200,9 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
     });
 
     const { POST } = await import("./route");
-    const res = await POST(makeRequest({ projectId: 1, markdown: "# Short doc\n\nHello world." }));
+    const res = await POST(
+      makeRequest({ projectId: 1, markdown: "# Short doc\n\nHello world." })
+    );
     expect(res.status).toBe(200);
 
     expect(mockChat).toHaveBeenCalled();

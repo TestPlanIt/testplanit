@@ -10,7 +10,8 @@ import { prisma } from "~/lib/prisma";
 export async function POST(req: NextRequest) {
   // Only allow when explicitly running E2E tests
   // Never available in actual production deployments
-  const isE2ETest = process.env.E2E_PROD === "on" || process.env.NODE_ENV === "test";
+  const isE2ETest =
+    process.env.E2E_PROD === "on" || process.env.NODE_ENV === "test";
 
   if (!isE2ETest) {
     return NextResponse.json(

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { User } from "@prisma/client";
 import { UserRoundIcon } from "lucide-react";
@@ -49,7 +49,10 @@ export const UserListDisplay: React.FC<UserListProps> = ({ users }) => {
           </Badge>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="border-2 bg-background text-foreground max-h-[300px] overflow-y-auto w-auto" onWheel={(e) => e.stopPropagation()}>
+      <PopoverContent
+        className="border-2 bg-background text-foreground max-h-[300px] overflow-y-auto w-auto"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <div className="flex flex-col gap-2 min-w-[200px]">
           {allUsers.map((user: User) => (
             <UserNameCell key={user.id} userId={user.id} hideLink={true} />

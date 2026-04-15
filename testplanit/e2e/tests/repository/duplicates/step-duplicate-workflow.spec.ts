@@ -16,9 +16,7 @@ import { expect, test } from "../../../fixtures";
 function makeTipTapDoc(text: string) {
   return {
     type: "doc",
-    content: [
-      { type: "paragraph", content: [{ type: "text", text }] },
-    ],
+    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
   };
 }
 
@@ -41,8 +39,16 @@ test.describe("Step Duplicate Detection Workflow", () => {
     const folderId = await api.createFolder(projectId, `Folder ${Date.now()}`);
 
     // Create two cases with identical steps
-    const caseAId = await api.createTestCase(projectId, folderId, "Login flow test A");
-    const caseBId = await api.createTestCase(projectId, folderId, "Login flow test B");
+    const caseAId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Login flow test A"
+    );
+    const caseBId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Login flow test B"
+    );
 
     const sharedSteps = [
       makeStep("Navigate to login page", "Login page is displayed", 0),
@@ -65,7 +71,9 @@ test.describe("Step Duplicate Detection Workflow", () => {
     );
 
     // Navigate to the step-duplicates page
-    await page.goto(`/en-US/projects/shared-steps/${projectId}/step-duplicates`);
+    await page.goto(
+      `/en-US/projects/shared-steps/${projectId}/step-duplicates`
+    );
     await page.waitForLoadState("networkidle");
 
     // The step-duplicates table should be visible
@@ -77,17 +85,22 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await expect(tableBody.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("Open conversion dialog from result row", async ({
-    api,
-    page,
-  }) => {
+  test("Open conversion dialog from result row", async ({ api, page }) => {
     const projectId = await api.createProject(
       `E2E Step Dups ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Folder ${Date.now()}`);
 
-    const caseAId = await api.createTestCase(projectId, folderId, "Conversion test A");
-    const caseBId = await api.createTestCase(projectId, folderId, "Conversion test B");
+    const caseAId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Conversion test A"
+    );
+    const caseBId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Conversion test B"
+    );
 
     const steps = [
       makeStep("Open settings page", "Settings page loads", 0),
@@ -107,7 +120,9 @@ test.describe("Step Duplicate Detection Workflow", () => {
       3
     );
 
-    await page.goto(`/en-US/projects/shared-steps/${projectId}/step-duplicates`);
+    await page.goto(
+      `/en-US/projects/shared-steps/${projectId}/step-duplicates`
+    );
     await page.waitForLoadState("networkidle");
 
     // Click the first row to open the conversion dialog
@@ -125,21 +140,30 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await expect(nameInput).toBeVisible();
 
     // Should have convert and dismiss buttons
-    await expect(page.locator('[data-testid="step-convert-button"]')).toBeVisible();
-    await expect(page.locator('[data-testid="step-dismiss-button"]')).toBeVisible();
+    await expect(
+      page.locator('[data-testid="step-convert-button"]')
+    ).toBeVisible();
+    await expect(
+      page.locator('[data-testid="step-dismiss-button"]')
+    ).toBeVisible();
   });
 
-  test("Dismiss a step sequence match", async ({
-    api,
-    page,
-  }) => {
+  test("Dismiss a step sequence match", async ({ api, page }) => {
     const projectId = await api.createProject(
       `E2E Step Dups ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Folder ${Date.now()}`);
 
-    const caseAId = await api.createTestCase(projectId, folderId, "Dismiss test A");
-    const caseBId = await api.createTestCase(projectId, folderId, "Dismiss test B");
+    const caseAId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Dismiss test A"
+    );
+    const caseBId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Dismiss test B"
+    );
 
     const steps = [
       makeStep("Step one", "Result one", 0),
@@ -159,7 +183,9 @@ test.describe("Step Duplicate Detection Workflow", () => {
       3
     );
 
-    await page.goto(`/en-US/projects/shared-steps/${projectId}/step-duplicates`);
+    await page.goto(
+      `/en-US/projects/shared-steps/${projectId}/step-duplicates`
+    );
     await page.waitForLoadState("networkidle");
 
     // Click row to open dialog
@@ -179,21 +205,26 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
 
     // Success toast should appear
-    const toast = page.locator('[data-sonner-toast]');
+    const toast = page.locator("[data-sonner-toast]");
     await expect(toast).toBeVisible({ timeout: 10000 });
   });
 
-  test("Convert matched steps to shared step group", async ({
-    api,
-    page,
-  }) => {
+  test("Convert matched steps to shared step group", async ({ api, page }) => {
     const projectId = await api.createProject(
       `E2E Step Dups ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Folder ${Date.now()}`);
 
-    const caseAId = await api.createTestCase(projectId, folderId, "Convert test A");
-    const caseBId = await api.createTestCase(projectId, folderId, "Convert test B");
+    const caseAId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Convert test A"
+    );
+    const caseBId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Convert test B"
+    );
 
     const steps = [
       makeStep("Open dashboard", "Dashboard loads", 0),
@@ -213,7 +244,9 @@ test.describe("Step Duplicate Detection Workflow", () => {
       3
     );
 
-    await page.goto(`/en-US/projects/shared-steps/${projectId}/step-duplicates`);
+    await page.goto(
+      `/en-US/projects/shared-steps/${projectId}/step-duplicates`
+    );
     await page.waitForLoadState("networkidle");
 
     // Click row to open dialog
@@ -239,23 +272,32 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await expect(dialog).not.toBeVisible({ timeout: 15000 });
 
     // Success toast should appear
-    const toast = page.locator('[data-sonner-toast]');
+    const toast = page.locator("[data-sonner-toast]");
     await expect(toast).toBeVisible({ timeout: 10000 });
   });
 
-  test("Bulk dismiss multiple step sequence matches", async ({
-    api,
-    page,
-  }) => {
+  test("Bulk dismiss multiple step sequence matches", async ({ api, page }) => {
     const projectId = await api.createProject(
       `E2E Step Dups ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const folderId = await api.createFolder(projectId, `Folder ${Date.now()}`);
 
     // Create 3 cases with shared steps to make 2 match groups
-    const caseAId = await api.createTestCase(projectId, folderId, "Bulk test A");
-    const caseBId = await api.createTestCase(projectId, folderId, "Bulk test B");
-    const caseCId = await api.createTestCase(projectId, folderId, "Bulk test C");
+    const caseAId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Bulk test A"
+    );
+    const caseBId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Bulk test B"
+    );
+    const caseCId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Bulk test C"
+    );
 
     const stepsGroup1 = [
       makeStep("Group1 step one", "Result", 0),
@@ -270,7 +312,10 @@ test.describe("Step Duplicate Detection Workflow", () => {
 
     const stepIdsA = await api.addStepsToTestCase(caseAId, stepsGroup1);
     const stepIdsB = await api.addStepsToTestCase(caseBId, stepsGroup1);
-    const stepIdsC1 = await api.addStepsToTestCase(caseBId, stepsGroup2.map((s, i) => ({ ...s, order: i + 3 })));
+    const stepIdsC1 = await api.addStepsToTestCase(
+      caseBId,
+      stepsGroup2.map((s, i) => ({ ...s, order: i + 3 }))
+    );
     const stepIdsC2 = await api.addStepsToTestCase(caseCId, stepsGroup2);
 
     await api.createStepSequenceMatch(
@@ -291,7 +336,9 @@ test.describe("Step Duplicate Detection Workflow", () => {
       3
     );
 
-    await page.goto(`/en-US/projects/shared-steps/${projectId}/step-duplicates`);
+    await page.goto(
+      `/en-US/projects/shared-steps/${projectId}/step-duplicates`
+    );
     await page.waitForLoadState("networkidle");
 
     const table = page.locator('[data-testid="step-duplicates-table"]');
@@ -299,8 +346,14 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await expect(rows).toHaveCount(2, { timeout: 10000 });
 
     // Select both rows using checkboxes
-    const checkbox1 = rows.nth(0).locator('input[type="checkbox"], button[role="checkbox"]').first();
-    const checkbox2 = rows.nth(1).locator('input[type="checkbox"], button[role="checkbox"]').first();
+    const checkbox1 = rows
+      .nth(0)
+      .locator('input[type="checkbox"], button[role="checkbox"]')
+      .first();
+    const checkbox2 = rows
+      .nth(1)
+      .locator('input[type="checkbox"], button[role="checkbox"]')
+      .first();
     await checkbox1.click();
     await checkbox2.click();
 
@@ -310,7 +363,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await bulkDismissBtn.click();
 
     // Success toast should appear
-    const toast = page.locator('[data-sonner-toast]');
+    const toast = page.locator("[data-sonner-toast]");
     await expect(toast).toBeVisible({ timeout: 10000 });
 
     // Table should be empty or show no results

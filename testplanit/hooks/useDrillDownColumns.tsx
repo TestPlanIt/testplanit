@@ -1354,7 +1354,9 @@ export function useDrillDownColumns({
           header: () => translations.key,
           cell: (info) => {
             const value = info.getValue();
-            return <span className="font-mono font-medium">{value || "-"}</span>;
+            return (
+              <span className="font-mono font-medium">{value || "-"}</span>
+            );
           },
           enableSorting: false,
           size: 80,

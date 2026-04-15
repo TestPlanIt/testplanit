@@ -27,7 +27,6 @@ export function getElasticsearchClient(): Client | null {
         requestTimeout: 30000,
         sniffOnStart: false, // Disable sniffing for custom ports
       });
-
     } catch (error) {
       console.error("Failed to initialize Elasticsearch client:", error);
       return null;
@@ -147,15 +146,18 @@ async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
   const prisma = prismaClient || defaultPrisma;
   try {
     const config = await prisma.appConfig.findUnique({
-      where: { key: "elasticsearch_replicas" }
+      where: { key: "elasticsearch_replicas" },
     });
 
     // Default to 0 for single-node clusters
     return {
-      numberOfReplicas: config?.value ? (config.value as number) : 0
+      numberOfReplicas: config?.value ? (config.value as number) : 0,
     };
   } catch (error) {
-    console.warn("Failed to get Elasticsearch settings from database, using defaults:", error);
+    console.warn(
+      "Failed to get Elasticsearch settings from database, using defaults:",
+      error
+    );
     return { numberOfReplicas: 0 };
   }
 }
@@ -208,7 +210,10 @@ export async function createRepositoryCaseIndex(
 
     return true;
   } catch (error) {
-    console.error(`Failed to create/update Elasticsearch index ${indexName}:`, error);
+    console.error(
+      `Failed to create/update Elasticsearch index ${indexName}:`,
+      error
+    );
     return false;
   }
 }

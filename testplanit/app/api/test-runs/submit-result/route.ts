@@ -34,7 +34,9 @@ type ProjectAccessTypeValue =
   | "SPECIFIC_ROLE";
 
 function roleCanAddEditTestRunResults(role: RolePermissionSnapshot): boolean {
-  return Boolean(role?.rolePermissions?.some((permission) => permission.canAddEdit));
+  return Boolean(
+    role?.rolePermissions?.some((permission) => permission.canAddEdit)
+  );
 }
 
 function hasSubmitResultPermission({
@@ -136,8 +138,9 @@ function hasSubmitResultPermission({
 
   if (project.defaultAccessType === "SPECIFIC_ROLE") {
     return (
-      project.assignedUsers.some((assignment) => assignment.userId === user.id) &&
-      roleCanAddEditTestRunResults(project.defaultRole)
+      project.assignedUsers.some(
+        (assignment) => assignment.userId === user.id
+      ) && roleCanAddEditTestRunResults(project.defaultRole)
     );
   }
 
@@ -401,7 +404,6 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       }
-
     }
 
     console.error("Error submitting test run result:", error);

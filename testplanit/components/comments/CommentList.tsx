@@ -5,7 +5,9 @@ import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
-  createComment, deleteComment, updateComment
+  createComment,
+  deleteComment,
+  updateComment,
 } from "~/app/actions/comments";
 import { Separator } from "~/components/ui/separator";
 import { CommentEditor } from "./CommentEditor";

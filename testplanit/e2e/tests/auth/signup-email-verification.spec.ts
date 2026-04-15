@@ -54,14 +54,17 @@ test.describe("Sign Up with Email Verification", () => {
       // Retrieve the email verification token from the database via admin API request
       // (request fixture uses admin session from global storageState)
       const baseURL = testInfo.project.use.baseURL || "http://localhost:3002";
-      const userResponse = await request.get(`${baseURL}/api/model/user/findFirst`, {
-        params: {
-          q: JSON.stringify({
-            where: { email: testEmail, isDeleted: false },
-            select: { id: true, emailVerifToken: true },
-          }),
-        },
-      });
+      const userResponse = await request.get(
+        `${baseURL}/api/model/user/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { email: testEmail, isDeleted: false },
+              select: { id: true, emailVerifToken: true },
+            }),
+          },
+        }
+      );
 
       expect(userResponse.ok()).toBe(true);
       const userData = await userResponse.json();
@@ -75,9 +78,12 @@ test.describe("Sign Up with Email Verification", () => {
       // Now navigate the browser (as unauthenticated context via a new page context)
       // to the REAL verification URL with the DB token.
       // Use a fresh unauthenticated browser context to simulate the real user flow.
-      const context = await page.context().browser()!.newContext({
-        storageState: { cookies: [], origins: [] },
-      });
+      const context = await page
+        .context()
+        .browser()!
+        .newContext({
+          storageState: { cookies: [], origins: [] },
+        });
       const verifyPage = await context.newPage();
 
       try {
@@ -90,9 +96,12 @@ test.describe("Sign Up with Email Verification", () => {
         // Wait for the verification to complete — the component auto-submits via useEffect
         // and redirects to "/" on success (or shows an error toast on failure)
         await Promise.race([
-          verifyPage.waitForURL(/\/en-US\/?$|\/en-US\/projects|\/en-US\/signin/, {
-            timeout: 15000,
-          }),
+          verifyPage.waitForURL(
+            /\/en-US\/?$|\/en-US\/projects|\/en-US\/signin/,
+            {
+              timeout: 15000,
+            }
+          ),
           verifyPage.waitForTimeout(10000),
         ]);
 
@@ -151,7 +160,9 @@ test.describe("Sign Up with Email Verification", () => {
         await signinPage.submit();
 
         // The Header component redirects unverified users to /verify-email
-        await page.waitForURL(/\/en-US\/verify-email|\/signin/, { timeout: 30000 });
+        await page.waitForURL(/\/en-US\/verify-email|\/signin/, {
+          timeout: 30000,
+        });
 
         const currentUrl = page.url();
 

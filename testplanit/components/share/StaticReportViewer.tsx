@@ -16,7 +16,11 @@ interface StaticReportViewerProps {
   isAuthenticatedUser?: boolean;
 }
 
-export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthenticatedUser = false }: StaticReportViewerProps) {
+export function StaticReportViewer({
+  shareData,
+  shareMode: _shareMode,
+  isAuthenticatedUser = false,
+}: StaticReportViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +49,20 @@ export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthent
     if (config.reportType) params.set("reportType", config.reportType);
     if (config.startDate) params.set("startDate", config.startDate);
     if (config.endDate) params.set("endDate", config.endDate);
-    if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
-    if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+    if (config.dimensions)
+      params.set(
+        "dimensions",
+        Array.isArray(config.dimensions)
+          ? config.dimensions.join(",")
+          : config.dimensions
+      );
+    if (config.metrics)
+      params.set(
+        "metrics",
+        Array.isArray(config.metrics)
+          ? config.metrics.join(",")
+          : config.metrics
+      );
     if (config.page) params.set("page", config.page.toString());
     if (config.pageSize) params.set("pageSize", config.pageSize.toString());
 
@@ -88,7 +104,8 @@ export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthent
   const handleSortChange = useCallback((columnId: string) => {
     setSortConfig((prev) => ({
       column: columnId,
-      direction: prev?.column === columnId && prev.direction === "asc" ? "desc" : "asc",
+      direction:
+        prev?.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
     setCurrentPage(1);
   }, []);
@@ -127,7 +144,10 @@ export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthent
       }
 
       // Call the share report API to fetch data
-      const url = new URL(`/api/share/${shareKey}/report`, window.location.origin);
+      const url = new URL(
+        `/api/share/${shareKey}/report`,
+        window.location.origin
+      );
       if (token) {
         url.searchParams.set("token", token);
       }
@@ -143,7 +163,9 @@ export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthent
       setReportData(data);
     } catch (error) {
       console.error("Error fetching report data:", error);
-      setError(error instanceof Error ? error.message : t("errors.failedToLoad"));
+      setError(
+        error instanceof Error ? error.message : t("errors.failedToLoad")
+      );
     } finally {
       setIsLoading(false);
     }
@@ -190,11 +212,16 @@ export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthent
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
                 <Badge variant="outline">{shareData.entityType}</Badge>
               </div>
-              <h1 data-testid="shared-report-title" className="text-2xl font-bold mb-1">
+              <h1
+                data-testid="shared-report-title"
+                className="text-2xl font-bold mb-1"
+              >
                 {shareData.title || t("defaultTitle")}
               </h1>
               {shareData.description && (
-                <p className="text-sm text-muted-foreground">{shareData.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {shareData.description}
+                </p>
               )}
             </div>
             {isAuthenticatedUser && fullReportUrl && (
@@ -241,15 +268,21 @@ export function StaticReportViewer({ shareData, shareMode: _shareMode, isAuthent
           projectId={shareData.projectId}
           mode={config.mode}
           projects={reportData.projects || []}
-          consecutiveRuns={reportData.consecutiveRuns || config.consecutiveRuns || 5}
+          consecutiveRuns={
+            reportData.consecutiveRuns || config.consecutiveRuns || 5
+          }
           staleDaysThreshold={config.staleDaysThreshold}
           minExecutionsForRate={config.minExecutionsForRate}
           lookbackDays={config.lookbackDays}
-          dateGrouping={reportData.dateGrouping || config.dateGrouping || "weekly"}
+          dateGrouping={
+            reportData.dateGrouping || config.dateGrouping || "weekly"
+          }
           totalFlakyTests={reportData.totalFlakyTests}
           currentPage={currentPage}
           pageSize={pageSize}
-          totalCount={reportData.pagination?.totalCount || reportData.results?.length || 0}
+          totalCount={
+            reportData.pagination?.totalCount || reportData.results?.length || 0
+          }
           onPageChange={setCurrentPage}
           onPageSizeChange={handlePageSizeChange}
           sortConfig={sortConfig}

@@ -6,7 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
-  ProcessedProject, processProjectsWithEffectiveMembers
+  ProcessedProject,
+  processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
 import { Loading as LoadingComponent } from "@/components/Loading";
@@ -19,7 +20,9 @@ const Projects = () => {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const t = useTranslations();
-  const [projectIssueCounts, setProjectIssueCounts] = useState<Record<number, number>>({});
+  const [projectIssueCounts, setProjectIssueCounts] = useState<
+    Record<number, number>
+  >({});
   const [isLoadingIssueCounts, setIsLoadingIssueCounts] = useState(false);
 
   const { data: allUsers } = useFindManyUser({
@@ -27,10 +30,7 @@ const Projects = () => {
     select: { id: true, access: true },
   });
 
-  const {
-    data: projectsRaw,
-    isFetched,
-  } = useFindManyProjects(
+  const { data: projectsRaw, isFetched } = useFindManyProjects(
     {
       where: {
         isDeleted: false,

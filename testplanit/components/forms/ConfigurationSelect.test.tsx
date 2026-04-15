@@ -16,7 +16,8 @@ vi.mock("next-intl", () => ({
 // Mock ~/lib/hooks
 const mockUseFindFirstConfigurations = vi.fn();
 vi.mock("~/lib/hooks", () => ({
-  useFindFirstConfigurations: (...args: any[]) => mockUseFindFirstConfigurations(...args),
+  useFindFirstConfigurations: (...args: any[]) =>
+    mockUseFindFirstConfigurations(...args),
 }));
 
 // Mock searchConfigurations server action
@@ -74,17 +75,13 @@ describe("ConfigurationSelect", () => {
   });
 
   it("renders AsyncCombobox", () => {
-    render(
-      <ConfigurationSelect value={null} onChange={vi.fn()} />
-    );
+    render(<ConfigurationSelect value={null} onChange={vi.fn()} />);
 
     expect(screen.getByTestId("async-combobox")).toBeInTheDocument();
   });
 
   it("shows placeholder when value is null", () => {
-    render(
-      <ConfigurationSelect value={null} onChange={vi.fn()} />
-    );
+    render(<ConfigurationSelect value={null} onChange={vi.fn()} />);
 
     // When value is null, resolvedValue is null, so AsyncCombobox gets value=null
     const comboboxValue = screen.getByTestId("combobox-value");
@@ -96,9 +93,7 @@ describe("ConfigurationSelect", () => {
       data: { id: 5, name: "My Configuration" },
     });
 
-    render(
-      <ConfigurationSelect value={5} onChange={vi.fn()} />
-    );
+    render(<ConfigurationSelect value={5} onChange={vi.fn()} />);
 
     const comboboxValue = screen.getByTestId("combobox-value");
     expect(comboboxValue.textContent).toBe("My Configuration");
@@ -107,9 +102,7 @@ describe("ConfigurationSelect", () => {
   it("calls onChange with null when unassigned option is selected", () => {
     const onChange = vi.fn();
 
-    render(
-      <ConfigurationSelect value={null} onChange={onChange} />
-    );
+    render(<ConfigurationSelect value={null} onChange={onChange} />);
 
     const unassignedBtn = screen.getByTestId("unassigned-option");
     fireEvent.click(unassignedBtn);
@@ -120,9 +113,7 @@ describe("ConfigurationSelect", () => {
   it("calls onChange with config id when option is selected", () => {
     const onChange = vi.fn();
 
-    render(
-      <ConfigurationSelect value={null} onChange={onChange} />
-    );
+    render(<ConfigurationSelect value={null} onChange={onChange} />);
 
     const trigger = screen.getByTestId("combobox-trigger");
     fireEvent.click(trigger);
@@ -151,9 +142,7 @@ describe("ConfigurationSelect", () => {
   it("queries useFindFirstConfigurations with the current value id", () => {
     mockUseFindFirstConfigurations.mockReturnValue({ data: null });
 
-    render(
-      <ConfigurationSelect value={10} onChange={vi.fn()} />
-    );
+    render(<ConfigurationSelect value={10} onChange={vi.fn()} />);
 
     expect(mockUseFindFirstConfigurations).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -165,9 +154,7 @@ describe("ConfigurationSelect", () => {
   it("queries useFindFirstConfigurations with undefined when value is null", () => {
     mockUseFindFirstConfigurations.mockReturnValue({ data: null });
 
-    render(
-      <ConfigurationSelect value={null} onChange={vi.fn()} />
-    );
+    render(<ConfigurationSelect value={null} onChange={vi.fn()} />);
 
     expect(mockUseFindFirstConfigurations).toHaveBeenCalledWith(
       expect.objectContaining({

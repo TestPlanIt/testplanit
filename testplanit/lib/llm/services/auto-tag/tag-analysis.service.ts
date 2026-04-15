@@ -170,7 +170,11 @@ export class TagAnalysisService {
         return;
       }
 
-      const userPrompt = this.buildUserPrompt(batch, existingTagNames, allowNewTags);
+      const userPrompt = this.buildUserPrompt(
+        batch,
+        existingTagNames,
+        allowNewTags
+      );
 
       let response;
       try {
@@ -392,7 +396,7 @@ export class TagAnalysisService {
       parts.push("You may suggest either existing tags or new tags.");
     } else {
       parts.push(
-        "Suggest ONLY tags from the EXISTING PROJECT TAGS list. Do not invent new tags.",
+        "Suggest ONLY tags from the EXISTING PROJECT TAGS list. Do not invent new tags."
       );
     }
     parts.push("");

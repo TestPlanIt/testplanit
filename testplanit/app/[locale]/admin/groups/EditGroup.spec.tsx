@@ -70,7 +70,9 @@ const {
   stableGroupAssignments,
   stableEmptyAssignments,
 } = vi.hoisted(() => {
-  const stableAllUsers = [{ id: "u1", name: "User One", isActive: true, isDeleted: false }];
+  const stableAllUsers = [
+    { id: "u1", name: "User One", isActive: true, isDeleted: false },
+  ];
   const stableGroupAssignments = [{ userId: "u1", groupId: 1 }];
   const stableEmptyAssignments: { userId: string; groupId: number }[] = [];
   return {
@@ -204,9 +206,7 @@ describe("EditGroup", () => {
 
     // User should be removed from the list
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("user-name-cell-u1")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("user-name-cell-u1")).not.toBeInTheDocument();
     });
   });
 

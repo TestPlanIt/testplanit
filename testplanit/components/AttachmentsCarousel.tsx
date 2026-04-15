@@ -4,7 +4,7 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  type CarouselApi
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import {
   Dialog,
@@ -12,15 +12,17 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Attachments } from "@prisma/client";
 import { filesize } from "filesize";
 import {
   ChevronLeft,
-  ChevronRight, CircleSlash2, Download,
+  ChevronRight,
+  CircleSlash2,
+  Download,
   SquarePen,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

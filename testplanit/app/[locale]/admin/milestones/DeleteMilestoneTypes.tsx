@@ -3,7 +3,10 @@ import { MilestoneTypes } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
-  useDeleteManyMilestoneTypesAssignment, useFindFirstMilestoneTypes, useUpdateManyMilestones, useUpdateMilestoneTypes
+  useDeleteManyMilestoneTypesAssignment,
+  useFindFirstMilestoneTypes,
+  useUpdateManyMilestones,
+  useUpdateMilestoneTypes,
 } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
@@ -15,7 +18,12 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface DeleteMilestoneTypeProps {

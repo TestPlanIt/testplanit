@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  API_CATEGORIES, getApiCategories, loadSpecByCategory, type ApiCategory
+  API_CATEGORIES,
+  getApiCategories,
+  loadSpecByCategory,
+  type ApiCategory,
 } from "~/lib/openapi/merge-specs";
 
 /**

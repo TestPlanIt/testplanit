@@ -51,8 +51,12 @@ describe("session-notifications", () => {
 
     it("should create notification when session is assigned to a new user", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(mockSessionData as any);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Mike Wilson" } as any);
+      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(
+        mockSessionData as any
+      );
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "Mike Wilson",
+      } as any);
 
       await notifySessionAssignment(1, "assignee-789", null);
 
@@ -60,7 +64,8 @@ describe("session-notifications", () => {
         userId: "assignee-789",
         type: "SESSION_ASSIGNED",
         title: "New Session Assignment",
-        message: 'Sarah Johnson assigned you to session "Exploratory Testing - Mobile App" in project "Mobile Banking App"',
+        message:
+          'Sarah Johnson assigned you to session "Exploratory Testing - Mobile App" in project "Mobile Banking App"',
         relatedEntityId: "1",
         relatedEntityType: "Session",
         data: expect.objectContaining({
@@ -113,9 +118,13 @@ describe("session-notifications", () => {
 
     it("should handle errors gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockRejectedValue(new Error("Database error"));
+      vi.mocked(prisma.sessions.findUnique).mockRejectedValue(
+        new Error("Database error")
+      );
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       await notifySessionAssignment(1, "assignee-789", null);
 
@@ -137,14 +146,19 @@ describe("session-notifications", () => {
       } as any;
 
       vi.mocked(getServerAuthSession).mockResolvedValue(sessionWithoutName);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(mockSessionData as any);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Mike Wilson" } as any);
+      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(
+        mockSessionData as any
+      );
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "Mike Wilson",
+      } as any);
 
       await notifySessionAssignment(1, "assignee-789", null);
 
       expect(NotificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Unknown User assigned you to session "Exploratory Testing - Mobile App" in project "Mobile Banking App"',
+          message:
+            'Unknown User assigned you to session "Exploratory Testing - Mobile App" in project "Mobile Banking App"',
           data: expect.objectContaining({
             assignedByName: "Unknown User",
           }),
@@ -154,8 +168,12 @@ describe("session-notifications", () => {
 
     it("should create notification when reassigning from one user to another", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(mockSessionData as any);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "New Assignee" } as any);
+      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(
+        mockSessionData as any
+      );
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "New Assignee",
+      } as any);
 
       await notifySessionAssignment(1, "assignee-new", "assignee-old");
 

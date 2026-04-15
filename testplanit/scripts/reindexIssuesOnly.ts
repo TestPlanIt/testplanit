@@ -16,7 +16,9 @@ async function reindexIssues() {
     console.log(`Found ${projects.length} projects`);
 
     for (const project of projects) {
-      console.log(`\nIndexing issues for project ${project.id} (${project.name})...`);
+      console.log(
+        `\nIndexing issues for project ${project.id} (${project.name})...`
+      );
       await syncProjectIssuesToElasticsearch(project.id, prisma);
     }
 

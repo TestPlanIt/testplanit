@@ -3,9 +3,12 @@ import {
   buildNumberIdMap,
   buildStringIdMap,
   buildTemplateFieldMaps,
-  resolveUserId, toBooleanValue,
-  toDateValue, toInputJsonValue, toNumberValue,
-  toStringValue
+  resolveUserId,
+  toBooleanValue,
+  toDateValue,
+  toInputJsonValue,
+  toNumberValue,
+  toStringValue,
 } from "./helpers";
 
 describe("toNumberValue", () => {

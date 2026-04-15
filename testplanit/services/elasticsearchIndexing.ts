@@ -1,13 +1,15 @@
 import {
   getElasticsearchClient,
   getRepositoryCaseIndexName,
-  RepositoryCaseDocument
+  RepositoryCaseDocument,
 } from "./elasticsearchService";
 
 /**
  * Extract human-readable text from custom fields for searchable content
  */
-function buildCustomFieldSearchableText(customFields?: RepositoryCaseDocument['customFields']): string {
+function buildCustomFieldSearchableText(
+  customFields?: RepositoryCaseDocument["customFields"]
+): string {
   if (!customFields || customFields.length === 0) return "";
 
   return customFields
@@ -22,7 +24,11 @@ function buildCustomFieldSearchableText(customFields?: RepositoryCaseDocument['c
           // Use the selected options' names instead of IDs
           if (cf.valueArray && cf.fieldOptions) {
             return cf.fieldOptions
-              .filter((opt) => cf.valueArray?.includes(opt.id.toString()) || cf.valueArray?.includes(opt.id))
+              .filter(
+                (opt) =>
+                  cf.valueArray?.includes(opt.id.toString()) ||
+                  cf.valueArray?.includes(opt.id)
+              )
               .map((opt) => opt.name)
               .join(" ");
           }
@@ -61,17 +67,17 @@ function buildCustomFieldSearchableText(customFields?: RepositoryCaseDocument['c
 /**
  * Extract searchable text from test case steps
  */
-function buildStepsSearchableText(steps?: RepositoryCaseDocument['steps']): string {
+function buildStepsSearchableText(
+  steps?: RepositoryCaseDocument["steps"]
+): string {
   if (!steps || steps.length === 0) return "";
 
   return steps
     .map((step) => {
       // Include step description, expected result, and shared step group name
-      return [
-        step.step,
-        step.expectedResult,
-        step.sharedStepGroupName
-      ].filter(Boolean).join(" ");
+      return [step.step, step.expectedResult, step.sharedStepGroupName]
+        .filter(Boolean)
+        .join(" ");
     })
     .filter(Boolean)
     .join(" ");

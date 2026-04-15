@@ -104,24 +104,34 @@ test.describe("Project Creation Wizard", () => {
 
     // Step 2: Templates — wait for step content to load (template list)
     // The step title changes to "Templates" after advancing
-    await expect(dialog.getByText(/templates/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(/templates/i).first()).toBeVisible({
+      timeout: 15000,
+    });
     await expect(nextButton).toBeEnabled({ timeout: 10000 });
     await nextButton.click();
 
     // Step 3: Workflows & Statuses — wait for step content
-    await expect(dialog.getByText(/workflows/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(/workflows/i).first()).toBeVisible({
+      timeout: 15000,
+    });
     await expect(nextButton).toBeEnabled({ timeout: 10000 });
     await nextButton.click();
 
     // Step 4: Integrations (optional — skip to next)
-    await expect(dialog.getByText(/integrations/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(/integrations/i).first()).toBeVisible({
+      timeout: 15000,
+    });
     await expect(nextButton).toBeVisible({ timeout: 10000 });
     await nextButton.click();
 
     // Step 5: Permissions — the final step shows "Create Project" button instead of Next
     // Wait for the permissions step content to appear
-    await expect(dialog.getByText(/permissions/i).first()).toBeVisible({ timeout: 15000 });
-    const createButton = dialog.getByRole("button", { name: /create project/i });
+    await expect(dialog.getByText(/permissions/i).first()).toBeVisible({
+      timeout: 15000,
+    });
+    const createButton = dialog.getByRole("button", {
+      name: /create project/i,
+    });
     await expect(createButton).toBeVisible({ timeout: 10000 });
     await expect(createButton).toBeEnabled({ timeout: 5000 });
     await createButton.click();
@@ -140,7 +150,9 @@ test.describe("Project Creation Wizard", () => {
     await filterInput.fill(projectName);
 
     // Verify the new project appears in the filtered list
-    await expect(page.getByText(projectName).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(projectName).first()).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   test("can navigate back through wizard steps using Previous button", async ({
@@ -237,7 +249,9 @@ test.describe("Project Creation Wizard", () => {
     // The step indicators are <button> elements with type="button" inside the progress indicator row
     // With Tailwind CSS v4, class selectors may not work reliably, so we target
     // the button elements inside the step indicator flex container
-    const stepIndicators = dialog.locator('.flex.items-center.gap-2 button[type="button"]');
+    const stepIndicators = dialog.locator(
+      '.flex.items-center.gap-2 button[type="button"]'
+    );
     await expect(stepIndicators.first()).toBeVisible({ timeout: 10000 });
     const stepIndicatorCount = await stepIndicators.count();
     expect(stepIndicatorCount).toBeGreaterThanOrEqual(5);

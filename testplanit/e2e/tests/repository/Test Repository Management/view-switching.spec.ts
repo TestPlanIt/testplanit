@@ -18,7 +18,9 @@ test.describe("View Switching", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).substring(7)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).substring(7)}`
+    );
   }
 
   /**
@@ -28,22 +30,31 @@ test.describe("View Switching", () => {
   async function getViewSwitcher(page: import("@playwright/test").Page) {
     // The view switcher is a combobox in the left panel
     // Match singular view names: Folders, Template, State, Creator, Automation, Tag
-    const viewSwitcher = page.locator('[role="combobox"]').filter({
-      hasText: /Folders|Template|State|Creator|Automation|Tag/i
-    }).first();
+    const viewSwitcher = page
+      .locator('[role="combobox"]')
+      .filter({
+        hasText: /Folders|Template|State|Creator|Automation|Tag/i,
+      })
+      .first();
     return viewSwitcher;
   }
 
   /**
    * Helper to switch to a specific view
    */
-  async function switchToView(page: import("@playwright/test").Page, viewName: string) {
+  async function switchToView(
+    page: import("@playwright/test").Page,
+    viewName: string
+  ) {
     const viewSwitcher = await getViewSwitcher(page);
     await expect(viewSwitcher).toBeVisible({ timeout: 5000 });
     await viewSwitcher.click();
 
     // Wait for dropdown to open and select the option
-    const option = page.locator('[role="option"]').filter({ hasText: new RegExp(viewName, 'i') }).first();
+    const option = page
+      .locator('[role="option"]')
+      .filter({ hasText: new RegExp(viewName, "i") })
+      .first();
     await expect(option).toBeVisible({ timeout: 3000 });
     await option.click();
 
@@ -75,7 +86,7 @@ test.describe("View Switching", () => {
 
     // The left panel should show template filter options
     // Look for "All Templates" text which appears in the Templates view
-    const templateFilter = page.locator('text=/All Templates/i');
+    const templateFilter = page.locator("text=/All Templates/i");
     await expect(templateFilter.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -91,7 +102,7 @@ test.describe("View Switching", () => {
 
     // The left panel should show state filter options
     // Look for "All States" text which appears in the States view
-    const stateFilter = page.locator('text=/All States/i');
+    const stateFilter = page.locator("text=/All States/i");
     await expect(stateFilter.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -107,7 +118,7 @@ test.describe("View Switching", () => {
 
     // The left panel should show creator filter options
     // Look for "All Creators" text which appears in the Creators view
-    const creatorFilter = page.locator('text=/All Creators/i');
+    const creatorFilter = page.locator("text=/All Creators/i");
     await expect(creatorFilter.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -123,7 +134,9 @@ test.describe("View Switching", () => {
 
     // The left panel should show automation filter options
     // Look for "All Cases" text which appears in the Automation view
-    const automationFilter = page.locator('text=/All Cases|Automated|Not Automated/i');
+    const automationFilter = page.locator(
+      "text=/All Cases|Automated|Not Automated/i"
+    );
     await expect(automationFilter.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -158,7 +171,7 @@ test.describe("View Switching", () => {
 
     // The folder tree should be visible again with Root Folder
     const rootFolder = page.locator('[data-testid^="folder-node-"]').filter({
-      hasText: "Root Folder"
+      hasText: "Root Folder",
     });
     await expect(rootFolder.first()).toBeVisible({ timeout: 5000 });
   });
@@ -218,21 +231,31 @@ test.describe("View Switching", () => {
     await expect(viewSwitcher).toContainText(/Folders/i);
 
     // The folder should show the count (e.g., "(2/2)")
-    const folderWithCount = page.locator('[data-testid^="folder-node-"]').filter({
-      hasText: folderName
-    }).filter({
-      hasText: /\(\d+\/\d+\)/
-    });
+    const folderWithCount = page
+      .locator('[data-testid^="folder-node-"]')
+      .filter({
+        hasText: folderName,
+      })
+      .filter({
+        hasText: /\(\d+\/\d+\)/,
+      });
     await expect(folderWithCount.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("Template View Shows Individual Template with Count", async ({ api, page }) => {
+  test("Template View Shows Individual Template with Count", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with test cases (they use the default template)
     const folderName = `Template Count Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `Template Case ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Template Case ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
 
@@ -267,12 +290,19 @@ test.describe("View Switching", () => {
     expect(templateText).toMatch(/\d+/); // Should contain a number (the count)
   });
 
-  test("State View Shows Individual States with Icons", async ({ api, page }) => {
+  test("State View Shows Individual States with Icons", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a test case so the state view has data to show
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `State View Case ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `State View Case ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
     await switchToView(page, "State");
@@ -305,26 +335,37 @@ test.describe("View Switching", () => {
     expect(count).toBeGreaterThan(1); // At least "All Creators" plus the admin user
   });
 
-  test("Automation View Shows Automated and Not Automated Options", async ({ api, page }) => {
+  test("Automation View Shows Automated and Not Automated Options", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a test case so the automation view has data to show
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Automation View Case ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Automation View Case ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
     await switchToView(page, "Automation");
 
     // Should show "All Cases", "Automated", and "Not Automated" options
-    const allCasesOption = repositoryPage.leftPanel.locator('[role="button"]').filter({
-      hasText: /All Cases/i
-    });
+    const allCasesOption = repositoryPage.leftPanel
+      .locator('[role="button"]')
+      .filter({
+        hasText: /All Cases/i,
+      });
     await expect(allCasesOption.first()).toBeVisible({ timeout: 5000 });
 
     // Check for Automated/Not Automated options
-    const automatedOption = repositoryPage.leftPanel.locator('[role="button"]').filter({
-      hasText: /Automated|Not Automated/i
-    });
+    const automatedOption = repositoryPage.leftPanel
+      .locator('[role="button"]')
+      .filter({
+        hasText: /Automated|Not Automated/i,
+      });
     await expect(automatedOption.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -340,7 +381,7 @@ test.describe("View Switching", () => {
     await expect(viewSwitcher).toContainText(/State/i);
 
     // Should show "All States" filter option
-    const stateFilter = page.locator('text=/All States/i');
+    const stateFilter = page.locator("text=/All States/i");
     await expect(stateFilter.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -356,9 +397,12 @@ test.describe("View Switching", () => {
     await switchToView(page, "Template");
 
     // Click on "All Templates" option
-    const allTemplatesOption = repositoryPage.leftPanel.locator('[role="button"]').filter({
-      hasText: /All Templates/i
-    }).first();
+    const allTemplatesOption = repositoryPage.leftPanel
+      .locator('[role="button"]')
+      .filter({
+        hasText: /All Templates/i,
+      })
+      .first();
     await expect(allTemplatesOption).toBeVisible({ timeout: 5000 });
     await allTemplatesOption.click();
 
@@ -380,10 +424,14 @@ test.describe("View Switching", () => {
     const options = page.locator('[role="option"]');
 
     // Check for Folders option
-    await expect(options.filter({ hasText: /Folders/i }).first()).toBeVisible({ timeout: 3000 });
+    await expect(options.filter({ hasText: /Folders/i }).first()).toBeVisible({
+      timeout: 3000,
+    });
 
     // Check for Template option
-    await expect(options.filter({ hasText: /Template/i }).first()).toBeVisible();
+    await expect(
+      options.filter({ hasText: /Template/i }).first()
+    ).toBeVisible();
 
     // Check for State option
     await expect(options.filter({ hasText: /State/i }).first()).toBeVisible();
@@ -392,13 +440,15 @@ test.describe("View Switching", () => {
     await expect(options.filter({ hasText: /Creator/i }).first()).toBeVisible();
 
     // Check for Automation option
-    await expect(options.filter({ hasText: /Automation/i }).first()).toBeVisible();
+    await expect(
+      options.filter({ hasText: /Automation/i }).first()
+    ).toBeVisible();
 
     // Check for Tag option
     await expect(options.filter({ hasText: /Tag/i }).first()).toBeVisible();
 
     // Close dropdown
-    await page.keyboard.press('Escape');
+    await page.keyboard.press("Escape");
   });
 
   test("Keyboard Navigation in View Switcher", async ({ api, page }) => {
@@ -409,17 +459,17 @@ test.describe("View Switching", () => {
     // Open the view switcher with keyboard
     const viewSwitcher = await getViewSwitcher(page);
     await viewSwitcher.focus();
-    await page.keyboard.press('Enter');
+    await page.keyboard.press("Enter");
 
     // Dropdown should be open
     const options = page.locator('[role="option"]');
     await expect(options.first()).toBeVisible({ timeout: 3000 });
 
     // Navigate down with arrow key
-    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press("ArrowDown");
 
     // Close with Escape
-    await page.keyboard.press('Escape');
+    await page.keyboard.press("Escape");
 
     // Dropdown should be closed
     await expect(options.first()).not.toBeVisible({ timeout: 2000 });

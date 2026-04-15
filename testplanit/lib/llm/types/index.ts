@@ -4,15 +4,13 @@
 
 // Import all types from Prisma - it generates them for us!
 import type {
-  LlmIntegration as Integration, LlmProvider, LlmProviderConfig
+  LlmIntegration as Integration,
+  LlmProvider,
+  LlmProviderConfig,
 } from "@prisma/client";
 
 // Re-export the Prisma types
-export type {
-  Integration,
-  LlmProviderConfig,
-  LlmProvider
-};
+export type { Integration, LlmProviderConfig, LlmProvider };
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";

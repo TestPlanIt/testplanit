@@ -144,8 +144,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the prompts using resolved template as base (or fall back to hard-coded)
-    const systemPromptBase = resolvedPrompt.source !== "fallback" ? resolvedPrompt.systemPrompt : undefined;
-    const userPromptBase = resolvedPrompt.source !== "fallback" ? resolvedPrompt.userPrompt || undefined : undefined;
+    const systemPromptBase =
+      resolvedPrompt.source !== "fallback"
+        ? resolvedPrompt.systemPrompt
+        : undefined;
+    const userPromptBase =
+      resolvedPrompt.source !== "fallback"
+        ? resolvedPrompt.userPrompt || undefined
+        : undefined;
 
     const systemPrompt = buildSystemPrompt(
       template,
@@ -164,28 +170,49 @@ export async function POST(request: NextRequest) {
     });
     if (providerConfig) {
       maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
-      maxTokens = providerConfig.defaultMaxTokens ?? resolvedPrompt.maxOutputTokens ?? 4096;
+      maxTokens =
+        providerConfig.defaultMaxTokens ??
+        resolvedPrompt.maxOutputTokens ??
+        4096;
     }
 
     // TOKEN-05: Calculate content budget
     const CONTENT_BUDGET_RATIO = 0.65;
     const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
-    const contentBudget = Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) - systemPromptTokens;
+    const contentBudget =
+      Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
+      systemPromptTokens;
 
     // Build a base user prompt WITHOUT existing test cases to measure its size
-    const contextWithoutCases: GenerationContext = { ...context, existingTestCases: [] };
-    const baseUserPrompt = buildUserPrompt(issue, contextWithoutCases, userPromptBase);
+    const contextWithoutCases: GenerationContext = {
+      ...context,
+      existingTestCases: [],
+    };
+    const baseUserPrompt = buildUserPrompt(
+      issue,
+      contextWithoutCases,
+      userPromptBase
+    );
     const basePromptTokens = Math.ceil(baseUserPrompt.length / 4);
 
     // Allocate remaining token budget to existing test case context
     const contextTokenBudget = Math.max(0, contentBudget - basePromptTokens);
 
     // Fetch prioritised context from folder hierarchy (server-side)
-    const hierarchyContext = contextTokenBudget > 0
-      ? await fetchHierarchyContext(prisma, projectId, context.folderContext, contextTokenBudget)
-      : [];
+    const hierarchyContext =
+      contextTokenBudget > 0
+        ? await fetchHierarchyContext(
+            prisma,
+            projectId,
+            context.folderContext,
+            contextTokenBudget
+          )
+        : [];
 
-    const enrichedContext: GenerationContext = { ...context, existingTestCases: hierarchyContext };
+    const enrichedContext: GenerationContext = {
+      ...context,
+      existingTestCases: hierarchyContext,
+    };
     let userPrompt = buildUserPrompt(issue, enrichedContext, userPromptBase);
     let wasTruncated = false;
 
@@ -198,7 +225,11 @@ export async function POST(request: NextRequest) {
         while (comments.length > 0) {
           comments = comments.slice(0, -1);
           truncatedIssue.comments = comments;
-          userPrompt = buildUserPrompt(truncatedIssue, enrichedContext, userPromptBase);
+          userPrompt = buildUserPrompt(
+            truncatedIssue,
+            enrichedContext,
+            userPromptBase
+          );
           estimatedUserTokens = Math.ceil(userPrompt.length / 4);
           if (estimatedUserTokens <= contentBudget) break;
         }
@@ -231,11 +262,10 @@ export async function POST(request: NextRequest) {
     };
 
     const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
-    const response = await manager.chat(
-      resolved.integrationId,
-      llmRequest,
-      { maxRetries, baseDelayMs },
-    );
+    const response = await manager.chat(resolved.integrationId, llmRequest, {
+      maxRetries,
+      baseDelayMs,
+    });
 
     // RETRY-03: Check truncation BEFORE JSON parse
     if (response.finishReason === "length") {
@@ -250,7 +280,7 @@ export async function POST(request: NextRequest) {
             completion: response.completionTokens ?? 0,
           },
         },
-        { status: 422 },
+        { status: 422 }
       );
     }
 
@@ -260,7 +290,7 @@ export async function POST(request: NextRequest) {
       template,
       issue,
       autoGenerateTags,
-      quantity,
+      quantity
     );
 
     if (parseError) {
@@ -311,7 +341,8 @@ export async function POST(request: NextRequest) {
         },
         truncated: wasTruncated,
         ...(wasTruncated && {
-          truncationNote: "Existing test cases and/or comments were trimmed to fit token budget",
+          truncationNote:
+            "Existing test cases and/or comments were trimmed to fit token budget",
         }),
       },
     });

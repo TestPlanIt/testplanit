@@ -55,7 +55,11 @@ export default function versioningCrud() {
   // Get repository, template, and default workflow state
   const repos = findMany(
     "repositories",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 1 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 1,
+    },
     { scenarioTag: TAG }
   );
   const templates = findMany(
@@ -65,7 +69,11 @@ export default function versioningCrud() {
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "CASES" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "CASES" },
+      select: { id: true },
+      take: 1,
+    },
     { scenarioTag: TAG }
   );
 
@@ -74,7 +82,9 @@ export default function versioningCrud() {
   const stateId = workflows?.data?.[0]?.id;
 
   if (!repoId || !templateId || !stateId) {
-    console.warn("Missing repo, template, or workflow state — skipping CRUD iteration");
+    console.warn(
+      "Missing repo, template, or workflow state — skipping CRUD iteration"
+    );
     sleep(2);
     return;
   }

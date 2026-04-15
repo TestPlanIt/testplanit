@@ -48,21 +48,33 @@ export const options = {
 export function setup() {
   const cases = findMany(
     "repositoryCases",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 10000 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 10000,
+    },
     {}
   );
   const statuses = findMany(
     "status",
-    { where: { isDeleted: false, isEnabled: true }, select: { id: true, isSuccess: true } },
+    {
+      where: { isDeleted: false, isEnabled: true },
+      select: { id: true, isSuccess: true },
+    },
     {}
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "RUNS" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "RUNS" },
+      select: { id: true },
+      take: 1,
+    },
     {}
   );
 
-  const defaultStatus = statuses?.data?.find((s) => !s.isSuccess) || statuses?.data?.[0];
+  const defaultStatus =
+    statuses?.data?.find((s) => !s.isSuccess) || statuses?.data?.[0];
   const runStateId = workflows?.data?.[0]?.id;
 
   if (!cases?.data?.length || !defaultStatus || !runStateId) {
@@ -79,7 +91,9 @@ export function setup() {
 export default function runCreation(ctx) {
   for (const size of RUN_SIZES) {
     if (size > ctx.caseIds.length) {
-      console.warn(`Skipping size=${size}: only ${ctx.caseIds.length} cases available`);
+      console.warn(
+        `Skipping size=${size}: only ${ctx.caseIds.length} cases available`
+      );
       continue;
     }
 
@@ -132,7 +146,9 @@ export default function runCreation(ctx) {
     check(null, {
       [`run_creation_${size}_attached_all`]: () => attached === size,
     });
-    console.log(`size=${size}: ${duration}ms total (${attached}/${size} attached)`);
+    console.log(
+      `size=${size}: ${duration}ms total (${attached}/${size} attached)`
+    );
 
     sleep(1); // gap between sizes
   }

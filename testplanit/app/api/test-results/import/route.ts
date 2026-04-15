@@ -15,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 import {
   JUnitResultType,
   RepositoryCaseSource,
-  TestRunType
+  TestRunType,
 } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -23,8 +23,19 @@ import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import {
-  countTotalTestCases, detectFormat, extractClassName, FORMAT_TO_RUN_TYPE,
-  FORMAT_TO_SOURCE, getExtendedDataKey, isValidFormat, normalizeStatus, parseExtendedTestCaseData, parseTestResults, TestResultFormat, TEST_RESULT_FORMATS, type ExtendedTestCaseDataMap
+  countTotalTestCases,
+  detectFormat,
+  extractClassName,
+  FORMAT_TO_RUN_TYPE,
+  FORMAT_TO_SOURCE,
+  getExtendedDataKey,
+  isValidFormat,
+  normalizeStatus,
+  parseExtendedTestCaseData,
+  parseTestResults,
+  TestResultFormat,
+  TEST_RESULT_FORMATS,
+  type ExtendedTestCaseDataMap,
 } from "~/lib/services/testResultsParser";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
@@ -169,7 +180,9 @@ export async function POST(request: NextRequest) {
 
         sendProgress(5, progressMessages.validating);
 
-        console.log(`[TestResultsImport] Received ${files.length} file(s): ${files.map(f => `${f.name} (${f.size} bytes)`).join(', ')}`);
+        console.log(
+          `[TestResultsImport] Received ${files.length} file(s): ${files.map((f) => `${f.name} (${f.size} bytes)`).join(", ")}`
+        );
         console.log(`[TestResultsImport] Format: ${format}`);
 
         // Per-file format detection map (file index -> format)
@@ -213,7 +226,9 @@ export async function POST(request: NextRequest) {
               )
             );
           } else {
-            const labels = [...uniqueFormats].map(f => TEST_RESULT_FORMATS[f].label).join(", ");
+            const labels = [...uniqueFormats]
+              .map((f) => TEST_RESULT_FORMATS[f].label)
+              .join(", ");
             sendProgress(8, `Detected mixed formats: ${labels}`);
           }
         }
@@ -240,7 +255,9 @@ export async function POST(request: NextRequest) {
         for (const fmt of fileFormatMap.values()) {
           formatCounts.set(fmt, (formatCounts.get(fmt) || 0) + 1);
         }
-        const primaryFormat = [...formatCounts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+        const primaryFormat = [...formatCounts.entries()].sort(
+          (a, b) => b[1] - a[1]
+        )[0][0];
 
         // Get the case workflow state (DONE) for imported test cases
         const caseWorkflow = await prisma.workflows.findFirst({
@@ -355,10 +372,14 @@ export async function POST(request: NextRequest) {
           allFileContentsForExtended.push(await file.text());
         }
 
-        console.log(`[TestResultsImport] Parsed ${files.length} file(s): ${files.map(f => f.name).join(', ')}`);
-        console.log(`[TestResultsImport] Result: ${result.suites?.length ?? 0} suites, ${result.total} total test cases`);
+        console.log(
+          `[TestResultsImport] Parsed ${files.length} file(s): ${files.map((f) => f.name).join(", ")}`
+        );
+        console.log(
+          `[TestResultsImport] Result: ${result.suites?.length ?? 0} suites, ${result.total} total test cases`
+        );
         if (errors.length > 0) {
-          console.log(`[TestResultsImport] Parse errors: ${errors.join('; ')}`);
+          console.log(`[TestResultsImport] Parse errors: ${errors.join("; ")}`);
         }
 
         // Parse extended data (system-out, system-err, assertions) that the main parser doesn't expose
@@ -535,7 +556,9 @@ export async function POST(request: NextRequest) {
         ) {
           const suite = result.suites[suiteIndex];
           const suiteFormat = suiteFormatMap[suiteIndex] || primaryFormat;
-          const caseSource = FORMAT_TO_SOURCE[suiteFormat] as RepositoryCaseSource;
+          const caseSource = FORMAT_TO_SOURCE[
+            suiteFormat
+          ] as RepositoryCaseSource;
           const suiteProgress =
             25 + (suiteIndex / (result.suites?.length || 1)) * 60;
 
@@ -643,14 +666,16 @@ export async function POST(request: NextRequest) {
                   },
                   orderBy: { id: "asc" },
                 });
-                _suiteFolder = existing ?? await prisma.repositoryFolders.create({
-                  data: {
-                    projectId: projectId,
-                    repositoryId: repository.id,
-                    name: `${primaryFormat.toUpperCase()} Imports`,
-                    creatorId: userId,
-                  },
-                });
+                _suiteFolder =
+                  existing ??
+                  (await prisma.repositoryFolders.create({
+                    data: {
+                      projectId: projectId,
+                      repositoryId: repository.id,
+                      name: `${primaryFormat.toUpperCase()} Imports`,
+                      creatorId: userId,
+                    },
+                  }));
               }
 
               return _suiteFolder;
@@ -825,10 +850,12 @@ export async function POST(request: NextRequest) {
                     testName: testCase.name,
                     className: className,
                     junitTestResultId: junitTestResult.id,
-                    attachments: testCase.attachments.map((att: { name: string; path: string }) => ({
-                      name: att.name,
-                      path: att.path,
-                    })),
+                    attachments: testCase.attachments.map(
+                      (att: { name: string; path: string }) => ({
+                        name: att.name,
+                        path: att.path,
+                      })
+                    ),
                   });
                 }
 
@@ -921,7 +948,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Advisory duplicate warnings — never blocks import
-        let duplicateWarnings: Array<{ caseName: string; className: string | null; similarTo: Array<{ id: number; name: string; confidence: string }> }> = [];
+        let duplicateWarnings: Array<{
+          caseName: string;
+          className: string | null;
+          similarTo: Array<{ id: number; name: string; confidence: string }>;
+        }> = [];
         try {
           const esClient = getElasticsearchClient();
           if (esClient) {
@@ -940,24 +971,40 @@ export async function POST(request: NextRequest) {
             }
 
             for (const name of caseNames) {
-              const similar = await scanService.findSimilarCases({ name }, projectId, tenantId);
+              const similar = await scanService.findSimilarCases(
+                { name },
+                projectId,
+                tenantId
+              );
               if (similar.length > 0) {
-                const caseIds = similar.slice(0, 3).map(s => s.caseAId === 0 ? s.caseBId : s.caseAId);
-                const cases = await prisma.repositoryCases.findMany({ where: { id: { in: caseIds } }, select: { id: true, name: true } });
+                const caseIds = similar
+                  .slice(0, 3)
+                  .map((s) => (s.caseAId === 0 ? s.caseBId : s.caseAId));
+                const cases = await prisma.repositoryCases.findMany({
+                  where: { id: { in: caseIds } },
+                  select: { id: true, name: true },
+                });
                 duplicateWarnings.push({
                   caseName: name,
                   className: caseNameToClassName.get(name) || null,
-                  similarTo: similar.slice(0, 3).map(s => {
+                  similarTo: similar.slice(0, 3).map((s) => {
                     const caseId = s.caseAId === 0 ? s.caseBId : s.caseAId;
-                    const found = cases.find(c => c.id === caseId);
-                    return { id: caseId, name: found?.name || `Case #${caseId}`, confidence: s.confidence };
+                    const found = cases.find((c) => c.id === caseId);
+                    return {
+                      id: caseId,
+                      name: found?.name || `Case #${caseId}`,
+                      confidence: s.confidence,
+                    };
                   }),
                 });
               }
             }
           }
         } catch (e) {
-          console.warn("Duplicate check during test-results import failed (non-blocking):", e);
+          console.warn(
+            "Duplicate check during test-results import failed (non-blocking):",
+            e
+          );
         }
 
         sendProgress(100, progressMessages.completed);

@@ -2,8 +2,12 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import { useEffect, useState } from "react";
 import {
-  useCreateManyProjectStatusAssignment, useCreateManyStatusScopeAssignment, useCreateStatus,
-  useFindFirstColor, useFindManyProjects, useFindManyStatusScope
+  useCreateManyProjectStatusAssignment,
+  useCreateManyStatusScopeAssignment,
+  useCreateStatus,
+  useFindFirstColor,
+  useFindManyProjects,
+  useFindManyStatusScope,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
@@ -22,7 +26,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {
@@ -83,8 +87,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [systemNameFocused, setSystemNameFocused] = useState(false);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
-  const { data: defaultColorData } =
-    useFindFirstColor();
+  const { data: defaultColorData } = useFindFirstColor();
 
   const { mutateAsync: createStatus } = useCreateStatus();
   const { mutateAsync: createManyStatusScopeAssignment } =
@@ -281,7 +284,9 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
                 <FormField
                   control={form.control}
                   name="colorId"
-                  render={({ field: _field }) => <FormMessage className="mt-1" />}
+                  render={({ field: _field }) => (
+                    <FormMessage className="mt-1" />
+                  )}
                 />
               </div>
               <div className="w-full">

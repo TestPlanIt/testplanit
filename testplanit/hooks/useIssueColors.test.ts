@@ -86,7 +86,9 @@ describe("useIssueColors", () => {
     const redFamily = result.current.colors?.["Red"];
     expect(redFamily?.colors).toBeDefined();
     for (let i = 1; i < (redFamily?.colors.length ?? 0); i++) {
-      expect(redFamily!.colors[i].order).toBeGreaterThanOrEqual(redFamily!.colors[i - 1].order);
+      expect(redFamily!.colors[i].order).toBeGreaterThanOrEqual(
+        redFamily!.colors[i - 1].order
+      );
     }
   });
 

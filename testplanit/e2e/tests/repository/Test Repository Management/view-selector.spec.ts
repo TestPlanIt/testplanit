@@ -28,7 +28,9 @@ test.describe("View Selector - Repository Views", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E View Selector ${Date.now()}-${Math.random().toString(36).substring(7)}`);
+    return await api.createProject(
+      `E2E View Selector ${Date.now()}-${Math.random().toString(36).substring(7)}`
+    );
   }
 
   /**
@@ -873,7 +875,9 @@ test.describe("View Selector - Filter Persistence", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E View Selector ${Date.now()}-${Math.random().toString(36).substring(7)}`);
+    return await api.createProject(
+      `E2E View Selector ${Date.now()}-${Math.random().toString(36).substring(7)}`
+    );
   }
 
   test("Filter selection updates state in view", async ({ api, page }) => {
@@ -924,12 +928,14 @@ test.describe("View Selector - Filter Persistence", () => {
     // Verify the clicked button is now selected (has selected styling).
     // The active state filter uses bg-primary or bg-accent or similar highlight class.
     if (clickedButton) {
-      await expect(clickedButton).toHaveAttribute("aria-pressed", "true", { timeout: 5000 }).catch(async () => {
-        // Some filter buttons use class-based selection instead of aria-pressed.
-        // Just verify the click worked by checking the table updated.
-        const rows = page.locator('table tbody tr');
-        await expect(rows.first()).toBeVisible({ timeout: 10000 });
-      });
+      await expect(clickedButton)
+        .toHaveAttribute("aria-pressed", "true", { timeout: 5000 })
+        .catch(async () => {
+          // Some filter buttons use class-based selection instead of aria-pressed.
+          // Just verify the click worked by checking the table updated.
+          const rows = page.locator("table tbody tr");
+          await expect(rows.first()).toBeVisible({ timeout: 10000 });
+        });
     }
   });
 

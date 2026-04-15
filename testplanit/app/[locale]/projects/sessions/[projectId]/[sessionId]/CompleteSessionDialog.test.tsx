@@ -2,10 +2,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useCreateSessionVersions, useFindManyWorkflows,
-  useUpdateSessions
+  useCreateSessionVersions,
+  useFindManyWorkflows,
+  useUpdateSessions,
 } from "~/lib/hooks";
-import { CompletableSession, CompleteSessionDialog } from "./CompleteSessionDialog";
+import {
+  CompletableSession,
+  CompleteSessionDialog,
+} from "./CompleteSessionDialog";
 
 // Mock the router
 const mockPush = vi.fn();
@@ -617,9 +621,13 @@ describe("CompleteSessionDialog", () => {
     });
 
     it("should handle errors gracefully during completion", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
-      const mockUpdateSessions = vi.fn().mockRejectedValue(new Error("Update failed"));
+      const mockUpdateSessions = vi
+        .fn()
+        .mockRejectedValue(new Error("Update failed"));
       const mockCreateSessionVersions = vi.fn().mockResolvedValue({});
 
       mockUseUpdateSessions.mockReturnValue({

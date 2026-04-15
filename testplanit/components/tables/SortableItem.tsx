@@ -6,7 +6,6 @@ import { DropTargetMonitor, useDrag, useDrop, XYCoord } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { ItemTypes } from "~/types/dndTypes";
 
-
 // Structure for individual items within draggedItems array
 interface DraggedCaseInfo {
   id: number | string;
@@ -66,67 +65,70 @@ function SortableItem<
     TestCaseDragOperationItem,
     void,
     { isDragging: boolean }
-  >(() => ({
-    type: itemType,
-    item: () => {
-      const primaryItem = {
-        id: row.original.id as number | string,
-        folderId: row.original.folderId as number | null,
-        name: row.original.name as string,
-        index,
-        // Add icon and color data if this is a workflow
-        ...(itemType === ItemTypes.WORKFLOW && {
-          icon: row.original.icon,
-          color: row.original.color,
-        }),
-      };
-
-      // Check if the current row is part of a multi-select drag
-      const isCurrentRowSelected = selectedItemsForDrag?.some(
-        (item) => item.id === primaryItem.id
-      );
-
-      // LOGGING: See what is being sent as the drag item
-      // console.log("[DRAG] primaryItem:", primaryItem);
-      // console.log("[DRAG] selectedItemsForDrag:", selectedItemsForDrag);
-      // console.log("[DRAG] isCurrentRowSelected:", isCurrentRowSelected);
-
-      if (
-        selectedItemsForDrag &&
-        selectedItemsForDrag.length > 0 &&
-        isCurrentRowSelected
-      ) {
-        const dragItem = {
-          ...primaryItem, // Include primary item details (id, folderId, name, index)
-          draggedItems: selectedItemsForDrag,
+  >(
+    () => ({
+      type: itemType,
+      item: () => {
+        const primaryItem = {
+          id: row.original.id as number | string,
+          folderId: row.original.folderId as number | null,
+          name: row.original.name as string,
+          index,
+          // Add icon and color data if this is a workflow
+          ...(itemType === ItemTypes.WORKFLOW && {
+            icon: row.original.icon,
+            color: row.original.color,
+          }),
         };
-        // console.log("[DRAG] Returning multi-select dragItem:", dragItem);
-        return dragItem;
-      } else {
-        const dragItem = {
-          ...primaryItem,
-          draggedItems: [{
-            id: primaryItem.id,
-            name: primaryItem.name,
-            // Include icon and color for workflows
-            ...(itemType === ItemTypes.WORKFLOW && {
-              icon: row.original.icon,
-              color: row.original.color,
-            }),
-          }],
-        };
-        // console.log("[DRAG] Returning single dragItem:", dragItem);
-        return dragItem;
-      }
-    },
-    canDrag: () => canDragTestCase,
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
+
+        // Check if the current row is part of a multi-select drag
+        const isCurrentRowSelected = selectedItemsForDrag?.some(
+          (item) => item.id === primaryItem.id
+        );
+
+        // LOGGING: See what is being sent as the drag item
+        // console.log("[DRAG] primaryItem:", primaryItem);
+        // console.log("[DRAG] selectedItemsForDrag:", selectedItemsForDrag);
+        // console.log("[DRAG] isCurrentRowSelected:", isCurrentRowSelected);
+
+        if (
+          selectedItemsForDrag &&
+          selectedItemsForDrag.length > 0 &&
+          isCurrentRowSelected
+        ) {
+          const dragItem = {
+            ...primaryItem, // Include primary item details (id, folderId, name, index)
+            draggedItems: selectedItemsForDrag,
+          };
+          // console.log("[DRAG] Returning multi-select dragItem:", dragItem);
+          return dragItem;
+        } else {
+          const dragItem = {
+            ...primaryItem,
+            draggedItems: [
+              {
+                id: primaryItem.id,
+                name: primaryItem.name,
+                // Include icon and color for workflows
+                ...(itemType === ItemTypes.WORKFLOW && {
+                  icon: row.original.icon,
+                  color: row.original.color,
+                }),
+              },
+            ],
+          };
+          // console.log("[DRAG] Returning single dragItem:", dragItem);
+          return dragItem;
+        }
+      },
+      canDrag: () => canDragTestCase,
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: () => {
+        setHoverPosition(null);
+      },
     }),
-    end: () => {
-      setHoverPosition(null);
-    },
-  }),
     [
       row.original.id,
       row.original.folderId,

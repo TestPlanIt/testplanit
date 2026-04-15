@@ -92,7 +92,6 @@ vi.mock("nextstepjs", () => ({
   ),
 }));
 
-
 import { NextStepOnboarding } from "./NextStepOnboarding";
 
 const mockUseFindFirstUserPreferences = vi.mocked(useFindFirstUserPreferences);
@@ -134,12 +133,20 @@ describe("NextStepOnboarding", () => {
   });
 
   it("renders without crashing when session exists", () => {
-    const { container } = render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    const { container } = render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     expect(container).toBeDefined();
   });
 
   it("renders NextStepProvider", () => {
-    render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     expect(screen.getByTestId("nextstep-provider")).toBeInTheDocument();
   });
 
@@ -148,7 +155,11 @@ describe("NextStepOnboarding", () => {
       data: undefined,
       isLoading: true,
     } as any);
-    render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     expect(screen.getByTestId("nextstep-provider")).toBeInTheDocument();
   });
 
@@ -157,7 +168,11 @@ describe("NextStepOnboarding", () => {
       data: { id: "pref-1", hasCompletedWelcomeTour: false },
       isLoading: false,
     } as any);
-    render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     expect(screen.getByTestId("nextstep-provider")).toBeInTheDocument();
   });
 
@@ -166,12 +181,20 @@ describe("NextStepOnboarding", () => {
       data: { id: "pref-1", hasCompletedWelcomeTour: true },
       isLoading: false,
     } as any);
-    render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     expect(screen.getByTestId("nextstep-provider")).toBeInTheDocument();
   });
 
   it("passes cardComponent prop to NextStep", () => {
-    render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     expect(mockNextStepCardComponent.current).toBeDefined();
     expect(typeof mockNextStepCardComponent.current).toBe("function");
   });
@@ -186,7 +209,11 @@ describe("TourCard (via NextStepOnboarding cardComponent)", () => {
   });
 
   const renderAndGetTourCard = () => {
-    render(<NextStepOnboarding><div /></NextStepOnboarding>);
+    render(
+      <NextStepOnboarding>
+        <div />
+      </NextStepOnboarding>
+    );
     return mockNextStepCardComponent.current;
   };
 
@@ -196,7 +223,10 @@ describe("TourCard (via NextStepOnboarding cardComponent)", () => {
 
     render(
       <TourCard
-        step={{ title: "Welcome to TestPlanIt", content: "Let us show you around." }}
+        step={{
+          title: "Welcome to TestPlanIt",
+          content: "Let us show you around.",
+        }}
         currentStep={0}
         totalSteps={5}
         nextStep={vi.fn()}

@@ -404,9 +404,9 @@ test.describe("Markdown Paste & Import", () => {
       "MD - Code Blocks",
       "MD - Mixed Rich Content",
     ]) {
-      await expect(
-        page.locator(`text="${caseName}"`).first()
-      ).toBeVisible({ timeout: 15000 });
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 15000,
+      });
     }
 
     // Now verify via API that each case's Description is TipTap JSON
@@ -453,12 +453,18 @@ test.describe("Markdown Paste & Import", () => {
 
       if (checks.hasNodeType) {
         const hasNode = jsonStr.includes(`"type":"${checks.hasNodeType}"`);
-        expect(hasNode, `Expected "${caseName}" to contain node type "${checks.hasNodeType}" in: ${jsonStr.substring(0, 500)}`).toBe(true);
+        expect(
+          hasNode,
+          `Expected "${caseName}" to contain node type "${checks.hasNodeType}" in: ${jsonStr.substring(0, 500)}`
+        ).toBe(true);
       }
 
       if (checks.hasMarkType) {
         const hasMark = jsonStr.includes(`"type":"${checks.hasMarkType}"`);
-        expect(hasMark, `Expected "${caseName}" to contain mark type "${checks.hasMarkType}" in: ${jsonStr.substring(0, 500)}`).toBe(true);
+        expect(
+          hasMark,
+          `Expected "${caseName}" to contain mark type "${checks.hasMarkType}" in: ${jsonStr.substring(0, 500)}`
+        ).toBe(true);
       }
     }
 

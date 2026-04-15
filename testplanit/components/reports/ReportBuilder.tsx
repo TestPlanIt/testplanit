@@ -3,23 +3,37 @@ import { DraggableList } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { HelpPopover } from "@/components/ui/help-popover";
 import {
-  ResizableHandle, ResizablePanel, ResizablePanelGroup
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ColumnDef,
-  ExpandedState, VisibilityState
+  ExpandedState,
+  VisibilityState,
 } from "@tanstack/react-table";
 import {
-  Bot, ChevronDown, ChevronLeft, ChevronRight, CircleDashed, Filter,
-  FolderOpen, LayoutTemplate, Loader2
+  Bot,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CircleDashed,
+  Filter,
+  FolderOpen,
+  LayoutTemplate,
+  Loader2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 import React, {
-  useCallback, useEffect, useMemo, useRef, useState
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm } from "react-hook-form";
@@ -38,7 +52,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Form } from "~/components/ui/form";
 import {
@@ -46,7 +60,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
@@ -56,21 +70,24 @@ import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverage
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
-  getCrossProjectReportTypes, getProjectReportTypes
+  getCrossProjectReportTypes,
+  getProjectReportTypes,
 } from "~/lib/config/reportTypes";
 import {
   PaginationProvider,
-  usePagination
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import type {
-  DimensionFilters, DrillDownContext
+  DimensionFilters,
+  DrillDownContext,
 } from "~/lib/types/reportDrillDown";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import {
   dimensionToDraggableField,
-  draggableFieldToDimension, getReportSummary
+  draggableFieldToDimension,
+  getReportSummary,
 } from "~/utils/reportUtils";
 
 interface ReportBuilderProps {
@@ -89,7 +106,7 @@ interface ReportBuilderProps {
  * @example getBaseReportType("automation-trends") => "automation-trends"
  */
 function getBaseReportType(reportType: string): string {
-  return reportType.replace(/^cross-project-/, '');
+  return reportType.replace(/^cross-project-/, "");
 }
 
 /**
@@ -108,7 +125,7 @@ function matchesReportType(reportType: string, baseType: string): boolean {
  * @example isCrossProjectReport("automation-trends") => false
  */
 function isCrossProjectReport(reportType: string): boolean {
-  return reportType.startsWith('cross-project-');
+  return reportType.startsWith("cross-project-");
 }
 
 /**
@@ -332,7 +349,9 @@ function ReportBuilderContent({
   // Track the last report type that was run
   const lastRunReportType = useRef<string | null>(null);
   // Track the last tab change to prevent duplicate calls
-  const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(null);
+  const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(
+    null
+  );
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -635,16 +654,15 @@ function ReportBuilderContent({
   );
 
   // Choose which columns to use based on report type
-  const columns =
-    matchesReportType(reportType, "automation-trends")
-      ? automationTrendsColumns
-      : matchesReportType(reportType, "flaky-tests")
-        ? flakyTestsColumns
-        : matchesReportType(reportType, "test-case-health")
-          ? testCaseHealthColumns
-          : matchesReportType(reportType, "issue-test-coverage")
-            ? issueTestCoverageSummaryColumns
-            : standardColumns;
+  const columns = matchesReportType(reportType, "automation-trends")
+    ? automationTrendsColumns
+    : matchesReportType(reportType, "flaky-tests")
+      ? flakyTestsColumns
+      : matchesReportType(reportType, "test-case-health")
+        ? testCaseHealthColumns
+        : matchesReportType(reportType, "issue-test-coverage")
+          ? issueTestCoverageSummaryColumns
+          : standardColumns;
 
   // When lastUsedDimensions change (after running a report), update grouping
   React.useEffect(() => {
@@ -706,7 +724,11 @@ function ReportBuilderContent({
 
   // Set grouping for issue test coverage report when data loads
   React.useEffect(() => {
-    if ((matchesReportType(reportType, "issue-test-coverage")) && allResults && allResults.length > 0) {
+    if (
+      matchesReportType(reportType, "issue-test-coverage") &&
+      allResults &&
+      allResults.length > 0
+    ) {
       // Group by issueId to show issues with expandable test cases
       setGrouping(["issueId"]);
       // Start with all groups collapsed
@@ -737,7 +759,8 @@ function ReportBuilderContent({
   useEffect(() => {
     if (
       reportType === "automation-trends" ||
-      isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")
+      (isCrossProjectReport(reportType) &&
+        matchesReportType(reportType, "automation-trends"))
     ) {
       // Build filter payload to send to view-options API
       const filterPayload: any = {};
@@ -832,7 +855,10 @@ function ReportBuilderContent({
   // Handle report type change
   const handleReportTypeChange = (newReportType: string) => {
     // Safety check: ensure reportType is never empty
-    const safeReportType = (newReportType && newReportType.trim() !== "") ? newReportType : "test-execution";
+    const safeReportType =
+      newReportType && newReportType.trim() !== ""
+        ? newReportType
+        : "test-execution";
 
     // Update state immediately for responsive UI
     setReportType(safeReportType);
@@ -856,9 +882,11 @@ function ReportBuilderContent({
   const handleTabChange = (newTab: string) => {
     // Prevent duplicate calls within 100ms (React Strict Mode workaround)
     const now = Date.now();
-    if (lastTabChangeRef.current &&
-        lastTabChangeRef.current.tab === newTab &&
-        now - lastTabChangeRef.current.timestamp < 100) {
+    if (
+      lastTabChangeRef.current &&
+      lastTabChangeRef.current.tab === newTab &&
+      now - lastTabChangeRef.current.timestamp < 100
+    ) {
       return;
     }
     lastTabChangeRef.current = { tab: newTab, timestamp: now };
@@ -879,10 +907,12 @@ function ReportBuilderContent({
 
     // Determine the default report - use first from target list with valid ID
     // Fallback: "automation-trends" for reports tab, "test-execution" for builder tab
-    const fallbackReport = newTab === "reports" ? "automation-trends" : "test-execution";
-    let defaultReport = targetReports.length > 0 && targetReports[0]?.id
-      ? targetReports[0].id
-      : fallbackReport;
+    const fallbackReport =
+      newTab === "reports" ? "automation-trends" : "test-execution";
+    let defaultReport =
+      targetReports.length > 0 && targetReports[0]?.id
+        ? targetReports[0].id
+        : fallbackReport;
 
     // Safety check: ensure defaultReport is never empty
     if (!defaultReport || defaultReport.trim() === "") {
@@ -998,7 +1028,10 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           // For cross-project flaky tests, ensure "project" is the first dimension
-          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
+          if (
+            isCrossProjectReport(reportType) &&
+            matchesReportType(reportType, "flaky-tests")
+          ) {
             const projectDim = dimOpts.find((d: any) => d.value === "project");
             if (projectDim) {
               // Remove project if it exists, then add it as first
@@ -1013,7 +1046,8 @@ function ReportBuilderContent({
             setDimensions(selectedDims);
           }
         } else if (
-          isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests") &&
+          isCrossProjectReport(reportType) &&
+          matchesReportType(reportType, "flaky-tests") &&
           dimOpts.length > 0
         ) {
           // Automatically add "project" as the first dimension for cross-project flaky tests
@@ -1042,7 +1076,10 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           // For cross-project flaky tests, ensure "project" is the first dimension
-          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
+          if (
+            isCrossProjectReport(reportType) &&
+            matchesReportType(reportType, "flaky-tests")
+          ) {
             const projectDim = dimOpts.find((d: any) => d.value === "project");
             if (projectDim) {
               // Remove project if it exists, then add it as first
@@ -1160,7 +1197,10 @@ function ReportBuilderContent({
           body.flipThreshold = flipThreshold;
           body.automatedFilter = flakyAutomatedFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
+          if (
+            isCrossProjectReport(reportType) &&
+            matchesReportType(reportType, "flaky-tests")
+          ) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1179,7 +1219,10 @@ function ReportBuilderContent({
           body.healthStatusFilter = healthStatusFilter;
           body.staleFilter = healthStaleFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) {
+          if (
+            isCrossProjectReport(reportType) &&
+            matchesReportType(reportType, "test-case-health")
+          ) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1192,7 +1235,10 @@ function ReportBuilderContent({
         // For issue test coverage, add dimensions for cross-project
         if (matchesReportType(reportType, "issue-test-coverage")) {
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "issue-test-coverage")) {
+          if (
+            isCrossProjectReport(reportType) &&
+            matchesReportType(reportType, "issue-test-coverage")
+          ) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1290,7 +1336,8 @@ function ReportBuilderContent({
             // Set initial sort order for flaky tests: Flips Desc
             if (
               (reportType === "flaky-tests" ||
-                isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) &&
+                (isCrossProjectReport(reportType) &&
+                  matchesReportType(reportType, "flaky-tests"))) &&
               !sortConfig
             ) {
               setSortConfig({ column: "flipCount", direction: "desc" });
@@ -1302,7 +1349,8 @@ function ReportBuilderContent({
           const effectiveSortConfig =
             updateUrl &&
             (reportType === "flaky-tests" ||
-              isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) &&
+              (isCrossProjectReport(reportType) &&
+                matchesReportType(reportType, "flaky-tests"))) &&
             !sortConfig
               ? { column: "flipCount", direction: "desc" as const }
               : sortConfig;
@@ -1355,7 +1403,10 @@ function ReportBuilderContent({
           setResults(tableData); // Support both formats
 
           // Store projects for automation trends report
-          if ((matchesReportType(reportType, "automation-trends")) && data.projects) {
+          if (
+            matchesReportType(reportType, "automation-trends") &&
+            data.projects
+          ) {
             setAutomationTrendsProjects(data.projects);
           }
 
@@ -1397,7 +1448,13 @@ function ReportBuilderContent({
           setReportGeneratedAt(new Date());
 
           // Store the request body for sharing (exclude page/pageSize as shares should show all data)
-          const { page, pageSize, sortColumn, sortDirection, ...shareableBody } = body;
+          const {
+            page,
+            pageSize,
+            sortColumn,
+            sortDirection,
+            ...shareableBody
+          } = body;
           setLastRequestBody(shareableBody);
 
           // Only update URL for custom reports (pre-built reports don't use dimensions/metrics)
@@ -1405,7 +1462,10 @@ function ReportBuilderContent({
             // Update URL with selections - start with existing params to preserve tab parameter
             const newParams = new URLSearchParams(searchParams.toString());
             // Safety check: ensure reportType is never empty
-            const safeReportType = (reportType && reportType.trim() !== "") ? reportType : "test-execution";
+            const safeReportType =
+              reportType && reportType.trim() !== ""
+                ? reportType
+                : "test-execution";
             newParams.set("reportType", safeReportType);
             newParams.set(
               "dimensions",
@@ -1498,7 +1558,16 @@ function ReportBuilderContent({
       lastRunReportType.current = reportType;
       runReport(lastUsedDimensions, lastUsedMetrics);
     }
-  }, [reportType, lastUsedDimensions, lastUsedMetrics, results, loading, error, runReport, currentReport]);
+  }, [
+    reportType,
+    lastUsedDimensions,
+    lastUsedMetrics,
+    results,
+    loading,
+    error,
+    runReport,
+    currentReport,
+  ]);
 
   // Re-fetch data when pagination changes (without full loading state)
   useEffect(() => {
@@ -1569,7 +1638,7 @@ function ReportBuilderContent({
   // Re-fetch data when filters or date grouping change for automation trends
   useEffect(() => {
     if (
-      (matchesReportType(reportType, "automation-trends")) &&
+      matchesReportType(reportType, "automation-trends") &&
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results
@@ -1591,7 +1660,8 @@ function ReportBuilderContent({
   // Automatically add "project" as first dimension for cross-project flaky tests
   useEffect(() => {
     if (
-      isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests") &&
+      isCrossProjectReport(reportType) &&
+      matchesReportType(reportType, "flaky-tests") &&
       dimensionOptions.length > 0
     ) {
       const projectDim = dimensionOptions.find(
@@ -1738,7 +1808,9 @@ function ReportBuilderContent({
                   <TabsTrigger value="reports" className="min-w-0 truncate">
                     {tAdminMenu("reports")}
                   </TabsTrigger>
-                  <TabsTrigger value="builder" className="min-w-0 truncate">{tReports("title")}</TabsTrigger>
+                  <TabsTrigger value="builder" className="min-w-0 truncate">
+                    {tReports("title")}
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent
@@ -1799,7 +1871,11 @@ function ReportBuilderContent({
 
                       {/* Date Grouping Selection for Automation Trends */}
                       {(reportType === "automation-trends" ||
-                        isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")) && (
+                        (isCrossProjectReport(reportType) &&
+                          matchesReportType(
+                            reportType,
+                            "automation-trends"
+                          ))) && (
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
                             {tReports("dateGrouping.label")}
@@ -1836,7 +1912,11 @@ function ReportBuilderContent({
 
                       {/* Filters Section for Automation Trends */}
                       {(reportType === "automation-trends" ||
-                        isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")) &&
+                        (isCrossProjectReport(reportType) &&
+                          matchesReportType(
+                            reportType,
+                            "automation-trends"
+                          ))) &&
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -1873,7 +1953,8 @@ function ReportBuilderContent({
 
                       {/* Flaky Tests Parameters */}
                       {(reportType === "flaky-tests" ||
-                        isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) && (
+                        (isCrossProjectReport(reportType) &&
+                          matchesReportType(reportType, "flaky-tests"))) && (
                         <div className="grid gap-4">
                           {/* Consecutive Runs */}
                           <div className="grid gap-2">
@@ -1991,7 +2072,11 @@ function ReportBuilderContent({
 
                       {/* Test Case Health Parameters */}
                       {(reportType === "test-case-health" ||
-                        isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) && (
+                        (isCrossProjectReport(reportType) &&
+                          matchesReportType(
+                            reportType,
+                            "test-case-health"
+                          ))) && (
                         <div className="grid gap-4">
                           {/* Stale Days Threshold */}
                           <div className="grid gap-2">
@@ -2039,7 +2124,9 @@ function ReportBuilderContent({
                                 step={1}
                                 value={minExecutionsForRate}
                                 onChange={(e) =>
-                                  setMinExecutionsForRate(Number(e.target.value))
+                                  setMinExecutionsForRate(
+                                    Number(e.target.value)
+                                  )
                                 }
                                 className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                               />
@@ -2174,7 +2261,8 @@ function ReportBuilderContent({
                                         ? tReports(
                                             "testCaseHealth.healthStatus.alwaysPassing"
                                           )
-                                        : healthStatusFilter === "always_failing"
+                                        : healthStatusFilter ===
+                                            "always_failing"
                                           ? tReports(
                                               "testCaseHealth.healthStatus.alwaysFailing"
                                             )
@@ -2190,9 +2278,7 @@ function ReportBuilderContent({
                               >
                                 <DropdownMenuGroup>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("all")
-                                    }
+                                    onClick={() => setHealthStatusFilter("all")}
                                   >
                                     {tIssues("filterAll")}
                                   </DropdownMenuItem>
@@ -2422,7 +2508,7 @@ function ReportBuilderContent({
                       </div>
 
                       {/* Priority Filter for Automation Trends */}
-                      {(matchesReportType(reportType, "automation-trends")) &&
+                      {matchesReportType(reportType, "automation-trends") &&
                         dimensions.some((d) => d.value === "priority") && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -2587,7 +2673,7 @@ function ReportBuilderContent({
             lookbackDays={lookbackDays}
             dateGrouping={lastUsedDateGrouping}
             totalFlakyTests={
-              (matchesReportType(reportType, "flaky-tests")) && allResults
+              matchesReportType(reportType, "flaky-tests") && allResults
                 ? allResults.length
                 : undefined
             }
@@ -2612,7 +2698,11 @@ function ReportBuilderContent({
             onGroupingChange={setGrouping}
             expanded={expanded}
             onExpandedChange={setExpanded}
-            reportSummary={typeof enhancedReportSummary === "string" ? enhancedReportSummary : reportSummary ?? undefined}
+            reportSummary={
+              typeof enhancedReportSummary === "string"
+                ? enhancedReportSummary
+                : (reportSummary ?? undefined)
+            }
             reportGeneratedAt={reportGeneratedAt || undefined}
             userTimezone={session?.user?.preferences?.timezone}
             readOnly={false}
@@ -2624,7 +2714,9 @@ function ReportBuilderContent({
                   // Use the last request body which contains ALL parameters
                   ...(lastRequestBody || {}),
                 }}
-                reportTitle={reportTypes.find((r) => r.id === reportType)?.label}
+                reportTitle={
+                  reportTypes.find((r) => r.id === reportType)?.label
+                }
               />
             }
           />

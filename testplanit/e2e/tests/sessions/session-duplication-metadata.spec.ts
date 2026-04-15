@@ -28,11 +28,9 @@ test.describe("Session Duplication Metadata", () => {
     // Find the session and click Duplicate
     const sessionItem = page.locator(`#session-${sessionId}`);
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
-    const duplicateItem = page.getByTestId(
-      `session-duplicate-${sessionId}`
-    );
+    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
     await expect(duplicateItem).toBeVisible({ timeout: 5000 });
     await duplicateItem.click();
 
@@ -42,9 +40,7 @@ test.describe("Session Duplication Metadata", () => {
 
     // The Configurations label should show "(1)" indicating config was pre-selected
     // Allow extra time for the duplication data to load and pre-populate the form
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     await expect(configLabel).toContainText("(1)", { timeout: 10000 });
 
     // The badge should show the config name
@@ -66,10 +62,7 @@ test.describe("Session Duplication Metadata", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E DupMilestone ${ts}`);
     const milestoneName = `Dup Milestone ${ts}`;
-    const milestoneId = await api.createMilestone(
-      projectId,
-      milestoneName
-    );
+    const milestoneId = await api.createMilestone(projectId, milestoneName);
     const sessionId = await api.createSession(
       projectId,
       `Milestone Source ${ts}`,
@@ -82,11 +75,9 @@ test.describe("Session Duplication Metadata", () => {
     // Find the session and click Duplicate
     const sessionItem = page.locator(`#session-${sessionId}`);
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
-    const duplicateItem = page.getByTestId(
-      `session-duplicate-${sessionId}`
-    );
+    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
     await expect(duplicateItem).toBeVisible({ timeout: 5000 });
     await duplicateItem.click();
 
@@ -117,10 +108,7 @@ test.describe("Session Duplication Metadata", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E DupTitle ${ts}`);
-    const sessionId = await api.createSession(
-      projectId,
-      `Title Source ${ts}`
-    );
+    const sessionId = await api.createSession(projectId, `Title Source ${ts}`);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -128,20 +116,19 @@ test.describe("Session Duplication Metadata", () => {
     // Find the session and click Duplicate
     const sessionItem = page.locator(`#session-${sessionId}`);
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
-    const duplicateItem = page.getByTestId(
-      `session-duplicate-${sessionId}`
-    );
+    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
     await duplicateItem.click();
 
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 15000 });
 
     // Dialog title should say "Duplicate Session"
-    await expect(
-      dialog.locator('h2, [class*="DialogTitle"]')
-    ).toContainText("Duplicate Session", { timeout: 5000 });
+    await expect(dialog.locator('h2, [class*="DialogTitle"]')).toContainText(
+      "Duplicate Session",
+      { timeout: 5000 }
+    );
 
     // Cleanup
     const cancelButton = dialog.getByRole("button", { name: /cancel/i });
@@ -167,11 +154,9 @@ test.describe("Session Duplication Metadata", () => {
     // Find the completed session and click Duplicate
     const sessionItem = page.locator(`#session-${sessionId}`);
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
-    const moreButton = sessionItem.locator('button:has(svg)').last();
+    const moreButton = sessionItem.locator("button:has(svg)").last();
     await moreButton.click();
-    const duplicateItem = page.getByTestId(
-      `session-duplicate-${sessionId}`
-    );
+    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
     await expect(duplicateItem).toBeVisible({ timeout: 5000 });
     await duplicateItem.click();
 

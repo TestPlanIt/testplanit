@@ -48,11 +48,15 @@ vi.mock("./ReportMultiLineChart", () => ({
 }));
 
 vi.mock("./ReportMultiMetricBarChart", () => ({
-  ReportMultiMetricBarChart: () => <div data-testid="ReportMultiMetricBarChart" />,
+  ReportMultiMetricBarChart: () => (
+    <div data-testid="ReportMultiMetricBarChart" />
+  ),
 }));
 
 vi.mock("./ReportSmallMultiplesGroupedBar", () => ({
-  ReportSmallMultiplesGroupedBar: () => <div data-testid="ReportSmallMultiplesGroupedBar" />,
+  ReportSmallMultiplesGroupedBar: () => (
+    <div data-testid="ReportSmallMultiplesGroupedBar" />
+  ),
 }));
 
 vi.mock("./FlakyTestsBubbleChart", () => ({
@@ -150,7 +154,14 @@ describe("ReportChart", () => {
   it("renders FlakyTestsBubbleChart when reportType is 'flaky-tests'", () => {
     render(
       <ReportChart
-        results={[{ testCaseId: 1, testCaseName: "Test A", flipCount: 3, executions: [] }]}
+        results={[
+          {
+            testCaseId: 1,
+            testCaseName: "Test A",
+            flipCount: 3,
+            executions: [],
+          },
+        ]}
         dimensions={[]}
         metrics={[]}
         reportType="flaky-tests"
@@ -163,7 +174,14 @@ describe("ReportChart", () => {
   it("renders FlakyTestsBubbleChart for cross-project flaky-tests variant", () => {
     render(
       <ReportChart
-        results={[{ testCaseId: 1, testCaseName: "Test A", flipCount: 3, executions: [] }]}
+        results={[
+          {
+            testCaseId: 1,
+            testCaseName: "Test A",
+            flipCount: 3,
+            executions: [],
+          },
+        ]}
         dimensions={[]}
         metrics={[]}
         reportType="cross-project-flaky-tests"
@@ -176,7 +194,15 @@ describe("ReportChart", () => {
   it("renders TestCaseHealthChart when reportType is 'test-case-health'", () => {
     render(
       <ReportChart
-        results={[{ testCaseId: 1, testCaseName: "Test A", healthStatus: "healthy", healthScore: 80, isStale: false }]}
+        results={[
+          {
+            testCaseId: 1,
+            testCaseName: "Test A",
+            healthStatus: "healthy",
+            healthScore: 80,
+            isStale: false,
+          },
+        ]}
         dimensions={[]}
         metrics={[]}
         reportType="test-case-health"
@@ -259,7 +285,12 @@ describe("ReportChart", () => {
 
   it("renders ReportMultiLineChart for automation-trends report type", () => {
     const automationResults = [
-      { periodStart: "2024-01-01", TestProject_automated: 10, TestProject_manual: 5, TestProject_total: 15 },
+      {
+        periodStart: "2024-01-01",
+        TestProject_automated: 10,
+        TestProject_manual: 5,
+        TestProject_total: 15,
+      },
     ];
     render(
       <ReportChart

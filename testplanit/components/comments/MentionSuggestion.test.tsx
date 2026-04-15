@@ -149,26 +149,26 @@ describe("MentionSuggestion", () => {
       makeMockUser("u2", "Bob Jones", "bob@example.com"),
     ];
     const ref = createRef<MentionSuggestionRef>();
-    render(
-      <MentionSuggestion ref={ref} items={items} command={mockCommand} />
-    );
+    render(<MentionSuggestion ref={ref} items={items} command={mockCommand} />);
 
     // Initially first item is selected
     const buttons = screen.getAllByRole("button");
     expect(buttons[0].className).toContain("bg-accent");
 
     // Press ArrowDown
-    ref.current?.onKeyDown({ event: new KeyboardEvent("keydown", { key: "ArrowDown" }) });
+    ref.current?.onKeyDown({
+      event: new KeyboardEvent("keydown", { key: "ArrowDown" }),
+    });
   });
 
   it("Enter via ref.onKeyDown calls command with selected item", () => {
     const items = [makeMockUser("u1", "Alice Smith", "alice@example.com")];
     const ref = createRef<MentionSuggestionRef>();
-    render(
-      <MentionSuggestion ref={ref} items={items} command={mockCommand} />
-    );
+    render(<MentionSuggestion ref={ref} items={items} command={mockCommand} />);
 
-    ref.current?.onKeyDown({ event: new KeyboardEvent("keydown", { key: "Enter" }) });
+    ref.current?.onKeyDown({
+      event: new KeyboardEvent("keydown", { key: "Enter" }),
+    });
 
     expect(mockCommand).toHaveBeenCalledWith({
       id: "u1",
@@ -183,9 +183,7 @@ describe("MentionSuggestion", () => {
       makeMockUser("u2", "Bob Jones", "bob@example.com"),
     ];
     const ref = createRef<MentionSuggestionRef>();
-    render(
-      <MentionSuggestion ref={ref} items={items} command={mockCommand} />
-    );
+    render(<MentionSuggestion ref={ref} items={items} command={mockCommand} />);
 
     // Press ArrowUp from first item — should wrap to last
     const result = ref.current?.onKeyDown({
@@ -197,9 +195,7 @@ describe("MentionSuggestion", () => {
   it("returns false for unhandled key events", () => {
     const items = [makeMockUser("u1", "Alice", "alice@example.com")];
     const ref = createRef<MentionSuggestionRef>();
-    render(
-      <MentionSuggestion ref={ref} items={items} command={mockCommand} />
-    );
+    render(<MentionSuggestion ref={ref} items={items} command={mockCommand} />);
 
     const result = ref.current?.onKeyDown({
       event: new KeyboardEvent("keydown", { key: "Escape" }),

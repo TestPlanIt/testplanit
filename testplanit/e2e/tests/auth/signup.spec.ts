@@ -43,20 +43,24 @@ test.describe("User Signup", () => {
     expect(page.url()).not.toContain("/signup");
   });
 
-  test("Shows validation error when passwords do not match", async ({ page }) => {
+  test("Shows validation error when passwords do not match", async ({
+    page,
+  }) => {
     await page.goto("/en-US/signup");
 
     await page.getByLabel(/^name/i).fill("Test User");
-    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
+    await page
+      .getByLabel(/^email/i)
+      .fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
     await page.getByLabel(/^password$/i).fill("Password123!");
     await page.getByLabel(/confirm.*password/i).fill("DifferentPassword123!");
 
     await page.getByRole("button", { name: /sign up/i }).click();
 
     // Should show validation error
-    await expect(
-      page.getByText(/password.*match|password.*same/i)
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/password.*match|password.*same/i)).toBeVisible(
+      { timeout: 5000 }
+    );
   });
 
   test("Shows validation error for invalid email format", async ({ page }) => {
@@ -70,12 +74,15 @@ test.describe("User Signup", () => {
     await page.getByRole("button", { name: /sign up/i }).click();
 
     // Should show email validation error
-    await expect(
-      page.getByText(/invalid.*email|email.*valid/i)
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/invalid.*email|email.*valid/i)).toBeVisible({
+      timeout: 5000,
+    });
   });
 
-  test("Shows error when signing up with existing email", async ({ page, api }) => {
+  test("Shows error when signing up with existing email", async ({
+    page,
+    api,
+  }) => {
     // Create an existing user
     const existingEmail = `existing-${Date.now()}@${TEST_EMAIL_DOMAIN}`;
     const userResult = await api.createUser({
@@ -108,7 +115,9 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signup");
 
     await page.getByLabel(/^name/i).fill("Test User");
-    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
+    await page
+      .getByLabel(/^email/i)
+      .fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
     await page.getByLabel(/^password$/i).fill("123"); // Too short
     await page.getByLabel(/confirm.*password/i).fill("123");
 
@@ -124,16 +133,18 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signup");
 
     // Leave name empty
-    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
+    await page
+      .getByLabel(/^email/i)
+      .fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
     await page.getByLabel(/^password$/i).fill("Password123!");
     await page.getByLabel(/confirm.*password/i).fill("Password123!");
 
     await page.getByRole("button", { name: /sign up/i }).click();
 
     // Should show name required error
-    await expect(
-      page.getByText(/name.*required|enter.*name/i)
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/name.*required|enter.*name/i)).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Created user has default preferences set", async ({ page }) => {
@@ -165,7 +176,9 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signin");
 
     // Should have a link to signup page - check for the actual link text
-    const signupLink = page.getByRole("link", { name: /sign up|create.*account/i });
+    const signupLink = page.getByRole("link", {
+      name: /sign up|create.*account/i,
+    });
     await expect(signupLink).toBeVisible();
 
     // Click should navigate to signup
@@ -177,7 +190,9 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signup");
 
     // Should have a link to signin page
-    const signinLink = page.getByRole("link", { name: /sign in|existing account/i });
+    const signinLink = page.getByRole("link", {
+      name: /sign in|existing account/i,
+    });
     await expect(signinLink).toBeVisible();
 
     // Click should navigate to signin

@@ -143,12 +143,17 @@ describe("TagsListDisplay", () => {
 
   it("handles tags with long names", () => {
     const longNameTags = [
-      { id: 1, name: "This is a very long tag name that might need truncation" },
+      {
+        id: 1,
+        name: "This is a very long tag name that might need truncation",
+      },
     ];
     render(<TagsListDisplay tags={longNameTags} projectId={projectId} />);
 
     expect(
-      screen.getByText("This is a very long tag name that might need truncation")
+      screen.getByText(
+        "This is a very long tag name that might need truncation"
+      )
     ).toBeInTheDocument();
   });
 

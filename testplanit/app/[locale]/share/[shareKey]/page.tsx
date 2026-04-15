@@ -98,7 +98,11 @@ export default async function SharePage({ params }: SharePageProps) {
         </div>
       }
     >
-      <ShareContent shareKey={shareKey} shareData={shareData} session={session} />
+      <ShareContent
+        shareKey={shareKey}
+        shareData={shareData}
+        session={session}
+      />
     </Suspense>
   );
 }

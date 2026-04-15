@@ -326,7 +326,11 @@ export class SyncService {
             // If no match criterion is met, include the issue (backward compat for ambiguous cases).
             const issuesForProject = allProjectIssues.filter((issue) => {
               if (!issue.externalKey) return false;
-              if (issue.externalKey.startsWith(integrationProject.externalProjectKey + "-")) {
+              if (
+                issue.externalKey.startsWith(
+                  integrationProject.externalProjectKey + "-"
+                )
+              ) {
                 return true;
               }
               if (issue.externalKey === integrationProject.externalProjectId) {
@@ -345,7 +349,9 @@ export class SyncService {
                 try {
                   if (job) {
                     const progress = Math.round(
-                      ((syncedCount + projectSynced + 1) / (allProjectIssues.length || 1)) * 100
+                      ((syncedCount + projectSynced + 1) /
+                        (allProjectIssues.length || 1)) *
+                        100
                     );
                     await job.updateProgress({
                       current: syncedCount + projectSynced + 1,
@@ -356,16 +362,24 @@ export class SyncService {
                   }
 
                   const issueIdentifier =
-                    localIssue.externalId || localIssue.externalKey || localIssue.name;
+                    localIssue.externalId ||
+                    localIssue.externalKey ||
+                    localIssue.name;
 
                   if (!issueIdentifier) {
-                    errors.push(`Issue ${localIssue.id} has no external identifier`);
+                    errors.push(
+                      `Issue ${localIssue.id} has no external identifier`
+                    );
                     continue;
                   }
 
                   const issueData = await adapter.syncIssue(issueIdentifier);
                   await issueCache.set(integrationId, issueData.id, issueData);
-                  await this.updateExistingIssue(prisma, integrationId, issueData);
+                  await this.updateExistingIssue(
+                    prisma,
+                    integrationId,
+                    issueData
+                  );
                   projectSynced++;
                 } catch (error: any) {
                   errors.push(
@@ -393,7 +407,9 @@ export class SyncService {
             });
           } catch (error: any) {
             // D-07: Error in one project must not block others — log, update status, continue
-            errors.push(`Project ${integrationProject.externalProjectKey}: ${error.message}`);
+            errors.push(
+              `Project ${integrationProject.externalProjectKey}: ${error.message}`
+            );
             try {
               await prisma.integrationProject.update({
                 where: { id: integrationProject.id },
@@ -404,7 +420,9 @@ export class SyncService {
               });
             } catch {
               // If status update itself fails, just log and continue
-              errors.push(`Failed to update error status for ${integrationProject.externalProjectKey}`);
+              errors.push(
+                `Failed to update error status for ${integrationProject.externalProjectKey}`
+              );
             }
             // Continue to next project — D-07: no one project blocks the rest
           }
@@ -450,7 +468,9 @@ export class SyncService {
             try {
               // Update progress to keep job alive and inform UI
               if (job) {
-                const progress = Math.round(((globalIndex + 1) / totalIssues) * 100);
+                const progress = Math.round(
+                  ((globalIndex + 1) / totalIssues) * 100
+                );
                 await job.updateProgress({
                   current: globalIndex + 1,
                   total: totalIssues,
@@ -461,10 +481,14 @@ export class SyncService {
 
               // Use externalId to fetch the latest data, fallback to externalKey or name
               const issueIdentifier =
-                localIssue.externalId || localIssue.externalKey || localIssue.name;
+                localIssue.externalId ||
+                localIssue.externalKey ||
+                localIssue.name;
 
               if (!issueIdentifier) {
-                errors.push(`Issue ${localIssue.id} has no external identifier`);
+                errors.push(
+                  `Issue ${localIssue.id} has no external identifier`
+                );
                 continue;
               }
 
@@ -661,7 +685,7 @@ export class SyncService {
         } else {
           throw new Error(
             `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
-            `Issue data is missing repository context.`
+              `Issue data is missing repository context.`
           );
         }
       }

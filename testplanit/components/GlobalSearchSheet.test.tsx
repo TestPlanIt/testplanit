@@ -49,7 +49,12 @@ vi.mock("@/components/UnifiedSearch", () => ({
             id: 5,
             entityType: SearchableEntityType.REPOSITORY_CASE,
             score: 1.0,
-            source: { id: 5, name: "Test Case", projectId: 1, isDeleted: false },
+            source: {
+              id: 5,
+              name: "Test Case",
+              projectId: 1,
+              isDeleted: false,
+            },
           })
         }
       >
@@ -62,7 +67,12 @@ vi.mock("@/components/UnifiedSearch", () => ({
             id: 10,
             entityType: SearchableEntityType.TEST_RUN,
             score: 1.0,
-            source: { id: 10, name: "Test Run", projectId: 2, isDeleted: false },
+            source: {
+              id: 10,
+              name: "Test Run",
+              projectId: 2,
+              isDeleted: false,
+            },
           })
         }
       >
@@ -114,7 +124,12 @@ vi.mock("@/components/UnifiedSearch", () => ({
             id: 50,
             entityType: SearchableEntityType.MILESTONE,
             score: 1.0,
-            source: { id: 50, name: "Milestone", projectId: 6, isDeleted: false },
+            source: {
+              id: 50,
+              name: "Milestone",
+              projectId: 6,
+              isDeleted: false,
+            },
           })
         }
       >
@@ -127,7 +142,12 @@ vi.mock("@/components/UnifiedSearch", () => ({
             id: 60,
             entityType: SearchableEntityType.SHARED_STEP,
             score: 1.0,
-            source: { id: 60, name: "Shared Step", projectId: 7, isDeleted: false },
+            source: {
+              id: 60,
+              name: "Shared Step",
+              projectId: 7,
+              isDeleted: false,
+            },
           })
         }
       >
@@ -140,7 +160,12 @@ vi.mock("@/components/UnifiedSearch", () => ({
             id: 99,
             entityType: SearchableEntityType.REPOSITORY_CASE,
             score: 1.0,
-            source: { id: 99, name: "Deleted Case", projectId: 1, isDeleted: true },
+            source: {
+              id: 99,
+              name: "Deleted Case",
+              projectId: 1,
+              isDeleted: true,
+            },
           })
         }
       >
@@ -244,9 +269,7 @@ describe("GlobalSearchSheet", () => {
   it("does not render sheet content when closed", () => {
     render(<GlobalSearchSheet isOpen={false} onClose={vi.fn()} />);
 
-    expect(
-      screen.queryByTestId("global-search-sheet")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("global-search-sheet")).not.toBeInTheDocument();
   });
 
   it("renders the sheet title and help button", () => {

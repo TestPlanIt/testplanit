@@ -5,7 +5,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import type {
-  DrillDownContext, DrillDownRecord, DrillDownResponse
+  DrillDownContext,
+  DrillDownRecord,
+  DrillDownResponse,
 } from "~/lib/types/reportDrillDown";
 
 const RECORDS_PER_PAGE = 50;
@@ -49,11 +51,18 @@ export function useDrillDown(): UseDrillDownReturn {
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [sessionId, setSessionId] = useState(0);
-  const [aggregates, setAggregates] = useState<DrillDownResponse["aggregates"]>();
+  const [aggregates, setAggregates] =
+    useState<DrillDownResponse["aggregates"]>();
 
   // Fetch initial batch of records
   const { isLoading, error } = useQuery({
-    queryKey: ["drill-down", sessionId, context?.metricId, context?.dimensions, offset],
+    queryKey: [
+      "drill-down",
+      sessionId,
+      context?.metricId,
+      context?.dimensions,
+      offset,
+    ],
     queryFn: async () => {
       if (!context) return null;
 

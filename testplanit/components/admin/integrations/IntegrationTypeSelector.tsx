@@ -4,7 +4,7 @@ import {
   Card,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { IntegrationProvider } from "@prisma/client";
 import { Check, Link } from "lucide-react";

@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AuditAction, AuditLog } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -147,7 +147,9 @@ export const getColumns = (
             <span className="text-xs text-muted-foreground">{email}</span>
           )}
           {!name && !email && (
-            <span className="text-muted-foreground">{tUserMenu("themes.system")}</span>
+            <span className="text-muted-foreground">
+              {tUserMenu("themes.system")}
+            </span>
           )}
         </div>
       );

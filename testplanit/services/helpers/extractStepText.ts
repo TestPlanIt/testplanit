@@ -5,10 +5,10 @@ import { extractTextFromNode } from "../../utils/extractTextFromJson";
  */
 export function extractStepText(stepData: any): string {
   if (!stepData) return "";
-  
+
   try {
     // If it's a string, try to parse it as JSON
-    if (typeof stepData === 'string') {
+    if (typeof stepData === "string") {
       const parsed = JSON.parse(stepData);
       return extractTextFromNode(parsed);
     }
@@ -16,6 +16,6 @@ export function extractStepText(stepData: any): string {
     return extractTextFromNode(stepData);
   } catch {
     // If parsing fails, return the original string
-    return typeof stepData === 'string' ? stepData : "";
+    return typeof stepData === "string" ? stepData : "";
   }
 }

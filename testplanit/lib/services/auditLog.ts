@@ -99,7 +99,10 @@ function maskSensitiveValue(fieldName: string, value: unknown): unknown {
   }
 
   // Show last 4 characters for tokens/keys
-  if (fieldName.toLowerCase().includes("token") || fieldName.toLowerCase().includes("key")) {
+  if (
+    fieldName.toLowerCase().includes("token") ||
+    fieldName.toLowerCase().includes("key")
+  ) {
     return `[****${strValue.slice(-4)}]`;
   }
 
@@ -142,7 +145,10 @@ export function calculateDiff(
 
   // UPDATE - only include changed fields
   const changes: Record<string, { old: unknown; new: unknown }> = {};
-  const allKeys = new Set([...Object.keys(oldEntity), ...Object.keys(newEntity)]);
+  const allKeys = new Set([
+    ...Object.keys(oldEntity),
+    ...Object.keys(newEntity),
+  ]);
 
   for (const key of allKeys) {
     // Skip internal timestamp fields

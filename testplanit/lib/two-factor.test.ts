@@ -1,8 +1,14 @@
 import { generate, generateSecret } from "otplib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  decryptSecret, encryptSecret, generateBackupCodes, generateQRCodeDataURL, generateTOTPSecret, hashBackupCode,
-  verifyBackupCode, verifyTOTP
+  decryptSecret,
+  encryptSecret,
+  generateBackupCodes,
+  generateQRCodeDataURL,
+  generateTOTPSecret,
+  hashBackupCode,
+  verifyBackupCode,
+  verifyTOTP,
 } from "./two-factor";
 
 // Mock QRCode
@@ -231,8 +237,14 @@ describe("Two-Factor Authentication", () => {
     it("should be case insensitive for verification", () => {
       const { plainCodes, hashedCodes } = generateBackupCodes(1);
 
-      const indexUpper = verifyBackupCode(plainCodes[0].toUpperCase(), hashedCodes);
-      const indexLower = verifyBackupCode(plainCodes[0].toLowerCase(), hashedCodes);
+      const indexUpper = verifyBackupCode(
+        plainCodes[0].toUpperCase(),
+        hashedCodes
+      );
+      const indexLower = verifyBackupCode(
+        plainCodes[0].toLowerCase(),
+        hashedCodes
+      );
 
       expect(indexUpper).toBe(0);
       expect(indexLower).toBe(0);

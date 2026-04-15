@@ -33,7 +33,9 @@ vi.mock("~/lib/navigation", () => ({
 
 // Mock storageUrl
 vi.mock("~/utils/storageUrl", () => ({
-  getStorageUrlClient: vi.fn((url: string) => `https://storage.example.com/${url}`),
+  getStorageUrlClient: vi.fn(
+    (url: string) => `https://storage.example.com/${url}`
+  ),
 }));
 
 // Mock AttachmentPreview
@@ -62,13 +64,20 @@ vi.mock("@/components/tables/UserNameCell", () => ({
 // Mock UI components
 vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children, variant }: any) => (
-    <span data-testid="badge" data-variant={variant}>{children}</span>
+    <span data-testid="badge" data-variant={variant}>
+      {children}
+    </span>
   ),
 }));
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, type, variant, size, ...props }: any) => (
-    <button type={type || "button"} onClick={onClick} data-variant={variant} {...props}>
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      data-variant={variant}
+      {...props}
+    >
       {children}
     </button>
   ),
@@ -77,7 +86,9 @@ vi.mock("@/components/ui/button", () => ({
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children, open, onOpenChange }: any) => (
     <div data-testid="popover" data-open={open}>
-      {typeof children === "function" ? children({ open, onOpenChange }) : children}
+      {typeof children === "function"
+        ? children({ open, onOpenChange })
+        : children}
     </div>
   ),
   PopoverTrigger: ({ children, asChild: _asChild }: any) => (
@@ -89,9 +100,7 @@ vi.mock("@/components/ui/popover", () => ({
 }));
 
 vi.mock("@/components/ui/separator", () => ({
-  Separator: ({ orientation }: any) => (
-    <hr data-orientation={orientation} />
-  ),
+  Separator: ({ orientation }: any) => <hr data-orientation={orientation} />,
 }));
 
 vi.mock("@/components/ui/textarea", () => ({
@@ -110,7 +119,12 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 // Helper to create mock attachment
-const makeAttachment = (id: number, name: string, mimeType = "image/png", overrides: any = {}) => ({
+const makeAttachment = (
+  id: number,
+  name: string,
+  mimeType = "image/png",
+  overrides: any = {}
+) => ({
   id,
   name,
   mimeType,
@@ -136,10 +150,7 @@ describe("AttachmentsDisplay", () => {
 
   it("renders null when attachments array is empty", () => {
     const { container } = render(
-      <AttachmentsDisplay
-        attachments={[]}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={[]} onSelect={mockOnSelect} />
     );
     expect(container.firstChild).toBeNull();
   });
@@ -150,23 +161,21 @@ describe("AttachmentsDisplay", () => {
       makeAttachment(2, "document.pdf", "application/pdf"),
     ];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     // Names appear in multiple places (title, preview, name field) — just confirm at least one is present
-    expect(screen.getAllByText("screenshot.png").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("document.pdf").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("screenshot.png").length).toBeGreaterThanOrEqual(
+      1
+    );
+    expect(screen.getAllByText("document.pdf").length).toBeGreaterThanOrEqual(
+      1
+    );
   });
 
   it("renders attachment previews", () => {
     const attachments = [makeAttachment(1, "photo.jpg")];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     expect(screen.getByTestId("attachment-preview-1")).toBeInTheDocument();
   });
@@ -174,10 +183,7 @@ describe("AttachmentsDisplay", () => {
   it("renders download link for non-uri-list attachments", () => {
     const attachments = [makeAttachment(1, "image.png", "image/png")];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     // Download link should be present (non-uri-list mime type)
     const links = screen.getAllByRole("link");
@@ -187,21 +193,17 @@ describe("AttachmentsDisplay", () => {
   it("does not render download link for uri-list mime type", () => {
     const attachments = [makeAttachment(1, "link.url", "text/uri-list")];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("shows file size formatted via filesize", () => {
-    const attachments = [makeAttachment(1, "file.png", "image/png", { size: BigInt(2048) })];
+    const attachments = [
+      makeAttachment(1, "file.png", "image/png", { size: BigInt(2048) }),
+    ];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     // filesize(2048) = "2 KB" — check something about size is displayed
     expect(screen.getByText("size")).toBeInTheDocument(); // Label "size" from translation mock
@@ -219,7 +221,9 @@ describe("AttachmentsDisplay", () => {
     );
     // When preventEditing is true, the delete popover trigger should not render
     // The delete button only renders when deferredMode && !preventEditing
-    const _deleteButtons = document.querySelectorAll('[data-variant="destructive"]');
+    const _deleteButtons = document.querySelectorAll(
+      '[data-variant="destructive"]'
+    );
     // Just check no trash button is visible for preventEditing
     expect(screen.queryByTestId("popover-trigger")).not.toBeInTheDocument();
   });
@@ -240,10 +244,7 @@ describe("AttachmentsDisplay", () => {
   it("calls onSelect when attachment title area is clicked", () => {
     const attachments = [makeAttachment(1, "photo.png")];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     // The attachment name is in a clickable div
     const clickableTitle = screen.getAllByText("photo.png")[0];
@@ -254,10 +255,7 @@ describe("AttachmentsDisplay", () => {
   it("renders name label", () => {
     const attachments = [makeAttachment(1, "file.png")];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     expect(screen.getByText("name")).toBeInTheDocument();
   });
@@ -265,21 +263,17 @@ describe("AttachmentsDisplay", () => {
   it("renders createdBy label", () => {
     const attachments = [makeAttachment(1, "file.png")];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     expect(screen.getByText("createdBy")).toBeInTheDocument();
   });
 
   it("renders user name cell for the creator", () => {
-    const attachments = [makeAttachment(1, "file.png", "image/png", { createdById: "user-42" })];
+    const attachments = [
+      makeAttachment(1, "file.png", "image/png", { createdById: "user-42" }),
+    ];
     render(
-      <AttachmentsDisplay
-        attachments={attachments}
-        onSelect={mockOnSelect}
-      />
+      <AttachmentsDisplay attachments={attachments} onSelect={mockOnSelect} />
     );
     expect(screen.getByTestId("user-name-user-42")).toBeInTheDocument();
   });
@@ -318,7 +312,9 @@ describe("AttachmentsDisplay", () => {
   });
 
   it("renders description textarea in deferred mode without preventEditing", () => {
-    const attachments = [makeAttachment(1, "file.png", "image/png", { note: "My note" })];
+    const attachments = [
+      makeAttachment(1, "file.png", "image/png", { note: "My note" }),
+    ];
     render(
       <AttachmentsDisplay
         attachments={attachments}

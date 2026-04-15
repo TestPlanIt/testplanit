@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  convertMarkdownCasesToImportData, parseMarkdownTestCases
+  convertMarkdownCasesToImportData,
+  parseMarkdownTestCases,
 } from "./markdownTestCaseParser";
 
 describe("parseMarkdownTestCases", () => {
@@ -59,7 +60,9 @@ smoke, login
       expect(result.cases[0].steps[0].action).toBe("Click submit");
       expect(result.cases[0].steps[0].expectedResult).toBe("Form is submitted");
       expect(result.cases[0].steps[1].action).toBe("Check status");
-      expect(result.cases[0].steps[1].expectedResult).toBe("Status shows success");
+      expect(result.cases[0].steps[1].expectedResult).toBe(
+        "Status shows success"
+      );
     });
 
     it("should parse inline expected results with | separator", () => {
@@ -91,7 +94,9 @@ smoke, login
       expect(result.cases[0].steps[0].action).toBe("Navigate to login page");
       expect(result.cases[0].steps[0].expectedResult).toBe("Login page loads");
       expect(result.cases[0].steps[2].action).toBe("Click submit");
-      expect(result.cases[0].steps[2].expectedResult).toBe("User is redirected");
+      expect(result.cases[0].steps[2].expectedResult).toBe(
+        "User is redirected"
+      );
     });
 
     it("should handle preconditions section", () => {
@@ -171,7 +176,9 @@ It should handle both valid and invalid credentials.
 1. Navigate to login
 `;
       const result = parseMarkdownTestCases(md);
-      expect(result.cases[0].description).toContain("This test validates the login feature");
+      expect(result.cases[0].description).toContain(
+        "This test validates the login feature"
+      );
     });
   });
 
@@ -403,7 +410,9 @@ smoke, login
     expect(rows).toHaveLength(1);
     expect(rows[0].name).toBe("Login Test");
     expect(rows[0].steps).toContain("1. Navigate to login | Page loads");
-    expect(rows[0].steps).toContain("2. Enter credentials | Fields accept input");
+    expect(rows[0].steps).toContain(
+      "2. Enter credentials | Fields accept input"
+    );
     expect(rows[0].tags).toBe("smoke, login");
     expect(columns).toContain("name");
     expect(columns).toContain("steps");

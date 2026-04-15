@@ -4,7 +4,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "@prisma/client";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";

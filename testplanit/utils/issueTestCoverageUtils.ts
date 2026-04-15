@@ -121,10 +121,7 @@ export async function handleIssueTestCoveragePOST(
     }
 
     const body = await req.json();
-    const {
-      projectId,
-      dimensions = [],
-    } = body;
+    const { projectId, dimensions = [] } = body;
 
     // Check if project dimension is requested
     const includeProject = isCrossProject && dimensions.includes("project");
@@ -336,7 +333,9 @@ export async function handleIssueTestCoveragePOST(
         externalId: row.external_id,
         externalKey: row.external_key,
         externalUrl: row.external_url,
-        lastSyncedAt: row.last_synced_at ? row.last_synced_at.toISOString() : null,
+        lastSyncedAt: row.last_synced_at
+          ? row.last_synced_at.toISOString()
+          : null,
         integrationId: row.integration_id,
         integrationProvider: row.integration_provider,
 

@@ -6,7 +6,7 @@ import {
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { MessageSquareHeart, X } from "lucide-react";
 import { useTranslations } from "next-intl";

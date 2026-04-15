@@ -10,11 +10,15 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareLinkMode } from "@prisma/client";
@@ -61,12 +65,15 @@ export function EditShareLinkDialog({
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Use ZenStack hook for updating share links
-  const { mutateAsync: updateShareLink, isPending: isUpdating } = useUpdateShareLink();
+  const { mutateAsync: updateShareLink, isPending: isUpdating } =
+    useUpdateShareLink();
 
   // Reset form when shareLink changes
   useEffect(() => {
     setMode(shareLink.mode);
-    setExpiresAt(shareLink.expiresAt ? new Date(shareLink.expiresAt) : undefined);
+    setExpiresAt(
+      shareLink.expiresAt ? new Date(shareLink.expiresAt) : undefined
+    );
     setNotifyOnView(shareLink.notifyOnView);
     setTitle(shareLink.title || "");
     setDescription(shareLink.description || "");
@@ -83,7 +90,10 @@ export function EditShareLinkDialog({
 
     try {
       // If switching TO PASSWORD_PROTECTED, require password
-      if (mode === "PASSWORD_PROTECTED" && (modeChanged || !shareLink.passwordHash)) {
+      if (
+        mode === "PASSWORD_PROTECTED" &&
+        (modeChanged || !shareLink.passwordHash)
+      ) {
         if (!password || password.length < 4) {
           setPasswordError("Password must be at least 4 characters long.");
           return;
@@ -133,9 +143,7 @@ export function EditShareLinkDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("editDialog.title")}</DialogTitle>
-          <DialogDescription>
-            {t("editDialog.description")}
-          </DialogDescription>
+          <DialogDescription>{t("editDialog.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
@@ -158,7 +166,9 @@ export function EditShareLinkDialog({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="edit-description">{tCommon("fields.description")}</Label>
+            <Label htmlFor="edit-description">
+              {tCommon("fields.description")}
+            </Label>
             <Textarea
               id="edit-description"
               value={description}
@@ -180,9 +190,16 @@ export function EditShareLinkDialog({
               }}
             >
               <div className="flex items-start space-x-2 rounded-lg border p-4">
-                <RadioGroupItem value="AUTHENTICATED" id="edit-authenticated" className="mt-1" />
+                <RadioGroupItem
+                  value="AUTHENTICATED"
+                  id="edit-authenticated"
+                  className="mt-1"
+                />
                 <div className="flex-1">
-                  <Label htmlFor="edit-authenticated" className="font-medium cursor-pointer">
+                  <Label
+                    htmlFor="edit-authenticated"
+                    className="font-medium cursor-pointer"
+                  >
                     {t("shareMode.authenticated.title")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
@@ -194,23 +211,39 @@ export function EditShareLinkDialog({
               </div>
 
               <div className="flex items-start space-x-2 rounded-lg border p-4">
-                <RadioGroupItem value="PASSWORD_PROTECTED" id="edit-password" className="mt-1" />
+                <RadioGroupItem
+                  value="PASSWORD_PROTECTED"
+                  id="edit-password"
+                  className="mt-1"
+                />
                 <div className="flex-1">
-                  <Label htmlFor="edit-password" className="font-medium cursor-pointer">
+                  <Label
+                    htmlFor="edit-password"
+                    className="font-medium cursor-pointer"
+                  >
                     {t("shareMode.passwordProtected.title")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
                     {shareLink.projectId
                       ? t("shareMode.passwordProtected.description")
-                      : t("shareMode.passwordProtected.descriptionCrossProject")}
+                      : t(
+                          "shareMode.passwordProtected.descriptionCrossProject"
+                        )}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-2 rounded-lg border p-4">
-                <RadioGroupItem value="PUBLIC" id="edit-public" className="mt-1" />
+                <RadioGroupItem
+                  value="PUBLIC"
+                  id="edit-public"
+                  className="mt-1"
+                />
                 <div className="flex-1">
-                  <Label htmlFor="edit-public" className="font-medium cursor-pointer">
+                  <Label
+                    htmlFor="edit-public"
+                    className="font-medium cursor-pointer"
+                  >
                     {t("shareMode.public.title")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
@@ -232,8 +265,13 @@ export function EditShareLinkDialog({
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="edit-password-input" className="flex items-center">
-                  {modeChanged || !shareLink.passwordHash ? "Password" : "New Password"}
+                <Label
+                  htmlFor="edit-password-input"
+                  className="flex items-center"
+                >
+                  {modeChanged || !shareLink.passwordHash
+                    ? "Password"
+                    : "New Password"}
                   {(modeChanged || !shareLink.passwordHash) && (
                     <sup>
                       <Asterisk className="w-3 h-3 text-destructive" />
@@ -256,11 +294,16 @@ export function EditShareLinkDialog({
                   required={modeChanged || !shareLink.passwordHash}
                   className={passwordError ? "border-destructive" : ""}
                 />
-                {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+                {passwordError && (
+                  <p className="text-sm text-destructive">{passwordError}</p>
+                )}
               </div>
               {password && (
                 <div className="space-y-2">
-                  <Label htmlFor="edit-confirm-password-input" className="flex items-center">
+                  <Label
+                    htmlFor="edit-confirm-password-input"
+                    className="flex items-center"
+                  >
                     {tCommon("fields.confirmPassword")}
                     <sup>
                       <Asterisk className="w-3 h-3 text-destructive" />
@@ -296,7 +339,9 @@ export function EditShareLinkDialog({
                   )}
                 >
                   <CalendarIcon className="h-4 w-4" />
-                  {expiresAt ? format(expiresAt, "PPP") : t("expiration.noExpiration")}
+                  {expiresAt
+                    ? format(expiresAt, "PPP")
+                    : t("expiration.noExpiration")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -334,7 +379,10 @@ export function EditShareLinkDialog({
               onCheckedChange={(checked) => setNotifyOnView(checked === true)}
             />
             <div className="-mt-1">
-              <Label htmlFor="edit-notify" className="font-medium cursor-pointer">
+              <Label
+                htmlFor="edit-notify"
+                className="font-medium cursor-pointer"
+              >
                 {t("notifyOnView.label")}
               </Label>
               <p className="text-sm text-muted-foreground">

@@ -171,9 +171,9 @@ describe("ManageSimpleUrlIssues", () => {
       />
     );
 
-    expect(screen.getByTestId("issue-7").getAttribute("data-external-url")).toBe(
-      "https://v1.test/ISSUE-7"
-    );
+    expect(
+      screen.getByTestId("issue-7").getAttribute("data-external-url")
+    ).toBe("https://v1.test/ISSUE-7");
 
     rerender(
       <ManageSimpleUrlIssues
@@ -183,9 +183,9 @@ describe("ManageSimpleUrlIssues", () => {
       />
     );
 
-    expect(screen.getByTestId("issue-7").getAttribute("data-external-url")).toBe(
-      "https://v2.test/ISSUE-7"
-    );
+    expect(
+      screen.getByTestId("issue-7").getAttribute("data-external-url")
+    ).toBe("https://v2.test/ISSUE-7");
   });
 
   it("add-dialog URL preview reflects the typed issue ID", async () => {

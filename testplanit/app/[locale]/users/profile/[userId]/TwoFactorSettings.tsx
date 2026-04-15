@@ -8,7 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,13 +17,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSlot
+  InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -31,11 +31,9 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Check, Copy, Info, Loader2, RefreshCw, Shield
-} from "lucide-react";
+import { Check, Copy, Info, Loader2, RefreshCw, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -416,9 +414,7 @@ export function TwoFactorSettings({
                   onClick={completeSetup}
                   disabled={isLoading || verificationCode.length < 6}
                 >
-                  {isLoading && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
+                  {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {t("auth.twoFactorSetup.verify")}
                 </Button>
               </>
@@ -611,9 +607,7 @@ export function TwoFactorSettings({
                   onClick={regenerateBackupCodes}
                   disabled={isLoading || regenerateCode.length < 6}
                 >
-                  {isLoading && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
+                  {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {t("users.profile.twoFactor.regenerate.confirm")}
                 </Button>
               </>

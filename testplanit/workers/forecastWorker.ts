@@ -1,16 +1,20 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData, validateMultiTenantJobData
+  MultiTenantJobData,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import valkeyConnection from "../lib/valkey";
 import {
-  getUniqueCaseGroupIds, updateRepositoryCaseForecast, updateTestRunForecast
+  getUniqueCaseGroupIds,
+  updateRepositoryCaseForecast,
+  updateTestRunForecast,
 } from "../services/forecastService";
 
 // Define expected job data structures with multi-tenant support
@@ -430,7 +434,7 @@ async function startWorker() {
   if (valkeyConnection) {
     const worker = new Worker(FORECAST_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.FORECAST_CONCURRENCY || '5', 10),
+      concurrency: parseInt(process.env.FORECAST_CONCURRENCY || "5", 10),
       limiter: {
         max: 100,
         duration: 1000,

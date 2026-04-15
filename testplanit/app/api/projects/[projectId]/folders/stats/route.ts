@@ -23,7 +23,10 @@ export async function GET(
     const { projectId: projectIdParam } = await params;
     const projectId = parseInt(projectIdParam);
     if (isNaN(projectId)) {
-      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -40,7 +43,7 @@ export async function GET(
 
     // Check if user has access to this project
     const accessibleProjects = await getUserAccessibleProjects(session.user.id);
-    const hasAccess = accessibleProjects.some(p => p.projectId === projectId);
+    const hasAccess = accessibleProjects.some((p) => p.projectId === projectId);
 
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
@@ -90,12 +93,14 @@ export async function GET(
       });
 
       directCounts = new Map();
-      testRunCases.forEach((trc: { repositoryCase: { folderId: number | null } | null }) => {
-        const folderId = trc.repositoryCase?.folderId;
-        if (folderId) {
-          directCounts.set(folderId, (directCounts.get(folderId) || 0) + 1);
+      testRunCases.forEach(
+        (trc: { repositoryCase: { folderId: number | null } | null }) => {
+          const folderId = trc.repositoryCase?.folderId;
+          if (folderId) {
+            directCounts.set(folderId, (directCounts.get(folderId) || 0) + 1);
+          }
         }
-      });
+      );
     } else {
       // For repository view, count all cases
       const cases = await prisma.repositoryCases.findMany({
@@ -139,11 +144,13 @@ export async function GET(
     });
 
     // Build response
-    const stats: FolderStats[] = folders.map((folder: { id: number; parentId: number | null }) => ({
-      folderId: folder.id,
-      directCaseCount: directCounts.get(folder.id) || 0,
-      totalCaseCount: totalCounts.get(folder.id) || 0,
-    }));
+    const stats: FolderStats[] = folders.map(
+      (folder: { id: number; parentId: number | null }) => ({
+        folderId: folder.id,
+        directCaseCount: directCounts.get(folder.id) || 0,
+        totalCaseCount: totalCounts.get(folder.id) || 0,
+      })
+    );
 
     return NextResponse.json({ stats });
   } catch (error) {

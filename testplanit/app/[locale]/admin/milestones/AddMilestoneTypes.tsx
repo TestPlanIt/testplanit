@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   useCreateMilestoneTypes,
-  useUpdateManyMilestoneTypes
+  useUpdateManyMilestoneTypes,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {

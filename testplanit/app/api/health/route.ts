@@ -82,7 +82,8 @@ export async function GET() {
   };
 
   // Return appropriate HTTP status code based on health
-  const httpStatus = status === "healthy" ? 200 : status === "degraded" ? 200 : 503;
+  const httpStatus =
+    status === "healthy" ? 200 : status === "degraded" ? 200 : 503;
 
   // Add CORS headers to allow cross-origin requests
   // Health check is public information, so we allow all origins
@@ -120,7 +121,8 @@ async function checkDatabase(): Promise<ServiceCheck> {
     console.error("Database health check failed:", error);
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "Unknown database error",
+      message:
+        error instanceof Error ? error.message : "Unknown database error",
     };
   }
 }
@@ -170,7 +172,8 @@ async function checkElasticsearch(): Promise<ServiceCheck> {
     console.error("Elasticsearch health check failed:", error);
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "Unknown Elasticsearch error",
+      message:
+        error instanceof Error ? error.message : "Unknown Elasticsearch error",
     };
   }
 }

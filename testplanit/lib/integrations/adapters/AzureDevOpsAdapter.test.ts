@@ -507,7 +507,10 @@ describe("AzureDevOpsAdapter", () => {
 
       const result = await adapter.getIssue("123");
 
-      expect(result.customFields).toHaveProperty("Custom.Field", "custom value");
+      expect(result.customFields).toHaveProperty(
+        "Custom.Field",
+        "custom value"
+      );
       // Should not include system fields
       expect(result.customFields).not.toHaveProperty("System.Title");
       expect(result.customFields).not.toHaveProperty("System.State");
@@ -639,9 +642,7 @@ describe("AzureDevOpsAdapter", () => {
 
       const wiqlCall = mockFetch.mock.calls[1];
       const body = JSON.parse(wiqlCall[1].body);
-      expect(body.query).toContain(
-        "[System.AssignedTo] = 'user@example.com'"
-      );
+      expect(body.query).toContain("[System.AssignedTo] = 'user@example.com'");
     });
 
     it("should filter by labels/tags", async () => {
@@ -679,7 +680,10 @@ describe("AzureDevOpsAdapter", () => {
           ok: true,
           json: () =>
             Promise.resolve({
-              value: [{ ...mockWorkItem, id: 3 }, { ...mockWorkItem, id: 4 }],
+              value: [
+                { ...mockWorkItem, id: 3 },
+                { ...mockWorkItem, id: 4 },
+              ],
             }),
         });
 
@@ -754,11 +758,7 @@ describe("AzureDevOpsAdapter", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            value: [
-              { name: "Bug" },
-              { name: "Task" },
-              { name: "User Story" },
-            ],
+            value: [{ name: "Bug" }, { name: "Task" }, { name: "User Story" }],
           }),
       });
 

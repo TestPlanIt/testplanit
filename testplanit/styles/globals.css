@@ -29,9 +29,13 @@
 
     /* TestPlanIT Chart Theming Variables - Using theme's semantic colors */
     --tp-primary-color: hsl(var(--primary));
-    --tp-secondary-color: hsl(var(--secondary-foreground)); /* Example: A contrasting color for test runs */
+    --tp-secondary-color: hsl(
+      var(--secondary-foreground)
+    ); /* Example: A contrasting color for test runs */
     --tp-text-on-primary: hsl(var(--primary-foreground));
-    --tp-text-on-secondary: hsl(var(--primary)); /* Text that contrasts with secondary-foreground */
+    --tp-text-on-secondary: hsl(
+      var(--primary)
+    ); /* Text that contrasts with secondary-foreground */
     --tp-tooltip-bg: hsl(var(--popover));
     --tp-tooltip-text: hsl(var(--popover-foreground));
     --tp-tooltip-border: hsl(var(--border));
@@ -66,9 +70,15 @@
 
     /* TestPlanIT Chart Theming Variables - Dark Mode - Using theme's semantic colors */
     --tp-primary-color: hsl(var(--primary)); /* primary in dark is light */
-    --tp-secondary-color: hsl(var(--secondary-foreground)); /* secondary-foreground in dark */
-    --tp-text-on-primary: hsl(var(--primary-foreground)); /* primary-foreground in dark is dark */
-    --tp-text-on-secondary: hsl(var(--primary)); /* Text that contrasts with tp-secondary-color */
+    --tp-secondary-color: hsl(
+      var(--secondary-foreground)
+    ); /* secondary-foreground in dark */
+    --tp-text-on-primary: hsl(
+      var(--primary-foreground)
+    ); /* primary-foreground in dark is dark */
+    --tp-text-on-secondary: hsl(
+      var(--primary)
+    ); /* Text that contrasts with tp-secondary-color */
     --tp-tooltip-bg: hsl(var(--popover));
     --tp-tooltip-text: hsl(var(--popover-foreground));
     --tp-tooltip-border: hsl(var(--border));
@@ -76,12 +86,11 @@
     --tp-grid-line-color: hsl(var(--border));
   }
 
-
   /* Theme wipe transition using scale */
   @keyframes theme-wipe-expand {
     0% {
       transform: translate(-50%, -50%) scale(0);
-      opacity: .8;
+      opacity: 0.8;
     }
     70% {
       transform: translate(-50%, -50%) scale(1);
@@ -117,12 +126,11 @@
     transform: translate(-50%, -50%) scale(0);
   }
 
-
   body a {
     @apply underline;
   }
   body a:hover {
-    @apply text-muted-foreground
+    @apply text-muted-foreground;
   }
 
   .no-focus-ring {
@@ -294,11 +302,15 @@ svg[class*="plot-"] .gantt-task-label text {
 /* Style the close button specifically for the TestRunCaseDetails sheet */
 .test-run-details-sheet > button.absolute.right-4.top-4 {
   background-color: hsl(var(--primary-foreground));
-  color: hsl(var(--primary-background)); /* Optional: Adjust icon color if needed */
+  color: hsl(
+    var(--primary-background)
+  ); /* Optional: Adjust icon color if needed */
 }
 
 .test-run-details-sheet > button.absolute.right-4.top-4:hover {
-  background-color: hsl(var(--primary-foreground) / 0.9); /* Optional: Adjust hover */
+  background-color: hsl(
+    var(--primary-foreground) / 0.9
+  ); /* Optional: Adjust hover */
 }
 
 @layer base {
@@ -309,7 +321,6 @@ svg[class*="plot-"] .gantt-task-label text {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
-
 }
 
 /* Search result highlighting - outside @layer to override browser defaults */
@@ -388,5 +399,4 @@ mark {
   [data-panel-group]:has([data-resize-handle-state="drag"]) iframe {
     pointer-events: none !important;
   }
-
 }

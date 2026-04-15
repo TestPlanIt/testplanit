@@ -32,9 +32,7 @@ test.describe("Project Settings Pages", () => {
   });
 
   test("integrations settings page loads correctly", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/integrations`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
     await page.waitForLoadState("networkidle");
 
     // The page renders a Card with "Issue Integrations" title via tGlobal("admin.menu.integrations")
@@ -50,9 +48,7 @@ test.describe("Project Settings Pages", () => {
   test("integrations page shows available integrations section", async ({
     page,
   }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/integrations`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
     await page.waitForLoadState("networkidle");
 
     // The page always renders the "Available Issue Integrations" card
@@ -62,9 +58,7 @@ test.describe("Project Settings Pages", () => {
   });
 
   test("AI models settings page loads correctly", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/ai-models`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/ai-models`);
     await page.waitForLoadState("networkidle");
 
     // Page renders with t("admin.menu.llm") title
@@ -80,9 +74,7 @@ test.describe("Project Settings Pages", () => {
   test("AI models page shows prompt configuration section", async ({
     page,
   }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/ai-models`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/ai-models`);
     await page.waitForLoadState("networkidle");
 
     // The prompt config card is always rendered
@@ -117,9 +109,7 @@ test.describe("Project Settings Pages", () => {
   });
 
   test("quickscript settings page loads correctly", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/quickscript`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
     await page.waitForLoadState("networkidle");
 
     // Page renders with t("projects.settings.quickScript.title") heading
@@ -128,9 +118,7 @@ test.describe("Project Settings Pages", () => {
   });
 
   test("quickscript page shows enable/disable toggle", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/quickscript`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
     await page.waitForLoadState("networkidle");
 
     // The switch has data-testid="quickscript-enabled-toggle"
@@ -141,9 +129,7 @@ test.describe("Project Settings Pages", () => {
   test("quickscript toggle can be clicked to change state", async ({
     page,
   }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/quickscript`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
     await page.waitForLoadState("networkidle");
 
     const toggle = page.getByTestId("quickscript-enabled-toggle");
@@ -164,9 +150,7 @@ test.describe("Project Settings Pages", () => {
   test("navigating directly to settings page highlights correct menu item", async ({
     page,
   }) => {
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/integrations`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
     await page.waitForLoadState("networkidle");
 
     // The settings menu section should be visible (accordion auto-expands for active page)
@@ -186,9 +170,7 @@ test.describe("Project Member Management", () => {
   const projectPrefix = "E2E Members";
 
   test.beforeEach(async ({ api }) => {
-    _testProjectId = await api.createProject(
-      `${projectPrefix} ${Date.now()}`
-    );
+    _testProjectId = await api.createProject(`${projectPrefix} ${Date.now()}`);
   });
 
   /**

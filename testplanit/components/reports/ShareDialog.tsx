@@ -1,6 +1,9 @@
 "use client";
 
-import { auditShareLinkCreation, prepareShareLinkData } from "@/actions/share-links";
+import {
+  auditShareLinkCreation,
+  prepareShareLinkData,
+} from "@/actions/share-links";
 import { ShareLinkCreated } from "@/components/share/ShareLinkCreated";
 import { ShareLinkList } from "@/components/share/ShareLinkList";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -12,11 +15,15 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,7 +72,8 @@ export function ShareDialog({
   const [createdShare, setCreatedShare] = useState<any>(null);
 
   // Use ZenStack hook for creating share links
-  const { mutateAsync: createShareLink, isPending: isCreating } = useCreateShareLink();
+  const { mutateAsync: createShareLink, isPending: isCreating } =
+    useCreateShareLink();
 
   // Generate default title with timestamp
   const defaultTitle = useMemo(() => {
@@ -130,7 +138,8 @@ export function ShareDialog({
         entityType: shareLink.entityType,
         mode: shareLink.mode,
         title: shareLink.title,
-        projectId: shareLink.projectId !== null ? shareLink.projectId : undefined,
+        projectId:
+          shareLink.projectId !== null ? shareLink.projectId : undefined,
         expiresAt: shareLink.expiresAt,
         notifyOnView: shareLink.notifyOnView,
         passwordHash: shareLink.passwordHash,
@@ -188,15 +197,20 @@ export function ShareDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("dialogTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("dialogDescription")}
-          </DialogDescription>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "create" | "list")}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "create" | "list")}
+        >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger data-testid="share-tab-create" value="create">{t("tabs.create")}</TabsTrigger>
-            <TabsTrigger data-testid="share-tab-list" value="list">{t("tabs.list")}</TabsTrigger>
+            <TabsTrigger data-testid="share-tab-create" value="create">
+              {t("tabs.create")}
+            </TabsTrigger>
+            <TabsTrigger data-testid="share-tab-list" value="list">
+              {t("tabs.list")}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="create" className="space-y-4 mt-4">
@@ -209,14 +223,25 @@ export function ShareDialog({
             {/* Share Mode */}
             <div className="space-y-3">
               <Label>{t("shareMode.label")}</Label>
-              <RadioGroup value={mode} onValueChange={(v) => {
-                setMode(v as ShareLinkMode);
-                setPasswordError(null);
-              }}>
+              <RadioGroup
+                value={mode}
+                onValueChange={(v) => {
+                  setMode(v as ShareLinkMode);
+                  setPasswordError(null);
+                }}
+              >
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
-                  <RadioGroupItem data-testid="share-mode-authenticated" value="AUTHENTICATED" id="authenticated" className="mt-1" />
+                  <RadioGroupItem
+                    data-testid="share-mode-authenticated"
+                    value="AUTHENTICATED"
+                    id="authenticated"
+                    className="mt-1"
+                  />
                   <div className="flex-1">
-                    <Label htmlFor="authenticated" className="font-medium cursor-pointer">
+                    <Label
+                      htmlFor="authenticated"
+                      className="font-medium cursor-pointer"
+                    >
                       {t("shareMode.authenticated.title")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -228,23 +253,41 @@ export function ShareDialog({
                 </div>
 
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
-                  <RadioGroupItem data-testid="share-mode-password" value="PASSWORD_PROTECTED" id="password" className="mt-1" />
+                  <RadioGroupItem
+                    data-testid="share-mode-password"
+                    value="PASSWORD_PROTECTED"
+                    id="password"
+                    className="mt-1"
+                  />
                   <div className="flex-1">
-                    <Label htmlFor="password" className="font-medium cursor-pointer">
+                    <Label
+                      htmlFor="password"
+                      className="font-medium cursor-pointer"
+                    >
                       {t("shareMode.passwordProtected.title")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
                       {projectId
                         ? t("shareMode.passwordProtected.description")
-                        : t("shareMode.passwordProtected.descriptionCrossProject")}
+                        : t(
+                            "shareMode.passwordProtected.descriptionCrossProject"
+                          )}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
-                  <RadioGroupItem data-testid="share-mode-public" value="PUBLIC" id="public" className="mt-1" />
+                  <RadioGroupItem
+                    data-testid="share-mode-public"
+                    value="PUBLIC"
+                    id="public"
+                    className="mt-1"
+                  />
                   <div className="flex-1">
-                    <Label htmlFor="public" className="font-medium cursor-pointer">
+                    <Label
+                      htmlFor="public"
+                      className="font-medium cursor-pointer"
+                    >
                       {t("shareMode.public.title")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -283,7 +326,10 @@ export function ShareDialog({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password-input" className="flex items-center">
+                  <Label
+                    htmlFor="confirm-password-input"
+                    className="flex items-center"
+                  >
                     {tCommon("fields.confirmPassword")}
                     <sup>
                       <Asterisk className="w-3 h-3 text-destructive" />
@@ -319,7 +365,9 @@ export function ShareDialog({
                     )}
                   >
                     <CalendarIcon className="h-4 w-4" />
-                    {expiresAt ? format(expiresAt, "PPP") : t("expiration.noExpiration")}
+                    {expiresAt
+                      ? format(expiresAt, "PPP")
+                      : t("expiration.noExpiration")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -384,7 +432,9 @@ export function ShareDialog({
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">{tCommon("fields.description")}</Label>
+              <Label htmlFor="description">
+                {tCommon("fields.description")}
+              </Label>
               <Textarea
                 data-testid="share-description-input"
                 id="description"
@@ -400,7 +450,11 @@ export function ShareDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 {tCommon("cancel")}
               </Button>
-              <Button data-testid="share-create-button" onClick={handleCreateShare} disabled={isCreating}>
+              <Button
+                data-testid="share-create-button"
+                onClick={handleCreateShare}
+                disabled={isCreating}
+              >
                 {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

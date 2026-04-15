@@ -35,17 +35,20 @@
 ## Headings
 
 # Heading 1
+
 ## Heading 2
+
 ### Heading 3
+
 #### Heading 4
+
 ##### Heading 5
+
 ###### Heading 6
 
-Alternate H1
-============
+# Alternate H1
 
-Alternate H2
-------------
+## Alternate H2
 
 ---
 
@@ -63,14 +66,14 @@ This is a new paragraph separated by a blank line.
 
 ## Emphasis
 
-*Italic using asterisks*  
+_Italic using asterisks_  
 _Italic using underscores_
 
 **Bold using asterisks**  
-__Bold using underscores__
+**Bold using underscores**
 
-***Bold and italic using asterisks***  
-___Bold and italic using underscores___
+**_Bold and italic using asterisks_**  
+**_Bold and italic using underscores_**
 
 ~~Strikethrough~~ (GFM / widely supported extension)
 
@@ -109,8 +112,8 @@ ___Bold and italic using underscores___
 * Asterisk bullet
 * Another asterisk bullet
 
-+ Plus bullet
-+ Another plus bullet
+- Plus bullet
+- Another plus bullet
 
 ### Ordered Lists
 
@@ -219,11 +222,11 @@ Three hyphens:
 
 Three asterisks:
 
-***
+---
 
 Three underscores:
 
-___
+---
 
 ---
 
@@ -281,26 +284,26 @@ Plain URL autolink (GFM): https://example.com
 
 ### Basic Table (GFM)
 
-| Name       | Type    | Required | Description                  |
-|------------|---------|----------|------------------------------|
-| `id`       | integer | Yes      | Unique identifier            |
-| `name`     | string  | Yes      | Display name                 |
-| `email`    | string  | No       | Contact email address        |
-| `active`   | boolean | No       | Whether the record is active |
+| Name     | Type    | Required | Description                  |
+| -------- | ------- | -------- | ---------------------------- |
+| `id`     | integer | Yes      | Unique identifier            |
+| `name`   | string  | Yes      | Display name                 |
+| `email`  | string  | No       | Contact email address        |
+| `active` | boolean | No       | Whether the record is active |
 
 ### Alignment
 
 | Left Aligned | Center Aligned | Right Aligned |
-|:-------------|:--------------:|--------------:|
-| Apple        | Banana         | Cherry        |
-| Dog          | Elephant       | Fox           |
-| 1            | 2              | 3             |
+| :----------- | :------------: | ------------: |
+| Apple        |     Banana     |        Cherry |
+| Dog          |    Elephant    |           Fox |
+| 1            |       2        |             3 |
 
 ### Minimal Table
 
-|Col A|Col B|
-|---|---|
-|1|2|
+| Col A | Col B |
+| ----- | ----- |
+| 1     | 2     |
 
 ---
 
@@ -354,8 +357,8 @@ Apple
 
 The HTML specification is maintained by the W3C.
 
-*[HTML]: HyperText Markup Language
-*[W3C]: World Wide Web Consortium
+_[HTML]: HyperText Markup Language
+_[W3C]: World Wide Web Consortium
 
 ---
 
@@ -394,11 +397,12 @@ Markdown allows raw <strong>HTML</strong> inline. This is <em>standard</em> beha
 <details>
   <summary>Expandable section (click to reveal)</summary>
 
-  This content is hidden inside a `<details>` element. Some parsers render this interactively.
+This content is hidden inside a `<details>` element. Some parsers render this interactively.
 
-  ```python
-  print("Inside a details block!")
-  ```
+```python
+print("Inside a details block!")
+```
+
 </details>
 
 <br>
@@ -483,10 +487,10 @@ Press <kbd>⌘</kbd> + <kbd>Space</kbd> on macOS.
 
 ### Empty Table Cell
 
-| A | B | C |
-|---|---|---|
-| 1 |   | 3 |
-|   | 2 |   |
+| A   | B   | C   |
+| --- | --- | --- |
+| 1   |     | 3   |
+|     | 2   |     |
 
 ### Escaped Characters
 
@@ -525,7 +529,7 @@ Line two (backslash line break — supported in some parsers)
 
 Inline code with angle brackets: `<div class="test">Hello</div>`
 
-Inline code with backtick: `` Use `code` like this ``
+Inline code with backtick: ``Use `code` like this``
 
 ### Very Long Line
 
@@ -545,6 +549,6 @@ This is an intentionally very long line to test how renderers handle wrapping of
 
 ---
 
-*End of Markdown Feature Test File*
+_End of Markdown Feature Test File_
 
 <!-- This is an HTML comment. It should not be visible in rendered output. -->

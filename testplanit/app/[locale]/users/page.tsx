@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 

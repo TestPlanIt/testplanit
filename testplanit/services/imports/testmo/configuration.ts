@@ -1,10 +1,24 @@
 import type { Access } from "@prisma/client";
 import { generateRandomPassword } from "~/utils/randomPassword";
 import type {
-  TestmoConfigurationMappingConfig, TestmoConfigVariantAction, TestmoConfigVariantMappingConfig, TestmoFieldOptionConfig, TestmoGroupMappingConfig, TestmoIssueTargetMappingConfig, TestmoMappingConfiguration,
-  TestmoMilestoneTypeMappingConfig, TestmoRoleMappingConfig, TestmoRolePermissionConfig, TestmoRolePermissions, TestmoStatusMappingConfig,
-  TestmoTagMappingConfig, TestmoTemplateAction, TestmoTemplateFieldMappingConfig,
-  TestmoTemplateMappingConfig, TestmoUserMappingConfig, TestmoWorkflowMappingConfig
+  TestmoConfigurationMappingConfig,
+  TestmoConfigVariantAction,
+  TestmoConfigVariantMappingConfig,
+  TestmoFieldOptionConfig,
+  TestmoGroupMappingConfig,
+  TestmoIssueTargetMappingConfig,
+  TestmoMappingConfiguration,
+  TestmoMilestoneTypeMappingConfig,
+  TestmoRoleMappingConfig,
+  TestmoRolePermissionConfig,
+  TestmoRolePermissions,
+  TestmoStatusMappingConfig,
+  TestmoTagMappingConfig,
+  TestmoTemplateAction,
+  TestmoTemplateFieldMappingConfig,
+  TestmoTemplateMappingConfig,
+  TestmoUserMappingConfig,
+  TestmoWorkflowMappingConfig,
 } from "./types";
 
 const ACTION_MAP = new Set(["map", "create"]);
@@ -71,20 +85,21 @@ const toAccessValue = (value: unknown): Access | undefined => {
   }
 };
 
-export const createEmptyMappingConfiguration = (): TestmoMappingConfiguration => ({
-  workflows: {},
-  statuses: {},
-  roles: {},
-  milestoneTypes: {},
-  groups: {},
-  tags: {},
-  issueTargets: {},
-  users: {},
-  configurations: {},
-  templateFields: {},
-  templates: {},
-  customFields: {},
-});
+export const createEmptyMappingConfiguration =
+  (): TestmoMappingConfiguration => ({
+    workflows: {},
+    statuses: {},
+    roles: {},
+    milestoneTypes: {},
+    groups: {},
+    tags: {},
+    issueTargets: {},
+    users: {},
+    configurations: {},
+    templateFields: {},
+    templates: {},
+    customFields: {},
+  });
 
 export const normalizeWorkflowConfig = (
   value: unknown
@@ -105,15 +120,17 @@ export const normalizeWorkflowConfig = (
 
   const record = value as Record<string, unknown>;
   const actionValue = typeof record.action === "string" ? record.action : "map";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "map";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "map";
 
   const mappedTo = toNumber(record.mappedTo);
   const workflowType =
     typeof record.workflowType === "string"
       ? record.workflowType
       : typeof record.suggestedWorkflowType === "string"
-      ? record.suggestedWorkflowType
-      : null;
+        ? record.suggestedWorkflowType
+        : null;
 
   const name = typeof record.name === "string" ? record.name : base.name;
   const scope = typeof record.scope === "string" ? record.scope : base.scope;
@@ -122,12 +139,12 @@ export const normalizeWorkflowConfig = (
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     workflowType,
     name: action === "create" ? name : undefined,
     scope: action === "create" ? scope : undefined,
-    iconId: action === "create" ? iconId ?? null : undefined,
-    colorId: action === "create" ? colorId ?? null : undefined,
+    iconId: action === "create" ? (iconId ?? null) : undefined,
+    colorId: action === "create" ? (colorId ?? null) : undefined,
   };
 };
 
@@ -154,8 +171,11 @@ export const normalizeStatusConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
 
   const colorId = toNumber(record.colorId);
@@ -167,22 +187,23 @@ export const normalizeStatusConfig = (
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: typeof record.name === "string" ? record.name : base.name,
     systemName:
       typeof record.systemName === "string"
         ? record.systemName
         : typeof record.system_name === "string"
-        ? record.system_name
-        : base.systemName,
-    colorHex: typeof record.colorHex === "string" ? record.colorHex : base.colorHex,
-    colorId: action === "create" ? colorId ?? null : undefined,
+          ? record.system_name
+          : base.systemName,
+    colorHex:
+      typeof record.colorHex === "string" ? record.colorHex : base.colorHex,
+    colorId: action === "create" ? (colorId ?? null) : undefined,
     aliases: typeof record.aliases === "string" ? record.aliases : base.aliases,
     isSuccess: toBoolean(record.isSuccess, base.isSuccess ?? false),
     isFailure: toBoolean(record.isFailure, base.isFailure ?? false),
     isCompleted: toBoolean(record.isCompleted, base.isCompleted ?? false),
     isEnabled: toBoolean(record.isEnabled, base.isEnabled ?? true),
-    scopeIds: action === "create" ? scopeIds ?? [] : undefined,
+    scopeIds: action === "create" ? (scopeIds ?? []) : undefined,
   };
 };
 
@@ -201,21 +222,22 @@ export const normalizeGroupConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: typeof record.name === "string" ? record.name : base.name,
     note: typeof record.note === "string" ? record.note : base.note,
   };
 };
 
-export const normalizeTagConfig = (
-  value: unknown
-): TestmoTagMappingConfig => {
+export const normalizeTagConfig = (value: unknown): TestmoTagMappingConfig => {
   const base: TestmoTagMappingConfig = {
     action: "create",
     mappedTo: null,
@@ -227,13 +249,16 @@ export const normalizeTagConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: typeof record.name === "string" ? record.name : base.name,
   };
 };
@@ -254,17 +279,21 @@ export const normalizeIssueTargetConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
   const testmoType = toNumber(record.testmoType ?? record.type);
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: typeof record.name === "string" ? record.name : base.name,
-    provider: typeof record.provider === "string" ? record.provider : base.provider,
-    testmoType: action === "create" ? testmoType ?? null : undefined,
+    provider:
+      typeof record.provider === "string" ? record.provider : base.provider,
+    testmoType: action === "create" ? (testmoType ?? null) : undefined,
   };
 };
 
@@ -289,7 +318,9 @@ export const normalizeUserConfig = (
 
   const record = value as Record<string, unknown>;
   const actionValue = typeof record.action === "string" ? record.action : "map";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "map";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "map";
 
   const mappedTo = typeof record.mappedTo === "string" ? record.mappedTo : null;
   const name = toStringValue(record.name);
@@ -310,11 +341,9 @@ export const normalizeUserConfig = (
     name: action === "create" ? name : undefined,
     email: action === "create" ? email : undefined,
     password:
-      action === "create"
-        ? password ?? generateRandomPassword()
-        : undefined,
+      action === "create" ? (password ?? generateRandomPassword()) : undefined,
     access: action === "create" ? access : undefined,
-    roleId: action === "create" ? roleId ?? null : undefined,
+    roleId: action === "create" ? (roleId ?? null) : undefined,
     isActive: action === "create" ? isActive : undefined,
     isApi: action === "create" ? isApi : undefined,
   };
@@ -559,7 +588,8 @@ export const normalizeTemplateFieldConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : base.action;
+  const actionValue =
+    typeof record.action === "string" ? record.action : base.action;
   const action = actionValue === "map" ? "map" : "create";
 
   const targetSource =
@@ -571,20 +601,25 @@ export const normalizeTemplateFieldConfig = (
     record.assignment ??
     record.fieldCategory ??
     record.field_category;
-  const targetType = normalizeTemplateFieldTarget(targetSource, base.targetType);
+  const targetType = normalizeTemplateFieldTarget(
+    targetSource,
+    base.targetType
+  );
 
   const mappedTo = toNumber(record.mappedTo);
-  const typeId = toNumber(record.typeId ?? record.type_id ?? record.fieldTypeId);
+  const typeId = toNumber(
+    record.typeId ?? record.type_id ?? record.fieldTypeId
+  );
   const typeName =
     typeof record.typeName === "string"
       ? record.typeName
       : typeof record.type_name === "string"
-      ? record.type_name
-      : typeof record.fieldType === "string"
-      ? record.fieldType
-      : typeof record.field_type === "string"
-      ? record.field_type
-      : base.typeName;
+        ? record.type_name
+        : typeof record.fieldType === "string"
+          ? record.fieldType
+          : typeof record.field_type === "string"
+            ? record.field_type
+            : base.typeName;
 
   const dropdownOptions =
     normalizeOptionConfigList(
@@ -597,56 +632,65 @@ export const normalizeTemplateFieldConfig = (
   return {
     action,
     targetType,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     displayName:
       typeof record.displayName === "string"
         ? record.displayName
         : typeof record.display_name === "string"
-        ? record.display_name
-        : typeof record.label === "string"
-        ? record.label
-        : base.displayName,
+          ? record.display_name
+          : typeof record.label === "string"
+            ? record.label
+            : base.displayName,
     systemName:
       typeof record.systemName === "string"
         ? record.systemName
         : typeof record.system_name === "string"
-        ? record.system_name
-        : typeof record.name === "string"
-        ? record.name
-        : base.systemName,
+          ? record.system_name
+          : typeof record.name === "string"
+            ? record.name
+            : base.systemName,
     typeId: typeId ?? null,
     typeName: typeName ?? null,
     hint:
       typeof record.hint === "string"
         ? record.hint
         : typeof record.description === "string"
-        ? record.description
-        : base.hint,
-    isRequired: toBoolean(record.isRequired ?? record.is_required ?? base.isRequired),
-    isRestricted: toBoolean(record.isRestricted ?? record.is_restricted ?? base.isRestricted),
+          ? record.description
+          : base.hint,
+    isRequired: toBoolean(
+      record.isRequired ?? record.is_required ?? base.isRequired
+    ),
+    isRestricted: toBoolean(
+      record.isRestricted ?? record.is_restricted ?? base.isRestricted
+    ),
     defaultValue:
       typeof record.defaultValue === "string"
         ? record.defaultValue
         : typeof record.default_value === "string"
-        ? record.default_value
-        : base.defaultValue,
-    isChecked: typeof record.isChecked === "boolean" ? record.isChecked : base.isChecked,
+          ? record.default_value
+          : base.defaultValue,
+    isChecked:
+      typeof record.isChecked === "boolean" ? record.isChecked : base.isChecked,
     minValue: toNumber(record.minValue ?? record.min_value) ?? base.minValue,
     maxValue: toNumber(record.maxValue ?? record.max_value) ?? base.maxValue,
     minIntegerValue:
-      toNumber(record.minIntegerValue ?? record.min_integer_value) ?? base.minIntegerValue,
+      toNumber(record.minIntegerValue ?? record.min_integer_value) ??
+      base.minIntegerValue,
     maxIntegerValue:
-      toNumber(record.maxIntegerValue ?? record.max_integer_value) ?? base.maxIntegerValue,
+      toNumber(record.maxIntegerValue ?? record.max_integer_value) ??
+      base.maxIntegerValue,
     initialHeight:
-      toNumber(record.initialHeight ?? record.initial_height) ?? base.initialHeight,
+      toNumber(record.initialHeight ?? record.initial_height) ??
+      base.initialHeight,
     dropdownOptions,
     templateName:
       typeof record.templateName === "string"
         ? record.templateName
         : typeof record.template_name === "string"
-        ? record.template_name
-        : base.templateName,
-    order: toNumber(record.order ?? record.position ?? record.ordinal) ?? base.order,
+          ? record.template_name
+          : base.templateName,
+    order:
+      toNumber(record.order ?? record.position ?? record.ordinal) ?? base.order,
   };
 };
 
@@ -664,7 +708,8 @@ export const normalizeTemplateConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : base.action;
+  const actionValue =
+    typeof record.action === "string" ? record.action : base.action;
   const action = ACTION_MAP.has(actionValue)
     ? (actionValue as TestmoTemplateAction)
     : base.action;
@@ -673,14 +718,12 @@ export const normalizeTemplateConfig = (
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
-    name: action === "create" ? name ?? undefined : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
+    name: action === "create" ? (name ?? undefined) : undefined,
   };
 };
 
-const normalizeRolePermissions = (
-  value: unknown
-): TestmoRolePermissions => {
+const normalizeRolePermissions = (value: unknown): TestmoRolePermissions => {
   if (!value || typeof value !== "object") {
     return {};
   }
@@ -709,7 +752,9 @@ const normalizeRolePermissions = (
     return result;
   }
 
-  for (const [area, entry] of Object.entries(value as Record<string, unknown>)) {
+  for (const [area, entry] of Object.entries(
+    value as Record<string, unknown>
+  )) {
     if (entry && typeof entry === "object") {
       assignPermission(area, entry as Record<string, unknown>);
     }
@@ -734,15 +779,18 @@ export const normalizeRoleConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
 
   const permissions = normalizeRolePermissions(record.permissions);
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: typeof record.name === "string" ? record.name : base.name,
     isDefault:
       action === "create" ? toBoolean(record.isDefault ?? false) : undefined,
@@ -766,16 +814,19 @@ export const normalizeMilestoneTypeConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
   const iconId = toNumber(record.iconId);
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: typeof record.name === "string" ? record.name : base.name,
-    iconId: action === "create" ? iconId ?? null : undefined,
+    iconId: action === "create" ? (iconId ?? null) : undefined,
     isDefault:
       action === "create" ? toBoolean(record.isDefault ?? false) : undefined,
   };
@@ -799,7 +850,8 @@ const normalizeConfigVariantConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : base.action;
+  const actionValue =
+    typeof record.action === "string" ? record.action : base.action;
   const action = CONFIG_VARIANT_ACTIONS.has(actionValue)
     ? (actionValue as TestmoConfigVariantAction)
     : base.action;
@@ -807,22 +859,27 @@ const normalizeConfigVariantConfig = (
   const token = typeof record.token === "string" ? record.token : base.token;
   const mappedVariantId = toNumber(record.mappedVariantId);
   const categoryId = toNumber(record.categoryId);
-  const categoryName = typeof record.categoryName === "string" ? record.categoryName : base.categoryName;
-  const variantName = typeof record.variantName === "string" ? record.variantName : base.variantName;
+  const categoryName =
+    typeof record.categoryName === "string"
+      ? record.categoryName
+      : base.categoryName;
+  const variantName =
+    typeof record.variantName === "string"
+      ? record.variantName
+      : base.variantName;
 
   return {
     token,
     action,
-    mappedVariantId: action === "map-variant" ? mappedVariantId ?? null : undefined,
+    mappedVariantId:
+      action === "map-variant" ? (mappedVariantId ?? null) : undefined,
     categoryId:
       action === "create-variant-existing-category"
-        ? categoryId ?? null
+        ? (categoryId ?? null)
         : undefined,
-    categoryName: action === "create-category-variant" ? categoryName : undefined,
-    variantName:
-      action === "map-variant"
-        ? undefined
-        : variantName ?? token,
+    categoryName:
+      action === "create-category-variant" ? categoryName : undefined,
+    variantName: action === "map-variant" ? undefined : (variantName ?? token),
   };
 };
 
@@ -841,8 +898,11 @@ export const normalizeConfigurationConfig = (
   }
 
   const record = value as Record<string, unknown>;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? (actionValue as "map" | "create") : "create";
+  const actionValue =
+    typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue)
+    ? (actionValue as "map" | "create")
+    : "create";
   const mappedTo = toNumber(record.mappedTo);
   const name = typeof record.name === "string" ? record.name : base.name;
 
@@ -861,7 +921,7 @@ export const normalizeConfigurationConfig = (
 
   return {
     action,
-    mappedTo: action === "map" ? mappedTo ?? null : undefined,
+    mappedTo: action === "map" ? (mappedTo ?? null) : undefined,
     name: action === "create" ? name : undefined,
     variants,
   };

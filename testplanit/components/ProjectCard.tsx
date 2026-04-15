@@ -9,13 +9,21 @@ import { Projects } from "@prisma/client";
 
 import { MemberList } from "@/components/MemberList";
 import {
-  Card, CardContent, CardDescription, CardFooter, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@/lib/navigation";
 import {
-  Bug, CirclePlay,
-  Compass, LinkIcon, ListChecks, Milestone
+  Bug,
+  CirclePlay,
+  Compass,
+  LinkIcon,
+  ListChecks,
+  Milestone,
 } from "lucide-react";
 
 // Define the expected shape of the _count object

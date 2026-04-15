@@ -2,9 +2,11 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
-  FormControl, FormField, FormItem,
+  FormControl,
+  FormField,
+  FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Asterisk, LockIcon } from "lucide-react";

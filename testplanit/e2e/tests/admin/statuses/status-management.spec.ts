@@ -43,7 +43,10 @@ test.describe("Admin Status Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Click AddStatusModal trigger button
-      const addBtn = page.getByRole("button").filter({ hasText: /add/i }).first();
+      const addBtn = page
+        .getByRole("button")
+        .filter({ hasText: /add/i })
+        .first();
       await addBtn.click();
 
       // Wait for dialog
@@ -63,7 +66,7 @@ test.describe("Admin Status Management", () => {
       await page.waitForTimeout(300);
 
       // Fill name input — first text input in the dialog
-      const nameInput = dialog.locator('input').first();
+      const nameInput = dialog.locator("input").first();
       await nameInput.fill(statusName);
       await page.waitForTimeout(500); // Allow systemName auto-fill
 
@@ -143,19 +146,22 @@ test.describe("Admin Status Management", () => {
         return;
       }
 
-      const createRes = await request.post(`${baseURL}/api/model/status/create`, {
-        data: {
+      const createRes = await request.post(
+        `${baseURL}/api/model/status/create`,
+        {
           data: {
-            name: originalName,
-            systemName: `test_edit_${Date.now()}`,
-            colorId,
-            isEnabled: true,
-            isSuccess: false,
-            isFailure: false,
-            isCompleted: false,
+            data: {
+              name: originalName,
+              systemName: `test_edit_${Date.now()}`,
+              colorId,
+              isEnabled: true,
+              isSuccess: false,
+              isFailure: false,
+              isCompleted: false,
+            },
           },
-        },
-      });
+        }
+      );
 
       if (!createRes.ok()) {
         test.skip(true, "Cannot create status via API");
@@ -190,7 +196,7 @@ test.describe("Admin Status Management", () => {
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
       // Update name — EditStatus name input has no placeholder, get first input
-      const nameInput = dialog.locator('input').first();
+      const nameInput = dialog.locator("input").first();
       await nameInput.clear();
       await nameInput.fill(updatedName);
 
@@ -247,19 +253,22 @@ test.describe("Admin Status Management", () => {
         return;
       }
 
-      const createRes = await request.post(`${baseURL}/api/model/status/create`, {
-        data: {
+      const createRes = await request.post(
+        `${baseURL}/api/model/status/create`,
+        {
           data: {
-            name: statusName,
-            systemName: `del_status_${Date.now()}`,
-            colorId,
-            isEnabled: true,
-            isSuccess: false,
-            isFailure: false,
-            isCompleted: false,
+            data: {
+              name: statusName,
+              systemName: `del_status_${Date.now()}`,
+              colorId,
+              isEnabled: true,
+              isSuccess: false,
+              isFailure: false,
+              isCompleted: false,
+            },
           },
-        },
-      });
+        }
+      );
 
       if (!createRes.ok()) {
         test.skip(true, "Cannot create status via API");
@@ -362,19 +371,22 @@ test.describe("Admin Status Management", () => {
         return;
       }
 
-      const createRes = await request.post(`${baseURL}/api/model/status/create`, {
-        data: {
+      const createRes = await request.post(
+        `${baseURL}/api/model/status/create`,
+        {
           data: {
-            name: statusName,
-            systemName: `flag_status_${Date.now()}`,
-            colorId,
-            isEnabled: true,
-            isSuccess: false,
-            isFailure: false,
-            isCompleted: false,
+            data: {
+              name: statusName,
+              systemName: `flag_status_${Date.now()}`,
+              colorId,
+              isEnabled: true,
+              isSuccess: false,
+              isFailure: false,
+              isCompleted: false,
+            },
           },
-        },
-      });
+        }
+      );
 
       if (!createRes.ok()) {
         test.skip(true, "Cannot create status via API");
@@ -407,13 +419,15 @@ test.describe("Admin Status Management", () => {
 
       // Toggle isEnabled switch (first switch in row)
       const enabledSwitch = rowSwitches.first();
-      const initialEnabledState = await enabledSwitch.getAttribute("data-state");
+      const initialEnabledState =
+        await enabledSwitch.getAttribute("data-state");
       expect(initialEnabledState).toBe("checked"); // Created with isEnabled=true
 
       // Toggle success flag on (second switch = isSuccess)
       if (switchCount >= 2) {
         const successSwitch = rowSwitches.nth(1);
-        const initialSuccessState = await successSwitch.getAttribute("data-state");
+        const initialSuccessState =
+          await successSwitch.getAttribute("data-state");
         expect(initialSuccessState).toBe("unchecked"); // Created with isSuccess=false
 
         // Toggle success flag on
@@ -427,7 +441,8 @@ test.describe("Admin Status Management", () => {
         await successSwitch.click();
         await page.waitForTimeout(1000);
 
-        const finalSuccessState = await successSwitch.getAttribute("data-state");
+        const finalSuccessState =
+          await successSwitch.getAttribute("data-state");
         expect(finalSuccessState).toBe("unchecked");
       }
     } finally {
@@ -476,19 +491,22 @@ test.describe("Admin Status Management", () => {
         return;
       }
 
-      const createRes = await request.post(`${baseURL}/api/model/status/create`, {
-        data: {
+      const createRes = await request.post(
+        `${baseURL}/api/model/status/create`,
+        {
           data: {
-            name: statusName,
-            systemName: `enable_status_${Date.now()}`,
-            colorId,
-            isEnabled: false,
-            isSuccess: false,
-            isFailure: false,
-            isCompleted: false,
+            data: {
+              name: statusName,
+              systemName: `enable_status_${Date.now()}`,
+              colorId,
+              isEnabled: false,
+              isSuccess: false,
+              isFailure: false,
+              isCompleted: false,
+            },
           },
-        },
-      });
+        }
+      );
 
       if (!createRes.ok()) {
         test.skip(true, "Cannot create status via API");
@@ -514,9 +532,7 @@ test.describe("Admin Status Management", () => {
       await expect(statusRow).toBeVisible({ timeout: 10000 });
 
       // First switch should be isEnabled — created with false
-      const enabledSwitch = statusRow
-        .locator('button[role="switch"]')
-        .first();
+      const enabledSwitch = statusRow.locator('button[role="switch"]').first();
       const initialState = await enabledSwitch.getAttribute("data-state");
       expect(initialState).toBe("unchecked"); // Created with isEnabled=false
 

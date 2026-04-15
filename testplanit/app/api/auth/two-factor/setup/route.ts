@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
-  encryptSecret, generateQRCodeDataURL, generateTOTPSecret
+  encryptSecret,
+  generateQRCodeDataURL,
+  generateTOTPSecret,
 } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
 

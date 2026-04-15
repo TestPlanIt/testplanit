@@ -5,7 +5,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -23,25 +23,63 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import {
-  Bot, Boxes, Bug, Calendar as CalendarIcon2, CalendarIcon, CheckCircle, Clock, Combine, Compass, FileText, FolderTree, GitBranch,
-  Hash, Layers, LayoutTemplate, ListChecks, Milestone, PlayCircle, Search, Settings, Tags, Timer, Trash2, User, UserCheck, Workflow
+  Bot,
+  Boxes,
+  Bug,
+  Calendar as CalendarIcon2,
+  CalendarIcon,
+  CheckCircle,
+  Clock,
+  Combine,
+  Compass,
+  FileText,
+  FolderTree,
+  GitBranch,
+  Hash,
+  Layers,
+  LayoutTemplate,
+  ListChecks,
+  Milestone,
+  PlayCircle,
+  Search,
+  Settings,
+  Tags,
+  Timer,
+  Trash2,
+  User,
+  UserCheck,
+  Workflow,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
-  useFindManyConfigurations, useFindManyMilestones, useFindManyProjectAssignment, useFindManyProjects, useFindManyRepositoryFolders, useFindManyTags,
-  useFindManyTemplates, useFindManyUser, useFindManyWorkflows
+  useFindManyConfigurations,
+  useFindManyMilestones,
+  useFindManyProjectAssignment,
+  useFindManyProjects,
+  useFindManyRepositoryFolders,
+  useFindManyTags,
+  useFindManyTemplates,
+  useFindManyUser,
+  useFindManyWorkflows,
 } from "~/lib/hooks";
 import {
-  BaseEntityFilters, IssueFilters,
-  MilestoneFilters, RepositoryCaseFilters, SearchableEntityType, SearchFacet, SessionFilters, TestRunFilters, UnifiedSearchFilters
+  BaseEntityFilters,
+  IssueFilters,
+  MilestoneFilters,
+  RepositoryCaseFilters,
+  SearchableEntityType,
+  SearchFacet,
+  SessionFilters,
+  TestRunFilters,
+  UnifiedSearchFilters,
 } from "~/types/search";
 import { cn, isAdmin } from "~/utils";
 import { CustomFieldFilters } from "./CustomFieldFilters";

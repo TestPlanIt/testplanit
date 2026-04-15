@@ -6,7 +6,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -45,7 +45,7 @@ export function TagChip({
         onToggle();
       }, 200);
     },
-    [onToggle],
+    [onToggle]
   );
 
   const handleDoubleClick = useCallback(
@@ -59,7 +59,7 @@ export function TagChip({
       setEditValue(tagName);
       setIsEditing(true);
     },
-    [tagName],
+    [tagName]
   );
 
   const commitEdit = useCallback(() => {
@@ -83,7 +83,7 @@ export function TagChip({
         setIsEditing(false);
       }
     },
-    [commitEdit, tagName],
+    [commitEdit, tagName]
   );
 
   const tooltip = isExisting
@@ -115,7 +115,7 @@ export function TagChip({
             className={cn(
               "cursor-pointer select-none transition-all",
               !isExisting && "outline-2 outline-offset-1 outline-primary/50",
-              !isAccepted && "opacity-50",
+              !isAccepted && "opacity-50"
             )}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}

@@ -6,7 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
@@ -34,7 +34,9 @@ export default function AdminImportsPage() {
           </TabsContent>
           <TabsContent value="testrail">
             <Alert>
-              <AlertTitle>{tGlobal("repository.exportModal.comingSoon")}</AlertTitle>
+              <AlertTitle>
+                {tGlobal("repository.exportModal.comingSoon")}
+              </AlertTitle>
               <AlertDescription>{t("comingSoon.description")}</AlertDescription>
             </Alert>
           </TabsContent>

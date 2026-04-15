@@ -63,7 +63,10 @@ export class IntegrationManager {
   /**
    * Get adapter for a specific integration
    */
-  async getAdapter(integrationId: string, prismaClient?: typeof prisma): Promise<IssueAdapter | null> {
+  async getAdapter(
+    integrationId: string,
+    prismaClient?: typeof prisma
+  ): Promise<IssueAdapter | null> {
     // Check cache first
     if (this.adapterCache.has(integrationId)) {
       return this.adapterCache.get(integrationId)!;
@@ -107,7 +110,11 @@ export class IntegrationManager {
     };
 
     // Handle API key or PAT authentication
-    if ((integration.authType === "API_KEY" || integration.authType === "PERSONAL_ACCESS_TOKEN") && integration.credentials) {
+    if (
+      (integration.authType === "API_KEY" ||
+        integration.authType === "PERSONAL_ACCESS_TOKEN") &&
+      integration.credentials
+    ) {
       let credentials = integration.credentials as any;
 
       // Check if credentials are encrypted
@@ -124,7 +131,8 @@ export class IntegrationManager {
       if (credentials.email) authData.email = credentials.email;
       if (credentials.apiToken) authData.apiToken = credentials.apiToken;
       // For GitHub PAT authentication
-      if (credentials.personalAccessToken) authData.apiKey = credentials.personalAccessToken;
+      if (credentials.personalAccessToken)
+        authData.apiKey = credentials.personalAccessToken;
 
       // Add baseUrl from settings
       if (integration.settings && typeof integration.settings === "object") {
@@ -133,7 +141,7 @@ export class IntegrationManager {
       }
 
       await adapter.authenticate(authData);
-    } 
+    }
     // Handle OAuth authentication
     else if (integration.userIntegrationAuths.length > 0) {
       const auth = integration.userIntegrationAuths[0];

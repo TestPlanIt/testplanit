@@ -1,4 +1,8 @@
-export const getCustomStyles = ({ theme: _theme = "light" }: { theme?: string }) => ({
+export const getCustomStyles = ({
+  theme: _theme = "light",
+}: {
+  theme?: string;
+}) => ({
   control: (provided: any, state: { isFocused: boolean }) => ({
     ...provided,
     backgroundColor: "hsl(var(--background))",

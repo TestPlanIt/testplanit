@@ -1,8 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import {
   AnthropicAdapter,
-  AzureOpenAIAdapter, BaseLlmAdapter, CustomLlmAdapter, GeminiAdapter,
-  OllamaAdapter, OpenAIAdapter
+  AzureOpenAIAdapter,
+  BaseLlmAdapter,
+  CustomLlmAdapter,
+  GeminiAdapter,
+  OllamaAdapter,
+  OpenAIAdapter,
 } from "../adapters";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 
@@ -23,8 +27,12 @@ const ALLOWED_BASE_URLS: Record<string, string[]> = {
 };
 
 // Providers that allow custom endpoints (must pass additional validation)
-const CUSTOM_ENDPOINT_PROVIDERS = ["ANTHROPIC", "AZURE_OPENAI", "OLLAMA", "CUSTOM_LLM"];
-
+const CUSTOM_ENDPOINT_PROVIDERS = [
+  "ANTHROPIC",
+  "AZURE_OPENAI",
+  "OLLAMA",
+  "CUSTOM_LLM",
+];
 
 /**
  * Checks if a hostname is a private/internal address that should be blocked
@@ -153,9 +161,12 @@ function getValidatedBaseUrl(
 }
 
 import type {
-  LlmAdapterConfig, LlmError, LlmProviderConfig, LlmRequest,
+  LlmAdapterConfig,
+  LlmError,
+  LlmProviderConfig,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse
+  LlmStreamResponse,
 } from "../types";
 
 export class LlmManager {
@@ -260,7 +271,7 @@ export class LlmManager {
   async chat(
     llmIntegrationId: number,
     request: LlmRequest,
-    retryOptions?: { maxRetries?: number; baseDelayMs?: number },
+    retryOptions?: { maxRetries?: number; baseDelayMs?: number }
   ): Promise<LlmResponse> {
     const maxRetries = retryOptions?.maxRetries ?? 3;
     const baseDelay = retryOptions?.baseDelayMs ?? 1000;
@@ -294,9 +305,10 @@ export class LlmManager {
         // Add jitter (±20%) to avoid thundering herd
         delay *= 0.8 + Math.random() * 0.4;
 
-        const errorCode = (error as Partial<LlmError>).code || (error as Error).message;
+        const errorCode =
+          (error as Partial<LlmError>).code || (error as Error).message;
         console.warn(
-          `[LlmManager] Retryable error (attempt ${attempt + 1}/${maxRetries}): ${errorCode}. Retrying in ${Math.round(delay)}ms...`,
+          `[LlmManager] Retryable error (attempt ${attempt + 1}/${maxRetries}): ${errorCode}. Retrying in ${Math.round(delay)}ms...`
         );
 
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -354,7 +366,9 @@ export class LlmManager {
    * Falls back to the system default if no project-level integration is set.
    */
   async getProjectIntegration(projectId: number): Promise<number | null> {
-    const projectIntegration = await (this.prisma as any).projectLlmIntegration.findFirst({
+    const projectIntegration = await (
+      this.prisma as any
+    ).projectLlmIntegration.findFirst({
       where: {
         projectId,
         isActive: true,
@@ -406,7 +420,11 @@ export class LlmManager {
     });
 
     // Explicit "No LLM" override — disabled with no integration
-    if (featureConfig && !featureConfig.enabled && !featureConfig.llmIntegrationId) {
+    if (
+      featureConfig &&
+      !featureConfig.enabled &&
+      !featureConfig.llmIntegrationId
+    ) {
       return null;
     }
 
@@ -429,7 +447,11 @@ export class LlmManager {
         where: { id: resolvedPrompt.llmIntegrationId },
         select: { isDeleted: true, status: true },
       });
-      if (integration && !integration.isDeleted && integration.status === "ACTIVE") {
+      if (
+        integration &&
+        !integration.isDeleted &&
+        integration.status === "ACTIVE"
+      ) {
         return {
           integrationId: resolvedPrompt.llmIntegrationId,
           model: resolvedPrompt.modelOverride,
@@ -568,22 +590,16 @@ export class LlmManager {
     if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
       try {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
-        const { BUDGET_ALERT_JOB_CHECK } = await import(
-          "~/workers/budgetAlertWorker"
-        );
-        const { getCurrentTenantId } = await import(
-          "~/lib/multiTenantPrisma"
-        );
+        const { BUDGET_ALERT_JOB_CHECK } =
+          await import("~/workers/budgetAlertWorker");
+        const { getCurrentTenantId } = await import("~/lib/multiTenantPrisma");
         getBudgetAlertQueue()
           ?.add(BUDGET_ALERT_JOB_CHECK, {
             llmIntegrationId,
             tenantId: this.tenantId ?? getCurrentTenantId(),
           })
           .catch((err: unknown) => {
-            console.error(
-              "[BudgetAlert] Failed to enqueue budget check:",
-              err
-            );
+            console.error("[BudgetAlert] Failed to enqueue budget check:", err);
           });
       } catch (err) {
         console.error("[BudgetAlert] Failed to enqueue budget check:", err);
@@ -629,22 +645,16 @@ export class LlmManager {
     if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
       try {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
-        const { BUDGET_ALERT_JOB_CHECK } = await import(
-          "~/workers/budgetAlertWorker"
-        );
-        const { getCurrentTenantId } = await import(
-          "~/lib/multiTenantPrisma"
-        );
+        const { BUDGET_ALERT_JOB_CHECK } =
+          await import("~/workers/budgetAlertWorker");
+        const { getCurrentTenantId } = await import("~/lib/multiTenantPrisma");
         getBudgetAlertQueue()
           ?.add(BUDGET_ALERT_JOB_CHECK, {
             llmIntegrationId,
             tenantId: this.tenantId ?? getCurrentTenantId(),
           })
           .catch((err: unknown) => {
-            console.error(
-              "[BudgetAlert] Failed to enqueue budget check:",
-              err
-            );
+            console.error("[BudgetAlert] Failed to enqueue budget check:", err);
           });
       } catch (err) {
         console.error("[BudgetAlert] Failed to enqueue budget check:", err);

@@ -95,7 +95,12 @@ vi.mock("@/components/ui/alert", () => ({
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, type, disabled, ...rest }: any) => (
-    <button type={type || "button"} onClick={onClick} disabled={disabled} {...rest}>
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      disabled={disabled}
+      {...rest}
+    >
       {children}
     </button>
   ),
@@ -267,10 +272,13 @@ describe("CreateIssueDialog", () => {
       fireEvent.submit(form);
     }
 
-    await waitFor(() => {
-      // Either the mock was called or the dialog handling occurred
-      expect(onOpenChange).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        // Either the mock was called or the dialog handling occurred
+        expect(onOpenChange).toHaveBeenCalled();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it("renders priority select field", () => {

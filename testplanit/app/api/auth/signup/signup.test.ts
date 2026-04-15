@@ -2,20 +2,22 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies using vi.hoisted
-const { mockPrisma, mockHash, mockIsEmailServerConfigured } = vi.hoisted(() => ({
-  mockPrisma: {
-    user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
+const { mockPrisma, mockHash, mockIsEmailServerConfigured } = vi.hoisted(
+  () => ({
+    mockPrisma: {
+      user: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+      },
+      registrationSettings: {
+        findFirst: vi.fn(),
+      },
+      $transaction: vi.fn(),
     },
-    registrationSettings: {
-      findFirst: vi.fn(),
-    },
-    $transaction: vi.fn(),
-  },
-  mockHash: vi.fn(),
-  mockIsEmailServerConfigured: vi.fn(),
-}));
+    mockHash: vi.fn(),
+    mockIsEmailServerConfigured: vi.fn(),
+  })
+);
 
 vi.mock("~/server/db", () => ({
   db: mockPrisma,
@@ -176,8 +178,12 @@ describe("POST /api/auth/signup", () => {
       const emailVerified = createCall.data.emailVerified;
 
       expect(emailVerified).toBeInstanceOf(Date);
-      expect(emailVerified.getTime()).toBeGreaterThanOrEqual(beforeRequest.getTime());
-      expect(emailVerified.getTime()).toBeLessThanOrEqual(afterRequest.getTime());
+      expect(emailVerified.getTime()).toBeGreaterThanOrEqual(
+        beforeRequest.getTime()
+      );
+      expect(emailVerified.getTime()).toBeLessThanOrEqual(
+        afterRequest.getTime()
+      );
     });
 
     it("should not store emailVerifToken when verification is not required", async () => {
@@ -307,7 +313,9 @@ describe("POST /api/auth/signup", () => {
 
     it("should return 500 on unexpected database error", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockRejectedValue(new Error("Database connection failed"));
+      mockPrisma.$transaction.mockRejectedValue(
+        new Error("Database connection failed")
+      );
 
       const response = await signup(createRequest(validSignupData));
       const data = await response.json();
@@ -480,8 +488,12 @@ describe("POST /api/auth/signup", () => {
         const emailVerified = createCall.data.emailVerified;
 
         expect(emailVerified).toBeInstanceOf(Date);
-        expect(emailVerified.getTime()).toBeGreaterThanOrEqual(beforeRequest.getTime());
-        expect(emailVerified.getTime()).toBeLessThanOrEqual(afterRequest.getTime());
+        expect(emailVerified.getTime()).toBeGreaterThanOrEqual(
+          beforeRequest.getTime()
+        );
+        expect(emailVerified.getTime()).toBeLessThanOrEqual(
+          afterRequest.getTime()
+        );
       });
 
       it("should not store emailVerifToken even when provided", async () => {

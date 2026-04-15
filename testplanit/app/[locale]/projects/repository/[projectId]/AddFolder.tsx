@@ -15,7 +15,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleX, Undo2 } from "lucide-react";
@@ -36,7 +36,7 @@ import { emptyEditorContent } from "~/app/constants";
 import {
   useCreateRepositoryFolders,
   useFindFirstRepositoryFolders,
-  useFindManyRepositoryFolders
+  useFindManyRepositoryFolders,
 } from "~/lib/hooks";
 
 const FormSchema = z.object({
@@ -86,18 +86,16 @@ export function AddFolder({
   );
 
   // Query sibling folders to calculate max order for new folder placement
-  const { data: siblingFolders } = useFindManyRepositoryFolders(
-    {
-      where: {
-        projectId,
-        parentId: effectiveParentId,
-        isDeleted: false,
-      },
-      select: {
-        order: true,
-      },
-    }
-  );
+  const { data: siblingFolders } = useFindManyRepositoryFolders({
+    where: {
+      projectId,
+      parentId: effectiveParentId,
+      isDeleted: false,
+    },
+    select: {
+      order: true,
+    },
+  });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

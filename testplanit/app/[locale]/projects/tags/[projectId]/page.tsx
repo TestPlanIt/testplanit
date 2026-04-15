@@ -9,9 +9,11 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Tags } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,10 +21,15 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
-  useFindFirstProjects, useFindManyRepositoryCases, useFindManySessions, useFindManyTags, useFindManyTestRuns
+  useFindFirstProjects,
+  useFindManyRepositoryCases,
+  useFindManySessions,
+  useFindManyTags,
+  useFindManyTestRuns,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { getColumns } from "./columns";

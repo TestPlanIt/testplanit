@@ -7,7 +7,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 
@@ -32,7 +32,6 @@ export function VersionSelect({
   userDateFormat,
   userTimeFormat,
 }: VersionSelectProps) {
-
   const tGlobal = useTranslations();
 
   if (!versions || versions.length <= 1) return null;

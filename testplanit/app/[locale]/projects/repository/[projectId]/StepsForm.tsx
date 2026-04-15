@@ -7,7 +7,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -18,33 +18,49 @@ import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import {
-  closestCenter, DndContext, PointerSensor, useSensor,
-  useSensors
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   SortableContext,
-  verticalListSortingStrategy
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Prisma, SharedStepGroup, Steps as PrismaSteps } from "@prisma/client";
 import type { Editor } from "@tiptap/core";
 import {
   CircleSlash2,
-  Layers, ListOrdered, MoveVertical, PlusCircle, SearchCheck, Trash2
+  Layers,
+  ListOrdered,
+  MoveVertical,
+  PlusCircle,
+  SearchCheck,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Control, FieldPath, FieldValues, useFieldArray, useFormContext } from "react-hook-form";
+import {
+  Control,
+  FieldPath,
+  FieldValues,
+  useFieldArray,
+  useFormContext,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
 import {
-  useCreateManySharedStepItem, useCreateSharedStepGroup, useFindManySharedStepGroup,
-  useFindManySharedStepItem
+  useCreateManySharedStepItem,
+  useCreateSharedStepGroup,
+  useFindManySharedStepGroup,
+  useFindManySharedStepItem,
 } from "~/lib/hooks";
 import SortableStep from "./SortableStep";
 
@@ -484,7 +500,14 @@ function StepsForm<T extends FieldValues = FieldValues>({
   const tCommon = useTranslations("common");
   const tRepoSteps = useTranslations("repository.steps");
   const { data: session } = useSession();
-  const { fields, append, remove, move, update: _update, replace } = useFieldArray({
+  const {
+    fields,
+    append,
+    remove,
+    move,
+    update: _update,
+    replace,
+  } = useFieldArray({
     control: control as Control<FieldValues>,
     name: name as string,
   });
@@ -1110,6 +1133,6 @@ function StepsForm<T extends FieldValues = FieldValues>({
       </AlertDialog>
     </DndContext>
   );
-};
+}
 
 export default StepsForm;

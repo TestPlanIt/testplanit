@@ -221,14 +221,20 @@ function computeProjectAccess(ctx: {
     createdBy: string;
     defaultAccessType: string;
     defaultRoleId: number | null;
-    defaultRole: { rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }> } | null;
+    defaultRole: {
+      rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>;
+    } | null;
     userPermissions: Array<{
       accessType: string;
-      role: { rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }> } | null;
+      role: {
+        rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>;
+      } | null;
     }>;
     groupPermissions: Array<{
       accessType: string;
-      role: { rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }> } | null;
+      role: {
+        rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>;
+      } | null;
     }>;
     assignedUsers: Array<{ userId: string }>;
   };
@@ -237,7 +243,10 @@ function computeProjectAccess(ctx: {
   if (ctx.project.createdBy === ctx.userId) return ADMIN_ACCESS;
 
   // PROJECTADMIN on assignedUsers → full access to this project.
-  if (ctx.userAccess === "PROJECTADMIN" && ctx.project.assignedUsers.length > 0) {
+  if (
+    ctx.userAccess === "PROJECTADMIN" &&
+    ctx.project.assignedUsers.length > 0
+  ) {
     return ADMIN_ACCESS;
   }
 
@@ -291,8 +300,12 @@ function computeProjectAccess(ctx: {
       if (ctx.project.defaultRole) {
         return {
           canRead: true,
-          canWrite: ctx.project.defaultRole.rolePermissions.some((rp) => rp.canAddEdit),
-          canDelete: ctx.project.defaultRole.rolePermissions.some((rp) => rp.canDelete),
+          canWrite: ctx.project.defaultRole.rolePermissions.some(
+            (rp) => rp.canAddEdit
+          ),
+          canDelete: ctx.project.defaultRole.rolePermissions.some(
+            (rp) => rp.canDelete
+          ),
         };
       }
       return NO_ACCESS;

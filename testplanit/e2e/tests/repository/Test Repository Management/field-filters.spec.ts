@@ -37,7 +37,9 @@ test.describe("Field-Based Filtering", () => {
     folderId: number;
   }> {
     // Create project
-    const projectId = await api.createProject(`Filter Test ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    const projectId = await api.createProject(
+      `Filter Test ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
 
     // Create a folder for test cases
     const folderId = await api.createFolder(projectId, "Filter Test Cases");
@@ -65,7 +67,9 @@ test.describe("Field-Based Filtering", () => {
       await expect(casesTable).toBeVisible({ timeout: 10000 });
 
       // Find the Name column header (should have filter capability)
-      const nameHeader = page.locator('th:has-text("Name"), th:has-text("Title")').first();
+      const nameHeader = page
+        .locator('th:has-text("Name"), th:has-text("Title")')
+        .first();
       await expect(nameHeader).toBeVisible({ timeout: 5000 });
 
       // Click column header to open filter dropdown
@@ -73,12 +77,16 @@ test.describe("Field-Based Filtering", () => {
       await page.waitForTimeout(500); // Wait for animation
 
       // Verify filter dropdown appears with filter options
-      const filterDropdown = page.locator('[role="menu"], [role="dialog"], [role="listbox"]').filter({
-        hasText: /Contains|Equals|Filter/i,
-      });
+      const filterDropdown = page
+        .locator('[role="menu"], [role="dialog"], [role="listbox"]')
+        .filter({
+          hasText: /Contains|Equals|Filter/i,
+        });
 
       // Check if dropdown is visible (some columns might not have filters)
-      const isDropdownVisible = await filterDropdown.isVisible({ timeout: 2000 }).catch(() => false);
+      const isDropdownVisible = await filterDropdown
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
       if (isDropdownVisible) {
         // Click outside to close dropdown
@@ -90,7 +98,10 @@ test.describe("Field-Based Filtering", () => {
       }
     });
 
-    test("1.2 - Filter operators are visible and selectable", async ({ api, page }) => {
+    test("1.2 - Filter operators are visible and selectable", async ({
+      api,
+      page,
+    }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
       await repositoryPage.goto(projectId);
@@ -98,7 +109,7 @@ test.describe("Field-Based Filtering", () => {
       await page.waitForLoadState("networkidle");
 
       // Find any filterable column header
-      const columnHeaders = page.locator('th').all();
+      const columnHeaders = page.locator("th").all();
       const headers = await columnHeaders;
 
       // Try to find a column with filter capability
@@ -114,21 +125,29 @@ test.describe("Field-Based Filtering", () => {
         await page.waitForTimeout(300);
 
         // Check if filter dropdown appeared
-        const filterDropdown = page.locator('[role="menu"], [role="dialog"]').filter({
-          hasText: /Contains|Equals|Has.*Value|Filter/i,
-        });
+        const filterDropdown = page
+          .locator('[role="menu"], [role="dialog"]')
+          .filter({
+            hasText: /Contains|Equals|Has.*Value|Filter/i,
+          });
 
-        const isVisible = await filterDropdown.isVisible({ timeout: 1000 }).catch(() => false);
+        const isVisible = await filterDropdown
+          .isVisible({ timeout: 1000 })
+          .catch(() => false);
 
         if (isVisible) {
           // Verify filter operators are present
           // Look for common filter options
-          const hasValueOption = page.locator('text=/Has.*Value/i').first();
-          const noValueOption = page.locator('text=/No.*Value/i').first();
+          const hasValueOption = page.locator("text=/Has.*Value/i").first();
+          const noValueOption = page.locator("text=/No.*Value/i").first();
 
           // At minimum, we should see these two options for most field types
-          const hasValueVisible = await hasValueOption.isVisible({ timeout: 2000 }).catch(() => false);
-          const noValueVisible = await noValueOption.isVisible({ timeout: 2000 }).catch(() => false);
+          const hasValueVisible = await hasValueOption
+            .isVisible({ timeout: 2000 })
+            .catch(() => false);
+          const noValueVisible = await noValueOption
+            .isVisible({ timeout: 2000 })
+            .catch(() => false);
 
           expect(hasValueVisible || noValueVisible).toBe(true);
 
@@ -148,7 +167,9 @@ test.describe("Field-Based Filtering", () => {
       await page.waitForLoadState("networkidle");
 
       // Wait for test cases to load - look for actual case names
-      await expect(page.locator('text="Login test case"')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text="Login test case"')).toBeVisible({
+        timeout: 10000,
+      });
 
       // Count initial test cases
       const initialRows = page.locator('tbody tr, [role="row"]').filter({
@@ -158,14 +179,19 @@ test.describe("Field-Based Filtering", () => {
       expect(initialCount).toBeGreaterThan(0);
 
       // Find a filterable column
-      const columnHeaders = page.locator('th').all();
+      const columnHeaders = page.locator("th").all();
       const headers = await columnHeaders;
 
       for (const header of headers) {
         const headerText = await header.textContent();
 
         // Skip system columns
-        if (!headerText || headerText.match(/^(#|Actions|Select|☰|Name|Template|State|Creator|Folder)$/i)) {
+        if (
+          !headerText ||
+          headerText.match(
+            /^(#|Actions|Select|☰|Name|Template|State|Creator|Folder)$/i
+          )
+        ) {
           continue;
         }
 
@@ -173,11 +199,15 @@ test.describe("Field-Based Filtering", () => {
         await page.waitForTimeout(300);
 
         // Look for Has Value / No Value options
-        const hasValueOption = page.locator('text=/Has.*Value/i').first();
-        const noValueOption = page.locator('text=/No.*Value/i').first();
+        const hasValueOption = page.locator("text=/Has.*Value/i").first();
+        const noValueOption = page.locator("text=/No.*Value/i").first();
 
-        const hasValueVisible = await hasValueOption.isVisible({ timeout: 1000 }).catch(() => false);
-        const noValueVisible = await noValueOption.isVisible({ timeout: 1000 }).catch(() => false);
+        const hasValueVisible = await hasValueOption
+          .isVisible({ timeout: 1000 })
+          .catch(() => false);
+        const noValueVisible = await noValueOption
+          .isVisible({ timeout: 1000 })
+          .catch(() => false);
 
         if (hasValueVisible || noValueVisible) {
           // Try clicking No Value to filter
@@ -187,15 +217,21 @@ test.describe("Field-Based Filtering", () => {
             await page.waitForTimeout(500);
 
             // Check if filter was applied (chip should appear or count should change)
-            const filterChip = page.locator('[class*="filter"], [class*="chip"], [class*="badge"]').filter({
-              hasText: /No.*Value|Empty|None/i,
-            });
+            const filterChip = page
+              .locator('[class*="filter"], [class*="chip"], [class*="badge"]')
+              .filter({
+                hasText: /No.*Value|Empty|None/i,
+              });
 
-            const chipVisible = await filterChip.isVisible({ timeout: 2000 }).catch(() => false);
+            const chipVisible = await filterChip
+              .isVisible({ timeout: 2000 })
+              .catch(() => false);
 
             // If chip appeared, try to clear it
             if (chipVisible) {
-              const clearButton = filterChip.locator('button, [role="button"]').first();
+              const clearButton = filterChip
+                .locator('button, [role="button"]')
+                .first();
               await clearButton.click();
               await page.waitForLoadState("networkidle");
             }
@@ -205,7 +241,10 @@ test.describe("Field-Based Filtering", () => {
       }
     });
 
-    test("1.4 - Numeric filter validation (between operator)", async ({ api, page }) => {
+    test("1.4 - Numeric filter validation (between operator)", async ({
+      api,
+      page,
+    }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
       await repositoryPage.goto(projectId);
@@ -213,7 +252,7 @@ test.describe("Field-Based Filtering", () => {
       await page.waitForLoadState("networkidle");
 
       // Look for numeric field columns (like Priority, Estimate, etc.)
-      const columnHeaders = page.locator('th').all();
+      const columnHeaders = page.locator("th").all();
       const headers = await columnHeaders;
 
       for (const header of headers) {
@@ -225,8 +264,10 @@ test.describe("Field-Based Filtering", () => {
           await page.waitForTimeout(300);
 
           // Look for Between operator
-          const betweenOption = page.locator('text=/Between/i').first();
-          const betweenVisible = await betweenOption.isVisible({ timeout: 1000 }).catch(() => false);
+          const betweenOption = page.locator("text=/Between/i").first();
+          const betweenVisible = await betweenOption
+            .isVisible({ timeout: 1000 })
+            .catch(() => false);
 
           if (betweenVisible) {
             await betweenOption.click();
@@ -243,8 +284,14 @@ test.describe("Field-Based Filtering", () => {
               await page.waitForTimeout(500);
 
               // Look for validation error or disabled apply button
-              const applyButton = page.locator('button:has-text("Apply"), button[aria-label*="Apply"]').first();
-              const isDisabled = await applyButton.isDisabled().catch(() => false);
+              const applyButton = page
+                .locator(
+                  'button:has-text("Apply"), button[aria-label*="Apply"]'
+                )
+                .first();
+              const isDisabled = await applyButton
+                .isDisabled()
+                .catch(() => false);
 
               expect(isDisabled).toBe(true);
 
@@ -254,7 +301,9 @@ test.describe("Field-Based Filtering", () => {
               await page.waitForTimeout(500);
 
               // Apply button should be enabled now
-              const isEnabledNow = await applyButton.isEnabled().catch(() => true);
+              const isEnabledNow = await applyButton
+                .isEnabled()
+                .catch(() => true);
               expect(isEnabledNow).toBe(true);
             }
 
@@ -274,32 +323,45 @@ test.describe("Field-Based Filtering", () => {
       await page.waitForLoadState("networkidle");
 
       // Use the Name column for text filtering
-      const nameHeader = page.locator('th:has-text("Name"), th:has-text("Title")').first();
+      const nameHeader = page
+        .locator('th:has-text("Name"), th:has-text("Title")')
+        .first();
       await nameHeader.click();
       await page.waitForTimeout(300);
 
       // Look for Contains operator
-      const containsOption = page.locator('text=/Contains/i').first();
-      const containsVisible = await containsOption.isVisible({ timeout: 1000 }).catch(() => false);
+      const containsOption = page.locator("text=/Contains/i").first();
+      const containsVisible = await containsOption
+        .isVisible({ timeout: 1000 })
+        .catch(() => false);
 
       if (containsVisible) {
         await containsOption.click();
         await page.waitForTimeout(300);
 
         // Type search term
-        const textInput = page.locator('input[type="text"], input[type="search"]').filter({
-          hasNotText: '',
-        }).first();
+        const textInput = page
+          .locator('input[type="text"], input[type="search"]')
+          .filter({
+            hasNotText: "",
+          })
+          .first();
 
-        const inputVisible = await textInput.isVisible({ timeout: 1000 }).catch(() => false);
+        const inputVisible = await textInput
+          .isVisible({ timeout: 1000 })
+          .catch(() => false);
 
         if (inputVisible) {
           await textInput.fill("test");
           await page.waitForTimeout(300);
 
           // Apply filter
-          const applyButton = page.locator('button:has-text("Apply"), button[aria-label*="Apply"]').first();
-          const buttonVisible = await applyButton.isVisible({ timeout: 1000 }).catch(() => false);
+          const applyButton = page
+            .locator('button:has-text("Apply"), button[aria-label*="Apply"]')
+            .first();
+          const buttonVisible = await applyButton
+            .isVisible({ timeout: 1000 })
+            .catch(() => false);
 
           if (buttonVisible) {
             await applyButton.click();
@@ -307,15 +369,21 @@ test.describe("Field-Based Filtering", () => {
             await page.waitForTimeout(500);
 
             // Look for filter chip
-            const filterChip = page.locator('[class*="filter"], [class*="chip"], [class*="badge"]').filter({
-              hasText: /contains|test/i,
-            });
+            const filterChip = page
+              .locator('[class*="filter"], [class*="chip"], [class*="badge"]')
+              .filter({
+                hasText: /contains|test/i,
+              });
 
-            const chipVisible = await filterChip.isVisible({ timeout: 2000 }).catch(() => false);
+            const chipVisible = await filterChip
+              .isVisible({ timeout: 2000 })
+              .catch(() => false);
 
             // If chip visible, clear it
             if (chipVisible) {
-              const clearButton = filterChip.locator('button, [role="button"]').first();
+              const clearButton = filterChip
+                .locator('button, [role="button"]')
+                .first();
               await clearButton.click();
               await page.waitForLoadState("networkidle");
             }
@@ -326,7 +394,10 @@ test.describe("Field-Based Filtering", () => {
   });
 
   test.describe("Suite 2: Multiple Filters", () => {
-    test("2.1 - Apply two filters and verify both chips appear", async ({ api, page }) => {
+    test("2.1 - Apply two filters and verify both chips appear", async ({
+      api,
+      page,
+    }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
       await repositoryPage.goto(projectId);
@@ -338,8 +409,10 @@ test.describe("Field-Based Filtering", () => {
       await nameHeader.click();
       await page.waitForTimeout(300);
 
-      const containsOption = page.locator('text=/Contains/i').first();
-      if (await containsOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const containsOption = page.locator("text=/Contains/i").first();
+      if (
+        await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
+      ) {
         await containsOption.click();
         await page.waitForTimeout(200);
 
@@ -352,13 +425,15 @@ test.describe("Field-Based Filtering", () => {
         await page.waitForLoadState("networkidle");
 
         // Verify first filter chip appears
-        const filterChip1 = page.locator('[class*="filter"], [class*="chip"]').filter({
-          hasText: /contains|test/i,
-        });
+        const filterChip1 = page
+          .locator('[class*="filter"], [class*="chip"]')
+          .filter({
+            hasText: /contains|test/i,
+          });
         await expect(filterChip1.first()).toBeVisible({ timeout: 3000 });
 
         // Try to apply a second filter
-        const headers = await page.locator('th').all();
+        const headers = await page.locator("th").all();
 
         for (const header of headers) {
           const headerText = await header.textContent();
@@ -372,20 +447,32 @@ test.describe("Field-Based Filtering", () => {
           await page.waitForTimeout(300);
 
           // Look for Has Value option
-          const hasValueOption = page.locator('text=/Has.*Value/i').first();
-          if (await hasValueOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+          const hasValueOption = page.locator("text=/Has.*Value/i").first();
+          if (
+            await hasValueOption.isVisible({ timeout: 1000 }).catch(() => false)
+          ) {
             await hasValueOption.click();
             await page.waitForLoadState("networkidle");
 
             // Check if second chip appeared
-            const filterChips = page.locator('[class*="filter"], [class*="chip"]');
+            const filterChips = page.locator(
+              '[class*="filter"], [class*="chip"]'
+            );
             const chipCount = await filterChips.count();
 
             if (chipCount >= 2) {
               // Success - two filters applied
               // Clear all filters
-              const clearAllButton = page.locator('button:has-text("Clear all"), button:has-text("Clear filters")').first();
-              if (await clearAllButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+              const clearAllButton = page
+                .locator(
+                  'button:has-text("Clear all"), button:has-text("Clear filters")'
+                )
+                .first();
+              if (
+                await clearAllButton
+                  .isVisible({ timeout: 1000 })
+                  .catch(() => false)
+              ) {
                 await clearAllButton.click();
                 await page.waitForLoadState("networkidle");
               }
@@ -410,8 +497,10 @@ test.describe("Field-Based Filtering", () => {
       await nameHeader.click();
       await page.waitForTimeout(300);
 
-      const containsOption = page.locator('text=/Contains/i').first();
-      if (await containsOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const containsOption = page.locator("text=/Contains/i").first();
+      if (
+        await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
+      ) {
         await containsOption.click();
         await page.waitForTimeout(200);
 
@@ -424,15 +513,20 @@ test.describe("Field-Based Filtering", () => {
         await page.waitForLoadState("networkidle");
 
         // Verify filter chip appears
-        const filterChip = page.locator('[class*="filter"], [class*="chip"]').filter({
-          hasText: /contains|test/i,
-        });
+        const filterChip = page
+          .locator('[class*="filter"], [class*="chip"]')
+          .filter({
+            hasText: /contains|test/i,
+          });
         await expect(filterChip.first()).toBeVisible({ timeout: 3000 });
 
         // Navigate to a test case (click first row)
-        const firstRow = page.locator('tbody tr, [role="row"]').filter({
-          has: page.locator('td, [role="cell"]'),
-        }).first();
+        const firstRow = page
+          .locator('tbody tr, [role="row"]')
+          .filter({
+            has: page.locator('td, [role="cell"]'),
+          })
+          .first();
 
         if (await firstRow.isVisible({ timeout: 2000 }).catch(() => false)) {
           await firstRow.click();
@@ -463,8 +557,10 @@ test.describe("Field-Based Filtering", () => {
       await nameHeader.click();
       await page.waitForTimeout(300);
 
-      const containsOption = page.locator('text=/Contains/i').first();
-      if (await containsOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const containsOption = page.locator("text=/Contains/i").first();
+      if (
+        await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
+      ) {
         await containsOption.click();
         await page.waitForTimeout(200);
 
@@ -478,8 +574,12 @@ test.describe("Field-Based Filtering", () => {
         await page.waitForTimeout(500);
 
         // Look for empty state message
-        const emptyState = page.locator('text=/No.*test cases|No.*results|No.*matches|No.*found/i').first();
-        const emptyStateVisible = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
+        const emptyState = page
+          .locator("text=/No.*test cases|No.*results|No.*matches|No.*found/i")
+          .first();
+        const emptyStateVisible = await emptyState
+          .isVisible({ timeout: 3000 })
+          .catch(() => false);
 
         // Either empty state appears OR no rows in the table
         const tableRows = page.locator('tbody tr, [role="row"]').filter({

@@ -10,18 +10,18 @@ interface DateTimeDisplayProps {
   className?: ClassValue;
 }
 
-export function DateTimeDisplay({ 
-  date, 
-  label, 
-  showTime = false, 
+export function DateTimeDisplay({
+  date,
+  label,
+  showTime = false,
   formatString,
   timezone,
-  className 
+  className,
 }: DateTimeDisplayProps) {
   // Default format based on showTime
   const defaultFormat = showTime ? "MM-dd-yyyy HH:mm" : "MM-dd-yyyy";
   const format = formatString || defaultFormat;
-  
+
   return (
     <span className={cn("text-xs text-muted-foreground", className)}>
       {label && <>{label}: </>}

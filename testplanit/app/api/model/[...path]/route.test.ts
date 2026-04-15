@@ -49,7 +49,10 @@ function getAuditAction(operation: string): string | null {
 }
 
 // Replicate extractEntityName
-function extractEntityName(entityType: string, result: any): string | undefined {
+function extractEntityName(
+  entityType: string,
+  result: any
+): string | undefined {
   if (!result) return undefined;
 
   const nameFields: Record<string, string | string[]> = {
@@ -71,14 +74,19 @@ function extractEntityName(entityType: string, result: any): string | undefined 
   if (!field) return undefined;
 
   if (Array.isArray(field)) {
-    return field.map((f) => result[f]).filter(Boolean).join(":");
+    return field
+      .map((f) => result[f])
+      .filter(Boolean)
+      .join(":");
   }
 
   return result[field];
 }
 
 // Replicate parseZenStackPath
-function parseZenStackPath(path: string[]): { model: string; operation: string } | null {
+function parseZenStackPath(
+  path: string[]
+): { model: string; operation: string } | null {
   if (path.length >= 2) {
     return { model: path[0], operation: path[1] };
   }
@@ -215,54 +223,75 @@ describe("ZenStack API Route Audit Interception", () => {
 
   describe("extractEntityName", () => {
     it("should extract name for repositoryCases", () => {
-      expect(extractEntityName("repositoryCases", { id: 1, name: "Test Case" })).toBe("Test Case");
+      expect(
+        extractEntityName("repositoryCases", { id: 1, name: "Test Case" })
+      ).toBe("Test Case");
     });
 
     it("should extract name for testRuns", () => {
-      expect(extractEntityName("testRuns", { id: 1, name: "Sprint 1 Run" })).toBe("Sprint 1 Run");
+      expect(
+        extractEntityName("testRuns", { id: 1, name: "Sprint 1 Run" })
+      ).toBe("Sprint 1 Run");
     });
 
     it("should extract title for sessions", () => {
-      expect(extractEntityName("sessions", { id: 1, title: "Exploratory Session" })).toBe(
-        "Exploratory Session"
-      );
+      expect(
+        extractEntityName("sessions", { id: 1, title: "Exploratory Session" })
+      ).toBe("Exploratory Session");
     });
 
     it("should extract title for issues", () => {
-      expect(extractEntityName("issues", { id: 1, title: "Bug Report" })).toBe("Bug Report");
+      expect(extractEntityName("issues", { id: 1, title: "Bug Report" })).toBe(
+        "Bug Report"
+      );
     });
 
     it("should extract name for projects", () => {
-      expect(extractEntityName("projects", { id: 1, name: "My Project" })).toBe("My Project");
+      expect(extractEntityName("projects", { id: 1, name: "My Project" })).toBe(
+        "My Project"
+      );
     });
 
     it("should extract email for user", () => {
-      expect(extractEntityName("user", { id: "abc", email: "user@example.com" })).toBe(
-        "user@example.com"
-      );
+      expect(
+        extractEntityName("user", { id: "abc", email: "user@example.com" })
+      ).toBe("user@example.com");
     });
 
     it("should extract type for ssoProvider", () => {
-      expect(extractEntityName("ssoProvider", { id: 1, type: "SAML" })).toBe("SAML");
-    });
-
-    it("should extract domain for allowedEmailDomain", () => {
-      expect(extractEntityName("allowedEmailDomain", { id: 1, domain: "example.com" })).toBe(
-        "example.com"
+      expect(extractEntityName("ssoProvider", { id: 1, type: "SAML" })).toBe(
+        "SAML"
       );
     });
 
+    it("should extract domain for allowedEmailDomain", () => {
+      expect(
+        extractEntityName("allowedEmailDomain", {
+          id: 1,
+          domain: "example.com",
+        })
+      ).toBe("example.com");
+    });
+
     it("should extract key for appConfig", () => {
-      expect(extractEntityName("appConfig", { key: "FEATURE_FLAG" })).toBe("FEATURE_FLAG");
+      expect(extractEntityName("appConfig", { key: "FEATURE_FLAG" })).toBe(
+        "FEATURE_FLAG"
+      );
     });
 
     it("should extract name for apiToken", () => {
-      expect(extractEntityName("apiToken", { id: "token-1", name: "CI Token" })).toBe("CI Token");
+      expect(
+        extractEntityName("apiToken", { id: "token-1", name: "CI Token" })
+      ).toBe("CI Token");
     });
 
     it("should return undefined for entities without name mapping", () => {
-      expect(extractEntityName("comment", { id: 1, content: "Test comment" })).toBeUndefined();
-      expect(extractEntityName("attachment", { id: 1, filename: "test.pdf" })).toBeUndefined();
+      expect(
+        extractEntityName("comment", { id: 1, content: "Test comment" })
+      ).toBeUndefined();
+      expect(
+        extractEntityName("attachment", { id: 1, filename: "test.pdf" })
+      ).toBeUndefined();
     });
 
     it("should return undefined for null result", () => {
@@ -284,8 +313,12 @@ describe("ZenStack API Route Audit Interception", () => {
     });
 
     it("should map permission models correctly", () => {
-      expect(entityTypeMap["userProjectPermission"]).toBe("UserProjectPermission");
-      expect(entityTypeMap["groupProjectPermission"]).toBe("GroupProjectPermission");
+      expect(entityTypeMap["userProjectPermission"]).toBe(
+        "UserProjectPermission"
+      );
+      expect(entityTypeMap["groupProjectPermission"]).toBe(
+        "GroupProjectPermission"
+      );
     });
 
     it("should map config models correctly", () => {
@@ -322,9 +355,11 @@ describe("ZenStack API Route Audit Interception", () => {
       const data = responseData?.data;
       if (!data) return null;
 
-      const entityId = data.id || data.key || `${parsedPath.operation}-fallback`;
+      const entityId =
+        data.id || data.key || `${parsedPath.operation}-fallback`;
       const entityName = extractEntityName(parsedPath.model, data);
-      const projectId = typeof data.projectId === "number" ? data.projectId : undefined;
+      const projectId =
+        typeof data.projectId === "number" ? data.projectId : undefined;
 
       // Special handling for API token operations - use specific audit actions
       let finalAuditAction = auditAction;
@@ -345,15 +380,22 @@ describe("ZenStack API Route Audit Interception", () => {
         projectId,
         metadata: {
           operation: parsedPath.operation,
-          ...(auditAction.startsWith("BULK_") && data.count ? { count: data.count } : {}),
+          ...(auditAction.startsWith("BULK_") && data.count
+            ? { count: data.count }
+            : {}),
         },
       };
     }
 
     it("should construct a CREATE event for a new test case", () => {
-      const event = constructAuditEvent("POST", ["repositoryCases", "create"], 200, {
-        data: { id: 123, name: "New Test Case", projectId: 1 },
-      });
+      const event = constructAuditEvent(
+        "POST",
+        ["repositoryCases", "create"],
+        200,
+        {
+          data: { id: 123, name: "New Test Case", projectId: 1 },
+        }
+      );
 
       expect(event).toEqual({
         action: "CREATE",
@@ -396,9 +438,14 @@ describe("ZenStack API Route Audit Interception", () => {
     });
 
     it("should construct a BULK_CREATE event with count", () => {
-      const event = constructAuditEvent("POST", ["repositoryCases", "createMany"], 200, {
-        data: { count: 10 },
-      });
+      const event = constructAuditEvent(
+        "POST",
+        ["repositoryCases", "createMany"],
+        200,
+        {
+          data: { count: 10 },
+        }
+      );
 
       expect(event).toEqual({
         action: "BULK_CREATE",
@@ -411,40 +458,65 @@ describe("ZenStack API Route Audit Interception", () => {
     });
 
     it("should return null for GET requests", () => {
-      const event = constructAuditEvent("GET", ["repositoryCases", "findMany"], 200, {
-        data: [{ id: 1 }],
-      });
+      const event = constructAuditEvent(
+        "GET",
+        ["repositoryCases", "findMany"],
+        200,
+        {
+          data: [{ id: 1 }],
+        }
+      );
 
       expect(event).toBeNull();
     });
 
     it("should return null for failed mutations", () => {
-      const event = constructAuditEvent("POST", ["repositoryCases", "create"], 500, {
-        error: "Server error",
-      });
+      const event = constructAuditEvent(
+        "POST",
+        ["repositoryCases", "create"],
+        500,
+        {
+          error: "Server error",
+        }
+      );
 
       expect(event).toBeNull();
     });
 
     it("should return null for non-audited entities", () => {
-      const event = constructAuditEvent("POST", ["verificationToken", "create"], 200, {
-        data: { id: 1 },
-      });
+      const event = constructAuditEvent(
+        "POST",
+        ["verificationToken", "create"],
+        200,
+        {
+          data: { id: 1 },
+        }
+      );
 
       expect(event).toBeNull();
     });
 
     it("should return null for read operations even with POST method", () => {
       // ZenStack uses POST for findMany queries
-      const event = constructAuditEvent("POST", ["repositoryCases", "findMany"], 200, {
-        data: [{ id: 1 }],
-      });
+      const event = constructAuditEvent(
+        "POST",
+        ["repositoryCases", "findMany"],
+        200,
+        {
+          data: [{ id: 1 }],
+        }
+      );
 
       expect(event).toBeNull();
     });
 
     it("should return null when response has no data", () => {
-      const event = constructAuditEvent("POST", ["repositoryCases", "create"], 200, {});
+      const event = constructAuditEvent(
+        "POST",
+        ["repositoryCases", "create"],
+        200,
+        {}
+      );
 
       expect(event).toBeNull();
     });
@@ -480,9 +552,14 @@ describe("ZenStack API Route Audit Interception", () => {
     });
 
     it("should handle permission entities", () => {
-      const event = constructAuditEvent("POST", ["userProjectPermission", "create"], 200, {
-        data: { id: 100, userId: "user-1", projectId: 5, role: "ADMIN" },
-      });
+      const event = constructAuditEvent(
+        "POST",
+        ["userProjectPermission", "create"],
+        200,
+        {
+          data: { id: 100, userId: "user-1", projectId: 5, role: "ADMIN" },
+        }
+      );
 
       expect(event).toEqual({
         action: "CREATE",
@@ -495,9 +572,14 @@ describe("ZenStack API Route Audit Interception", () => {
     });
 
     it("should handle BULK_DELETE with count", () => {
-      const event = constructAuditEvent("DELETE", ["repositoryCases", "deleteMany"], 200, {
-        data: { count: 5 },
-      });
+      const event = constructAuditEvent(
+        "DELETE",
+        ["repositoryCases", "deleteMany"],
+        200,
+        {
+          data: { count: 5 },
+        }
+      );
 
       expect(event).toEqual({
         action: "BULK_DELETE",

@@ -2,7 +2,9 @@
 
 import React, { createContext, useCallback, useContext, useState } from "react";
 import {
-  SearchableEntityType, UnifiedSearchFilters, UnifiedSearchResult
+  SearchableEntityType,
+  UnifiedSearchFilters,
+  UnifiedSearchResult,
 } from "~/types/search";
 
 interface SearchState {

@@ -32,11 +32,13 @@ vi.mock("react-select", () => ({
           {opt.label}
         </div>
       ))}
-      {value && Array.isArray(value) && value.map((v: any) => (
-        <div key={v.value} data-selected-value={v.value}>
-          {v.label}
-        </div>
-      ))}
+      {value &&
+        Array.isArray(value) &&
+        value.map((v: any) => (
+          <div key={v.value} data-selected-value={v.value}>
+            {v.label}
+          </div>
+        ))}
       <button
         type="button"
         onClick={() => onChange && onChange([])}
@@ -51,7 +53,8 @@ vi.mock("react-select", () => ({
 // Mock @tanstack/react-query useQueryClient
 const mockRefetchQueries = vi.fn();
 vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@tanstack/react-query")>();
+  const original =
+    await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...original,
     useQueryClient: () => ({ refetchQueries: mockRefetchQueries }),

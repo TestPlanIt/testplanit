@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractEntityContent,
   extractFieldValue,
-  extractTiptapText
+  extractTiptapText,
 } from "./content-extractor";
 
 describe("extractTiptapText", () => {
@@ -84,9 +84,7 @@ describe("extractFieldValue", () => {
   });
 
   it("handles object value", () => {
-    expect(extractFieldValue({ value: { key: "val" } })).toBe(
-      '{"key":"val"}',
-    );
+    expect(extractFieldValue({ value: { key: "val" } })).toBe('{"key":"val"}');
   });
 });
 
@@ -130,7 +128,7 @@ describe("extractEntityContent", () => {
       const result = extractEntityContent(
         entity,
         "repositoryCase",
-        "Auth / Login",
+        "Auth / Login"
       );
 
       expect(result.id).toBe(1);
@@ -143,7 +141,7 @@ describe("extractEntityContent", () => {
       expect(result.textContent).toContain("Priority: High");
       expect(result.existingTagNames).toEqual(["login", "smoke"]);
       expect(result.estimatedTokens).toBe(
-        Math.ceil(result.textContent.length / 4),
+        Math.ceil(result.textContent.length / 4)
       );
     });
 

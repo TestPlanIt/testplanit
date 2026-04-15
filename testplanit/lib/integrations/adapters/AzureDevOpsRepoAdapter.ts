@@ -1,5 +1,8 @@
 import {
-  GitRepoAdapter, ListFilesResult, RepoFileEntry, TestConnectionResult
+  GitRepoAdapter,
+  ListFilesResult,
+  RepoFileEntry,
+  TestConnectionResult,
 } from "./GitRepoAdapter";
 
 export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
@@ -35,9 +38,7 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
       { headers: this.authHeaders }
     );
     // defaultBranch is like "refs/heads/main"
-    return (
-      (data.defaultBranch as string)?.replace("refs/heads/", "") ?? "main"
-    );
+    return (data.defaultBranch as string)?.replace("refs/heads/", "") ?? "main";
   }
 
   async listAllFiles(branch: string): Promise<ListFilesResult> {

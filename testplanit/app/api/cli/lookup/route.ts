@@ -13,7 +13,14 @@ import { getServerAuthSession } from "~/server/auth";
 
 interface LookupRequest {
   projectId?: number; // Not required for project lookup
-  type: "project" | "state" | "config" | "milestone" | "tag" | "folder" | "testRun";
+  type:
+    | "project"
+    | "state"
+    | "config"
+    | "milestone"
+    | "tag"
+    | "folder"
+    | "testRun";
   name: string;
   createIfMissing?: boolean; // Only applicable for tags
 }
@@ -209,7 +216,10 @@ export async function POST(request: NextRequest) {
 
         if (!repository) {
           return NextResponse.json(
-            { error: `No active repository found for project ${projectId}`, code: "NOT_FOUND" },
+            {
+              error: `No active repository found for project ${projectId}`,
+              code: "NOT_FOUND",
+            },
             { status: 404 }
           );
         }

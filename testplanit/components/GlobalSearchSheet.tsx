@@ -4,14 +4,14 @@ import { SearchHelpContent } from "@/components/search/SearchHelpContent";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { UnifiedSearch } from "@/components/UnifiedSearch";
 import { HelpCircle } from "lucide-react";

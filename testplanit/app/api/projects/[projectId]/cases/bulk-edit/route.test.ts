@@ -229,7 +229,9 @@ describe("Bulk Edit API Route", () => {
     });
 
     it("returns 400 when some cases not found", async () => {
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([mockCases[0]]);
+      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+        mockCases[0],
+      ]);
 
       const [request, context] = createRequest({
         caseIds: [1, 2, 3],
@@ -327,7 +329,9 @@ describe("Bulk Edit API Route", () => {
 
     it("handles state update with large ID value", async () => {
       // Override findMany to return just 1 case for this test
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([mockCases[0]]);
+      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+        mockCases[0],
+      ]);
 
       const transactionMock = vi.fn().mockImplementation(async (callback) => {
         const tx = {
@@ -409,8 +413,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -441,8 +452,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -469,8 +487,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -497,8 +522,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -536,8 +568,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -570,8 +609,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -606,8 +652,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: mockTxUpdate },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -642,7 +695,10 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
           caseFieldValues: {
             create: mockTxCreate,
             update: vi.fn(),
@@ -689,7 +745,10 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
           caseFieldValues: {
             create: vi.fn(),
             update: mockTxUpdate,
@@ -733,7 +792,10 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
           caseFieldValues: {
             create: vi.fn(),
             update: vi.fn(),
@@ -763,9 +825,19 @@ describe("Bulk Edit API Route", () => {
       const mockCreateMany = vi.fn().mockResolvedValue({ count: 2 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
-          repositoryCaseVersions: { create: mockCreate, createMany: mockCreateMany },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCaseVersions: {
+            create: mockCreate,
+            createMany: mockCreateMany,
+          },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -790,8 +862,15 @@ describe("Bulk Edit API Route", () => {
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           repositoryCaseVersions: { createMany: mockCreateMany },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -820,8 +899,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: {
             create: mockCreate,
             update: vi.fn(),
@@ -836,7 +922,11 @@ describe("Bulk Edit API Route", () => {
         stepsUpdates: {
           operation: "replace",
           newSteps: [
-            { step: { type: "doc", content: [] }, expectedResult: { type: "doc", content: [] }, order: 0 },
+            {
+              step: { type: "doc", content: [] },
+              expectedResult: { type: "doc", content: [] },
+              order: 0,
+            },
           ],
         },
         createVersions: true,
@@ -855,12 +945,15 @@ describe("Bulk Edit API Route", () => {
           {
             id: 1,
             step: '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Click login button"}]}]}',
-            expectedResult: '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"User is logged in"}]}]}',
+            expectedResult:
+              '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"User is logged in"}]}]}',
             order: 0,
           },
         ],
       }));
-      (prisma.repositoryCases.findMany as any).mockResolvedValue(casesWithSteps);
+      (prisma.repositoryCases.findMany as any).mockResolvedValue(
+        casesWithSteps
+      );
 
       const mockStepUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
@@ -869,8 +962,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: {
             create: vi.fn(),
             update: mockStepUpdate,
@@ -908,8 +1008,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });
@@ -959,7 +1066,10 @@ describe("Bulk Edit API Route", () => {
               create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
               createMany: vi.fn().mockResolvedValue({ count: 2 }),
             },
-            repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
+            repositoryCases: {
+              findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+              update: vi.fn().mockResolvedValue({}),
+            },
             caseFieldValues: {
               create: vi.fn(),
               update: vi.fn(),
@@ -997,8 +1107,15 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
           },
-          repositoryCases: { findUnique: vi.fn().mockResolvedValue(mockCases[0]), update: vi.fn().mockResolvedValue({}) },
-          caseFieldValues: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
         });
       });

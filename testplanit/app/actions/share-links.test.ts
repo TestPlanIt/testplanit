@@ -87,7 +87,9 @@ describe("Share Link Password Hashing", () => {
       const hash = await bcrypt.hash(passwordWithSpaces, 10);
 
       // Exact match should work
-      expect(await bcrypt.compare("  password with   spaces  ", hash)).toBe(true);
+      expect(await bcrypt.compare("  password with   spaces  ", hash)).toBe(
+        true
+      );
 
       // Trimmed version should fail
       expect(await bcrypt.compare("password with   spaces", hash)).toBe(false);

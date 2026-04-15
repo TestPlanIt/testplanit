@@ -1,8 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  checkRateLimit, generateCSRFToken, generateSecureState, getSecureCookieOptions, getSecurityHeaders, hashData,
+  checkRateLimit,
+  generateCSRFToken,
+  generateSecureState,
+  getSecureCookieOptions,
+  getSecurityHeaders,
+  hashData,
   isValidRedirectUrl,
-  sanitizeCallbackUrl, validateSAMLTimestamp, verifyState, verifyTempSessionToken
+  sanitizeCallbackUrl,
+  validateSAMLTimestamp,
+  verifyState,
+  verifyTempSessionToken,
 } from "./auth-security";
 
 // Mock environment variables
@@ -178,9 +186,8 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
 
     // Force module re-evaluation by clearing cache
     vi.resetModules();
-    const { createTempSessionToken: createToken } = await import(
-      "./auth-security"
-    );
+    const { createTempSessionToken: createToken } =
+      await import("./auth-security");
 
     const token = createToken(testData);
     expect(typeof token).toBe("string");
@@ -220,8 +227,10 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
     process.env.NEXTAUTH_SECRET = "test-secret-key-at-least-32-chars-long";
 
     vi.resetModules();
-    const { createTempSessionToken: createToken, verifyTempSessionToken: verifyToken } =
-      await import("./auth-security");
+    const {
+      createTempSessionToken: createToken,
+      verifyTempSessionToken: verifyToken,
+    } = await import("./auth-security");
 
     const token = createToken(testData);
     const tamperedToken = token.slice(0, -5) + "xxxxx";
@@ -342,12 +351,21 @@ describe("getSecureCookieOptions", () => {
   it("should set secure based on NODE_ENV", () => {
     const originalNodeEnv = process.env.NODE_ENV;
 
-    Object.defineProperty(process.env, "NODE_ENV", { value: "production", writable: true });
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "production",
+      writable: true,
+    });
     expect(getSecureCookieOptions().secure).toBe(true);
 
-    Object.defineProperty(process.env, "NODE_ENV", { value: "development", writable: true });
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+    });
     expect(getSecureCookieOptions().secure).toBe(false);
 
-    Object.defineProperty(process.env, "NODE_ENV", { value: originalNodeEnv, writable: true });
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: originalNodeEnv,
+      writable: true,
+    });
   });
 });

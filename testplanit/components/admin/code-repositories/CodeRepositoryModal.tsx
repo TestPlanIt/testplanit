@@ -3,13 +3,18 @@
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent, DialogFooter, DialogHeader,
-  DialogTitle
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form, FormControl, FormField,
+  Form,
+  FormControl,
+  FormField,
   FormItem,
-  FormLabel, FormMessage
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -18,7 +23,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,9 +33,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import {
-  useUpdateCodeRepository, useUpsertCodeRepository
-} from "~/lib/hooks";
+import { useUpdateCodeRepository, useUpsertCodeRepository } from "~/lib/hooks";
 import { CodeRepositoryConfigForm } from "./CodeRepositoryConfigForm";
 
 const PROVIDERS = [
@@ -164,7 +167,9 @@ export function CodeRepositoryModal({
           },
         });
       }
-      toast.success(repository ? t("repositoryUpdated") : t("repositoryCreated"));
+      toast.success(
+        repository ? t("repositoryUpdated") : t("repositoryCreated")
+      );
       onSaved();
       onClose();
     } catch (err: any) {
@@ -182,7 +187,10 @@ export function CodeRepositoryModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit as any)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control as any}
               name="name"
@@ -230,10 +238,7 @@ export function CodeRepositoryModal({
               />
             )}
 
-            <CodeRepositoryConfigForm
-              provider={selectedProvider}
-              form={form}
-            />
+            <CodeRepositoryConfigForm provider={selectedProvider} form={form} />
 
             {repository && (
               <FormField
@@ -261,9 +266,7 @@ export function CodeRepositoryModal({
                 onClick={handleTestConnection}
                 disabled={isTesting}
               >
-                {isTesting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t("testConnection")}
               </Button>
               {testResult && (
@@ -295,7 +298,9 @@ export function CodeRepositoryModal({
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {repository ? tCommon("actions.saveChanges") : t("addRepository")}
+                {repository
+                  ? tCommon("actions.saveChanges")
+                  : t("addRepository")}
               </Button>
             </DialogFooter>
           </form>

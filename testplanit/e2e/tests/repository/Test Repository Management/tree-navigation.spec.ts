@@ -17,7 +17,9 @@ test.describe("Tree Navigation", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Navigate to Repository Page and Display Folder Tree @smoke", async ({
@@ -87,9 +89,14 @@ test.describe("Tree Navigation", () => {
     // Collapse via the chevron button (clicking on expand button toggles)
     const parentFolder = repositoryPage.getFolderById(parentId);
     // Look for the expand/collapse button with chevron icon (could be chevron-down when expanded)
-    const collapseButton = parentFolder.locator('button').filter({
-      has: page.locator('svg.lucide-chevron-down, svg.lucide-chevron-right, svg[class*="lucide-chevron"]')
-    }).first();
+    const collapseButton = parentFolder
+      .locator("button")
+      .filter({
+        has: page.locator(
+          'svg.lucide-chevron-down, svg.lucide-chevron-right, svg[class*="lucide-chevron"]'
+        ),
+      })
+      .first();
     await expect(collapseButton).toBeVisible({ timeout: 5000 });
     await collapseButton.click();
 
@@ -137,7 +144,7 @@ test.describe("Tree Navigation", () => {
     await expect(separator).toBeVisible({ timeout: 5000 });
 
     // The separator should have aria semantics for a resize handle
-    await expect(separator).toHaveAttribute('role', 'separator');
+    await expect(separator).toHaveAttribute("role", "separator");
   });
 
   test("Repository Page Has Both Panels Visible", async ({ api, page }) => {
@@ -155,11 +162,14 @@ test.describe("Tree Navigation", () => {
 
     // Verify the right panel area is visible (test cases area)
     // The right panel contains the breadcrumb and test cases
-    const testCasesHeader = page.locator('text=/Test Cases/i').first();
+    const testCasesHeader = page.locator("text=/Test Cases/i").first();
     await expect(testCasesHeader).toBeVisible({ timeout: 5000 });
   });
 
-  test("Parent Folder Expands After Adding First Child", async ({ api, page: _page }) => {
+  test("Parent Folder Expands After Adding First Child", async ({
+    api,
+    page: _page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create an empty parent folder
@@ -202,9 +212,12 @@ test.describe("Tree Navigation", () => {
     // Hover to make the expand button visible
     await parent1.hover();
     // Find the expand button that contains the chevron
-    const expandButton = parent1.locator('button').filter({
-      has: page.locator('svg[class*="chevron"]')
-    }).first();
+    const expandButton = parent1
+      .locator("button")
+      .filter({
+        has: page.locator('svg[class*="chevron"]'),
+      })
+      .first();
     await expect(expandButton).toBeVisible({ timeout: 5000 });
 
     // Click the expand button with ControlOrMeta modifier (works on both Mac and Windows)
@@ -247,7 +260,9 @@ test.describe("Tree Navigation", () => {
     await expect(level3Folder).not.toBeVisible();
 
     // Expand level 2 - wait for level2 folder to be ready first
-    await expect(repositoryPage.getFolderById(level2Id)).toBeVisible({ timeout: 5000 });
+    await expect(repositoryPage.getFolderById(level2Id)).toBeVisible({
+      timeout: 5000,
+    });
     await repositoryPage.expandFolder(level2Id);
     await expect(level3Folder.first()).toBeVisible({ timeout: 10000 });
   });
@@ -267,11 +282,14 @@ test.describe("Tree Navigation", () => {
     await repositoryPage.goto(projectId);
 
     // The folder should show test case count (e.g., "(2/2)")
-    const folderWithCount = page.locator('[data-testid^="folder-node-"]').filter({
-      hasText: folderName
-    }).filter({
-      hasText: /\(\d+\/\d+\)/
-    });
+    const folderWithCount = page
+      .locator('[data-testid^="folder-node-"]')
+      .filter({
+        hasText: folderName,
+      })
+      .filter({
+        hasText: /\(\d+\/\d+\)/,
+      });
     await expect(folderWithCount.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -298,12 +316,15 @@ test.describe("Tree Navigation", () => {
 
     // Root Folder should always be present in the tree
     const rootFolder = page.locator('[data-testid^="folder-node-"]').filter({
-      hasText: "Root Folder"
+      hasText: "Root Folder",
     });
     await expect(rootFolder.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test("Show All Descendants Toggle Displays Cases From Subfolders", async ({ api, page }) => {
+  test("Show All Descendants Toggle Displays Cases From Subfolders", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     const uniqueId = Date.now();
 
@@ -325,29 +346,45 @@ test.describe("Tree Navigation", () => {
     await repositoryPage.selectFolder(parentId);
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${childCaseName}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${childCaseName}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
 
     // Click the "Show all descendants" toggle
-    const descendantsToggle = page.getByRole("button", { name: /show all descendants/i });
+    const descendantsToggle = page.getByRole("button", {
+      name: /show all descendants/i,
+    });
     await expect(descendantsToggle).toBeVisible({ timeout: 5000 });
     await descendantsToggle.click();
     await page.waitForLoadState("networkidle");
 
     // Both cases should now be visible
-    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${childCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${childCaseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Child case should show a folder badge
     const childCaseRow = page.locator("tr").filter({ hasText: childCaseName });
-    await expect(childCaseRow.locator(`text="${childName}"`)).toBeVisible({ timeout: 5000 });
+    await expect(childCaseRow.locator(`text="${childName}"`)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Toggle off - should go back to showing only parent's case
     await descendantsToggle.click();
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${childCaseName}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="${parentCaseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${childCaseName}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
   });
 
   test("View Test Cases in Selected Folder Only", async ({ api, page }) => {
@@ -390,5 +427,4 @@ test.describe("Tree Navigation", () => {
       timeout: 3000,
     });
   });
-
 });

@@ -16,11 +16,11 @@ export async function GET(
 
     const { id } = await params;
     const integrationId = id;
-    
+
     // Get issueTypeId from query params
     const { searchParams } = new URL(request.url);
     const issueTypeId = searchParams.get("issueTypeId");
-    
+
     if (!issueTypeId) {
       return NextResponse.json(
         { error: "Issue type ID is required" },
@@ -81,7 +81,8 @@ export async function GET(
       }
 
       const config = projectIntegration.config as Record<string, any> | null;
-      projectKey = config?.externalProjectKey || config?.externalProjectId || null;
+      projectKey =
+        config?.externalProjectKey || config?.externalProjectId || null;
     }
 
     if (!projectKey) {
@@ -105,7 +106,9 @@ export async function GET(
     // Get issue type fields
     if (!adapter.getIssueTypeFields) {
       return NextResponse.json(
-        { error: "This integration does not support fetching issue type fields" },
+        {
+          error: "This integration does not support fetching issue type fields",
+        },
         { status: 400 }
       );
     }

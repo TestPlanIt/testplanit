@@ -2,8 +2,9 @@ import {
   Select,
   SelectContent,
   SelectGroup,
-  SelectItem, SelectTrigger,
-  SelectValue
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 import { DraggableField } from "./DraggableCaseFields";
@@ -33,7 +34,10 @@ export function SelectScrollable({
         }
       }}
     >
-      <SelectTrigger className="w-[280px]" data-testid={`add-${type}-field-select`}>
+      <SelectTrigger
+        className="w-[280px]"
+        data-testid={`add-${type}-field-select`}
+      >
         <SelectValue
           placeholder={`Add a field to ${type.charAt(0).toUpperCase() + type.slice(1)} Fields`}
         />

@@ -110,7 +110,6 @@ describe("isValidShareKey", () => {
         expect(isValidShareKey(shareKey)).toBe(true);
       }
     });
-
   });
 
   describe("invalid keys", () => {
@@ -127,29 +126,37 @@ describe("isValidShareKey", () => {
 
     it("should reject keys with invalid characters (base64 padding)", () => {
       const keyWithPadding = "aBcDeFgHiJkLmNoPqRsTuVwXyZa012345678901=";
-            expect(isValidShareKey(keyWithPadding)).toBe(false);
+      expect(isValidShareKey(keyWithPadding)).toBe(false);
     });
 
     it("should reject keys with + character", () => {
       const keyWithPlus = "aBcDeFgHiJkLmNoPqRsTuVwXyZa012345678901+";
-            expect(isValidShareKey(keyWithPlus)).toBe(false);
+      expect(isValidShareKey(keyWithPlus)).toBe(false);
     });
 
     it("should reject keys with / character", () => {
       const keyWithSlash = "aBcDeFgHiJkLmNoPqRsTuVwXyZa012345678901/";
-            expect(isValidShareKey(keyWithSlash)).toBe(false);
+      expect(isValidShareKey(keyWithSlash)).toBe(false);
     });
 
     it("should reject keys with spaces", () => {
       const keyWithSpaces = "aBcDeFgHiJkLm NoPqRsTuVwXyZa012345678901";
-            expect(isValidShareKey(keyWithSpaces)).toBe(false);
+      expect(isValidShareKey(keyWithSpaces)).toBe(false);
     });
 
     it("should reject keys with special characters", () => {
-      expect(isValidShareKey("aBcDeFgHiJkLm@NoPqRsTuVwXyZa0123456789012")).toBe(false);
-      expect(isValidShareKey("aBcDeFgHiJkLm#NoPqRsTuVwXyZa0123456789012")).toBe(false);
-      expect(isValidShareKey("aBcDeFgHiJkLm$NoPqRsTuVwXyZa0123456789012")).toBe(false);
-      expect(isValidShareKey("aBcDeFgHiJkLm%NoPqRsTuVwXyZa0123456789012")).toBe(false);
+      expect(isValidShareKey("aBcDeFgHiJkLm@NoPqRsTuVwXyZa0123456789012")).toBe(
+        false
+      );
+      expect(isValidShareKey("aBcDeFgHiJkLm#NoPqRsTuVwXyZa0123456789012")).toBe(
+        false
+      );
+      expect(isValidShareKey("aBcDeFgHiJkLm$NoPqRsTuVwXyZa0123456789012")).toBe(
+        false
+      );
+      expect(isValidShareKey("aBcDeFgHiJkLm%NoPqRsTuVwXyZa0123456789012")).toBe(
+        false
+      );
     });
 
     it("should reject null or undefined", () => {
@@ -177,7 +184,7 @@ describe("isValidShareKey", () => {
 
     it("should handle mixed valid and invalid characters", () => {
       const mixedKey = "aBcDeFgHiJkLm-_+NoPqRsTuVwXyZa0123456789";
-            expect(isValidShareKey(mixedKey)).toBe(false); // Contains +
+      expect(isValidShareKey(mixedKey)).toBe(false); // Contains +
     });
   });
 });

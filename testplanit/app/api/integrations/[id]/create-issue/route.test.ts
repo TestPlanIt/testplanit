@@ -49,14 +49,11 @@ import { getServerSession } from "next-auth/next";
 import { POST } from "./route";
 
 const createRequest = (payload: Record<string, any> = {}): NextRequest => {
-  return new NextRequest(
-    "http://localhost/api/integrations/1/create-issue",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  return new NextRequest("http://localhost/api/integrations/1/create-issue", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+  });
 };
 
 const params = { params: Promise.resolve({ id: "1" }) };
@@ -90,7 +87,10 @@ describe("POST /api/integrations/[id]/create-issue", () => {
     it("returns 401 when no session", async () => {
       (getServerSession as any).mockResolvedValue(null);
 
-      const response = await POST(createRequest({ title: "Test", projectId: "PROJ" }), params);
+      const response = await POST(
+        createRequest({ title: "Test", projectId: "PROJ" }),
+        params
+      );
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -100,7 +100,10 @@ describe("POST /api/integrations/[id]/create-issue", () => {
     it("returns 401 when session has no user id", async () => {
       (getServerSession as any).mockResolvedValue({ user: {} });
 
-      const response = await POST(createRequest({ title: "Test", projectId: "PROJ" }), params);
+      const response = await POST(
+        createRequest({ title: "Test", projectId: "PROJ" }),
+        params
+      );
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -122,7 +125,10 @@ describe("POST /api/integrations/[id]/create-issue", () => {
     it("returns 400 when projectId is missing", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
 
-      const response = await POST(createRequest({ title: "Test Issue" }), params);
+      const response = await POST(
+        createRequest({ title: "Test Issue" }),
+        params
+      );
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -256,7 +262,11 @@ describe("POST /api/integrations/[id]/create-issue", () => {
 
     it("stores issue in DB when testCaseId provided", async () => {
       const response = await POST(
-        createRequest({ title: "Linked Issue", projectId: "PROJ", testCaseId: "42" }),
+        createRequest({
+          title: "Linked Issue",
+          projectId: "PROJ",
+          testCaseId: "42",
+        }),
         params
       );
       const data = await response.json();
@@ -276,7 +286,9 @@ describe("POST /api/integrations/[id]/create-issue", () => {
         authType: "API_KEY",
         status: "ACTIVE",
       });
-      mockAdapter.createIssue.mockRejectedValue(new Error("External service error"));
+      mockAdapter.createIssue.mockRejectedValue(
+        new Error("External service error")
+      );
 
       const response = await POST(
         createRequest({ title: "Failing Issue", projectId: "PROJ" }),

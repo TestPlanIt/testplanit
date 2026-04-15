@@ -27,27 +27,35 @@ const updateUserSchema = z.object({
   roleId: z.number().int().optional(),
   userPreferences: z
     .object({
-      theme: z.enum(["Light", "Dark", "System", "Green", "Orange", "Purple"]).optional(),
+      theme: z
+        .enum(["Light", "Dark", "System", "Green", "Orange", "Purple"])
+        .optional(),
       locale: z.enum(["en_US", "es_ES", "fr_FR"]).optional(),
       itemsPerPage: z.enum(["P10", "P25", "P50", "P100", "P250"]).optional(),
-      dateFormat: z.enum([
-        "MM_DD_YYYY_SLASH",
-        "MM_DD_YYYY_DASH",
-        "DD_MM_YYYY_SLASH",
-        "DD_MM_YYYY_DASH",
-        "YYYY_MM_DD",
-        "MMM_D_YYYY",
-        "D_MMM_YYYY",
-      ]).optional(),
-      timeFormat: z.enum(["HH_MM", "HH_MM_A", "HH_MM_Z", "HH_MM_Z_A"]).optional(),
+      dateFormat: z
+        .enum([
+          "MM_DD_YYYY_SLASH",
+          "MM_DD_YYYY_DASH",
+          "DD_MM_YYYY_SLASH",
+          "DD_MM_YYYY_DASH",
+          "YYYY_MM_DD",
+          "MMM_D_YYYY",
+          "D_MMM_YYYY",
+        ])
+        .optional(),
+      timeFormat: z
+        .enum(["HH_MM", "HH_MM_A", "HH_MM_Z", "HH_MM_Z_A"])
+        .optional(),
       timezone: z.string().optional(),
-      notificationMode: z.enum([
-        "NONE",
-        "USE_GLOBAL",
-        "IN_APP",
-        "IN_APP_EMAIL_IMMEDIATE",
-        "IN_APP_EMAIL_DAILY",
-      ]).optional(),
+      notificationMode: z
+        .enum([
+          "NONE",
+          "USE_GLOBAL",
+          "IN_APP",
+          "IN_APP_EMAIL_IMMEDIATE",
+          "IN_APP_EMAIL_DAILY",
+        ])
+        .optional(),
       emailNotifications: z.boolean().optional(),
       inAppNotifications: z.boolean().optional(),
     })
@@ -102,9 +110,10 @@ export async function PATCH(
           { status: 403 }
         );
       }
-      userUpdate.emailVerified = validatedData.emailVerified instanceof Date
-        ? validatedData.emailVerified
-        : new Date(validatedData.emailVerified);
+      userUpdate.emailVerified =
+        validatedData.emailVerified instanceof Date
+          ? validatedData.emailVerified
+          : new Date(validatedData.emailVerified);
     }
     if (validatedData.isActive !== undefined) {
       userUpdate.isActive = validatedData.isActive;
@@ -159,11 +168,9 @@ export async function PATCH(
               // Set defaults for required fields not in the update
               theme: validatedData.userPreferences.theme || "Light",
               locale: validatedData.userPreferences.locale || "en_US",
-              itemsPerPage:
-                validatedData.userPreferences.itemsPerPage || "P10",
+              itemsPerPage: validatedData.userPreferences.itemsPerPage || "P10",
               dateFormat:
-                validatedData.userPreferences.dateFormat ||
-                "MM_DD_YYYY_DASH",
+                validatedData.userPreferences.dateFormat || "MM_DD_YYYY_DASH",
               timeFormat: validatedData.userPreferences.timeFormat || "HH_MM_A",
               timezone: validatedData.userPreferences.timezone || "Etc/UTC",
             },

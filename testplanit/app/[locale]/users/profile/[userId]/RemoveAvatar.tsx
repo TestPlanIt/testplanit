@@ -6,7 +6,9 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
-  Popover, PopoverContent, PopoverTrigger
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { CircleSlash2, Trash2, X } from "lucide-react";
 
@@ -78,8 +80,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               onClick={() => setOpenPopover(false)}
               disabled={isLoading}
             >
-              <CircleSlash2 className="h-4 w-4" />{" "}
-              {tCommon("cancel")}
+              <CircleSlash2 className="h-4 w-4" /> {tCommon("cancel")}
             </Button>
           </div>
           <div className="flex items-center">

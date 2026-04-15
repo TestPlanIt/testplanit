@@ -19,9 +19,12 @@ async function migrateIntegrationProjects() {
     const config = pi.config as Record<string, any> | null;
 
     // Fallback chain: externalProjectId > externalProjectKey
-    const externalProjectId = config?.externalProjectId || config?.externalProjectKey;
+    const externalProjectId =
+      config?.externalProjectId || config?.externalProjectKey;
     if (!externalProjectId) {
-      console.log(`  Skipping ${pi.id} — no externalProjectId or externalProjectKey in config`);
+      console.log(
+        `  Skipping ${pi.id} — no externalProjectId or externalProjectKey in config`
+      );
       skipped++;
       continue;
     }
@@ -35,7 +38,9 @@ async function migrateIntegrationProjects() {
     });
 
     if (existing) {
-      console.log(`  Skipping ${pi.id} — already migrated (${externalProjectId})`);
+      console.log(
+        `  Skipping ${pi.id} — already migrated (${externalProjectId})`
+      );
       skipped++;
       continue;
     }
@@ -45,8 +50,14 @@ async function migrateIntegrationProjects() {
         data: {
           projectIntegrationId: pi.id,
           externalProjectId: String(externalProjectId),
-          externalProjectKey: String(config?.externalProjectKey || externalProjectId),
-          externalProjectName: String(config?.externalProjectName || config?.externalProjectKey || externalProjectId),
+          externalProjectKey: String(
+            config?.externalProjectKey || externalProjectId
+          ),
+          externalProjectName: String(
+            config?.externalProjectName ||
+              config?.externalProjectKey ||
+              externalProjectId
+          ),
           isActive: true,
           isDefault: true, // First-and-only project becomes default per D-03
           defaultIssueType: config?.defaultIssueType || null,
@@ -61,7 +72,9 @@ async function migrateIntegrationProjects() {
     }
   }
 
-  console.log(`\nMigration complete: ${migrated} migrated, ${skipped} skipped, ${errors} errors`);
+  console.log(
+    `\nMigration complete: ${migrated} migrated, ${skipped} skipped, ${errors} errors`
+  );
 }
 
 migrateIntegrationProjects()

@@ -3,31 +3,31 @@
  */
 
 export enum SearchableEntityType {
-  REPOSITORY_CASE = 'repository_case',
-  SHARED_STEP = 'shared_step',
-  TEST_RUN = 'test_run',
-  SESSION = 'session',
-  PROJECT = 'project',
-  ISSUE = 'issue',
-  MILESTONE = 'milestone'
+  REPOSITORY_CASE = "repository_case",
+  SHARED_STEP = "shared_step",
+  TEST_RUN = "test_run",
+  SESSION = "session",
+  PROJECT = "project",
+  ISSUE = "issue",
+  MILESTONE = "milestone",
 }
 
-export type CustomFieldOperator = 
-  | 'equals' 
-  | 'not_equals'
-  | 'contains' 
-  | 'not_contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'gt' 
-  | 'lt' 
-  | 'gte'
-  | 'lte'
-  | 'between' 
-  | 'in' 
-  | 'not_in'
-  | 'exists'
-  | 'not_exists';
+export type CustomFieldOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "gt"
+  | "lt"
+  | "gte"
+  | "lte"
+  | "between"
+  | "in"
+  | "not_in"
+  | "exists"
+  | "not_exists";
 
 export interface CustomFieldFilter {
   fieldId: number;
@@ -45,7 +45,7 @@ export interface BaseEntityFilters {
   stateIds?: number[];
   includeDeleted?: boolean;
   dateRange?: {
-    field: 'createdAt' | 'updatedAt' | 'completedAt';
+    field: "createdAt" | "updatedAt" | "completedAt";
     from?: Date;
     to?: Date;
   };
@@ -69,7 +69,7 @@ export interface TestRunFilters extends BaseEntityFilters {
   configurationIds?: number[];
   milestoneIds?: number[];
   isCompleted?: boolean;
-  testRunType?: 'REGULAR' | 'JUNIT';
+  testRunType?: "REGULAR" | "JUNIT";
   customFields?: CustomFieldFilter[];
   elapsedRange?: {
     min?: number;
@@ -102,7 +102,7 @@ export interface ProjectFilters {
   creatorIds?: string[];
   isDeleted?: boolean;
   dateRange?: {
-    field: 'createdAt' | 'updatedAt';
+    field: "createdAt" | "updatedAt";
     from?: Date;
     to?: Date;
   };
@@ -129,7 +129,7 @@ export interface UnifiedSearchFilters {
   entityTypes?: SearchableEntityType[];
   query?: string;
   includeDeleted?: boolean;
-  
+
   // Entity-specific filters
   repositoryCase?: RepositoryCaseFilters;
   testRun?: TestRunFilters;
@@ -144,7 +144,7 @@ export interface SearchOptions {
   filters: UnifiedSearchFilters;
   sort?: {
     field: string;
-    order: 'asc' | 'desc';
+    order: "asc" | "desc";
   }[];
   pagination?: {
     page: number;

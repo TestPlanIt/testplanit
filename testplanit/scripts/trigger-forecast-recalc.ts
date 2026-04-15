@@ -5,7 +5,9 @@ import { JOB_UPDATE_ALL_CASES } from "../workers/forecastWorker";
 async function triggerForecastRecalculation() {
   const forecastQueue = getForecastQueue();
   if (!forecastQueue) {
-    console.error("Forecast queue not initialized. Make sure Valkey/Redis is running.");
+    console.error(
+      "Forecast queue not initialized. Make sure Valkey/Redis is running."
+    );
     process.exit(1);
   }
 
@@ -14,7 +16,9 @@ async function triggerForecastRecalculation() {
     console.log("Queueing forecast recalculation job...");
     for (const tenantId of tenantIds) {
       const job = await forecastQueue.add(JOB_UPDATE_ALL_CASES, { tenantId });
-      console.log(`✓ Successfully queued forecast recalculation job: ${job.id}${tenantId ? ` for tenant ${tenantId}` : ""}`);
+      console.log(
+        `✓ Successfully queued forecast recalculation job: ${job.id}${tenantId ? ` for tenant ${tenantId}` : ""}`
+      );
     }
     console.log(`  Job will be processed by the forecast worker`);
     console.log(`  Monitor progress with: pnpm pm2:logs`);

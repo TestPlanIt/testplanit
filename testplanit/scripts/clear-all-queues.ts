@@ -1,8 +1,12 @@
 import { Queue } from "bullmq";
 import {
-  AUTO_TAG_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
-  NOTIFICATION_QUEUE_NAME, SYNC_QUEUE_NAME,
-  TESTMO_IMPORT_QUEUE_NAME
+  AUTO_TAG_QUEUE_NAME,
+  ELASTICSEARCH_REINDEX_QUEUE_NAME,
+  EMAIL_QUEUE_NAME,
+  FORECAST_QUEUE_NAME,
+  NOTIFICATION_QUEUE_NAME,
+  SYNC_QUEUE_NAME,
+  TESTMO_IMPORT_QUEUE_NAME,
 } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
 
@@ -31,7 +35,10 @@ async function clearQueue(queueName: string) {
 
     // Get counts before clearing
     const counts = await queue.getJobCounts();
-    const totalJobs = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const totalJobs = Object.values(counts).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     if (totalJobs === 0) {
       console.log(`  Queue "${queueName}" is already empty.`);

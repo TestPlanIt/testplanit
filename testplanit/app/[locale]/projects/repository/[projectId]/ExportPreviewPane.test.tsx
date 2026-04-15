@@ -74,9 +74,7 @@ vi.mock("@/components/ui/separator", () => ({
 }));
 
 vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: React.PropsWithChildren<object>) => (
-    <>{children}</>
-  ),
+  Tooltip: ({ children }: React.PropsWithChildren<object>) => <>{children}</>,
   TooltipProvider: ({ children }: React.PropsWithChildren<object>) => (
     <>{children}</>
   ),
@@ -97,9 +95,9 @@ vi.mock("@/components/ui/collapsible", () => ({
     children,
     ...props
   }: React.PropsWithChildren<object>) => <button {...props}>{children}</button>,
-  CollapsibleContent: ({
-    children,
-  }: React.PropsWithChildren<object>) => <div>{children}</div>,
+  CollapsibleContent: ({ children }: React.PropsWithChildren<object>) => (
+    <div>{children}</div>
+  ),
 }));
 
 // --- Import Component Under Test ---
@@ -110,7 +108,9 @@ import type { ParallelFileProgress } from "./QuickScriptModal";
 
 // --- Fixtures ---
 
-const makeResult = (overrides: Partial<AiExportResult> = {}): AiExportResult => ({
+const makeResult = (
+  overrides: Partial<AiExportResult> = {}
+): AiExportResult => ({
   code: "test('login', () => { expect(true).toBe(true); });",
   generatedBy: "ai",
   caseId: 1,
@@ -139,12 +139,7 @@ beforeEach(() => {
 describe("ExportPreviewPane", () => {
   it("renders results with code content visible", () => {
     const result = makeResult();
-    render(
-      <ExportPreviewPane
-        {...defaultProps}
-        results={[result]}
-      />
-    );
+    render(<ExportPreviewPane {...defaultProps} results={[result]} />);
 
     expect(screen.getByText(result.code)).toBeInTheDocument();
   });
@@ -249,12 +244,7 @@ describe("ExportPreviewPane", () => {
       error: "AI generation failed: token limit exceeded",
     });
 
-    render(
-      <ExportPreviewPane
-        {...defaultProps}
-        results={[result]}
-      />
-    );
+    render(<ExportPreviewPane {...defaultProps} results={[result]} />);
 
     // Error appears in the tooltip content rendered via our mock
     expect(
@@ -263,14 +253,19 @@ describe("ExportPreviewPane", () => {
   });
 
   it("results with generatedBy=ai show AI badge indicator", () => {
-    const result1 = makeResult({ caseId: 1, caseName: "Test A", generatedBy: "ai" });
-    const result2 = makeResult({ caseId: 2, caseName: "Test B", generatedBy: "template" });
+    const result1 = makeResult({
+      caseId: 1,
+      caseName: "Test A",
+      generatedBy: "ai",
+    });
+    const result2 = makeResult({
+      caseId: 2,
+      caseName: "Test B",
+      generatedBy: "template",
+    });
 
     render(
-      <ExportPreviewPane
-        {...defaultProps}
-        results={[result1, result2]}
-      />
+      <ExportPreviewPane {...defaultProps} results={[result1, result2]} />
     );
 
     // In multi-result view: AI badge shows "aiGenerated", template shows "templateGenerated"
@@ -309,11 +304,7 @@ describe("ExportPreviewPane", () => {
 
   it("returns null when no results and not generating", () => {
     const { container } = render(
-      <ExportPreviewPane
-        {...defaultProps}
-        results={[]}
-        isGenerating={false}
-      />
+      <ExportPreviewPane {...defaultProps} results={[]} isGenerating={false} />
     );
 
     expect(container.firstChild).toBeNull();

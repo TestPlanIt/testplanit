@@ -187,9 +187,7 @@ test.describe("RepositoryCases CRUD", () => {
     const prefix = `E2E Multi Case ${ts}`;
 
     // Create a fresh project for isolation
-    const projectId = await api.createProject(
-      `E2E RC Multi Project ${ts}`
-    );
+    const projectId = await api.createProject(`E2E RC Multi Project ${ts}`);
     const folderId = await api.getRootFolderId(projectId);
 
     // Create 3 cases in the same folder

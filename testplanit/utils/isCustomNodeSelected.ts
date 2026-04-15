@@ -1,11 +1,12 @@
 import { Editor } from "@tiptap/react";
 
 import {
-  CodeBlock, Figcaption,
+  CodeBlock,
+  Figcaption,
   HorizontalRule,
   ImageBlock,
   ImageUpload,
-  Link
+  Link,
 } from "@/extensions";
 
 export const isTableGripSelected = (node: HTMLElement) => {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 /**
  * Fix ZenStack enhance function symlink for pnpm workspaces
@@ -15,18 +15,20 @@ const path = require('path');
  * The fix: Create a symlink from the runtime package directory to the generated files.
  */
 
-console.log('🔧 Fixing ZenStack symlink for pnpm workspace...');
+console.log("🔧 Fixing ZenStack symlink for pnpm workspace...");
 
 try {
   // Find the @zenstackhq/runtime directory
-  const runtimePath = path.dirname(require.resolve('@zenstackhq/runtime/package.json'));
-  const symlinkPath = path.join(runtimePath, '.zenstack');
+  const runtimePath = path.dirname(
+    require.resolve("@zenstackhq/runtime/package.json")
+  );
+  const symlinkPath = path.join(runtimePath, ".zenstack");
 
   console.log(`   Runtime package found at: ${runtimePath}`);
 
   // Remove existing symlink if it exists
   if (fs.existsSync(symlinkPath)) {
-    console.log('   Removing existing .zenstack symlink...');
+    console.log("   Removing existing .zenstack symlink...");
     fs.unlinkSync(symlinkPath);
   }
 
@@ -36,7 +38,7 @@ try {
   // The generated files are in the same pnpm directory structure as the runtime
   // Look for a .zenstack directory at the same level as the runtime package
   const pnpmRuntimeDir = path.dirname(path.dirname(runtimePath)); // Go up two levels from @zenstackhq/runtime
-  const pnpmZenstackDir = path.join(pnpmRuntimeDir, '.zenstack');
+  const pnpmZenstackDir = path.join(pnpmRuntimeDir, ".zenstack");
 
   if (fs.existsSync(pnpmZenstackDir)) {
     // Use relative path from runtime directory to the pnpm .zenstack directory
@@ -45,23 +47,33 @@ try {
     console.log(`   Found generated files at: ${pnpmZenstackDir}`);
     console.log(`   Creating symlink with relative path: ${relativePath}`);
   } else {
-    console.log('   Warning: Generated .zenstack directory not found.');
-    console.log('   Expected location:', pnpmZenstackDir);
-    console.log('   This might be normal if zenstack generate hasn\'t been run yet.');
+    console.log("   Warning: Generated .zenstack directory not found.");
+    console.log("   Expected location:", pnpmZenstackDir);
+    console.log(
+      "   This might be normal if zenstack generate hasn't been run yet."
+    );
     process.exit(0);
   }
 
   // Create the symlink
-  fs.symlinkSync(zenstackDir, symlinkPath, 'dir');
-  console.log(`   ✅ Successfully created symlink: ${symlinkPath} -> ${zenstackDir}`);
+  fs.symlinkSync(zenstackDir, symlinkPath, "dir");
+  console.log(
+    `   ✅ Successfully created symlink: ${symlinkPath} -> ${zenstackDir}`
+  );
 
   // Also copy files directly for build compatibility
   const sourceZenstackDir = path.resolve(runtimePath, zenstackDir);
-  const enhanceFile = path.join(symlinkPath, 'enhance.js');
-  const _enhanceEdgeFile = path.join(symlinkPath, 'enhance-edge.js');
+  const enhanceFile = path.join(symlinkPath, "enhance.js");
+  const _enhanceEdgeFile = path.join(symlinkPath, "enhance-edge.js");
 
   // Copy all zenstack files directly to runtime directory for build compatibility
-  const filesToCopy = ['enhance.js', 'enhance-edge.js', 'policy.js', 'model-meta.js', 'models.js'];
+  const filesToCopy = [
+    "enhance.js",
+    "enhance-edge.js",
+    "policy.js",
+    "model-meta.js",
+    "models.js",
+  ];
 
   try {
     let copiedCount = 0;
@@ -79,29 +91,35 @@ try {
         copiedCount++;
       }
     }
-    console.log(`   ✅ Copied ${copiedCount} zenstack files to runtime directory`);
+    console.log(
+      `   ✅ Copied ${copiedCount} zenstack files to runtime directory`
+    );
   } catch (copyError) {
-    console.log('   ⚠️  Warning: Could not copy zenstack files:', copyError.message);
+    console.log(
+      "   ⚠️  Warning: Could not copy zenstack files:",
+      copyError.message
+    );
   }
 
   // Verify the symlink works
   if (fs.existsSync(enhanceFile)) {
-    console.log('   ✅ Symlink verified: enhance.js is accessible');
+    console.log("   ✅ Symlink verified: enhance.js is accessible");
   } else {
-    console.log('   ⚠️  Warning: enhance.js not found through symlink');
+    console.log("   ⚠️  Warning: enhance.js not found through symlink");
   }
 
   // Verify direct files exist
-  const runtimeEnhanceFile = path.join(runtimePath, 'enhance.js');
+  const runtimeEnhanceFile = path.join(runtimePath, "enhance.js");
   if (fs.existsSync(runtimeEnhanceFile)) {
-    console.log('   ✅ Direct copy verified: enhance.js in runtime directory');
+    console.log("   ✅ Direct copy verified: enhance.js in runtime directory");
   }
-
 } catch (error) {
-  console.error('   ❌ Error fixing ZenStack symlink:', error.message);
+  console.error("   ❌ Error fixing ZenStack symlink:", error.message);
   // Don't fail the install process - just warn
-  console.log('   This may cause "enhance function not found" errors at runtime.');
+  console.log(
+    '   This may cause "enhance function not found" errors at runtime.'
+  );
   process.exit(0);
 }
 
-console.log('🎉 ZenStack symlink fix completed!');
+console.log("🎉 ZenStack symlink fix completed!");

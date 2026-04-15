@@ -486,16 +486,16 @@ export function NotificationContent({
           <h4 className="font-medium text-sm">{notification.title}</h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>{notification.message}</p>
-            {data.url && (
-              <p className="text-xs truncate">{data.url}</p>
-            )}
+            {data.url && <p className="text-xs truncate">{data.url}</p>}
             {!isFailure && (
               <div className="flex items-center gap-1">
                 <Link
                   href={reviewLink}
                   className="font-medium text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  {t("reviewGeneratedCases", { defaultValue: "Review generated test cases" })}
+                  {t("reviewGeneratedCases", {
+                    defaultValue: "Review generated test cases",
+                  })}
                   <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>

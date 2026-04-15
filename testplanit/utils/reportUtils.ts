@@ -953,7 +953,11 @@ export function createTestExecutionMetricRegistry(
           // If no results with elapsed time, return 0
           // Otherwise, return the average (null values are already filtered out)
           return [
-            { avgElapsedTime: result._avg.elapsed ? Math.round(result._avg.elapsed) : 0 },
+            {
+              avgElapsedTime: result._avg.elapsed
+                ? Math.round(result._avg.elapsed)
+                : 0,
+            },
           ];
         }
 
@@ -3878,7 +3882,9 @@ export function createUserEngagementMetricRegistry(
           // Otherwise, return the average in seconds (null values are already filtered out)
           return [
             {
-              averageElapsed: result._avg.elapsed ? result._avg.elapsed / 1000 : 0,
+              averageElapsed: result._avg.elapsed
+                ? result._avg.elapsed / 1000
+                : 0,
             },
           ];
         }

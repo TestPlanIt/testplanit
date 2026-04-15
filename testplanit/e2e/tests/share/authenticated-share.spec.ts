@@ -20,7 +20,9 @@ test.describe("Authenticated Share Flow", () => {
       dimensions: "testCase",
       metrics: "testCaseCount",
     });
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
 
     const runButton = page.locator('[data-testid="run-report-button"]');
@@ -36,7 +38,7 @@ test.describe("Authenticated Share Flow", () => {
     await runButton.click();
     await page.waitForLoadState("networkidle");
 
-    const resultsCard = page.locator('text=/Results/i');
+    const resultsCard = page.locator("text=/Results/i");
     await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
   }
 
@@ -50,8 +52,16 @@ test.describe("Authenticated Share Flow", () => {
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Test Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, rootFolderId, `Test Case 2 ${timestamp}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Test Case 1 ${timestamp}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Test Case 2 ${timestamp}`
+    );
 
     // Navigate to report builder and run report
     await navigateToRepositoryStatsReport(page, projectId);
@@ -63,7 +73,9 @@ test.describe("Authenticated Share Flow", () => {
 
     // Select AUTHENTICATED mode
     // Note: The data-testid uses lowercase version of the mode
-    const authModeRadio = page.locator('[data-testid="share-mode-authenticated"]');
+    const authModeRadio = page.locator(
+      '[data-testid="share-mode-authenticated"]'
+    );
     await expect(authModeRadio).toBeVisible({ timeout: 5000 });
     await authModeRadio.click();
 
@@ -118,7 +130,9 @@ test.describe("Authenticated Share Flow", () => {
     page,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Auth Redirect Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Auth Redirect Test ${timestamp}`
+    );
 
     // Create test data
     const rootFolderId = await api.getRootFolderId(projectId);
@@ -157,7 +171,9 @@ test.describe("Authenticated Share Flow", () => {
     await page.waitForLoadState("networkidle");
 
     // Should be redirected to the Reports page with the report configuration
-    await expect(page).toHaveURL(/\/projects\/reports\/\d+/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/projects\/reports\/\d+/, {
+      timeout: 10000,
+    });
 
     // Verify the URL contains the report configuration parameters
     const finalUrl = page.url();
@@ -166,7 +182,7 @@ test.describe("Authenticated Share Flow", () => {
     expect(finalUrl).toContain("metrics=testCaseCount");
 
     // Verify we're on the Report Builder tab (not viewing static share)
-    const reportBuilder = page.locator('text=/Report Builder/i');
+    const reportBuilder = page.locator("text=/Report Builder/i");
     await expect(reportBuilder.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -175,7 +191,9 @@ test.describe("Authenticated Share Flow", () => {
     page,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Auth View Count Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Auth View Count Test ${timestamp}`
+    );
 
     // Create test data
     const rootFolderId = await api.getRootFolderId(projectId);

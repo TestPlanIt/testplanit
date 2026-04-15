@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LinkIcon } from "lucide-react";
 import React from "react";

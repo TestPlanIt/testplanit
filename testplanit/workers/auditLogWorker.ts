@@ -2,8 +2,10 @@ import type { Prisma } from "@prisma/client";
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
-  isMultiTenantMode, validateMultiTenantJobData
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import type { AuditLogJobData } from "../lib/services/auditLog";
@@ -83,7 +85,10 @@ const processor = async (job: Job<AuditLogJobData>) => {
         entityId: event.entityId,
         entityName: event.entityName || null,
         changes: event.changes as Prisma.InputJsonValue | undefined,
-        metadata: Object.keys(metadata).length > 0 ? (metadata as Prisma.InputJsonValue) : undefined,
+        metadata:
+          Object.keys(metadata).length > 0
+            ? (metadata as Prisma.InputJsonValue)
+            : undefined,
         projectId: validatedProjectId,
       },
     });
@@ -113,7 +118,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(AUDIT_LOG_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.AUDIT_LOG_CONCURRENCY || '10', 10), // Higher concurrency since audit logs are independent
+      concurrency: parseInt(process.env.AUDIT_LOG_CONCURRENCY || "10", 10), // Higher concurrency since audit logs are independent
     });
 
     worker.on("completed", (_job) => {
@@ -164,8 +169,8 @@ const startWorker = async () => {
 if (
   (typeof import.meta !== "undefined" &&
     import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  (typeof import.meta === "undefined" ||
-    (import.meta as unknown as { url?: string })?.url === undefined)
+  typeof import.meta === "undefined" ||
+  (import.meta as unknown as { url?: string })?.url === undefined
 ) {
   console.log("[AuditLogWorker] Running as standalone process...");
   startWorker().catch((err) => {

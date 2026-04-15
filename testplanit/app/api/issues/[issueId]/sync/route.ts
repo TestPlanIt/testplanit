@@ -36,8 +36,7 @@ export async function POST(
     if (!issue.integrationId || !issue.externalId) {
       return NextResponse.json(
         {
-          error:
-            "Issue does not have an external integration or external ID",
+          error: "Issue does not have an external integration or external ID",
         },
         { status: 400 }
       );
@@ -55,8 +54,7 @@ export async function POST(
     if (issue.integration.provider === "SIMPLE_URL") {
       return NextResponse.json(
         {
-          error:
-            "Sync is not supported for Simple URL integrations",
+          error: "Sync is not supported for Simple URL integrations",
         },
         { status: 400 }
       );

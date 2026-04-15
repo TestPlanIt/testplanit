@@ -66,9 +66,7 @@ test("shows validation errors for empty fields on submit", async () => {
   expect(
     await screen.findByText("admin.appConfig.errors.keyRequired")
   ).toBeVisible();
-  expect(
-    await screen.findByText("common.errors.valueRequired")
-  ).toBeVisible();
+  expect(await screen.findByText("common.errors.valueRequired")).toBeVisible();
   // Ensure mutation was NOT called
   expect(mockMutateAsync).not.toHaveBeenCalled();
 });

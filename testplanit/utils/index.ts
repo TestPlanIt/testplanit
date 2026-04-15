@@ -16,4 +16,3 @@ export function cn(...inputs: ClassValue[]) {
 export function randomElement(array: Array<any>) {
   return array[Math.floor(Math.random() * array.length)];
 }
-

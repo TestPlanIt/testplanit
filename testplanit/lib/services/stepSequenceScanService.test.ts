@@ -13,7 +13,12 @@ import { StepSequenceScanService } from "./stepSequenceScanService";
  */
 function makeCase(
   id: number,
-  steps: Array<{ id: number; step: string; expectedResult?: string; order?: number }>,
+  steps: Array<{
+    id: number;
+    step: string;
+    expectedResult?: string;
+    order?: number;
+  }>
 ) {
   return {
     id,
@@ -33,7 +38,7 @@ function makeStep(
   id: number,
   text: string,
   expectedResult = "",
-  order = 0,
+  order = 0
 ): { id: number; step: string; expectedResult: string; order: number } {
   return { id, step: text, expectedResult, order };
 }
@@ -69,8 +74,16 @@ describe("StepSequenceScanService", async () => {
   });
 
   it("returns 0 groups for cases with completely different steps", async () => {
-    const a = makeCase(1, [makeStep(1, "Login to app"), makeStep(2, "Click submit"), makeStep(3, "Check error")]);
-    const b = makeCase(2, [makeStep(4, "Open report"), makeStep(5, "Export PDF"), makeStep(6, "Download file")]);
+    const a = makeCase(1, [
+      makeStep(1, "Login to app"),
+      makeStep(2, "Click submit"),
+      makeStep(3, "Check error"),
+    ]);
+    const b = makeCase(2, [
+      makeStep(4, "Open report"),
+      makeStep(5, "Export PDF"),
+      makeStep(6, "Download file"),
+    ]);
     const result = await service.findSharedSequences([a, b]);
     expect(result).toHaveLength(0);
   });
@@ -116,7 +129,10 @@ describe("StepSequenceScanService", async () => {
   });
 
   it("minSteps=2 parameter finds sequences of length 2 that default would miss", async () => {
-    const a = makeCase(1, [makeStep(1, "Navigate to login page"), makeStep(2, "Enter username")]);
+    const a = makeCase(1, [
+      makeStep(1, "Navigate to login page"),
+      makeStep(2, "Enter username"),
+    ]);
     const b = makeCase(2, [
       { id: 10, step: "Navigate to login page", expectedResult: "", order: 1 },
       { id: 11, step: "Enter username", expectedResult: "", order: 2 },
@@ -139,9 +155,18 @@ describe("StepSequenceScanService", async () => {
       "Click login button",
     ];
 
-    const a = makeCase(1, steps.map((t, i) => makeStep(i + 1, t, "", i + 1)));
-    const b = makeCase(2, steps.map((t, i) => makeStep(i + 10, t, "", i + 1)));
-    const c = makeCase(3, steps.map((t, i) => makeStep(i + 20, t, "", i + 1)));
+    const a = makeCase(
+      1,
+      steps.map((t, i) => makeStep(i + 1, t, "", i + 1))
+    );
+    const b = makeCase(
+      2,
+      steps.map((t, i) => makeStep(i + 10, t, "", i + 1))
+    );
+    const c = makeCase(
+      3,
+      steps.map((t, i) => makeStep(i + 20, t, "", i + 1))
+    );
 
     const result = await service.findSharedSequences([a, b, c]);
 
@@ -293,7 +318,12 @@ describe("StepSequenceScanService", async () => {
     // Simulate TipTap JSON format — the service must extract plain text
     const tipTapDoc = JSON.stringify({
       type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: "Navigate to login page" }] }],
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Navigate to login page" }],
+        },
+      ],
     });
 
     const a = makeCase(1, [
@@ -371,14 +401,20 @@ describe("StepSequenceScanService", async () => {
       { id: 3, step: "Enter password", expectedResult: "", order: 3 },
     ]);
     // First step is from shared group, rest are regular
-    a.steps = a.steps.map((s, i) => ({ ...s, sharedStepGroupId: i === 0 ? 100 : null }));
+    a.steps = a.steps.map((s, i) => ({
+      ...s,
+      sharedStepGroupId: i === 0 ? 100 : null,
+    }));
 
     const b = makeCase(2, [
       { id: 10, step: "Navigate to login page", expectedResult: "", order: 1 },
       { id: 11, step: "Enter username", expectedResult: "", order: 2 },
       { id: 12, step: "Enter password", expectedResult: "", order: 3 },
     ]);
-    b.steps = b.steps.map((s, i) => ({ ...s, sharedStepGroupId: i === 0 ? 100 : null }));
+    b.steps = b.steps.map((s, i) => ({
+      ...s,
+      sharedStepGroupId: i === 0 ? 100 : null,
+    }));
 
     const result = await service.findSharedSequences([a, b]);
     // Mix of shared and regular — should still be reported
@@ -401,7 +437,10 @@ describe("StepSequenceScanService", async () => {
     ]);
 
     // Empty step text produces no tokens — pair is skipped by overlap pre-filter
-    const result = await service.findSharedSequences([caseWithEmptySteps1, caseWithEmptySteps2]);
+    const result = await service.findSharedSequences([
+      caseWithEmptySteps1,
+      caseWithEmptySteps2,
+    ]);
     expect(result).toHaveLength(0);
   });
 });

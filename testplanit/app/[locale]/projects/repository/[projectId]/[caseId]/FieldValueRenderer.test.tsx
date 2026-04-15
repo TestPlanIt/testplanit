@@ -39,15 +39,17 @@ vi.mock("next-themes", () => ({
 
 // Mock TipTapEditor
 vi.mock("@/components/tiptap/TipTapEditor", () => ({
-  default: vi.fn(({ content, readOnly }: { content?: any; readOnly?: boolean }) => (
-    <div
-      data-testid="tiptap-editor"
-      data-content={JSON.stringify(content)}
-      data-readonly={readOnly ? "true" : "false"}
-    >
-      TipTapEditor
-    </div>
-  )),
+  default: vi.fn(
+    ({ content, readOnly }: { content?: any; readOnly?: boolean }) => (
+      <div
+        data-testid="tiptap-editor"
+        data-content={JSON.stringify(content)}
+        data-readonly={readOnly ? "true" : "false"}
+      >
+        TipTapEditor
+      </div>
+    )
+  ),
 }));
 
 // Mock DynamicIcon
@@ -121,7 +123,15 @@ vi.mock("./StepsResults", () => ({
 // Mock react-select
 vi.mock("react-select", () => ({
   default: vi.fn(
-    ({ value, _options, _onChange }: { value?: any; _options?: any[]; _onChange?: any }) => (
+    ({
+      value,
+      _options,
+      _onChange,
+    }: {
+      value?: any;
+      _options?: any[];
+      _onChange?: any;
+    }) => (
       <div data-testid="multi-select">
         {Array.isArray(value)
           ? value.map((v: any) => <span key={v.value}>{v.label}</span>)
@@ -175,7 +185,11 @@ vi.mock("~/app/constants", () => ({
 import React from "react";
 import FieldValueRenderer from "./FieldValueRenderer";
 
-const makeTemplate = (fieldId: number, fieldType: string, fieldOptions: any[] = []) => ({
+const makeTemplate = (
+  fieldId: number,
+  fieldType: string,
+  fieldOptions: any[] = []
+) => ({
   caseFields: [
     {
       caseField: {
@@ -195,7 +209,9 @@ const makeTemplate = (fieldId: number, fieldType: string, fieldOptions: any[] = 
 
 const defaultProps = {
   caseId: "1",
-  session: { user: { preferences: { dateFormat: "MM/DD/YYYY", timezone: "UTC" } } },
+  session: {
+    user: { preferences: { dateFormat: "MM/DD/YYYY", timezone: "UTC" } },
+  },
   isEditMode: false,
   isSubmitting: false,
   control: {},
@@ -278,8 +294,18 @@ describe("FieldValueRenderer", () => {
   describe("Dropdown field", () => {
     it("renders selected option name in view mode", () => {
       const template = makeTemplate(3, "Dropdown", [
-        { id: 10, name: "Option A", icon: { name: "circle" }, iconColor: { value: "#ff0000" } },
-        { id: 11, name: "Option B", icon: { name: "circle" }, iconColor: { value: "#00ff00" } },
+        {
+          id: 10,
+          name: "Option A",
+          icon: { name: "circle" },
+          iconColor: { value: "#ff0000" },
+        },
+        {
+          id: 11,
+          name: "Option B",
+          icon: { name: "circle" },
+          iconColor: { value: "#00ff00" },
+        },
       ]);
 
       render(
@@ -299,8 +325,18 @@ describe("FieldValueRenderer", () => {
   describe("Multi-Select field", () => {
     it("renders selected option names in view mode", () => {
       const template = makeTemplate(4, "Multi-Select", [
-        { id: 20, name: "Tag Alpha", icon: { name: "circle" }, iconColor: { value: "#ff0000" } },
-        { id: 21, name: "Tag Beta", icon: { name: "circle" }, iconColor: { value: "#00ff00" } },
+        {
+          id: 20,
+          name: "Tag Alpha",
+          icon: { name: "circle" },
+          iconColor: { value: "#ff0000" },
+        },
+        {
+          id: 21,
+          name: "Tag Beta",
+          icon: { name: "circle" },
+          iconColor: { value: "#00ff00" },
+        },
       ]);
 
       render(
@@ -522,7 +558,9 @@ describe("FieldValueRenderer", () => {
     it("renders StepsResults in run mode", () => {
       const template = makeTemplate(10, "Steps");
       // Use non-empty steps so isEmptyValue returns false
-      const mockSteps = [{ id: 1, step: null, expectedResult: null, sharedStepGroupId: null }];
+      const mockSteps = [
+        { id: 1, step: null, expectedResult: null, sharedStepGroupId: null },
+      ];
 
       render(
         <FieldValueRenderer
@@ -557,7 +595,9 @@ describe("FieldValueRenderer", () => {
       );
 
       // Field container should be present but text content minimal
-      const fieldDiv = container.querySelector('[data-testid="field-value-field-1"]');
+      const fieldDiv = container.querySelector(
+        '[data-testid="field-value-field-1"]'
+      );
       expect(fieldDiv).toBeInTheDocument();
     });
 
@@ -591,7 +631,9 @@ describe("FieldValueRenderer", () => {
         />
       );
 
-      expect(container.querySelector('[data-testid="field-value-field-1"]')).toBeInTheDocument();
+      expect(
+        container.querySelector('[data-testid="field-value-field-1"]')
+      ).toBeInTheDocument();
     });
   });
 });

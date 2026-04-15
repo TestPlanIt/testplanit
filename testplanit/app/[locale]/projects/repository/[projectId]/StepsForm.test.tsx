@@ -77,15 +77,17 @@ vi.mock("sonner", () => ({
 
 // Mock TipTapEditor
 vi.mock("@/components/tiptap/TipTapEditor", () => ({
-  default: vi.fn(({ content, readOnly }: { content?: any; readOnly?: boolean }) => (
-    <div
-      data-testid="tiptap-editor"
-      data-content={JSON.stringify(content)}
-      data-readonly={readOnly ? "true" : "false"}
-    >
-      TipTapEditor
-    </div>
-  )),
+  default: vi.fn(
+    ({ content, readOnly }: { content?: any; readOnly?: boolean }) => (
+      <div
+        data-testid="tiptap-editor"
+        data-content={JSON.stringify(content)}
+        data-readonly={readOnly ? "true" : "false"}
+      >
+        TipTapEditor
+      </div>
+    )
+  ),
 }));
 
 // Mock AsyncCombobox
@@ -143,7 +145,13 @@ vi.mock("react-hook-form", async (importOriginal) => {
     useFormContext: vi.fn(() => ({
       setValue: mockSetValue,
       getValues: vi.fn(() => ({})),
-      getFieldState: vi.fn(() => ({ invalid: false, isDirty: false, isTouched: false, isValidating: false, error: undefined })),
+      getFieldState: vi.fn(() => ({
+        invalid: false,
+        isDirty: false,
+        isTouched: false,
+        isValidating: false,
+        error: undefined,
+      })),
       formState: { errors: {}, isSubmitting: false },
       control: {},
     })),

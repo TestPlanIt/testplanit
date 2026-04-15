@@ -19,7 +19,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     api,
   }) => {
     const prefix = `FilterTest-${Date.now()}`;
-    const projectId = await api.createProject(`E2E Filter Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E Filter Project ${Date.now()}`
+    );
     const folderId = await api.getRootFolderId(projectId);
 
     // Create 3 test cases with distinct names
@@ -56,7 +58,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     api,
   }) => {
     const prefix = `OrderTest-${Date.now()}`;
-    const projectId = await api.createProject(`E2E OrderBy Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E OrderBy Project ${Date.now()}`
+    );
     const folderId = await api.getRootFolderId(projectId);
 
     // Create 3 test cases — A, B, C
@@ -121,7 +125,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     api,
   }) => {
     const prefix = `PageTest-${Date.now()}`;
-    const projectId = await api.createProject(`E2E Pagination Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E Pagination Project ${Date.now()}`
+    );
     const folderId = await api.getRootFolderId(projectId);
 
     // Create 5 test cases with ordered names
@@ -208,7 +214,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     api,
   }) => {
     const prefix = `CountTest-${Date.now()}`;
-    const projectId = await api.createProject(`E2E Count RC Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E Count RC Project ${Date.now()}`
+    );
     const folderId = await api.getRootFolderId(projectId);
 
     // Create 4 cases: 2 with "CountMatch" and 2 with "CountOther"
@@ -287,7 +295,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     api,
   }) => {
     const prefix = `CountRun-${Date.now()}`;
-    const projectId = await api.createProject(`E2E Count Runs Project ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E Count Runs Project ${Date.now()}`
+    );
 
     // Create 3 test runs with unique prefix
     await api.createTestRun(projectId, `${prefix}-A`);

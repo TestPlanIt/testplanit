@@ -9,7 +9,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -29,12 +29,16 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { emptyEditorContent } from "~/app/constants";
 import {
-  useFindManyColor, useFindManyMilestones, useFindManyMilestoneTypes
+  useFindManyColor,
+  useFindManyMilestones,
+  useFindManyMilestoneTypes,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import {
-  ColorMap, createColorMap, getStatus,
-  getStatusStyle
+  ColorMap,
+  createColorMap,
+  getStatus,
+  getStatusStyle,
 } from "~/utils/milestoneUtils";
 
 interface MilestoneFormControlsProps {

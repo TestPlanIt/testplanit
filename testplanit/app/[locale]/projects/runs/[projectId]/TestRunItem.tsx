@@ -11,19 +11,24 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Configurations } from "@prisma/client";
 import {
-  Bot, CheckCircle, Combine, Copy, LinkIcon,
-  MoreVertical, Pencil
+  Bot,
+  CheckCircle,
+  Combine,
+  Copy,
+  LinkIcon,
+  MoreVertical,
+  Pencil,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -253,7 +258,9 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="truncate inline-block">{testRun.name}</span>
+                        <span className="truncate inline-block">
+                          {testRun.name}
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="text-sm">{testRun.name}</p>

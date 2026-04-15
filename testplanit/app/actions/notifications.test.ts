@@ -33,8 +33,13 @@ vi.mock("~/lib/services/notificationService", () => ({
 }));
 
 import {
-  createUserRegistrationNotification, deleteAllNotifications, deleteNotification, getUnreadNotificationCount, markAllNotificationsAsRead, markNotificationAsRead,
-  markNotificationAsUnread
+  createUserRegistrationNotification,
+  deleteAllNotifications,
+  deleteNotification,
+  getUnreadNotificationCount,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  markNotificationAsUnread,
 } from "./notifications";
 
 describe("notifications actions", () => {

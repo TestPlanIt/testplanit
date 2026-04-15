@@ -240,9 +240,7 @@ export const getColumns = (
           onClick={() => onDeleteConfig?.(row.original)}
           className="px-2 py-1 h-auto"
           disabled={row.original.isDefault}
-          title={
-            row.original.isDefault ? t("cannotDeleteDefault") : undefined
-          }
+          title={row.original.isDefault ? t("cannotDeleteDefault") : undefined}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

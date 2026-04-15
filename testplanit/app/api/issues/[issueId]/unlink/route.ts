@@ -58,7 +58,9 @@ export async function POST(
         updateData.testRunResults = { disconnect: { id: parseInt(entityId) } };
         break;
       case "testRunStepResult":
-        updateData.testRunStepResults = { disconnect: { id: parseInt(entityId) } };
+        updateData.testRunStepResults = {
+          disconnect: { id: parseInt(entityId) },
+        };
         break;
       default:
         return NextResponse.json(

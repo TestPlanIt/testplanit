@@ -335,7 +335,9 @@ describe("OllamaAdapter", () => {
 
       mockFetch.mockRejectedValueOnce(new Error("Connection refused"));
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       const models = await adapter.getAvailableModels();
 
       expect(models).toEqual([]);
@@ -407,7 +409,9 @@ describe("OllamaAdapter", () => {
         ok: true,
       });
 
-      await expect(adapter.deleteModel("llama3:latest")).resolves.toBeUndefined();
+      await expect(
+        adapter.deleteModel("llama3:latest")
+      ).resolves.toBeUndefined();
 
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost:11434/api/delete",

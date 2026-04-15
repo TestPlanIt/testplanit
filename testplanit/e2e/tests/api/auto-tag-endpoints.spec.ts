@@ -18,17 +18,23 @@ test.describe("Auto-Tag API Endpoints", () => {
    * POST /api/auto-tag/submit
    */
   test.describe("POST /api/auto-tag/submit", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      const response = await unauthRequest.post(`${baseURL}/api/auto-tag/submit`, {
-        data: {
-          entityIds: [1],
-          entityType: "repositoryCase",
-          projectId: 1,
-        },
-      });
+      const response = await unauthRequest.post(
+        `${baseURL}/api/auto-tag/submit`,
+        {
+          data: {
+            entityIds: [1],
+            entityType: "repositoryCase",
+            projectId: 1,
+          },
+        }
+      );
 
       expect(response.status()).toBe(401);
       const body = await response.json();
@@ -51,7 +57,10 @@ test.describe("Auto-Tag API Endpoints", () => {
       expect(body.details).toBeDefined();
     });
 
-    test("returns 400 for empty entityIds array", async ({ request, baseURL }) => {
+    test("returns 400 for empty entityIds array", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(`${baseURL}/api/auto-tag/submit`, {
         data: {
           entityIds: [], // min(1) fails
@@ -108,7 +117,10 @@ test.describe("Auto-Tag API Endpoints", () => {
    * GET /api/auto-tag/status/:jobId
    */
   test.describe("GET /api/auto-tag/status/:jobId", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
@@ -146,7 +158,10 @@ test.describe("Auto-Tag API Endpoints", () => {
    * POST /api/auto-tag/cancel/:jobId
    */
   test.describe("POST /api/auto-tag/cancel/:jobId", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
@@ -186,21 +201,27 @@ test.describe("Auto-Tag API Endpoints", () => {
    * This endpoint has no queue dependency and is fully testable end-to-end.
    */
   test.describe("POST /api/auto-tag/apply", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      const response = await unauthRequest.post(`${baseURL}/api/auto-tag/apply`, {
-        data: {
-          suggestions: [
-            {
-              entityId: 1,
-              entityType: "repositoryCase",
-              tagName: "TestTag",
-            },
-          ],
-        },
-      });
+      const response = await unauthRequest.post(
+        `${baseURL}/api/auto-tag/apply`,
+        {
+          data: {
+            suggestions: [
+              {
+                entityId: 1,
+                entityType: "repositoryCase",
+                tagName: "TestTag",
+              },
+            ],
+          },
+        }
+      );
 
       expect(response.status()).toBe(401);
       const body = await response.json();
@@ -208,7 +229,10 @@ test.describe("Auto-Tag API Endpoints", () => {
       await unauthCtx.close();
     });
 
-    test("returns 400 for empty suggestions array", async ({ request, baseURL }) => {
+    test("returns 400 for empty suggestions array", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(`${baseURL}/api/auto-tag/apply`, {
         data: {
           suggestions: [], // min(1) Zod validation fails
@@ -272,17 +296,20 @@ test.describe("Auto-Tag API Endpoints", () => {
 
       const tagName = `E2E-AutoTag-${ts}`;
 
-      const applyResponse = await request.post(`${baseURL}/api/auto-tag/apply`, {
-        data: {
-          suggestions: [
-            {
-              entityId: caseId,
-              entityType: "repositoryCase",
-              tagName,
-            },
-          ],
-        },
-      });
+      const applyResponse = await request.post(
+        `${baseURL}/api/auto-tag/apply`,
+        {
+          data: {
+            suggestions: [
+              {
+                entityId: caseId,
+                entityType: "repositoryCase",
+                tagName,
+              },
+            ],
+          },
+        }
+      );
 
       expect(applyResponse.status()).toBe(200);
       const applyBody = await applyResponse.json();
@@ -318,9 +345,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       api,
     }) => {
       const ts = Date.now();
-      const projectId = await api.createProject(
-        `E2E AutoTag Reuse Test ${ts}`
-      );
+      const projectId = await api.createProject(`E2E AutoTag Reuse Test ${ts}`);
       const folderId = await api.getRootFolderId(projectId);
       const caseId = await api.createTestCase(
         projectId,

@@ -239,7 +239,10 @@ describe("useDrillDownExport", () => {
       await result.current.exportToCSV();
     });
 
-    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as Record<string, any>[];
+    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as Record<
+      string,
+      any
+    >[];
     expect(csvData).toHaveLength(1);
     // The keys use translation function output
     expect(Object.keys(csvData[0])).toContain("testCases");
@@ -271,7 +274,10 @@ describe("useDrillDownExport", () => {
       await result.current.exportToCSV();
     });
 
-    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as Record<string, any>[];
+    const csvData = (mockUnparse.mock.calls[0] as any[])[0] as Record<
+      string,
+      any
+    >[];
     expect(csvData).toHaveLength(1);
     expect(csvData[0]["Progress"]).toBe("13/18");
     expect(csvData[0]["Passed"]).toBe(10);

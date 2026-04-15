@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Forge-Api-Key",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, X-Forge-Api-Key",
   };
 
   try {
@@ -57,7 +58,10 @@ export async function GET(request: NextRequest) {
 
     if (!authenticatedIntegration) {
       return NextResponse.json(
-        { error: "Invalid or missing API key. Configure a Forge API key in your Jira integration settings." },
+        {
+          error:
+            "Invalid or missing API key. Configure a Forge API key in your Jira integration settings.",
+        },
         { status: 401, headers }
       );
     }
@@ -83,7 +87,7 @@ export async function GET(request: NextRequest) {
     // Find ALL issues with matching key (there may be duplicates)
     // Starting database query
     let allMatchingIssues;
-    
+
     try {
       allMatchingIssues = await db.issue.findMany({
         where: {
@@ -96,319 +100,320 @@ export async function GET(request: NextRequest) {
             provider: IntegrationProvider.JIRA,
           },
         },
-      include: {
-        repositoryCases: {
-          include: {
-            state: {
-              select: {
-                name: true,
-                icon: {
-                  select: {
-                    name: true,
-                  },
-                },
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-            project: {
-              select: {
-                id: true,
-              },
-            },
-            testRuns: {
-              include: {
-                testRun: {
-                  select: {
-                    id: true,
-                    name: true,
-                    isCompleted: true,
-                  },
-                },
-                results: {
-                  include: {
-                    status: {
-                      select: {
-                        name: true,
-                        color: {
-                          select: {
-                            value: true,
-                          },
-                        },
-                      },
-                    },
-                    executedBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    editedBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
+        include: {
+          repositoryCases: {
+            include: {
+              state: {
+                select: {
+                  name: true,
+                  icon: {
+                    select: {
+                      name: true,
                     },
                   },
-                  orderBy: {
-                    executedAt: "desc",
-                  },
-                  take: 5,
-                  where: {
-                    isDeleted: false,
-                  },
-                },
-              },
-              orderBy: {
-                createdAt: "desc",
-              },
-            },
-          },
-        },
-        sessions: {
-          select: {
-            id: true,
-            name: true,
-            estimate: true,
-            isDeleted: true,
-            state: {
-              select: {
-                name: true,
-                icon: {
-                  select: {
-                    name: true,
-                  },
-                },
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-            project: {
-              select: {
-                id: true,
-              },
-            },
-            sessionResults: {
-              include: {
-                status: {
-                  include: {
-                    color: true,
-                  },
-                },
-              },
-              orderBy: {
-                createdAt: "asc",
-              },
-              where: {
-                isDeleted: false,
-              },
-            },
-          },
-        },
-        testRuns: {
-          include: {
-            state: {
-              select: {
-                name: true,
-                icon: {
-                  select: {
-                    name: true,
-                  },
-                },
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-            project: {
-              select: {
-                id: true,
-              },
-            },
-            testCases: {
-              include: {
-                repositoryCase: {
-                  select: {
-                    id: true,
-                    name: true,
-                    estimate: true,
-                  },
-                },
-                status: {
-                  include: {
-                    color: true,
-                  },
-                },
-                results: {
-                  include: {
-                    status: {
-                      include: {
-                        color: true,
-                      },
-                    },
-                    executedBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                  },
-                  orderBy: {
-                    executedAt: "desc",
-                  },
-                  where: {
-                    isDeleted: false,
-                  },
-                },
-              },
-              orderBy: {
-                order: "asc",
-              },
-            },
-          },
-        },
-        // Test runs connected through test run results
-        testRunResults: {
-          include: {
-            testRun: {
-              include: {
-                state: {
-                  select: {
-                    name: true,
-                    icon: {
-                      select: {
-                        name: true,
-                      },
-                    },
-                    color: {
-                      select: {
-                        value: true,
-                      },
+                  color: {
+                    select: {
+                      value: true,
                     },
                   },
                 },
-                project: {
-                  select: {
-                    id: true,
-                  },
-                },
-                testCases: {
-                  include: {
-                    repositoryCase: {
-                      select: {
-                        id: true,
-                        name: true,
-                        estimate: true,
-                      },
-                    },
-                    status: {
-                      include: {
-                        color: true,
-                      },
-                    },
-                    results: {
-                      include: {
-                        status: {
-                          include: {
-                            color: true,
-                          },
-                        },
-                        executedBy: {
-                          select: {
-                            id: true,
-                            name: true,
-                          },
-                        },
-                      },
-                      orderBy: {
-                        executedAt: "desc",
-                      },
-                      where: {
-                        isDeleted: false,
-                      },
-                    },
-                  },
-                  orderBy: {
-                    order: "asc",
-                  },
+              },
+              project: {
+                select: {
+                  id: true,
                 },
               },
-            },
-          },
-        },
-        // Test runs connected through test run step results
-        testRunStepResults: {
-          include: {
-            testRunResult: {
-              include: {
-                testRun: {
-                  include: {
-                    state: {
-                      select: {
-                        name: true,
-                        icon: {
-                          select: {
-                            name: true,
-                          },
-                        },
-                        color: {
-                          select: {
-                            value: true,
-                          },
-                        },
-                      },
+              testRuns: {
+                include: {
+                  testRun: {
+                    select: {
+                      id: true,
+                      name: true,
+                      isCompleted: true,
                     },
-                    project: {
-                      select: {
-                        id: true,
-                      },
-                    },
-                    testCases: {
-                      include: {
-                        repositoryCase: {
-                          select: {
-                            id: true,
-                            name: true,
-                            estimate: true,
-                          },
-                        },
-                        status: {
-                          include: {
-                            color: true,
-                          },
-                        },
-                        results: {
-                          include: {
-                            status: {
-                              include: {
-                                color: true,
-                              },
-                            },
-                            executedBy: {
-                              select: {
-                                id: true,
-                                name: true,
-                              },
+                  },
+                  results: {
+                    include: {
+                      status: {
+                        select: {
+                          name: true,
+                          color: {
+                            select: {
+                              value: true,
                             },
                           },
-                          orderBy: {
-                            executedAt: "desc",
+                        },
+                      },
+                      executedBy: {
+                        select: {
+                          id: true,
+                          name: true,
+                        },
+                      },
+                      editedBy: {
+                        select: {
+                          id: true,
+                          name: true,
+                        },
+                      },
+                    },
+                    orderBy: {
+                      executedAt: "desc",
+                    },
+                    take: 5,
+                    where: {
+                      isDeleted: false,
+                    },
+                  },
+                },
+                orderBy: {
+                  createdAt: "desc",
+                },
+              },
+            },
+          },
+          sessions: {
+            select: {
+              id: true,
+              name: true,
+              estimate: true,
+              isDeleted: true,
+              state: {
+                select: {
+                  name: true,
+                  icon: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  color: {
+                    select: {
+                      value: true,
+                    },
+                  },
+                },
+              },
+              project: {
+                select: {
+                  id: true,
+                },
+              },
+              sessionResults: {
+                include: {
+                  status: {
+                    include: {
+                      color: true,
+                    },
+                  },
+                },
+                orderBy: {
+                  createdAt: "asc",
+                },
+                where: {
+                  isDeleted: false,
+                },
+              },
+            },
+          },
+          testRuns: {
+            include: {
+              state: {
+                select: {
+                  name: true,
+                  icon: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  color: {
+                    select: {
+                      value: true,
+                    },
+                  },
+                },
+              },
+              project: {
+                select: {
+                  id: true,
+                },
+              },
+              testCases: {
+                include: {
+                  repositoryCase: {
+                    select: {
+                      id: true,
+                      name: true,
+                      estimate: true,
+                    },
+                  },
+                  status: {
+                    include: {
+                      color: true,
+                    },
+                  },
+                  results: {
+                    include: {
+                      status: {
+                        include: {
+                          color: true,
+                        },
+                      },
+                      executedBy: {
+                        select: {
+                          id: true,
+                          name: true,
+                        },
+                      },
+                    },
+                    orderBy: {
+                      executedAt: "desc",
+                    },
+                    where: {
+                      isDeleted: false,
+                    },
+                  },
+                },
+                orderBy: {
+                  order: "asc",
+                },
+              },
+            },
+          },
+          // Test runs connected through test run results
+          testRunResults: {
+            include: {
+              testRun: {
+                include: {
+                  state: {
+                    select: {
+                      name: true,
+                      icon: {
+                        select: {
+                          name: true,
+                        },
+                      },
+                      color: {
+                        select: {
+                          value: true,
+                        },
+                      },
+                    },
+                  },
+                  project: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                  testCases: {
+                    include: {
+                      repositoryCase: {
+                        select: {
+                          id: true,
+                          name: true,
+                          estimate: true,
+                        },
+                      },
+                      status: {
+                        include: {
+                          color: true,
+                        },
+                      },
+                      results: {
+                        include: {
+                          status: {
+                            include: {
+                              color: true,
+                            },
                           },
-                          where: {
-                            isDeleted: false,
+                          executedBy: {
+                            select: {
+                              id: true,
+                              name: true,
+                            },
+                          },
+                        },
+                        orderBy: {
+                          executedAt: "desc",
+                        },
+                        where: {
+                          isDeleted: false,
+                        },
+                      },
+                    },
+                    orderBy: {
+                      order: "asc",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          // Test runs connected through test run step results
+          testRunStepResults: {
+            include: {
+              testRunResult: {
+                include: {
+                  testRun: {
+                    include: {
+                      state: {
+                        select: {
+                          name: true,
+                          icon: {
+                            select: {
+                              name: true,
+                            },
+                          },
+                          color: {
+                            select: {
+                              value: true,
+                            },
                           },
                         },
                       },
-                      orderBy: {
-                        order: "asc",
+                      project: {
+                        select: {
+                          id: true,
+                        },
+                      },
+                      testCases: {
+                        include: {
+                          repositoryCase: {
+                            select: {
+                              id: true,
+                              name: true,
+                              estimate: true,
+                            },
+                          },
+                          status: {
+                            include: {
+                              color: true,
+                            },
+                          },
+                          results: {
+                            include: {
+                              status: {
+                                include: {
+                                  color: true,
+                                },
+                              },
+                              executedBy: {
+                                select: {
+                                  id: true,
+                                  name: true,
+                                },
+                              },
+                            },
+                            orderBy: {
+                              executedAt: "desc",
+                            },
+                            where: {
+                              isDeleted: false,
+                            },
+                          },
+                        },
+                        orderBy: {
+                          order: "asc",
+                        },
                       },
                     },
                   },
@@ -416,55 +421,57 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-        },
-        // Sessions connected through session results
-        sessionResults: {
-          include: {
-            session: {
-              include: {
-                state: {
-                  select: {
-                    name: true,
-                    icon: {
-                      select: {
-                        name: true,
+          // Sessions connected through session results
+          sessionResults: {
+            include: {
+              session: {
+                include: {
+                  state: {
+                    select: {
+                      name: true,
+                      icon: {
+                        select: {
+                          name: true,
+                        },
                       },
-                    },
-                    color: {
-                      select: {
-                        value: true,
-                      },
-                    },
-                  },
-                },
-                project: {
-                  select: {
-                    id: true,
-                  },
-                },
-                sessionResults: {
-                  include: {
-                    status: {
-                      include: {
-                        color: true,
+                      color: {
+                        select: {
+                          value: true,
+                        },
                       },
                     },
                   },
-                  orderBy: {
-                    createdAt: "asc",
+                  project: {
+                    select: {
+                      id: true,
+                    },
                   },
-                  where: {
-                    isDeleted: false,
+                  sessionResults: {
+                    include: {
+                      status: {
+                        include: {
+                          color: true,
+                        },
+                      },
+                    },
+                    orderBy: {
+                      createdAt: "asc",
+                    },
+                    where: {
+                      isDeleted: false,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
       });
     } catch (dbError) {
-      console.error("Forge test-info DB error:", dbError instanceof Error ? dbError.message : dbError);
+      console.error(
+        "Forge test-info DB error:",
+        dbError instanceof Error ? dbError.message : dbError
+      );
       return NextResponse.json(
         { error: "Database query failed" },
         { status: 500, headers }
@@ -602,8 +609,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-
-
     // Collect all unique sessions from different sources
     const allSessions = new Map();
 
@@ -618,8 +623,6 @@ export async function GET(request: NextRequest) {
         allSessions.set(result.session.id, result.session);
       }
     });
-
-
 
     const formattedSessions = Array.from(allSessions.values()).map(
       (session: any) => {
@@ -758,7 +761,8 @@ export async function OPTIONS() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Forge-Api-Key",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-Forge-Api-Key",
     },
   });
 }

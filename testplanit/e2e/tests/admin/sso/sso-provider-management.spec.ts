@@ -97,7 +97,9 @@ test.describe("Admin SSO Provider Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the Setup/Edit button for Google OAuth
-      const setupBtn = page.getByRole("button", { name: /setup|edit/i }).first();
+      const setupBtn = page
+        .getByRole("button", { name: /setup|edit/i })
+        .first();
       await expect(setupBtn).toBeVisible({ timeout: 10000 });
       await setupBtn.click();
 
@@ -111,7 +113,9 @@ test.describe("Admin SSO Provider Management", () => {
       await inputs.nth(1).fill("test-client-secret-e2e");
 
       // Submit
-      const saveBtn = dialog.getByRole("button", { name: /save|submit/i }).first();
+      const saveBtn = dialog
+        .getByRole("button", { name: /save|submit/i })
+        .first();
       await saveBtn.click();
 
       // Wait for dialog to close
@@ -229,20 +233,20 @@ test.describe("Admin SSO Provider Management", () => {
 
       // Poll for state change
       await expect
-        .poll(
-          async () => forceSsoSwitch.getAttribute("data-state"),
-          { message: "Force SSO switch state should change after toggle", timeout: 15000 }
-        )
+        .poll(async () => forceSsoSwitch.getAttribute("data-state"), {
+          message: "Force SSO switch state should change after toggle",
+          timeout: 15000,
+        })
         .not.toBe(initialState);
 
       // Toggle back to restore original state
       await forceSsoSwitch.click();
 
       await expect
-        .poll(
-          async () => forceSsoSwitch.getAttribute("data-state"),
-          { message: "Force SSO switch state should be restored", timeout: 15000 }
-        )
+        .poll(async () => forceSsoSwitch.getAttribute("data-state"), {
+          message: "Force SSO switch state should be restored",
+          timeout: 15000,
+        })
         .toBe(initialState);
     } finally {
       // Clean up temporary provider if we created one
@@ -287,20 +291,20 @@ test.describe("Admin SSO Provider Management", () => {
         await restrictSwitch.click();
         await page.waitForTimeout(1500);
         // Verify it's now enabled
-        await expect(restrictSwitch).toHaveAttribute("data-state", "checked", { timeout: 5000 });
+        await expect(restrictSwitch).toHaveAttribute("data-state", "checked", {
+          timeout: 5000,
+        });
       }
 
       // Domain input should now be visible
-      const domainInput = page.locator('input[placeholder]').last();
+      const domainInput = page.locator("input[placeholder]").last();
       await expect(domainInput).toBeVisible({ timeout: 5000 });
 
       // Type the test domain
       await domainInput.fill(testDomain);
 
       // Click Add button
-      const addBtn = page
-        .getByRole("button", { name: /add/i })
-        .last();
+      const addBtn = page.getByRole("button", { name: /add/i }).last();
       await addBtn.click();
       await page.waitForTimeout(1500);
 
@@ -352,7 +356,8 @@ test.describe("Admin SSO Provider Management", () => {
           .locator("../..")
           .locator('button[role="switch"]')
           .first();
-        const currentState = await restrictSwitchAfter.getAttribute("data-state");
+        const currentState =
+          await restrictSwitchAfter.getAttribute("data-state");
         if (currentState === "checked") {
           await restrictSwitchAfter.click();
           await page.waitForTimeout(1000);
@@ -362,12 +367,9 @@ test.describe("Admin SSO Provider Management", () => {
       // Clean up domain via API if it still exists
       if (createdDomainId) {
         try {
-          await request.post(
-            `${baseURL}/api/model/allowedEmailDomain/delete`,
-            {
-              data: { where: { id: createdDomainId } },
-            }
-          );
+          await request.post(`${baseURL}/api/model/allowedEmailDomain/delete`, {
+            data: { where: { id: createdDomainId } },
+          });
         } catch {
           // Non-fatal
         }

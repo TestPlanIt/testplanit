@@ -221,7 +221,9 @@ describe("MagicSelectDialog", () => {
 
     // Wait for configuring state
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /actions\.start/i })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
@@ -243,7 +245,9 @@ describe("MagicSelectDialog", () => {
 
     // Wait for configuring state
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /actions\.start/i })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
@@ -294,21 +298,28 @@ describe("MagicSelectDialog", () => {
     const onAccept = vi.fn();
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
-    mockFetchSubmitPollSuccess({}, { suggestedCaseIds: [7, 8, 9], reasoning: "Selected for login coverage" });
+    mockFetchSubmitPollSuccess(
+      {},
+      { suggestedCaseIds: [7, 8, 9], reasoning: "Selected for login coverage" }
+    );
 
     renderWithQueryClient(
       <MagicSelectDialog {...defaultProps} onAccept={onAccept} />
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /actions\.start/i })
+      ).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
 
     await vi.advanceTimersByTimeAsync(2500);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /actions\.accept/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /actions\.accept/i })
+      ).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.accept/i }));
 
@@ -344,7 +355,9 @@ describe("MagicSelectDialog", () => {
     renderWithQueryClient(<MagicSelectDialog {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /actions\.start/i })
+      ).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
 
@@ -371,7 +384,9 @@ describe("MagicSelectDialog", () => {
     renderWithQueryClient(<MagicSelectDialog {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /actions\.start/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /actions\.start/i })
+      ).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /actions\.start/i }));
 
@@ -393,9 +408,7 @@ describe("MagicSelectDialog", () => {
     // Even with a pending fetch, dialog is closed
     global.fetch = vi.fn().mockReturnValue(new Promise(() => {}));
 
-    renderWithQueryClient(
-      <MagicSelectDialog {...defaultProps} open={false} />
-    );
+    renderWithQueryClient(<MagicSelectDialog {...defaultProps} open={false} />);
 
     // Dialog content not rendered when closed
     expect(screen.queryByText("counting")).not.toBeInTheDocument();

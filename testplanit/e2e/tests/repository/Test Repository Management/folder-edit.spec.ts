@@ -17,7 +17,9 @@ test.describe("Folder Edit", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Folder Edit ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Folder Edit ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Rename Existing Folder", async ({ api, page }) => {
@@ -40,7 +42,7 @@ test.describe("Folder Edit", () => {
     await expect(editDialog).toBeVisible({ timeout: 5000 });
 
     // Find the name input inside the dialog - it's after the "Name" label
-    const editInput = editDialog.locator('input').first();
+    const editInput = editDialog.locator("input").first();
     await expect(editInput).toBeVisible({ timeout: 5000 });
 
     // Clear and enter new name
@@ -49,14 +51,17 @@ test.describe("Folder Edit", () => {
     await editInput.fill(newName);
 
     // Submit the change - look for Submit button in the dialog
-    const saveButton = editDialog.locator('button[type="submit"], button:has-text("Submit")').first();
+    const saveButton = editDialog
+      .locator('button[type="submit"], button:has-text("Submit")')
+      .first();
     await expect(saveButton).toBeEnabled({ timeout: 3000 });
 
     // Wait for the API call to complete
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes("/api/model/repositoryFolders") &&
-        (response.request().method() === "PUT" || response.request().method() === "PATCH"),
+        (response.request().method() === "PUT" ||
+          response.request().method() === "PATCH"),
       { timeout: 15000 }
     );
 
@@ -99,13 +104,15 @@ test.describe("Folder Edit", () => {
     await expect(editDialog).toBeVisible({ timeout: 5000 });
 
     // Find and update documentation - the TipTap editor uses .ProseMirror class
-    const docsEditor = editDialog.locator('.tiptap, .ProseMirror').first();
+    const docsEditor = editDialog.locator(".tiptap, .ProseMirror").first();
     await expect(docsEditor).toBeVisible({ timeout: 3000 });
     await docsEditor.click();
     await page.keyboard.type("Updated documentation content");
 
     // Submit the change - look for Submit button in the dialog
-    const saveButton = editDialog.locator('button[type="submit"], button:has-text("Submit")').first();
+    const saveButton = editDialog
+      .locator('button[type="submit"], button:has-text("Submit")')
+      .first();
     await saveButton.click();
 
     // Wait for modal to close
@@ -116,7 +123,10 @@ test.describe("Folder Edit", () => {
     await repositoryPage.verifyFolderExists(folderName);
   });
 
-  test("Edit Folder Option Available with Permission", async ({ api, page }) => {
+  test("Edit Folder Option Available with Permission", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder
@@ -129,11 +139,13 @@ test.describe("Folder Edit", () => {
     await repositoryPage.openFolderContextMenu(folderId);
 
     // Verify edit option is visible (admin user has permissions)
-    const editOption = page.locator('[role="menuitem"]').filter({ hasText: "Edit" }).first();
+    const editOption = page
+      .locator('[role="menuitem"]')
+      .filter({ hasText: "Edit" })
+      .first();
     await expect(editOption).toBeVisible({ timeout: 5000 });
 
     // Close the menu
     await page.keyboard.press("Escape");
   });
-
 });

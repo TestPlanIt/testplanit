@@ -26,7 +26,7 @@ describe("multiTenantPrisma", () => {
   });
 
   describe("isMultiTenantMode", () => {
-    it('should return false when MULTI_TENANT_MODE is not set', async () => {
+    it("should return false when MULTI_TENANT_MODE is not set", async () => {
       const { isMultiTenantMode } = await resetModule();
       expect(isMultiTenantMode()).toBe(false);
     });
@@ -288,9 +288,9 @@ describe("multiTenantPrisma", () => {
 
       const { getPrismaClientForJob } = await resetModule();
 
-      expect(() =>
-        getPrismaClientForJob({ tenantId: "non-existent" })
-      ).toThrow("No configuration found for tenant: non-existent");
+      expect(() => getPrismaClientForJob({ tenantId: "non-existent" })).toThrow(
+        "No configuration found for tenant: non-existent"
+      );
     });
   });
 
@@ -302,7 +302,9 @@ describe("multiTenantPrisma", () => {
       const jobDataWithoutTenant: { tenantId?: string } = {};
       const jobDataWithTenant: { tenantId?: string } = { tenantId: "tenant-a" };
 
-      expect(() => validateMultiTenantJobData(jobDataWithoutTenant)).not.toThrow();
+      expect(() =>
+        validateMultiTenantJobData(jobDataWithoutTenant)
+      ).not.toThrow();
       expect(() => validateMultiTenantJobData(jobDataWithTenant)).not.toThrow();
     });
   });
@@ -336,9 +338,10 @@ describe("Tenant filtering helpers", () => {
         { id: "4", data: {} }, // No tenantId
       ];
 
-      const filteredJobs = multiTenant && currentTenantId
-        ? jobsToFilter.filter((job) => job.data?.tenantId === currentTenantId)
-        : jobsToFilter;
+      const filteredJobs =
+        multiTenant && currentTenantId
+          ? jobsToFilter.filter((job) => job.data?.tenantId === currentTenantId)
+          : jobsToFilter;
 
       expect(filteredJobs).toHaveLength(2);
       expect(filteredJobs.map((j) => j.id)).toEqual(["1", "3"]);
@@ -356,9 +359,10 @@ describe("Tenant filtering helpers", () => {
         { id: "3", data: {} },
       ];
 
-      const filteredJobs = multiTenant && currentTenantId
-        ? jobsToFilter.filter((job) => job.data?.tenantId === currentTenantId)
-        : jobsToFilter;
+      const filteredJobs =
+        multiTenant && currentTenantId
+          ? jobsToFilter.filter((job) => job.data?.tenantId === currentTenantId)
+          : jobsToFilter;
 
       expect(filteredJobs).toHaveLength(3);
     });

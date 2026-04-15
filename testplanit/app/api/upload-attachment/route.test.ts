@@ -17,7 +17,10 @@ vi.mock("@aws-sdk/client-s3", () => {
 
 import { POST } from "./route";
 
-function createUploadRequest(file: File | null, prependString?: string): NextRequest {
+function createUploadRequest(
+  file: File | null,
+  prependString?: string
+): NextRequest {
   const formData = new FormData();
   if (file) {
     formData.set("file", file);
@@ -72,12 +75,16 @@ describe("POST /api/upload-attachment", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBeDefined();
-      expect(data.success.url).toMatch(/^\/api\/storage\/uploads\/attachments\//);
+      expect(data.success.url).toMatch(
+        /^\/api\/storage\/uploads\/attachments\//
+      );
       expect(data.success.key).toMatch(/^uploads\/attachments\//);
     });
 
     it("uses uploads/attachments/ key prefix", async () => {
-      const file = new File(["content"], "document.pdf", { type: "application/pdf" });
+      const file = new File(["content"], "document.pdf", {
+        type: "application/pdf",
+      });
       const request = createUploadRequest(file);
       const response = await POST(request);
       const data = await response.json();

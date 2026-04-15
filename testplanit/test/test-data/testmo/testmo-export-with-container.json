@@ -5,17 +5,15 @@
   },
   "datasets": {
     "users": {
-      "schema": {"id": "id", "email": "string"},
+      "schema": { "id": "id", "email": "string" },
       "data": [
-        {"id": 11, "email": "alice@example.com"},
-        {"id": 12, "email": "bob@example.com"}
+        { "id": 11, "email": "alice@example.com" },
+        { "id": 12, "email": "bob@example.com" }
       ]
     },
     "projects": {
-      "schema": {"id": "id", "name": "string"},
-      "data": [
-        {"id": 301, "name": "Backend"}
-      ]
+      "schema": { "id": "id", "name": "string" },
+      "data": [{ "id": 301, "name": "Backend" }]
     }
   }
 }

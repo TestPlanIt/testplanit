@@ -66,6 +66,8 @@ describe("POST /api/upload-project-icon", () => {
 
     expect(response.status).toBe(200);
     expect(data.success.key).toMatch(/^uploads\/project-icons\//);
-    expect(data.success.url).toMatch(/^\/api\/storage\/uploads\/project-icons\//);
+    expect(data.success.url).toMatch(
+      /^\/api\/storage\/uploads\/project-icons\//
+    );
   });
 });

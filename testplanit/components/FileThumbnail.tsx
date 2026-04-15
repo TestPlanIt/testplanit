@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Attachments } from "@prisma/client";
 import Image from "next/image";

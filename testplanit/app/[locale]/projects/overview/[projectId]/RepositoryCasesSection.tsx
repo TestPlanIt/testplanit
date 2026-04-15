@@ -9,7 +9,7 @@ import LoadingSpinner from "~/components/LoadingSpinner";
 import {
   useFindManyRepositoryCases,
   useFindManyWorkflows,
-  useGroupByRepositoryCases
+  useGroupByRepositoryCases,
 } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 

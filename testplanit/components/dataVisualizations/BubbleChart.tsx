@@ -57,102 +57,102 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
       return;
     }
 
-      const hierarchyInput: RootHierarchyData = {
-        rootId: "rootNode",
-        children: tags.map((tag) => ({
-          ...tag,
-          value: tag.count,
-        })),
-      };
+    const hierarchyInput: RootHierarchyData = {
+      rootId: "rootNode",
+      children: tags.map((tag) => ({
+        ...tag,
+        value: tag.count,
+      })),
+    };
 
-      const root = d3
-        .hierarchy<HierarchyNodeDatum>(hierarchyInput, (d) => {
-          if ("children" in d && d.children) {
-            return d.children;
-          }
-          return null;
-        })
-        .sum((d) => {
-          if (!("children" in d) || !d.children) {
-            if (typeof (d as LeafHierarchyData).value === "number") {
-              return (d as LeafHierarchyData).value;
-            }
-          }
-          return 0;
-        })
-        .sort((a, b) => (b.value || 0) - (a.value || 0));
-
-      const pack = d3
-        .pack<HierarchyNodeDatum>()
-        .size([width - margin * 2, height - margin * 2])
-        .padding(5);
-
-      const packedRoot = pack(root);
-
-      // Determine min/max values for color scaling
-      const leafDataValues = packedRoot
-        .leaves()
-        .map((d) => (d.data as LeafHierarchyData).value);
-      const minValue = d3.min(leafDataValues) || 0;
-      const maxValue = d3.max(leafDataValues) || 1;
-
-      let computedPrimaryColorString = "hsl(210, 40%, 50%)"; // A sensible default
-      if (svgElement && typeof window !== "undefined") {
-        const style = getComputedStyle(svgElement);
-        const primaryVar = style.getPropertyValue("--primary").trim();
-
-        if (primaryVar) {
-          if (
-            primaryVar.split(" ").length === 3 &&
-            !primaryVar.startsWith("hsl")
-          ) {
-            // Input: "H S% L%" -> Output: "hsl(H, S%, L%)"
-            const parts = primaryVar.split(" ");
-            computedPrimaryColorString = `hsl(${parts[0]}, ${parts[1]}, ${parts[2]})`;
-          } else if (
-            primaryVar.startsWith("hsl(") &&
-            primaryVar.split(",").length === 1
-          ) {
-            // Input: "hsl(H S% L%)" -> Output: "hsl(H, S%, L%)"
-            // Handles if primaryVar is already hsl() but with spaces instead of commas
-            computedPrimaryColorString = primaryVar
-              .replace(/\s+/g, ",")
-              .replace("(,", "(");
-          } else {
-            computedPrimaryColorString = primaryVar;
-          }
-        } else {
-          const h = style.getPropertyValue("--primary-h").trim();
-          const s = style.getPropertyValue("--primary-s").trim();
-          const l = style.getPropertyValue("--primary-l").trim();
-          if (h && s && l) {
-            // Output: "hsl(H, S%, L%)"
-            computedPrimaryColorString = `hsl(${h}, ${s}, ${l})`;
+    const root = d3
+      .hierarchy<HierarchyNodeDatum>(hierarchyInput, (d) => {
+        if ("children" in d && d.children) {
+          return d.children;
+        }
+        return null;
+      })
+      .sum((d) => {
+        if (!("children" in d) || !d.children) {
+          if (typeof (d as LeafHierarchyData).value === "number") {
+            return (d as LeafHierarchyData).value;
           }
         }
-      }
+        return 0;
+      })
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-      // Ensure the string is in the format d3.color expects, specifically with commas for hsl if it was space-separated.
-      // If it was "H S% L%", it's now "hsl(H, S%, L%)".
-      // If it was "hsl(H S% L%)", the regex above attempts to put commas.
-      // This is a bit of a brute force replacement for spaces within hsl() to commas, might need refinement.
-      if (
-        computedPrimaryColorString.startsWith("hsl(") &&
-        computedPrimaryColorString.includes(" ") &&
-        !computedPrimaryColorString.includes(",")
-      ) {
-        const content = computedPrimaryColorString.substring(
-          4,
-          computedPrimaryColorString.length - 1
-        );
-        const parts = content.split(/\s+/).join(", ");
-        computedPrimaryColorString = `hsl(${parts})`;
-      }
+    const pack = d3
+      .pack<HierarchyNodeDatum>()
+      .size([width - margin * 2, height - margin * 2])
+      .padding(5);
 
-      const opacityScale = d3
-        .scaleLinear()
-        .domain([minValue, maxValue])
-        .range([0.3, 0.9]);
+    const packedRoot = pack(root);
+
+    // Determine min/max values for color scaling
+    const leafDataValues = packedRoot
+      .leaves()
+      .map((d) => (d.data as LeafHierarchyData).value);
+    const minValue = d3.min(leafDataValues) || 0;
+    const maxValue = d3.max(leafDataValues) || 1;
+
+    let computedPrimaryColorString = "hsl(210, 40%, 50%)"; // A sensible default
+    if (svgElement && typeof window !== "undefined") {
+      const style = getComputedStyle(svgElement);
+      const primaryVar = style.getPropertyValue("--primary").trim();
+
+      if (primaryVar) {
+        if (
+          primaryVar.split(" ").length === 3 &&
+          !primaryVar.startsWith("hsl")
+        ) {
+          // Input: "H S% L%" -> Output: "hsl(H, S%, L%)"
+          const parts = primaryVar.split(" ");
+          computedPrimaryColorString = `hsl(${parts[0]}, ${parts[1]}, ${parts[2]})`;
+        } else if (
+          primaryVar.startsWith("hsl(") &&
+          primaryVar.split(",").length === 1
+        ) {
+          // Input: "hsl(H S% L%)" -> Output: "hsl(H, S%, L%)"
+          // Handles if primaryVar is already hsl() but with spaces instead of commas
+          computedPrimaryColorString = primaryVar
+            .replace(/\s+/g, ",")
+            .replace("(,", "(");
+        } else {
+          computedPrimaryColorString = primaryVar;
+        }
+      } else {
+        const h = style.getPropertyValue("--primary-h").trim();
+        const s = style.getPropertyValue("--primary-s").trim();
+        const l = style.getPropertyValue("--primary-l").trim();
+        if (h && s && l) {
+          // Output: "hsl(H, S%, L%)"
+          computedPrimaryColorString = `hsl(${h}, ${s}, ${l})`;
+        }
+      }
+    }
+
+    // Ensure the string is in the format d3.color expects, specifically with commas for hsl if it was space-separated.
+    // If it was "H S% L%", it's now "hsl(H, S%, L%)".
+    // If it was "hsl(H S% L%)", the regex above attempts to put commas.
+    // This is a bit of a brute force replacement for spaces within hsl() to commas, might need refinement.
+    if (
+      computedPrimaryColorString.startsWith("hsl(") &&
+      computedPrimaryColorString.includes(" ") &&
+      !computedPrimaryColorString.includes(",")
+    ) {
+      const content = computedPrimaryColorString.substring(
+        4,
+        computedPrimaryColorString.length - 1
+      );
+      const parts = content.split(/\s+/).join(", ");
+      computedPrimaryColorString = `hsl(${parts})`;
+    }
+
+    const opacityScale = d3
+      .scaleLinear()
+      .domain([minValue, maxValue])
+      .range([0.3, 0.9]);
 
     const svg = d3
       .select(svgElement)
@@ -224,51 +224,51 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
       .duration(150)
       .attr("r", (d) => d.r);
 
-      leafNodes.each(function (dNode) {
-        const group = d3.select(this);
-        const radius = dNode.r;
-        const diameter = radius * 2;
-        const nodeData = dNode.data as LeafHierarchyData;
+    leafNodes.each(function (dNode) {
+      const group = d3.select(this);
+      const radius = dNode.r;
+      const diameter = radius * 2;
+      const nodeData = dNode.data as LeafHierarchyData;
 
-        if (radius < 10) return;
+      if (radius < 10) return;
 
-        const baseFontSize = Math.max(8, Math.min(radius / 3, 16));
+      const baseFontSize = Math.max(8, Math.min(radius / 3, 16));
 
-        const fo = group
-          .append("foreignObject")
-          .attr("x", -radius)
-          .attr("y", -radius)
-          .attr("width", diameter)
-          .attr("height", diameter)
-          .style("pointer-events", "none");
+      const fo = group
+        .append("foreignObject")
+        .attr("x", -radius)
+        .attr("y", -radius)
+        .attr("width", diameter)
+        .attr("height", diameter)
+        .style("pointer-events", "none");
 
-        const div = fo
-          .append("xhtml:div")
-          .style("display", "flex")
-          .style("flex-direction", "column")
-          .style("align-items", "center")
-          .style("justify-content", "center")
-          .style("width", "100%")
-          .style("height", "100%")
-          .style("font-family", "'Noto Sans', sans-serif")
-          .style("color", foregroundColor)
-          .style("text-align", "center")
-          .style("overflow", "hidden")
-          .style("word-break", "break-word")
-          .style("pointer-events", "none");
+      const div = fo
+        .append("xhtml:div")
+        .style("display", "flex")
+        .style("flex-direction", "column")
+        .style("align-items", "center")
+        .style("justify-content", "center")
+        .style("width", "100%")
+        .style("height", "100%")
+        .style("font-family", "'Noto Sans', sans-serif")
+        .style("color", foregroundColor)
+        .style("text-align", "center")
+        .style("overflow", "hidden")
+        .style("word-break", "break-word")
+        .style("pointer-events", "none");
 
-        const nameText = nodeData.name;
+      const nameText = nodeData.name;
 
-        div.html(
-          `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 3px; box-sizing: border-box; cursor: pointer;">
+      div.html(
+        `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 3px; box-sizing: border-box; cursor: pointer;">
           <span style="font-size: ${baseFontSize}px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-height: ${
             baseFontSize * 1.1 * 2
           }px;">
             ${nameText}
           </span>
         </div>`
-        );
-      });
+      );
+    });
   }, [tags, onTagClick]);
 
   useEffect(() => {

@@ -9,7 +9,15 @@ import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { SearchHelpContent } from "@/components/search/SearchHelpContent";
 import {
-  BadgeList, DateDisplay, ExternalLink, MetadataItem, MetadataList, SearchHighlight, StatusBadge, TagList, TimeEstimate
+  BadgeList,
+  DateDisplay,
+  ExternalLink,
+  MetadataItem,
+  MetadataList,
+  SearchHighlight,
+  StatusBadge,
+  TagList,
+  TimeEstimate,
 } from "@/components/search/SearchResultComponents";
 import { TestCaseSearchResult } from "@/components/search/TestCaseSearchResult";
 import { UserDisplay } from "@/components/search/UserDisplay";
@@ -25,7 +33,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -34,24 +42,35 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight, Filter, Folder, Search, Settings2, X
+  ChevronsRight,
+  Filter,
+  Folder,
+  Search,
+  Settings2,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  getEntityIcon, getEntityLabel, useSearchContext
+  getEntityIcon,
+  getEntityLabel,
+  useSearchContext,
 } from "~/hooks/useSearchContext";
 import { useSearchState } from "~/lib/contexts/SearchStateContext";
 import { IconName } from "~/types/globals";
 import {
-  SearchableEntityType, SearchHit, SearchOptions, UnifiedSearchFilters, UnifiedSearchResult
+  SearchableEntityType,
+  SearchHit,
+  SearchOptions,
+  UnifiedSearchFilters,
+  UnifiedSearchResult,
 } from "~/types/search";
 import { cn } from "~/utils";
 

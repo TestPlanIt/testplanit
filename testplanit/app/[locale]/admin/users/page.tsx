@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
@@ -100,38 +101,37 @@ function UserList() {
     [queryClient]
   );
 
-  const { data: totalFilteredUsers } =
-    useFindManyUser(
-      {
-        orderBy: sortConfig
-          ? { [sortConfig.column]: sortConfig.direction }
-          : { name: "asc" },
-        include: {
-          role: true,
-          groups: true,
-          projects: true,
-          createdBy: true,
-        },
-        where: {
-          AND: [
-            {
-              name: {
-                contains: debouncedSearchString,
-                mode: "insensitive",
-              },
-            },
-            showInactiveUsers ? {} : { isActive: true },
-            {
-              isDeleted: false,
-            },
-          ],
-        },
+  const { data: totalFilteredUsers } = useFindManyUser(
+    {
+      orderBy: sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { name: "asc" },
+      include: {
+        role: true,
+        groups: true,
+        projects: true,
+        createdBy: true,
       },
-      {
-        enabled: !!session?.user,
-        refetchOnWindowFocus: true,
-      }
-    );
+      where: {
+        AND: [
+          {
+            name: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          showInactiveUsers ? {} : { isActive: true },
+          {
+            isDeleted: false,
+          },
+        ],
+      },
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   // Update total items in pagination context
   useEffect(() => {
@@ -256,9 +256,7 @@ function UserList() {
             <div>
               <Button onClick={() => setAddUserOpen(true)}>
                 <CirclePlus className="w-4" />
-                <span className="hidden md:inline">
-                  {t("add.button")}
-                </span>
+                <span className="hidden md:inline">{t("add.button")}</span>
               </Button>
               {addUserOpen && (
                 <AddUser

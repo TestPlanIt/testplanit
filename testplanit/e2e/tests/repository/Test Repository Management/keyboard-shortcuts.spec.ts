@@ -17,7 +17,9 @@ test.describe("Keyboard Shortcuts", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Shift+N Opens Add Folder Dialog", async ({ api, page }) => {
@@ -36,7 +38,9 @@ test.describe("Keyboard Shortcuts", () => {
     await page.keyboard.up("Shift");
 
     // Check if add folder modal opened - look for the dialog with "Add Folder" title
-    const addFolderModal = page.locator('[role="dialog"]').filter({ hasText: /add.*folder/i });
+    const addFolderModal = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /add.*folder/i });
     await expect(addFolderModal).toBeVisible({ timeout: 5000 });
 
     // Close the modal
@@ -44,12 +48,17 @@ test.describe("Keyboard Shortcuts", () => {
     await expect(addFolderModal).not.toBeVisible({ timeout: 3000 });
   });
 
-  test("Shift+N Does Not Trigger When Typing in Input", async ({ api, page }) => {
+  test("Shift+N Does Not Trigger When Typing in Input", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     await repositoryPage.goto(projectId);
 
     // Find a search/filter input on the page
-    const searchInput = page.locator('input[placeholder*="Filter"], input[placeholder*="Search"]').first();
+    const searchInput = page
+      .locator('input[placeholder*="Filter"], input[placeholder*="Search"]')
+      .first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
     // Focus on the input and type
@@ -60,7 +69,9 @@ test.describe("Keyboard Shortcuts", () => {
     await page.keyboard.press("Shift+n");
 
     // The modal should NOT be visible since we're typing in an input
-    const addFolderModal = page.locator('[role="dialog"]').filter({ hasText: /add.*folder/i });
+    const addFolderModal = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /add.*folder/i });
     await expect(addFolderModal).not.toBeVisible({ timeout: 1000 });
   });
 
@@ -71,7 +82,9 @@ test.describe("Keyboard Shortcuts", () => {
     // Open the add folder modal using the button
     await repositoryPage.addFolderButton.click();
 
-    const addFolderModal = page.locator('[role="dialog"]').filter({ hasText: /add.*folder/i });
+    const addFolderModal = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /add.*folder/i });
     await expect(addFolderModal).toBeVisible({ timeout: 5000 });
 
     // Press Escape to close
@@ -87,9 +100,17 @@ test.describe("Keyboard Shortcuts", () => {
     // Create a folder with multiple test cases
     const folderName = `Range Select Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const case1Id = await api.createTestCase(projectId, folderId, `Range Case 1 ${Date.now()}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Range Case 1 ${Date.now()}`
+    );
     await api.createTestCase(projectId, folderId, `Range Case 2 ${Date.now()}`);
-    const case3Id = await api.createTestCase(projectId, folderId, `Range Case 3 ${Date.now()}`);
+    const case3Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Range Case 3 ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
@@ -98,12 +119,16 @@ test.describe("Keyboard Shortcuts", () => {
     await page.waitForLoadState("networkidle");
 
     // Click first checkbox
-    const checkbox1 = page.locator(`[data-testid="case-checkbox-${case1Id}"]`).first();
+    const checkbox1 = page
+      .locator(`[data-testid="case-checkbox-${case1Id}"]`)
+      .first();
     await expect(checkbox1).toBeVisible({ timeout: 5000 });
     await checkbox1.click();
 
     // Shift+click on third checkbox to select range
-    const checkbox3 = page.locator(`[data-testid="case-checkbox-${case3Id}"]`).first();
+    const checkbox3 = page
+      .locator(`[data-testid="case-checkbox-${case3Id}"]`)
+      .first();
     await expect(checkbox3).toBeVisible({ timeout: 5000 });
     await checkbox3.click({ modifiers: ["Shift"] });
 

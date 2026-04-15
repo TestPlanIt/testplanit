@@ -7,7 +7,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Prisma } from "@prisma/client";
 import { Combine, PlayCircle, Trash2 } from "lucide-react";

@@ -20,9 +20,9 @@ describe("pdfHelpers", () => {
     });
 
     it("handles multiple problematic characters in one string", () => {
-      expect(
-        sanitizeTextForPdf("a\u202Fb\u00A0c\u200Bd\u2060e")
-      ).toBe("a b cde");
+      expect(sanitizeTextForPdf("a\u202Fb\u00A0c\u200Bd\u2060e")).toBe(
+        "a b cde"
+      );
     });
 
     it("returns empty string for empty input", () => {

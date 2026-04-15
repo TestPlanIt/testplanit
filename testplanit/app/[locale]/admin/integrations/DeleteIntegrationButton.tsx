@@ -10,7 +10,10 @@ interface DeleteIntegrationButtonProps {
   onDelete: (integration: Integration) => void;
 }
 
-export function DeleteIntegrationButton({ integration, onDelete }: DeleteIntegrationButtonProps) {
+export function DeleteIntegrationButton({
+  integration,
+  onDelete,
+}: DeleteIntegrationButtonProps) {
   const tCommon = useTranslations("common");
 
   return (

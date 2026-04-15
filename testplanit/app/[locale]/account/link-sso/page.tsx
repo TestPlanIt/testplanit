@@ -11,7 +11,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "~/components/ui/card";
 import { useFindManySsoProvider } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";

@@ -3,7 +3,10 @@ import { ApplicationArea, Roles } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
-  useFindManyRolePermission, useUpdateManyRoles, useUpdateRoles, useUpsertRolePermission
+  useFindManyRolePermission,
+  useUpdateManyRoles,
+  useUpdateRoles,
+  useUpsertRolePermission,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +22,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import { Checkbox } from "@/components/ui/checkbox";

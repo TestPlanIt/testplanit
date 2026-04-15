@@ -189,10 +189,7 @@ export interface IssueAdapter {
   /**
    * Get fields for a specific issue type
    */
-  getIssueTypeFields?(
-    projectId: string,
-    issueTypeId: string
-  ): Promise<any[]>;
+  getIssueTypeFields?(projectId: string, issueTypeId: string): Promise<any[]>;
 
   /**
    * Get available priorities

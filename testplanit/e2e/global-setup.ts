@@ -31,8 +31,7 @@ async function globalSetup(config: FullConfig) {
   // Always re-authenticate after database reset (auth session was cleared by setup-db)
 
   // Get base URL from config
-  const baseURL =
-    config.projects[0]?.use?.baseURL || "http://localhost:3000";
+  const baseURL = config.projects[0]?.use?.baseURL || "http://localhost:3000";
 
   console.log(`Authenticating admin user against ${baseURL}...`);
 
@@ -49,15 +48,19 @@ async function globalSetup(config: FullConfig) {
 
     // Fill in credentials
     // Try common input selectors since we may not have test IDs yet
-    const emailInput = page.locator(
-      '[data-testid="email-input"], input[type="email"], input[name="email"]'
-    ).first();
-    const passwordInput = page.locator(
-      '[data-testid="password-input"], input[type="password"], input[name="password"]'
-    ).first();
-    const submitButton = page.locator(
-      '[data-testid="signin-button"], button[type="submit"]'
-    ).first();
+    const emailInput = page
+      .locator(
+        '[data-testid="email-input"], input[type="email"], input[name="email"]'
+      )
+      .first();
+    const passwordInput = page
+      .locator(
+        '[data-testid="password-input"], input[type="password"], input[name="password"]'
+      )
+      .first();
+    const submitButton = page
+      .locator('[data-testid="signin-button"], button[type="submit"]')
+      .first();
 
     await emailInput.fill("admin@example.com");
     await passwordInput.fill("admin");

@@ -19,7 +19,7 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * when multiple tests create templates/fields simultaneously.
  */
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: "serial" });
 
 test.describe("Case Creation - Text String Fields", () => {
   let repositoryPage: RepositoryPage;
@@ -32,7 +32,9 @@ test.describe("Case Creation - Text String Fields", () => {
     projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
   });
 
-  test("Create case with empty text string (optional field)", async ({ api }) => {
+  test("Create case with empty text string (optional field)", async ({
+    api,
+  }) => {
     const systemName = `text_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     // Create dedicated template for this test
@@ -67,7 +69,9 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 5000 });
 
     // Fill required name field
@@ -78,7 +82,9 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.submitAddCase();
 
     // Dialog should close on success
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Create case with text string value", async ({ api }) => {
@@ -110,7 +116,9 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     // Fill name and text field
@@ -120,7 +128,9 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.fillCaseField(systemName, "Test value");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Default value auto-applied for text string", async ({ api }) => {
@@ -154,17 +164,25 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     // Verify default value is present
-    const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
+    const fieldLabel = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}-label`);
     const labelText = await fieldLabel.textContent();
-    const fieldInput = repositoryPage.getPage().getByLabel(labelText?.trim() || '', { exact: false });
+    const fieldInput = repositoryPage
+      .getPage()
+      .getByLabel(labelText?.trim() || "", { exact: false });
     await expect(fieldInput).toHaveValue(defaultValue);
   });
 
-  test("Required text string validation prevents submission", async ({ api }) => {
+  test("Required text string validation prevents submission", async ({
+    api,
+  }) => {
     const systemName = `text_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     const fieldId = await api.createCaseField({
@@ -197,11 +215,15 @@ test.describe("Case Creation - Text String Fields", () => {
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Try to submit - should fail validation
-    const submitButton = repositoryPage.getPage().getByTestId("case-submit-button");
+    const submitButton = repositoryPage
+      .getPage()
+      .getByTestId("case-submit-button");
     await submitButton.click();
 
     // Dialog should remain open
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).toBeVisible();
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).toBeVisible();
 
     // Validation message should appear (using FormMessage component)
     await repositoryPage.getPage().waitForTimeout(500);
@@ -238,15 +260,19 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     // Verify hint icon is visible in label
-    const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
+    const fieldLabel = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}-label`);
     await expect(fieldLabel).toBeVisible();
 
     // HelpPopover button should be present (has aria-label="Help")
-    const helpButton = fieldLabel.getByRole('button', { name: 'Help' });
+    const helpButton = fieldLabel.getByRole("button", { name: "Help" });
     await expect(helpButton).toBeVisible();
   });
 });
@@ -289,7 +315,9 @@ test.describe("Case Creation - Number Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -299,7 +327,9 @@ test.describe("Case Creation - Number Fields", () => {
     await repositoryPage.fillCaseField(systemName, "123.45");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Number min/max validation enforced", async ({ api }) => {
@@ -333,7 +363,9 @@ test.describe("Case Creation - Number Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -343,11 +375,15 @@ test.describe("Case Creation - Number Fields", () => {
     await repositoryPage.fillCaseField(systemName, "150");
 
     // Try to submit - validation should fail
-    const submitButton = repositoryPage.getPage().getByTestId("case-submit-button");
+    const submitButton = repositoryPage
+      .getPage()
+      .getByTestId("case-submit-button");
     await submitButton.click();
 
     // Dialog should remain open due to validation error
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).toBeVisible();
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).toBeVisible();
   });
 });
 
@@ -390,20 +426,28 @@ test.describe("Case Creation - Checkbox Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Verify checkbox is unchecked by default
-    const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
+    const fieldLabel = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}-label`);
     const labelText = await fieldLabel.textContent();
-    const switchButton = repositoryPage.getPage().getByRole('switch', { name: labelText?.trim() });
-    await expect(switchButton).toHaveAttribute('data-state', 'unchecked');
+    const switchButton = repositoryPage
+      .getPage()
+      .getByRole("switch", { name: labelText?.trim() });
+    await expect(switchButton).toHaveAttribute("data-state", "unchecked");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Create case with checkbox default checked", async ({ api }) => {
@@ -436,20 +480,28 @@ test.describe("Case Creation - Checkbox Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Verify checkbox is checked by default
-    const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
+    const fieldLabel = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}-label`);
     const labelText = await fieldLabel.textContent();
-    const switchButton = repositoryPage.getPage().getByRole('switch', { name: labelText?.trim() });
-    await expect(switchButton).toHaveAttribute('data-state', 'checked');
+    const switchButton = repositoryPage
+      .getPage()
+      .getByRole("switch", { name: labelText?.trim() });
+    await expect(switchButton).toHaveAttribute("data-state", "checked");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Toggle checkbox before submission", async ({ api }) => {
@@ -482,21 +534,29 @@ test.describe("Case Creation - Checkbox Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Toggle checkbox
-    const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
+    const fieldLabel = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}-label`);
     const labelText = await fieldLabel.textContent();
-    const switchButton = repositoryPage.getPage().getByRole('switch', { name: labelText?.trim() });
+    const switchButton = repositoryPage
+      .getPage()
+      .getByRole("switch", { name: labelText?.trim() });
     await switchButton.click();
-    await expect(switchButton).toHaveAttribute('data-state', 'checked');
+    await expect(switchButton).toHaveAttribute("data-state", "checked");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -554,22 +614,28 @@ test.describe("Case Creation - Dropdown Fields", () => {
     await repositoryPage.selectTemplate(templateName);
 
     // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Select dropdown option - find the combobox within the field element
-    const selectTrigger = fieldElement.getByRole('combobox');
+    const selectTrigger = fieldElement.getByRole("combobox");
     await selectTrigger.click();
     await repositoryPage.getPage().waitForTimeout(500);
 
-    const option = repositoryPage.getPage().getByRole('option', { name: 'High' });
+    const option = repositoryPage
+      .getPage()
+      .getByRole("option", { name: "High" });
     await option.click();
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -582,7 +648,9 @@ test.describe("Case Creation - Text Long Fields", () => {
     projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
   });
 
-  test("Create case with text long field renders TipTap editor", async ({ api }) => {
+  test("Create case with text long field renders TipTap editor", async ({
+    api,
+  }) => {
     const systemName = `textlong_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     const fieldId = await api.createCaseField({
@@ -607,22 +675,28 @@ test.describe("Case Creation - Text Long Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     // TipTap editor should be present within the field
-    const editor = fieldElement.locator('.tiptap');
+    const editor = fieldElement.locator(".tiptap");
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Type into the TipTap editor
     await editor.click();
-    await repositoryPage.getPage().keyboard.type("Rich text content for test case");
+    await repositoryPage
+      .getPage()
+      .keyboard.type("Rich text content for test case");
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Create case with empty text long field (optional)", async ({ api }) => {
@@ -650,7 +724,9 @@ test.describe("Case Creation - Text Long Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -658,7 +734,9 @@ test.describe("Case Creation - Text Long Fields", () => {
 
     // Leave text long field empty and submit
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -696,7 +774,9 @@ test.describe("Case Creation - Integer Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -705,7 +785,9 @@ test.describe("Case Creation - Integer Fields", () => {
     await repositoryPage.fillCaseField(systemName, "42");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Integer min/max validation enforced", async ({ api }) => {
@@ -735,7 +817,9 @@ test.describe("Case Creation - Integer Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -744,11 +828,15 @@ test.describe("Case Creation - Integer Fields", () => {
     // Enter value outside range
     await repositoryPage.fillCaseField(systemName, "99");
 
-    const submitButton = repositoryPage.getPage().getByTestId("case-submit-button");
+    const submitButton = repositoryPage
+      .getPage()
+      .getByTestId("case-submit-button");
     await submitButton.click();
 
     // Dialog should remain open due to validation error
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).toBeVisible();
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).toBeVisible();
   });
 });
 
@@ -786,25 +874,33 @@ test.describe("Case Creation - Date Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Click the date picker button to open the calendar popover
-    const dateButton = fieldElement.getByRole('button').first();
+    const dateButton = fieldElement.getByRole("button").first();
     await dateButton.click();
 
     // Select today's date from the calendar
     const today = new Date();
     const dayNumber = today.getDate().toString();
     // Click the day button in the calendar - today should be available
-    const calendarDay = repositoryPage.getPage().locator('[role="gridcell"] button').filter({ hasText: new RegExp(`^${dayNumber}$`) }).first();
+    const calendarDay = repositoryPage
+      .getPage()
+      .locator('[role="gridcell"] button')
+      .filter({ hasText: new RegExp(`^${dayNumber}$`) })
+      .first();
     await calendarDay.click();
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Create case with empty date field (optional)", async ({ api }) => {
@@ -832,7 +928,9 @@ test.describe("Case Creation - Date Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -840,7 +938,9 @@ test.describe("Case Creation - Date Fields", () => {
 
     // Leave date field empty and submit
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -878,7 +978,9 @@ test.describe("Case Creation - Link Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -887,7 +989,9 @@ test.describe("Case Creation - Link Fields", () => {
     await repositoryPage.fillCaseField(systemName, "https://example.com/test");
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Create case with empty link field (optional)", async ({ api }) => {
@@ -915,7 +1019,9 @@ test.describe("Case Creation - Link Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -923,7 +1029,9 @@ test.describe("Case Creation - Link Fields", () => {
 
     // Leave link field empty and submit
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -981,27 +1089,39 @@ test.describe("Case Creation - Multi-Select Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     // Click the react-select input within the field to open dropdown
-    const selectInput = fieldElement.locator('input').first();
+    const selectInput = fieldElement.locator("input").first();
     await selectInput.click();
 
     // Select "Option A" from the dropdown menu
-    const optionA = repositoryPage.getPage().locator('[class*="option"]').filter({ hasText: 'Option A' }).first();
+    const optionA = repositoryPage
+      .getPage()
+      .locator('[class*="option"]')
+      .filter({ hasText: "Option A" })
+      .first();
     await optionA.click();
 
     // Click again to select a second option
     await selectInput.click();
-    const optionB = repositoryPage.getPage().locator('[class*="option"]').filter({ hasText: 'Option B' }).first();
+    const optionB = repositoryPage
+      .getPage()
+      .locator('[class*="option"]')
+      .filter({ hasText: "Option B" })
+      .first();
     await optionB.click();
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -1039,11 +1159,15 @@ test.describe("Case Creation - Steps Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     // Click "Add Step" button to add a step
-    const addStepButton = repositoryPage.getPage().getByTestId("add-step-button");
+    const addStepButton = repositoryPage
+      .getPage()
+      .getByTestId("add-step-button");
     await expect(addStepButton).toBeVisible({ timeout: 5000 });
     await addStepButton.click();
 
@@ -1052,15 +1176,19 @@ test.describe("Case Creation - Steps Fields", () => {
     await expect(stepEditor).toBeVisible({ timeout: 5000 });
 
     // Type into the step's TipTap editor
-    const stepTipTap = stepEditor.locator('.tiptap').first();
+    const stepTipTap = stepEditor.locator(".tiptap").first();
     await stepTipTap.click();
-    await repositoryPage.getPage().keyboard.type("Step 1: Navigate to login page");
+    await repositoryPage
+      .getPage()
+      .keyboard.type("Step 1: Navigate to login page");
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 
   test("Create case with empty steps field (optional)", async ({ api }) => {
@@ -1088,7 +1216,9 @@ test.describe("Case Creation - Steps Fields", () => {
 
     await repositoryPage.selectTemplate(templateName);
 
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
     await expect(fieldElement).toBeVisible({ timeout: 10000 });
 
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
@@ -1096,7 +1226,9 @@ test.describe("Case Creation - Steps Fields", () => {
 
     // Leave steps field empty and submit
     await repositoryPage.submitAddCase();
-    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).not.toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -1109,7 +1241,11 @@ test.describe("Case Creation - Restricted Fields", () => {
     projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
   });
 
-  test("Restricted result field appears but is disabled without permission", async ({ api, browser, baseURL }) => {
+  test("Restricted result field appears but is disabled without permission", async ({
+    api,
+    browser,
+    baseURL,
+  }) => {
     const systemName = `restricted_result_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     // Create restricted RESULT field (not case field)
@@ -1135,10 +1271,18 @@ test.describe("Case Creation - Restricted Fields", () => {
     // Create a test case with this template
     const caseName = `Test Case ${Date.now()}`;
     const folderId = await api.getRootFolderId(projectId);
-    const caseId = await api.createTestCase(projectId, folderId, caseName, templateId);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      caseName,
+      templateId
+    );
 
     // Create a test run
-    const testRunId = await api.createTestRun(projectId, `Test Run ${Date.now()}`);
+    const testRunId = await api.createTestRun(
+      projectId,
+      `Test Run ${Date.now()}`
+    );
 
     // Add the test case to the test run
     const _testRunCaseId = await api.addTestCaseToTestRun(testRunId, caseId);
@@ -1148,11 +1292,7 @@ test.describe("Case Creation - Restricted Fields", () => {
     const restrictedRoleId = await api.createRole(restrictedRoleName);
 
     // Grant base permissions but NOT TestRunResultRestrictedFields
-    const areasToGrant = [
-      "TestCaseRepository",
-      "TestRuns",
-      "TestRunResults",
-    ];
+    const areasToGrant = ["TestCaseRepository", "TestRuns", "TestRunResults"];
     for (const area of areasToGrant) {
       await api.setRolePermission({
         roleId: restrictedRoleId,
@@ -1208,7 +1348,9 @@ test.describe("Case Creation - Restricted Fields", () => {
       await userPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
 
       // Navigate to the test run as regular user
-      await userPage.goto(`${baseURL}/en-US/projects/runs/${projectId}/${testRunId}`);
+      await userPage.goto(
+        `${baseURL}/en-US/projects/runs/${projectId}/${testRunId}`
+      );
       await userPage.waitForLoadState("networkidle");
 
       // Click on the test case name to open sidebar
@@ -1220,12 +1362,14 @@ test.describe("Case Creation - Restricted Fields", () => {
       await userPage.waitForLoadState("networkidle");
 
       // Find and click the "Add Result" button in the sidebar
-      const addResultButton = userPage.locator('button:has-text("Add Result")').first();
+      const addResultButton = userPage
+        .locator('button:has-text("Add Result")')
+        .first();
       await expect(addResultButton).toBeVisible({ timeout: 15000 });
       await addResultButton.click();
 
       // Wait for Add Result modal to open
-      const modal = userPage.getByRole('dialog', { name: 'Add Result' });
+      const modal = userPage.getByRole("dialog", { name: "Add Result" });
       await expect(modal).toBeVisible({ timeout: 10000 });
 
       // Find the restricted result field by its label text within the modal
@@ -1233,8 +1377,8 @@ test.describe("Case Creation - Restricted Fields", () => {
       await expect(fieldLabel).toBeVisible({ timeout: 10000 });
 
       // The label is inside a FormItem div — go up to it to scope the input search
-      const formItem = fieldLabel.locator('..');
-      const fieldInput = formItem.locator('input').first();
+      const formItem = fieldLabel.locator("..");
+      const fieldInput = formItem.locator("input").first();
       await expect(fieldInput).toBeVisible();
       await expect(fieldInput).toBeDisabled();
 

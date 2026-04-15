@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash2 } from "lucide-react";

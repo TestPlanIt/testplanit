@@ -37,7 +37,7 @@ function levenshteinDistance(a: string, b: string): number {
       curr[j] = Math.min(
         prev[j]! + 1, // deletion
         curr[j - 1]! + 1, // insertion
-        prev[j - 1]! + cost, // substitution
+        prev[j - 1]! + cost // substitution
       );
     }
     [prev, curr] = [curr, prev];
@@ -70,7 +70,7 @@ interface MatchResult {
 export function matchTagSuggestions(
   aiSuggestedTags: string[],
   existingProjectTags: string[],
-  entityExistingTagNames: string[],
+  entityExistingTagNames: string[]
 ): MatchResult[] {
   // Build normalized map: normalizedName -> originalName
   const existingMap = new Map<string, string>();
@@ -80,7 +80,7 @@ export function matchTagSuggestions(
 
   // Normalize entity's existing tags for comparison
   const entityTagsNormalized = new Set(
-    entityExistingTagNames.map(normalizeTagName),
+    entityExistingTagNames.map(normalizeTagName)
   );
 
   // Track seen normalized suggestions to deduplicate
@@ -123,7 +123,10 @@ export function matchTagSuggestions(
       if (entityTagsNormalized.has(existingNorm)) continue;
 
       // Substring match: one is contained in the other
-      if (existingNorm.includes(normalized) || normalized.includes(existingNorm)) {
+      if (
+        existingNorm.includes(normalized) ||
+        normalized.includes(existingNorm)
+      ) {
         // Prefer shorter distance (closer match)
         const distance = levenshteinDistance(normalized, existingNorm);
         if (distance < bestScore) {

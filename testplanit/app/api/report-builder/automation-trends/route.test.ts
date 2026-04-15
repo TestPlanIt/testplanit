@@ -31,11 +31,14 @@ const createGETRequest = (params?: Record<string, string>): NextRequest => {
 };
 
 const createPOSTRequest = (body: Record<string, unknown>): NextRequest => {
-  return new NextRequest("http://localhost/api/report-builder/automation-trends", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
-  });
+  return new NextRequest(
+    "http://localhost/api/report-builder/automation-trends",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 };
 
 describe("GET /api/report-builder/automation-trends", () => {
@@ -99,7 +102,8 @@ describe("POST /api/report-builder/automation-trends", () => {
     await POST(createPOSTRequest({ projectId: 1 }));
 
     expect(handleAutomationTrendsPOST).toHaveBeenCalledOnce();
-    const [, isCrossProject] = (handleAutomationTrendsPOST as any).mock.calls[0];
+    const [, isCrossProject] = (handleAutomationTrendsPOST as any).mock
+      .calls[0];
     expect(isCrossProject).toBe(false);
   });
 

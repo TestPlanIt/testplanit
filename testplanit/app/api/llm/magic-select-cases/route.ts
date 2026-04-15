@@ -6,7 +6,7 @@ import { z } from "zod/v4";
 import { authOptions } from "~/server/auth";
 import {
   getElasticsearchClient,
-  getRepositoryCaseIndexName
+  getRepositoryCaseIndexName,
 } from "~/services/elasticsearchService";
 
 // Request validation schema
@@ -27,13 +27,19 @@ const MagicSelectRequestSchema = z.object({
 });
 
 // Helper to parse env var as number with fallback
-const parseEnvInt = (envVar: string | undefined, defaultValue: number): number => {
+const parseEnvInt = (
+  envVar: string | undefined,
+  defaultValue: number
+): number => {
   if (!envVar) return defaultValue;
   const parsed = parseInt(envVar, 10);
   return isNaN(parsed) ? defaultValue : parsed;
 };
 
-const parseEnvFloat = (envVar: string | undefined, defaultValue: number): number => {
+const parseEnvFloat = (
+  envVar: string | undefined,
+  defaultValue: number
+): number => {
   if (!envVar) return defaultValue;
   const parsed = parseFloat(envVar);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -41,10 +47,19 @@ const parseEnvFloat = (envVar: string | undefined, defaultValue: number): number
 
 // Search configuration for pre-filtering test cases (configurable via env vars)
 const SEARCH_CONFIG = {
-  searchPreFilterThreshold: parseEnvInt(process.env.MAGIC_SELECT_SEARCH_THRESHOLD, 250),
+  searchPreFilterThreshold: parseEnvInt(
+    process.env.MAGIC_SELECT_SEARCH_THRESHOLD,
+    250
+  ),
   minKeywordLength: parseEnvInt(process.env.MAGIC_SELECT_MIN_KEYWORD_LENGTH, 3),
-  minSearchScore: parseEnvFloat(process.env.MAGIC_SELECT_MIN_SEARCH_SCORE, 50.0),
-  maxSearchResults: parseEnvInt(process.env.MAGIC_SELECT_MAX_SEARCH_RESULTS, 2000),
+  minSearchScore: parseEnvFloat(
+    process.env.MAGIC_SELECT_MIN_SEARCH_SCORE,
+    50.0
+  ),
+  maxSearchResults: parseEnvInt(
+    process.env.MAGIC_SELECT_MAX_SEARCH_RESULTS,
+    2000
+  ),
 };
 
 // Issue data structure
@@ -273,12 +288,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      projectId,
-      testRunMetadata,
-      clarification,
-      countOnly,
-    } = parseResult.data;
+    const { projectId, testRunMetadata, clarification, countOnly } =
+      parseResult.data;
 
     // Verify user has access to the project and check for active LLM integration
     const isAdmin = session.user.access === "ADMIN";
@@ -516,7 +527,9 @@ export async function POST(request: NextRequest) {
                 Math.max(...scores).toFixed(2)
               );
               break;
-            } else if (minScore === scoreThresholds[scoreThresholds.length - 1]) {
+            } else if (
+              minScore === scoreThresholds[scoreThresholds.length - 1]
+            ) {
               // Last threshold and still no results
               console.log(
                 "Search returned no results even at minimum score threshold (",
@@ -572,7 +585,10 @@ export async function POST(request: NextRequest) {
     // Full analysis has moved to the background worker.
     // Use POST /api/llm/magic-select-cases/submit to start a job.
     return NextResponse.json(
-      { error: "Full analysis has been moved to background processing. Use /api/llm/magic-select-cases/submit to start a job." },
+      {
+        error:
+          "Full analysis has been moved to background processing. Use /api/llm/magic-select-cases/submit to start a job.",
+      },
       { status: 410 }
     );
   } catch (error) {
@@ -583,4 +599,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -11,7 +11,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import {
   useFindManyConfigurations,
-  useUpdateConfigurations
+  useUpdateConfigurations,
 } from "~/lib/hooks";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { ConfigWithVariants, getColumns } from "./configColumns";
@@ -110,15 +110,12 @@ function Configurations(): React.ReactElement | null {
   // eslint-disable-next-line react-hooks/refs
   updateConfigurationRef.current = updateConfiguration;
 
-  const handleToggle = useCallback(
-    (id: number, isEnabled: boolean) => {
-      updateConfigurationRef.current({
-        where: { id },
-        data: { isEnabled },
-      });
-    },
-    []
-  );
+  const handleToggle = useCallback((id: number, isEnabled: boolean) => {
+    updateConfigurationRef.current({
+      where: { id },
+      data: { isEnabled },
+    });
+  }, []);
 
   const [editingConfiguration, setEditingConfiguration] =
     useState<ConfigWithVariants | null>(null);
