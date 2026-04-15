@@ -3844,60 +3844,158 @@ var SyncService = class {
       if (!adapter) {
         throw new Error("Invalid adapter for issue synchronization");
       }
-      const totalIssues = await prisma2.issue.count({
+      const linkedProjects = await prisma2.integrationProject.findMany({
         where: {
-          integrationId,
-          ...projectId && { projectId: parseInt(projectId) }
+          projectIntegration: { integrationId },
+          isActive: true
         }
       });
-      const BATCH_SIZE = 50;
-      let processedCount = 0;
-      while (processedCount < totalIssues) {
-        const localIssues = await prisma2.issue.findMany({
+      if (linkedProjects.length > 0) {
+        for (const integrationProject of linkedProjects) {
+          try {
+            await prisma2.integrationProject.update({
+              where: { id: integrationProject.id },
+              data: { syncStatus: "syncing" }
+            });
+            const allProjectIssues = await prisma2.issue.findMany({
+              where: {
+                integrationId,
+                ...projectId && { projectId: parseInt(projectId) }
+              },
+              select: {
+                id: true,
+                externalId: true,
+                externalKey: true,
+                name: true,
+                externalData: true
+              }
+            });
+            const issuesForProject = allProjectIssues.filter((issue) => {
+              if (!issue.externalKey) return false;
+              if (issue.externalKey.startsWith(integrationProject.externalProjectKey + "-")) {
+                return true;
+              }
+              if (issue.externalKey === integrationProject.externalProjectId) {
+                return true;
+              }
+              return false;
+            });
+            let projectSynced = 0;
+            const BATCH_SIZE = 50;
+            for (let i = 0; i < issuesForProject.length; i += BATCH_SIZE) {
+              const batch = issuesForProject.slice(i, i + BATCH_SIZE);
+              for (const localIssue of batch) {
+                try {
+                  if (job) {
+                    const progress = Math.round(
+                      (syncedCount + projectSynced + 1) / (allProjectIssues.length || 1) * 100
+                    );
+                    await job.updateProgress({
+                      current: syncedCount + projectSynced + 1,
+                      total: allProjectIssues.length,
+                      percentage: Math.min(progress, 100),
+                      message: `Syncing ${integrationProject.externalProjectKey}: issue ${projectSynced + 1}`
+                    });
+                  }
+                  const issueIdentifier = localIssue.externalId || localIssue.externalKey || localIssue.name;
+                  if (!issueIdentifier) {
+                    errors.push(`Issue ${localIssue.id} has no external identifier`);
+                    continue;
+                  }
+                  const issueData = await adapter.syncIssue(issueIdentifier);
+                  await issueCache.set(integrationId, issueData.id, issueData);
+                  await this.updateExistingIssue(prisma2, integrationId, issueData);
+                  projectSynced++;
+                } catch (error) {
+                  errors.push(
+                    `Failed to sync issue ${localIssue.externalKey || localIssue.externalId || localIssue.id}: ${error.message}`
+                  );
+                }
+              }
+              if (i + BATCH_SIZE < issuesForProject.length) {
+                await new Promise((resolve) => setTimeout(resolve, 10));
+              }
+            }
+            syncedCount += projectSynced;
+            await prisma2.integrationProject.update({
+              where: { id: integrationProject.id },
+              data: {
+                syncStatus: "completed",
+                lastSyncAt: /* @__PURE__ */ new Date(),
+                syncError: null
+              }
+            });
+          } catch (error) {
+            errors.push(`Project ${integrationProject.externalProjectKey}: ${error.message}`);
+            try {
+              await prisma2.integrationProject.update({
+                where: { id: integrationProject.id },
+                data: {
+                  syncStatus: "error",
+                  syncError: error.message
+                }
+              });
+            } catch {
+              errors.push(`Failed to update error status for ${integrationProject.externalProjectKey}`);
+            }
+          }
+        }
+      } else {
+        const totalIssues = await prisma2.issue.count({
           where: {
             integrationId,
             ...projectId && { projectId: parseInt(projectId) }
-          },
-          select: {
-            id: true,
-            externalId: true,
-            externalKey: true,
-            name: true
-          },
-          skip: processedCount,
-          take: BATCH_SIZE
-        });
-        for (let i = 0; i < localIssues.length; i++) {
-          const localIssue = localIssues[i];
-          const globalIndex = processedCount + i;
-          try {
-            if (job) {
-              const progress = Math.round((globalIndex + 1) / totalIssues * 100);
-              await job.updateProgress({
-                current: globalIndex + 1,
-                total: totalIssues,
-                percentage: progress,
-                message: `Syncing issue ${globalIndex + 1} of ${totalIssues}`
-              });
-            }
-            const issueIdentifier = localIssue.externalId || localIssue.externalKey || localIssue.name;
-            if (!issueIdentifier) {
-              errors.push(`Issue ${localIssue.id} has no external identifier`);
-              continue;
-            }
-            const issueData = await adapter.syncIssue(issueIdentifier);
-            await issueCache.set(integrationId, issueData.id, issueData);
-            await this.updateExistingIssue(prisma2, integrationId, issueData);
-            syncedCount++;
-          } catch (error) {
-            errors.push(
-              `Failed to sync issue ${localIssue.externalKey || localIssue.externalId || localIssue.id}: ${error.message}`
-            );
           }
-        }
-        processedCount += localIssues.length;
-        if (processedCount < totalIssues) {
-          await new Promise((resolve) => setTimeout(resolve, 10));
+        });
+        const BATCH_SIZE = 50;
+        let processedCount = 0;
+        while (processedCount < totalIssues) {
+          const localIssues = await prisma2.issue.findMany({
+            where: {
+              integrationId,
+              ...projectId && { projectId: parseInt(projectId) }
+            },
+            select: {
+              id: true,
+              externalId: true,
+              externalKey: true,
+              name: true
+            },
+            skip: processedCount,
+            take: BATCH_SIZE
+          });
+          for (let i = 0; i < localIssues.length; i++) {
+            const localIssue = localIssues[i];
+            const globalIndex = processedCount + i;
+            try {
+              if (job) {
+                const progress = Math.round((globalIndex + 1) / totalIssues * 100);
+                await job.updateProgress({
+                  current: globalIndex + 1,
+                  total: totalIssues,
+                  percentage: progress,
+                  message: `Syncing issue ${globalIndex + 1} of ${totalIssues}`
+                });
+              }
+              const issueIdentifier = localIssue.externalId || localIssue.externalKey || localIssue.name;
+              if (!issueIdentifier) {
+                errors.push(`Issue ${localIssue.id} has no external identifier`);
+                continue;
+              }
+              const issueData = await adapter.syncIssue(issueIdentifier);
+              await issueCache.set(integrationId, issueData.id, issueData);
+              await this.updateExistingIssue(prisma2, integrationId, issueData);
+              syncedCount++;
+            } catch (error) {
+              errors.push(
+                `Failed to sync issue ${localIssue.externalKey || localIssue.externalId || localIssue.id}: ${error.message}`
+              );
+            }
+          }
+          processedCount += localIssues.length;
+          if (processedCount < totalIssues) {
+            await new Promise((resolve) => setTimeout(resolve, 10));
+          }
         }
       }
       if (options.includeMetadata) {

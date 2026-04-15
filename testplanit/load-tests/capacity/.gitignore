@@ -1,0 +1,5 @@
+# Capacity-test outputs stay local — backed up on the tester's machine,
+# never committed to the repo. The empty results/ directory is preserved
+# via .gitkeep because run-capacity-tests.sh writes into it.
+results/*
+!results/.gitkeep

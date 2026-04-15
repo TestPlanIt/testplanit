@@ -4,6 +4,7 @@ import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { tryFastPathCreate } from "~/lib/access-fast-path";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { extractIpAddress, setAuditContext } from "~/lib/auditContext";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
@@ -318,9 +319,21 @@ async function handler(
       }
     }
 
-    const response = await baseHandler(modifiedReq, {
-      params: Promise.resolve(params),
+    // Fast path: bypass ZenStack's policy engine for project-scoped creates
+    // where the user's cached access manifest already answers the question.
+    // Returns null when the fast path doesn't apply (wrong model/op, missing
+    // projectId, etc.), in which case we fall through to the regular handler.
+    let response = await tryFastPathCreate({
+      parsedPath,
+      requestBody,
+      userId: authenticatedUserId ?? null,
     });
+
+    if (!response) {
+      response = await baseHandler(modifiedReq, {
+        params: Promise.resolve(params),
+      });
+    }
 
     // Clone the response to add headers (NextResponse is immutable)
     const responseBody = await response.clone().text();

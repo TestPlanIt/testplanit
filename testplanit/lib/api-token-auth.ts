@@ -6,8 +6,16 @@
  */
 
 import { NextRequest } from "next/server";
+import {
+  getCachedTokenInfo,
+  invalidateApiTokenCache,
+  setCachedTokenInfo,
+} from "./api-token-cache";
 import { hashToken, isValidTokenFormat } from "./api-tokens";
 import { prisma } from "./prisma";
+
+// Re-export so callers that previously imported from api-token-auth keep working.
+export { invalidateApiTokenCache };
 
 export interface ApiTokenAuthResult {
   /** Whether authentication was successful */
@@ -62,10 +70,45 @@ export async function authenticateApiToken(
     };
   }
 
-  // Hash the token to look up in database
+  // Hash the token to look up in database/cache
   const tokenHash = hashToken(token);
 
-  // Look up the token
+  // Fast path: cached lookup (saves a DB query per request under load).
+  const cached = await getCachedTokenInfo(tokenHash);
+  if (cached) {
+    // Revalidate expiration inline (clock may have advanced since we cached).
+    if (cached.expiresAt && new Date(cached.expiresAt) < new Date()) {
+      await invalidateApiTokenCache(tokenHash);
+      return {
+        authenticated: false,
+        error: "API token has expired",
+        errorCode: "EXPIRED_TOKEN",
+      };
+    }
+
+    // Update lastUsedAt asynchronously, same as the slow path.
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    prisma.apiToken
+      .update({
+        where: { id: cached.tokenId },
+        data: { lastUsedAt: new Date(), lastUsedIp: clientIp },
+      })
+      .catch((err) => {
+        console.error("Failed to update API token last used:", err);
+      });
+
+    return {
+      authenticated: true,
+      userId: cached.userId,
+      access: cached.userAccess ?? undefined,
+      scopes: cached.scopes,
+    };
+  }
+
+  // Slow path: DB lookup, validate everything, populate cache on success.
   const apiToken = await prisma.apiToken.findUnique({
     where: { token: tokenHash },
     include: {
@@ -124,6 +167,15 @@ export async function authenticateApiToken(
       errorCode: "API_ACCESS_DISABLED",
     };
   }
+
+  // Cache the successful lookup for subsequent requests.
+  await setCachedTokenInfo(tokenHash, {
+    tokenId: apiToken.id,
+    userId: apiToken.userId,
+    userAccess: apiToken.user.access ?? null,
+    scopes: apiToken.scopes,
+    expiresAt: apiToken.expiresAt ? apiToken.expiresAt.toISOString() : null,
+  });
 
   // Update last used timestamp (async, don't block the response)
   const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

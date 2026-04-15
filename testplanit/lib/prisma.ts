@@ -22,6 +22,7 @@ import {
   auditBulkDelete,
   captureAuditEvent,
 } from "./services/auditLog";
+import { invalidateApiTokenCache } from "./api-token-cache";
 
 // Declare global types
 declare global {
@@ -832,6 +833,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             }).catch((error: any) => {
               console.error(`Failed to audit API token delete:`, error);
             });
+            // Evict the short-TTL auth cache so the token is rejected immediately.
+            invalidateApiTokenCache(oldEntity.token).catch((error: any) => {
+              console.error(`Failed to invalidate API token cache on delete:`, error);
+            });
           }
           return result;
         },
@@ -856,6 +861,50 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               },
             }).catch((error: any) => {
               console.error(`Failed to audit API token revocation:`, error);
+            });
+          }
+          // Evict the short-TTL auth cache on every write: revocation must be
+          // immediate, and rotated scopes/expiresAt/isActive all need to
+          // invalidate a prior cached lookup.
+          if (oldEntity) {
+            invalidateApiTokenCache(oldEntity.token).catch((error: any) => {
+              console.error(`Failed to invalidate API token cache on update:`, error);
+            });
+          }
+          return result;
+        },
+        async updateMany({ args, query }: any) {
+          // Capture tokens affected by the bulk update so we can invalidate
+          // their cached entries after the write completes.
+          const affected = args.where
+            ? await baseClient.apiToken.findMany({
+                where: args.where,
+                select: { token: true },
+              })
+            : [];
+          const result = await query(args);
+          if (affected.length > 0) {
+            Promise.all(
+              affected.map((t: { token: string }) => invalidateApiTokenCache(t.token))
+            ).catch((error: any) => {
+              console.error(`Failed to invalidate API token caches on updateMany:`, error);
+            });
+          }
+          return result;
+        },
+        async deleteMany({ args, query }: any) {
+          const affected = args.where
+            ? await baseClient.apiToken.findMany({
+                where: args.where,
+                select: { token: true },
+              })
+            : [];
+          const result = await query(args);
+          if (affected.length > 0) {
+            Promise.all(
+              affected.map((t: { token: string }) => invalidateApiTokenCache(t.token))
+            ).catch((error: any) => {
+              console.error(`Failed to invalidate API token caches on deleteMany:`, error);
             });
           }
           return result;
