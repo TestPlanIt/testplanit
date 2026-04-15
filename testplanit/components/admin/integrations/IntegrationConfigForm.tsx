@@ -99,17 +99,6 @@ const authTypeFields: Record<string, FieldConfig[]> = {
       required: true,
     },
   ],
-  [`${IntegrationProvider.SIMPLE_URL}_${IntegrationAuthType.API_KEY}`]: [
-    {
-      name: "apiKey",
-      label: "config.apiKey",
-      placeholder: "config.apiKeyPlaceholder",
-      help: "config.apiKeyHelp",
-      type: "password",
-      isCredential: true,
-      required: false,
-    },
-  ],
 };
 
 const providerFields: Record<IntegrationProvider, FieldConfig[]> = {

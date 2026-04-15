@@ -61,7 +61,7 @@ const providerAuthTypes: Record<IntegrationProvider, IntegrationAuthType[]> = {
   [IntegrationProvider.AZURE_DEVOPS]: [
     IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
   ],
-  [IntegrationProvider.SIMPLE_URL]: [IntegrationAuthType.API_KEY],
+  [IntegrationProvider.SIMPLE_URL]: [IntegrationAuthType.NONE],
 };
 
 export function IntegrationModal({
@@ -302,19 +302,23 @@ export function IntegrationModal({
                 />
 
                 <div className="flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleTestConnection}
-                    disabled={isTesting || isLoading}
-                  >
-                    {isTesting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Activity className="h-4 w-4" />
-                    )}
-                    {t("testConnection")}
-                  </Button>
+                  {selectedType !== IntegrationProvider.SIMPLE_URL ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleTestConnection}
+                      disabled={isTesting || isLoading}
+                    >
+                      {isTesting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Activity className="h-4 w-4" />
+                      )}
+                      {t("testConnection")}
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
 
                   <div className="space-x-2">
                     <Button
