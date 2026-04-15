@@ -76,7 +76,7 @@ export function setup() {
   };
 }
 
-export default function (ctx) {
+export default function runCreation(ctx) {
   for (const size of RUN_SIZES) {
     if (size > ctx.caseIds.length) {
       console.warn(`Skipping size=${size}: only ${ctx.caseIds.length} cases available`);

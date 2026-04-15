@@ -59,7 +59,7 @@ const TYPEAHEAD_SEQUENCES = [
   ["t", "te", "tes", "test"],
 ];
 
-export default function () {
+export default function search() {
   // Get project context (templates, tags) for filtered searches
   const templates = findMany(
     "templates",

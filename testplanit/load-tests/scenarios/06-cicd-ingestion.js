@@ -30,7 +30,7 @@ export const options = {
   thresholds,
 };
 
-export default function () {
+export default function cicdIngestion() {
   // 1. Get a folder to place imported cases
   const folders = findMany(
     "repositoryFolders",

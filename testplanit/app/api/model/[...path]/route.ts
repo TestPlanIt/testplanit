@@ -40,6 +40,7 @@ const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
   caseSteps: ["createdBy"],
   jUnitTestSuite: ["createdBy"],
   jUnitTestResult: ["createdBy"],
+  issue: ["createdBy"],
 };
 
 // Entity types we want to audit
@@ -387,12 +388,14 @@ async function handler(
         const data = result?.data;
 
         if (data?.id) {
-          syncRepositoryCaseToElasticsearch(data.id, tenantId).catch((error: any) => {
-            console.error(
-              `Failed to sync repository case ${data.id} to Elasticsearch:`,
-              error
-            );
-          });
+          syncRepositoryCaseToElasticsearch(data.id, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync repository case ${data.id} to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
@@ -468,12 +471,14 @@ async function handler(
         const data = result?.data;
 
         if (data?.id) {
-          syncSharedStepToElasticsearch(data.id, tenantId).catch((error: any) => {
-            console.error(
-              `Failed to sync shared step ${data.id} to Elasticsearch:`,
-              error
-            );
-          });
+          syncSharedStepToElasticsearch(data.id, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync shared step ${data.id} to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
@@ -495,12 +500,14 @@ async function handler(
         const data = result?.data;
 
         if (data?.id) {
-          syncIssueToElasticsearch(data.id, undefined, tenantId).catch((error: any) => {
-            console.error(
-              `Failed to sync issue ${data.id} to Elasticsearch:`,
-              error
-            );
-          });
+          syncIssueToElasticsearch(data.id, undefined, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync issue ${data.id} to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
@@ -522,12 +529,14 @@ async function handler(
         const data = result?.data;
 
         if (data?.id) {
-          syncMilestoneToElasticsearch(data.id, tenantId).catch((error: any) => {
-            console.error(
-              `Failed to sync milestone ${data.id} to Elasticsearch:`,
-              error
-            );
-          });
+          syncMilestoneToElasticsearch(data.id, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync milestone ${data.id} to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
@@ -577,7 +586,10 @@ async function handler(
         const data = result?.data;
 
         if (data?.repositoryCaseId) {
-          syncRepositoryCaseToElasticsearch(data.repositoryCaseId, tenantId).catch((error: any) => {
+          syncRepositoryCaseToElasticsearch(
+            data.repositoryCaseId,
+            tenantId
+          ).catch((error: any) => {
             console.error(
               `Failed to sync repository case ${data.repositoryCaseId} after step update to Elasticsearch:`,
               error
@@ -605,7 +617,10 @@ async function handler(
         const data = result?.data;
 
         if (data?.repositoryCaseId) {
-          syncRepositoryCaseToElasticsearch(data.repositoryCaseId, tenantId).catch((error: any) => {
+          syncRepositoryCaseToElasticsearch(
+            data.repositoryCaseId,
+            tenantId
+          ).catch((error: any) => {
             console.error(
               `Failed to sync repository case ${data.repositoryCaseId} after custom field update to Elasticsearch:`,
               error

@@ -28,7 +28,7 @@ import {
   PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
 import {
-  useCountIssue, useFindFirstProjects, useFindManyIssue, useGroupByIssue
+  useCountIssue, useFindFirstProjects, useFindManyIssue, useFindManyProjectIntegration, useGroupByIssue
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
@@ -112,6 +112,7 @@ function ProjectIssues() {
     if (projectId === null) return {};
     return {
       OR: [
+        { projectId },
         { repositoryCases: { some: { projectId } } },
         { sessions: { some: { projectId } } },
         { testRuns: { some: { projectId } } },
@@ -224,6 +225,7 @@ function ProjectIssues() {
 
     const projectFilter = {
       OR: [
+        { projectId },
         { repositoryCases: { some: { projectId } } },
         { sessions: { some: { projectId } } },
         { testRuns: { some: { projectId } } },
@@ -366,6 +368,7 @@ function ProjectIssues() {
                 id: true,
                 provider: true,
                 name: true,
+                settings: true,
               },
             },
           },
@@ -715,6 +718,22 @@ function ProjectIssues() {
     }
   }, [isAuthLoading, session, router]);
 
+  // Determine if the project only has SIMPLE_URL integrations so we can hide
+  // columns that would always be empty (description, status, priority, lastSyncedAt).
+  const { data: projectIntegrations } = useFindManyProjectIntegration(
+    {
+      where: { projectId: projectId ?? -1, isActive: true },
+      include: { integration: { select: { provider: true } } },
+    },
+    { enabled: !!projectId && !isAuthLoading }
+  );
+  const hasIntegrations = (projectIntegrations?.length ?? 0) > 0;
+  const onlySimpleUrl =
+    hasIntegrations &&
+    (projectIntegrations as any[]).every(
+      (pi) => pi.integration?.provider === "SIMPLE_URL"
+    );
+
   const columns = useIssueColumns({
     translations: {
       name: t("common.name"),
@@ -729,6 +748,7 @@ function ProjectIssues() {
       integration: t("common.fields.integration"),
     },
     isLoadingCounts,
+    hideSyncedFields: onlySimpleUrl,
   });
 
   if (projectId === null && !isAuthLoading) {

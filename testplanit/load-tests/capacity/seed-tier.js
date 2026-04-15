@@ -36,7 +36,7 @@ export const options = {
   thresholds: {},
 };
 
-export default function () {
+export default function seedTier() {
   console.log(`\n=== Seeding capacity tier: ${TIER} ===`);
   console.log(`  Projects: ${config.projects}`);
   console.log(`  Cases/project: ${config.casesPerProject}`);

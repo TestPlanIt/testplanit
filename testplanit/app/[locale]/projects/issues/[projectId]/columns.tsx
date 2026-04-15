@@ -8,11 +8,25 @@ import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Issue } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import DOMPurify from "dompurify";
+import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
+
+function resolveIssueUrl(row: ExtendedIssues): string | null {
+  if (row.integration?.provider === "SIMPLE_URL") {
+    const settings =
+      row.integration.settings && typeof row.integration.settings === "object"
+        ? (row.integration.settings as Record<string, unknown>)
+        : null;
+    const baseUrl =
+      typeof settings?.baseUrl === "string" ? settings.baseUrl : undefined;
+    return buildSimpleUrlLink(baseUrl, row.externalId);
+  }
+  return row.externalUrl ?? null;
+}
 
 // Helper function to strip HTML tags and get plain text
 function stripHtmlTags(html: string | null): string {
@@ -34,6 +48,7 @@ export interface ExtendedIssues extends Issue {
     id: number;
     provider: string;
     name: string;
+    settings?: unknown;
   } | null;
   repositoryCases: { id: number }[];
   sessions: { id: number }[];
@@ -51,6 +66,7 @@ export interface ExtendedIssues extends Issue {
 export function useIssueColumns({
   translations,
   isLoadingCounts = false,
+  hideSyncedFields = false,
 }: {
   translations: {
     name: string;
@@ -65,6 +81,9 @@ export function useIssueColumns({
     integration: string;
   };
   isLoadingCounts?: boolean;
+  /** Hide columns that come from external API sync (description, status, priority, lastSyncedAt)
+   *  when the project only has SIMPLE_URL integrations — those columns never have values. */
+  hideSyncedFields?: boolean;
 }): ColumnDef<ExtendedIssues>[] {
   const columns: ColumnDef<ExtendedIssues>[] = [
     {
@@ -90,7 +109,7 @@ export function useIssueColumns({
               id={row.original.id}
               name={row.original.name}
               externalId={row.original.externalId}
-              externalUrl={row.original.externalUrl}
+              externalUrl={resolveIssueUrl(row.original)}
               title={row.original.title}
               status={row.original.externalStatus}
               projectIds={row.original.projectIds}
@@ -118,10 +137,29 @@ export function useIssueColumns({
       maxSize: 500,
       cell: ({ row, column }) => {
         const title = row.original.title;
+        const externalUrl = resolveIssueUrl(row.original);
         const hasHtml = title && /<[^>]+>/.test(title);
         const plainText = stripHtmlTags(title);
 
         if (!title) return <span className="text-muted-foreground">-</span>;
+
+        // If the issue has an externalUrl and the title is plain text,
+        // render the title as a link to the external system.
+        if (externalUrl && !hasHtml) {
+          return (
+            <a
+              href={externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={plainText}
+              className="line-clamp-2 overflow-hidden text-ellipsis text-sm hover:text-primary hover:underline block px-1 -mx-1 py-0.5"
+              style={{ maxWidth: column.getSize() }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {plainText}
+            </a>
+          );
+        }
 
         return (
           <Popover>
@@ -271,7 +309,9 @@ export function useIssueColumns({
       maxSize: 200,
       cell: ({ row }) => {
         const priority = row.original.priority;
-        return <IssuePriorityDisplay priority={priority} className="capitalize" />;
+        return (
+          <IssuePriorityDisplay priority={priority} className="capitalize" />
+        );
       },
     },
     {
@@ -390,6 +430,18 @@ export function useIssueColumns({
       },
     },
   ];
+
+  // Hide columns that are populated only via external API sync when the project
+  // only has SIMPLE_URL integrations — those columns would always be empty.
+  if (hideSyncedFields) {
+    const syncedOnly = new Set([
+      "description",
+      "status",
+      "priority",
+      "lastSyncedAt",
+    ]);
+    return columns.filter((c) => !syncedOnly.has(c.id as string));
+  }
 
   return columns;
 }

@@ -80,7 +80,7 @@ export function setup() {
   };
 }
 
-export default function (ctx) {
+export default function importRate(ctx) {
   if (!ctx.folderIds.length || !ctx.repoId || !ctx.templateId || !ctx.stateId) {
     return;
   }

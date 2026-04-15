@@ -51,7 +51,7 @@ for (const s of SCENARIOS) {
   cumulative.push({ ...s, threshold: running / totalWeight });
 }
 
-export default function () {
+export default function mixedWorkload() {
   const rand = Math.random();
   const scenario = cumulative.find((s) => rand <= s.threshold);
   scenario.fn();

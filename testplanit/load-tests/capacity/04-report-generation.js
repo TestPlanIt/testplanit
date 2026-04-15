@@ -51,7 +51,7 @@ export const options = {
   },
 };
 
-export default function () {
+export default function reportGeneration() {
   for (const report of reports) {
     const start = Date.now();
     const { res } = postApi(report.path, report.body, { scenarioTag: "reporting" });

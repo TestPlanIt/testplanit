@@ -4467,6 +4467,8 @@
     "unlink": "Desvincular",
     "linkError": "Error al vincular la incidencia",
     "linkExternalIssue": "Enlace a problema {provider}",
+    "linkIssue": "Problema con el enlace",
+    "addIssue": "Agregar problema",
     "unlinkError": "Error al desvincular el problema",
     "noIssuesFound": "No se encontraron peticiones",
     "startTypingToSearch": "Empezar a escribir para buscar problemas",

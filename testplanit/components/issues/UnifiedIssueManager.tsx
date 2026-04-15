@@ -15,7 +15,13 @@ interface UnifiedIssueManagerProps {
   projectId: number;
   linkedIssueIds: number[];
   setLinkedIssueIds: (ids: number[]) => void;
-  entityType?: 'testCase' | 'testRun' | 'session' | 'testRunResult' | 'testRunStepResult' | 'sessionResult';
+  entityType?:
+    | "testCase"
+    | "testRun"
+    | "session"
+    | "testRunResult"
+    | "testRunStepResult"
+    | "sessionResult";
   entityId?: number;
   maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
 }
@@ -24,23 +30,23 @@ export function UnifiedIssueManager({
   projectId,
   linkedIssueIds,
   setLinkedIssueIds,
-  entityType = 'testCase',
+  entityType = "testCase",
   entityId,
   maxBadgeWidth,
 }: UnifiedIssueManagerProps) {
   const t = useTranslations();
-  
+
   // Fetch project with both old and new issue tracking config
   const { data: project, isLoading } = useFindFirstProjects({
     where: { id: projectId },
     include: {
       projectIntegrations: {
         where: { isActive: true },
-        include: { 
-          integration: true
-        }
-      }
-    }
+        include: {
+          integration: true,
+        },
+      },
+    },
   });
 
   if (isLoading) {
@@ -49,7 +55,7 @@ export function UnifiedIssueManager({
 
   // Check for new integration system first
   const activeIntegration = project?.projectIntegrations?.[0];
-  
+
   // If entity doesn't exist yet (entityId is 0 or undefined), use deferred linking
   if (activeIntegration?.integration && (!entityId || entityId === 0)) {
     return (
@@ -64,17 +70,24 @@ export function UnifiedIssueManager({
       />
     );
   }
-  
+
   if (activeIntegration?.integration) {
-    const integrationId = typeof activeIntegration.integration.id === 'string' 
-      ? parseInt(activeIntegration.integration.id) 
-      : activeIntegration.integration.id;
-    const projectIntegrationId = typeof activeIntegration.id === 'string' 
-      ? parseInt(activeIntegration.id) 
-      : activeIntegration.id;
+    const integrationId =
+      typeof activeIntegration.integration.id === "string"
+        ? parseInt(activeIntegration.integration.id)
+        : activeIntegration.integration.id;
+    const projectIntegrationId =
+      typeof activeIntegration.id === "string"
+        ? parseInt(activeIntegration.id)
+        : activeIntegration.id;
 
     // Handle SIMPLE_URL provider
-    if (activeIntegration.integration.provider === IntegrationProvider.SIMPLE_URL) {
+    if (
+      activeIntegration.integration.provider === IntegrationProvider.SIMPLE_URL
+    ) {
+      // The URL template lives on Integration.settings, not ProjectIntegration.config
+      const integrationSettings =
+        (activeIntegration.integration.settings as Record<string, any>) || {};
       return (
         <ManageSimpleUrlIssues
           projectId={projectId}
@@ -83,7 +96,9 @@ export function UnifiedIssueManager({
           linkedIssueIds={linkedIssueIds}
           setLinkedIssueIds={setLinkedIssueIds}
           entityType={entityType}
-          config={activeIntegration.config as any}
+          config={{
+            baseUrl: integrationSettings.baseUrl as string | undefined,
+          }}
         />
       );
     }
@@ -102,7 +117,6 @@ export function UnifiedIssueManager({
       />
     );
   }
-
 
   // No issue tracking configured
   return (
@@ -124,7 +138,10 @@ export function UnifiedIssueManager({
 /**
  * Simplified component for use in forms where we already have project data
  */
-interface SimpleUnifiedIssueManagerProps extends Omit<UnifiedIssueManagerProps, 'projectId'> {
+interface SimpleUnifiedIssueManagerProps extends Omit<
+  UnifiedIssueManagerProps,
+  "projectId"
+> {
   projectData: {
     projectIntegrations?: Array<{
       id: string | number;
@@ -144,14 +161,16 @@ export function SimpleUnifiedIssueManager({
   projectId,
   linkedIssueIds,
   setLinkedIssueIds,
-  entityType = 'testCase',
+  entityType = "testCase",
   entityId,
 }: SimpleUnifiedIssueManagerProps) {
   const t = useTranslations();
-  
+
   // Check for new integration system first
-  const activeIntegration = projectData.projectIntegrations?.find(pi => pi.isActive);
-  
+  const activeIntegration = projectData.projectIntegrations?.find(
+    (pi) => pi.isActive
+  );
+
   // If entity doesn't exist yet (entityId is 0 or undefined), use deferred linking
   if (activeIntegration && (!entityId || entityId === 0)) {
     return (
@@ -165,17 +184,26 @@ export function SimpleUnifiedIssueManager({
       />
     );
   }
-  
+
   if (activeIntegration) {
-    const integrationId = typeof activeIntegration.integration.id === 'string' 
-      ? parseInt(activeIntegration.integration.id) 
-      : activeIntegration.integration.id;
-    const projectIntegrationId = typeof activeIntegration.id === 'string' 
-      ? parseInt(activeIntegration.id) 
-      : activeIntegration.id;
+    const integrationId =
+      typeof activeIntegration.integration.id === "string"
+        ? parseInt(activeIntegration.integration.id)
+        : activeIntegration.integration.id;
+    const projectIntegrationId =
+      typeof activeIntegration.id === "string"
+        ? parseInt(activeIntegration.id)
+        : activeIntegration.id;
 
     // Handle SIMPLE_URL provider
-    if (activeIntegration.integration.provider === IntegrationProvider.SIMPLE_URL) {
+    if (
+      activeIntegration.integration.provider === IntegrationProvider.SIMPLE_URL
+    ) {
+      const integrationSettings =
+        ((activeIntegration as any).integration?.settings as Record<
+          string,
+          any
+        >) || {};
       return (
         <ManageSimpleUrlIssues
           projectId={projectId}
@@ -184,7 +212,9 @@ export function SimpleUnifiedIssueManager({
           linkedIssueIds={linkedIssueIds}
           setLinkedIssueIds={setLinkedIssueIds}
           entityType={entityType}
-          config={(activeIntegration as any).config}
+          config={{
+            baseUrl: integrationSettings.baseUrl as string | undefined,
+          }}
         />
       );
     }
@@ -203,7 +233,6 @@ export function SimpleUnifiedIssueManager({
       />
     );
   }
-
 
   // No issue tracking configured
   return (

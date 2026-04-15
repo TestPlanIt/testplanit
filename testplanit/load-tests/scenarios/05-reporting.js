@@ -28,7 +28,7 @@ export const options = {
   thresholds,
 };
 
-export default function () {
+export default function reporting() {
   // 1. Single-project: Test execution report (status dimension, testResults metric)
   const { res: execRes } = postApi(
     "/api/report-builder/test-execution",

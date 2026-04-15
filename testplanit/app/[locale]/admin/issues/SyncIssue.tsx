@@ -25,8 +25,13 @@ export function SyncIssue({ issue }: SyncIssueProps) {
   const router = useRouter();
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Only show sync button for issues with external integration
-  if (!issue.integrationId || !issue.externalId) {
+  // Only show sync button for issues with external integration.
+  // SIMPLE_URL integrations have no API to pull from, so sync is not supported.
+  if (
+    !issue.integrationId ||
+    !issue.externalId ||
+    issue.integration?.provider === "SIMPLE_URL"
+  ) {
     return null;
   }
 
