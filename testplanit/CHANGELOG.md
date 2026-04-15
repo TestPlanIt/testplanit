@@ -1,3 +1,9 @@
+## [0.21.14](https://github.com/TestPlanIt/testplanit/compare/v0.21.13...v0.21.14) (2026-04-15)
+
+### Bug Fixes
+
+* **issues:** disable sync for SIMPLE_URL issue integrations ([#197](https://github.com/TestPlanIt/testplanit/issues/197)) ([6b0cc94](https://github.com/TestPlanIt/testplanit/commit/6b0cc942a0e6da8b4b3e093ac87f1d255b5f7ba3))
+
 ## [0.21.13](https://github.com/TestPlanIt/testplanit/compare/v0.21.12...v0.21.13) (2026-04-15)
 
 ### Enhancements
