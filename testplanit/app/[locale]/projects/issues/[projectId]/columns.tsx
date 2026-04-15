@@ -8,7 +8,7 @@ import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Issue } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -17,10 +17,13 @@ import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 
 function resolveIssueUrl(row: ExtendedIssues): string | null {
   if (row.integration?.provider === "SIMPLE_URL") {
-    return buildSimpleUrlLink(
-      row.integration.settings?.baseUrl as string | undefined,
-      row.externalId
-    );
+    const settings =
+      row.integration.settings && typeof row.integration.settings === "object"
+        ? (row.integration.settings as Record<string, unknown>)
+        : null;
+    const baseUrl =
+      typeof settings?.baseUrl === "string" ? settings.baseUrl : undefined;
+    return buildSimpleUrlLink(baseUrl, row.externalId);
   }
   return row.externalUrl ?? null;
 }
@@ -45,7 +48,7 @@ export interface ExtendedIssues extends Issue {
     id: number;
     provider: string;
     name: string;
-    settings?: Record<string, any> | null;
+    settings?: unknown;
   } | null;
   repositoryCases: { id: number }[];
   sessions: { id: number }[];
@@ -306,7 +309,9 @@ export function useIssueColumns({
       maxSize: 200,
       cell: ({ row }) => {
         const priority = row.original.priority;
-        return <IssuePriorityDisplay priority={priority} className="capitalize" />;
+        return (
+          <IssuePriorityDisplay priority={priority} className="capitalize" />
+        );
       },
     },
     {
