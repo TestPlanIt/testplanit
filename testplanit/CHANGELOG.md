@@ -1,3 +1,9 @@
+## [0.21.15](https://github.com/TestPlanIt/testplanit/compare/v0.21.14...v0.21.15) (2026-04-15)
+
+### Enhancements
+
+* **two-factor:** implement AES-256-GCM encryption for TOTP secrets and add legacy support ([#212](https://github.com/TestPlanIt/testplanit/issues/212)) ([8cdba1d](https://github.com/TestPlanIt/testplanit/commit/8cdba1dfadcc0e76d8b9de3c6f4dea1e201af044))
+
 ## [0.21.14](https://github.com/TestPlanIt/testplanit/compare/v0.21.13...v0.21.14) (2026-04-15)
 
 ### Bug Fixes
