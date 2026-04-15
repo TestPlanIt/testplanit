@@ -136,27 +136,47 @@ var init_db = __esm({
   }
 });
 
+// lib/utils/ssrf.ts
+function getAllowedPrivateHosts() {
+  return new Set(
+    (process.env.ALLOWED_PRIVATE_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean)
+  );
+}
+var MAX_PAGE_BYTES;
+var init_ssrf = __esm({
+  "lib/utils/ssrf.ts"() {
+    "use strict";
+    MAX_PAGE_BYTES = 5 * 1024 * 1024;
+  }
+});
+
 // utils/ssrf.ts
 function isPrivateIp(ip) {
   return PRIVATE_RANGES.some((r) => r.test(ip));
 }
-function isSsrfSafe(url) {
+function isSsrfSafe(url, allowedHosts) {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
-    if (hostname === "localhost") return false;
-    if (isPrivateIp(hostname)) return false;
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return false;
     }
+    const allowed = allowedHosts ?? getAllowedPrivateHosts();
+    if (allowed.has(hostname.toLowerCase())) return true;
+    if (hostname === "localhost") return false;
+    if (isPrivateIp(hostname)) return false;
     return true;
   } catch {
     return false;
   }
 }
-async function assertSsrfSafeResolved(url) {
+async function assertSsrfSafeResolved(url, allowedHosts) {
   const parsed = new URL(url);
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+  const allowed = allowedHosts ?? getAllowedPrivateHosts();
+  if (allowed.has(hostname.toLowerCase())) {
+    return;
+  }
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":")) {
     return;
   }
@@ -173,10 +193,11 @@ async function assertSsrfSafeResolved(url) {
   }
 }
 var import_promises, PRIVATE_RANGES;
-var init_ssrf = __esm({
+var init_ssrf2 = __esm({
   "utils/ssrf.ts"() {
     "use strict";
     import_promises = require("node:dns/promises");
+    init_ssrf();
     PRIVATE_RANGES = [
       // IPv4 loopback
       /^127\./,
@@ -196,20 +217,6 @@ var init_ssrf = __esm({
       // IPv6 link-local
       /^fe80:/i
     ];
-  }
-});
-
-// lib/utils/ssrf.ts
-function getAllowedPrivateHosts() {
-  return new Set(
-    (process.env.ALLOWED_PRIVATE_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean)
-  );
-}
-var MAX_PAGE_BYTES;
-var init_ssrf2 = __esm({
-  "lib/utils/ssrf.ts"() {
-    "use strict";
-    MAX_PAGE_BYTES = 5 * 1024 * 1024;
   }
 });
 
@@ -683,8 +690,8 @@ var GitRepoAdapter;
 var init_GitRepoAdapter = __esm({
   "lib/integrations/adapters/GitRepoAdapter.ts"() {
     "use strict";
-    init_ssrf();
     init_ssrf2();
+    init_ssrf();
     GitRepoAdapter = class {
       rateLimitDelay = 500;
       // ms between requests (baseline)

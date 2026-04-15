@@ -170,6 +170,23 @@ To prevent a user from using API tokens without deleting their existing tokens:
 
 This immediately invalidates all authentication attempts using that user's tokens while preserving the tokens for potential re-enablement later.
 
+## Rate Limits
+
+API requests made with tokens count against TestPlanIt's **global hourly rate limit**. The limit applies per instance (not per token), so all tokens across all users share the same hourly budget.
+
+| Tier | Hourly Limit |
+|------|--------------|
+| `essentials` | 1,000 requests/hour |
+| `team` | 5,000 requests/hour |
+| `professional` (default) | 10,000 requests/hour |
+| `dedicated` | 25,000 requests/hour |
+
+When the limit is exceeded, requests return HTTP 429 with a `Retry-After` header.
+
+Every response includes `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers so CI/CD pipelines can pace themselves.
+
+For full details, including how to disable rate limiting in isolated load-test environments, see the [API Reference — Rate Limiting](./api-reference.md#rate-limiting) section.
+
 ## Security Best Practices
 
 ### Token Storage

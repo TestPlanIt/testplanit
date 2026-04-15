@@ -12,6 +12,8 @@ import { expect, test } from "../../fixtures/index";
  * - AUTH-08-5: Requests without tokens get 401 (when using Bearer auth path)
  * - AUTH-08-6: Tokens for users with isApi=false are rejected
  * - AUTH-08-7: Tokens for deactivated users are rejected
+ * - AUTH-08-8: Admin token authenticates cross-project report endpoints
+ * - AUTH-08-9: Non-admin token is rejected from cross-project report endpoints
  *
  * Note: The /api/model/* endpoints check session auth first (cookie), then
  * Bearer token auth. Tests that verify token-based rejection use a fresh
@@ -393,6 +395,128 @@ test.describe("API Token Authentication", () => {
       }
     } finally {
       // Cleanup: delete the test user (admin session)
+      await api.deleteUser(testUserId);
+    }
+  });
+
+  /**
+   * AUTH-08-8: Admin token authenticates cross-project report endpoints
+   *
+   * Guards the branch that added API-token auth fallback to the 4 cross-project
+   * report handlers (automationTrends / flakyTests / testCaseHealth /
+   * issueTestCoverage). All four use the same authenticateRequest() wrapper,
+   * so passing on each one confirms the pattern is wired up everywhere.
+   */
+  test("admin token authenticates cross-project report endpoints", async ({
+    request,
+    baseURL,
+    browser,
+    api,
+    adminUserId,
+  }) => {
+    await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+
+    const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
+      data: { name: `Report Auth Test Token ${Date.now()}` },
+    });
+    expect(createResponse.status()).toBe(200);
+    const { token } = await createResponse.json();
+
+    const endpoints = [
+      "/api/report-builder/cross-project-automation-trends",
+      "/api/report-builder/cross-project-flaky-tests",
+      "/api/report-builder/cross-project-test-case-health",
+      "/api/report-builder/cross-project-issue-test-coverage",
+    ];
+
+    const body = {
+      dimensions: [],
+      metrics: [],
+      projectIds: [],
+    };
+
+    const unauthCtx = await browser.newContext({ storageState: undefined });
+    try {
+      for (const endpoint of endpoints) {
+        const response = await unauthCtx.request.post(`${baseURL}${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          data: body,
+        });
+        expect(
+          response.status(),
+          `${endpoint} should authenticate with admin token`
+        ).toBe(200);
+      }
+    } finally {
+      await unauthCtx.close();
+    }
+  });
+
+  /**
+   * AUTH-08-9: Non-admin token is rejected from cross-project report endpoints
+   *
+   * The cross-project report handlers require access === "ADMIN". A regular
+   * USER with a valid Bearer token must be rejected with 401. This prevents
+   * a regression where the auth wrapper could succeed but the admin check be
+   * removed or weakened.
+   */
+  test("non-admin token is rejected from cross-project report endpoints", async ({
+    baseURL,
+    browser,
+    api,
+  }) => {
+    const email = `api-token-nonadmin-${Date.now()}@example.com`;
+    const userResult = await api.createUser({
+      name: "Non-admin API Token Test User",
+      email,
+      password: "password123",
+      access: "USER",
+    });
+    const testUserId = userResult.data.id;
+
+    try {
+      await api.updateUser({ userId: testUserId, data: { isApi: true } });
+
+      const testUserCtx = await browser.newContext({
+        storageState: undefined,
+        extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
+      });
+
+      let userToken: string;
+      try {
+        const loginPage = await testUserCtx.newPage();
+        await loginPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
+        await loginPage.getByTestId("email-input").fill(email);
+        await loginPage.getByTestId("password-input").fill("password123");
+        await loginPage.locator('button[type="submit"]').first().click();
+        await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+        await loginPage.close();
+
+        const createResponse = await testUserCtx.request.post(
+          `${baseURL}/api/api-tokens`,
+          { data: { name: `Non-admin Report Test Token ${Date.now()}` } }
+        );
+        expect(createResponse.status()).toBe(200);
+        const { token } = await createResponse.json();
+        userToken = token;
+
+        const unauthCtx = await browser.newContext({ storageState: undefined });
+        try {
+          const response = await unauthCtx.request.post(
+            `${baseURL}/api/report-builder/cross-project-automation-trends`,
+            {
+              headers: { Authorization: `Bearer ${userToken}` },
+              data: { dimensions: [], metrics: [], projectIds: [] },
+            }
+          );
+          expect(response.status()).toBe(401);
+        } finally {
+          await unauthCtx.close();
+        }
+      } finally {
+        await testUserCtx.close();
+      }
+    } finally {
       await api.deleteUser(testUserId);
     }
   });

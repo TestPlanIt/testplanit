@@ -84,10 +84,18 @@ function checkFallback(): RateLimitResult {
  *
  * Returns whether the request is allowed along with rate limit metadata
  * suitable for `X-RateLimit-*` response headers.
+ *
+ * Set `DISABLE_API_RATE_LIMIT=true` to bypass rate limiting entirely.
+ * Intended for isolated load-test and development environments —
+ * never enable this in production.
  */
 export async function checkApiRateLimit(): Promise<RateLimitResult> {
   const limit = getTierLimit();
   const { key, resetAt } = getWindowInfo();
+
+  if (process.env.DISABLE_API_RATE_LIMIT === "true") {
+    return { allowed: true, limit, remaining: limit, resetAt };
+  }
 
   if (!valkeyConnection) {
     return checkFallback();
