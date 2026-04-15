@@ -2,6 +2,7 @@ import { generate, generateSecret } from "otplib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   decryptSecret, encryptSecret, generateBackupCodes, generateQRCodeDataURL, generateTOTPSecret, hashBackupCode,
+  isLegacyEncryption,
   verifyBackupCode, verifyTOTP
 } from "./two-factor";
 
@@ -15,7 +16,10 @@ vi.mock("qrcode", () => ({
 describe("Two-Factor Authentication", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Set encryption key for tests
+    // Encryption keys for tests. ENCRYPTION_KEY powers the v2 (AES) path used
+    // by new writes; TWO_FACTOR_ENCRYPTION_KEY is kept only so the legacy v1
+    // (XOR) decrypt path is exercisable by the backward-compat test below.
+    vi.stubEnv("ENCRYPTION_KEY", "test-encryption-key-for-aes-gcm-path!!");
     vi.stubEnv("TWO_FACTOR_ENCRYPTION_KEY", "test-encryption-key-32-chars!!");
     vi.stubEnv("NEXTAUTH_SECRET", "fallback-secret-key");
   });
@@ -256,40 +260,38 @@ describe("Two-Factor Authentication", () => {
   });
 
   describe("encryptSecret", () => {
-    it("should encrypt secret with version prefix", () => {
+    it("should encrypt secret with v2 version prefix (AES-256-GCM)", () => {
       const secret = "TESTSECRET123456";
 
       const encrypted = encryptSecret(secret);
 
-      expect(encrypted).toMatch(/^v1:/);
+      expect(encrypted).toMatch(/^v2:/);
     });
 
     it("should produce base64 encoded output", () => {
       const secret = "TESTSECRET";
 
       const encrypted = encryptSecret(secret);
-      const base64Part = encrypted.replace(/^v1:/, "");
+      const base64Part = encrypted.replace(/^v2:/, "");
 
       expect(() => Buffer.from(base64Part, "base64")).not.toThrow();
     });
 
-    it("should throw error when encryption key not configured", () => {
+    it("should throw when ENCRYPTION_KEY not configured in production", () => {
       vi.unstubAllEnvs();
-      vi.stubEnv("TWO_FACTOR_ENCRYPTION_KEY", "");
-      vi.stubEnv("NEXTAUTH_SECRET", "");
+      vi.stubEnv("NODE_ENV", "production");
 
-      expect(() => encryptSecret("secret")).toThrow(
-        "Encryption key not configured"
-      );
+      expect(() => encryptSecret("secret")).toThrow(/ENCRYPTION_KEY/);
     });
 
-    it("should use NEXTAUTH_SECRET as fallback", () => {
+    it("should use the default dev key when ENCRYPTION_KEY is unset in non-production", () => {
       vi.unstubAllEnvs();
-      vi.stubEnv("TWO_FACTOR_ENCRYPTION_KEY", "");
-      vi.stubEnv("NEXTAUTH_SECRET", "fallback-key");
+      vi.stubEnv("NODE_ENV", "test");
+      // Silence the expected dev-mode warning
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      // Should not throw
       expect(() => encryptSecret("secret")).not.toThrow();
+      warn.mockRestore();
     });
 
     it("should produce different output for different secrets", () => {
@@ -299,13 +301,15 @@ describe("Two-Factor Authentication", () => {
       expect(encrypted1).not.toBe(encrypted2);
     });
 
-    it("should produce consistent output for same secret", () => {
+    it("should produce non-deterministic output for the same secret (random salt/iv)", () => {
+      // AES-GCM with a fresh salt + IV per call must never repeat ciphertext;
+      // deterministic output would be a subtle regression to a weaker scheme.
       const secret = "CONSISTENTSECRET";
 
       const encrypted1 = encryptSecret(secret);
       const encrypted2 = encryptSecret(secret);
 
-      expect(encrypted1).toBe(encrypted2);
+      expect(encrypted1).not.toBe(encrypted2);
     });
   });
 
@@ -323,20 +327,45 @@ describe("Two-Factor Authentication", () => {
       const originalSecret = "SECRETWITHPREFIX";
 
       const encrypted = encryptSecret(originalSecret);
-      expect(encrypted).toMatch(/^v1:/);
+      expect(encrypted).toMatch(/^v2:/);
 
       const decrypted = decryptSecret(encrypted);
       expect(decrypted).toBe(originalSecret);
     });
 
-    it("should throw error when encryption key not configured", () => {
+    it("should throw when v2 record is present but ENCRYPTION_KEY missing in production", () => {
+      // Encrypt while config is good, then tear down prod config and attempt decrypt.
+      const encrypted = encryptSecret("PRODSECRET");
       vi.unstubAllEnvs();
-      vi.stubEnv("TWO_FACTOR_ENCRYPTION_KEY", "");
-      vi.stubEnv("NEXTAUTH_SECRET", "");
+      vi.stubEnv("NODE_ENV", "production");
 
-      expect(() => decryptSecret("v1:encrypted")).toThrow(
-        "Encryption key not configured"
+      expect(() => decryptSecret(encrypted)).toThrow(/ENCRYPTION_KEY/);
+    });
+
+    it("should reject unknown version prefixes", () => {
+      expect(() => decryptSecret("v99:garbage")).toThrow(
+        /version prefix/
       );
+      expect(() => decryptSecret("no-prefix-at-all")).toThrow(
+        /version prefix/
+      );
+    });
+
+    it("should decrypt legacy v1 (XOR) records for backward compatibility", () => {
+      // Construct a v1 record the same way the legacy implementation did, so
+      // we prove the migration window works for existing production data.
+      const secret = "LEGACYSECRET";
+      const legacyKey = "test-encryption-key-32-chars!!"; // matches TWO_FACTOR_ENCRYPTION_KEY above
+      const secretBuffer = Buffer.from(secret);
+      const keyBuffer = Buffer.from(legacyKey);
+      const encrypted = Buffer.alloc(secretBuffer.length);
+      for (let i = 0; i < secretBuffer.length; i++) {
+        encrypted[i] = secretBuffer[i] ^ keyBuffer[i % keyBuffer.length];
+      }
+      const v1Record = `v1:${encrypted.toString("base64")}`;
+
+      expect(isLegacyEncryption(v1Record)).toBe(true);
+      expect(decryptSecret(v1Record)).toBe(secret);
     });
 
     it("should decrypt with same key used for encryption", () => {
@@ -376,6 +405,18 @@ describe("Two-Factor Authentication", () => {
     });
   });
 
+  describe("isLegacyEncryption", () => {
+    it("returns true for v1 prefix", () => {
+      expect(isLegacyEncryption("v1:anything")).toBe(true);
+    });
+    it("returns false for v2 prefix", () => {
+      expect(isLegacyEncryption("v2:anything")).toBe(false);
+    });
+    it("returns false for unprefixed input", () => {
+      expect(isLegacyEncryption("raw")).toBe(false);
+    });
+  });
+
   describe("Integration", () => {
     it("should complete full 2FA setup and verification flow", async () => {
       // 1. Generate secret
@@ -388,7 +429,7 @@ describe("Two-Factor Authentication", () => {
 
       // 3. Encrypt secret for storage
       const encryptedSecret = encryptSecret(secret);
-      expect(encryptedSecret).toMatch(/^v1:/);
+      expect(encryptedSecret).toMatch(/^v2:/);
 
       // 4. Decrypt secret for verification
       const decryptedSecret = decryptSecret(encryptedSecret);
