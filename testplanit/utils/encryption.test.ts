@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  assertEncryptionConfigured,
   decrypt, encrypt, EncryptionService, getMasterKey, isEncrypted
 } from "./encryption";
 
@@ -18,19 +19,61 @@ afterEach(() => {
 describe("getMasterKey", () => {
   it("should return the ENCRYPTION_KEY when set", () => {
     process.env.ENCRYPTION_KEY = "my-secure-encryption-key";
-    // Need to re-import to get fresh module
     expect(getMasterKey()).toBe("my-secure-encryption-key");
   });
 
-  it("should return default development key when ENCRYPTION_KEY is not set", () => {
+  it("should return default development key (with warning) when unset in non-production", () => {
     delete process.env.ENCRYPTION_KEY;
+    vi.stubEnv("NODE_ENV", "test");
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
     const key = getMasterKey();
+
     expect(key).toBe("development-key-do-not-use-in-production-please!");
     expect(consoleSpy).toHaveBeenCalledWith(
       "ENCRYPTION_KEY not set, using default key for development"
     );
     consoleSpy.mockRestore();
+  });
+
+  it("should throw in production when ENCRYPTION_KEY is not set", () => {
+    delete process.env.ENCRYPTION_KEY;
+    vi.stubEnv("NODE_ENV", "production");
+
+    expect(() => getMasterKey()).toThrow(/ENCRYPTION_KEY/);
+  });
+
+  it("should return the configured ENCRYPTION_KEY in production when set", () => {
+    process.env.ENCRYPTION_KEY = "prod-key-abc";
+    vi.stubEnv("NODE_ENV", "production");
+
+    expect(getMasterKey()).toBe("prod-key-abc");
+  });
+});
+
+describe("assertEncryptionConfigured", () => {
+  it("returns the key when configured", () => {
+    process.env.ENCRYPTION_KEY = "configured-key";
+    expect(assertEncryptionConfigured()).toBe("configured-key");
+  });
+
+  it("throws in production when ENCRYPTION_KEY is missing", () => {
+    delete process.env.ENCRYPTION_KEY;
+    vi.stubEnv("NODE_ENV", "production");
+
+    expect(() => assertEncryptionConfigured()).toThrow(/ENCRYPTION_KEY/);
+  });
+
+  it("returns the dev fallback (with warning) in non-production when missing", () => {
+    delete process.env.ENCRYPTION_KEY;
+    vi.stubEnv("NODE_ENV", "development");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const key = assertEncryptionConfigured();
+
+    expect(key).toBe("development-key-do-not-use-in-production-please!");
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 
