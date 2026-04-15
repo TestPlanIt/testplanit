@@ -2,11 +2,11 @@ import { prisma } from "@/lib/prisma";
 import micromatch from "micromatch";
 import {
   createGitRepoAdapter,
-  type GitRepoAdapter
+  type GitRepoAdapter,
 } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
-  type RepoFileEntry
+  type RepoFileEntry,
 } from "~/lib/integrations/cache/RepoFileCache";
 import { bfsRank, buildImportGraph, isBarrelFile } from "./import-analyzer";
 
@@ -24,12 +24,60 @@ function isRateLimitError(err: unknown): boolean {
 
 // Words too generic to be useful for relevance scoring
 const STOP_WORDS = new Set([
-  "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-  "of", "with", "by", "from", "as", "is", "was", "are", "were", "be",
-  "been", "have", "has", "had", "do", "does", "did", "will", "would",
-  "could", "should", "may", "might", "shall", "can", "that", "this",
-  "it", "its", "click", "enter", "verify", "check", "then", "when",
-  "given", "user", "page", "test", "into", "that", "with", "from",
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "but",
+  "in",
+  "on",
+  "at",
+  "to",
+  "for",
+  "of",
+  "with",
+  "by",
+  "from",
+  "as",
+  "is",
+  "was",
+  "are",
+  "were",
+  "be",
+  "been",
+  "have",
+  "has",
+  "had",
+  "do",
+  "does",
+  "did",
+  "will",
+  "would",
+  "could",
+  "should",
+  "may",
+  "might",
+  "shall",
+  "can",
+  "that",
+  "this",
+  "it",
+  "its",
+  "click",
+  "enter",
+  "verify",
+  "check",
+  "then",
+  "when",
+  "given",
+  "user",
+  "page",
+  "test",
+  "into",
+  "that",
+  "with",
+  "from",
 ]);
 
 export interface AssembledContext {
@@ -81,9 +129,15 @@ export function extractTerms(text: string): Set<string> {
  * Score a file path by how many case-derived terms appear in its segments.
  * e.g. "tests/e2e/login-page.spec.ts" scores higher if "login" is in terms.
  */
-export function scoreFileRelevance(filePath: string, terms: Set<string>): number {
+export function scoreFileRelevance(
+  filePath: string,
+  terms: Set<string>
+): number {
   if (terms.size === 0) return 0;
-  const segments = filePath.toLowerCase().split(/[\/.\-_]+/).filter((s) => s.length > 2);
+  const segments = filePath
+    .toLowerCase()
+    .split(/[\/.\-_]+/)
+    .filter((s) => s.length > 2);
   return segments.filter((s) => terms.has(s)).length;
 }
 
@@ -192,7 +246,12 @@ export class CodeContextService {
         }
       }
 
-      return { contextParts, filesUsed, tokenEstimate: currentTokens, truncated };
+      return {
+        contextParts,
+        filesUsed,
+        tokenEstimate: currentTokens,
+        truncated,
+      };
     }
 
     // BFS path: seed identified — load all file contents to build import graph.
@@ -339,7 +398,8 @@ export class CodeContextService {
       filesToFetch = cached;
 
       // Load cached file contents to avoid live git API calls during BFS
-      const cachedContents = await repoFileCache.getFileContents(projectConfigId);
+      const cachedContents =
+        await repoFileCache.getFileContents(projectConfigId);
       if (cachedContents && cachedContents.size > 0) {
         preloadedContents = cachedContents;
         console.log(
@@ -353,7 +413,8 @@ export class CodeContextService {
     } else {
       // Live path: fetch file list from git, apply path patterns, store nothing
       const { files: allFiles } = await adapter.listAllFiles(branch);
-      const pathPatterns = (config.pathPatterns as unknown as PathPattern[]) ?? [];
+      const pathPatterns =
+        (config.pathPatterns as unknown as PathPattern[]) ?? [];
       filesToFetch = applyPathPatterns(allFiles, pathPatterns);
       if (filesToFetch.length === 0) return empty;
     }
@@ -383,9 +444,7 @@ export class CodeContextService {
    * - cacheEnabled=false → returns true if a config exists (live fetch at
    *   export time, no way to pre-verify without a network round-trip)
    */
-  static async checkProjectHasCodeContext(
-    projectId: number
-  ): Promise<boolean> {
+  static async checkProjectHasCodeContext(projectId: number): Promise<boolean> {
     const config = await prisma.projectCodeRepositoryConfig.findUnique({
       where: { projectId },
       select: { id: true, cacheEnabled: true } as any,

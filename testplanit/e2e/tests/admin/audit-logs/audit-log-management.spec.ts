@@ -67,9 +67,7 @@ test.describe("Audit Log Management - Filtering", () => {
 
     // There are two SelectTriggers: action filter and entity type filter
     // The action filter is the first one (w-[180px] container)
-    const actionFilterTrigger = page
-      .locator('[role="combobox"]')
-      .first();
+    const actionFilterTrigger = page.locator('[role="combobox"]').first();
     await expect(actionFilterTrigger).toBeVisible({ timeout: 10000 });
 
     // Open the select
@@ -92,9 +90,7 @@ test.describe("Audit Log Management - Filtering", () => {
         name: /all actions/i,
       });
       if (
-        await allActionsOption
-          .isVisible({ timeout: 2000 })
-          .catch(() => false)
+        await allActionsOption.isVisible({ timeout: 2000 }).catch(() => false)
       ) {
         await allActionsOption.click();
       }
@@ -106,16 +102,16 @@ test.describe("Audit Log Management - Filtering", () => {
     await page.waitForLoadState("networkidle");
 
     // Entity type filter is the second combobox
-    const entityTypeFilterTrigger = page
-      .locator('[role="combobox"]')
-      .nth(1);
+    const entityTypeFilterTrigger = page.locator('[role="combobox"]').nth(1);
     await expect(entityTypeFilterTrigger).toBeVisible({ timeout: 10000 });
 
     // Open the select
     await entityTypeFilterTrigger.click();
 
     // If there are entity types available, select the first non-"all" option
-    const options = page.getByRole("option").filter({ hasNot: page.getByText(/^all entity types$/i) });
+    const options = page
+      .getByRole("option")
+      .filter({ hasNot: page.getByText(/^all entity types$/i) });
     const optionCount = await options.count();
     if (optionCount > 0) {
       await options.first().click();
@@ -131,9 +127,7 @@ test.describe("Audit Log Management - Filtering", () => {
         name: /all entity types/i,
       });
       if (
-        await allEntityOption
-          .isVisible({ timeout: 2000 })
-          .catch(() => false)
+        await allEntityOption.isVisible({ timeout: 2000 }).catch(() => false)
       ) {
         await allEntityOption.click();
       }
@@ -173,7 +167,9 @@ test.describe("Audit Log Management - Detail Modal", () => {
 
     // The DataTable renders a "No Results" row when empty — detect actual data rows
     // by checking whether any tbody row has a button (data rows have action buttons)
-    const dataRows = page.locator("tbody tr").filter({ has: page.getByRole("button") });
+    const dataRows = page
+      .locator("tbody tr")
+      .filter({ has: page.getByRole("button") });
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {
@@ -224,7 +220,9 @@ test.describe("Audit Log Management - CSV Export", () => {
     await expect(exportButton).toBeVisible({ timeout: 10000 });
 
     // Check if there are actual data rows (rows with action buttons, not the "No Results" row)
-    const dataRows = page.locator("tbody tr").filter({ has: page.getByRole("button") });
+    const dataRows = page
+      .locator("tbody tr")
+      .filter({ has: page.getByRole("button") });
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {

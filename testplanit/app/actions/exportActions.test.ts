@@ -167,7 +167,9 @@ describe("exportActions", () => {
         const result = await fetchAllCasesForExport(baseArgs);
 
         expect(result.success).toBe(true);
-        expect((result.data[0] as any).linkedCases).toBe("Linked Case A, Linked Case B");
+        expect((result.data[0] as any).linkedCases).toBe(
+          "Linked Case A, Linked Case B"
+        );
       });
 
       it("should filter out deleted links", async () => {

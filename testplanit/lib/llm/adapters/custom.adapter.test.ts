@@ -230,13 +230,16 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should use custom response mapping", async () => {
-      const config = createTestConfig({}, {
-        responseMapping: {
-          content: "data.generated_text",
-          promptTokens: "stats.input",
-          completionTokens: "stats.output",
-        },
-      });
+      const config = createTestConfig(
+        {},
+        {
+          responseMapping: {
+            content: "data.generated_text",
+            promptTokens: "stats.input",
+            completionTokens: "stats.output",
+          },
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -261,12 +264,15 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should apply request field mappings", async () => {
-      const config = createTestConfig({}, {
-        requestFieldMappings: {
-          max_tokens: "maxOutputTokens",
-          temperature: "temp",
-        },
-      });
+      const config = createTestConfig(
+        {},
+        {
+          requestFieldMappings: {
+            max_tokens: "maxOutputTokens",
+            temperature: "temp",
+          },
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -293,12 +299,15 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should include custom headers from settings", async () => {
-      const config = createTestConfig({}, {
-        headers: {
-          "X-Custom-Header": "custom-value",
-          "X-Another-Header": "another-value",
-        },
-      });
+      const config = createTestConfig(
+        {},
+        {
+          headers: {
+            "X-Custom-Header": "custom-value",
+            "X-Another-Header": "another-value",
+          },
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -320,10 +329,13 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should use custom auth header and prefix", async () => {
-      const config = createTestConfig({}, {
-        authHeader: "X-API-Key",
-        authPrefix: "Token",
-      });
+      const config = createTestConfig(
+        {},
+        {
+          authHeader: "X-API-Key",
+          authPrefix: "Token",
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -571,9 +583,12 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should use custom error message path", async () => {
-      const config = createTestConfig({}, {
-        errorMessagePath: "errors.details.message",
-      });
+      const config = createTestConfig(
+        {},
+        {
+          errorMessagePath: "errors.details.message",
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -637,12 +652,15 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should apply request template", async () => {
-      const config = createTestConfig({}, {
-        requestTemplate: {
-          custom_field: "custom_value",
-          another_field: 123,
-        },
-      });
+      const config = createTestConfig(
+        {},
+        {
+          requestTemplate: {
+            custom_field: "custom_value",
+            another_field: 123,
+          },
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -671,18 +689,23 @@ describe("CustomLlmAdapter", () => {
       const adapter = new CustomLlmAdapter(config);
 
       const mockReader = {
-        read: vi.fn()
+        read: vi
+          .fn()
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: {"delta":{"content":"Hello"}}\n\n'),
+            value: new TextEncoder().encode(
+              'data: {"delta":{"content":"Hello"}}\n\n'
+            ),
           })
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: {"delta":{"content":" World"}}\n\n'),
+            value: new TextEncoder().encode(
+              'data: {"delta":{"content":" World"}}\n\n'
+            ),
           })
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: [DONE]\n\n'),
+            value: new TextEncoder().encode("data: [DONE]\n\n"),
           })
           .mockResolvedValueOnce({ done: true, value: undefined }),
         releaseLock: vi.fn(),
@@ -716,10 +739,13 @@ describe("CustomLlmAdapter", () => {
       const adapter = new CustomLlmAdapter(config);
 
       const mockReader = {
-        read: vi.fn()
+        read: vi
+          .fn()
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('{"content":"Part 1"}\n{"content":"Part 2"}\n'),
+            value: new TextEncoder().encode(
+              '{"content":"Part 1"}\n{"content":"Part 2"}\n'
+            ),
           })
           .mockResolvedValueOnce({ done: true, value: undefined }),
         releaseLock: vi.fn(),
@@ -752,14 +778,17 @@ describe("CustomLlmAdapter", () => {
       const adapter = new CustomLlmAdapter(config);
 
       const mockReader = {
-        read: vi.fn()
+        read: vi
+          .fn()
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: {"choices":[{"delta":{"content":"OpenAI style"}}]}\n\n'),
+            value: new TextEncoder().encode(
+              'data: {"choices":[{"delta":{"content":"OpenAI style"}}]}\n\n'
+            ),
           })
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: [DONE]\n\n'),
+            value: new TextEncoder().encode("data: [DONE]\n\n"),
           })
           .mockResolvedValueOnce({ done: true, value: undefined }),
         releaseLock: vi.fn(),
@@ -788,22 +817,28 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should use custom stream response mapping", async () => {
-      const config = createTestConfig({}, {
-        streamResponseMapping: {
-          delta: "generated.text",
-        },
-      });
+      const config = createTestConfig(
+        {},
+        {
+          streamResponseMapping: {
+            delta: "generated.text",
+          },
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       const mockReader = {
-        read: vi.fn()
+        read: vi
+          .fn()
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: {"generated":{"text":"Custom mapped"}}\n\n'),
+            value: new TextEncoder().encode(
+              'data: {"generated":{"text":"Custom mapped"}}\n\n'
+            ),
           })
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: [DONE]\n\n'),
+            value: new TextEncoder().encode("data: [DONE]\n\n"),
           })
           .mockResolvedValueOnce({ done: true, value: undefined }),
         releaseLock: vi.fn(),
@@ -882,17 +917,22 @@ describe("CustomLlmAdapter", () => {
       const config = createTestConfig();
       const adapter = new CustomLlmAdapter(config);
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const mockReader = {
-        read: vi.fn()
+        read: vi
+          .fn()
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: invalid json\n\ndata: {"delta":{"content":"Valid"}}\n\n'),
+            value: new TextEncoder().encode(
+              'data: invalid json\n\ndata: {"delta":{"content":"Valid"}}\n\n'
+            ),
           })
           .mockResolvedValueOnce({
             done: false,
-            value: new TextEncoder().encode('data: [DONE]\n\n'),
+            value: new TextEncoder().encode("data: [DONE]\n\n"),
           })
           .mockResolvedValueOnce({ done: true, value: undefined }),
         releaseLock: vi.fn(),
@@ -925,12 +965,15 @@ describe("CustomLlmAdapter", () => {
 
   describe("getAvailableModels", () => {
     it("should return configured models when no models endpoint", async () => {
-      const config = createTestConfig({}, {
-        models: [
-          { id: "model-1", name: "Model One", contextWindow: 8192 },
-          { id: "model-2", name: "Model Two", maxOutputTokens: 2048 },
-        ],
-      });
+      const config = createTestConfig(
+        {},
+        {
+          models: [
+            { id: "model-1", name: "Model One", contextWindow: 8192 },
+            { id: "model-2", name: "Model Two", maxOutputTokens: 2048 },
+          ],
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       const models = await adapter.getAvailableModels();
@@ -944,10 +987,13 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should fetch models from endpoint when provided", async () => {
-      const config = createTestConfig({}, {
-        modelsEndpoint: "https://api.example.com/models",
-        modelsResponsePath: "data.models",
-      });
+      const config = createTestConfig(
+        {},
+        {
+          modelsEndpoint: "https://api.example.com/models",
+          modelsResponsePath: "data.models",
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -970,15 +1016,18 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should use custom model field mappings", async () => {
-      const config = createTestConfig({}, {
-        modelsEndpoint: "https://api.example.com/models",
-        modelFieldMappings: {
-          id: "model_id",
-          name: "display_name",
-          contextWindow: "context_length",
-          maxOutputTokens: "max_output",
-        },
-      });
+      const config = createTestConfig(
+        {},
+        {
+          modelsEndpoint: "https://api.example.com/models",
+          modelFieldMappings: {
+            id: "model_id",
+            name: "display_name",
+            contextWindow: "context_length",
+            maxOutputTokens: "max_output",
+          },
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       mockFetch.mockResolvedValueOnce({
@@ -1004,13 +1053,18 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should fall back to configured models on fetch error", async () => {
-      const config = createTestConfig({}, {
-        modelsEndpoint: "https://api.example.com/models",
-        models: [{ id: "fallback-model", name: "Fallback" }],
-      });
+      const config = createTestConfig(
+        {},
+        {
+          modelsEndpoint: "https://api.example.com/models",
+          models: [{ id: "fallback-model", name: "Fallback" }],
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       const models = await adapter.getAvailableModels();
@@ -1021,13 +1075,18 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should handle models endpoint error response", async () => {
-      const config = createTestConfig({}, {
-        modelsEndpoint: "https://api.example.com/models",
-        models: [{ id: "fallback-model", name: "Fallback" }],
-      });
+      const config = createTestConfig(
+        {},
+        {
+          modelsEndpoint: "https://api.example.com/models",
+          models: [{ id: "fallback-model", name: "Fallback" }],
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -1041,12 +1100,17 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should return empty array when no models configured and endpoint fails", async () => {
-      const config = createTestConfig({}, {
-        modelsEndpoint: "https://api.example.com/models",
-      });
+      const config = createTestConfig(
+        {},
+        {
+          modelsEndpoint: "https://api.example.com/models",
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       const models = await adapter.getAvailableModels();
@@ -1058,9 +1122,12 @@ describe("CustomLlmAdapter", () => {
 
   describe("isModelAvailable", () => {
     it("should return true for available model", async () => {
-      const config = createTestConfig({}, {
-        models: [{ id: "test-model", name: "Test" }],
-      });
+      const config = createTestConfig(
+        {},
+        {
+          models: [{ id: "test-model", name: "Test" }],
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       const result = await adapter.isModelAvailable("test-model");
@@ -1069,9 +1136,12 @@ describe("CustomLlmAdapter", () => {
     });
 
     it("should return false for unavailable model", async () => {
-      const config = createTestConfig({}, {
-        models: [{ id: "test-model", name: "Test" }],
-      });
+      const config = createTestConfig(
+        {},
+        {
+          models: [{ id: "test-model", name: "Test" }],
+        }
+      );
       const adapter = new CustomLlmAdapter(config);
 
       const result = await adapter.isModelAvailable("nonexistent-model");

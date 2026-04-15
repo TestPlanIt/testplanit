@@ -55,16 +55,16 @@ export function ShareLinkCreated({
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold mb-1">{t("title")}</h3>
-          <p className="text-sm text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
       </div>
 
       {/* Share details */}
       <div className="space-y-3">
         <div>
-          <label className="text-sm font-medium mb-2 block">{t("shareLink")}</label>
+          <label className="text-sm font-medium mb-2 block">
+            {t("shareLink")}
+          </label>
           <div className="flex gap-2">
             <Input
               data-testid="share-url-input"
@@ -106,25 +106,37 @@ export function ShareLinkCreated({
         {/* Share metadata */}
         <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">{t("metadata.mode")}</p>
-            <Badge variant="secondary">{shareData.mode.replace("_", " ")}</Badge>
+            <p className="text-xs text-muted-foreground mb-1">
+              {t("metadata.mode")}
+            </p>
+            <Badge variant="secondary">
+              {shareData.mode.replace("_", " ")}
+            </Badge>
           </div>
           {shareData.expiresAt && (
             <div>
-              <p className="text-xs text-muted-foreground mb-1">{t("metadata.expires")}</p>
+              <p className="text-xs text-muted-foreground mb-1">
+                {t("metadata.expires")}
+              </p>
               <p className="text-sm font-medium">
                 {format(new Date(shareData.expiresAt), "PPP")}
               </p>
             </div>
           )}
           <div>
-            <p className="text-xs text-muted-foreground mb-1">{tCommon("fields.notificationMode")}</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              {tCommon("fields.notificationMode")}
+            </p>
             <p className="text-sm font-medium">
-              {shareData.notifyOnView ? tCommon("fields.enabled") : tCommon("status.disabled")}
+              {shareData.notifyOnView
+                ? tCommon("fields.enabled")
+                : tCommon("status.disabled")}
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">{t("metadata.views")}</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              {t("metadata.views")}
+            </p>
             <p className="text-sm font-medium">{shareData.viewCount}</p>
           </div>
         </div>
@@ -135,7 +147,8 @@ export function ShareLinkCreated({
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>{t("warnings.publicLink")}</strong> {t("warnings.publicLinkDescription")}
+            <strong>{t("warnings.publicLink")}</strong>{" "}
+            {t("warnings.publicLinkDescription")}
           </AlertDescription>
         </Alert>
       )}

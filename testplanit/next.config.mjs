@@ -1,15 +1,15 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import createNextIntlPlugin from 'next-intl/plugin';
+import path from "path";
+import { fileURLToPath } from "url";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin({
-  locales: ['en-US', 'es-ES', 'fr-FR'],
-  defaultLocale: 'en-US',
-  requestConfig: './i18n/request.ts',
+  locales: ["en-US", "es-ES", "fr-FR"],
+  defaultLocale: "en-US",
+  requestConfig: "./i18n/request.ts",
   createMessagesDeclaration: {
-    path: './messages/en-US.json',
-    makeParamsOptional: true
-  }
+    path: "./messages/en-US.json",
+    makeParamsOptional: true,
+  },
 });
 
 // Helper function to extract hostname and port from URL
@@ -17,9 +17,9 @@ const parseUrlForPattern = (url) => {
   try {
     const parsed = new URL(url);
     return {
-      protocol: parsed.protocol.replace(':', ''),
+      protocol: parsed.protocol.replace(":", ""),
       hostname: parsed.hostname,
-      port: parsed.port || '',
+      port: parsed.port || "",
     };
   } catch {
     return null;
@@ -44,18 +44,21 @@ const addUploadPatternsForUrl = (patterns, url, uploadPaths) => {
 // Build dynamic remote patterns based on environment configuration
 const buildDynamicRemotePatterns = () => {
   const dynamicPatterns = [];
-  const bucketName = process.env.AWS_BUCKET_NAME || 'testplanit';
+  const bucketName = process.env.AWS_BUCKET_NAME || "testplanit";
 
   const uploadPaths = [
-    `/${bucketName}/uploads/**`,  // MinIO with bucket prefix (via nginx)
-    '/uploads/avatars/**',         // Direct S3 or MinIO paths
-    '/uploads/document-images/**',
-    '/uploads/attachments/**',
-    '/uploads/project-icons/**',
+    `/${bucketName}/uploads/**`, // MinIO with bucket prefix (via nginx)
+    "/uploads/avatars/**", // Direct S3 or MinIO paths
+    "/uploads/document-images/**",
+    "/uploads/attachments/**",
+    "/uploads/project-icons/**",
   ];
 
   // Include the public-facing URL that end-users access through nginx/proxy
-  const publicEndpointUrl = process.env.AWS_PUBLIC_ENDPOINT_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+  const publicEndpointUrl =
+    process.env.AWS_PUBLIC_ENDPOINT_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL;
   addUploadPatternsForUrl(dynamicPatterns, publicEndpointUrl, uploadPaths);
 
   // Include the direct storage endpoint when different (e.g., MinIO internal URL)
@@ -66,7 +69,11 @@ const buildDynamicRemotePatterns = () => {
 
   // Optionally include an explicit internal MinIO endpoint if provided
   if (process.env.MINIO_INTERNAL_ENDPOINT) {
-    addUploadPatternsForUrl(dynamicPatterns, process.env.MINIO_INTERNAL_ENDPOINT, uploadPaths);
+    addUploadPatternsForUrl(
+      dynamicPatterns,
+      process.env.MINIO_INTERNAL_ENDPOINT,
+      uploadPaths
+    );
   }
 
   // For multi-tenant deployments: Add wildcard pattern for *.testplanit.com
@@ -75,9 +82,9 @@ const buildDynamicRemotePatterns = () => {
   if (baseDomain) {
     uploadPaths.forEach((pathname) => {
       dynamicPatterns.push({
-        protocol: 'https',
+        protocol: "https",
         hostname: `*.${baseDomain}`,
-        port: '',
+        port: "",
         pathname,
       });
     });
@@ -88,24 +95,33 @@ const buildDynamicRemotePatterns = () => {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: "standalone",
   turbopack: {
     resolveAlias: {
       // Fix Turbopack resolution for zod subpath exports (used by @hookform/resolvers)
-      'zod/v3': 'zod/v3',
-      'zod/v4/core': 'zod/v4/core',
+      "zod/v3": "zod/v3",
+      "zod/v4/core": "zod/v4/core",
     },
   },
-  transpilePackages: ['lucide-react'],
-  serverExternalPackages: ["@zenstackhq/runtime", "@zenstackhq/server", "test-results-parser", "jspdf", "fflate"],
-  outputFileTracingRoot: path.join(path.dirname(fileURLToPath(import.meta.url)), "../"),
+  transpilePackages: ["lucide-react"],
+  serverExternalPackages: [
+    "@zenstackhq/runtime",
+    "@zenstackhq/server",
+    "test-results-parser",
+    "jspdf",
+    "fflate",
+  ],
+  outputFileTracingRoot: path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../"
+  ),
   experimental: {
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,
     cpus: 2,
     // Increase body size limit for server actions (file uploads)
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: "10mb",
     },
   },
   images: {
@@ -115,19 +131,19 @@ const nextConfig = {
 
       // Static patterns for third-party services
       {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**', // Google profile pictures for SSO
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+        pathname: "/**", // Google profile pictures for SSO
       },
 
       // AWS S3 pattern (only needed if using direct S3, not MinIO)
       // If you're using real AWS S3, you need to update this:
       {
-        protocol: 'https',
-        hostname: 'testplanitdev.s3.us-east-1.amazonaws.com',
-        port: '',
-        pathname: '/uploads/**',
+        protocol: "https",
+        hostname: "testplanitdev.s3.us-east-1.amazonaws.com",
+        port: "",
+        pathname: "/uploads/**",
       },
     ],
   },

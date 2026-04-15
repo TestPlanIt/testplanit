@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ExternalLink } from "lucide-react";
 import React from "react";
@@ -26,7 +26,10 @@ export const EmailCell: React.FC<EmailCellProps> = ({ email, fullWidth }) => {
         <span className="flex items-center truncate gap-1">
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger type="button" className="text-left block truncate">
+              <TooltipTrigger
+                type="button"
+                className="text-left block truncate"
+              >
                 {email}
                 {/* Apply flex and items-center to this span */}
               </TooltipTrigger>

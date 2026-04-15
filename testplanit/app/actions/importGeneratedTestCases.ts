@@ -171,8 +171,11 @@ export async function importGeneratedTestCases(
     await prisma.$transaction(
       async (tx) => {
         // Upsert issue once if needed
-        let sharedIssue: { id: number; name: string; externalId: string | null } | null =
-          null;
+        let sharedIssue: {
+          id: number;
+          name: string;
+          externalId: string | null;
+        } | null = null;
         if (data.issue) {
           sharedIssue = await tx.issue.upsert({
             where: {
@@ -250,11 +253,12 @@ export async function importGeneratedTestCases(
               folderName = url.slice(0, 100);
             }
             // Sanitize: remove special chars, limit length
-            folderName = folderName
-              .replace(/[<>:"/\\|?*]/g, "")
-              .replace(/\s+/g, " ")
-              .trim()
-              .slice(0, 100) || "Page";
+            folderName =
+              folderName
+                .replace(/[<>:"/\\|?*]/g, "")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 100) || "Page";
 
             // Find existing folder (active or soft-deleted) and reuse/restore it,
             // or create a new one if none exists.
@@ -320,7 +324,7 @@ export async function importGeneratedTestCases(
             const calculatedOrder = data.maxOrder + importedCount + 1;
             // Use subfolder if one was created for this page, otherwise use the target folder
             const targetFolderId = testCase.sourceUrl
-              ? folderIdBySourceUrl.get(testCase.sourceUrl) ?? data.folderId
+              ? (folderIdBySourceUrl.get(testCase.sourceUrl) ?? data.folderId)
               : data.folderId;
 
             // 1. Create the repository case
@@ -473,8 +477,7 @@ export async function importGeneratedTestCases(
 
             importedCount++;
           } catch (error) {
-            const msg =
-              error instanceof Error ? error.message : String(error);
+            const msg = error instanceof Error ? error.message : String(error);
             errors.push(`Failed to import "${testCase.name}": ${msg}`);
           }
         }

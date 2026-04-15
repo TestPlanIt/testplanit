@@ -186,7 +186,9 @@ describe("TreeView", () => {
     render(<TreeView {...defaultProps} />);
 
     // When folders is empty array, renders empty message
-    expect(screen.getByText(/\[t\]repository\.emptyFolders/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/\[t\]repository\.emptyFolders/)
+    ).toBeInTheDocument();
   });
 
   it("renders empty state for non-editor when no folders exist", async () => {
@@ -200,7 +202,9 @@ describe("TreeView", () => {
 
     render(<TreeView {...defaultProps} canAddEdit={false} />);
 
-    expect(screen.getByText(/\[t\]repository\.noFoldersOrCasesNoPermission/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/\[t\]repository\.noFoldersOrCasesNoPermission/)
+    ).toBeInTheDocument();
   });
 
   it("renders folder items from mock data with folder names", async () => {
@@ -366,10 +370,7 @@ describe("TreeView", () => {
     } as any);
 
     render(
-      <TreeView
-        {...defaultProps}
-        onHierarchyChange={onHierarchyChange}
-      />
+      <TreeView {...defaultProps} onHierarchyChange={onHierarchyChange} />
     );
 
     // onHierarchyChange should be called at least once (may be called with [] initially then with data)
@@ -381,7 +382,9 @@ describe("TreeView", () => {
     expect(lastCallArg).toBeInstanceOf(Array);
 
     // Find the call that has our folder data
-    const callWithData = allCalls.find((call) => call[0].some((item: any) => item.id === 10));
+    const callWithData = allCalls.find((call) =>
+      call[0].some((item: any) => item.id === 10)
+    );
     if (callWithData) {
       const hierarchyItem = callWithData[0].find((item: any) => item.id === 10);
       expect(hierarchyItem.text).toBe("Hierarchy Folder");

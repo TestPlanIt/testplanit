@@ -1,5 +1,10 @@
 import {
-  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
 } from "@prisma/client";
 import userEvent from "@testing-library/user-event";
 import { Session } from "next-auth";

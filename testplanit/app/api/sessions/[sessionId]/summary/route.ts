@@ -61,10 +61,7 @@ export async function GET(
   const sessionId = Number(sessionIdParam);
 
   if (isNaN(sessionId)) {
-    return NextResponse.json(
-      { error: "Invalid session ID" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid session ID" }, { status: 400 });
   }
 
   try {
@@ -195,7 +192,9 @@ export async function GET(
     const totalElapsed = results.reduce((sum, r) => sum + (r.elapsed || 0), 0);
 
     // Get comments count for this session
-    const commentsCountResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+    const commentsCountResult = await prisma.$queryRaw<
+      Array<{ count: bigint }>
+    >`
       SELECT COUNT(*) as count
       FROM "Comment"
       WHERE "sessionId" = ${sessionId}

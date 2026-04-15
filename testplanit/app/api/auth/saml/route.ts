@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  checkRateLimit, generateSecureState, getSecureCookieOptions, sanitizeCallbackUrl
+  checkRateLimit,
+  generateSecureState,
+  getSecureCookieOptions,
+  sanitizeCallbackUrl,
 } from "~/lib/auth-security";
 import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";

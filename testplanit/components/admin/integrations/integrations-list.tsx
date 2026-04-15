@@ -8,15 +8,16 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent, CardFooter,
+  CardContent,
+  CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Integration, ProjectIntegration } from "@prisma/client";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
@@ -24,7 +25,9 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  useDeleteProjectIntegration, useUpdateManyProjectIntegration, useUpsertProjectIntegration
+  useDeleteProjectIntegration,
+  useUpdateManyProjectIntegration,
+  useUpsertProjectIntegration,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { IntegrationIcon } from "./integration-icon";
@@ -157,7 +160,9 @@ export function IntegrationsList({
                   : ""
             }`}
           >
-            <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-2${isDimmed ? " opacity-70" : ""}`}>
+            <CardHeader
+              className={`flex flex-row items-center justify-between space-y-0 pb-2${isDimmed ? " opacity-70" : ""}`}
+            >
               <CardTitle className="text-base font-medium">
                 {integration.name}
               </CardTitle>
@@ -168,7 +173,9 @@ export function IntegrationsList({
               )}
             </CardHeader>
             <CardContent className="grow">
-              <div className={`flex items-start gap-3${isDimmed ? " opacity-70" : ""}`}>
+              <div
+                className={`flex items-start gap-3${isDimmed ? " opacity-70" : ""}`}
+              >
                 <IntegrationIcon
                   provider={integration.provider}
                   className="h-10 w-10"

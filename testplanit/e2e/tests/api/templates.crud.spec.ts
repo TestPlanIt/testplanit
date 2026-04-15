@@ -11,7 +11,11 @@ import { expect, test } from "../../fixtures/index";
 test.describe.configure({ mode: "serial" });
 
 test.describe("Templates CRUD", () => {
-  test("should create a template and read it back", async ({ request, baseURL, api }) => {
+  test("should create a template and read it back", async ({
+    request,
+    baseURL,
+    api,
+  }) => {
     const uniqueName = `API Test Template ${Date.now()}`;
 
     // Create template via fixture helper
@@ -103,7 +107,11 @@ test.describe("Templates CRUD", () => {
     expect(result.data.isDeleted).toBe(true);
   });
 
-  test("should list templates via findMany", async ({ request, baseURL, api }) => {
+  test("should list templates via findMany", async ({
+    request,
+    baseURL,
+    api,
+  }) => {
     const timestamp = Date.now();
     const name1 = `API List Template A ${timestamp}`;
     const name2 = `API List Template B ${timestamp}`;
@@ -132,7 +140,9 @@ test.describe("Templates CRUD", () => {
     expect(result.data).toBeTruthy();
     expect(result.data.length).toBe(2);
 
-    const names = result.data.map((t: { templateName: string }) => t.templateName);
+    const names = result.data.map(
+      (t: { templateName: string }) => t.templateName
+    );
     expect(names).toContain(name1);
     expect(names).toContain(name2);
   });

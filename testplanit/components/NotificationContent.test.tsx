@@ -63,7 +63,7 @@ describe("NotificationContent", () => {
         casesInProject: "{count} cases in",
         sentBy: "Sent by {name}",
       };
-      
+
       let result = translations[key] || key;
       if (params) {
         Object.entries(params).forEach(([paramKey, value]) => {
@@ -92,15 +92,19 @@ describe("NotificationContent", () => {
 
       // Check title is displayed instead of generic "System Announcement"
       expect(screen.getByText("Maintenance Notice")).toBeInTheDocument();
-      
+
       // Check message
-      expect(screen.getByText("System will be down for maintenance")).toBeInTheDocument();
-      
+      expect(
+        screen.getByText("System will be down for maintenance")
+      ).toBeInTheDocument();
+
       // Check sent by
       expect(screen.getByText("Sent by Admin User")).toBeInTheDocument();
-      
+
       // Check for megaphone icon (by class)
-      const icon = screen.getByText("Maintenance Notice").parentElement?.querySelector("svg");
+      const icon = screen
+        .getByText("Maintenance Notice")
+        .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
     });
 
@@ -112,7 +116,11 @@ describe("NotificationContent", () => {
             type: "paragraph",
             content: [
               { type: "text", text: "Important: " },
-              { type: "text", marks: [{ type: "bold" }], text: "System Update" },
+              {
+                type: "text",
+                marks: [{ type: "bold" }],
+                text: "System Update",
+              },
             ],
           },
         ],
@@ -133,13 +141,15 @@ describe("NotificationContent", () => {
 
       // Check title
       expect(screen.getByText("System Update")).toBeInTheDocument();
-      
+
       // Should render rich content component
       expect(screen.getByTestId("rich-content")).toBeInTheDocument();
-      
+
       // Should not show plain text message when rich content exists
-      expect(screen.queryByText("Important: System Update")).not.toBeInTheDocument();
-      
+      expect(
+        screen.queryByText("Important: System Update")
+      ).not.toBeInTheDocument();
+
       // Check sent by
       expect(screen.getByText("Sent by Admin User")).toBeInTheDocument();
     });
@@ -156,8 +166,10 @@ describe("NotificationContent", () => {
       render(<NotificationContent notification={notification} />);
 
       expect(screen.getByText("Anonymous Notice")).toBeInTheDocument();
-      expect(screen.getByText("This is an anonymous notification")).toBeInTheDocument();
-      
+      expect(
+        screen.getByText("This is an anonymous notification")
+      ).toBeInTheDocument();
+
       // Should not show "Sent by" when no sender name
       expect(screen.queryByText(/Sent by/)).not.toBeInTheDocument();
     });
@@ -186,10 +198,13 @@ describe("NotificationContent", () => {
       expect(screen.getByText("assigned you to test case")).toBeInTheDocument();
       expect(screen.getByText("Login Test")).toBeInTheDocument();
       expect(screen.getByText("Test Project")).toBeInTheDocument();
-      
+
       // Check link
       const link = screen.getByRole("link");
-      expect(link).toHaveAttribute("href", "/projects/runs/456/123?selectedCase=789");
+      expect(link).toHaveAttribute(
+        "href",
+        "/projects/runs/456/123?selectedCase=789"
+      );
     });
 
     it("should render bulk assignment", () => {
@@ -219,7 +234,9 @@ describe("NotificationContent", () => {
 
       render(<NotificationContent notification={notification} />);
 
-      expect(screen.getByText("Multiple Test Cases Assigned")).toBeInTheDocument();
+      expect(
+        screen.getByText("Multiple Test Cases Assigned")
+      ).toBeInTheDocument();
       expect(screen.getByText("assigned you 5 test cases")).toBeInTheDocument();
       expect(screen.getByText("Sprint 1 Tests")).toBeInTheDocument();
       expect(screen.getByText("2 cases in")).toBeInTheDocument();
@@ -246,8 +263,10 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("New Session Assignment")).toBeInTheDocument();
       expect(screen.getByText("assigned you to session")).toBeInTheDocument();
-      expect(screen.getByText("Exploratory Testing Session")).toBeInTheDocument();
-      
+      expect(
+        screen.getByText("Exploratory Testing Session")
+      ).toBeInTheDocument();
+
       // Check link
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute("href", "/projects/sessions/456/789");
@@ -340,7 +359,9 @@ describe("NotificationContent", () => {
       render(<NotificationContent notification={notification} />);
 
       expect(screen.getByText("Shared Report Viewed")).toBeInTheDocument();
-      expect(screen.getByText("John viewed your shared report")).toBeInTheDocument();
+      expect(
+        screen.getByText("John viewed your shared report")
+      ).toBeInTheDocument();
     });
 
     it("should render share link accessed notification without viewedAt", () => {
@@ -358,7 +379,9 @@ describe("NotificationContent", () => {
       render(<NotificationContent notification={notification} />);
 
       expect(screen.getByText("Shared Report Viewed")).toBeInTheDocument();
-      expect(screen.getByText("Someone viewed your report")).toBeInTheDocument();
+      expect(
+        screen.getByText("Someone viewed your report")
+      ).toBeInTheDocument();
       // viewedAt label should not appear when viewedAt is absent
       expect(screen.queryByText(/Viewed at/i)).not.toBeInTheDocument();
     });
@@ -456,7 +479,8 @@ describe("NotificationContent", () => {
         id: "18",
         type: "USER_REGISTERED",
         title: "New User Registration",
-        message: "John Doe (john@example.com) has registered via registration form",
+        message:
+          "John Doe (john@example.com) has registered via registration form",
         data: {
           newUserName: "John Doe",
           newUserEmail: "john@example.com",
@@ -467,7 +491,11 @@ describe("NotificationContent", () => {
       render(<NotificationContent notification={notification} />);
 
       expect(screen.getByText("New User Registration")).toBeInTheDocument();
-      expect(screen.getByText("John Doe (john@example.com) has registered via registration form")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "John Doe (john@example.com) has registered via registration form"
+        )
+      ).toBeInTheDocument();
     });
   });
 
@@ -484,7 +512,9 @@ describe("NotificationContent", () => {
       render(<NotificationContent notification={notification} />);
 
       expect(screen.getByText("Budget Alert")).toBeInTheDocument();
-      expect(screen.getByText("You have reached 90% of your LLM budget")).toBeInTheDocument();
+      expect(
+        screen.getByText("You have reached 90% of your LLM budget")
+      ).toBeInTheDocument();
       // Disclaimer text
       expect(screen.getByText("budgetDisclaimer")).toBeInTheDocument();
     });

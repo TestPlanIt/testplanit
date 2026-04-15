@@ -13,15 +13,20 @@ import { handleTestCaseHealthPOST } from "~/utils/testCaseHealthUtils";
 import { GET, POST } from "./route";
 
 const _createGETRequest = (): NextRequest => {
-  return new NextRequest("http://localhost/api/report-builder/test-case-health");
+  return new NextRequest(
+    "http://localhost/api/report-builder/test-case-health"
+  );
 };
 
 const createPOSTRequest = (body: Record<string, unknown>): NextRequest => {
-  return new NextRequest("http://localhost/api/report-builder/test-case-health", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
-  });
+  return new NextRequest(
+    "http://localhost/api/report-builder/test-case-health",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 };
 
 describe("GET /api/report-builder/test-case-health", () => {
@@ -42,7 +47,13 @@ describe("POST /api/report-builder/test-case-health", () => {
 
   it("delegates to handleTestCaseHealthPOST with isCrossProject=false", async () => {
     (handleTestCaseHealthPOST as any).mockResolvedValue(
-      Response.json({ data: [], total: 0, page: 1, pageSize: 10, totalCount: 0 })
+      Response.json({
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+      })
     );
 
     await POST(createPOSTRequest({ projectId: 1 }));

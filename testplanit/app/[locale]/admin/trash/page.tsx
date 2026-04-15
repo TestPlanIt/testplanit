@@ -4,7 +4,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Trash2 } from "lucide-react";
 import dynamicIconImports from "lucide-react/dynamicIconImports";

@@ -4,7 +4,7 @@ import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   getElasticsearchClient,
-  getEntityIndexName
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
 /**
@@ -35,7 +35,10 @@ type SessionForIndexing = Sessions & {
  * @param session - The session to index
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function indexSession(session: SessionForIndexing, tenantId?: string): Promise<void> {
+export async function indexSession(
+  session: SessionForIndexing,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
@@ -43,7 +46,9 @@ export async function indexSession(session: SessionForIndexing, tenantId?: strin
 
   // Extract text from TipTap JSON for note and mission fields
   const noteText = session.note ? extractTextFromNode(session.note) : "";
-  const missionText = session.mission ? extractTextFromNode(session.mission) : "";
+  const missionText = session.mission
+    ? extractTextFromNode(session.mission)
+    : "";
 
   const searchableContent = [
     session.name,
@@ -51,7 +56,6 @@ export async function indexSession(session: SessionForIndexing, tenantId?: strin
     missionText,
     session.tags.map((t) => t.name).join(" "),
   ].join(" ");
-
 
   const document = {
     id: session.id,
@@ -97,7 +101,10 @@ export async function indexSession(session: SessionForIndexing, tenantId?: strin
  * @param sessionId - The ID of the session to delete
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteSessionFromIndex(sessionId: number, tenantId?: string): Promise<void> {
+export async function deleteSessionFromIndex(
+  sessionId: number,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -120,7 +127,10 @@ export async function deleteSessionFromIndex(sessionId: number, tenantId?: strin
 /**
  * Sync a single session to Elasticsearch
  */
-export async function syncSessionToElasticsearch(sessionId: number, tenantId?: string): Promise<boolean> {
+export async function syncSessionToElasticsearch(
+  sessionId: number,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -175,7 +185,6 @@ export async function syncProjectSessionsToElasticsearch(
     return;
   }
 
-
   const sessions = await db.sessions.findMany({
     where: {
       projectId: projectId,
@@ -201,7 +210,9 @@ export async function syncProjectSessionsToElasticsearch(
   for (const session of sessions) {
     // Extract text from TipTap JSON for note and mission fields
     const noteText = session.note ? extractTextFromNode(session.note) : "";
-    const missionText = session.mission ? extractTextFromNode(session.mission) : "";
+    const missionText = session.mission
+      ? extractTextFromNode(session.mission)
+      : "";
 
     const searchableContent = [
       session.name,
@@ -209,7 +220,6 @@ export async function syncProjectSessionsToElasticsearch(
       missionText,
       session.tags.map((t: any) => t.name).join(" "),
     ].join(" ");
-
 
     bulkBody.push({
       index: {
@@ -257,7 +267,9 @@ export async function syncProjectSessionsToElasticsearch(
       const errorItems = bulkResponse.items.filter(
         (item: any) => item.index?.error
       );
-      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      console.error(
+        `Bulk indexing errors: ${errorItems.length} failed documents`
+      );
       // Log detailed error information
       errorItems.slice(0, 10).forEach((item: any) => {
         if (item.index?.error) {
@@ -265,7 +277,9 @@ export async function syncProjectSessionsToElasticsearch(
           console.error(`    Error type: ${item.index.error.type}`);
           console.error(`    Error reason: ${item.index.error.reason}`);
           if (item.index.error.caused_by) {
-            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+            console.error(
+              `    Caused by: ${JSON.stringify(item.index.error.caused_by)}`
+            );
           }
         }
       });

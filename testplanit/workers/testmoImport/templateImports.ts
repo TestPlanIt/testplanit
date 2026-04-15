@@ -1,7 +1,8 @@
 import { Prisma } from "@prisma/client";
 import type {
-  TestmoFieldOptionConfig, TestmoMappingConfiguration,
-  TestmoTemplateFieldTargetType
+  TestmoFieldOptionConfig,
+  TestmoMappingConfiguration,
+  TestmoTemplateFieldTargetType,
 } from "../../services/imports/testmo/types";
 import { toBooleanValue, toNumberValue, toStringValue } from "./helpers";
 import type { EntitySummaryResult } from "./types";

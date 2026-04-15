@@ -12,10 +12,7 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  authenticateApiToken,
-  extractBearerToken
-} from "~/lib/api-token-auth";
+import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 

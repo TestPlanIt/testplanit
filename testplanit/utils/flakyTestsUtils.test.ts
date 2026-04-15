@@ -23,7 +23,10 @@ function countStatusFlips(executions: ExecutionStatus[]): number {
 
     const currentIsSuccess = execution.isSuccess;
 
-    if (lastDefinitiveResult !== null && currentIsSuccess !== lastDefinitiveResult) {
+    if (
+      lastDefinitiveResult !== null &&
+      currentIsSuccess !== lastDefinitiveResult
+    ) {
       flips++;
     }
 

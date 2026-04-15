@@ -1,15 +1,15 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import { TagAnalysisService } from "../lib/llm/services/auto-tag/tag-analysis.service";
-import type {
-  EntityType
-} from "../lib/llm/services/auto-tag/types";
+import type { EntityType } from "../lib/llm/services/auto-tag/types";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData, validateMultiTenantJobData
+  MultiTenantJobData,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { AUTO_TAG_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";

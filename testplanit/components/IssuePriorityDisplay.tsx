@@ -24,7 +24,11 @@ export function IssuePriorityDisplay({
   }
 
   return (
-    <Badge variant="outline" className={`whitespace-nowrap ${className ?? ""}`} style={style}>
+    <Badge
+      variant="outline"
+      className={`whitespace-nowrap ${className ?? ""}`}
+      style={style}
+    >
       {priority}
     </Badge>
   );

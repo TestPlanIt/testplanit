@@ -72,10 +72,12 @@ import { getServerAuthSession } from "~/server/auth";
 
 import { GET } from "./route";
 
-const createMockRequest = (options: {
-  authHeader?: string;
-  searchParams?: Record<string, string>;
-} = {}): NextRequest => {
+const createMockRequest = (
+  options: {
+    authHeader?: string;
+    searchParams?: Record<string, string>;
+  } = {}
+): NextRequest => {
   const headers = new Headers();
   if (options.authHeader) {
     headers.set("authorization", options.authHeader);
@@ -94,7 +96,9 @@ const createMockContext = (itemType: string) => ({
 });
 
 const setupAdminSession = () => {
-  (getServerAuthSession as any).mockResolvedValue({ user: { id: "admin-user-1" } });
+  (getServerAuthSession as any).mockResolvedValue({
+    user: { id: "admin-user-1" },
+  });
   (prisma.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
 };
 
@@ -122,7 +126,9 @@ describe("Admin Trash Route", () => {
     });
 
     it("returns 403 when authenticated as non-admin", async () => {
-      (getServerAuthSession as any).mockResolvedValue({ user: { id: "user-1" } });
+      (getServerAuthSession as any).mockResolvedValue({
+        user: { id: "user-1" },
+      });
       (prisma.user.findUnique as any).mockResolvedValue({ access: "USER" });
 
       const request = createMockRequest();
@@ -139,7 +145,10 @@ describe("Admin Trash Route", () => {
       setupAdminSession();
 
       const request = createMockRequest();
-      const response = await GET(request, createMockContext("NonExistentModel"));
+      const response = await GET(
+        request,
+        createMockContext("NonExistentModel")
+      );
       const data = await response.json();
 
       expect(response.status).toBe(404);
@@ -172,10 +181,14 @@ describe("Admin Trash Route", () => {
       await GET(request, createMockContext("Projects"));
 
       expect(mockModel.count).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ isDeleted: true }) })
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: true }),
+        })
       );
       expect(mockModel.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ isDeleted: true }) })
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: true }),
+        })
       );
     });
 
@@ -254,7 +267,9 @@ describe("Admin Trash Route", () => {
     it("works with Tags itemType", async () => {
       setupAdminSession();
       mockModel.count.mockResolvedValue(1);
-      mockModel.findMany.mockResolvedValue([{ id: 5, name: "Deleted Tag", isDeleted: true }]);
+      mockModel.findMany.mockResolvedValue([
+        { id: 5, name: "Deleted Tag", isDeleted: true },
+      ]);
 
       const request = createMockRequest();
       const response = await GET(request, createMockContext("Tags"));

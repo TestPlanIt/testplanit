@@ -98,7 +98,14 @@ const useDynamicIcon = (name: keyof typeof dynamicIconImports) => {
   return { IconComponent, isLoading };
 };
 
-const DynamicIcon: FC<IconProps> = ({ name, color, className, size, strokeWidth, style }) => {
+const DynamicIcon: FC<IconProps> = ({
+  name,
+  color,
+  className,
+  size,
+  strokeWidth,
+  style,
+}) => {
   const { IconComponent, isLoading } = useDynamicIcon(name);
 
   if (isLoading) {
@@ -109,7 +116,11 @@ const DynamicIcon: FC<IconProps> = ({ name, color, className, size, strokeWidth,
     return null;
   }
 
-  return <IconComponent {...{ color, className, size, strokeWidth, style } as LucideProps} />;
+  return (
+    <IconComponent
+      {...({ color, className, size, strokeWidth, style } as LucideProps)}
+    />
+  );
 };
 
 export default DynamicIcon;

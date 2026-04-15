@@ -6,13 +6,15 @@ import { Filter } from "@/components/tables/Filter";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card, CardContent, CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -20,16 +22,14 @@ import { PlusCircle, SquarePen, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import React, {
-  useEffect,
-  useMemo,
-  useRef, useState
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod/v4";
 import {
   useCreateConfigCategories,
-  useCreateConfigVariants, useFindManyConfigCategories, useUpdateConfigVariants,
-  useUpdateManyConfigurations
+  useCreateConfigVariants,
+  useFindManyConfigCategories,
+  useUpdateConfigVariants,
+  useUpdateManyConfigurations,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ConfigCategoryWithVariants, getColumns } from "./categoryColumns";
@@ -125,7 +125,6 @@ function ConfigCategoriesList() {
       refetchInterval: false,
     }
   );
-
 
   useEffect(() => {
     if (data) {

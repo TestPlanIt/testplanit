@@ -164,7 +164,9 @@ export async function touchLastActive(
  * permissions, access level, or preferences so subsequent requests see
  * the change immediately.
  */
-export async function invalidateSessionUserCache(userId: string): Promise<void> {
+export async function invalidateSessionUserCache(
+  userId: string
+): Promise<void> {
   if (!valkeyConnection) return;
   try {
     await valkeyConnection.del(`${SESSION_USER_CACHE_PREFIX}${userId}`);

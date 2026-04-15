@@ -186,7 +186,10 @@ describe("DuplicateScanWorker", () => {
     });
 
     it("Test 2: Duplicate pairs (same caseAId:caseBId key) are deduplicated — only first occurrence kept", async () => {
-      mockFindMany.mockResolvedValue([{ id: 1, name: "Case A", steps: [], tags: [] }, { id: 2, name: "Case B", steps: [], tags: [] }]);
+      mockFindMany.mockResolvedValue([
+        { id: 1, name: "Case A", steps: [], tags: [] },
+        { id: 2, name: "Case B", steps: [], tags: [] },
+      ]);
 
       // Case 1 finds pair (1,2), Case 2 also finds pair (1,2) — should deduplicate
       mockFindSimilarCases
@@ -202,19 +205,26 @@ describe("DuplicateScanWorker", () => {
 
     it("Test 3: All unique pairs are stored (no artificial cap)", async () => {
       // 60 cases, each returning 5 pairs = 300 unique pairs
-      const manyPairs = Array.from({ length: 60 }, (_, i) => ({ id: i + 1, name: `Case ${i + 1}`, steps: [], tags: [] }));
+      const manyPairs = Array.from({ length: 60 }, (_, i) => ({
+        id: i + 1,
+        name: `Case ${i + 1}`,
+        steps: [],
+        tags: [],
+      }));
       mockFindMany.mockResolvedValue(manyPairs);
 
       // Each case returns 5 pairs with distinct caseBIds
-      mockFindSimilarCases.mockImplementation(async ({ id }: { id: number }) => {
-        return Array.from({ length: 5 }, (_, j) => ({
-          caseAId: id,
-          caseBId: id * 100 + j + 1000,
-          score: 0.5 + (j * 0.05), // varying scores
-          confidence: "MEDIUM" as const,
-          matchedFields: ["name"],
-        }));
-      });
+      mockFindSimilarCases.mockImplementation(
+        async ({ id }: { id: number }) => {
+          return Array.from({ length: 5 }, (_, j) => ({
+            caseAId: id,
+            caseBId: id * 100 + j + 1000,
+            score: 0.5 + j * 0.05, // varying scores
+            confidence: "MEDIUM" as const,
+            matchedFields: ["name"],
+          }));
+        }
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-3" }) as Job);
@@ -228,8 +238,14 @@ describe("DuplicateScanWorker", () => {
       mockFindSimilarCases.mockResolvedValue([makePair(1, 2)]);
 
       const callOrder: string[] = [];
-      mockUpdateMany.mockImplementation(async () => { callOrder.push("updateMany"); return { count: 0 }; });
-      mockCreateMany.mockImplementation(async () => { callOrder.push("createMany"); return { count: 1 }; });
+      mockUpdateMany.mockImplementation(async () => {
+        callOrder.push("updateMany");
+        return { count: 0 };
+      });
+      mockCreateMany.mockImplementation(async () => {
+        callOrder.push("createMany");
+        return { count: 1 };
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-4" }) as Job);
@@ -241,7 +257,9 @@ describe("DuplicateScanWorker", () => {
       });
 
       // soft-delete must come before createMany
-      expect(callOrder.indexOf("updateMany")).toBeLessThan(callOrder.indexOf("createMany"));
+      expect(callOrder.indexOf("updateMany")).toBeLessThan(
+        callOrder.indexOf("createMany")
+      );
     });
 
     it("Test 5: job.updateProgress called once per batch plus AI phase", async () => {
@@ -253,8 +271,15 @@ describe("DuplicateScanWorker", () => {
 
       // 3 cases with BATCH_SIZE=20 → 1 batch progress + 1 AI phase progress = 2 calls
       expect(mockUpdateProgress).toHaveBeenCalledTimes(2);
-      expect(mockUpdateProgress).toHaveBeenNthCalledWith(1, { analyzed: 3, total: 3 });
-      expect(mockUpdateProgress).toHaveBeenNthCalledWith(2, { analyzed: 3, total: 3, phase: "ai" });
+      expect(mockUpdateProgress).toHaveBeenNthCalledWith(1, {
+        analyzed: 3,
+        total: 3,
+      });
+      expect(mockUpdateProgress).toHaveBeenNthCalledWith(2, {
+        analyzed: 3,
+        total: 3,
+        phase: "ai",
+      });
     });
   });
 
@@ -275,15 +300,18 @@ describe("DuplicateScanWorker", () => {
     it("Test 7: Mid-loop cancellation check — if Redis key set between batches, throws 'Job cancelled by user'", async () => {
       // Need enough cases to span 2 batches (BATCH_SIZE=20)
       const manyCases = Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1, name: `Case ${i + 1}`, steps: [], tags: [],
+        id: i + 1,
+        name: `Case ${i + 1}`,
+        steps: [],
+        tags: [],
       }));
       mockFindMany.mockResolvedValue(manyCases);
 
       // Not cancelled pre-start, not cancelled for first batch, cancelled for second batch
       mockRedisGet
-        .mockResolvedValueOnce(null)     // Pre-start: not cancelled
-        .mockResolvedValueOnce(null)     // First batch check: not cancelled
-        .mockResolvedValueOnce("1");     // Second batch check: cancelled!
+        .mockResolvedValueOnce(null) // Pre-start: not cancelled
+        .mockResolvedValueOnce(null) // First batch check: not cancelled
+        .mockResolvedValueOnce("1"); // Second batch check: cancelled!
 
       mockFindSimilarCases.mockResolvedValue([]);
 
@@ -300,7 +328,10 @@ describe("DuplicateScanWorker", () => {
 
   describe("result persistence", () => {
     it("Test 8: createMany uses skipDuplicates: true as safety net against @@unique constraint", async () => {
-      mockFindMany.mockResolvedValue([{ id: 1, name: "Case A", steps: [], tags: [] }, { id: 2, name: "Case B", steps: [], tags: [] }]);
+      mockFindMany.mockResolvedValue([
+        { id: 1, name: "Case A", steps: [], tags: [] },
+        { id: 2, name: "Case B", steps: [], tags: [] },
+      ]);
       mockFindSimilarCases.mockResolvedValue([makePair(1, 2, 0.9)]);
 
       const { processor } = await loadWorker();

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
     body = parsed.data;
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     if (!sourceProject) {
       return NextResponse.json(
         { error: "No access to source project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     if (!targetProject) {
       return NextResponse.json(
         { error: "No write access to target project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -105,24 +105,26 @@ export async function POST(request: Request) {
       });
 
     const targetTemplateIds = new Set(
-      targetTemplateAssignments.map(
-        (a: { templateId: number }) => a.templateId,
-      ),
+      targetTemplateAssignments.map((a: { templateId: number }) => a.templateId)
     );
 
     const missingTemplateIds = uniqueSourceTemplateIds.filter(
-      (id) => !targetTemplateIds.has(id),
+      (id) => !targetTemplateIds.has(id)
     );
 
     // Fetch actual template names for missing IDs
-    const missingTemplateRecords = missingTemplateIds.length > 0
-      ? await enhancedDb.templates.findMany({
-          where: { id: { in: missingTemplateIds } },
-          select: { id: true, templateName: true },
-        })
-      : [];
+    const missingTemplateRecords =
+      missingTemplateIds.length > 0
+        ? await enhancedDb.templates.findMany({
+            where: { id: { in: missingTemplateIds } },
+            select: { id: true, templateName: true },
+          })
+        : [];
     const templateNameMap = new Map(
-      missingTemplateRecords.map((t: { id: number; templateName: string }) => [t.id, t.templateName]),
+      missingTemplateRecords.map((t: { id: number; templateName: string }) => [
+        t.id,
+        t.templateName,
+      ])
     );
     const missingTemplates = missingTemplateIds.map((id: number) => ({
       id,
@@ -136,9 +138,7 @@ export async function POST(request: Request) {
     // ─── Workflow state mapping ───────────────────────────────────────────────
 
     const uniqueSourceStateIds = [
-      ...new Set(
-        sourceCases.map((c: { stateId: number }) => c.stateId),
-      ),
+      ...new Set(sourceCases.map((c: { stateId: number }) => c.stateId)),
     ];
 
     const targetWorkflowAssignments =
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
 
     const targetWorkflows = targetWorkflowAssignments.map(
       (a: { workflow: { id: number; name: string; isDefault: boolean } }) =>
-        a.workflow,
+        a.workflow
     );
 
     const targetWorkflowByName = new Map<
@@ -163,8 +163,9 @@ export async function POST(request: Request) {
     }
 
     const defaultTargetWorkflow = targetWorkflows.find(
-      (wf: { isDefault: boolean }) => wf.isDefault,
-    ) ?? targetWorkflows[0] ?? { id: 0, name: "Unknown", isDefault: true };
+      (wf: { isDefault: boolean }) => wf.isDefault
+    ) ??
+      targetWorkflows[0] ?? { id: 0, name: "Unknown", isDefault: true };
 
     // We need source state names — fetch from the source project's workflow assignments
     const sourceWorkflowAssignments =
@@ -213,13 +214,11 @@ export async function POST(request: Request) {
 
     // ─── Collision detection ──────────────────────────────────────────────────
 
-    const sourceNames = sourceCases.map(
-      (c: any) => ({
-        name: c.name as string,
-        className: c.className as string | null,
-        source: c.source as RepositoryCaseSource,
-      }),
-    );
+    const sourceNames = sourceCases.map((c: any) => ({
+      name: c.name as string,
+      className: c.className as string | null,
+      source: c.source as RepositoryCaseSource,
+    }));
 
     // Use prisma directly for collision detection — access is already verified above
     // and ZenStack's enhanced DB can have issues matching null fields in OR clauses
@@ -247,7 +246,7 @@ export async function POST(request: Request) {
         caseName: c.name,
         className: c.className,
         source: c.source,
-      }),
+      })
     );
 
     // ─── Resolve target repository ────────────────────────────────────────────
@@ -294,7 +293,7 @@ export async function POST(request: Request) {
     console.error("[preflight] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

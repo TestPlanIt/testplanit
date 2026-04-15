@@ -49,7 +49,9 @@ describe("POST /api/upload-docimage", () => {
   it("returns 500 when AWS_BUCKET_NAME not configured", async () => {
     delete process.env.AWS_BUCKET_NAME;
 
-    const file = new File(["image data"], "screenshot.png", { type: "image/png" });
+    const file = new File(["image data"], "screenshot.png", {
+      type: "image/png",
+    });
     const request = createUploadRequest(file);
     const response = await POST(request);
     const data = await response.json();
@@ -59,7 +61,9 @@ describe("POST /api/upload-docimage", () => {
   });
 
   it("uploads with uploads/docimages/ key prefix", async () => {
-    const file = new File(["image data"], "screenshot.png", { type: "image/png" });
+    const file = new File(["image data"], "screenshot.png", {
+      type: "image/png",
+    });
     const request = createUploadRequest(file);
     const response = await POST(request);
     const data = await response.json();

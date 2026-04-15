@@ -33,15 +33,11 @@ vi.mock("./ManageExternalIssues", () => ({
 }));
 
 vi.mock("./ManageSimpleUrlIssues", () => ({
-  ManageSimpleUrlIssues: () => (
-    <div data-testid="manage-simple-url-issues" />
-  ),
+  ManageSimpleUrlIssues: () => <div data-testid="manage-simple-url-issues" />,
 }));
 
 vi.mock("./DeferredIssueManager", () => ({
-  DeferredIssueManager: () => (
-    <div data-testid="deferred-issue-manager" />
-  ),
+  DeferredIssueManager: () => <div data-testid="deferred-issue-manager" />,
 }));
 
 // Mock @prisma/client enums for jsdom
@@ -70,7 +66,10 @@ vi.mock("@/components/ui/alert", () => ({
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, asChild, ...rest }: any) =>
     asChild ? (
-      React.cloneElement(React.Children.only(children) as React.ReactElement, rest)
+      React.cloneElement(
+        React.Children.only(children) as React.ReactElement,
+        rest
+      )
     ) : (
       <button {...rest}>{children}</button>
     ),
@@ -92,7 +91,10 @@ describe("UnifiedIssueManager", () => {
   });
 
   it("shows loading skeleton when isLoading is true", () => {
-    mockUseFindFirstProjects.mockReturnValue({ data: undefined, isLoading: true });
+    mockUseFindFirstProjects.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    });
 
     const { container } = render(<UnifiedIssueManager {...defaultProps} />);
 
@@ -108,7 +110,11 @@ describe("UnifiedIssueManager", () => {
             id: 10,
             isActive: true,
             config: {},
-            integration: { id: 5, name: "Simple Links", provider: "SIMPLE_URL" },
+            integration: {
+              id: 5,
+              name: "Simple Links",
+              provider: "SIMPLE_URL",
+            },
           },
         ],
       },

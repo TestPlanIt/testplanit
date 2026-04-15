@@ -5,7 +5,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -134,7 +134,9 @@ export function ExportModal({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{tGlobal("repository.exportModal.title")}</DialogTitle>
-          <DialogDescription>{tGlobal("repository.exportModal.description")}</DialogDescription>
+          <DialogDescription>
+            {tGlobal("repository.exportModal.description")}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
           {/* Export Scope */}
@@ -170,7 +172,9 @@ export function ExportModal({
                       : "cursor-pointer"
                   }
                 >
-                  {tGlobal("repository.exportModal.scope.selected", { count: selectedCaseIds.length })}
+                  {tGlobal("repository.exportModal.scope.selected", {
+                    count: selectedCaseIds.length,
+                  })}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -190,7 +194,9 @@ export function ExportModal({
                   data-testid="export-scope-allProject"
                 />
                 <Label htmlFor="scope-allProject" className="cursor-pointer">
-                  {tGlobal("repository.exportModal.scope.allProject", { count: totalProjectCases ?? 0 })}
+                  {tGlobal("repository.exportModal.scope.allProject", {
+                    count: totalProjectCases ?? 0,
+                  })}
                 </Label>
               </div>
             </RadioGroup>
@@ -295,7 +301,11 @@ export function ExportModal({
                     data-testid="export-delimiter-select"
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={tGlobal("repository.exportModal.delimiter.placeholder")} />
+                      <SelectValue
+                        placeholder={tGlobal(
+                          "repository.exportModal.delimiter.placeholder"
+                        )}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="," data-testid="delimiter-comma">
@@ -327,9 +337,9 @@ export function ExportModal({
                 <RadioGroup
                   id="textLongFormat"
                   value={textLongFormat}
-                  onValueChange={(
-                    value: "json" | "plainText" | "markdown"
-                  ) => setTextLongFormat(value)}
+                  onValueChange={(value: "json" | "plainText" | "markdown") =>
+                    setTextLongFormat(value)
+                  }
                   className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
                   data-testid="export-textlong-format-radio-group"
                 >
@@ -387,9 +397,9 @@ export function ExportModal({
                 <RadioGroup
                   id="stepsFormat"
                   value={stepsFormat}
-                  onValueChange={(
-                    value: "json" | "plainText" | "markdown"
-                  ) => setStepsFormat(value)}
+                  onValueChange={(value: "json" | "plainText" | "markdown") =>
+                    setStepsFormat(value)
+                  }
                   className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
                   data-testid="export-steps-format-radio-group"
                 >
@@ -539,7 +549,9 @@ export function ExportModal({
                 <RadioGroup
                   id="columns-pdf"
                   value={columns}
-                  onValueChange={(value: "visible" | "all") => setColumns(value)}
+                  onValueChange={(value: "visible" | "all") =>
+                    setColumns(value)
+                  }
                   className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
                   data-testid="export-columns-pdf-radio-group"
                 >
@@ -610,7 +622,9 @@ export function ExportModal({
                       htmlFor="attachmentFormat-pdf-embedded"
                       className="cursor-pointer"
                     >
-                      {tGlobal("repository.exportModal.attachmentFormat.embedded")}
+                      {tGlobal(
+                        "repository.exportModal.attachmentFormat.embedded"
+                      )}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -625,12 +639,13 @@ export function ExportModal({
           <Button
             onClick={handleExportClick}
             disabled={
-              isExporting ||
-              (scope === "selected" && !canExportSelected)
+              isExporting || (scope === "selected" && !canExportSelected)
             }
             data-testid="export-modal-export-button"
           >
-            {isExporting ? tGlobal("repository.exportModal.exporting") : tGlobal("repository.cases.export")}
+            {isExporting
+              ? tGlobal("repository.exportModal.exporting")
+              : tGlobal("repository.cases.export")}
           </Button>
         </DialogFooter>
       </DialogContent>

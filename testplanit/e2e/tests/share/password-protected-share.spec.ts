@@ -20,7 +20,9 @@ test.describe("Password-Protected Share Flow", () => {
       dimensions: "testCase",
       metrics: "testCaseCount",
     });
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
 
     const runButton = page.locator('[data-testid="run-report-button"]');
@@ -36,7 +38,7 @@ test.describe("Password-Protected Share Flow", () => {
     await runButton.click();
     await page.waitForLoadState("networkidle");
 
-    const resultsCard = page.locator('text=/Results/i');
+    const resultsCard = page.locator("text=/Results/i");
     await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
   }
 
@@ -46,13 +48,23 @@ test.describe("Password-Protected Share Flow", () => {
     context,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Password Share Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Password Share Test ${timestamp}`
+    );
     const sharePassword = `TestPass123-${timestamp}`;
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Test Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, rootFolderId, `Test Case 2 ${timestamp}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Test Case 1 ${timestamp}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Test Case 2 ${timestamp}`
+    );
 
     // Navigate to report builder and run report
     await navigateToRepositoryStatsReport(page, projectId);
@@ -74,7 +86,9 @@ test.describe("Password-Protected Share Flow", () => {
     // Enter password
     await passwordInput.fill(sharePassword);
 
-    const confirmPasswordInput = page.getByTestId("share-confirm-password-input");
+    const confirmPasswordInput = page.getByTestId(
+      "share-confirm-password-input"
+    );
     await confirmPasswordInput.fill(sharePassword);
 
     // Add title
@@ -112,11 +126,15 @@ test.describe("Password-Protected Share Flow", () => {
       await incognitoPage.waitForLoadState("networkidle");
 
       // Should see password gate, not the report
-      const passwordGateInput = incognitoPage.getByTestId("password-gate-input");
+      const passwordGateInput = incognitoPage.getByTestId(
+        "password-gate-input"
+      );
       await expect(passwordGateInput).toBeVisible({ timeout: 10000 });
 
       // Verify report is NOT visible yet
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).not.toBeVisible();
 
       // Enter the correct password
@@ -133,7 +151,9 @@ test.describe("Password-Protected Share Flow", () => {
 
       // Verify report content
       const reportTitle = incognitoPage.getByTestId("shared-report-title");
-      await expect(reportTitle).toContainText(`Password Protected Report ${timestamp}`);
+      await expect(reportTitle).toContainText(
+        `Password Protected Report ${timestamp}`
+      );
 
       // Verify test cases are shown
       const reportTable = incognitoPage.locator("table").first();
@@ -144,13 +164,11 @@ test.describe("Password-Protected Share Flow", () => {
     }
   });
 
-  test("Reject incorrect password", async ({
-    api,
-    page,
-    context,
-  }) => {
+  test("Reject incorrect password", async ({ api, page, context }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Wrong Password Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Wrong Password Test ${timestamp}`
+    );
     const correctPassword = `CorrectPass-${timestamp}`;
     const wrongPassword = `WrongPass-${timestamp}`;
 
@@ -171,7 +189,9 @@ test.describe("Password-Protected Share Flow", () => {
     const passwordInput = page.getByTestId("share-password-input");
     await passwordInput.fill(correctPassword);
 
-    const confirmPasswordInput = page.getByTestId("share-confirm-password-input");
+    const confirmPasswordInput = page.getByTestId(
+      "share-confirm-password-input"
+    );
     await confirmPasswordInput.fill(correctPassword);
 
     const createButton = page.getByTestId("share-create-button");
@@ -201,7 +221,9 @@ test.describe("Password-Protected Share Flow", () => {
       await incognitoPage.waitForLoadState("networkidle");
 
       // Enter wrong password
-      const passwordGateInput = incognitoPage.getByTestId("password-gate-input");
+      const passwordGateInput = incognitoPage.getByTestId(
+        "password-gate-input"
+      );
       await expect(passwordGateInput).toBeVisible({ timeout: 10000 });
       await passwordGateInput.fill(wrongPassword);
 
@@ -216,7 +238,9 @@ test.describe("Password-Protected Share Flow", () => {
       await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
 
       // Report should NOT be visible
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).not.toBeVisible();
 
       // Password input should be cleared and ready for another attempt
@@ -255,7 +279,9 @@ test.describe("Password-Protected Share Flow", () => {
     const passwordInput = page.getByTestId("share-password-input");
     await passwordInput.fill(correctPassword);
 
-    const confirmPasswordInput = page.getByTestId("share-confirm-password-input");
+    const confirmPasswordInput = page.getByTestId(
+      "share-confirm-password-input"
+    );
     await confirmPasswordInput.fill(correctPassword);
 
     const createButton = page.getByTestId("share-create-button");
@@ -284,7 +310,9 @@ test.describe("Password-Protected Share Flow", () => {
       await incognitoPage.goto(shareUrl);
       await incognitoPage.waitForLoadState("networkidle");
 
-      const passwordGateInput = incognitoPage.getByTestId("password-gate-input");
+      const passwordGateInput = incognitoPage.getByTestId(
+        "password-gate-input"
+      );
       const submitButton = incognitoPage.getByTestId("password-gate-submit");
 
       // Make 5 failed attempts
@@ -302,7 +330,9 @@ test.describe("Password-Protected Share Flow", () => {
       await incognitoPage.waitForTimeout(500);
 
       // Should see rate limit error
-      const rateLimitError = incognitoPage.locator('text=/too many attempts|rate limit/i');
+      const rateLimitError = incognitoPage.locator(
+        "text=/too many attempts|rate limit/i"
+      );
       await expect(rateLimitError.first()).toBeVisible({ timeout: 5000 });
 
       // Even the correct password should be blocked now
@@ -314,7 +344,9 @@ test.describe("Password-Protected Share Flow", () => {
       await expect(rateLimitError.first()).toBeVisible({ timeout: 5000 });
 
       // Report should not be accessible
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).not.toBeVisible();
     } finally {
       await incognitoPage.close();
@@ -322,12 +354,11 @@ test.describe("Password-Protected Share Flow", () => {
     }
   });
 
-  test("Password mismatch shows validation error", async ({
-    api,
-    page,
-  }) => {
+  test("Password mismatch shows validation error", async ({ api, page }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Password Mismatch Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Password Mismatch Test ${timestamp}`
+    );
 
     // Create test data
     const rootFolderId = await api.getRootFolderId(projectId);
@@ -349,7 +380,9 @@ test.describe("Password-Protected Share Flow", () => {
     const passwordInput = page.getByTestId("share-password-input");
     await passwordInput.fill("Password123");
 
-    const confirmPasswordInput = page.getByTestId("share-confirm-password-input");
+    const confirmPasswordInput = page.getByTestId(
+      "share-confirm-password-input"
+    );
     await confirmPasswordInput.fill("DifferentPassword456");
 
     // Try to create the share
@@ -357,7 +390,7 @@ test.describe("Password-Protected Share Flow", () => {
     await createButton.click();
 
     // Should see validation error
-    const errorMessage = page.locator('text=/passwords do not match/i');
+    const errorMessage = page.locator("text=/passwords do not match/i");
     await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
 
     // Share should NOT be created
@@ -371,7 +404,9 @@ test.describe("Password-Protected Share Flow", () => {
     context,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Session Persist Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Session Persist Test ${timestamp}`
+    );
     const sharePassword = `SessionPass-${timestamp}`;
 
     // Create test data
@@ -391,7 +426,9 @@ test.describe("Password-Protected Share Flow", () => {
     const passwordInput = page.getByTestId("share-password-input");
     await passwordInput.fill(sharePassword);
 
-    const confirmPasswordInput = page.getByTestId("share-confirm-password-input");
+    const confirmPasswordInput = page.getByTestId(
+      "share-confirm-password-input"
+    );
     await confirmPasswordInput.fill(sharePassword);
 
     const createButton = page.getByTestId("share-create-button");
@@ -421,14 +458,18 @@ test.describe("Password-Protected Share Flow", () => {
       await incognitoPage.waitForLoadState("networkidle");
 
       // Enter password
-      const passwordGateInput = incognitoPage.getByTestId("password-gate-input");
+      const passwordGateInput = incognitoPage.getByTestId(
+        "password-gate-input"
+      );
       await passwordGateInput.fill(sharePassword);
 
       const submitButton = incognitoPage.getByTestId("password-gate-submit");
       await submitButton.click();
 
       // Wait for report to load
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
 
       // Reload the page
@@ -447,12 +488,11 @@ test.describe("Password-Protected Share Flow", () => {
     }
   });
 
-  test("Empty password shows validation error", async ({
-    api,
-    page,
-  }) => {
+  test("Empty password shows validation error", async ({ api, page }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Empty Password Test ${timestamp}`);
+    const projectId = await api.createProject(
+      `Empty Password Test ${timestamp}`
+    );
 
     // Create test data
     const rootFolderId = await api.getRootFolderId(projectId);

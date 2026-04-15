@@ -131,7 +131,9 @@ describe("GET /api/health", () => {
 
   describe("Degraded state", () => {
     it("returns 200 with status degraded when redis is down", async () => {
-      mockValkeyConnection.ping.mockRejectedValue(new Error("Connection refused"));
+      mockValkeyConnection.ping.mockRejectedValue(
+        new Error("Connection refused")
+      );
 
       const response = await GET();
       const data = await response.json();
@@ -223,7 +225,9 @@ describe("GET /api/health", () => {
     it("includes Access-Control-Allow-Methods header", async () => {
       const response = await GET();
 
-      expect(response.headers.get("Access-Control-Allow-Methods")).toContain("GET");
+      expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
+        "GET"
+      );
     });
   });
 });
@@ -234,6 +238,8 @@ describe("OPTIONS /api/health", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(response.headers.get("Access-Control-Allow-Methods")).toContain("GET");
+    expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
+      "GET"
+    );
   });
 });

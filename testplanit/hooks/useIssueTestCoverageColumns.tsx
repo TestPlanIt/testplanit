@@ -6,7 +6,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "@prisma/client";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
@@ -223,8 +223,7 @@ export function useIssueTestCoverageSummaryColumns(
           const count = info.row.subRows.length;
           return (
             <span className="text-muted-foreground text-sm">
-              {count}{" "}
-              {t("reports.ui.issueTestCoverage.testCases", { count })}
+              {count} {t("reports.ui.issueTestCoverage.testCases", { count })}
             </span>
           );
         },
@@ -426,9 +425,7 @@ export function useIssueTestCoverageSummaryColumns(
                       {firstRow.untestedTestCases}
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    {tCommon("labels.untested")}
-                  </TooltipContent>
+                  <TooltipContent>{tCommon("labels.untested")}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>

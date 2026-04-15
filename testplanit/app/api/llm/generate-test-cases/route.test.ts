@@ -52,10 +52,12 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
     },
     llmProviderConfig: {
-      findFirst: (...args: any[]) => mockPrismaLlmProviderConfigFindFirst(...args),
+      findFirst: (...args: any[]) =>
+        mockPrismaLlmProviderConfigFindFirst(...args),
     },
     repositoryFolders: {
-      findMany: (...args: any[]) => mockPrismaRepositoryFoldersFindMany(...args),
+      findMany: (...args: any[]) =>
+        mockPrismaRepositoryFoldersFindMany(...args),
     },
     repositoryCases: {
       findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
@@ -519,7 +521,9 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
 
     const data = await res.json();
     // truncated should be false or undefined when no truncation occurs
-    expect(data.metadata.truncated === false || data.metadata.truncated === undefined).toBe(true);
+    expect(
+      data.metadata.truncated === false || data.metadata.truncated === undefined
+    ).toBe(true);
     expect(data.metadata.truncationNote).toBeUndefined();
   });
 });

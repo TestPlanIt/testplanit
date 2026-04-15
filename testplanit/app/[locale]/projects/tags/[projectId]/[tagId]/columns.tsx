@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { CheckCircle2, PlayCircle } from "lucide-react";
@@ -111,10 +111,7 @@ export const getSessionColumns = (translations: {
         return (
           <Badge
             variant={isCompleted ? "outline" : "default"}
-            className={cn(
-              "gap-1",
-              isCompleted && "text-muted-foreground"
-            )}
+            className={cn("gap-1", isCompleted && "text-muted-foreground")}
           >
             {isCompleted && <CheckCircle2 className="h-3 w-3" />}
             {isCompleted ? translations.completed : translations.inProgress}
@@ -216,10 +213,7 @@ export const getTestRunColumns = (translations: {
         return (
           <Badge
             variant={isCompleted ? "outline" : "default"}
-            className={cn(
-              "gap-1",
-              isCompleted && "text-muted-foreground"
-            )}
+            className={cn("gap-1", isCompleted && "text-muted-foreground")}
           >
             {isCompleted && <CheckCircle2 className="h-3 w-3" />}
             {isCompleted ? translations.completed : translations.inProgress}

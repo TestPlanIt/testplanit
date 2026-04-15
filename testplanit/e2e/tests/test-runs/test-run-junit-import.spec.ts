@@ -52,7 +52,9 @@ function parseSseEvents(text: string): Array<Record<string, unknown>> {
 /**
  * Find the final/completion event from SSE stream events
  */
-function getFinalEvent(events: Array<Record<string, unknown>>): Record<string, unknown> | null {
+function getFinalEvent(
+  events: Array<Record<string, unknown>>
+): Record<string, unknown> | null {
   // Look for the completion event (has complete: true) or error event
   for (let i = events.length - 1; i >= 0; i--) {
     const event = events[i];

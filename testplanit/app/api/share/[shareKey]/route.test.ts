@@ -41,13 +41,18 @@ import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { GET, POST } from "./route";
 
-const createGetRequest = (shareKey: string): [NextRequest, { params: Promise<{ shareKey: string }> }] => {
+const createGetRequest = (
+  shareKey: string
+): [NextRequest, { params: Promise<{ shareKey: string }> }] => {
   const req = new NextRequest(`http://localhost/api/share/${shareKey}`);
   const params = { params: Promise.resolve({ shareKey }) };
   return [req, params];
 };
 
-const createPostRequest = (shareKey: string, body: Record<string, any> = {}): [NextRequest, { params: Promise<{ shareKey: string }> }] => {
+const createPostRequest = (
+  shareKey: string,
+  body: Record<string, any> = {}
+): [NextRequest, { params: Promise<{ shareKey: string }> }] => {
   const req = new NextRequest(`http://localhost/api/share/${shareKey}`, {
     method: "POST",
     body: JSON.stringify(body),
@@ -178,7 +183,9 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns 500 on database error", async () => {
-    (prisma.shareLink.findUnique as any).mockRejectedValue(new Error("DB error"));
+    (prisma.shareLink.findUnique as any).mockRejectedValue(
+      new Error("DB error")
+    );
 
     const [req, ctx] = createGetRequest("abc123");
     const response = await GET(req, ctx);
@@ -363,7 +370,9 @@ describe("POST /api/share/[shareKey]", () => {
     });
     (bcrypt.compare as any).mockResolvedValue(false);
 
-    const [req, ctx] = createPostRequest("abc123", { password: "wrongpassword" });
+    const [req, ctx] = createPostRequest("abc123", {
+      password: "wrongpassword",
+    });
     const response = await POST(req, ctx);
     const data = await response.json();
 
@@ -380,7 +389,9 @@ describe("POST /api/share/[shareKey]", () => {
     });
     (bcrypt.compare as any).mockResolvedValue(true);
 
-    const [req, ctx] = createPostRequest("abc123", { password: "correctpassword" });
+    const [req, ctx] = createPostRequest("abc123", {
+      password: "correctpassword",
+    });
     const response = await POST(req, ctx);
     const data = await response.json();
 

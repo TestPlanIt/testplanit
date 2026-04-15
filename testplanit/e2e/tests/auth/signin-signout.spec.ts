@@ -46,9 +46,12 @@ test.describe("Sign In and Sign Out", () => {
         await signinPage.submit();
 
         // Wait for redirect away from signin page
-        await page.waitForURL(/\/en-US\/?$|\/en-US\/projects|\/en-US\/verify-email/, {
-          timeout: 30000,
-        });
+        await page.waitForURL(
+          /\/en-US\/?$|\/en-US\/projects|\/en-US\/verify-email/,
+          {
+            timeout: 30000,
+          }
+        );
 
         expect(page.url()).not.toContain("/signin");
       } finally {
@@ -195,7 +198,9 @@ test.describe("Sign In and Sign Out", () => {
 
   // Authenticated tests: use the default admin storage state
   test.describe("Authenticated sign-out flow", () => {
-    test("Sign-out clears session and redirects to signin", async ({ page }) => {
+    test("Sign-out clears session and redirects to signin", async ({
+      page,
+    }) => {
       await page.goto("/en-US/projects");
       await page.waitForLoadState("networkidle");
 
@@ -204,16 +209,20 @@ test.describe("Sign In and Sign Out", () => {
       expect(page.url()).toContain("/projects");
 
       // Find user menu button in the header
-      const userMenu = page.locator(
-        'button[aria-label*="User menu" i], [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
-      ).first();
+      const userMenu = page
+        .locator(
+          'button[aria-label*="User menu" i], [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
+        )
+        .first();
       await expect(userMenu).toBeVisible({ timeout: 10000 });
       await userMenu.click();
 
       // Find sign-out button in the dropdown menu
-      const signOutButton = page.locator(
-        '[role="menuitem"]:has-text("Sign out"), [role="menuitem"]:has-text("Sign Out"), [role="menuitem"]:has-text("Logout"), [role="menuitem"]:has-text("Log out")'
-      ).first();
+      const signOutButton = page
+        .locator(
+          '[role="menuitem"]:has-text("Sign out"), [role="menuitem"]:has-text("Sign Out"), [role="menuitem"]:has-text("Logout"), [role="menuitem"]:has-text("Log out")'
+        )
+        .first();
       await expect(signOutButton).toBeVisible({ timeout: 5000 });
       await signOutButton.click();
 

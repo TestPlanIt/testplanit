@@ -22,7 +22,13 @@ import { sleep, check } from "k6";
 import http from "k6/http";
 import { findMany, create, update, postApi, getApi } from "./helpers/api.js";
 import { testCaseName, junitXml, uniqueId } from "./helpers/data.js";
-import { getProfile, thresholds, PROJECT_ID, BASE_URL, headers } from "./config.js";
+import {
+  getProfile,
+  thresholds,
+  PROJECT_ID,
+  BASE_URL,
+  headers,
+} from "./config.js";
 
 export const options = {
   ...getProfile(),
@@ -145,13 +151,26 @@ function testRunScenario() {
     return;
   }
 
-  const defaultStatus = statuses.data.find((s) => !s.isSuccess && !s.isFailure) || statuses.data[0];
-  const passedStatus = statuses.data.find((s) => s.isSuccess) || statuses.data[0];
+  const defaultStatus =
+    statuses.data.find((s) => !s.isSuccess && !s.isFailure) || statuses.data[0];
+  const passedStatus =
+    statuses.data.find((s) => s.isSuccess) || statuses.data[0];
 
   // Get run workflow state
-  const runWorkflows = findMany("workflows", { where: { isDeleted: false, isDefault: true, scope: "RUNS" }, select: { id: true }, take: 1 }, { scenarioTag: TAG });
+  const runWorkflows = findMany(
+    "workflows",
+    {
+      where: { isDeleted: false, isDefault: true, scope: "RUNS" },
+      select: { id: true },
+      take: 1,
+    },
+    { scenarioTag: TAG }
+  );
   const runStateId = runWorkflows?.data?.[0]?.id;
-  if (!runStateId) { sleep(1); return; }
+  if (!runStateId) {
+    sleep(1);
+    return;
+  }
 
   // Create run
   const testRun = create(
@@ -168,7 +187,10 @@ function testRunScenario() {
   );
 
   const testRunId = testRun?.data?.id;
-  if (!testRunId) { sleep(1); return; }
+  if (!testRunId) {
+    sleep(1);
+    return;
+  }
 
   // Add 5-10 cases
   const casesToAdd = cases.data.slice(0, 5 + Math.floor(Math.random() * 6));
@@ -186,7 +208,8 @@ function testRunScenario() {
       },
       { scenarioTag: TAG }
     );
-    if (trc?.data?.id) trcIds.push({ id: trc.data.id, version: trc.data.version || 1 });
+    if (trc?.data?.id)
+      trcIds.push({ id: trc.data.id, version: trc.data.version || 1 });
   }
 
   sleep(0.5);
@@ -209,13 +232,26 @@ function testRunScenario() {
   }
 
   // Complete
-  update("testRuns", testRunId, { isCompleted: true, completedAt: new Date().toISOString() }, { scenarioTag: TAG });
+  update(
+    "testRuns",
+    testRunId,
+    { isCompleted: true, completedAt: new Date().toISOString() },
+    { scenarioTag: TAG }
+  );
   sleep(1 + Math.random() * 2);
 }
 
 function searchScenario() {
   const TAG = "search";
-  const queries = ["login", "payment", "API", "security", "validation", "error", "mobile"];
+  const queries = [
+    "login",
+    "payment",
+    "API",
+    "security",
+    "validation",
+    "error",
+    "mobile",
+  ];
   const query = queries[Math.floor(Math.random() * queries.length)];
 
   const { res } = postApi(
@@ -259,20 +295,47 @@ function crudScenario() {
     { scenarioTag: TAG }
   );
 
-  const folderId = folders?.data?.length > 0
-    ? folders.data[Math.floor(Math.random() * folders.data.length)].id
-    : null;
+  const folderId =
+    folders?.data?.length > 0
+      ? folders.data[Math.floor(Math.random() * folders.data.length)].id
+      : null;
 
-  if (!folderId) { sleep(2); return; }
+  if (!folderId) {
+    sleep(2);
+    return;
+  }
 
   // Get repo, template, and workflow state for creating cases
-  const repos = findMany("repositories", { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 1 }, { scenarioTag: TAG });
-  const templates = findMany("templates", { where: { isDefault: true }, select: { id: true }, take: 1 }, { scenarioTag: TAG });
-  const workflows = findMany("workflows", { where: { isDeleted: false, isDefault: true, scope: "CASES" }, select: { id: true }, take: 1 }, { scenarioTag: TAG });
+  const repos = findMany(
+    "repositories",
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 1,
+    },
+    { scenarioTag: TAG }
+  );
+  const templates = findMany(
+    "templates",
+    { where: { isDefault: true }, select: { id: true }, take: 1 },
+    { scenarioTag: TAG }
+  );
+  const workflows = findMany(
+    "workflows",
+    {
+      where: { isDeleted: false, isDefault: true, scope: "CASES" },
+      select: { id: true },
+      take: 1,
+    },
+    { scenarioTag: TAG }
+  );
   const repoId = repos?.data?.[0]?.id;
   const templateId = templates?.data?.[0]?.id;
   const stateId = workflows?.data?.[0]?.id;
-  if (!repoId || !templateId || !stateId) { sleep(2); return; }
+  if (!repoId || !templateId || !stateId) {
+    sleep(2);
+    return;
+  }
 
   // Create
   const created = create(
@@ -293,7 +356,12 @@ function crudScenario() {
   if (created?.data?.id) {
     sleep(0.5);
     // Update
-    update("repositoryCases", created.data.id, { name: `${created.data.name} [EDITED]` }, { scenarioTag: TAG });
+    update(
+      "repositoryCases",
+      created.data.id,
+      { name: `${created.data.name} [EDITED]` },
+      { scenarioTag: TAG }
+    );
   }
 
   sleep(1 + Math.random() * 2);

@@ -54,10 +54,7 @@ const grandchildFolder = { id: 3, text: "Grandchild Folder", parent: 2 };
 describe("BreadcrumbComponent", () => {
   it("renders single root folder breadcrumb without separator", () => {
     render(
-      <BreadcrumbComponent
-        breadcrumbItems={[rootFolder]}
-        projectId="1"
-      />
+      <BreadcrumbComponent breadcrumbItems={[rootFolder]} projectId="1" />
     );
 
     expect(screen.getByText("Root Folder")).toBeInTheDocument();
@@ -147,13 +144,14 @@ describe("BreadcrumbComponent", () => {
   });
 
   it("renders folder names with truncate class for long names", () => {
-    const longNameFolder = { id: 99, text: "A Very Long Folder Name That Should Be Truncated In The UI", parent: 0 };
+    const longNameFolder = {
+      id: 99,
+      text: "A Very Long Folder Name That Should Be Truncated In The UI",
+      parent: 0,
+    };
 
     render(
-      <BreadcrumbComponent
-        breadcrumbItems={[longNameFolder]}
-        projectId="1"
-      />
+      <BreadcrumbComponent breadcrumbItems={[longNameFolder]} projectId="1" />
     );
 
     const span = screen.getByText(longNameFolder.text);
@@ -163,7 +161,11 @@ describe("BreadcrumbComponent", () => {
   });
 
   it("shows full folder name in tooltip content", () => {
-    const folderWithLongName = { id: 5, text: "Long Folder Name For Tooltip Test", parent: 0 };
+    const folderWithLongName = {
+      id: 5,
+      text: "Long Folder Name For Tooltip Test",
+      parent: 0,
+    };
 
     render(
       <BreadcrumbComponent
@@ -175,7 +177,9 @@ describe("BreadcrumbComponent", () => {
     // The tooltip content should contain the folder name
     // Radix Tooltip renders TooltipContent in the DOM (may be hidden)
     // At minimum, the visible text should be present
-    expect(screen.getByText("Long Folder Name For Tooltip Test")).toBeInTheDocument();
+    expect(
+      screen.getByText("Long Folder Name For Tooltip Test")
+    ).toBeInTheDocument();
   });
 
   it("builds correct href for folder items", () => {

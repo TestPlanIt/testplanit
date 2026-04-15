@@ -4,7 +4,7 @@ import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   getElasticsearchClient,
-  getEntityIndexName
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
 /**
@@ -31,18 +31,16 @@ export async function indexMilestone(
     throw new Error("Elasticsearch client not available");
   }
 
-  const indexName = getEntityIndexName(SearchableEntityType.MILESTONE, tenantId);
+  const indexName = getEntityIndexName(
+    SearchableEntityType.MILESTONE,
+    tenantId
+  );
 
   // Extract text from TipTap JSON for note and docs fields
   const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
   const docsText = milestone.docs ? extractTextFromNode(milestone.docs) : "";
 
-  const searchableContent = [
-    milestone.name,
-    noteText,
-    docsText,
-  ].join(" ");
-
+  const searchableContent = [milestone.name, noteText, docsText].join(" ");
 
   const document = {
     id: milestone.id,
@@ -90,7 +88,10 @@ export async function deleteMilestoneFromIndex(
     return;
   }
 
-  const indexName = getEntityIndexName(SearchableEntityType.MILESTONE, tenantId);
+  const indexName = getEntityIndexName(
+    SearchableEntityType.MILESTONE,
+    tenantId
+  );
 
   try {
     await client.delete({
@@ -168,9 +169,14 @@ export async function syncProjectMilestonesToElasticsearch(
     return;
   }
 
-  const indexName = getEntityIndexName(SearchableEntityType.MILESTONE, tenantId);
+  const indexName = getEntityIndexName(
+    SearchableEntityType.MILESTONE,
+    tenantId
+  );
 
-  console.log(`Starting milestone sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+  console.log(
+    `Starting milestone sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`
+  );
 
   const milestones = await db.milestones.findMany({
     where: {
@@ -200,12 +206,7 @@ export async function syncProjectMilestonesToElasticsearch(
     const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
     const docsText = milestone.docs ? extractTextFromNode(milestone.docs) : "";
 
-    const searchableContent = [
-      milestone.name,
-      noteText,
-      docsText,
-    ].join(" ");
-
+    const searchableContent = [milestone.name, noteText, docsText].join(" ");
 
     bulkBody.push({
       index: {
@@ -227,14 +228,14 @@ export async function syncProjectMilestonesToElasticsearch(
       milestoneTypeIcon: milestone.milestoneType.icon?.name,
       parentId: milestone.parentId,
       parentName: milestone.parent?.name,
-        isCompleted: milestone.isCompleted,
+      isCompleted: milestone.isCompleted,
       completedAt: milestone.completedAt,
       isDeleted: milestone.isDeleted,
       createdAt: milestone.createdAt,
-        createdById: milestone.createdBy,
+      createdById: milestone.createdBy,
       createdByName: milestone.createdBy.name,
       createdByImage: milestone.createdBy.image,
-        searchableContent,
+      searchableContent,
     });
   }
 
@@ -244,7 +245,9 @@ export async function syncProjectMilestonesToElasticsearch(
       const errorItems = bulkResponse.items.filter(
         (item: any) => item.index?.error
       );
-      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      console.error(
+        `Bulk indexing errors: ${errorItems.length} failed documents`
+      );
       // Log detailed error information
       errorItems.slice(0, 10).forEach((item: any) => {
         if (item.index?.error) {
@@ -252,7 +255,9 @@ export async function syncProjectMilestonesToElasticsearch(
           console.error(`    Error type: ${item.index.error.type}`);
           console.error(`    Error reason: ${item.index.error.reason}`);
           if (item.index.error.caused_by) {
-            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+            console.error(
+              `    Caused by: ${JSON.stringify(item.index.error.caused_by)}`
+            );
           }
         }
       });
@@ -294,6 +299,9 @@ export async function syncChildMilestonesToElasticsearch(
       await syncMilestoneToElasticsearch(child.id, tenantId);
     }
   } catch (error) {
-    console.error(`Failed to sync child milestones of parent ${parentId}:`, error);
+    console.error(
+      `Failed to sync child milestones of parent ${parentId}:`,
+      error
+    );
   }
 }

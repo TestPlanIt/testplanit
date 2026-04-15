@@ -35,7 +35,9 @@ import { BASE_URL } from "./config.js";
 
 const SEED_PROJECTS = parseInt(__ENV.SEED_PROJECTS || "10");
 const SEED_CASES_PER_PROJECT = parseInt(__ENV.SEED_CASES_PER_PROJECT || "500");
-const SEED_FOLDERS_PER_PROJECT = parseInt(__ENV.SEED_FOLDERS_PER_PROJECT || "20");
+const SEED_FOLDERS_PER_PROJECT = parseInt(
+  __ENV.SEED_FOLDERS_PER_PROJECT || "20"
+);
 const SEED_RUNS_PER_PROJECT = parseInt(__ENV.SEED_RUNS_PER_PROJECT || "10");
 
 // Seeding runs as a single VU with one iteration
@@ -81,28 +83,44 @@ export default function seed() {
       select: { id: true, name: true, isSuccess: true, isFailure: true },
     });
 
-    const defaultStatus = statuses?.data?.find((s) => !s.isSuccess && !s.isFailure) || statuses?.data?.[0];
-    const passedStatus = statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
-    const failedStatus = statuses?.data?.find((s) => s.isFailure) || defaultStatus;
+    const defaultStatus =
+      statuses?.data?.find((s) => !s.isSuccess && !s.isFailure) ||
+      statuses?.data?.[0];
+    const passedStatus =
+      statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
+    const failedStatus =
+      statuses?.data?.find((s) => s.isFailure) || defaultStatus;
 
     // Get repo (created automatically with project)
     const repos = findMany("repositories", {
-      where: { projectId, isDeleted: false }, select: { id: true }, take: 1,
+      where: { projectId, isDeleted: false },
+      select: { id: true },
+      take: 1,
     });
     const repoId = repos?.data?.[0]?.id;
 
     // Get default template and workflow state
-    const templates = findMany("templates", { where: { isDefault: true }, select: { id: true }, take: 1 });
+    const templates = findMany("templates", {
+      where: { isDefault: true },
+      select: { id: true },
+      take: 1,
+    });
     const templateId = templates?.data?.[0]?.id;
 
-    const workflows = findMany("workflows", { where: { isDeleted: false, isDefault: true, scope: "CASES" }, select: { id: true }, take: 1 });
+    const workflows = findMany("workflows", {
+      where: { isDeleted: false, isDefault: true, scope: "CASES" },
+      select: { id: true },
+      take: 1,
+    });
     const stateId = workflows?.data?.[0]?.id;
 
     if (!defaultStatus) {
       console.warn(`  No statuses found — skipping runs`);
     }
     if (!repoId || !templateId || !stateId) {
-      console.warn(`  Missing repo(${repoId}), template(${templateId}), or state(${stateId}) — cases will fail`);
+      console.warn(
+        `  Missing repo(${repoId}), template(${templateId}), or state(${stateId}) — cases will fail`
+      );
     }
 
     // 3. Create folder hierarchy
@@ -123,7 +141,10 @@ export default function seed() {
 
     // Sub-folders (nested under random top-level folders)
     for (let f = 0; f < subFolderCount && folderIds.length > 0; f++) {
-      const parentId = folderIds[Math.floor(Math.random() * Math.min(folderIds.length, topLevelCount))];
+      const parentId =
+        folderIds[
+          Math.floor(Math.random() * Math.min(folderIds.length, topLevelCount))
+        ];
       const folder = create("repositoryFolders", {
         name: folderName(),
         order: f + 1,
@@ -142,9 +163,10 @@ export default function seed() {
     const totalCases = SEED_CASES_PER_PROJECT;
 
     for (let c = 0; c < totalCases; c++) {
-      const folderId = folderIds.length > 0
-        ? folderIds[Math.floor(Math.random() * folderIds.length)]
-        : null;
+      const folderId =
+        folderIds.length > 0
+          ? folderIds[Math.floor(Math.random() * folderIds.length)]
+          : null;
 
       const caseData = {
         name: testCaseName(),
@@ -170,7 +192,11 @@ export default function seed() {
     console.log(`  Test cases created: ${caseIds.length}`);
 
     // Get default run workflow state
-    const runWorkflows = findMany("workflows", { where: { isDeleted: false, isDefault: true, scope: "RUNS" }, select: { id: true }, take: 1 });
+    const runWorkflows = findMany("workflows", {
+      where: { isDeleted: false, isDefault: true, scope: "RUNS" },
+      select: { id: true },
+      take: 1,
+    });
     const runStateId = runWorkflows?.data?.[0]?.id;
 
     // 5. Create test runs with results
@@ -203,7 +229,11 @@ export default function seed() {
           // Pick a status — 70% pass, 20% fail, 10% untested
           const rand = Math.random();
           const statusId =
-            rand < 0.7 ? passedStatus?.id : rand < 0.9 ? failedStatus?.id : defaultStatus?.id;
+            rand < 0.7
+              ? passedStatus?.id
+              : rand < 0.9
+                ? failedStatus?.id
+                : defaultStatus?.id;
 
           create("testRunCases", {
             order: i + 1,
@@ -216,7 +246,9 @@ export default function seed() {
           if ((i + 1) % 20 === 0) sleep(0.05);
         }
 
-        console.log(`  Run ${r + 1}/${SEED_RUNS_PER_PROJECT}: ${runCaseCount} cases`);
+        console.log(
+          `  Run ${r + 1}/${SEED_RUNS_PER_PROJECT}: ${runCaseCount} cases`
+        );
       }
     }
 

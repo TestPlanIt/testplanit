@@ -50,9 +50,7 @@ describe("repositoryCaseSearch", () => {
         expect.objectContaining({
           query: expect.objectContaining({
             bool: expect.objectContaining({
-              filter: expect.arrayContaining([
-                { term: { isDeleted: false } },
-              ]),
+              filter: expect.arrayContaining([{ term: { isDeleted: false } }]),
             }),
           }),
         })

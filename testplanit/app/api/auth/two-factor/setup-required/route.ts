@@ -2,7 +2,9 @@ import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
-  encryptSecret, generateQRCodeDataURL, generateTOTPSecret
+  encryptSecret,
+  generateQRCodeDataURL,
+  generateTOTPSecret,
 } from "~/lib/two-factor";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
@@ -24,7 +26,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the setup token
-    let tokenData: { userId: string; email: string; twoFactorSetupRequired: boolean };
+    let tokenData: {
+      userId: string;
+      email: string;
+      twoFactorSetupRequired: boolean;
+    };
     try {
       tokenData = jwt.verify(setupToken, JWT_SECRET) as typeof tokenData;
     } catch {

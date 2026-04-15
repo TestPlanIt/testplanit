@@ -134,13 +134,14 @@ describe("useRepositoryCasesWithLastResult", () => {
     });
 
     const wrapper = createWrapper();
-    renderHook(
-      () => useRepositoryCasesWithLastResult(defaultArgs),
-      { wrapper }
-    );
+    renderHook(() => useRepositoryCasesWithLastResult(defaultArgs), {
+      wrapper,
+    });
 
     await waitFor(() => {
-      expect(fetchRepositoryCasesWithLastResult).toHaveBeenCalledWith(defaultArgs);
+      expect(fetchRepositoryCasesWithLastResult).toHaveBeenCalledWith(
+        defaultArgs
+      );
     });
     expect(fetchRepositoryCasesWithLastResult).toHaveBeenCalledTimes(1);
   });

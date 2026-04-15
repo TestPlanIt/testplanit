@@ -58,7 +58,9 @@ describe("NotificationService", () => {
     it("should handle queue not available", async () => {
       vi.mocked(getNotificationQueue).mockReturnValueOnce(null);
 
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       const params = {
         userId: "user-123",
@@ -81,7 +83,9 @@ describe("NotificationService", () => {
       const error = new Error("Queue error");
       mockQueue.add.mockRejectedValue(error);
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const params = {
         userId: "user-123",
@@ -90,9 +94,9 @@ describe("NotificationService", () => {
         message: "This is a test notification",
       };
 
-      await expect(NotificationService.createNotification(params)).rejects.toThrow(
-        "Queue error"
-      );
+      await expect(
+        NotificationService.createNotification(params)
+      ).rejects.toThrow("Queue error");
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         "Failed to queue notification:",
@@ -124,7 +128,8 @@ describe("NotificationService", () => {
           userId: "assignee-123",
           type: NotificationType.WORK_ASSIGNED,
           title: "New Test Case Assignment",
-          message: 'John Doe assigned you to test case "Test Case 1" in project "Project Alpha"',
+          message:
+            'John Doe assigned you to test case "Test Case 1" in project "Project Alpha"',
           relatedEntityId: "case-789",
           relatedEntityType: "TestRunCase",
           data: {
@@ -163,7 +168,8 @@ describe("NotificationService", () => {
           userId: "assignee-123",
           type: NotificationType.SESSION_ASSIGNED,
           title: "New Session Assignment",
-          message: 'Jane Smith assigned you to session "Exploratory Session 1" in project "Project Beta"',
+          message:
+            'Jane Smith assigned you to session "Exploratory Session 1" in project "Project Beta"',
           relatedEntityId: "session-123",
           relatedEntityType: "Session",
           data: {
@@ -193,12 +199,12 @@ describe("NotificationService", () => {
       const assignerId = "assigner-456";
       const assignerName = "Admin User";
       const projectName = "Test Project";
-      
+
       // Simulate assigning 3 test cases
       const testCases = [
         { id: "case-1", name: "Test Case 1" },
         { id: "case-2", name: "Test Case 2" },
-        { id: "case-3", name: "Test Case 3" }
+        { id: "case-3", name: "Test Case 3" },
       ];
 
       // Create bulk notification
@@ -213,8 +219,8 @@ describe("NotificationService", () => {
           projectName: projectName,
           count: testCases.length,
           isBulkAssignment: true,
-          testCases: testCases
-        }
+          testCases: testCases,
+        },
       });
 
       expect(mockQueue.add).toHaveBeenCalledWith(
@@ -226,8 +232,8 @@ describe("NotificationService", () => {
           message: `Admin User assigned you 3 test cases`,
           data: expect.objectContaining({
             isBulkAssignment: true,
-            count: 3
-          })
+            count: 3,
+          }),
         }),
         expect.any(Object)
       );
@@ -248,8 +254,12 @@ describe("NotificationService", () => {
           projectName: "E-Commerce Platform",
           testCases: [
             { testRunCaseId: 10, testCaseId: 1001, testCaseName: "Login Test" },
-            { testRunCaseId: 11, testCaseId: 1002, testCaseName: "Checkout Test" }
-          ]
+            {
+              testRunCaseId: 11,
+              testCaseId: 1002,
+              testCaseName: "Checkout Test",
+            },
+          ],
         },
         {
           testRunId: 2,
@@ -257,9 +267,9 @@ describe("NotificationService", () => {
           projectId: 100,
           projectName: "E-Commerce Platform",
           testCases: [
-            { testRunCaseId: 20, testCaseId: 2001, testCaseName: "API Test" }
-          ]
-        }
+            { testRunCaseId: 20, testCaseId: 2001, testCaseName: "API Test" },
+          ],
+        },
       ];
 
       const result = await NotificationService.createNotification({
@@ -272,8 +282,8 @@ describe("NotificationService", () => {
           assignedByName: "Jane Doe",
           testRunGroups: testRunGroups,
           count: 3,
-          isBulkAssignment: true
-        }
+          isBulkAssignment: true,
+        },
       });
 
       expect(mockQueue.add).toHaveBeenCalledWith(
@@ -284,11 +294,11 @@ describe("NotificationService", () => {
               expect.objectContaining({
                 testRunName: "Sprint 1 Testing",
                 testCases: expect.arrayContaining([
-                  expect.objectContaining({ testCaseName: "Login Test" })
-                ])
-              })
-            ])
-          })
+                  expect.objectContaining({ testCaseName: "Login Test" }),
+                ]),
+              }),
+            ]),
+          }),
         }),
         expect.any(Object)
       );
@@ -310,8 +320,8 @@ describe("NotificationService", () => {
         message: "You have been assigned a test",
         data: {
           userNotificationMode: "NO_NOTIFICATIONS",
-          shouldSkipNotification: true
-        }
+          shouldSkipNotification: true,
+        },
       });
 
       // The service should still queue the job, but with preference data
@@ -321,8 +331,8 @@ describe("NotificationService", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             userNotificationMode: "NO_NOTIFICATIONS",
-            shouldSkipNotification: true
-          })
+            shouldSkipNotification: true,
+          }),
         }),
         expect.any(Object)
       );
@@ -342,8 +352,8 @@ describe("NotificationService", () => {
         message: "You have been assigned to a session",
         data: {
           globalNotificationMode: "IN_APP_EMAIL_DAILY",
-          userNotificationMode: "USE_GLOBAL"
-        }
+          userNotificationMode: "USE_GLOBAL",
+        },
       });
 
       expect(mockQueue.add).toHaveBeenCalledWith(
@@ -351,8 +361,8 @@ describe("NotificationService", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             globalNotificationMode: "IN_APP_EMAIL_DAILY",
-            userNotificationMode: "USE_GLOBAL"
-          })
+            userNotificationMode: "USE_GLOBAL",
+          }),
         }),
         expect.any(Object)
       );
@@ -413,7 +423,9 @@ describe("NotificationService", () => {
           userId: "user-123",
           type: NotificationType.MILESTONE_DUE_REMINDER,
           title: "Milestone Due Soon",
-          message: expect.stringContaining('Milestone "Release 2.0" in project "Project Alpha" is due on'),
+          message: expect.stringContaining(
+            'Milestone "Release 2.0" in project "Project Alpha" is due on'
+          ),
           relatedEntityId: "42",
           relatedEntityType: "Milestone",
           data: {
@@ -455,7 +467,9 @@ describe("NotificationService", () => {
           userId: "user-456",
           type: NotificationType.MILESTONE_DUE_REMINDER,
           title: "Milestone Overdue",
-          message: expect.stringContaining('Milestone "Sprint 5 Complete" in project "Mobile App" was due on'),
+          message: expect.stringContaining(
+            'Milestone "Sprint 5 Complete" in project "Mobile App" was due on'
+          ),
           relatedEntityId: "99",
           relatedEntityType: "Milestone",
           data: {
@@ -555,7 +569,9 @@ describe("NotificationService", () => {
       const error = new Error("Queue error");
       mockQueue.add.mockRejectedValue(error);
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       await expect(
         NotificationService.createMilestoneDueNotification(
@@ -581,10 +597,7 @@ describe("NotificationService", () => {
   describe("createUserRegistrationNotification", () => {
     it("should notify all system admins when a new user registers via form", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-admin-1" } as any);
-      mockFindMany.mockResolvedValue([
-        { id: "admin-1" },
-        { id: "admin-2" },
-      ]);
+      mockFindMany.mockResolvedValue([{ id: "admin-1" }, { id: "admin-2" }]);
 
       await NotificationService.createUserRegistrationNotification(
         "Jane Smith",
@@ -610,7 +623,8 @@ describe("NotificationService", () => {
           userId: "admin-1",
           type: NotificationType.USER_REGISTERED,
           title: "New User Registration",
-          message: "Jane Smith (jane@example.com) has registered via registration form",
+          message:
+            "Jane Smith (jane@example.com) has registered via registration form",
           relatedEntityId: "new-user-id",
           relatedEntityType: "User",
           data: expect.objectContaining({
@@ -648,7 +662,9 @@ describe("NotificationService", () => {
 
     it("should handle no system admins found gracefully", async () => {
       mockFindMany.mockResolvedValue([]);
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       await NotificationService.createUserRegistrationNotification(
         "Alice",
@@ -667,7 +683,9 @@ describe("NotificationService", () => {
 
     it("should handle db errors without throwing", async () => {
       mockFindMany.mockRejectedValue(new Error("DB connection error"));
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       // Should not throw — the method swallows errors
       await expect(
@@ -692,14 +710,15 @@ describe("NotificationService", () => {
     it("should create share link accessed notification with viewer name", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-share-1" } as any);
 
-      const result = await NotificationService.createShareLinkAccessedNotification(
-        "owner-123",
-        "Sprint Report Q4",
-        "Alice Viewer",
-        "alice@test.com",
-        "share-link-abc",
-        100
-      );
+      const result =
+        await NotificationService.createShareLinkAccessedNotification(
+          "owner-123",
+          "Sprint Report Q4",
+          "Alice Viewer",
+          "alice@test.com",
+          "share-link-abc",
+          100
+        );
 
       expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
@@ -737,7 +756,8 @@ describe("NotificationService", () => {
       expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         expect.objectContaining({
-          message: 'anonymous@test.com viewed your shared report: "Test Summary"',
+          message:
+            'anonymous@test.com viewed your shared report: "Test Summary"',
         }),
         expect.any(Object)
       );
@@ -808,12 +828,18 @@ describe("NotificationService", () => {
   describe("markNotificationsAsRead", () => {
     it("should return the provided notification IDs", async () => {
       const ids = ["notif-1", "notif-2", "notif-3"];
-      const result = await NotificationService.markNotificationsAsRead(ids, "user-123");
+      const result = await NotificationService.markNotificationsAsRead(
+        ids,
+        "user-123"
+      );
       expect(result).toEqual(ids);
     });
 
     it("should return empty array when no IDs provided", async () => {
-      const result = await NotificationService.markNotificationsAsRead([], "user-123");
+      const result = await NotificationService.markNotificationsAsRead(
+        [],
+        "user-123"
+      );
       expect(result).toEqual([]);
     });
   });

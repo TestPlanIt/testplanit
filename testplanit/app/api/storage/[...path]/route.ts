@@ -64,9 +64,10 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": response.ContentType || "application/octet-stream",
-        "Content-Length": response.ContentLength?.toString() || buffer.length.toString(),
+        "Content-Length":
+          response.ContentLength?.toString() || buffer.length.toString(),
         "Cache-Control": "public, max-age=31536000, immutable",
-        "ETag": response.ETag || "",
+        ETag: response.ETag || "",
       },
     });
   } catch (error: any) {

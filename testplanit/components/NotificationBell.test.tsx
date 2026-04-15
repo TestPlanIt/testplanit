@@ -38,8 +38,8 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en-US",
   useTranslations: () => (key: string, values?: any) => {
     const translations: Record<string, string> = {
-      "title": "Notifications",
-      "empty": "No notifications",
+      title: "Notifications",
+      empty: "No notifications",
       "aria.notifications": `Notifications (${values?.count || 0} unread)`,
       "actions.menu": "Actions",
       "actions.markRead": "Mark as read",
@@ -161,7 +161,7 @@ describe("NotificationBell", () => {
 
   it("should not show badge when no unread notifications", () => {
     vi.mocked(useFindManyNotification).mockReturnValue({
-      data: mockNotifications.map(n => ({ ...n, isRead: true })),
+      data: mockNotifications.map((n) => ({ ...n, isRead: true })),
       refetch: vi.fn(),
     } as any);
 
@@ -198,14 +198,11 @@ describe("NotificationBell", () => {
 
     render(<NotificationBell />);
 
-    expect(useFindManyNotification).toHaveBeenCalledWith(
-      expect.any(Object),
-      {
-        enabled: false,
-        refetchInterval: 30000,
-        refetchIntervalInBackground: true,
-      }
-    );
+    expect(useFindManyNotification).toHaveBeenCalledWith(expect.any(Object), {
+      enabled: false,
+      refetchInterval: 30000,
+      refetchIntervalInBackground: true,
+    });
   });
 
   it("should handle empty notifications", () => {

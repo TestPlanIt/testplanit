@@ -4,7 +4,9 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates
+  useFindManyProjectLlmIntegration,
+  useFindManyRepositoryFolders,
+  useFindManyTemplates,
 } from "~/lib/hooks";
 import { ImportCasesWizard } from "./ImportCasesWizard";
 
@@ -331,7 +333,6 @@ describe("ImportCasesWizard", () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
       });
@@ -350,7 +351,6 @@ describe("ImportCasesWizard", () => {
     it("allows import location selection", async () => {
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       const singleFolderRadio = screen.getByLabelText(
         "Import all cases to a single folder"
       );
@@ -373,7 +373,6 @@ describe("ImportCasesWizard", () => {
     it("shows folder select when single folder or root folder is selected", async () => {
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       // Single folder mode - should show folder select
       expect(screen.getByText("Select Folder")).toBeInTheDocument();
 
@@ -387,7 +386,6 @@ describe("ImportCasesWizard", () => {
     it("allows delimiter selection", async () => {
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       // Should have delimiter select (mocked)
       const selects = screen.getAllByTestId("mock-select");
       expect(selects.length).toBeGreaterThan(0);
@@ -397,7 +395,6 @@ describe("ImportCasesWizard", () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       // Upload a CSV file first — the headers checkbox only appears for CSV files
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
@@ -418,7 +415,6 @@ describe("ImportCasesWizard", () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       // Try to upload a non-CSV file
       const nonCsvFile = new File(["test content"], "test.txt", {
         type: "text/plain",
@@ -452,7 +448,6 @@ describe("ImportCasesWizard", () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       const file = new File(
         ["Name,Description,Priority\nTest 1,Desc 1,High"],
         "test.csv",
@@ -473,7 +468,6 @@ describe("ImportCasesWizard", () => {
     it("validates required fields before enabling next button", async () => {
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       const nextButton = screen.getByText("Next");
       expect((nextButton as HTMLButtonElement).disabled).toBe(false);
 
@@ -490,7 +484,6 @@ describe("ImportCasesWizard", () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       // Upload file to enable navigation
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
@@ -518,7 +511,6 @@ describe("ImportCasesWizard", () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
 
-  
       // Setup minimal required data
       const file = new File(["Name\nTest 1"], "test.csv", {
         type: "text/csv",
@@ -557,7 +549,6 @@ describe("ImportCasesWizard", () => {
         />
       );
 
-  
       // Setup minimal data
       const file = new File(["Name\nTest 1"], "test.csv", {
         type: "text/csv",

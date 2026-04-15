@@ -1,6 +1,11 @@
 import { BaseAdapter } from "./BaseAdapter";
 import {
-  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
+  AuthenticationData,
+  CreateIssueData,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
 } from "./IssueAdapter";
 
 /**
@@ -98,14 +103,19 @@ export class AzureDevOpsAdapter extends BaseAdapter {
     if (data.description) {
       // Convert TipTap JSON to HTML if needed
       let descriptionValue: string;
-      if (typeof data.description === 'object' && data.description && 'type' in data.description && data.description.type === 'doc') {
+      if (
+        typeof data.description === "object" &&
+        data.description &&
+        "type" in data.description &&
+        data.description.type === "doc"
+      ) {
         // For now, extract plain text from TipTap JSON
         // Azure DevOps expects HTML or plain text
         descriptionValue = this.extractTextFromTiptap(data.description);
       } else {
         descriptionValue = data.description as string;
       }
-      
+
       patchDocument.push({
         op: "add",
         path: "/fields/System.Description",
@@ -566,18 +576,18 @@ export class AzureDevOpsAdapter extends BaseAdapter {
 
   private extractTextFromTiptap(tiptapJson: any): string {
     // Simple text extraction from TipTap JSON
-    let text = '';
-    
+    let text = "";
+
     if (tiptapJson.content && Array.isArray(tiptapJson.content)) {
       tiptapJson.content.forEach((node: any) => {
-        if (node.type === 'text') {
-          text += node.text || '';
+        if (node.type === "text") {
+          text += node.text || "";
         } else if (node.content && Array.isArray(node.content)) {
-          text += this.extractTextFromTiptap(node) + '\n';
+          text += this.extractTextFromTiptap(node) + "\n";
         }
       });
     }
-    
+
     return text.trim();
   }
 }

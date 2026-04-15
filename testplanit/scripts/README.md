@@ -13,11 +13,13 @@ pnpm queues:clear
 ```
 
 This will:
+
 - Drain all waiting jobs from each queue
 - Obliterate all queue data (removes completed, failed, and delayed jobs)
 - Show a summary of cleared queues
 
 **Queues cleared:**
+
 - `forecast-updates` - Forecast recalculation jobs
 - `notifications` - In-app notification jobs
 - `emails` - Email delivery jobs
@@ -36,6 +38,7 @@ pnpm testmo-import:clear
 ```
 
 This will:
+
 - Clear the `testmo-imports` queue
 - Delete all `TestmoImportJob` records from the database
 - Delete all `TestmoImportDataset` records from the database

@@ -41,11 +41,13 @@ import { getElasticsearchClient } from "~/services/elasticsearchService";
 
 import { GET, POST } from "./route";
 
-const createMockRequest = (options: {
-  method?: string;
-  authHeader?: string;
-  body?: any;
-} = {}): NextRequest => {
+const createMockRequest = (
+  options: {
+    method?: string;
+    authHeader?: string;
+    body?: any;
+  } = {}
+): NextRequest => {
   const headers = new Headers();
   if (options.authHeader) {
     headers.set("authorization", options.authHeader);
@@ -60,7 +62,9 @@ const createMockRequest = (options: {
 };
 
 const setupAdminSession = () => {
-  (getServerAuthSession as any).mockResolvedValue({ user: { id: "admin-user-1" } });
+  (getServerAuthSession as any).mockResolvedValue({
+    user: { id: "admin-user-1" },
+  });
   (prisma.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
 };
 
@@ -88,7 +92,9 @@ describe("Admin Elasticsearch Reindex Route", () => {
     });
 
     it("returns 403 when authenticated as non-admin", async () => {
-      (getServerAuthSession as any).mockResolvedValue({ user: { id: "user-1" } });
+      (getServerAuthSession as any).mockResolvedValue({
+        user: { id: "user-1" },
+      });
       (prisma.user.findUnique as any).mockResolvedValue({ access: "USER" });
 
       const request = createMockRequest();

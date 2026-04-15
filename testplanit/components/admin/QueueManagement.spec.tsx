@@ -27,7 +27,14 @@ vi.mock("./QueueJobsView", () => ({
 const mockQueues = [
   {
     name: "emails",
-    counts: { waiting: 5, active: 1, completed: 100, failed: 2, delayed: 0, paused: 0 },
+    counts: {
+      waiting: 5,
+      active: 1,
+      completed: 100,
+      failed: 2,
+      delayed: 0,
+      paused: 0,
+    },
     isPaused: false,
     error: null,
     concurrency: 3,
@@ -37,7 +44,14 @@ const mockQueues = [
 const mockPausedQueue = [
   {
     name: "emails",
-    counts: { waiting: 0, active: 0, completed: 50, failed: 0, delayed: 0, paused: 10 },
+    counts: {
+      waiting: 0,
+      active: 0,
+      completed: 50,
+      failed: 0,
+      delayed: 0,
+      paused: 10,
+    },
     isPaused: true,
     error: null,
     concurrency: 2,
@@ -84,7 +98,9 @@ describe("QueueManagement", () => {
 
     // The queue name "emails" maps to translation key admin.queues.queueNames.emails
     await waitFor(() => {
-      expect(screen.getByText("admin.queues.queueNames.emails")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.queues.queueNames.emails")
+      ).toBeInTheDocument();
     });
 
     // Count cells
@@ -119,7 +135,9 @@ describe("QueueManagement", () => {
     render(<QueueManagement />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.queues.status.paused")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.queues.status.paused")
+      ).toBeInTheDocument();
     });
   });
 
@@ -128,7 +146,9 @@ describe("QueueManagement", () => {
     render(<QueueManagement />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.queues.queueNames.emails")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.queues.queueNames.emails")
+      ).toBeInTheDocument();
     });
 
     // Reassign fetch to capture the action POST + reload
@@ -157,7 +177,9 @@ describe("QueueManagement", () => {
     await waitFor(() => {
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
       const postCall = calls.find(
-        (c) => c[1]?.method === "POST" && String(c[0]).includes("/api/admin/queues/emails")
+        (c) =>
+          c[1]?.method === "POST" &&
+          String(c[0]).includes("/api/admin/queues/emails")
       );
       expect(postCall).toBeDefined();
       const body = JSON.parse(postCall![1].body);
@@ -170,7 +192,9 @@ describe("QueueManagement", () => {
     render(<QueueManagement />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.queues.status.paused")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.queues.status.paused")
+      ).toBeInTheDocument();
     });
 
     global.fetch = vi
@@ -198,7 +222,9 @@ describe("QueueManagement", () => {
     await waitFor(() => {
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
       const postCall = calls.find(
-        (c) => c[1]?.method === "POST" && String(c[0]).includes("/api/admin/queues/emails")
+        (c) =>
+          c[1]?.method === "POST" &&
+          String(c[0]).includes("/api/admin/queues/emails")
       );
       expect(postCall).toBeDefined();
       const body = JSON.parse(postCall![1].body);
@@ -211,7 +237,9 @@ describe("QueueManagement", () => {
     render(<QueueManagement />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.queues.queueNames.emails")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.queues.queueNames.emails")
+      ).toBeInTheDocument();
     });
 
     // Find the small destructive Trash2 button in actions column
@@ -226,7 +254,9 @@ describe("QueueManagement", () => {
     fireEvent.click(destructiveSmallButtons[0]);
 
     // Confirmation dialog should appear
-    expect(screen.getByText("admin.queues.actions.clean.confirmTitle")).toBeInTheDocument();
+    expect(
+      screen.getByText("admin.queues.actions.clean.confirmTitle")
+    ).toBeInTheDocument();
   });
 
   test("confirming clean dialog calls fetch with clean action", async () => {
@@ -234,7 +264,9 @@ describe("QueueManagement", () => {
     render(<QueueManagement />);
 
     await waitFor(() => {
-      expect(screen.getByText("admin.queues.queueNames.emails")).toBeInTheDocument();
+      expect(
+        screen.getByText("admin.queues.queueNames.emails")
+      ).toBeInTheDocument();
     });
 
     // Open confirmation dialog
@@ -247,7 +279,9 @@ describe("QueueManagement", () => {
       );
     fireEvent.click(destructiveSmallButtons[0]);
 
-    expect(screen.getByText("admin.queues.actions.clean.confirmTitle")).toBeInTheDocument();
+    expect(
+      screen.getByText("admin.queues.actions.clean.confirmTitle")
+    ).toBeInTheDocument();
 
     // Reassign fetch to capture clean call
     global.fetch = vi
@@ -269,7 +303,9 @@ describe("QueueManagement", () => {
     await waitFor(() => {
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
       const postCall = calls.find(
-        (c) => c[1]?.method === "POST" && String(c[0]).includes("/api/admin/queues/emails")
+        (c) =>
+          c[1]?.method === "POST" &&
+          String(c[0]).includes("/api/admin/queues/emails")
       );
       expect(postCall).toBeDefined();
       const body = JSON.parse(postCall![1].body);

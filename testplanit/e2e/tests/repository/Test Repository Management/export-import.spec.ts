@@ -17,7 +17,9 @@ test.describe("Export & Import", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Import Test Cases from CSV", async ({ api, page }) => {
@@ -35,7 +37,9 @@ test.describe("Export & Import", () => {
     await page.waitForLoadState("networkidle");
 
     // Look for import button - it's "Import Test Cases" button in the header
-    const importButton = page.locator('button:has-text("Import Test Cases")').first();
+    const importButton = page
+      .locator('button:has-text("Import Test Cases")')
+      .first();
     await expect(importButton).toBeVisible({ timeout: 10000 });
     await importButton.click();
 
@@ -44,7 +48,7 @@ test.describe("Export & Import", () => {
     await expect(importDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Verify the import wizard has the expected title
-    const wizardTitle = importDialog.locator('text=Import Test Cases');
+    const wizardTitle = importDialog.locator("text=Import Test Cases");
     await expect(wizardTitle.first()).toBeVisible({ timeout: 5000 });
 
     // Verify the wizard has file upload functionality
@@ -70,11 +74,13 @@ ${case2Name},Description for case 2`;
     await page.waitForLoadState("networkidle");
 
     // Verify the file was uploaded - look for the filename or file info
-    const fileInfo = importDialog.locator('text=import-test-cases.csv');
+    const fileInfo = importDialog.locator("text=import-test-cases.csv");
     await expect(fileInfo.first()).toBeVisible({ timeout: 5000 });
 
     // Verify the Next button is available (wizard is functional)
-    const nextButton = importDialog.locator('[data-testid="next-button"], button:has-text("Next")').first();
+    const nextButton = importDialog
+      .locator('[data-testid="next-button"], button:has-text("Next")')
+      .first();
     await expect(nextButton).toBeVisible({ timeout: 5000 });
 
     // Close the dialog - full import wizard flow is complex and covered by unit tests
@@ -87,7 +93,9 @@ ${case2Name},Description for case 2`;
     await repositoryPage.goto(projectId);
 
     // Look for import button - it's "Import Test Cases" button in the header
-    const importButton = page.locator('button:has-text("Import Test Cases")').first();
+    const importButton = page
+      .locator('button:has-text("Import Test Cases")')
+      .first();
     await expect(importButton).toBeVisible({ timeout: 10000 });
     await importButton.click();
 
@@ -108,7 +116,9 @@ Test Case 2,Description 2,Low`;
     await page.waitForLoadState("networkidle");
 
     // Select a folder
-    const folderSelect = importDialog.locator('button:has-text("Select a folder")').first();
+    const folderSelect = importDialog
+      .locator('button:has-text("Select a folder")')
+      .first();
     await expect(folderSelect).toBeVisible({ timeout: 5000 });
     await folderSelect.click();
     const folderOption = page.locator('[role="option"]').first();
@@ -116,14 +126,18 @@ Test Case 2,Description 2,Low`;
     await folderOption.click();
 
     // Click Next to get to field mapping step (step 2)
-    const nextButton = importDialog.locator('[data-testid="next-button"], button:has-text("Next")').first();
+    const nextButton = importDialog
+      .locator('[data-testid="next-button"], button:has-text("Next")')
+      .first();
     await expect(nextButton).toBeEnabled({ timeout: 5000 });
     await nextButton.click();
     await page.waitForLoadState("networkidle");
 
     // Verify field mapping UI is visible on step 2
     // Look for mapping-related content (column headers, dropdown selectors, etc.)
-    const mappingContent = importDialog.locator('text=/Map|Mapping|Column|Field/i').first();
+    const mappingContent = importDialog
+      .locator("text=/Map|Mapping|Column|Field/i")
+      .first();
     await expect(mappingContent).toBeVisible({ timeout: 5000 });
 
     await page.keyboard.press("Escape");
@@ -134,7 +148,9 @@ Test Case 2,Description 2,Low`;
     await repositoryPage.goto(projectId);
 
     // Look for import button
-    const importButton = page.locator('button:has-text("Import Test Cases")').first();
+    const importButton = page
+      .locator('button:has-text("Import Test Cases")')
+      .first();
     await expect(importButton).toBeVisible({ timeout: 10000 });
     await importButton.click();
 
@@ -155,7 +171,7 @@ some data,without,proper,structure`;
 
     // The wizard should show some indication that the file is uploaded
     // Look for the file name or "Selected file" text
-    const selectedFile = importDialog.locator('text=invalid.csv').first();
+    const selectedFile = importDialog.locator("text=invalid.csv").first();
     await expect(selectedFile).toBeVisible({ timeout: 5000 });
 
     await page.keyboard.press("Escape");
@@ -166,7 +182,9 @@ some data,without,proper,structure`;
     await repositoryPage.goto(projectId);
 
     // Look for import button
-    const importButton = page.locator('button:has-text("Import Test Cases")').first();
+    const importButton = page
+      .locator('button:has-text("Import Test Cases")')
+      .first();
     await expect(importButton).toBeVisible({ timeout: 10000 });
     await importButton.click();
 
@@ -175,7 +193,7 @@ some data,without,proper,structure`;
 
     // The import wizard is visible - verify it has the expected structure
     // Step indicators (1, 2, 3, 4) should be visible
-    const stepIndicators = importDialog.locator('text=/1|Upload/i');
+    const stepIndicators = importDialog.locator("text=/1|Upload/i");
     await expect(stepIndicators.first()).toBeVisible({ timeout: 3000 });
 
     await page.keyboard.press("Escape");
@@ -200,11 +218,17 @@ some data,without,proper,structure`;
     await page.waitForLoadState("networkidle");
 
     // Verify test cases are visible before export
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Click export button - use the data-testid from Cases.tsx
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await expect(exportButton).toBeEnabled({ timeout: 5000 });
     await exportButton.click();
@@ -214,17 +238,25 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select CSV format from the format selector
-    const csvFormat = exportDialog.locator('[data-testid="export-format-csv"]').first();
+    const csvFormat = exportDialog
+      .locator('[data-testid="export-format-csv"]')
+      .first();
     await expect(csvFormat).toBeVisible({ timeout: 5000 });
     await csvFormat.click();
 
     // Select "All filtered" scope to export all cases in the current view
-    const allFilteredScope = exportDialog.locator('[data-testid="export-scope-allFiltered"]').first();
+    const allFilteredScope = exportDialog
+      .locator('[data-testid="export-scope-allFiltered"]')
+      .first();
     await expect(allFilteredScope).toBeVisible({ timeout: 5000 });
     await allFilteredScope.click();
 
     // Find and click the export submit button
-    const exportSubmit = exportDialog.locator('[data-testid="export-modal-export-button"], button:has-text("Export")').first();
+    const exportSubmit = exportDialog
+      .locator(
+        '[data-testid="export-modal-export-button"], button:has-text("Export")'
+      )
+      .first();
     await expect(exportSubmit).toBeEnabled({ timeout: 5000 });
 
     // Set up download listener before triggering export
@@ -278,7 +310,9 @@ some data,without,proper,structure`;
     await page.waitForLoadState("networkidle");
 
     // Click export button - use the data-testid from Cases.tsx
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await expect(exportButton).toBeEnabled({ timeout: 5000 });
     await exportButton.click();
@@ -287,13 +321,19 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select CSV format first
-    const csvFormat = exportDialog.locator('[data-testid="export-format-csv"]').first();
+    const csvFormat = exportDialog
+      .locator('[data-testid="export-format-csv"]')
+      .first();
     await expect(csvFormat).toBeVisible({ timeout: 5000 });
     await csvFormat.click();
 
     // Verify column selection options exist - "Visible columns only" and "All columns"
-    const visibleColumnsOption = exportDialog.locator('[data-testid="export-columns-visible"]').first();
-    const allColumnsOption = exportDialog.locator('[data-testid="export-columns-all"]').first();
+    const visibleColumnsOption = exportDialog
+      .locator('[data-testid="export-columns-visible"]')
+      .first();
+    const allColumnsOption = exportDialog
+      .locator('[data-testid="export-columns-all"]')
+      .first();
 
     // Both column options should be visible
     await expect(visibleColumnsOption).toBeVisible({ timeout: 5000 });
@@ -324,11 +364,17 @@ some data,without,proper,structure`;
     await page.waitForLoadState("networkidle");
 
     // Verify test cases are visible before export
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Click export button
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await expect(exportButton).toBeEnabled({ timeout: 5000 });
     await exportButton.click();
@@ -338,26 +384,36 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select PDF format
-    const pdfFormat = exportDialog.locator('[data-testid="export-format-pdf"]').first();
+    const pdfFormat = exportDialog
+      .locator('[data-testid="export-format-pdf"]')
+      .first();
     await expect(pdfFormat).toBeVisible({ timeout: 5000 });
     await pdfFormat.click();
 
     // Verify PDF-specific options are shown
     // Column selection for PDF
-    const pdfColumnsAll = exportDialog.locator('[data-testid="export-columns-pdf-all"]').first();
+    const pdfColumnsAll = exportDialog
+      .locator('[data-testid="export-columns-pdf-all"]')
+      .first();
     await expect(pdfColumnsAll).toBeVisible({ timeout: 5000 });
 
     // Attachment format for PDF (names/embedded)
-    const pdfAttachmentNames = exportDialog.locator('[data-testid="export-attachment-pdf-names"]').first();
+    const pdfAttachmentNames = exportDialog
+      .locator('[data-testid="export-attachment-pdf-names"]')
+      .first();
     await expect(pdfAttachmentNames).toBeVisible({ timeout: 5000 });
 
     // Select "All filtered" scope to export all cases in the current view
-    const allFilteredScope = exportDialog.locator('[data-testid="export-scope-allFiltered"]').first();
+    const allFilteredScope = exportDialog
+      .locator('[data-testid="export-scope-allFiltered"]')
+      .first();
     await expect(allFilteredScope).toBeVisible({ timeout: 5000 });
     await allFilteredScope.click();
 
     // Find and click the export submit button
-    const exportSubmit = exportDialog.locator('[data-testid="export-modal-export-button"]').first();
+    const exportSubmit = exportDialog
+      .locator('[data-testid="export-modal-export-button"]')
+      .first();
     await expect(exportSubmit).toBeEnabled({ timeout: 5000 });
 
     // Set up download listener before triggering export
@@ -415,26 +471,36 @@ some data,without,proper,structure`;
     await page.waitForLoadState("networkidle");
 
     // Wait for test cases to load
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open export dialog
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await exportButton.click();
 
     const exportDialog = page.locator('[role="dialog"]');
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select PDF format
-    const pdfFormat = exportDialog.locator('[data-testid="export-format-pdf"]').first();
+    const pdfFormat = exportDialog
+      .locator('[data-testid="export-format-pdf"]')
+      .first();
     await pdfFormat.click();
 
     // Select all filtered
-    const allFilteredScope = exportDialog.locator('[data-testid="export-scope-allFiltered"]').first();
+    const allFilteredScope = exportDialog
+      .locator('[data-testid="export-scope-allFiltered"]')
+      .first();
     await allFilteredScope.click();
 
     // Export
     const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
-    const exportSubmit = exportDialog.locator('[data-testid="export-modal-export-button"]').first();
+    const exportSubmit = exportDialog
+      .locator('[data-testid="export-modal-export-button"]')
+      .first();
     await exportSubmit.click();
 
     const download = await downloadPromise;
@@ -481,14 +547,20 @@ some data,without,proper,structure`;
     const uniqueId = Date.now();
     const folderName = `PDF Columns Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `PDF Columns Case ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `PDF Columns Case ${uniqueId}`
+    );
 
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
     // Click export button
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await exportButton.click();
 
@@ -496,12 +568,18 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select PDF format
-    const pdfFormat = exportDialog.locator('[data-testid="export-format-pdf"]').first();
+    const pdfFormat = exportDialog
+      .locator('[data-testid="export-format-pdf"]')
+      .first();
     await pdfFormat.click();
 
     // Verify PDF column options
-    const pdfColumnsAll = exportDialog.locator('[data-testid="export-columns-pdf-all"]').first();
-    const pdfColumnsVisible = exportDialog.locator('[data-testid="export-columns-pdf-visible"]').first();
+    const pdfColumnsAll = exportDialog
+      .locator('[data-testid="export-columns-pdf-all"]')
+      .first();
+    const pdfColumnsVisible = exportDialog
+      .locator('[data-testid="export-columns-pdf-visible"]')
+      .first();
 
     await expect(pdfColumnsAll).toBeVisible({ timeout: 5000 });
     await expect(pdfColumnsVisible).toBeVisible({ timeout: 5000 });
@@ -525,14 +603,20 @@ some data,without,proper,structure`;
     const uniqueId = Date.now();
     const folderName = `PDF Attachments Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `PDF Attachments Case ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `PDF Attachments Case ${uniqueId}`
+    );
 
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
     // Click export button
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await exportButton.click();
 
@@ -540,12 +624,18 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select PDF format
-    const pdfFormat = exportDialog.locator('[data-testid="export-format-pdf"]').first();
+    const pdfFormat = exportDialog
+      .locator('[data-testid="export-format-pdf"]')
+      .first();
     await pdfFormat.click();
 
     // Verify PDF attachment format options
-    const attachmentNames = exportDialog.locator('[data-testid="export-attachment-pdf-names"]').first();
-    const attachmentEmbedded = exportDialog.locator('[data-testid="export-attachment-pdf-embedded"]').first();
+    const attachmentNames = exportDialog
+      .locator('[data-testid="export-attachment-pdf-names"]')
+      .first();
+    const attachmentEmbedded = exportDialog
+      .locator('[data-testid="export-attachment-pdf-embedded"]')
+      .first();
 
     await expect(attachmentNames).toBeVisible({ timeout: 5000 });
     await expect(attachmentEmbedded).toBeVisible({ timeout: 5000 });
@@ -582,15 +672,24 @@ some data,without,proper,structure`;
     await page.waitForLoadState("networkidle");
 
     // Wait for cases to be visible
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Select the first case using the checkbox
-    const firstCaseRow = page.locator('tr').filter({ hasText: case1Name }).first();
-    const checkbox = firstCaseRow.locator('input[type="checkbox"], [role="checkbox"]').first();
+    const firstCaseRow = page
+      .locator("tr")
+      .filter({ hasText: case1Name })
+      .first();
+    const checkbox = firstCaseRow
+      .locator('input[type="checkbox"], [role="checkbox"]')
+      .first();
     await checkbox.click();
 
     // Click export button
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await exportButton.click();
 
@@ -598,23 +697,31 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Select PDF format
-    const pdfFormat = exportDialog.locator('[data-testid="export-format-pdf"]').first();
+    const pdfFormat = exportDialog
+      .locator('[data-testid="export-format-pdf"]')
+      .first();
     await pdfFormat.click();
 
     // Verify "Selected" scope shows count of 1
-    const selectedScope = exportDialog.locator('[data-testid="export-scope-selected"]').first();
+    const selectedScope = exportDialog
+      .locator('[data-testid="export-scope-selected"]')
+      .first();
     await expect(selectedScope).toBeVisible({ timeout: 5000 });
     await expect(selectedScope).toBeEnabled();
 
     // The label should indicate 1 selected item
-    const selectedLabel = exportDialog.locator('label[for="scope-selected"]').first();
+    const selectedLabel = exportDialog
+      .locator('label[for="scope-selected"]')
+      .first();
     await expect(selectedLabel).toContainText("1");
 
     // Select the "selected" scope
     await selectedScope.click();
 
     // Export should be enabled
-    const exportSubmit = exportDialog.locator('[data-testid="export-modal-export-button"]').first();
+    const exportSubmit = exportDialog
+      .locator('[data-testid="export-modal-export-button"]')
+      .first();
     await expect(exportSubmit).toBeEnabled({ timeout: 5000 });
 
     // Set up download listener
@@ -635,14 +742,20 @@ some data,without,proper,structure`;
     const uniqueId = Date.now();
     const folderName = `PDF Format Switch Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `Format Switch Case ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Format Switch Case ${uniqueId}`
+    );
 
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
     // Click export button
-    const exportButton = page.locator('[data-testid="export-cases-button"]').first();
+    const exportButton = page
+      .locator('[data-testid="export-cases-button"]')
+      .first();
     await expect(exportButton).toBeVisible({ timeout: 10000 });
     await exportButton.click();
 
@@ -650,13 +763,19 @@ some data,without,proper,structure`;
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
     // Initially CSV should be selected
-    const csvFormat = exportDialog.locator('[data-testid="export-format-csv"]').first();
-    const pdfFormat = exportDialog.locator('[data-testid="export-format-pdf"]').first();
+    const csvFormat = exportDialog
+      .locator('[data-testid="export-format-csv"]')
+      .first();
+    const pdfFormat = exportDialog
+      .locator('[data-testid="export-format-pdf"]')
+      .first();
 
     await expect(csvFormat).toBeChecked();
 
     // CSV-specific options should be visible
-    const csvDelimiter = exportDialog.locator('[data-testid="export-columns-all"]').first();
+    const csvDelimiter = exportDialog
+      .locator('[data-testid="export-columns-all"]')
+      .first();
     await expect(csvDelimiter).toBeVisible({ timeout: 5000 });
 
     // Switch to PDF
@@ -664,14 +783,20 @@ some data,without,proper,structure`;
     await expect(pdfFormat).toBeChecked();
 
     // PDF-specific options should now be visible
-    const pdfColumnsAll = exportDialog.locator('[data-testid="export-columns-pdf-all"]').first();
-    const pdfAttachmentNames = exportDialog.locator('[data-testid="export-attachment-pdf-names"]').first();
+    const pdfColumnsAll = exportDialog
+      .locator('[data-testid="export-columns-pdf-all"]')
+      .first();
+    const pdfAttachmentNames = exportDialog
+      .locator('[data-testid="export-attachment-pdf-names"]')
+      .first();
 
     await expect(pdfColumnsAll).toBeVisible({ timeout: 5000 });
     await expect(pdfAttachmentNames).toBeVisible({ timeout: 5000 });
 
     // CSV-specific delimiter select should not be visible for PDF
-    const delimiterSelect = exportDialog.locator('[data-testid="export-delimiter-select"]').first();
+    const delimiterSelect = exportDialog
+      .locator('[data-testid="export-delimiter-select"]')
+      .first();
     await expect(delimiterSelect).not.toBeVisible();
 
     // Switch back to CSV

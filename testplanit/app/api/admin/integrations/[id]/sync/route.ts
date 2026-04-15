@@ -24,7 +24,10 @@ export async function POST(
     const integrationId = parseInt(integrationIdParam);
 
     if (isNaN(integrationId)) {
-      return NextResponse.json({ error: "Invalid integration ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid integration ID" },
+        { status: 400 }
+      );
     }
 
     // SIMPLE_URL integrations have no API to pull from — sync is not supported

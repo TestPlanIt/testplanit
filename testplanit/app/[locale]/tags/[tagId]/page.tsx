@@ -444,15 +444,13 @@ function TagDetail() {
     casesCount ?? 0
   );
 
-  const sessionsStartIndex =
-    (sessionsPage - 1) * effectiveSessionsPageSize + 1;
+  const sessionsStartIndex = (sessionsPage - 1) * effectiveSessionsPageSize + 1;
   const sessionsEndIndex = Math.min(
     sessionsPage * effectiveSessionsPageSize,
     sessionsCount ?? 0
   );
 
-  const testRunsStartIndex =
-    (testRunsPage - 1) * effectiveTestRunsPageSize + 1;
+  const testRunsStartIndex = (testRunsPage - 1) * effectiveTestRunsPageSize + 1;
   const testRunsEndIndex = Math.min(
     testRunsPage * effectiveTestRunsPageSize,
     testRunsCount ?? 0

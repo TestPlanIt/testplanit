@@ -7,7 +7,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,7 +18,11 @@ type NumericOperator = "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "between";
 interface NumericFilterInputProps {
   fieldId: number;
   fieldType: string;
-  onFilterApply: (operator: NumericOperator, value1: number, value2?: number) => void;
+  onFilterApply: (
+    operator: NumericOperator,
+    value1: number,
+    value2?: number
+  ) => void;
   onClearFilter?: () => void;
   currentFilter: string | null;
 }
@@ -121,7 +125,8 @@ export function NumericFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")}{" "}
+            {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -141,7 +146,10 @@ export function NumericFilterInput({
         </div>
       )}
 
-      <Select value={operator} onValueChange={(val) => setOperator(val as NumericOperator)}>
+      <Select
+        value={operator}
+        onValueChange={(val) => setOperator(val as NumericOperator)}
+      >
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Select operator" />
         </SelectTrigger>
@@ -167,7 +175,9 @@ export function NumericFilterInput({
 
         {operator === "between" && (
           <>
-            <span className="text-xs text-muted-foreground">{t("common.and")}</span>
+            <span className="text-xs text-muted-foreground">
+              {t("common.and")}
+            </span>
             <Input
               type="number"
               step={fieldType === "Integer" ? "1" : "any"}
@@ -190,9 +200,14 @@ export function NumericFilterInput({
         </Button>
       </div>
 
-      {operator === "between" && value1 && value2 && parseFloat(value1) >= parseFloat(value2) && (
-        <p className="text-xs text-destructive">{t("search.filters.validation.firstValueMustBeLessThanSecond")}</p>
-      )}
+      {operator === "between" &&
+        value1 &&
+        value2 &&
+        parseFloat(value1) >= parseFloat(value2) && (
+          <p className="text-xs text-destructive">
+            {t("search.filters.validation.firstValueMustBeLessThanSecond")}
+          </p>
+        )}
     </div>
   );
 }

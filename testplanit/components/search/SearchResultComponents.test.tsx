@@ -1,19 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 import {
-  BadgeList, DateDisplay, ExternalLink, MetadataItem, MetadataList, MetadataSeparator, SearchHighlight, StatusBadge, TagList, TimeEstimate
+  BadgeList,
+  DateDisplay,
+  ExternalLink,
+  MetadataItem,
+  MetadataList,
+  MetadataSeparator,
+  SearchHighlight,
+  StatusBadge,
+  TagList,
+  TimeEstimate,
 } from "./SearchResultComponents";
 
 // Mock dependencies
 vi.mock("@/components/DateFormatter", () => ({
   DateFormatter: ({ date }: { date: string | Date }) => (
-    <span data-testid="date-formatter">{typeof date === "string" ? date : date.toISOString()}</span>
+    <span data-testid="date-formatter">
+      {typeof date === "string" ? date : date.toISOString()}
+    </span>
   ),
 }));
 
 vi.mock("@/components/DurationDisplay", () => ({
   DurationDisplay: ({ seconds }: { seconds: number }) => (
-    <span data-testid="duration-display">{seconds}{"s"}</span>
+    <span data-testid="duration-display">
+      {seconds}
+      {"s"}
+    </span>
   ),
 }));
 
@@ -21,7 +35,7 @@ describe("SearchResultComponents", () => {
   describe("MetadataItem", () => {
     it("should render children with default classes", () => {
       render(<MetadataItem>{"Test metadata"}</MetadataItem>);
-      
+
       const item = screen.getByText("Test metadata");
       expect(item).toBeInTheDocument();
       expect(item).toHaveClass("text-xs");
@@ -29,7 +43,7 @@ describe("SearchResultComponents", () => {
 
     it("should apply custom className", () => {
       render(<MetadataItem className="custom-class">{"Test"}</MetadataItem>);
-      
+
       const item = screen.getByText("Test");
       expect(item).toHaveClass("text-xs");
       expect(item).toHaveClass("custom-class");
@@ -39,7 +53,7 @@ describe("SearchResultComponents", () => {
   describe("MetadataSeparator", () => {
     it("should render bullet separator", () => {
       render(<MetadataSeparator />);
-      
+
       const separator = screen.getByText("•");
       expect(separator).toBeInTheDocument();
       expect(separator).toHaveClass("text-muted-foreground");
@@ -47,7 +61,7 @@ describe("SearchResultComponents", () => {
 
     it("should apply custom className", () => {
       render(<MetadataSeparator className="custom-separator" />);
-      
+
       const separator = screen.getByText("•");
       expect(separator).toHaveClass("custom-separator");
     });
@@ -57,13 +71,15 @@ describe("SearchResultComponents", () => {
     it("should render multiple items with separators", () => {
       const items = ["Item 1", "Item 2", "Item 3"];
       const { container } = render(<MetadataList items={items} />);
-      
+
       // Check that the container has all items
-      const metadataContainer = container.querySelector('.flex.items-center.gap-2');
+      const metadataContainer = container.querySelector(
+        ".flex.items-center.gap-2"
+      );
       expect(metadataContainer).toHaveTextContent("Item 1");
       expect(metadataContainer).toHaveTextContent("Item 2");
       expect(metadataContainer).toHaveTextContent("Item 3");
-      
+
       // Should have 2 separators for 3 items
       const separators = screen.getAllByText("•");
       expect(separators).toHaveLength(2);
@@ -72,11 +88,13 @@ describe("SearchResultComponents", () => {
     it("should filter out null and undefined items", () => {
       const items = ["Item 1", null, undefined, "Item 2", null];
       const { container } = render(<MetadataList items={items} />);
-      
-      const metadataContainer = container.querySelector('.flex.items-center.gap-2');
+
+      const metadataContainer = container.querySelector(
+        ".flex.items-center.gap-2"
+      );
       expect(metadataContainer).toHaveTextContent("Item 1");
       expect(metadataContainer).toHaveTextContent("Item 2");
-      
+
       // Should have only 1 separator for 2 valid items
       const separators = screen.getAllByText("•");
       expect(separators).toHaveLength(1);
@@ -85,16 +103,20 @@ describe("SearchResultComponents", () => {
     it("should render empty when all items are null/undefined", () => {
       const items = [null, undefined, null];
       const { container } = render(<MetadataList items={items} />);
-      
+
       const div = container.querySelector("div");
       expect(div).toBeEmptyDOMElement();
     });
 
     it("should apply custom className", () => {
-      const { container } = render(<MetadataList items={["Test"]} className="custom-list" />);
-      
+      const { container } = render(
+        <MetadataList items={["Test"]} className="custom-list" />
+      );
+
       // The div containing the items should have the custom class
-      const metadataContainer = container.querySelector('.flex.items-center.gap-2');
+      const metadataContainer = container.querySelector(
+        ".flex.items-center.gap-2"
+      );
       expect(metadataContainer).toHaveClass("custom-list");
       expect(metadataContainer).toHaveClass("flex");
       expect(metadataContainer).toHaveClass("items-center");
@@ -106,7 +128,7 @@ describe("SearchResultComponents", () => {
         <div key="2">{"Component 2"}</div>,
       ];
       render(<MetadataList items={items} />);
-      
+
       expect(screen.getByText("Component 1")).toBeInTheDocument();
       expect(screen.getByText("Component 2")).toBeInTheDocument();
     });
@@ -143,14 +165,14 @@ describe("SearchResultComponents", () => {
 
     it("should apply custom className", () => {
       render(
-        <StatusBadge 
-          isCompleted={true} 
-          completedText="Done" 
+        <StatusBadge
+          isCompleted={true}
+          completedText="Done"
           activeText="In Progress"
           className="custom-badge"
         />
       );
-      
+
       const badge = screen.getByText("Done");
       expect(badge).toHaveClass("custom-badge");
     });
@@ -159,21 +181,21 @@ describe("SearchResultComponents", () => {
   describe("TimeEstimate", () => {
     it("should render time estimate with seconds", () => {
       render(<TimeEstimate label="Estimate" seconds={3600} />);
-      
+
       expect(screen.getByText("Estimate:")).toBeInTheDocument();
       expect(screen.getByTestId("duration-display")).toHaveTextContent("3600s");
     });
 
     it("should render time estimate with minutes", () => {
       render(<TimeEstimate label="Duration" minutes={60} />);
-      
+
       expect(screen.getByText("Duration:")).toBeInTheDocument();
       expect(screen.getByTestId("duration-display")).toHaveTextContent("3600s");
     });
 
     it("should prioritize seconds over minutes", () => {
       render(<TimeEstimate label="Time" seconds={120} minutes={60} />);
-      
+
       expect(screen.getByTestId("duration-display")).toHaveTextContent("120s");
     });
 
@@ -188,10 +210,12 @@ describe("SearchResultComponents", () => {
     });
 
     it("should apply custom className", () => {
-      render(<TimeEstimate label="Time" seconds={60} className="custom-time" />);
-      
+      render(
+        <TimeEstimate label="Time" seconds={60} className="custom-time" />
+      );
+
       // Find the span that contains "Time:" text
-      const wrapper = screen.getByText(/Time:/i).closest('span');
+      const wrapper = screen.getByText(/Time:/i).closest("span");
       expect(wrapper).toHaveClass("custom-time");
     });
   });
@@ -206,7 +230,7 @@ describe("SearchResultComponents", () => {
 
     it("should render tags with default max visible", () => {
       render(<TagList tags={tags} />);
-      
+
       expect(screen.getByText("Tag1")).toBeInTheDocument();
       expect(screen.getByText("Tag2")).toBeInTheDocument();
       expect(screen.getByText("Tag3")).toBeInTheDocument();
@@ -216,7 +240,7 @@ describe("SearchResultComponents", () => {
 
     it("should render all tags when maxVisible is higher", () => {
       render(<TagList tags={tags} maxVisible={5} />);
-      
+
       expect(screen.getByText("Tag1")).toBeInTheDocument();
       expect(screen.getByText("Tag2")).toBeInTheDocument();
       expect(screen.getByText("Tag3")).toBeInTheDocument();
@@ -236,16 +260,18 @@ describe("SearchResultComponents", () => {
 
     it("should apply custom className", () => {
       render(<TagList tags={tags} className="custom-tags" />);
-      
+
       // Find the container div that wraps all tags
-      const tagBadge = screen.getByText("Tag1").closest('[class*="rounded-md"]');
+      const tagBadge = screen
+        .getByText("Tag1")
+        .closest('[class*="rounded-md"]');
       const wrapper = tagBadge?.parentElement;
       expect(wrapper).toHaveClass("custom-tags");
     });
 
     it("should show correct remaining count", () => {
       render(<TagList tags={tags} maxVisible={1} />);
-      
+
       expect(screen.getByText("+3")).toBeInTheDocument();
     });
   });
@@ -257,7 +283,7 @@ describe("SearchResultComponents", () => {
         <span key="2">{"Badge 2"}</span>,
       ];
       render(<BadgeList items={items} />);
-      
+
       expect(screen.getByText("Badge 1")).toBeInTheDocument();
       expect(screen.getByText("Badge 2")).toBeInTheDocument();
     });
@@ -270,14 +296,19 @@ describe("SearchResultComponents", () => {
         <span key="2">{"Badge 2"}</span>,
       ];
       render(<BadgeList items={items} />);
-      
+
       expect(screen.getByText("Badge 1")).toBeInTheDocument();
       expect(screen.getByText("Badge 2")).toBeInTheDocument();
     });
 
     it("should apply custom className", () => {
-      render(<BadgeList items={[<span key="1">{"Test"}</span>]} className="custom-badges" />);
-      
+      render(
+        <BadgeList
+          items={[<span key="1">{"Test"}</span>]}
+          className="custom-badges"
+        />
+      );
+
       const wrapper = screen.getByText("Test").parentElement;
       expect(wrapper).toHaveClass("custom-badges");
       expect(wrapper).toHaveClass("flex");
@@ -290,7 +321,7 @@ describe("SearchResultComponents", () => {
   describe("ExternalLink", () => {
     it("should render link text", () => {
       render(<ExternalLink url="https://example.com" />);
-      
+
       const link = screen.getByText("https://example.com");
       expect(link).toBeInTheDocument();
       expect(link).toHaveClass("text-blue-600");
@@ -299,7 +330,7 @@ describe("SearchResultComponents", () => {
 
     it("should apply custom className", () => {
       render(<ExternalLink url="https://test.com" className="custom-link" />);
-      
+
       const link = screen.getByText("https://test.com");
       expect(link).toHaveClass("custom-link");
     });
@@ -308,14 +339,14 @@ describe("SearchResultComponents", () => {
   describe("DateDisplay", () => {
     it("should render date without label", () => {
       render(<DateDisplay date="2024-01-15" />);
-      
+
       const formatter = screen.getByTestId("date-formatter");
       expect(formatter).toHaveTextContent("2024-01-15");
     });
 
     it("should render date with label", () => {
       render(<DateDisplay date="2024-01-15" label="Created" />);
-      
+
       expect(screen.getByText("Created:")).toBeInTheDocument();
       const formatter = screen.getByTestId("date-formatter");
       expect(formatter).toHaveTextContent("2024-01-15");
@@ -324,14 +355,14 @@ describe("SearchResultComponents", () => {
     it("should accept Date object", () => {
       const date = new Date("2024-01-15T10:30:00Z");
       render(<DateDisplay date={date} />);
-      
+
       const formatter = screen.getByTestId("date-formatter");
       expect(formatter).toHaveTextContent(date.toISOString());
     });
 
     it("should apply custom className", () => {
       render(<DateDisplay date="2024-01-15" className="custom-date" />);
-      
+
       const wrapper = screen.getByTestId("date-formatter").parentElement;
       expect(wrapper).toHaveClass("custom-date");
       expect(wrapper).toHaveClass("text-xs");
@@ -344,9 +375,9 @@ describe("SearchResultComponents", () => {
       const highlights = {
         content: ["This is <mark>highlighted</mark> text"],
       };
-      
+
       render(<SearchHighlight highlights={highlights} field="content" />);
-      
+
       const highlight = screen.getByText(/This is/);
       expect(highlight.innerHTML).toContain("<mark>highlighted</mark>");
     });
@@ -360,8 +391,10 @@ describe("SearchResultComponents", () => {
       const highlights = {
         other: ["Some text"],
       };
-      
-      const { container } = render(<SearchHighlight highlights={highlights} field="content" />);
+
+      const { container } = render(
+        <SearchHighlight highlights={highlights} field="content" />
+      );
       expect(container.firstChild).toBeNull();
     });
 
@@ -369,8 +402,10 @@ describe("SearchResultComponents", () => {
       const highlights = {
         content: [],
       };
-      
-      const { container } = render(<SearchHighlight highlights={highlights} field="content" />);
+
+      const { container } = render(
+        <SearchHighlight highlights={highlights} field="content" />
+      );
       expect(container.firstChild).toBeNull();
     });
 
@@ -378,9 +413,15 @@ describe("SearchResultComponents", () => {
       const highlights = {
         content: ["Text"],
       };
-      
-      render(<SearchHighlight highlights={highlights} field="content" className="custom-highlight" />);
-      
+
+      render(
+        <SearchHighlight
+          highlights={highlights}
+          field="content"
+          className="custom-highlight"
+        />
+      );
+
       const wrapper = screen.getByText("Text").parentElement;
       expect(wrapper).toHaveClass("custom-highlight");
       expect(wrapper).toHaveClass("text-sm");
@@ -392,9 +433,9 @@ describe("SearchResultComponents", () => {
       const highlights = {
         content: ["Very long text that should be clamped"],
       };
-      
+
       render(<SearchHighlight highlights={highlights} field="content" />);
-      
+
       const p = screen.getByText(/Very long text/);
       expect(p).toHaveClass("line-clamp-2");
     });

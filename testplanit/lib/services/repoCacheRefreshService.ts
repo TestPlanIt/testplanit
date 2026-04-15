@@ -3,7 +3,7 @@ import micromatch from "micromatch";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
-  type RepoFileEntry
+  type RepoFileEntry,
 } from "~/lib/integrations/cache/RepoFileCache";
 
 interface PathPattern {
@@ -62,9 +62,12 @@ function sleep(ms: number): Promise<void> {
  */
 async function fetchContentsBatched(
   files: RepoFileEntry[],
-  adapter: { getFileContent(path: string, branch: string): Promise<string>; retryAfterSeconds: number },
+  adapter: {
+    getFileContent(path: string, branch: string): Promise<string>;
+    retryAfterSeconds: number;
+  },
   branch: string,
-  initialConcurrency: number,
+  initialConcurrency: number
 ): Promise<{ contentMap: Map<string, string>; contentRateLimited: boolean }> {
   const contentMap = new Map<string, string>();
   let concurrency = initialConcurrency;
@@ -147,7 +150,9 @@ export async function refreshRepoCache(
   configId: number,
   prismaClient: PrismaClient
 ): Promise<RefreshResult> {
-  const config = await (prismaClient as any).projectCodeRepositoryConfig.findUnique({
+  const config = await (
+    prismaClient as any
+  ).projectCodeRepositoryConfig.findUnique({
     where: { id: configId },
     include: {
       repository: {
@@ -223,7 +228,10 @@ export async function refreshRepoCache(
 
     // Fetch and cache file contents (with rate-limit retry)
     const { contentMap, contentRateLimited } = await fetchContentsBatched(
-      files, adapter, branch, 10,
+      files,
+      adapter,
+      branch,
+      10
     );
 
     if (contentMap.size > 0) {
@@ -285,7 +293,9 @@ export async function refreshRepoCacheContentsOnly(
   contentRateLimited: boolean;
   error?: string;
 }> {
-  const config = await (prismaClient as any).projectCodeRepositoryConfig.findUnique({
+  const config = await (
+    prismaClient as any
+  ).projectCodeRepositoryConfig.findUnique({
     where: { id: configId },
     include: {
       repository: {
@@ -318,7 +328,10 @@ export async function refreshRepoCacheContentsOnly(
   const branch = config.branch || (await adapter.getDefaultBranch());
 
   const { contentMap, contentRateLimited } = await fetchContentsBatched(
-    cachedFiles, adapter, branch, 10,
+    cachedFiles,
+    adapter,
+    branch,
+    10
   );
 
   if (contentMap.size > 0) {

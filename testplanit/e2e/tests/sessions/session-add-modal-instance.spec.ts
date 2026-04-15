@@ -83,9 +83,7 @@ test.describe("Session Add Modal Instance", () => {
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
-    await page
-      .locator(`[role="option"]:has-text("${configName}")`)
-      .click();
+    await page.locator(`[role="option"]:has-text("${configName}")`).click();
     await page.keyboard.press("Escape");
 
     // Verify config is selected
@@ -105,9 +103,7 @@ test.describe("Session Add Modal Instance", () => {
     await expect(nameInputAfter).toHaveValue("", { timeout: 5000 });
 
     // Configurations count should not show "(1)"
-    const configLabelAfter = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabelAfter = dialog.locator('label:has-text("Configurations")');
     await expect(configLabelAfter).not.toContainText("(1)", { timeout: 3000 });
 
     // Close

@@ -221,7 +221,10 @@ describe("fetchSignedUrl", () => {
       const mockProxyUrl = "/api/storage/uploads/document-images/1_image.jpg";
 
       mockUploadFile.mockResolvedValueOnce({
-        success: { url: mockProxyUrl, key: "uploads/document-images/1_image.jpg" },
+        success: {
+          url: mockProxyUrl,
+          key: "uploads/document-images/1_image.jpg",
+        },
       });
 
       const result = await fetchSignedUrl(file, "/api/get-docimage-url");
@@ -239,10 +242,14 @@ describe("fetchSignedUrl", () => {
     it("should include prependString in FormData when in proxy mode", async () => {
       const file = createMockFile("test.png", "image/png", 512);
       const prependString = "project123";
-      const mockProxyUrl = "/api/storage/uploads/document-images/project123_test.png";
+      const mockProxyUrl =
+        "/api/storage/uploads/document-images/project123_test.png";
 
       mockUploadFile.mockResolvedValueOnce({
-        success: { url: mockProxyUrl, key: "uploads/document-images/project123_test.png" },
+        success: {
+          url: mockProxyUrl,
+          key: "uploads/document-images/project123_test.png",
+        },
       });
 
       await fetchSignedUrl(file, "/api/get-docimage-url", prependString);
@@ -257,7 +264,10 @@ describe("fetchSignedUrl", () => {
       const file = createMockFile("doc.pdf", "application/pdf", 2048);
 
       mockUploadFile.mockResolvedValueOnce({
-        success: { url: "/api/storage/uploads/attachments/doc.pdf", key: "uploads/attachments/doc.pdf" },
+        success: {
+          url: "/api/storage/uploads/attachments/doc.pdf",
+          key: "uploads/attachments/doc.pdf",
+        },
       });
 
       await fetchSignedUrl(file, "/api/get-attachment-url");
@@ -272,7 +282,10 @@ describe("fetchSignedUrl", () => {
       const file = createMockFile("avatar.png", "image/png", 1024);
 
       mockUploadFile.mockResolvedValueOnce({
-        success: { url: "/api/storage/uploads/avatars/avatar.png", key: "uploads/avatars/avatar.png" },
+        success: {
+          url: "/api/storage/uploads/avatars/avatar.png",
+          key: "uploads/avatars/avatar.png",
+        },
       });
 
       await fetchSignedUrl(file, "/api/get-avatar-url");
@@ -287,7 +300,10 @@ describe("fetchSignedUrl", () => {
       const file = createMockFile("icon.png", "image/png", 512);
 
       mockUploadFile.mockResolvedValueOnce({
-        success: { url: "/api/storage/uploads/project-icons/icon.png", key: "uploads/project-icons/icon.png" },
+        success: {
+          url: "/api/storage/uploads/project-icons/icon.png",
+          key: "uploads/project-icons/icon.png",
+        },
       });
 
       await fetchSignedUrl(file, "/api/get-project-icon-url");

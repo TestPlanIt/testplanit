@@ -23,7 +23,10 @@ vi.mock("~/lib/config/reportTypes", () => ({
 }));
 
 import { getServerSession } from "next-auth/next";
-import { getCrossProjectReportTypes, getProjectReportTypes } from "~/lib/config/reportTypes";
+import {
+  getCrossProjectReportTypes,
+  getProjectReportTypes,
+} from "~/lib/config/reportTypes";
 import { prisma } from "~/lib/prisma";
 import { GET } from "./route";
 
@@ -331,7 +334,10 @@ describe("GET /api/share/[shareKey]/report", () => {
       expect(data).toHaveProperty("dimensions");
       expect(data).toHaveProperty("metrics");
       expect(data).toHaveProperty("pagination");
-      expect(data.dimensions[0]).toEqual({ value: "testCase", label: "Test Case" });
+      expect(data.dimensions[0]).toEqual({
+        value: "testCase",
+        label: "Test Case",
+      });
       expect(data.metrics[0]).toEqual({ value: "count", label: "Count" });
     });
 
@@ -416,7 +422,9 @@ describe("GET /api/share/[shareKey]/report", () => {
   describe("Error handling", () => {
     it("returns 500 when database throws", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockRejectedValue(new Error("DB error"));
+      (prisma.shareLink.findUnique as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const [req, ctx] = createRequest("abc123");
       const response = await GET(req, ctx);

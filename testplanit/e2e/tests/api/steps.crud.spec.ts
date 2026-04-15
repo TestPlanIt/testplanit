@@ -97,7 +97,10 @@ test.describe("Steps CRUD", () => {
             name: "Root Folder",
             order: 0,
             isDeleted: false,
-            docs: JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] }),
+            docs: JSON.stringify({
+              type: "doc",
+              content: [{ type: "paragraph" }],
+            }),
             project: { connect: { id: sharedProjectId } },
             repository: { connect: { id: repositoryId } },
             creator: { connect: { id: userId } },
@@ -109,11 +112,14 @@ test.describe("Steps CRUD", () => {
     sharedFolderId = folderResult.data.id;
 
     // Assign template to project
-    await request.post(`${baseURL}/api/model/templateProjectAssignment/create`, {
-      data: {
-        data: { templateId: defaultTemplateId, projectId: sharedProjectId },
-      },
-    });
+    await request.post(
+      `${baseURL}/api/model/templateProjectAssignment/create`,
+      {
+        data: {
+          data: { templateId: defaultTemplateId, projectId: sharedProjectId },
+        },
+      }
+    );
 
     // Assign workflows to project
     const workflowsResponse = await request.get(
@@ -126,14 +132,17 @@ test.describe("Steps CRUD", () => {
     );
     const workflows = (await workflowsResponse.json()).data || [];
     if (workflows.length > 0) {
-      await request.post(`${baseURL}/api/model/projectWorkflowAssignment/createMany`, {
-        data: {
-          data: workflows.map((w: { id: number }) => ({
-            workflowId: w.id,
-            projectId: sharedProjectId,
-          })),
-        },
-      });
+      await request.post(
+        `${baseURL}/api/model/projectWorkflowAssignment/createMany`,
+        {
+          data: {
+            data: workflows.map((w: { id: number }) => ({
+              workflowId: w.id,
+              projectId: sharedProjectId,
+            })),
+          },
+        }
+      );
     }
 
     // Add user as project member

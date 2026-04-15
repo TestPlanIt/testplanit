@@ -76,7 +76,10 @@ const RenderSharedGroupItemsForResults: React.FC<
         }
 
         return (
-          <div key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`} className="space-y-2 w-full">
+          <div
+            key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`}
+            className="space-y-2 w-full"
+          >
             <div className="flex">
               <div className="shrink-0 pt-[0.4rem]">
                 <div className="text-sm font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6">

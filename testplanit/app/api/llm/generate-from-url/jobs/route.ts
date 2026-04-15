@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
   if (!projectId) {
     return NextResponse.json(
       { error: "projectId is required" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   const limit = Math.min(
     Number(request.nextUrl.searchParams.get("limit") ?? 10),
-    20,
+    20
   );
 
   try {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         let testCaseCount = 0;
         if (state === "completed") {
           const raw = await connection.get(
-            `generate-from-url:generated:${job.id}`,
+            `generate-from-url:generated:${job.id}`
           );
           if (raw) {
             hasGeneratedResults = true;
@@ -83,9 +83,7 @@ export async function GET(request: NextRequest) {
         const hasPageContent =
           state === "completed" && !hasGeneratedResults
             ? Boolean(
-                await connection.exists(
-                  `generate-from-url:pages:${job.id}`,
-                ),
+                await connection.exists(`generate-from-url:pages:${job.id}`)
               )
             : false;
 
@@ -118,7 +116,7 @@ export async function GET(request: NextRequest) {
           finishedOn: job.finishedOn,
           failedReason: state === "failed" ? job.failedReason : null,
         };
-      }),
+      })
     );
 
     return NextResponse.json({ jobs });
@@ -126,7 +124,7 @@ export async function GET(request: NextRequest) {
     console.error("Generate from URL jobs list error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

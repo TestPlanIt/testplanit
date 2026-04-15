@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +31,9 @@ export function PasswordDialog({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(
+    null
+  );
 
   const t = useTranslations("reports.passwordDialog");
   const tCommon = useTranslations("common");
@@ -58,10 +60,10 @@ export function PasswordDialog({
 
       if (!response.ok) {
         if (response.status === 429) {
-          const resetAt = data.resetAt ? new Date(data.resetAt).toLocaleTimeString() : null;
-          setError(
-            t("errors.tooManyAttempts", { resetAt: resetAt || "" })
-          );
+          const resetAt = data.resetAt
+            ? new Date(data.resetAt).toLocaleTimeString()
+            : null;
+          setError(t("errors.tooManyAttempts", { resetAt: resetAt || "" }));
         } else {
           setError(data.error || tCommon("errors.invalidCredentials"));
           if (data.remainingAttempts !== undefined) {
@@ -115,7 +117,9 @@ export function PasswordDialog({
                 <AlertDescription>
                   {remainingAttempts === 0
                     ? t("attempts.noAttemptsRemaining")
-                    : t("attempts.attemptsRemaining", { count: remainingAttempts })}
+                    : t("attempts.attemptsRemaining", {
+                        count: remainingAttempts,
+                      })}
                 </AlertDescription>
               </Alert>
             )}
@@ -156,7 +160,12 @@ export function PasswordDialog({
           </CardContent>
 
           <CardFooter>
-            <Button data-testid="password-gate-submit" type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              data-testid="password-gate-submit"
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

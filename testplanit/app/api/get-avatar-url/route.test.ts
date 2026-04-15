@@ -36,7 +36,9 @@ describe("GET /api/get-avatar-url", () => {
     process.env.AWS_ACCESS_KEY_ID = "test-key-id";
     process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
     process.env.AWS_REGION = "us-east-1";
-    mockGetSignedUrl.mockResolvedValue("https://s3.example.com/presigned-url?sig=xyz");
+    mockGetSignedUrl.mockResolvedValue(
+      "https://s3.example.com/presigned-url?sig=xyz"
+    );
   });
 
   it("returns signed URL on successful request", async () => {

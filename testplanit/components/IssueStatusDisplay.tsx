@@ -20,7 +20,11 @@ export function IssueStatusDisplay({
   }
 
   return (
-    <Badge variant="outline" className={`whitespace-nowrap ${className ?? ""}`} style={style}>
+    <Badge
+      variant="outline"
+      className={`whitespace-nowrap ${className ?? ""}`}
+      style={style}
+    >
       {status}
     </Badge>
   );

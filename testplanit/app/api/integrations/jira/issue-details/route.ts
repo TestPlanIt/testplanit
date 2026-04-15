@@ -6,12 +6,9 @@ import { authOptions } from "~/server/auth";
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -48,30 +45,43 @@ export async function GET(request: NextRequest) {
       status: {
         name: issueData.status,
         // Map common status names to colors
-        color: issueData.status?.toLowerCase() === 'done' ? 'green' :
-               issueData.status?.toLowerCase() === 'in progress' ? 'blue' :
-               issueData.status?.toLowerCase() === 'to do' || issueData.status?.toLowerCase() === 'todo' ? 'yellow' : 
-               'gray',
+        color:
+          issueData.status?.toLowerCase() === "done"
+            ? "green"
+            : issueData.status?.toLowerCase() === "in progress"
+              ? "blue"
+              : issueData.status?.toLowerCase() === "to do" ||
+                  issueData.status?.toLowerCase() === "todo"
+                ? "yellow"
+                : "gray",
       },
-      priority: issueData.priority ? {
-        name: issueData.priority,
-        iconUrl: undefined, // Not provided by the IssueData interface
-      } : null,
-      assignee: issueData.assignee ? {
-        displayName: issueData.assignee.name,
-        avatarUrl: undefined, // Not provided by the IssueData interface
-      } : null,
-      reporter: issueData.reporter ? {
-        displayName: issueData.reporter.name,
-        avatarUrl: undefined, // Not provided by the IssueData interface
-      } : null,
-      issueType: issueData.issueType ? {
-        name: issueData.issueType.name,
-        iconUrl: issueData.issueType.iconUrl,
-      } : {
-        name: 'Issue', // Default type
-        iconUrl: undefined,
-      },
+      priority: issueData.priority
+        ? {
+            name: issueData.priority,
+            iconUrl: undefined, // Not provided by the IssueData interface
+          }
+        : null,
+      assignee: issueData.assignee
+        ? {
+            displayName: issueData.assignee.name,
+            avatarUrl: undefined, // Not provided by the IssueData interface
+          }
+        : null,
+      reporter: issueData.reporter
+        ? {
+            displayName: issueData.reporter.name,
+            avatarUrl: undefined, // Not provided by the IssueData interface
+          }
+        : null,
+      issueType: issueData.issueType
+        ? {
+            name: issueData.issueType.name,
+            iconUrl: issueData.issueType.iconUrl,
+          }
+        : {
+            name: "Issue", // Default type
+            iconUrl: undefined,
+          },
       created: issueData.createdAt?.toISOString(),
       updated: issueData.updatedAt?.toISOString(),
     };
@@ -79,15 +89,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(issueDetails);
   } catch (error: any) {
     console.error("Error fetching Jira issue details:", error);
-    
+
     // Check if it's an authentication error
-    if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
+    if (
+      error.message?.includes("401") ||
+      error.message?.includes("Unauthorized")
+    ) {
       return NextResponse.json(
-        { error: "Authentication failed. Please check integration credentials." },
+        {
+          error: "Authentication failed. Please check integration credentials.",
+        },
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
       { error: error.message || "Failed to fetch issue details" },
       { status: 500 }

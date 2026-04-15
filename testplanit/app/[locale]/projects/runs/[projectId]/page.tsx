@@ -148,9 +148,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     (completedRunsPage - 1) * effectiveCompletedPageSize;
 
   // State for Sunburst Legend
-  const [, setSunburstLegendItems] = useState<
-    SunburstLegendItem[]
-  >([]);
+  const [, setSunburstLegendItems] = useState<SunburstLegendItem[]>([]);
 
   // New state for the total remaining estimate to be displayed below sunburst
   const [
@@ -496,39 +494,37 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const _responsibleUsers = new Set<string>();
 
   // Query for completed test runs with server-side pagination and filtering
-  const {
-    data: completedRunsData,
-    isLoading: isLoadingCompletedRuns,
-  } = useQuery<CompletedTestRunsResponse | null>({
-    queryKey: [
-      "completedTestRuns",
-      numericProjectId,
-      completedRunsPage,
-      effectiveCompletedPageSize,
-      debouncedCompletedRunsSearchString,
-      runTypeFilter,
-    ],
-    queryFn: async () => {
-      if (!numericProjectId) return null;
+  const { data: completedRunsData, isLoading: isLoadingCompletedRuns } =
+    useQuery<CompletedTestRunsResponse | null>({
+      queryKey: [
+        "completedTestRuns",
+        numericProjectId,
+        completedRunsPage,
+        effectiveCompletedPageSize,
+        debouncedCompletedRunsSearchString,
+        runTypeFilter,
+      ],
+      queryFn: async () => {
+        if (!numericProjectId) return null;
 
-      const params = new URLSearchParams({
-        projectId: numericProjectId.toString(),
-        page: completedRunsPage.toString(),
-        pageSize: effectiveCompletedPageSize.toString(),
-        search: debouncedCompletedRunsSearchString,
-        runType: runTypeFilter,
-      });
+        const params = new URLSearchParams({
+          projectId: numericProjectId.toString(),
+          page: completedRunsPage.toString(),
+          pageSize: effectiveCompletedPageSize.toString(),
+          search: debouncedCompletedRunsSearchString,
+          runType: runTypeFilter,
+        });
 
-      const response = await fetch(`/api/test-runs/completed?${params}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch completed test runs");
-      }
-      return response.json();
-    },
-    enabled: !!numericProjectId && activeTab === "completed",
-    staleTime: 30000, // Cache for 30 seconds
-    refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
-  });
+        const response = await fetch(`/api/test-runs/completed?${params}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch completed test runs");
+        }
+        return response.json();
+      },
+      enabled: !!numericProjectId && activeTab === "completed",
+      staleTime: 30000, // Cache for 30 seconds
+      refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
+    });
 
   const completedTestRuns = completedRunsData?.runs || [];
   const totalCompletedRunsCount = completedRunsData?.totalCount || 0;
@@ -606,25 +602,24 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Manual Test Run Results (two-query approach) ---
   // Query 1: Get the most recent result to determine the date range
-  const { data: latestManualResult } =
-    useFindFirstTestRunResults(
-      {
-        where: {
-          testRun: { projectId: numericProjectId ?? undefined },
-          status: {
-            systemName: { not: "untested" },
-          },
-        },
-        orderBy: { executedAt: "desc" },
-        select: {
-          executedAt: true,
+  const { data: latestManualResult } = useFindFirstTestRunResults(
+    {
+      where: {
+        testRun: { projectId: numericProjectId ?? undefined },
+        status: {
+          systemName: { not: "untested" },
         },
       },
-      {
-        enabled: !!numericProjectId,
-        staleTime: 30000, // Cache for 30 seconds
-      }
-    );
+      orderBy: { executedAt: "desc" },
+      select: {
+        executedAt: true,
+      },
+    },
+    {
+      enabled: !!numericProjectId,
+      staleTime: 30000, // Cache for 30 seconds
+    }
+  );
 
   // Calculate 7 days before the latest result
   const sevenDaysBeforeLatestManual = useMemo(() => {
@@ -731,9 +726,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Automated (JUnit) Test Results (two-query approach) ---
   // Query 1: Get the most recent automated result to determine the date range
-  const {
-    data: latestAutomatedResult,
-  } = useFindFirstJUnitTestResult(
+  const { data: latestAutomatedResult } = useFindFirstJUnitTestResult(
     {
       where: {
         testSuite: {
@@ -1037,9 +1030,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                               setDroppedFiles([]);
                             }}
                             initialFiles={
-                              droppedFiles.length > 0
-                                ? droppedFiles
-                                : undefined
+                              droppedFiles.length > 0 ? droppedFiles : undefined
                             }
                           />
                         )}

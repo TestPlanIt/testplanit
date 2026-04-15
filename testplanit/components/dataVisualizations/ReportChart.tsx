@@ -14,7 +14,7 @@ import { ReportMultiLineChart } from "./ReportMultiLineChart";
 import { ReportMultiMetricBarChart } from "./ReportMultiMetricBarChart";
 import {
   ReportSmallMultiplesGroupedBar,
-  SmallMultipleData
+  SmallMultipleData,
 } from "./ReportSmallMultiplesGroupedBar";
 import { ReportSunburstChart } from "./ReportSunburstChart";
 import { TestCaseHealthChart } from "./TestCaseHealthChart";
@@ -24,7 +24,7 @@ import { TestCaseHealthChart } from "./TestCaseHealthChart";
  * Strips the "cross-project-" prefix from a report type ID
  */
 function getBaseReportType(reportType: string): string {
-  return reportType.replace(/^cross-project-/, '');
+  return reportType.replace(/^cross-project-/, "");
 }
 
 /**
@@ -363,7 +363,12 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   });
 
   // Special handling for automation trends report
-  if (reportType && matchesReportType(reportType, "automation-trends") && projects && projects.length > 0) {
+  if (
+    reportType &&
+    matchesReportType(reportType, "automation-trends") &&
+    projects &&
+    projects.length > 0
+  ) {
     // Transform automation trends data into multi-line series
     const seriesMap = new Map<string, MultiLineSeries>();
     const isMultiProject = projects.length > 1;
@@ -620,7 +625,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
               id: path,
               children: index === dimensions.length - 1 ? undefined : [],
               color:
-                getColor(row, dim, issueColorFns) || stringToColorCode(dimValue).colorCode,
+                getColor(row, dim, issueColorFns) ||
+                stringToColorCode(dimValue).colorCode,
             };
             hierarchyMap.set(path, node);
             currentLevelChildren.push(node);

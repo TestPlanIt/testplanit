@@ -12,12 +12,12 @@ TestPlanIt's production Docker setup (`docker-compose.prod.yml`) uses Docker Com
 
 ## Available Profiles
 
-| Profile | Service | Purpose |
-|---------|---------|---------|
-| `with-postgres` | PostgreSQL 15 | Database storage |
-| `with-valkey` | Valkey 8 | Redis-compatible cache and job queue |
-| `with-elasticsearch` | Elasticsearch 9 | Full-text search engine |
-| `with-minio` | MinIO + Nginx | S3-compatible file storage with reverse proxy |
+| Profile              | Service         | Purpose                                       |
+| -------------------- | --------------- | --------------------------------------------- |
+| `with-postgres`      | PostgreSQL 15   | Database storage                              |
+| `with-valkey`        | Valkey 8        | Redis-compatible cache and job queue          |
+| `with-elasticsearch` | Elasticsearch 9 | Full-text search engine                       |
+| `with-minio`         | MinIO + Nginx   | S3-compatible file storage with reverse proxy |
 
 ## Quick Start
 
@@ -58,6 +58,7 @@ docker compose -f docker-compose.prod.yml \
 - `db-init-prod` - Initializes schema and seeds data
 
 **Environment Variables:**
+
 ```bash
 DATABASE_URL="postgresql://user:password@postgres:5432/testplanit_prod?schema=public"
 POSTGRES_HOST="postgres"  # Optional, defaults to 'postgres'
@@ -88,6 +89,7 @@ DATABASE_URL="postgresql://username:password@mydb.123456.us-east-1.rds.amazonaws
 - `valkey` - Valkey 8 (Redis-compatible)
 
 **Environment Variables:**
+
 ```bash
 VALKEY_URL="valkey://valkey:6379"
 ```
@@ -116,6 +118,7 @@ VALKEY_URL="valkey://my-redis.abc123.0001.use1.cache.amazonaws.com:6379"
 - `elasticsearch` - Elasticsearch 9 single-node
 
 **Environment Variables:**
+
 ```bash
 ELASTICSEARCH_NODE="http://elasticsearch:9200"
 ```
@@ -148,6 +151,7 @@ ELASTICSEARCH_NODE=""
 - `nginx` - Reverse proxy for MinIO
 
 **Environment Variables:**
+
 ```bash
 AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
@@ -231,13 +235,14 @@ docker compose -f docker-compose.prod.yml \
   up -d
 ```
 
-Configure external AWS RDS (DATABASE_URL) and S3 (AWS_* vars).
+Configure external AWS RDS (DATABASE*URL) and S3 (AWS*\* vars).
 
 ## Tips and Best Practices
 
 1. **Start Simple**: Begin with all Docker services, then migrate to external services as needed.
 
 2. **Profile Consistency**: Use the same profiles for all operations (up, down, logs, etc.):
+
    ```bash
    PROFILES="--profile with-postgres --profile with-valkey --profile with-elasticsearch --profile with-minio"
    docker compose -f docker-compose.prod.yml $PROFILES up -d
@@ -246,6 +251,7 @@ Configure external AWS RDS (DATABASE_URL) and S3 (AWS_* vars).
    ```
 
 3. **Environment-Specific Configs**: Keep separate `.env.production` files for different environments:
+
    ```text
    ~/testplanit-dev/.env.production     # All Docker services
    ~/testplanit-staging/.env.production # Mix of Docker and external

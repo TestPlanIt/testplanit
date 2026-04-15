@@ -37,9 +37,7 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="link" className="-m-2">
-              {totalRows <= 10 ||
-              pageSize === "All" ||
-              pageSize === totalRows
+              {totalRows <= 10 || pageSize === "All" || pageSize === totalRows
                 ? t("all")
                 : `${t("entries", { count: pageSize })}/${t("pageSize")}`}
             </Button>

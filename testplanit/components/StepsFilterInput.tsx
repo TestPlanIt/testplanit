@@ -7,7 +7,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -17,7 +17,11 @@ type StepsOperator = "eq" | "lt" | "lte" | "gt" | "gte" | "between";
 
 interface StepsFilterInputProps {
   fieldId: number;
-  onFilterApply: (operator: StepsOperator, value1: number, value2?: number) => void;
+  onFilterApply: (
+    operator: StepsOperator,
+    value1: number,
+    value2?: number
+  ) => void;
   onClearFilter?: () => void;
   currentFilter: string | null;
 }
@@ -117,7 +121,8 @@ export function StepsFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")}{" "}
+            {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -137,7 +142,10 @@ export function StepsFilterInput({
         </div>
       )}
 
-      <Select value={operator} onValueChange={(val) => setOperator(val as StepsOperator)}>
+      <Select
+        value={operator}
+        onValueChange={(val) => setOperator(val as StepsOperator)}
+      >
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Select operator" />
         </SelectTrigger>
@@ -164,7 +172,9 @@ export function StepsFilterInput({
 
         {operator === "between" && (
           <>
-            <span className="text-xs text-muted-foreground">{t("common.and")}</span>
+            <span className="text-xs text-muted-foreground">
+              {t("common.and")}
+            </span>
             <Input
               type="number"
               step="1"
@@ -188,9 +198,14 @@ export function StepsFilterInput({
         </Button>
       </div>
 
-      {operator === "between" && value1 && value2 && parseInt(value1) >= parseInt(value2) && (
-        <p className="text-xs text-destructive">{t("search.filters.validation.firstValueMustBeLessThanSecond")}</p>
-      )}
+      {operator === "between" &&
+        value1 &&
+        value2 &&
+        parseInt(value1) >= parseInt(value2) && (
+          <p className="text-xs text-destructive">
+            {t("search.filters.validation.firstValueMustBeLessThanSecond")}
+          </p>
+        )}
     </div>
   );
 }

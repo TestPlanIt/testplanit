@@ -21,7 +21,8 @@ import { emptyEditorContent } from "~/app/constants";
 import type { StepFormField } from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
 import StepsForm from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
 import {
-  useCreateManySharedStepItem, useCreateSharedStepGroup
+  useCreateManySharedStepItem,
+  useCreateSharedStepGroup,
 } from "~/lib/hooks";
 
 interface ManualSharedStepsDialogProps {
@@ -138,9 +139,7 @@ export function ManualSharedStepsDialog({
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="group-name">
-              {tCommon("fields.groupName")}
-            </Label>
+            <Label htmlFor="group-name">{tCommon("fields.groupName")}</Label>
             <Input
               id="group-name"
               value={groupName}

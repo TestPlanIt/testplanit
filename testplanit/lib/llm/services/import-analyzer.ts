@@ -68,7 +68,10 @@ export function detectLanguage(filePath: string): Language {
  *
  * Each call creates fresh RegExp instances to avoid lastIndex issues with /g.
  */
-export function extractImportSpecifiers(content: string, language: Language): string[] {
+export function extractImportSpecifiers(
+  content: string,
+  language: Language
+): string[] {
   const specifiers: string[] = [];
 
   if (language === "ts" || language === "js") {
@@ -159,12 +162,7 @@ export function resolveSpecifier(
   }
 
   // Try index resolution
-  const indexFiles = [
-    "/index.ts",
-    "/index.tsx",
-    "/index.js",
-    "/index.jsx",
-  ];
+  const indexFiles = ["/index.ts", "/index.tsx", "/index.js", "/index.jsx"];
   for (const idx of indexFiles) {
     const candidate = normalized + idx;
     if (availablePaths.has(candidate)) {

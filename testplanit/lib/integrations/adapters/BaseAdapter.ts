@@ -1,6 +1,13 @@
 import {
-  AuthenticationData, CreateIssueData, FieldMapping, IssueAdapter,
-  IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData, WebhookData
+  AuthenticationData,
+  CreateIssueData,
+  FieldMapping,
+  IssueAdapter,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
+  WebhookData,
 } from "./IssueAdapter";
 
 /**
@@ -115,7 +122,10 @@ export abstract class BaseAdapter implements IssueAdapter {
   /**
    * Add a comment to an issue (should be implemented by adapters that support it)
    */
-  protected async addComment(_issueId: string, _comment: string): Promise<void> {
+  protected async addComment(
+    _issueId: string,
+    _comment: string
+  ): Promise<void> {
     throw new Error("Adding comments is not supported by this adapter");
   }
 
@@ -248,7 +258,9 @@ export abstract class BaseAdapter implements IssueAdapter {
 
       // Provide a clear error message for timeout
       if (error.name === "AbortError") {
-        throw new Error(`Request timeout after ${this.requestTimeout}ms: ${url}`);
+        throw new Error(
+          `Request timeout after ${this.requestTimeout}ms: ${url}`
+        );
       }
 
       throw error;

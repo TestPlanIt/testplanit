@@ -23,7 +23,6 @@ export const ReportMultiMetricBarChart: React.FC<
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useResponsiveSVG(containerRef);
 
-
   useEffect(() => {
     const tooltipElement = document.createElement("div");
     tooltipElement.style.position = "fixed";
@@ -47,7 +46,13 @@ export const ReportMultiMetricBarChart: React.FC<
   }, []);
 
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0 || width === 0 || height === 0) {
+    if (
+      !svgRef.current ||
+      !data ||
+      data.length === 0 ||
+      width === 0 ||
+      height === 0
+    ) {
       if (svgRef.current) d3.select(svgRef.current).selectAll("*").remove();
       return;
     }

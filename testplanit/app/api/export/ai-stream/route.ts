@@ -91,9 +91,7 @@ export async function POST(req: NextRequest) {
     const bodies = body.cases.map((c) =>
       Mustache.render(template.templateBody, c)
     );
-    mustacheFallback = [header, ...bodies, footer]
-      .filter(Boolean)
-      .join("\n\n");
+    mustacheFallback = [header, ...bodies, footer].filter(Boolean).join("\n\n");
   }
 
   const encoder = new TextEncoder();
@@ -106,9 +104,7 @@ export async function POST(req: NextRequest) {
   ): void {
     if (controllerClosed) return;
     try {
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-      );
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
     } catch {
       controllerClosed = true;
     }
@@ -171,11 +167,10 @@ export async function POST(req: NextRequest) {
         const outputTokenCap = providerConfig?.maxTokensPerRequest ?? Infinity;
 
         // Assemble code context if a repo is configured (optional)
-        const repoConfig =
-          await prisma.projectCodeRepositoryConfig.findUnique({
-            where: { projectId },
-            select: { id: true },
-          });
+        const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
+          where: { projectId },
+          select: { id: true },
+        });
 
         let contextResult = {
           context: "",
@@ -282,7 +277,8 @@ export async function POST(req: NextRequest) {
             request
           )) {
             if (chunk.finishReason) finishReason = chunk.finishReason;
-            if (chunk.delta) send(controller, { type: "chunk", delta: chunk.delta });
+            if (chunk.delta)
+              send(controller, { type: "chunk", delta: chunk.delta });
           }
           send(controller, {
             type: "done",
@@ -302,8 +298,7 @@ export async function POST(req: NextRequest) {
         console.error("[export/ai-stream] Setup failed:", err);
         send(controller, {
           type: "error",
-          message:
-            err instanceof Error ? err.message : "Internal server error",
+          message: err instanceof Error ? err.message : "Internal server error",
         });
       } finally {
         clearInterval(heartbeat);
@@ -319,7 +314,7 @@ export async function POST(req: NextRequest) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     },
   });
 }

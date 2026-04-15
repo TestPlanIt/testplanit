@@ -2,7 +2,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import {
   MilestoneSelect,
-  transformMilestones
+  transformMilestones,
 } from "@/components/forms/MilestoneSelect";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,17 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +42,9 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import {
-  useCreateMilestones, useFindManyMilestones, useFindManyMilestoneTypes
+  useCreateMilestones,
+  useFindManyMilestones,
+  useFindManyMilestoneTypes,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 

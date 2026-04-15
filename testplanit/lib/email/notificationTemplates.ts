@@ -47,7 +47,7 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
   const transporter = getTransporter();
 
   // Render the email using Handlebars template
-  const { html, subject } = await renderEmailTemplate('notification', {
+  const { html, subject } = await renderEmailTemplate("notification", {
     userName: data.userName,
     notification: {
       title: data.notificationTitle,
@@ -56,8 +56,8 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
       createdAt: new Date(),
     },
     notificationUrl: data.notificationUrl,
-    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || 'http://localhost:3000',
-    locale: data.locale || 'en-US',
+    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000",
+    locale: data.locale || "en-US",
     userId: data.userId,
     currentYear: new Date().getFullYear(),
     subject: `TestPlanIt: ${data.notificationTitle}`,
@@ -84,11 +84,11 @@ export async function sendDigestEmail(data: DigestEmailData) {
   const transporter = getTransporter();
 
   // Render the email using Handlebars template
-  const { html, subject } = await renderEmailTemplate('daily-digest', {
+  const { html, subject } = await renderEmailTemplate("daily-digest", {
     userName: data.userName,
     notifications: data.notifications,
-    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || 'http://localhost:3000',
-    locale: data.locale || 'en-US',
+    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000",
+    locale: data.locale || "en-US",
     userId: data.userId,
     currentYear: new Date().getFullYear(),
     subject: `TestPlanIt Daily Digest - ${data.notifications.length} notifications`,

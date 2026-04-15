@@ -14,11 +14,7 @@
         "type_name": "Dropdown",
         "is_required": true,
         "is_restricted": false,
-        "dropdown_options": [
-          "Low",
-          "Medium",
-          "High"
-        ]
+        "dropdown_options": ["Low", "Medium", "High"]
       }
     ]
   },

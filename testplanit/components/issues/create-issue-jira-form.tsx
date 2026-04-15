@@ -5,20 +5,18 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl, FormItem,
-  FormLabel
-} from "@/components/ui/form";
+import { Form, FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
@@ -102,10 +100,7 @@ export function CreateIssueJiraForm({
           projectIntegrationId,
           isActive: true,
         },
-        orderBy: [
-          { isDefault: "desc" },
-          { externalProjectName: "asc" },
-        ],
+        orderBy: [{ isDefault: "desc" }, { externalProjectName: "asc" }],
       },
       { enabled: !!projectIntegrationId }
     );
@@ -122,7 +117,8 @@ export function CreateIssueJiraForm({
 
   // Auto-select the default project and its issue type when data loads
   useEffect(() => {
-    if (!open || !integrationProjects || integrationProjects.length === 0) return;
+    if (!open || !integrationProjects || integrationProjects.length === 0)
+      return;
     if (selectedProjectKey) return; // Already selected
 
     const defaultProject =
@@ -520,7 +516,9 @@ export function CreateIssueJiraForm({
                 <FormItem>
                   <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.externalProject")}
-                    <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   </FormLabel>
                   <Select
                     value={selectedProjectKey}
@@ -553,7 +551,9 @@ export function CreateIssueJiraForm({
                 <FormItem>
                   <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.issueType")}
-                    <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   </FormLabel>
                   <Select
                     value={selectedIssueType}

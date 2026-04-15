@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import TestRunResultsDonut, {
-  TestRunResultStatusItem
+  TestRunResultStatusItem,
 } from "./TestRunResultsDonut";
 
 // Mock next-intl
@@ -44,14 +44,16 @@ vi.mock("d3", () => ({
     })),
   })),
   pie: vi.fn(() => {
-    const fn = vi.fn((data) => data.map((d: any, i: number) => ({
-      data: d,
-      value: d.value,
-      index: i,
-      startAngle: 0,
-      endAngle: Math.PI * 2,
-      padAngle: 0,
-    }))) as any;
+    const fn = vi.fn((data) =>
+      data.map((d: any, i: number) => ({
+        data: d,
+        value: d.value,
+        index: i,
+        startAngle: 0,
+        endAngle: Math.PI * 2,
+        padAngle: 0,
+      }))
+    ) as any;
     fn.value = vi.fn().mockReturnThis();
     fn.sort = vi.fn().mockReturnThis();
     return fn;
@@ -66,7 +68,10 @@ vi.mock("d3", () => ({
   sum: vi.fn((arr: any[], accessor: (d: any) => number) =>
     arr.reduce((sum, d) => sum + accessor(d), 0)
   ),
-  interpolate: vi.fn(() => (t: number) => ({ startAngle: 0, endAngle: t * Math.PI * 2 })),
+  interpolate: vi.fn(() => (t: number) => ({
+    startAngle: 0,
+    endAngle: t * Math.PI * 2,
+  })),
   easeBackOut: { overshoot: vi.fn(() => (t: number) => t) },
   easeQuadOut: vi.fn((t: number) => t),
 }));

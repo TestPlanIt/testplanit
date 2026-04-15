@@ -125,7 +125,9 @@ export const ReportSmallMultiplesGroupedBar: React.FC<
             }
           } catch (error) {
             console.warn(`Error formatting date "${groupName}":`, error);
-            return format(dateObject, finalFormatString, { locale: dateLocale });
+            return format(dateObject, finalFormatString, {
+              locale: dateLocale,
+            });
           }
         }
       }

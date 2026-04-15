@@ -6,38 +6,54 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription, DialogFooter, DialogHeader,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Select, SelectContent,
-  SelectItem, SelectTrigger,
-  SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody,
-  TableCell, TableHead, TableHeader,
-  TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   LinkType,
   RepositoryCaseLink,
-  RepositoryCaseSource
+  RepositoryCaseSource,
 } from "@prisma/client";
 import {
-  Bot, Calendar, CircleSlash2, Link2, ListChecks, Plus, Trash2, X
+  Bot,
+  Calendar,
+  CircleSlash2,
+  Link2,
+  ListChecks,
+  Plus,
+  Trash2,
+  X,
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import {
-  useFindManyRepositoryCaseLink, useUpdateRepositoryCaseLink, useUpsertRepositoryCaseLink
+  useFindManyRepositoryCaseLink,
+  useUpdateRepositoryCaseLink,
+  useUpsertRepositoryCaseLink,
 } from "~/lib/hooks";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
@@ -244,9 +260,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       selectedType: inputType as LinkType,
     });
     if (!result.success) {
-      return (
-        result.error.issues[0]?.message || tLinkedCases("failedToCreate")
-      );
+      return result.error.issues[0]?.message || tLinkedCases("failedToCreate");
     }
     const { selectedCaseId: validCaseId, selectedType: validType } =
       result.data;
@@ -762,9 +776,7 @@ function AddLinkDialog({
               </SelectContent>
             </Select>
           </div>
-          {error && (
-            <div className="text-destructive text-sm">{error}</div>
-          )}
+          {error && <div className="text-destructive text-sm">{error}</div>}
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit}>{tLinkedCases("addLink")}</Button>

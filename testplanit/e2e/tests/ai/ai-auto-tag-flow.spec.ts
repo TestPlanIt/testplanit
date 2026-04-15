@@ -35,13 +35,13 @@ test.describe("Auto-Tag Flow", () => {
     await folderNode.click();
 
     // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    const caseCheckbox = page
+      .locator('[data-testid^="case-checkbox-"]')
+      .first();
     await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
     // Now select all cases via header checkbox
-    const headerCheckbox = page
-      .locator('thead [role="checkbox"]')
-      .first();
+    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
     await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
 
@@ -127,13 +127,13 @@ test.describe("Auto-Tag Flow", () => {
     await folderNode.click();
 
     // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    const caseCheckbox = page
+      .locator('[data-testid^="case-checkbox-"]')
+      .first();
     await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
     // Select cases via header checkbox
-    const headerCheckbox = page
-      .locator('thead [role="checkbox"]')
-      .first();
+    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
     await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
 
@@ -148,9 +148,11 @@ test.describe("Auto-Tag Flow", () => {
 
     // Wait for the analysis to show progress or complete
     // Either a spinner is visible (in-progress) or results are shown (completed)
-    const spinnerOrResults = dialog.locator(
-      'svg.lucide-loader-2, [class*="animate-spin"], table, [data-testid*="tag"]'
-    ).first();
+    const spinnerOrResults = dialog
+      .locator(
+        'svg.lucide-loader-2, [class*="animate-spin"], table, [data-testid*="tag"]'
+      )
+      .first();
     await expect(spinnerOrResults).toBeVisible({ timeout: 10000 });
 
     // Dialog should remain open during/after analysis
@@ -210,8 +212,8 @@ test.describe("Auto-Tag Flow", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    await expect(
-      page.locator('[data-testid="repository-layout"]')
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-testid="repository-layout"]')).toBeVisible(
+      { timeout: 15000 }
+    );
   });
 });

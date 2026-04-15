@@ -1,5 +1,10 @@
 import {
-  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
 } from "@prisma/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";

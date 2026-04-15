@@ -31,10 +31,18 @@ const stableFormObject = vi.hoisted(() => ({
   reset: vi.fn(),
   trigger: vi.fn().mockResolvedValue(true),
   clearErrors: vi.fn(),
-  getFieldState: vi.fn(() => ({ isDirty: false, invalid: false, isTouched: false })),
+  getFieldState: vi.fn(() => ({
+    isDirty: false,
+    invalid: false,
+    isTouched: false,
+  })),
 }));
 
-const mockChildren = vi.hoisted(() => ({ children }: any) => children || null);
+const mockChildren = vi.hoisted(
+  () =>
+    ({ children }: any) =>
+      children || null
+);
 const mockField = vi.hoisted(() => ({
   value: "",
   onChange: vi.fn(),
@@ -169,8 +177,7 @@ vi.mock("@hookform/resolvers/zod", () => ({
 
 vi.mock("@/components/ui/form", () => ({
   Form: mockChildren,
-  FormField: ({ render: renderFn }: any) =>
-    renderFn({ field: mockField }),
+  FormField: ({ render: renderFn }: any) => renderFn({ field: mockField }),
   FormItem: mockChildren,
   FormLabel: mockChildren,
   FormControl: mockChildren,
@@ -270,10 +277,7 @@ const buildMockResult = (overrides: Partial<any> = {}) => ({
 });
 
 // Import after vi.mock
-import {
-  useFindManySessionResults,
-  useFindManyStatus,
-} from "~/lib/hooks";
+import { useFindManySessionResults, useFindManyStatus } from "~/lib/hooks";
 import { SessionResultsList } from "./SessionResultsList";
 
 beforeEach(() => {

@@ -53,21 +53,19 @@ describe("parseSentinels", () => {
 
 describe("extractPasswordFromUrl", () => {
   it("extracts password from valkey:// URL", () => {
-    expect(
-      extractPasswordFromUrl("valkey://:mypassword@host:6379")
-    ).toBe("mypassword");
+    expect(extractPasswordFromUrl("valkey://:mypassword@host:6379")).toBe(
+      "mypassword"
+    );
   });
 
   it("extracts password from redis:// URL", () => {
-    expect(
-      extractPasswordFromUrl("redis://:secret123@host:6379")
-    ).toBe("secret123");
+    expect(extractPasswordFromUrl("redis://:secret123@host:6379")).toBe(
+      "secret123"
+    );
   });
 
   it("extracts password with user:password format", () => {
-    expect(
-      extractPasswordFromUrl("redis://user:pass@host:6379")
-    ).toBe("pass");
+    expect(extractPasswordFromUrl("redis://user:pass@host:6379")).toBe("pass");
   });
 
   it("returns undefined when no password", () => {
@@ -80,8 +78,8 @@ describe("extractPasswordFromUrl", () => {
 
   it("preserves URL-encoded characters in password", () => {
     // URL.password returns the raw encoded form; ioredis handles decoding
-    expect(
-      extractPasswordFromUrl("valkey://:p%40ss%23word@host:6379")
-    ).toBe("p%40ss%23word");
+    expect(extractPasswordFromUrl("valkey://:p%40ss%23word@host:6379")).toBe(
+      "p%40ss%23word"
+    );
   });
 });

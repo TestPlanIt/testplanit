@@ -12,9 +12,11 @@ import { getColumns } from "./columns";
 
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddStatus } from "./AddStatus";

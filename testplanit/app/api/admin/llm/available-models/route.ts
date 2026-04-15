@@ -49,7 +49,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function fetchOpenAiModels(apiKey?: string, endpoint?: string): Promise<string[]> {
+async function fetchOpenAiModels(
+  apiKey?: string,
+  endpoint?: string
+): Promise<string[]> {
   if (!apiKey) {
     throw new Error("API key is required for OpenAI");
   }
@@ -95,12 +98,16 @@ async function fetchOpenAiModels(apiKey?: string, endpoint?: string): Promise<st
   }
 }
 
-async function fetchGeminiModels(apiKey: string, endpoint?: string): Promise<string[]> {
+async function fetchGeminiModels(
+  apiKey: string,
+  endpoint?: string
+): Promise<string[]> {
   if (!apiKey) {
     throw new Error("API key is required for Gemini");
   }
 
-  const baseUrl = endpoint || "https://generativelanguage.googleapis.com/v1beta";
+  const baseUrl =
+    endpoint || "https://generativelanguage.googleapis.com/v1beta";
   const url = `${baseUrl}/models?key=${apiKey}`;
 
   try {
@@ -112,23 +119,27 @@ async function fetchGeminiModels(apiKey: string, endpoint?: string): Promise<str
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Gemini API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
-    
+
     // Extract model names from the response
     if (data.models && Array.isArray(data.models)) {
       return data.models
         .filter((model: any) => {
           // Filter for generation models only
-          return model.name && 
-                 model.supportedGenerationMethods?.includes('generateContent') &&
-                 !model.name.includes('embedding'); // Exclude embedding models
+          return (
+            model.name &&
+            model.supportedGenerationMethods?.includes("generateContent") &&
+            !model.name.includes("embedding")
+          ); // Exclude embedding models
         })
         .map((model: any) => {
           // Extract just the model name (e.g., "models/gemini-1.5-flash" -> "gemini-1.5-flash")
-          return model.name.replace('models/', '');
+          return model.name.replace("models/", "");
         })
         .sort();
     }
@@ -136,11 +147,16 @@ async function fetchGeminiModels(apiKey: string, endpoint?: string): Promise<str
     return [];
   } catch (error) {
     console.error("Error fetching Gemini models:", error);
-    throw new Error(`Failed to fetch Gemini models: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to fetch Gemini models: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
   }
 }
 
-async function fetchAnthropicModels(apiKey?: string, endpoint?: string): Promise<string[]> {
+async function fetchAnthropicModels(
+  apiKey?: string,
+  endpoint?: string
+): Promise<string[]> {
   if (!apiKey) {
     throw new Error("API key is required for Anthropic");
   }
@@ -155,7 +171,8 @@ async function fetchAnthropicModels(apiKey?: string, endpoint?: string): Promise
       isCustomEndpoint = true;
     }
   }
-  const baseUrl = endpoint?.trim()?.replace(/\/$/, "") || "https://api.anthropic.com/v1";
+  const baseUrl =
+    endpoint?.trim()?.replace(/\/$/, "") || "https://api.anthropic.com/v1";
 
   try {
     let response: Response;
@@ -165,7 +182,7 @@ async function fetchAnthropicModels(apiKey?: string, endpoint?: string): Promise
       response = await fetch(`${baseUrl}/models`, {
         method: "GET",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         signal: AbortSignal.timeout(10000),
       });
@@ -229,11 +246,13 @@ async function fetchOllamaModels(endpoint?: string): Promise<string[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
-    
+
     // Extract model names from the response
     if (data.models && Array.isArray(data.models)) {
       return data.models
@@ -245,9 +264,13 @@ async function fetchOllamaModels(endpoint?: string): Promise<string[]> {
     return [];
   } catch (error) {
     console.error("Error fetching Ollama models:", error);
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      throw new Error("Ollama server is not responding. Make sure Ollama is running and accessible.");
+    if (error instanceof Error && error.name === "TimeoutError") {
+      throw new Error(
+        "Ollama server is not responding. Make sure Ollama is running and accessible."
+      );
     }
-    throw new Error(`Failed to fetch Ollama models: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to fetch Ollama models: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
   }
 }

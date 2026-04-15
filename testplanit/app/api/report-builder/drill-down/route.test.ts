@@ -23,7 +23,10 @@ vi.mock("~/utils/drillDownQueryBuilders", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { getModelForMetric, getQueryBuilderForMetric } from "~/utils/drillDownQueryBuilders";
+import {
+  getModelForMetric,
+  getQueryBuilderForMetric,
+} from "~/utils/drillDownQueryBuilders";
 import { POST } from "./route";
 
 const createRequest = (body: Record<string, unknown>): NextRequest => {
@@ -81,7 +84,9 @@ describe("POST /api/report-builder/drill-down", () => {
     it("returns 401 when no session", async () => {
       (getServerSession as any).mockResolvedValue(null);
 
-      const response = await POST(createRequest({ context: validDrillDownContext }));
+      const response = await POST(
+        createRequest({ context: validDrillDownContext })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(401);

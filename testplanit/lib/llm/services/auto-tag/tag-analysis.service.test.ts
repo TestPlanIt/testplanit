@@ -15,10 +15,7 @@ describe("createBatches", () => {
     systemPromptTokens: 200,
   };
 
-  function makeEntity(
-    id: number,
-    estimatedTokens: number,
-  ): EntityContent {
+  function makeEntity(id: number, estimatedTokens: number): EntityContent {
     return {
       id,
       entityType: "repositoryCase",
@@ -30,7 +27,11 @@ describe("createBatches", () => {
   }
 
   it("puts all entities in one batch when they fit", () => {
-    const entities = [makeEntity(1, 200), makeEntity(2, 200), makeEntity(3, 200)];
+    const entities = [
+      makeEntity(1, 200),
+      makeEntity(2, 200),
+      makeEntity(3, 200),
+    ];
     const batches = createBatches(entities, defaultConfig);
     expect(batches).toHaveLength(1);
     expect(batches[0]).toHaveLength(3);
@@ -56,27 +57,34 @@ describe("createBatches", () => {
 
   it("truncates oversized entity and puts it in its own batch", () => {
     // Budget ~2462 tokens, entity has 5000 tokens
-    const entities = [makeEntity(1, 100), makeEntity(2, 5000), makeEntity(3, 100)];
-    const truncateItem = (item: EntityContent, maxChars: number): EntityContent => ({
+    const entities = [
+      makeEntity(1, 100),
+      makeEntity(2, 5000),
+      makeEntity(3, 100),
+    ];
+    const truncateItem = (
+      item: EntityContent,
+      maxChars: number
+    ): EntityContent => ({
       ...item,
       textContent: item.textContent.slice(0, maxChars),
-      estimatedTokens: Math.ceil(Math.min(item.textContent.length, maxChars) / 4),
+      estimatedTokens: Math.ceil(
+        Math.min(item.textContent.length, maxChars) / 4
+      ),
     });
     const batches = createBatches(entities, defaultConfig, truncateItem);
     // Entity 2 should be alone in a batch, truncated
     expect(batches.length).toBeGreaterThanOrEqual(2);
 
     // Find the batch with entity 2
-    const oversizedBatch = batches.find((b) =>
-      b.some((e) => e.id === 2),
-    );
+    const oversizedBatch = batches.find((b) => b.some((e) => e.id === 2));
     expect(oversizedBatch).toBeDefined();
     expect(oversizedBatch).toHaveLength(1);
     // Its estimated tokens should be <= budget
     const truncatedEntity = oversizedBatch![0]!;
     const budget = Math.floor(
       defaultConfig.maxTokensPerRequest * defaultConfig.contentBudgetRatio! -
-        defaultConfig.systemPromptTokens,
+        defaultConfig.systemPromptTokens
     );
     expect(truncatedEntity.estimatedTokens).toBeLessThanOrEqual(budget);
   });
@@ -130,7 +138,7 @@ describe("TagAnalysisService", () => {
     service = new TagAnalysisService(
       mockPrisma,
       mockLlmManager,
-      mockPromptResolver,
+      mockPromptResolver
     );
   });
 
@@ -161,7 +169,14 @@ describe("TagAnalysisService", () => {
       {
         id: 1,
         name: "Login test case",
-        steps: [{ step: "Navigate to login", expectedResult: "Page loads", isDeleted: false, order: 1 }],
+        steps: [
+          {
+            step: "Navigate to login",
+            expectedResult: "Page loads",
+            isDeleted: false,
+            order: 1,
+          },
+        ],
         caseFieldValues: [],
         tags: [],
         folder: null,
@@ -266,7 +281,7 @@ describe("TagAnalysisService", () => {
         entityType: "repositoryCase",
         projectId: 5,
         userId: "u1",
-      }),
+      })
     ).rejects.toThrow(/no llm integration configured/i);
   });
 
@@ -426,21 +441,19 @@ describe("TagAnalysisService", () => {
 
     // "Login" matches existing "login"
     const loginSugg = result.suggestions.find(
-      (s) => s.tagName.toLowerCase() === "login",
+      (s) => s.tagName.toLowerCase() === "login"
     );
     expect(loginSugg?.isExisting).toBe(true);
     expect(loginSugg?.matchedExistingTag).toBe("login");
 
     // "regression" is already on entity -> filtered out
     const regrSugg = result.suggestions.find(
-      (s) => s.tagName.toLowerCase() === "regression",
+      (s) => s.tagName.toLowerCase() === "regression"
     );
     expect(regrSugg).toBeUndefined();
 
     // "new-feature" is new
-    const newSugg = result.suggestions.find(
-      (s) => s.tagName === "new-feature",
-    );
+    const newSugg = result.suggestions.find((s) => s.tagName === "new-feature");
     expect(newSugg?.isExisting).toBe(false);
   });
 

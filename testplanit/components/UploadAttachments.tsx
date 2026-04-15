@@ -4,13 +4,16 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { filesize } from "filesize";
 import {
-  CloudUpload, FileStack, FileText, Loader2,
-  XCircle
+  CloudUpload,
+  FileStack,
+  FileText,
+  Loader2,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

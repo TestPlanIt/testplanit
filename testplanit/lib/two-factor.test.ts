@@ -1,9 +1,15 @@
 import { generate, generateSecret } from "otplib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  decryptSecret, encryptSecret, generateBackupCodes, generateQRCodeDataURL, generateTOTPSecret, hashBackupCode,
+  decryptSecret,
+  encryptSecret,
+  generateBackupCodes,
+  generateQRCodeDataURL,
+  generateTOTPSecret,
+  hashBackupCode,
   isLegacyEncryption,
-  verifyBackupCode, verifyTOTP
+  verifyBackupCode,
+  verifyTOTP,
 } from "./two-factor";
 
 // Mock QRCode
@@ -235,8 +241,14 @@ describe("Two-Factor Authentication", () => {
     it("should be case insensitive for verification", () => {
       const { plainCodes, hashedCodes } = generateBackupCodes(1);
 
-      const indexUpper = verifyBackupCode(plainCodes[0].toUpperCase(), hashedCodes);
-      const indexLower = verifyBackupCode(plainCodes[0].toLowerCase(), hashedCodes);
+      const indexUpper = verifyBackupCode(
+        plainCodes[0].toUpperCase(),
+        hashedCodes
+      );
+      const indexLower = verifyBackupCode(
+        plainCodes[0].toLowerCase(),
+        hashedCodes
+      );
 
       expect(indexUpper).toBe(0);
       expect(indexLower).toBe(0);
@@ -343,12 +355,8 @@ describe("Two-Factor Authentication", () => {
     });
 
     it("should reject unknown version prefixes", () => {
-      expect(() => decryptSecret("v99:garbage")).toThrow(
-        /version prefix/
-      );
-      expect(() => decryptSecret("no-prefix-at-all")).toThrow(
-        /version prefix/
-      );
+      expect(() => decryptSecret("v99:garbage")).toThrow(/version prefix/);
+      expect(() => decryptSecret("no-prefix-at-all")).toThrow(/version prefix/);
     });
 
     it("should decrypt legacy v1 (XOR) records for backward compatibility", () => {

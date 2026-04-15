@@ -7,12 +7,13 @@ import { describe, expect, it } from "vitest";
 type DateGrouping = "daily" | "weekly" | "monthly" | "quarterly" | "annually";
 
 // Re-implement getPeriodDates for testing (mirrors the implementation in automationTrendsUtils.ts)
-function getPeriodDates(date: Date, grouping: DateGrouping): { start: Date; end: Date } {
-  const utcDate = new Date(Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate()
-  ));
+function getPeriodDates(
+  date: Date,
+  grouping: DateGrouping
+): { start: Date; end: Date } {
+  const utcDate = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
 
   switch (grouping) {
     case "daily": {
@@ -34,21 +35,41 @@ function getPeriodDates(date: Date, grouping: DateGrouping): { start: Date; end:
       return { start, end };
     }
     case "monthly": {
-      const start = new Date(Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), 1, 0, 0, 0, 0));
-      const end = new Date(Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+      const start = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), 1, 0, 0, 0, 0)
+      );
+      const end = new Date(
+        Date.UTC(
+          utcDate.getUTCFullYear(),
+          utcDate.getUTCMonth() + 1,
+          1,
+          0,
+          0,
+          0,
+          0
+        )
+      );
       end.setUTCMilliseconds(-1);
       return { start, end };
     }
     case "quarterly": {
       const quarter = Math.floor(utcDate.getUTCMonth() / 3);
-      const start = new Date(Date.UTC(utcDate.getUTCFullYear(), quarter * 3, 1, 0, 0, 0, 0));
-      const end = new Date(Date.UTC(utcDate.getUTCFullYear(), quarter * 3 + 3, 1, 0, 0, 0, 0));
+      const start = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), quarter * 3, 1, 0, 0, 0, 0)
+      );
+      const end = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), quarter * 3 + 3, 1, 0, 0, 0, 0)
+      );
       end.setUTCMilliseconds(-1);
       return { start, end };
     }
     case "annually": {
-      const start = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1, 0, 0, 0, 0));
-      const end = new Date(Date.UTC(utcDate.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0));
+      const start = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), 0, 1, 0, 0, 0, 0)
+      );
+      const end = new Date(
+        Date.UTC(utcDate.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0)
+      );
       end.setUTCMilliseconds(-1);
       return { start, end };
     }

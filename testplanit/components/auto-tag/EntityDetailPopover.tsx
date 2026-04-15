@@ -3,13 +3,16 @@
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ExternalLink, FolderOpen, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import {
-  useFindManyCaseFields, useFindUniqueRepositoryCases, useFindUniqueSessions, useFindUniqueTestRuns
+  useFindManyCaseFields,
+  useFindUniqueRepositoryCases,
+  useFindUniqueSessions,
+  useFindUniqueTestRuns,
 } from "~/lib/hooks";
 import { extractTiptapText } from "~/lib/llm/services/auto-tag/content-extractor";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
@@ -24,7 +27,11 @@ interface EntityDetailPopoverProps {
   className?: string;
 }
 
-function getEntityHref(entityType: EntityType, projectId: string, entityId: number): string {
+function getEntityHref(
+  entityType: EntityType,
+  projectId: string,
+  entityId: number
+): string {
   switch (entityType) {
     case "repositoryCase":
       return `/projects/repository/${projectId}/${entityId}`;
@@ -61,7 +68,7 @@ function extractRichText(value: unknown): string {
  */
 function resolveFieldValue(
   value: unknown,
-  optionsMap: Map<number, string>,
+  optionsMap: Map<number, string>
 ): string {
   if (value == null) return "";
   if (typeof value === "string") {
@@ -82,7 +89,7 @@ function resolveFieldValue(
   if (Array.isArray(value)) {
     return value
       .map((v) =>
-        typeof v === "number" ? (optionsMap.get(v) ?? String(v)) : String(v),
+        typeof v === "number" ? (optionsMap.get(v) ?? String(v)) : String(v)
       )
       .join(", ");
   }
@@ -107,7 +114,7 @@ export function EntityDetailPopover({
           type="button"
           className={cn(
             "cursor-pointer truncate text-left hover:underline",
-            className,
+            className
           )}
         >
           {children}
@@ -120,10 +127,7 @@ export function EntityDetailPopover({
         align="start"
         collisionPadding={16}
       >
-        <EntityDetailContent
-          entityId={entityId}
-          entityType={entityType}
-        />
+        <EntityDetailContent entityId={entityId} entityType={entityType} />
         <EntityDetailFooter
           entityType={entityType}
           projectId={projectId}
@@ -207,7 +211,7 @@ function useFieldOptionsMap(fieldIds: number[]) {
           },
         }
       : undefined,
-    { enabled: fieldIds.length > 0 },
+    { enabled: fieldIds.length > 0 }
   );
 
   return useMemo(() => {
@@ -239,15 +243,17 @@ function CaseDetail({ entityId }: { entityId: number }) {
         folder: true,
       },
     },
-    { enabled: true },
+    { enabled: true }
   );
 
   const fieldIds = useMemo(
     () =>
       (data?.caseFieldValues ?? [])
         .map((cfv: any) => cfv.fieldId as number)
-        .filter((id: number, i: number, arr: number[]) => arr.indexOf(id) === i),
-    [data?.caseFieldValues],
+        .filter(
+          (id: number, i: number, arr: number[]) => arr.indexOf(id) === i
+        ),
+    [data?.caseFieldValues]
   );
   const optionsMap = useFieldOptionsMap(fieldIds);
 
@@ -326,7 +332,7 @@ function TestRunDetail({ entityId }: { entityId: number }) {
     {
       where: { id: entityId },
     },
-    { enabled: true },
+    { enabled: true }
   );
 
   if (isLoading || !data) return <LoadingState />;
@@ -369,7 +375,7 @@ function SessionDetail({ entityId }: { entityId: number }) {
         sessionFieldValues: { include: { field: true } },
       },
     },
-    { enabled: true },
+    { enabled: true }
   );
 
   const sessionFieldValues = (data as any)?.sessionFieldValues;
@@ -377,8 +383,10 @@ function SessionDetail({ entityId }: { entityId: number }) {
     () =>
       (sessionFieldValues ?? [])
         .map((sfv: any) => sfv.fieldId as number)
-        .filter((id: number, i: number, arr: number[]) => arr.indexOf(id) === i),
-    [sessionFieldValues],
+        .filter(
+          (id: number, i: number, arr: number[]) => arr.indexOf(id) === i
+        ),
+    [sessionFieldValues]
   );
   const optionsMap = useFieldOptionsMap(fieldIds);
 

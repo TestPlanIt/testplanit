@@ -184,7 +184,9 @@ export class JiraLinkService {
   /**
    * Get linked Jira issues for a test run
    */
-  static async getLinkedJiraIssuesForTestRun(testRunId: number): Promise<any[]> {
+  static async getLinkedJiraIssuesForTestRun(
+    testRunId: number
+  ): Promise<any[]> {
     try {
       const testRun = await prisma.testRuns.findUnique({
         where: { id: testRunId },
@@ -207,7 +209,7 @@ export class JiraLinkService {
         return [];
       }
 
-      return testRun.issues.map(issue => ({
+      return testRun.issues.map((issue) => ({
         id: issue.id,
         key: issue.name,
         title: issue.title,
@@ -315,7 +317,9 @@ export class JiraLinkService {
   /**
    * Get linked Jira issues for a session
    */
-  static async getLinkedJiraIssuesForSession(sessionId: number): Promise<any[]> {
+  static async getLinkedJiraIssuesForSession(
+    sessionId: number
+  ): Promise<any[]> {
     try {
       const session = await prisma.sessions.findUnique({
         where: { id: sessionId },
@@ -338,7 +342,7 @@ export class JiraLinkService {
         return [];
       }
 
-      return session.issues.map(issue => ({
+      return session.issues.map((issue) => ({
         id: issue.id,
         key: issue.name,
         title: issue.title,
@@ -381,7 +385,7 @@ export class JiraLinkService {
         },
       });
 
-      return linkedIssues.map(issue => ({
+      return linkedIssues.map((issue) => ({
         id: issue.id,
         key: issue.name,
         title: issue.title,
@@ -446,12 +450,13 @@ export class JiraLinkService {
         },
       });
 
-      const remainingLinks = (issueWithLinks?.repositoryCases?.length || 0) +
-                             (issueWithLinks?.testRuns?.length || 0) +
-                             (issueWithLinks?.sessions?.length || 0) +
-                             (issueWithLinks?.testRunResults?.length || 0) +
-                             (issueWithLinks?.sessionResults?.length || 0) +
-                             (issueWithLinks?.testRunStepResults?.length || 0);
+      const remainingLinks =
+        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.testRuns?.length || 0) +
+        (issueWithLinks?.sessions?.length || 0) +
+        (issueWithLinks?.testRunResults?.length || 0) +
+        (issueWithLinks?.sessionResults?.length || 0) +
+        (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
         await prisma.issue.delete({
@@ -508,12 +513,13 @@ export class JiraLinkService {
         },
       });
 
-      const remainingLinks = (issueWithLinks?.repositoryCases?.length || 0) +
-                             (issueWithLinks?.testRuns?.length || 0) +
-                             (issueWithLinks?.sessions?.length || 0) +
-                             (issueWithLinks?.testRunResults?.length || 0) +
-                             (issueWithLinks?.sessionResults?.length || 0) +
-                             (issueWithLinks?.testRunStepResults?.length || 0);
+      const remainingLinks =
+        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.testRuns?.length || 0) +
+        (issueWithLinks?.sessions?.length || 0) +
+        (issueWithLinks?.testRunResults?.length || 0) +
+        (issueWithLinks?.sessionResults?.length || 0) +
+        (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
         await prisma.issue.delete({
@@ -570,12 +576,13 @@ export class JiraLinkService {
         },
       });
 
-      const remainingLinks = (issueWithLinks?.repositoryCases?.length || 0) +
-                             (issueWithLinks?.testRuns?.length || 0) +
-                             (issueWithLinks?.sessions?.length || 0) +
-                             (issueWithLinks?.testRunResults?.length || 0) +
-                             (issueWithLinks?.sessionResults?.length || 0) +
-                             (issueWithLinks?.testRunStepResults?.length || 0);
+      const remainingLinks =
+        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.testRuns?.length || 0) +
+        (issueWithLinks?.sessions?.length || 0) +
+        (issueWithLinks?.testRunResults?.length || 0) +
+        (issueWithLinks?.sessionResults?.length || 0) +
+        (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
         await prisma.issue.delete({
@@ -631,11 +638,12 @@ export class JiraLinkService {
         },
       });
 
-      const remainingLinks = (issueWithLinks?.repositoryCases?.length || 0) +
-                             (issueWithLinks?.testRuns?.length || 0) +
-                             (issueWithLinks?.sessions?.length || 0) +
-                             (issueWithLinks?.testRunResults?.length || 0) +
-                             (issueWithLinks?.sessionResults?.length || 0);
+      const remainingLinks =
+        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.testRuns?.length || 0) +
+        (issueWithLinks?.sessions?.length || 0) +
+        (issueWithLinks?.testRunResults?.length || 0) +
+        (issueWithLinks?.sessionResults?.length || 0);
 
       if (remainingLinks === 0) {
         await prisma.issue.delete({
@@ -691,11 +699,12 @@ export class JiraLinkService {
         },
       });
 
-      const remainingLinks = (issueWithLinks?.repositoryCases?.length || 0) +
-                             (issueWithLinks?.testRuns?.length || 0) +
-                             (issueWithLinks?.sessions?.length || 0) +
-                             (issueWithLinks?.testRunResults?.length || 0) +
-                             (issueWithLinks?.sessionResults?.length || 0);
+      const remainingLinks =
+        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.testRuns?.length || 0) +
+        (issueWithLinks?.sessions?.length || 0) +
+        (issueWithLinks?.testRunResults?.length || 0) +
+        (issueWithLinks?.sessionResults?.length || 0);
 
       if (remainingLinks === 0) {
         await prisma.issue.delete({
@@ -734,13 +743,13 @@ export class JiraLinkService {
 
       const testRunResult = await prisma.testRunResults.findUnique({
         where: { id: testRunResultId },
-        include: { 
+        include: {
           issues: true,
           testRunCase: {
             include: {
-              testRun: true
-            }
-          }
+              testRun: true,
+            },
+          },
         },
       });
 
@@ -827,9 +836,9 @@ export class JiraLinkService {
 
       const sessionResult = await prisma.sessionResults.findUnique({
         where: { id: sessionResultId },
-        include: { 
+        include: {
           issues: true,
-          session: true
+          session: true,
         },
       });
 
@@ -893,7 +902,9 @@ export class JiraLinkService {
   /**
    * Get linked Jira issues for a test run result
    */
-  static async getLinkedJiraIssuesForTestRunResult(testRunResultId: number): Promise<any[]> {
+  static async getLinkedJiraIssuesForTestRunResult(
+    testRunResultId: number
+  ): Promise<any[]> {
     try {
       const testRunResult = await prisma.testRunResults.findUnique({
         where: { id: testRunResultId },
@@ -916,7 +927,7 @@ export class JiraLinkService {
         return [];
       }
 
-      return testRunResult.issues.map(issue => ({
+      return testRunResult.issues.map((issue) => ({
         id: issue.id,
         key: issue.name,
         title: issue.title,
@@ -932,7 +943,10 @@ export class JiraLinkService {
         },
       }));
     } catch (error) {
-      console.error("Error fetching linked Jira issues for test run result:", error);
+      console.error(
+        "Error fetching linked Jira issues for test run result:",
+        error
+      );
       return [];
     }
   }
@@ -940,7 +954,9 @@ export class JiraLinkService {
   /**
    * Get linked Jira issues for a session result
    */
-  static async getLinkedJiraIssuesForSessionResult(sessionResultId: number): Promise<any[]> {
+  static async getLinkedJiraIssuesForSessionResult(
+    sessionResultId: number
+  ): Promise<any[]> {
     try {
       const sessionResult = await prisma.sessionResults.findUnique({
         where: { id: sessionResultId },
@@ -963,7 +979,7 @@ export class JiraLinkService {
         return [];
       }
 
-      return sessionResult.issues.map(issue => ({
+      return sessionResult.issues.map((issue) => ({
         id: issue.id,
         key: issue.name,
         title: issue.title,
@@ -979,7 +995,10 @@ export class JiraLinkService {
         },
       }));
     } catch (error) {
-      console.error("Error fetching linked Jira issues for session result:", error);
+      console.error(
+        "Error fetching linked Jira issues for session result:",
+        error
+      );
       return [];
     }
   }
@@ -1010,17 +1029,17 @@ export class JiraLinkService {
 
       const testRunStepResult = await prisma.testRunStepResults.findUnique({
         where: { id: testRunStepResultId },
-        include: { 
+        include: {
           issues: true,
           testRunResult: {
             include: {
               testRunCase: {
                 include: {
-                  testRun: true
-                }
-              }
-            }
-          }
+                  testRun: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -1028,7 +1047,8 @@ export class JiraLinkService {
         throw new Error("Test run step result not found");
       }
 
-      const projectId = testRunStepResult.testRunResult.testRunCase.testRun.projectId;
+      const projectId =
+        testRunStepResult.testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
       const issue = await prisma.issue.upsert({
@@ -1125,12 +1145,13 @@ export class JiraLinkService {
         },
       });
 
-      const remainingLinks = (issueWithLinks?.repositoryCases?.length || 0) +
-                             (issueWithLinks?.testRuns?.length || 0) +
-                             (issueWithLinks?.sessions?.length || 0) +
-                             (issueWithLinks?.testRunResults?.length || 0) +
-                             (issueWithLinks?.sessionResults?.length || 0) +
-                             (issueWithLinks?.testRunStepResults?.length || 0);
+      const remainingLinks =
+        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.testRuns?.length || 0) +
+        (issueWithLinks?.sessions?.length || 0) +
+        (issueWithLinks?.testRunResults?.length || 0) +
+        (issueWithLinks?.sessionResults?.length || 0) +
+        (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
         await prisma.issue.delete({
@@ -1138,7 +1159,10 @@ export class JiraLinkService {
         });
       }
     } catch (error) {
-      console.error("Error unlinking test run step result from Jira issue:", error);
+      console.error(
+        "Error unlinking test run step result from Jira issue:",
+        error
+      );
       throw error;
     }
   }
@@ -1146,7 +1170,9 @@ export class JiraLinkService {
   /**
    * Get linked Jira issues for a test run step result
    */
-  static async getLinkedJiraIssuesForTestRunStepResult(testRunStepResultId: number): Promise<any[]> {
+  static async getLinkedJiraIssuesForTestRunStepResult(
+    testRunStepResultId: number
+  ): Promise<any[]> {
     try {
       const testRunStepResult = await prisma.testRunStepResults.findUnique({
         where: { id: testRunStepResultId },
@@ -1169,7 +1195,7 @@ export class JiraLinkService {
         return [];
       }
 
-      return testRunStepResult.issues.map(issue => ({
+      return testRunStepResult.issues.map((issue) => ({
         id: issue.id,
         key: issue.name,
         title: issue.title,
@@ -1185,7 +1211,10 @@ export class JiraLinkService {
         },
       }));
     } catch (error) {
-      console.error("Error fetching linked Jira issues for test run step result:", error);
+      console.error(
+        "Error fetching linked Jira issues for test run step result:",
+        error
+      );
       return [];
     }
   }
@@ -1217,5 +1246,4 @@ export class JiraLinkService {
       throw error;
     }
   }
-
 }

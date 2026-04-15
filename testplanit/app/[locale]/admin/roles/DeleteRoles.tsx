@@ -2,7 +2,9 @@
 import { Roles } from "@prisma/client";
 import { useState } from "react";
 import {
-  useFindFirstRoles, useUpdateManyUser, useUpdateRoles
+  useFindFirstRoles,
+  useUpdateManyUser,
+  useUpdateRoles,
 } from "~/lib/hooks";
 
 import { useTranslations } from "next-intl";
@@ -15,7 +17,12 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface DeleteRoleProps {

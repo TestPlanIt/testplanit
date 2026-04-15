@@ -20,7 +20,14 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 vi.mock("~/utils/testResultTypes", () => ({
-  AUTOMATED_TEST_RUN_TYPES: ["JUNIT", "TESTNG", "XUNIT", "NUNIT", "MOCHA", "CUCUMBER"],
+  AUTOMATED_TEST_RUN_TYPES: [
+    "JUNIT",
+    "TESTNG",
+    "XUNIT",
+    "NUNIT",
+    "MOCHA",
+    "CUCUMBER",
+  ],
 }));
 
 import { getServerSession } from "next-auth";
@@ -53,8 +60,18 @@ describe("Completed Test Runs API Route", () => {
     forecastAutomated: null,
     configuration: null,
     milestone: null,
-    state: { id: 1, name: "Done", icon: null, color: { id: 1, value: "#22c55e" } },
-    createdBy: { id: "user-123", name: "Test User", email: "test@example.com", image: null },
+    state: {
+      id: 1,
+      name: "Done",
+      icon: null,
+      color: { id: 1, value: "#22c55e" },
+    },
+    createdBy: {
+      id: "user-123",
+      name: "Test User",
+      email: "test@example.com",
+      image: null,
+    },
     project: { id: 1, name: "Test Project", note: null, iconUrl: null },
     tags: [],
     issues: [],
@@ -178,7 +195,11 @@ describe("Completed Test Runs API Route", () => {
     it("applies correct skip for page 2", async () => {
       (prisma.testRuns.count as any).mockResolvedValue(50);
 
-      const request = createRequest({ projectId: "1", page: "2", pageSize: "10" });
+      const request = createRequest({
+        projectId: "1",
+        page: "2",
+        pageSize: "10",
+      });
       await GET(request);
 
       const findCall = (prisma.testRuns.findMany as any).mock.calls[0][0];

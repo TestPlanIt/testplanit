@@ -376,7 +376,10 @@ test.describe("API Token Authentication", () => {
           expect(validResponse.status()).toBe(200);
 
           // Deactivate the test user via admin session
-          await api.updateUser({ userId: testUserId, data: { isActive: false } });
+          await api.updateUser({
+            userId: testUserId,
+            data: { isActive: false },
+          });
 
           // Token should now be rejected
           const rejectedResponse = await unauthCtx.request.get(

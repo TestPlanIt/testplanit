@@ -13,7 +13,11 @@ function createWrapper() {
     },
   });
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(QueryClientProvider, { client: queryClient }, children);
+    return React.createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      children
+    );
   };
 }
 
@@ -82,7 +86,11 @@ describe("useDrillDown", () => {
       result.current.handleMetricClick(sampleContext);
     });
 
-    const newContext = { ...sampleContext, metricId: "testRuns", metricLabel: "Test Runs" };
+    const newContext = {
+      ...sampleContext,
+      metricId: "testRuns",
+      metricLabel: "Test Runs",
+    };
     act(() => {
       result.current.handleMetricClick(newContext);
     });
@@ -198,13 +206,19 @@ describe("useDrillDown", () => {
     const context2 = { ...sampleContext, metricId: "testRuns" };
     const context3 = { ...sampleContext, metricId: "sessions" };
 
-    act(() => { result.current.handleMetricClick(context1); });
+    act(() => {
+      result.current.handleMetricClick(context1);
+    });
     expect(result.current.context?.metricId).toBe("testResults");
 
-    act(() => { result.current.handleMetricClick(context2); });
+    act(() => {
+      result.current.handleMetricClick(context2);
+    });
     expect(result.current.context?.metricId).toBe("testRuns");
 
-    act(() => { result.current.handleMetricClick(context3); });
+    act(() => {
+      result.current.handleMetricClick(context3);
+    });
     expect(result.current.context?.metricId).toBe("sessions");
   });
 

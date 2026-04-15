@@ -30,13 +30,12 @@ const mockRunsReset = vi.hoisted(() => vi.fn());
 // Controllable job state objects — mutate .status etc. in tests
 const mockCasesJob = vi.hoisted(() => ({
   jobId: null as string | null,
-  status: "idle" as
-    | "idle"
-    | "waiting"
-    | "active"
-    | "completed"
-    | "failed",
-  progress: null as { analyzed: number; total: number; finalizing?: boolean } | null,
+  status: "idle" as "idle" | "waiting" | "active" | "completed" | "failed",
+  progress: null as {
+    analyzed: number;
+    total: number;
+    finalizing?: boolean;
+  } | null,
   error: null as string | null,
   suggestions: null as Array<{
     entityId: number;
@@ -60,13 +59,12 @@ const mockCasesJob = vi.hoisted(() => ({
 
 const mockSessionsJob = vi.hoisted(() => ({
   jobId: null as string | null,
-  status: "idle" as
-    | "idle"
-    | "waiting"
-    | "active"
-    | "completed"
-    | "failed",
-  progress: null as { analyzed: number; total: number; finalizing?: boolean } | null,
+  status: "idle" as "idle" | "waiting" | "active" | "completed" | "failed",
+  progress: null as {
+    analyzed: number;
+    total: number;
+    finalizing?: boolean;
+  } | null,
   error: null as string | null,
   suggestions: null as Array<{
     entityId: number;
@@ -90,13 +88,12 @@ const mockSessionsJob = vi.hoisted(() => ({
 
 const mockRunsJob = vi.hoisted(() => ({
   jobId: null as string | null,
-  status: "idle" as
-    | "idle"
-    | "waiting"
-    | "active"
-    | "completed"
-    | "failed",
-  progress: null as { analyzed: number; total: number; finalizing?: boolean } | null,
+  status: "idle" as "idle" | "waiting" | "active" | "completed" | "failed",
+  progress: null as {
+    analyzed: number;
+    total: number;
+    finalizing?: boolean;
+  } | null,
   error: null as string | null,
   suggestions: null as Array<{
     entityId: number;
@@ -202,8 +199,16 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogHeader: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-header">{children}</div>
   ),
-  DialogTitle: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <h2 data-testid="dialog-title" className={className}>{children}</h2>
+  DialogTitle: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <h2 data-testid="dialog-title" className={className}>
+      {children}
+    </h2>
   ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p data-testid="dialog-description">{children}</p>
@@ -306,18 +311,8 @@ vi.mock("@/components/ui/input", () => ({
 }));
 
 vi.mock("@/components/ui/progress", () => ({
-  Progress: ({
-    value,
-    className,
-  }: {
-    value?: number;
-    className?: string;
-  }) => (
-    <div
-      data-testid="progress-bar"
-      data-value={value}
-      className={className}
-    />
+  Progress: ({ value, className }: { value?: number; className?: string }) => (
+    <div data-testid="progress-bar" data-value={value} className={className} />
   ),
 }));
 
@@ -400,9 +395,7 @@ vi.mock("./EntityDetailPopover", () => ({
     children: React.ReactNode;
     entityId: number;
     [key: string]: unknown;
-  }) => (
-    <span data-testid={`entity-popover-${entityId}`}>{children}</span>
-  ),
+  }) => <span data-testid={`entity-popover-${entityId}`}>{children}</span>,
 }));
 
 vi.mock("./TagChip", () => ({
@@ -449,7 +442,14 @@ vi.mock("@/components/tables/DataTable", () => ({
 }));
 
 vi.mock("@/components/tables/Pagination", () => ({
-  PaginationComponent: ({ currentPage, totalPages }: { currentPage: number; totalPages: number; [key: string]: unknown }) => (
+  PaginationComponent: ({
+    currentPage,
+    totalPages,
+  }: {
+    currentPage: number;
+    totalPages: number;
+    [key: string]: unknown;
+  }) => (
     <div data-testid="pagination">
       {currentPage}/{totalPages}
     </div>
@@ -457,7 +457,16 @@ vi.mock("@/components/tables/Pagination", () => ({
 }));
 
 vi.mock("@/components/tables/PaginationControls", () => ({
-  PaginationInfo: ({ startIndex, endIndex, totalRows }: { startIndex: number; endIndex: number; totalRows: number; [key: string]: unknown }) => (
+  PaginationInfo: ({
+    startIndex,
+    endIndex,
+    totalRows,
+  }: {
+    startIndex: number;
+    endIndex: number;
+    totalRows: number;
+    [key: string]: unknown;
+  }) => (
     <div data-testid="pagination-info">
       {startIndex}-{endIndex} of {totalRows}
     </div>
@@ -808,7 +817,7 @@ describe("AutoTagWizardDialog", () => {
       await userEvent.click(applyBtn);
 
       expect(mockToastSuccess).toHaveBeenCalledWith(
-        "review.applySuccess(tagCount=2, entityCount=2)",
+        "review.applySuccess(tagCount=2, entityCount=2)"
       );
     });
 

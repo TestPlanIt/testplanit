@@ -1,6 +1,8 @@
 import {
   Dialog,
-  DialogContent, DialogDescription, DialogTitle
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { type DialogProps } from "@radix-ui/react-dialog";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";

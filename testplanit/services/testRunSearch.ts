@@ -4,7 +4,7 @@ import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   getElasticsearchClient,
-  getEntityIndexName
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
 /**
@@ -174,7 +174,9 @@ export async function syncProjectTestRunsToElasticsearch(
 
   const indexName = getEntityIndexName(SearchableEntityType.TEST_RUN, tenantId);
 
-  console.log(`Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+  console.log(
+    `Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`
+  );
 
   const testRuns = await db.testRuns.findMany({
     where: {
@@ -251,7 +253,9 @@ export async function syncProjectTestRunsToElasticsearch(
       const errorItems = bulkResponse.items.filter(
         (item: any) => item.index?.error
       );
-      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      console.error(
+        `Bulk indexing errors: ${errorItems.length} failed documents`
+      );
       // Log detailed error information
       errorItems.slice(0, 10).forEach((item: any) => {
         if (item.index?.error) {
@@ -259,7 +263,9 @@ export async function syncProjectTestRunsToElasticsearch(
           console.error(`    Error type: ${item.index.error.type}`);
           console.error(`    Error reason: ${item.index.error.reason}`);
           if (item.index.error.caused_by) {
-            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+            console.error(
+              `    Caused by: ${JSON.stringify(item.index.error.caused_by)}`
+            );
           }
         }
       });

@@ -20,9 +20,10 @@ export function buildProjectAccessWhere(
   isAdmin: boolean,
   isProjectAdmin: boolean
 ) {
-  const baseCondition = projectId !== undefined
-    ? { id: projectId, isDeleted: false }
-    : { isDeleted: false };
+  const baseCondition =
+    projectId !== undefined
+      ? { id: projectId, isDeleted: false }
+      : { isDeleted: false };
 
   if (isAdmin) {
     return baseCondition;

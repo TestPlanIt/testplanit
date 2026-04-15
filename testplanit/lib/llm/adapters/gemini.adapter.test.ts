@@ -346,7 +346,9 @@ describe("GeminiAdapter", () => {
         text: async () => "Unauthorized",
       });
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       const result = await adapter.testConnection();
       expect(result).toBe(false);
       consoleSpy.mockRestore();

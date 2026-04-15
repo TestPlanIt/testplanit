@@ -145,14 +145,20 @@ export async function POST(request: NextRequest) {
     });
     if (providerConfig) {
       maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
-      maxTokens = providerConfig.defaultMaxTokens ?? resolvedPrompt.maxOutputTokens ?? 4096;
+      maxTokens =
+        providerConfig.defaultMaxTokens ??
+        resolvedPrompt.maxOutputTokens ??
+        4096;
     }
 
     // TOKEN-06: Validate input document size before calling LLM
     const CONTENT_BUDGET_RATIO = 0.65;
-    const systemPromptTokens = Math.ceil(resolvedPrompt.systemPrompt.length / 4);
+    const systemPromptTokens = Math.ceil(
+      resolvedPrompt.systemPrompt.length / 4
+    );
     const contentBudget = Math.max(
-      Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) - systemPromptTokens,
+      Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
+        systemPromptTokens,
       0
     );
     const estimatedDocumentTokens = Math.ceil(markdown.length / 4);
@@ -186,11 +192,10 @@ export async function POST(request: NextRequest) {
     };
 
     const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
-    const response = await manager.chat(
-      resolved.integrationId,
-      llmRequest,
-      { maxRetries, baseDelayMs }
-    );
+    const response = await manager.chat(resolved.integrationId, llmRequest, {
+      maxRetries,
+      baseDelayMs,
+    });
 
     // RETRY-04: Check truncation BEFORE JSON parse
     if (response.finishReason === "length") {
@@ -265,7 +270,9 @@ export async function POST(request: NextRequest) {
         {
           error: "Failed to parse AI response",
           details:
-            parseError instanceof Error ? parseError.message : String(parseError),
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError),
         },
         { status: 500 }
       );
@@ -292,9 +299,13 @@ export async function POST(request: NextRequest) {
         ...Object.fromEntries(
           Object.entries(tc).filter(
             ([key]) =>
-              !["name", "description", "preconditions", "steps", "tags"].includes(
-                key
-              )
+              ![
+                "name",
+                "description",
+                "preconditions",
+                "steps",
+                "tags",
+              ].includes(key)
           )
         ),
       }))

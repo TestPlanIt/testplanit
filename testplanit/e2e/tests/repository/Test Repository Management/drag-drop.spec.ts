@@ -17,7 +17,9 @@ test.describe("Drag & Drop", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Drag Folder to New Position (Same Level)", async ({ api, page }) => {
@@ -135,18 +137,27 @@ test.describe("Drag & Drop", () => {
 
     // Wait for UI to stabilize after drag operation
     // Re-fetch element reference since DOM may have changed during drag
-    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 5000 });
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Try to expand the parent folder to see nested children
     // This may fail if the drag didn't nest the child (parent has no children to expand)
     const parentFolder = repositoryPage.getFolderById(parentId);
     await parentFolder.hover();
-    const expandButton = parentFolder.locator('button').filter({
-      has: page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]')
-    }).first();
+    const expandButton = parentFolder
+      .locator("button")
+      .filter({
+        has: page.locator(
+          'svg.lucide-chevron-right, svg[class*="lucide-chevron"]'
+        ),
+      })
+      .first();
 
     // Only try to expand if the expand button exists (meaning child was nested)
-    const hasExpandButton = await expandButton.isVisible({ timeout: 2000 }).catch(() => false);
+    const hasExpandButton = await expandButton
+      .isVisible({ timeout: 2000 })
+      .catch(() => false);
     if (hasExpandButton) {
       await expandButton.click();
       await page.waitForLoadState("networkidle");
@@ -154,11 +165,18 @@ test.describe("Drag & Drop", () => {
 
     // Verify the child folder is still visible (either as nested or at root level)
     // Use retry logic because the tree may re-render after drag operation
-    let childBoxAfter: { x: number; y: number; width: number; height: number } | null = null;
+    let childBoxAfter: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } | null = null;
     await expect(async () => {
       const childAfterDrag = repositoryPage.getFolderByName(childName).first();
       await expect(childAfterDrag).toBeVisible({ timeout: 3000 });
-      await childAfterDrag.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await childAfterDrag.evaluate((el) =>
+        el.scrollIntoView({ block: "center" })
+      );
       childBoxAfter = await childAfterDrag.boundingBox();
       expect(childBoxAfter).not.toBeNull();
     }).toPass({ timeout: 10000 });
@@ -170,7 +188,9 @@ test.describe("Drag & Drop", () => {
       expect(childBoxAfter!.x).toBeGreaterThan(childBox!.x);
     } else {
       // Child not indented - drag-to-nest may not be supported
-      console.log("Drag-to-nest did not indent child - may require specific drag handle");
+      console.log(
+        "Drag-to-nest did not indent child - may require specific drag handle"
+      );
     }
   });
 
@@ -186,7 +206,9 @@ test.describe("Drag & Drop", () => {
     await repositoryPage.goto(projectId);
 
     // Wait for parent folder to be visible before expanding
-    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 5000 });
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Expand parent to see nested child
     await repositoryPage.expandFolder(parentId);
@@ -265,7 +287,9 @@ test.describe("Drag & Drop", () => {
       expect(childBoxAfter!.x).toBeLessThan(childXBefore);
     } else if (stayedNested) {
       // Drag didn't move to root - may require specific drag handle or drop zone
-      console.log("Drag-to-root did not move child to root level - may need specific drop target");
+      console.log(
+        "Drag-to-root did not move child to root level - may need specific drop target"
+      );
     }
   });
 
@@ -298,7 +322,9 @@ test.describe("Drag & Drop", () => {
 
     // Scroll elements into view
     await testCaseRow.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await targetFolderElement.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await targetFolderElement.evaluate((el) =>
+      el.scrollIntoView({ block: "center" })
+    );
 
     const caseBox = await testCaseRow.boundingBox();
     const targetBox = await targetFolderElement.boundingBox();
@@ -306,9 +332,16 @@ test.describe("Drag & Drop", () => {
     expect(caseBox).not.toBeNull();
     expect(targetBox).not.toBeNull();
 
-    await page.mouse.move(caseBox!.x + caseBox!.width / 2, caseBox!.y + caseBox!.height / 2);
+    await page.mouse.move(
+      caseBox!.x + caseBox!.width / 2,
+      caseBox!.y + caseBox!.height / 2
+    );
     await page.mouse.down();
-    await page.mouse.move(targetBox!.x + targetBox!.width / 2, targetBox!.y + targetBox!.height / 2, { steps: 10 });
+    await page.mouse.move(
+      targetBox!.x + targetBox!.width / 2,
+      targetBox!.y + targetBox!.height / 2,
+      { steps: 10 }
+    );
     await page.mouse.up();
 
     await page.waitForLoadState("networkidle");
@@ -327,7 +360,9 @@ test.describe("Drag & Drop", () => {
       // If drag didn't work, verify case is still in source folder
       await repositoryPage.selectFolder(sourceFolderId);
       await page.waitForLoadState("networkidle");
-      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({ timeout: 5000 });
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -338,8 +373,16 @@ test.describe("Drag & Drop", () => {
     const sourceFolderId = await api.createFolder(projectId, sourceFolder);
     const targetFolder = `Multi Target ${Date.now()}`;
     const targetFolderId = await api.createFolder(projectId, targetFolder);
-    const case1Id = await api.createTestCase(projectId, sourceFolderId, `Multi Case 1 ${Date.now()}`);
-    const case2Id = await api.createTestCase(projectId, sourceFolderId, `Multi Case 2 ${Date.now()}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      sourceFolderId,
+      `Multi Case 1 ${Date.now()}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      sourceFolderId,
+      `Multi Case 2 ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
 
@@ -347,15 +390,21 @@ test.describe("Drag & Drop", () => {
     await page.waitForLoadState("networkidle");
 
     // Select multiple test cases
-    const checkbox1 = page.locator(`[data-testid="case-checkbox-${case1Id}"]`).first();
-    const checkbox2 = page.locator(`[data-testid="case-checkbox-${case2Id}"]`).first();
+    const checkbox1 = page
+      .locator(`[data-testid="case-checkbox-${case1Id}"]`)
+      .first();
+    const checkbox2 = page
+      .locator(`[data-testid="case-checkbox-${case2Id}"]`)
+      .first();
 
     await expect(checkbox1).toBeVisible({ timeout: 5000 });
     await checkbox1.click();
     await checkbox2.click();
 
     // Drag selection to target folder
-    const selectedRow = page.locator(`[data-testid="case-row-${case1Id}"]`).first();
+    const selectedRow = page
+      .locator(`[data-testid="case-row-${case1Id}"]`)
+      .first();
     const targetFolderElement = repositoryPage.getFolderById(targetFolderId);
 
     await expect(selectedRow).toBeVisible({ timeout: 5000 });
@@ -363,7 +412,9 @@ test.describe("Drag & Drop", () => {
 
     // Scroll elements into view
     await selectedRow.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await targetFolderElement.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await targetFolderElement.evaluate((el) =>
+      el.scrollIntoView({ block: "center" })
+    );
 
     const rowBox = await selectedRow.boundingBox();
     const targetBox = await targetFolderElement.boundingBox();
@@ -371,15 +422,25 @@ test.describe("Drag & Drop", () => {
     expect(rowBox).not.toBeNull();
     expect(targetBox).not.toBeNull();
 
-    await page.mouse.move(rowBox!.x + rowBox!.width / 2, rowBox!.y + rowBox!.height / 2);
+    await page.mouse.move(
+      rowBox!.x + rowBox!.width / 2,
+      rowBox!.y + rowBox!.height / 2
+    );
     await page.mouse.down();
-    await page.mouse.move(targetBox!.x + targetBox!.width / 2, targetBox!.y + targetBox!.height / 2, { steps: 10 });
+    await page.mouse.move(
+      targetBox!.x + targetBox!.width / 2,
+      targetBox!.y + targetBox!.height / 2,
+      { steps: 10 }
+    );
     await page.mouse.up();
 
     await page.waitForLoadState("networkidle");
   });
 
-  test("Drag and Drop Visual Feedback - Valid Target", async ({ api, page }) => {
+  test("Drag and Drop Visual Feedback - Valid Target", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create two folders to test folder-to-folder drag visual feedback
@@ -404,9 +465,16 @@ test.describe("Drag & Drop", () => {
     expect(targetBox).not.toBeNull();
 
     // Start dragging source folder toward target folder
-    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
+    await page.mouse.move(
+      sourceBox!.x + sourceBox!.width / 2,
+      sourceBox!.y + sourceBox!.height / 2
+    );
     await page.mouse.down();
-    await page.mouse.move(targetBox!.x + targetBox!.width / 2, targetBox!.y + targetBox!.height / 2, { steps: 10 });
+    await page.mouse.move(
+      targetBox!.x + targetBox!.width / 2,
+      targetBox!.y + targetBox!.height / 2,
+      { steps: 10 }
+    );
 
     // Verify visual feedback (drop target highlighting)
     // The data-drop-target attribute is set when a valid drop is detected
@@ -426,7 +494,10 @@ test.describe("Drag & Drop", () => {
     await expect(targetFolder).toBeVisible({ timeout: 5000 });
   });
 
-  test("Drag and Drop Visual Feedback - Invalid Target", async ({ api, page }) => {
+  test("Drag and Drop Visual Feedback - Invalid Target", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with a test case - dragging case to its own folder is invalid
@@ -442,7 +513,9 @@ test.describe("Drag & Drop", () => {
     await page.waitForLoadState("networkidle");
 
     // Use data-testid for more reliable selection
-    const testCaseRow = page.locator(`[data-testid="case-row-${caseId}"]`).first();
+    const testCaseRow = page
+      .locator(`[data-testid="case-row-${caseId}"]`)
+      .first();
     const folder = repositoryPage.getFolderById(folderId);
 
     await expect(testCaseRow).toBeVisible({ timeout: 5000 });
@@ -459,15 +532,24 @@ test.describe("Drag & Drop", () => {
     expect(folderBox).not.toBeNull();
 
     // Try to drag case to its own folder (invalid - same folder)
-    await page.mouse.move(caseBox!.x + caseBox!.width / 2, caseBox!.y + caseBox!.height / 2);
+    await page.mouse.move(
+      caseBox!.x + caseBox!.width / 2,
+      caseBox!.y + caseBox!.height / 2
+    );
     await page.mouse.down();
-    await page.mouse.move(folderBox!.x + folderBox!.width / 2, folderBox!.y + folderBox!.height / 2, { steps: 10 });
+    await page.mouse.move(
+      folderBox!.x + folderBox!.width / 2,
+      folderBox!.y + folderBox!.height / 2,
+      { steps: 10 }
+    );
 
     // When dragging to same folder, it should NOT show as valid drop target
     const validIndicator = page.locator('[data-drop-target="true"]');
 
     // The key assertion: should NOT show as valid drop target
-    const hasValidIndicator = await validIndicator.isVisible().catch(() => false);
+    const hasValidIndicator = await validIndicator
+      .isVisible()
+      .catch(() => false);
     expect(hasValidIndicator).toBe(false);
 
     await page.mouse.up();
@@ -523,7 +605,9 @@ test.describe("Drag & Drop", () => {
     expect(box).not.toBeNull();
 
     // Find the bottom of the tree
-    const treeBottom = page.locator('[data-testid="folder-tree-end"], .tree-end').first();
+    const treeBottom = page
+      .locator('[data-testid="folder-tree-end"], .tree-end')
+      .first();
     await expect(treeBottom).toBeVisible({ timeout: 2000 });
     const bottomBox = await treeBottom.boundingBox();
     expect(bottomBox).not.toBeNull();
@@ -549,7 +633,9 @@ test.describe("Drag & Drop", () => {
     await repositoryPage.goto(projectId);
 
     // Wait for parent folder to be visible before expanding
-    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 5000 });
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({
+      timeout: 5000,
+    });
 
     await repositoryPage.expandFolder(parentId);
 
@@ -578,9 +664,16 @@ test.describe("Drag & Drop", () => {
     const parentBox = await parent.boundingBox();
     const childBox = await child.boundingBox();
 
-    await page.mouse.move(parentBox!.x + parentBox!.width / 2, parentBox!.y + parentBox!.height / 2);
+    await page.mouse.move(
+      parentBox!.x + parentBox!.width / 2,
+      parentBox!.y + parentBox!.height / 2
+    );
     await page.mouse.down();
-    await page.mouse.move(childBox!.x + childBox!.width / 2, childBox!.y + childBox!.height / 2, { steps: 10 });
+    await page.mouse.move(
+      childBox!.x + childBox!.width / 2,
+      childBox!.y + childBox!.height / 2,
+      { steps: 10 }
+    );
     await page.mouse.up();
 
     // This should be prevented - verify parent is still at root

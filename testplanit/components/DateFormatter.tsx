@@ -74,7 +74,8 @@ export const DateFormatter: React.FC<DateFormatterProps> = ({
 
   return (
     <>
-      {formattedDate}{suffix}
+      {formattedDate}
+      {suffix}
     </>
   );
 };

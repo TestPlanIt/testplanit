@@ -1,5 +1,8 @@
 import {
-  GitRepoAdapter, ListFilesResult, RepoFileEntry, TestConnectionResult
+  GitRepoAdapter,
+  ListFilesResult,
+  RepoFileEntry,
+  TestConnectionResult,
 } from "./GitRepoAdapter";
 
 const MAX_FILES = 10000; // Cap to prevent runaway pagination

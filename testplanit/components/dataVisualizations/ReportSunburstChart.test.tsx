@@ -1,6 +1,9 @@
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ReportSunburstChart, SunburstHierarchyNode } from "./ReportSunburstChart";
+import {
+  ReportSunburstChart,
+  SunburstHierarchyNode,
+} from "./ReportSunburstChart";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
@@ -25,8 +28,10 @@ vi.mock("d3", () => {
       data: { name: "A", id: "a", value: 10, color: "#ff0000" },
       depth: 1,
       value: 10,
-      x0: 0, x1: Math.PI,
-      y0: 0, y1: 50,
+      x0: 0,
+      x1: Math.PI,
+      y0: 0,
+      y1: 50,
       children: undefined,
       parent: null,
     },
@@ -34,8 +39,10 @@ vi.mock("d3", () => {
       data: { name: "B", id: "b", value: 20, color: undefined },
       depth: 1,
       value: 20,
-      x0: Math.PI, x1: 2 * Math.PI,
-      y0: 0, y1: 50,
+      x0: Math.PI,
+      x1: 2 * Math.PI,
+      y0: 0,
+      y1: 50,
       children: undefined,
       parent: null,
     },
@@ -49,8 +56,10 @@ vi.mock("d3", () => {
     leaves: vi.fn(() => []),
     value: 30,
     depth: 0,
-    x0: 0, x1: 2 * Math.PI,
-    y0: 0, y1: 50,
+    x0: 0,
+    x1: 2 * Math.PI,
+    y0: 0,
+    y1: 50,
     children: [],
     data: { name: "root", id: "root" },
   };
@@ -62,8 +71,10 @@ vi.mock("d3", () => {
     descendants: vi.fn(() => [...hierarchyResult.descendants()]),
     leaves: vi.fn(() => []),
     value: 30,
-    x0: 0, x1: 2 * Math.PI,
-    y0: 0, y1: 50,
+    x0: 0,
+    x1: 2 * Math.PI,
+    y0: 0,
+    y1: 50,
     children: [],
     data: { name: "root", id: "root" },
   };
@@ -140,9 +151,7 @@ describe("ReportSunburstChart", () => {
           {
             name: "Level 2",
             id: "l2",
-            children: [
-              { name: "Leaf", id: "leaf", value: 5 },
-            ],
+            children: [{ name: "Leaf", id: "leaf", value: 5 }],
           },
         ],
       },
@@ -180,9 +189,7 @@ describe("ReportSunburstChart", () => {
       id: "single",
       value: 100,
     };
-    const { container } = render(
-      <ReportSunburstChart data={noChildrenData} />
-    );
+    const { container } = render(<ReportSunburstChart data={noChildrenData} />);
     expect(container.querySelector("svg")).toBeInTheDocument();
   });
 

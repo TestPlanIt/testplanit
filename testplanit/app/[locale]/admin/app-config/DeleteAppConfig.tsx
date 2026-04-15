@@ -3,7 +3,12 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { TriangleAlert } from "lucide-react";
@@ -19,7 +24,11 @@ interface DeleteAppConfigProps {
   onClose: () => void;
 }
 
-export function DeleteAppConfig({ config, open, onClose }: DeleteAppConfigProps) {
+export function DeleteAppConfig({
+  config,
+  open,
+  onClose,
+}: DeleteAppConfigProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: deleteAppConfig } = useDeleteAppConfig();
   const tCommon = useTranslations("common");

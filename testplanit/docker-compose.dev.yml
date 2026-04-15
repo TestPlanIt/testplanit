@@ -16,7 +16,14 @@ services:
     ports:
       - "${DOCKER_DEV_APP_PORT:-3000}:3000"
     # Use wait script, then execute next dev directly from node_modules
-    entrypoint: ["/usr/local/bin/wait-for-postgres.sh", "postgres", "5432", "./node_modules/.bin/next", "dev"]
+    entrypoint:
+      [
+        "/usr/local/bin/wait-for-postgres.sh",
+        "postgres",
+        "5432",
+        "./node_modules/.bin/next",
+        "dev",
+      ]
     networks:
       - testplanit-net
     depends_on:
@@ -61,7 +68,12 @@ services:
       - .env.development # Needs DB_URL and other env vars for prisma/zenstack
     working_dir: /app # Set working directory for commands within the container
     # Push schema and seed database (no migrations)
-    command: ["sh", "-c", "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'"]
+    command:
+      [
+        "sh",
+        "-c",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'",
+      ]
     networks:
       - testplanit-net
     depends_on:

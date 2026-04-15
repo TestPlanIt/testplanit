@@ -18,7 +18,10 @@ test.describe("LLM API Endpoints", () => {
    * POST /api/llm/generate-test-cases
    */
   test.describe("POST /api/llm/generate-test-cases", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
@@ -70,7 +73,12 @@ test.describe("LLM API Endpoints", () => {
         {
           data: {
             projectId: 1,
-            issue: { key: "TEST-1", title: "Login feature", description: "Implement login", status: "Open" },
+            issue: {
+              key: "TEST-1",
+              title: "Login feature",
+              description: "Implement login",
+              status: "Open",
+            },
             // template is missing
             context: { folderContext: 0 },
           },
@@ -82,7 +90,10 @@ test.describe("LLM API Endpoints", () => {
       expect(body.error).toBe("Missing required parameters");
     });
 
-    test("returns 404 for non-existent project", async ({ request, baseURL }) => {
+    test("returns 404 for non-existent project", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(
         `${baseURL}/api/llm/generate-test-cases`,
         {
@@ -156,7 +167,9 @@ test.describe("LLM API Endpoints", () => {
 
       expect(response.status()).toBe(400);
       const body = await response.json();
-      expect(body.error).toBe("No active LLM integration found for this project");
+      expect(body.error).toBe(
+        "No active LLM integration found for this project"
+      );
     });
   });
 
@@ -164,7 +177,10 @@ test.describe("LLM API Endpoints", () => {
    * POST /api/llm/magic-select-cases
    */
   test.describe("POST /api/llm/magic-select-cases", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
@@ -238,7 +254,10 @@ test.describe("LLM API Endpoints", () => {
       expect(body.error).toBe("Invalid request");
     });
 
-    test("returns 404 for non-existent project", async ({ request, baseURL }) => {
+    test("returns 404 for non-existent project", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(
         `${baseURL}/api/llm/magic-select-cases`,
         {
@@ -325,7 +344,9 @@ test.describe("LLM API Endpoints", () => {
         expect(typeof body.repositoryTotalCount).toBe("number");
       } else {
         // Expected: no LLM integration configured in test env
-        expect(body.error).toBe("No active LLM integration found for this project");
+        expect(body.error).toBe(
+          "No active LLM integration found for this project"
+        );
       }
     });
   });
@@ -334,7 +355,10 @@ test.describe("LLM API Endpoints", () => {
    * POST /api/llm/chat
    */
   test.describe("POST /api/llm/chat", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
@@ -383,7 +407,10 @@ test.describe("LLM API Endpoints", () => {
       expect(body.error).toBe("LLM integration ID and message are required");
     });
 
-    test("returns 404 for non-existent project", async ({ request, baseURL }) => {
+    test("returns 404 for non-existent project", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(`${baseURL}/api/llm/chat`, {
         data: {
           llmIntegrationId: 1,
@@ -424,7 +451,10 @@ test.describe("LLM API Endpoints", () => {
    * POST /api/llm/parse-markdown-test-cases
    */
   test.describe("POST /api/llm/parse-markdown-test-cases", () => {
-    test("returns 401 for unauthenticated requests", async ({ browser, baseURL }) => {
+    test("returns 401 for unauthenticated requests", async ({
+      browser,
+      baseURL,
+    }) => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
@@ -433,7 +463,8 @@ test.describe("LLM API Endpoints", () => {
         {
           data: {
             projectId: 1,
-            markdown: "# Test Case 1\n- Step 1: Do something\n- Expected: Something happens",
+            markdown:
+              "# Test Case 1\n- Step 1: Do something\n- Expected: Something happens",
           },
         }
       );
@@ -457,7 +488,9 @@ test.describe("LLM API Endpoints", () => {
 
       expect(response.status()).toBe(400);
       const body = await response.json();
-      expect(body.error).toBe("Missing required parameters (projectId, markdown)");
+      expect(body.error).toBe(
+        "Missing required parameters (projectId, markdown)"
+      );
     });
 
     test("returns 400 for missing projectId", async ({ request, baseURL }) => {
@@ -473,16 +506,22 @@ test.describe("LLM API Endpoints", () => {
 
       expect(response.status()).toBe(400);
       const body = await response.json();
-      expect(body.error).toBe("Missing required parameters (projectId, markdown)");
+      expect(body.error).toBe(
+        "Missing required parameters (projectId, markdown)"
+      );
     });
 
-    test("returns 404 for non-existent project", async ({ request, baseURL }) => {
+    test("returns 404 for non-existent project", async ({
+      request,
+      baseURL,
+    }) => {
       const response = await request.post(
         `${baseURL}/api/llm/parse-markdown-test-cases`,
         {
           data: {
             projectId: 99999999,
-            markdown: "# Test Case 1\n- Step 1: Navigate to login page\n- Expected: Login page loads",
+            markdown:
+              "# Test Case 1\n- Step 1: Navigate to login page\n- Expected: Login page loads",
           },
         }
       );
@@ -514,7 +553,9 @@ test.describe("LLM API Endpoints", () => {
 
       expect(response.status()).toBe(400);
       const body = await response.json();
-      expect(body.error).toBe("No active LLM integration found for this project");
+      expect(body.error).toBe(
+        "No active LLM integration found for this project"
+      );
     });
   });
 });

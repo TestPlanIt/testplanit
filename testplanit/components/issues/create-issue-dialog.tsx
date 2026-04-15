@@ -9,14 +9,15 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
-  FormControl, FormField,
+  FormControl,
+  FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateIssue } from "@/lib/hooks/issue";
@@ -106,16 +107,15 @@ export function CreateIssueDialog({
   const createIssue = useCreateIssue();
 
   // Fetch project integrations
-  const { data: projectIntegrations } =
-    useFindManyProjectIntegration({
-      where: {
-        projectId,
-        isActive: true,
-      },
-      include: {
-        integration: true,
-      },
-    });
+  const { data: projectIntegrations } = useFindManyProjectIntegration({
+    where: {
+      projectId,
+      isActive: true,
+    },
+    include: {
+      integration: true,
+    },
+  });
 
   const activeIntegration = projectIntegrations?.[0];
   const integrationId = activeIntegration?.integrationId;
@@ -127,10 +127,7 @@ export function CreateIssueDialog({
         projectIntegrationId: activeIntegration?.id || "",
         isActive: true,
       },
-      orderBy: [
-        { isDefault: "desc" },
-        { externalProjectName: "asc" },
-      ],
+      orderBy: [{ isDefault: "desc" }, { externalProjectName: "asc" }],
     },
     {
       enabled: !!activeIntegration?.id,
@@ -138,7 +135,9 @@ export function CreateIssueDialog({
   );
 
   // Track which IntegrationProject the user has selected for issue creation
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null
+  );
 
   // Auto-select default project when dialog opens or integrationProjects loads.
   // Also resets selection when dialog closes.
@@ -147,8 +146,14 @@ export function CreateIssueDialog({
       setSelectedProjectId(null);
       return;
     }
-    if (integrationProjects && integrationProjects.length > 0 && !selectedProjectId) {
-      const defaultProject = integrationProjects.find((ip) => ip.isDefault) || integrationProjects[0];
+    if (
+      integrationProjects &&
+      integrationProjects.length > 0 &&
+      !selectedProjectId
+    ) {
+      const defaultProject =
+        integrationProjects.find((ip) => ip.isDefault) ||
+        integrationProjects[0];
       setSelectedProjectId(defaultProject.id);
     }
   }, [open, integrationProjects, selectedProjectId]);
@@ -156,14 +161,20 @@ export function CreateIssueDialog({
   // Derive the selected project record
   const selectedProject = useMemo(() => {
     if (!integrationProjects || integrationProjects.length === 0) return null;
-    return integrationProjects.find((ip) => ip.id === selectedProjectId) || null;
+    return (
+      integrationProjects.find((ip) => ip.id === selectedProjectId) || null
+    );
   }, [integrationProjects, selectedProjectId]);
 
   // The effective project key for API calls — from IntegrationProject when available,
   // falling back to legacy config fields for backward compatibility
   const effectiveProjectKey = useMemo(() => {
     if (selectedProject) {
-      return selectedProject.externalProjectKey || selectedProject.externalProjectId || "";
+      return (
+        selectedProject.externalProjectKey ||
+        selectedProject.externalProjectId ||
+        ""
+      );
     }
     // Backward compat: fall back to config when no IntegrationProject records exist
     const config = (activeIntegration?.config as Record<string, any>) || {};
@@ -194,7 +205,9 @@ export function CreateIssueDialog({
     if (selectedProject?.defaultIssueType) {
       return {
         id: selectedProject.defaultIssueType,
-        name: selectedProject.defaultIssueTypeName || selectedProject.defaultIssueType,
+        name:
+          selectedProject.defaultIssueTypeName ||
+          selectedProject.defaultIssueType,
       };
     }
     // Backward compat: read from config when no IntegrationProject records exist
@@ -741,7 +754,9 @@ export function CreateIssueDialog({
                     <SelectContent>
                       {integrationProjects.map((ip) => (
                         <SelectItem key={ip.id} value={ip.id}>
-                          {ip.externalProjectName} {"("}{ip.externalProjectKey}{")"}
+                          {ip.externalProjectName} {"("}
+                          {ip.externalProjectKey}
+                          {")"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -852,7 +867,9 @@ export function CreateIssueDialog({
                     <Label htmlFor={field.key}>
                       {field.name}
                       {field.required && (
-                        <sup><Asterisk className="w-3 h-3 text-destructive" /></sup>
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       )}
                     </Label>
                     {renderField(field)}

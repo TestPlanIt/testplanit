@@ -2,10 +2,14 @@ import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { fr } from "date-fns/locale/fr";
 import { describe, expect, it } from "vitest";
-import { formatEmailDate, formatEmailDateTime, getServerDateFnsLocale } from "./server-date-formatter";
+import {
+  formatEmailDate,
+  formatEmailDateTime,
+  getServerDateFnsLocale,
+} from "./server-date-formatter";
 
 describe("server-date-formatter", () => {
-  const testDate = new Date('2025-07-10T14:45:00Z');
+  const testDate = new Date("2025-07-10T14:45:00Z");
 
   describe("getServerDateFnsLocale", () => {
     it("should return correct locale for en-US", () => {

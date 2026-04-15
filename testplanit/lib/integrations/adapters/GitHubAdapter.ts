@@ -1,6 +1,11 @@
 import { BaseAdapter } from "./BaseAdapter";
 import {
-  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
+  AuthenticationData,
+  CreateIssueData,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
 } from "./IssueAdapter";
 
 /**
@@ -314,14 +319,18 @@ export class GitHubAdapter extends BaseAdapter {
 
     if (githubIssue.repository_url) {
       // Format: https://api.github.com/repos/owner/repo
-      const match = githubIssue.repository_url.match(/\/repos\/([^/]+)\/([^/]+)$/);
+      const match = githubIssue.repository_url.match(
+        /\/repos\/([^/]+)\/([^/]+)$/
+      );
       if (match) {
         owner = match[1];
         repo = match[2];
       }
     } else if (githubIssue.html_url) {
       // Format: https://github.com/owner/repo/issues/123
-      const match = githubIssue.html_url.match(/github\.com\/([^/]+)\/([^/]+)\/issues/);
+      const match = githubIssue.html_url.match(
+        /github\.com\/([^/]+)\/([^/]+)\/issues/
+      );
       if (match) {
         owner = match[1];
         repo = match[2];

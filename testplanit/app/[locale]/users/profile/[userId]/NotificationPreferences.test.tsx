@@ -11,8 +11,8 @@ vi.mock("~/lib/hooks");
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, _values?: any) => {
     const translations: Record<string, string> = {
-      "title": "Notification Preferences",
-      "description": "Choose how you want to receive notifications",
+      title: "Notification Preferences",
+      description: "Choose how you want to receive notifications",
       "mode.label": "Notification Mode",
       "mode.useGlobal": "Use Global Setting",
       "success.title": "Success",
@@ -20,8 +20,10 @@ vi.mock("next-intl", () => ({
       "error.description": "Failed to save preferences",
       "common.access.none": "None",
       "admin.notifications.defaultMode.inApp": "In-App Only",
-      "admin.notifications.defaultMode.inAppEmailImmediate": "In-App + Immediate Email",
-      "admin.notifications.defaultMode.inAppEmailDaily": "In-App + Daily Digest",
+      "admin.notifications.defaultMode.inAppEmailImmediate":
+        "In-App + Immediate Email",
+      "admin.notifications.defaultMode.inAppEmailDaily":
+        "In-App + Daily Digest",
       "common.actions.saving": "Saving...",
       "common.actions.save": "Save",
       "common.messages.createError": "Error",
@@ -90,7 +92,9 @@ describe("NotificationPreferences - Email Server Configuration", () => {
 
     // Wait for the email server check to complete and email options to be hidden
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/admin/sso/magic-link-status");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/admin/sso/magic-link-status"
+      );
       expect(screen.queryByLabelText(/In-App \+ Immediate Email/i)).toBeNull();
     });
 
@@ -119,7 +123,9 @@ describe("NotificationPreferences - Email Server Configuration", () => {
 
     // Wait for the email server check to complete
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/admin/sso/magic-link-status");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/admin/sso/magic-link-status"
+      );
     });
 
     // Verify all options are visible including email options
@@ -152,7 +158,9 @@ describe("NotificationPreferences - Email Server Configuration", () => {
 
     // Wait for the email server check and fallback to complete
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/admin/sso/magic-link-status");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/admin/sso/magic-link-status"
+      );
     });
 
     // The IN_APP radio should be selected after fallback

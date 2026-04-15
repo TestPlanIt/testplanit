@@ -14,12 +14,22 @@ test.describe("Report Builder - Multiple Report Types", () => {
     api: import("../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    const projectId = await api.createProject(`E2E Report Types Project ${uniqueId}`);
+    const projectId = await api.createProject(
+      `E2E Report Types Project ${uniqueId}`
+    );
 
     // Create test cases to have data for the repository-stats based reports
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Report TC Alpha ${uniqueId}`);
-    await api.createTestCase(projectId, rootFolderId, `Report TC Beta ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Report TC Alpha ${uniqueId}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Report TC Beta ${uniqueId}`
+    );
 
     return projectId;
   }
@@ -47,7 +57,9 @@ test.describe("Report Builder - Multiple Report Types", () => {
       params.set("metrics", metrics.join(","));
     }
 
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
   }
 
@@ -65,16 +77,22 @@ test.describe("Report Builder - Multiple Report Types", () => {
   /**
    * Helper to assert that a report produced results or a graceful no-data message
    */
-  async function assertReportResultsOrNoData(page: import("@playwright/test").Page) {
+  async function assertReportResultsOrNoData(
+    page: import("@playwright/test").Page
+  ) {
     // Accept either a results table, a visualization, or a no-results message
-    const hasTable = await page.locator("table").first().isVisible().catch(() => false);
+    const hasTable = await page
+      .locator("table")
+      .first()
+      .isVisible()
+      .catch(() => false);
     const hasNoResults = await page
-      .locator('text=/No results found|No data|no data|0 results/i')
+      .locator("text=/No results found|No data|no data|0 results/i")
       .first()
       .isVisible()
       .catch(() => false);
     const hasVisualization = await page
-      .locator('text=/Visualization|Chart|visualization/i')
+      .locator("text=/Visualization|Chart|visualization/i")
       .first()
       .isVisible()
       .catch(() => false);
@@ -110,7 +128,13 @@ test.describe("Report Builder - Multiple Report Types", () => {
     const projectId = await createProjectWithTestData(api);
 
     // test-execution with status dimension and testCaseCount metric
-    await navigateToReport(page, projectId, "test-execution", ["status"], ["testCaseCount"]);
+    await navigateToReport(
+      page,
+      projectId,
+      "test-execution",
+      ["status"],
+      ["testCaseCount"]
+    );
 
     // Wait for run button to be enabled (dimensions/metrics loaded from URL)
     const runButton = page.locator('[data-testid="run-report-button"]');
@@ -167,7 +191,13 @@ test.describe("Report Builder - Multiple Report Types", () => {
     const projectId = await createProjectWithTestData(api);
 
     // Use repository-stats (not pre-built) with folder dimension + testCaseCount metric
-    await navigateToReport(page, projectId, "repository-stats", ["folder"], ["testCaseCount"]);
+    await navigateToReport(
+      page,
+      projectId,
+      "repository-stats",
+      ["folder"],
+      ["testCaseCount"]
+    );
 
     const runButton = page.locator('[data-testid="run-report-button"]');
     await expect(runButton).toBeVisible({ timeout: 5000 });
@@ -204,7 +234,13 @@ test.describe("Report Builder - Multiple Report Types", () => {
     const projectId = await createProjectWithTestData(api);
 
     // Navigate with URL params
-    await navigateToReport(page, projectId, "repository-stats", ["testCase"], ["testCaseCount"]);
+    await navigateToReport(
+      page,
+      projectId,
+      "repository-stats",
+      ["testCase"],
+      ["testCaseCount"]
+    );
 
     // Run the report
     const runButton = page.locator('[data-testid="run-report-button"]');

@@ -74,9 +74,7 @@ vi.mock("./AddAppConfig", () => ({
 // parent page; mock it as a div placeholder. The page test simulates the
 // "edit button clicked" view by rendering the mock for each row.
 vi.mock("./EditAppConfig", () => ({
-  EditAppConfig: vi.fn(({ config }) => (
-    <div>{`Mock Edit ${config.key}`}</div>
-  )),
+  EditAppConfig: vi.fn(({ config }) => <div>{`Mock Edit ${config.key}`}</div>),
 }));
 
 // Debounce Hook

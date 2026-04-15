@@ -28,19 +28,21 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     }
   ) {
     const params = new URLSearchParams({
-      tab: 'builder',
-      reportType: 'repository-stats',
+      tab: "builder",
+      reportType: "repository-stats",
     });
 
     if (options?.dimensions?.length) {
-      params.set('dimensions', options.dimensions.join(','));
+      params.set("dimensions", options.dimensions.join(","));
     }
 
     if (options?.metrics?.length) {
-      params.set('metrics', options.metrics.join(','));
+      params.set("metrics", options.metrics.join(","));
     }
 
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
 
     // Wait for the report builder to load dimensions/metrics from URL params
@@ -67,7 +69,9 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
    * Legacy helper - kept for backwards compatibility with passing tests
    */
   async function _switchToBuilderTab(page: import("@playwright/test").Page) {
-    const builderTab = page.locator('[role="tab"]').filter({ hasText: /Report Builder/i });
+    const builderTab = page
+      .locator('[role="tab"]')
+      .filter({ hasText: /Report Builder/i });
     await expect(builderTab).toBeVisible({ timeout: 5000 });
     await builderTab.click();
     await page.waitForLoadState("networkidle");
@@ -77,9 +81,11 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
    * Legacy helper - replaced by direct URL navigation
    * The select component dropdown doesn't open reliably in E2E tests
    */
-  async function _selectRepositoryStatsReport(_page: import("@playwright/test").Page) {
+  async function _selectRepositoryStatsReport(
+    _page: import("@playwright/test").Page
+  ) {
     // This function is deprecated - use navigateToRepositoryStatsReport instead
-    throw new Error('Use navigateToRepositoryStatsReport() instead');
+    throw new Error("Use navigateToRepositoryStatsReport() instead");
   }
 
   /**
@@ -151,10 +157,12 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Navigate directly to Repository Statistics report (without dimensions to test the UI)
     const params = new URLSearchParams({
-      tab: 'builder',
-      reportType: 'repository-stats',
+      tab: "builder",
+      reportType: "repository-stats",
     });
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
 
     // Open dimension selector
@@ -175,20 +183,28 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Create test cases for the report
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Report Test Case 1 ${Date.now()}`);
-    await api.createTestCase(projectId, rootFolderId, `Report Test Case 2 ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Report Test Case 1 ${Date.now()}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Report Test Case 2 ${Date.now()}`
+    );
 
     // Navigate directly with dimensions and metrics
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount"],
     });
 
     // Run the report
     await runReport(page);
 
     // Verify results are displayed
-    const resultsCard = page.locator('text=/Results/i');
+    const resultsCard = page.locator("text=/Results/i");
     await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
 
     // The table should show the test cases
@@ -212,8 +228,8 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Navigate directly with dimensions and metrics
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount"],
     });
 
     // Run the report
@@ -240,12 +256,16 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Combined TC ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Combined TC ${Date.now()}`
+    );
 
     // Navigate directly to Repository Statistics with Test Case and Template dimensions
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase', 'template'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase", "template"],
+      metrics: ["testCaseCount"],
     });
 
     // Run the report
@@ -257,9 +277,11 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Table should have both Test Case and Template columns
     // Check that both dimension columns are present
-    const headers = await table.locator('th').allTextContents();
-    const hasTestCaseDimension = headers.some(h => /test\s*case/i.test(h) && !h.toLowerCase().includes('count'));
-    const hasTemplateColumn = headers.some(h => /^template$/i.test(h.trim()));
+    const headers = await table.locator("th").allTextContents();
+    const hasTestCaseDimension = headers.some(
+      (h) => /test\s*case/i.test(h) && !h.toLowerCase().includes("count")
+    );
+    const hasTemplateColumn = headers.some((h) => /^template$/i.test(h.trim()));
 
     expect(hasTestCaseDimension).toBeTruthy();
     expect(hasTemplateColumn).toBeTruthy();
@@ -273,12 +295,16 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Multi Metric TC ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Multi Metric TC ${Date.now()}`
+    );
 
     // Navigate directly to Repository Statistics with Test Case dimension and multiple metrics
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount', 'automationRate'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount", "automationRate"],
     });
 
     // Run the report
@@ -290,7 +316,9 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Check that metric columns are present
     await expect(
-      table.locator('th:has-text("Test Cases Count"), th:has-text("Test Cases")')
+      table.locator(
+        'th:has-text("Test Cases Count"), th:has-text("Test Cases")'
+      )
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -302,20 +330,28 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Chart TC 1 ${Date.now()}`);
-    await api.createTestCase(projectId, rootFolderId, `Chart TC 2 ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Chart TC 1 ${Date.now()}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Chart TC 2 ${Date.now()}`
+    );
 
     // Navigate directly to Repository Statistics with Test Case dimension
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount"],
     });
 
     // Run the report
     await runReport(page);
 
     // Verify visualization section is displayed
-    const visualizationCard = page.locator('text=/Visualization/i');
+    const visualizationCard = page.locator("text=/Visualization/i");
     await expect(visualizationCard.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -327,16 +363,22 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Date Filter TC ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Date Filter TC ${Date.now()}`
+    );
 
     // Navigate directly with dimensions and metrics
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount"],
     });
 
     // Click on date range picker to select a range
-    const dateRangeButton = page.locator('button:has-text("Select date range")');
+    const dateRangeButton = page.locator(
+      'button:has-text("Select date range")'
+    );
     if (await dateRangeButton.isVisible()) {
       await dateRangeButton.click();
 
@@ -367,8 +409,8 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Navigate directly to Repository Statistics with Test Case dimension
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount"],
     });
 
     // Run the report
@@ -376,7 +418,7 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Should show no results message
     const noResultsMessage = page.locator(
-      'text=/No results found|No data|No test cases/i'
+      "text=/No results found|No data|No test cases/i"
     );
     await expect(noResultsMessage.first()).toBeVisible({ timeout: 10000 });
   });
@@ -389,12 +431,16 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
     // Create test cases
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `URL Persist TC ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `URL Persist TC ${Date.now()}`
+    );
 
     // Navigate directly to Repository Statistics with Test Case dimension
     await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ['testCase'],
-      metrics: ['testCaseCount'],
+      dimensions: ["testCase"],
+      metrics: ["testCaseCount"],
     });
 
     // Run the report

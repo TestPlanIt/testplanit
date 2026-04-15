@@ -463,7 +463,10 @@ const METRIC_REGISTRY: Record<
       // Handle manual aggregation for complex grouping
       const needsManualAggregation =
         groupBy.some(
-          (field) => field === "createdById" || field === "createdAt" || field === "assignedToId"
+          (field) =>
+            field === "createdById" ||
+            field === "createdAt" ||
+            field === "assignedToId"
         ) || groupBy.length === 0;
 
       if (needsManualAggregation) {
@@ -592,7 +595,10 @@ const METRIC_REGISTRY: Record<
       // Handle manual aggregation for complex grouping
       const needsManualAggregation =
         groupBy.some(
-          (field) => field === "createdById" || field === "createdAt" || field === "assignedToId"
+          (field) =>
+            field === "createdById" ||
+            field === "createdAt" ||
+            field === "assignedToId"
         ) || groupBy.length === 0;
 
       if (needsManualAggregation) {
@@ -753,7 +759,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, dimensions, metrics, startDate, endDate } = await req.json();
+    const { projectId, dimensions, metrics, startDate, endDate } =
+      await req.json();
 
     if (!projectId) {
       return Response.json(

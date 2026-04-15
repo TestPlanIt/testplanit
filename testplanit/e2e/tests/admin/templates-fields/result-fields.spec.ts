@@ -433,7 +433,9 @@ test.describe("Result Fields - Validation", () => {
 
     // Try to create a result field with the same system name
     await templatesPage.clickAddResultField();
-    await templatesPage.fillResultFieldDisplayName(`E2E Result Field ${Date.now()}`);
+    await templatesPage.fillResultFieldDisplayName(
+      `E2E Result Field ${Date.now()}`
+    );
     await templatesPage.selectResultFieldType("Text String");
     await templatesPage.fillResultFieldSystemName(systemName);
     await templatesPage.clickSubmitResultField();
@@ -492,7 +494,8 @@ test.describe("Result Fields - Delete Operations", () => {
     await templatesPage.goto();
 
     // Verify template has the field
-    let fieldCount = await templatesPage.getTemplateResultFieldsCount(templateName);
+    let fieldCount =
+      await templatesPage.getTemplateResultFieldsCount(templateName);
     expect(fieldCount).toBe(1);
 
     // Delete the field

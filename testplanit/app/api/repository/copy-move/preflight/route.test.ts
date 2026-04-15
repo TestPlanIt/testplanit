@@ -91,9 +91,7 @@ const baseTargetWorkflowAssignments = [
   },
 ];
 
-const _baseSourceWorkflowStates = [
-  { id: 100, name: "Not Started" },
-];
+const _baseSourceWorkflowStates = [{ id: 100, name: "Not Started" }];
 
 const baseTargetRepository = { id: 200 };
 
@@ -123,23 +121,21 @@ function setupDefaultMocks() {
     .mockResolvedValueOnce({ id: 10 }) // source
     .mockResolvedValueOnce({ id: 20 }); // target
 
-  mockEnhancedDb.repositoryCases.findMany
-    .mockResolvedValueOnce(baseSourceCases); // source cases (via enhancedDb)
+  mockEnhancedDb.repositoryCases.findMany.mockResolvedValueOnce(
+    baseSourceCases
+  ); // source cases (via enhancedDb)
 
-  mockPrismaRepositoryCasesFindMany
-    .mockResolvedValueOnce([]); // collision check (via prisma, no collisions by default)
+  mockPrismaRepositoryCasesFindMany.mockResolvedValueOnce([]); // collision check (via prisma, no collisions by default)
 
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
-    baseTargetTemplateAssignments,
+    baseTargetTemplateAssignments
   );
 
   mockEnhancedDb.projectWorkflowAssignment.findMany.mockResolvedValue(
-    baseTargetWorkflowAssignments,
+    baseTargetWorkflowAssignments
   );
 
-  mockEnhancedDb.repositories.findFirst.mockResolvedValue(
-    baseTargetRepository,
-  );
+  mockEnhancedDb.repositories.findFirst.mockResolvedValue(baseTargetRepository);
 
   mockEnhancedDb.templates.findMany.mockResolvedValue([]);
 }
@@ -205,9 +201,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     // Override: source case uses templateId 99 which is not in target assignments
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValue([
-        { ...baseSourceCases[0], templateId: 99 },
-      ]);
+      .mockResolvedValue([{ ...baseSourceCases[0], templateId: 99 }]);
     mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue([
       { templateId: 10, template: { id: 10, name: "Default Template" } },
     ]);
@@ -234,7 +228,10 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 7
   it("returns canAutoAssignTemplates=true when user.access === ADMIN", async () => {
     setupDefaultMocks();
-    mockPrismaUserFindUnique.mockResolvedValue({ ...baseUser, access: "ADMIN" });
+    mockPrismaUserFindUnique.mockResolvedValue({
+      ...baseUser,
+      access: "ADMIN",
+    });
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(200);
@@ -276,7 +273,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     const mapping = data.workflowMappings.find(
-      (m: any) => m.sourceStateId === 100,
+      (m: any) => m.sourceStateId === 100
     );
     expect(mapping).toBeDefined();
     expect(mapping.targetStateId).toBe(100);
@@ -289,9 +286,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     // Source case has a state "Custom State" (id=999) not in target workflow
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValue([
-        { ...baseSourceCases[0], stateId: 999 },
-      ]);
+      .mockResolvedValue([{ ...baseSourceCases[0], stateId: 999 }]);
 
     // We need to also mock to return workflow state name for source
     // The route fetches source workflow states separately — let's provide that info
@@ -305,7 +300,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     const mapping = data.workflowMappings.find(
-      (m: any) => m.sourceStateId === 999,
+      (m: any) => m.sourceStateId === 999
     );
     expect(mapping).toBeDefined();
     expect(mapping.isDefaultFallback).toBe(true);
@@ -316,9 +311,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     setupDefaultMocks();
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
-      .mockResolvedValue([
-        { ...baseSourceCases[0], stateId: 999 },
-      ]);
+      .mockResolvedValue([{ ...baseSourceCases[0], stateId: 999 }]);
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
@@ -336,16 +329,14 @@ describe("POST /api/repository/copy-move/preflight", () => {
     mockEnhancedDb.repositoryCases.findMany
       .mockReset()
       .mockResolvedValueOnce(baseSourceCases); // source cases
-    mockPrismaRepositoryCasesFindMany
-      .mockReset()
-      .mockResolvedValueOnce([
-        {
-          id: 99,
-          name: "Test Case 1",
-          className: null,
-          source: "MANUAL",
-        },
-      ]); // collision check
+    mockPrismaRepositoryCasesFindMany.mockReset().mockResolvedValueOnce([
+      {
+        id: 99,
+        name: "Test Case 1",
+        className: null,
+        source: "MANUAL",
+      },
+    ]); // collision check
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
@@ -383,7 +374,16 @@ describe("POST /api/repository/copy-move/preflight", () => {
     mockPrismaUserFindUnique.mockResolvedValue({
       id: "user-1",
       access: "USER",
-      role: { rolePermissions: [{ area: "TestCaseRepository", canAddEdit: false, canDelete: false, canClose: false }] },
+      role: {
+        rolePermissions: [
+          {
+            area: "TestCaseRepository",
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
     });
     const { POST } = await import("./route");
     const res = await POST(makeRequest({ ...validBody, operation: "move" }));

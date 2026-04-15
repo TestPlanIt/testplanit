@@ -1,8 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  auditAuthEvent, auditBulkCreate, auditBulkDelete, auditBulkUpdate, auditCreate, auditDataExport, auditDelete, auditPasswordChange, auditPermissionGrant,
-  auditPermissionRevoke, auditRoleChange, auditSsoConfigChange, auditSystemConfigChange, auditUpdate, calculateDiff, captureAuditEvent, extractEntityName,
-  type AuditEvent
+  auditAuthEvent,
+  auditBulkCreate,
+  auditBulkDelete,
+  auditBulkUpdate,
+  auditCreate,
+  auditDataExport,
+  auditDelete,
+  auditPasswordChange,
+  auditPermissionGrant,
+  auditPermissionRevoke,
+  auditRoleChange,
+  auditSsoConfigChange,
+  auditSystemConfigChange,
+  auditUpdate,
+  calculateDiff,
+  captureAuditEvent,
+  extractEntityName,
+  type AuditEvent,
 } from "./auditLog";
 
 // Mock the queue
@@ -149,13 +164,23 @@ describe("AuditLog Service", () => {
 
   describe("extractEntityName", () => {
     it("should extract name for User entity", () => {
-      const entity = { id: "user-1", email: "test@example.com", name: "Test User" };
+      const entity = {
+        id: "user-1",
+        email: "test@example.com",
+        name: "Test User",
+      };
       expect(extractEntityName("User", entity)).toBe("test@example.com");
     });
 
     it("should extract name for RepositoryCases entity", () => {
-      const entity = { id: 1, name: "Test Case Name", title: "Test Case Title" };
-      expect(extractEntityName("RepositoryCases", entity)).toBe("Test Case Name");
+      const entity = {
+        id: 1,
+        name: "Test Case Name",
+        title: "Test Case Title",
+      };
+      expect(extractEntityName("RepositoryCases", entity)).toBe(
+        "Test Case Name"
+      );
     });
 
     it("should extract name for Projects entity", () => {
@@ -164,7 +189,11 @@ describe("AuditLog Service", () => {
     });
 
     it("should extract name for ApiToken entity", () => {
-      const entity = { id: "token-1", name: "CI Token", tokenPrefix: "tpi_abc" };
+      const entity = {
+        id: "token-1",
+        name: "CI Token",
+        tokenPrefix: "tpi_abc",
+      };
       expect(extractEntityName("ApiToken", entity)).toBe("CI Token");
     });
 
@@ -179,7 +208,9 @@ describe("AuditLog Service", () => {
 
     it("should handle composite keys", () => {
       const entity = { userId: "user-1", projectId: 10 };
-      expect(extractEntityName("UserProjectPermission", entity)).toBe("user-1:10");
+      expect(extractEntityName("UserProjectPermission", entity)).toBe(
+        "user-1:10"
+      );
     });
   });
 
@@ -216,7 +247,9 @@ describe("AuditLog Service", () => {
       const { getAuditLogQueue } = await import("../queues");
       vi.mocked(getAuditLogQueue).mockReturnValueOnce(null);
 
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       const event: AuditEvent = {
         action: "CREATE",
@@ -241,7 +274,9 @@ describe("AuditLog Service", () => {
       const error = new Error("Queue error");
       mockQueue.add.mockRejectedValue(error);
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const event: AuditEvent = {
         action: "CREATE",
@@ -285,7 +320,9 @@ describe("AuditLog Service", () => {
 
     it("should fall back to getCurrentTenantId when no explicit tenantId", async () => {
       const multiTenant = await import("../multiTenantPrisma");
-      vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue("tenant-from-env");
+      vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue(
+        "tenant-from-env"
+      );
 
       const event: AuditEvent = {
         action: "CREATE",
@@ -306,7 +343,9 @@ describe("AuditLog Service", () => {
 
     it("should prefer explicit tenantId over getCurrentTenantId", async () => {
       const multiTenant = await import("../multiTenantPrisma");
-      vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue("tenant-from-env");
+      vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue(
+        "tenant-from-env"
+      );
 
       const event: AuditEvent = {
         action: "UPDATE",
@@ -595,7 +634,10 @@ describe("AuditLog Service", () => {
     it("should capture DATA_EXPORTED event", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-1" });
 
-      await auditDataExport("CSV", "TestRuns", { projectId: 1, status: "PASSED" });
+      await auditDataExport("CSV", "TestRuns", {
+        projectId: 1,
+        status: "PASSED",
+      });
 
       expect(mockQueue.add).toHaveBeenCalledWith(
         "audit-event",

@@ -135,9 +135,9 @@ describe("Queue API Tenant Filtering", () => {
 
     it("should return false for jobs without tenant ID in multi-tenant mode", () => {
       expect(jobBelongsToCurrentTenant({}, true, "tenant-a")).toBe(false);
-      expect(
-        jobBelongsToCurrentTenant({ data: {} }, true, "tenant-a")
-      ).toBe(false);
+      expect(jobBelongsToCurrentTenant({ data: {} }, true, "tenant-a")).toBe(
+        false
+      );
     });
   });
 
@@ -247,15 +247,15 @@ describe("Queue API Tenant Filtering", () => {
     };
 
     it("should return base job name without tenant ID", () => {
-      expect(generateScheduledJobId("update-all-cases-forecast", undefined)).toBe(
-        "update-all-cases-forecast"
-      );
+      expect(
+        generateScheduledJobId("update-all-cases-forecast", undefined)
+      ).toBe("update-all-cases-forecast");
     });
 
     it("should append tenant ID to job name", () => {
-      expect(generateScheduledJobId("update-all-cases-forecast", "tenant-a")).toBe(
-        "update-all-cases-forecast-tenant-a"
-      );
+      expect(
+        generateScheduledJobId("update-all-cases-forecast", "tenant-a")
+      ).toBe("update-all-cases-forecast-tenant-a");
     });
 
     it("should generate unique IDs per tenant", () => {
@@ -355,7 +355,9 @@ describe("Queue API Tenant Filtering", () => {
       ];
 
       expect(filterByTenant(jobs, true, "tenant-with-dashes")).toHaveLength(1);
-      expect(filterByTenant(jobs, true, "tenant_with_underscores")).toHaveLength(1);
+      expect(
+        filterByTenant(jobs, true, "tenant_with_underscores")
+      ).toHaveLength(1);
     });
 
     it("should be case-sensitive for tenant IDs", () => {

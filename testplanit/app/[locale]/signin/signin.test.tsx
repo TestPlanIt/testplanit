@@ -42,7 +42,8 @@ vi.mock("~/lib/navigation", () => ({
 // Mock ZenStack SSO provider hook
 const mockUseFindManySsoProvider = vi.fn();
 vi.mock("~/lib/hooks/sso-provider", () => ({
-  useFindManySsoProvider: (...args: any[]) => mockUseFindManySsoProvider(...args),
+  useFindManySsoProvider: (...args: any[]) =>
+    mockUseFindManySsoProvider(...args),
 }));
 
 // Mock next-auth signIn
@@ -75,7 +76,9 @@ describe("Signin Page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset elementFromPoint mock
-    (document.elementFromPoint as ReturnType<typeof vi.fn>)?.mockReturnValue?.(null);
+    (document.elementFromPoint as ReturnType<typeof vi.fn>)?.mockReturnValue?.(
+      null
+    );
     mockRouterPush.mockClear();
 
     // Default: no SSO providers, finished loading
@@ -124,7 +127,9 @@ describe("Signin Page", () => {
     render(<Signin />);
     await waitForFormToRender();
 
-    const signupLink = screen.getByRole("link", { name: /signup|create|sign up|register/i });
+    const signupLink = screen.getByRole("link", {
+      name: /signup|create|sign up|register/i,
+    });
     expect(signupLink).toBeInTheDocument();
     expect(signupLink.getAttribute("href")).toContain("/signup");
   });
@@ -155,11 +160,14 @@ describe("Signin Page", () => {
     await user.click(screen.getByTestId("signin-button"));
 
     await waitFor(() => {
-      expect(mockSignIn).toHaveBeenCalledWith("credentials", expect.objectContaining({
-        email: "test@example.com",
-        password: "wrongpassword",
-        redirect: false,
-      }));
+      expect(mockSignIn).toHaveBeenCalledWith(
+        "credentials",
+        expect.objectContaining({
+          email: "test@example.com",
+          password: "wrongpassword",
+          redirect: false,
+        })
+      );
     });
 
     await waitFor(() => {

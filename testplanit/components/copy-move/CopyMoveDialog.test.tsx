@@ -19,11 +19,7 @@ beforeAll(() => {
 
 // ── Stable mock refs (vi.hoisted) to avoid OOM infinite loops ─────────────────
 
-const {
-  mockJobState,
-  mockProjectsData,
-  mockFoldersData,
-} = vi.hoisted(() => ({
+const { mockJobState, mockProjectsData, mockFoldersData } = vi.hoisted(() => ({
   mockJobState: {
     jobId: null as string | null,
     status: "idle" as
@@ -76,7 +72,9 @@ vi.mock("./useCopyMoveJob", () => ({
 vi.mock("~/lib/hooks", () => ({
   useFindManyProjects: () => mockProjectsData,
   useFindFirstRepositories: () => ({ data: { id: 100 } }),
-  useCreateRepositoryFolders: () => ({ mutateAsync: vi.fn().mockResolvedValue({ id: 99 }) }),
+  useCreateRepositoryFolders: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
+  }),
   useFindManyRepositoryCases: () => ({ data: [] }),
 }));
 
@@ -96,9 +94,18 @@ vi.mock("~/lib/navigation", () => ({
 // Radix Popover portals don't render in JSDOM
 // Uses placeholder to derive a stable test ID so multiple instances are distinguishable
 vi.mock("@/components/ui/async-combobox", () => ({
-  AsyncCombobox: ({ value, onValueChange, fetchOptions, getOptionValue, placeholder, disabled }: any) => {
+  AsyncCombobox: ({
+    value,
+    onValueChange,
+    fetchOptions,
+    getOptionValue,
+    placeholder,
+    disabled,
+  }: any) => {
     const [options, setOptions] = React.useState<any[]>([]);
-    const testId = placeholder?.toLowerCase().includes("folder") ? "folder-select" : "project-select";
+    const testId = placeholder?.toLowerCase().includes("folder")
+      ? "folder-select"
+      : "project-select";
     React.useEffect(() => {
       fetchOptions("", 0, 50).then((opts: any[]) => setOptions(opts));
     }, [fetchOptions]);
@@ -108,7 +115,9 @@ vi.mock("@/components/ui/async-combobox", () => ({
         value={value ? String(getOptionValue(value)) : ""}
         disabled={disabled}
         onChange={(e) => {
-          const opt = options.find((o: any) => String(getOptionValue(o)) === e.target.value);
+          const opt = options.find(
+            (o: any) => String(getOptionValue(o)) === e.target.value
+          );
           onValueChange(opt ?? null);
         }}
         aria-label={placeholder ?? "select"}
@@ -136,7 +145,13 @@ vi.mock("next-intl", () => ({
 // Mock next/image
 vi.mock("next/image", () => ({
   default: ({ src, alt, width, height, className }: any) => (
-    <img src={src} alt={alt} width={width} height={height} className={className} />
+    <img
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+    />
   ),
 }));
 
@@ -177,7 +192,9 @@ const MOCK_PREFLIGHT = {
  * FolderSelect is mocked as a plain <select> element for JSDOM compatibility.
  * The cmdk Command input has role="combobox"; our folder select is a plain <select>.
  */
-async function advanceToConfigureStep(user: ReturnType<typeof userEvent.setup>) {
+async function advanceToConfigureStep(
+  user: ReturnType<typeof userEvent.setup>
+) {
   // Select "Target Project" from the mocked AsyncCombobox select
   const projectSelect = await screen.findByTestId("project-select");
   await user.selectOptions(projectSelect, "2"); // Target Project id=2
@@ -221,8 +238,12 @@ describe("CopyMoveDialog", () => {
     const projectSelect = await screen.findByTestId("project-select");
     expect(projectSelect).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByRole("option", { name: /Target Project/i })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: /Another Project/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /Target Project/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /Another Project/i })
+      ).toBeInTheDocument();
     });
   });
 
@@ -253,7 +274,9 @@ describe("CopyMoveDialog", () => {
 
     // Folder options should be available (mocked lazy-load)
     expect(screen.getByRole("option", { name: /Root/i })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /Subfolder/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /Subfolder/i })
+    ).toBeInTheDocument();
   });
 
   // Test 4: Next button disabled until project AND folder selected
@@ -286,8 +309,12 @@ describe("CopyMoveDialog", () => {
     await advanceToConfigureStep(user);
 
     // Radio buttons for copy and move
-    expect(screen.getByRole("radio", { name: /operationCopy/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /operationMove/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /operationCopy/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /operationMove/i })
+    ).toBeInTheDocument();
 
     // Descriptions
     expect(screen.getByText("operationCopyDesc")).toBeInTheDocument();
@@ -324,7 +351,9 @@ describe("CopyMoveDialog", () => {
 
     await advanceToConfigureStep(user);
 
-    const checkbox = screen.getByRole("checkbox", { name: /autoAssignTemplates/i });
+    const checkbox = screen.getByRole("checkbox", {
+      name: /autoAssignTemplates/i,
+    });
     expect(checkbox).toBeInTheDocument();
     expect(checkbox).toBeChecked();
   });
@@ -352,8 +381,12 @@ describe("CopyMoveDialog", () => {
     expect(screen.getByText("Smoke Tests")).toBeInTheDocument();
 
     // Skip/rename radios for conflict resolution
-    expect(screen.getByRole("radio", { name: /conflictSkip/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /conflictRename/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /conflictSkip/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /conflictRename/i })
+    ).toBeInTheDocument();
   });
 
   // Test 9: Step 2 shows shared step group resolution radio
@@ -364,8 +397,12 @@ describe("CopyMoveDialog", () => {
 
     await advanceToConfigureStep(user);
 
-    expect(screen.getByRole("radio", { name: /sharedStepGroupReuse/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /sharedStepGroupCreateNew/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /sharedStepGroupReuse/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /sharedStepGroupCreateNew/i })
+    ).toBeInTheDocument();
   });
 
   // Test 10: Step 2 Go button disabled when hasTargetWriteAccess is false
@@ -407,7 +444,9 @@ describe("CopyMoveDialog", () => {
 
     // Should show progress text
     expect(screen.getByText(/progressText/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^cancel$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^cancel$/i })
+    ).toBeInTheDocument();
   });
 
   // Test 12: Step 3 shows results summary with success count on completion (BULK-04)
@@ -437,7 +476,9 @@ describe("CopyMoveDialog", () => {
     expect(screen.getByText(/successCount/i)).toBeInTheDocument();
 
     // View in target project link visible
-    expect(screen.getByRole("link", { name: /viewInTargetProject/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /viewInTargetProject/i })
+    ).toBeInTheDocument();
   });
 
   // Test 13: Step 3 shows expandable error list when result.errors is non-empty (BULK-04)
@@ -450,7 +491,9 @@ describe("CopyMoveDialog", () => {
       movedCount: 0,
       skippedCount: 0,
       droppedLinkCount: 0,
-      errors: [{ caseId: 99, caseName: "Broken Case", error: "Permission denied" }],
+      errors: [
+        { caseId: 99, caseName: "Broken Case", error: "Permission denied" },
+      ],
     };
     render(<CopyMoveDialog {...DEFAULT_PROPS} />);
 
@@ -506,12 +549,7 @@ describe("CopyMoveDialog", () => {
     mockJobState.status = "active";
     mockJobState.progress = { processed: 2, total: 5 };
 
-    render(
-      <CopyMoveDialog
-        {...DEFAULT_PROPS}
-        onOpenChange={onOpenChange}
-      />
-    );
+    render(<CopyMoveDialog {...DEFAULT_PROPS} onOpenChange={onOpenChange} />);
 
     await advanceToConfigureStep(user);
     const goBtn = screen.getByRole("button", { name: /^go$/i });
@@ -537,10 +575,7 @@ describe("CopyMoveDialog", () => {
     const onOpenChange = vi.fn();
 
     const { rerender } = render(
-      <CopyMoveDialog
-        {...DEFAULT_PROPS}
-        onOpenChange={onOpenChange}
-      />
+      <CopyMoveDialog {...DEFAULT_PROPS} onOpenChange={onOpenChange} />
     );
 
     // reset is called when dialog opens (useEffect with open=true)

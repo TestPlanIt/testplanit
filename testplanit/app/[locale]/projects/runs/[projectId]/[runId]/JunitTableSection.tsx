@@ -13,34 +13,54 @@ import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent, CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
-  CarouselItem, CarouselNext, CarouselPrevious
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  FormControl, FormField,
-  FormItem, FormLabel
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
 } from "@/components/ui/form";
 import {
-  ResizableHandle, ResizablePanel, ResizablePanelGroup
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, FileDown, Maximize2, Save, SquarePen, Trash2
+  ArrowLeft,
+  ChevronLeft,
+  CircleCheckBig,
+  CircleSlash2,
+  FileDown,
+  Maximize2,
+  Save,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -48,7 +68,8 @@ import { FormProvider } from "react-hook-form";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
 import {
-  defaultPageSizeOptions, usePagination
+  defaultPageSizeOptions,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useFindManyJUnitTestResult } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
@@ -212,21 +233,21 @@ function JunitTableSection({
   // Fetch all JUnit results for this run (only if automated test run type)
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
   useFindManyJUnitTestResult(
-      isJUnitRun
-        ? {
-            where: { testSuiteId: Number(runId) },
-            orderBy: { executedAt: "desc" },
-            distinct: ["repositoryCaseId"],
-            select: {
-              statusId: true,
-              repositoryCaseId: true,
-              executedAt: true,
-              id: true,
-            },
-          }
-        : undefined,
-      { enabled: isJUnitRun }
-    );
+    isJUnitRun
+      ? {
+          where: { testSuiteId: Number(runId) },
+          orderBy: { executedAt: "desc" },
+          distinct: ["repositoryCaseId"],
+          select: {
+            statusId: true,
+            repositoryCaseId: true,
+            executedAt: true,
+            id: true,
+          },
+        }
+      : undefined,
+    { enabled: isJUnitRun }
+  );
   // Group by status for donut chart (JUnit)
   const donutChartData = useMemo(() => {
     if (!sortedJunitTestCases) return [];
@@ -440,9 +461,7 @@ function JunitTableSection({
                             {isCompleteDialogOpen && (
                               <CompleteTestRunDialog
                                 open={isCompleteDialogOpen}
-                                onClose={() =>
-                                  setIsCompleteDialogOpen(false)
-                                }
+                                onClose={() => setIsCompleteDialogOpen(false)}
                                 testRunId={Number(runId)}
                                 projectId={Number(projectId)}
                                 stateId={testRunData?.stateId || 0}
@@ -613,7 +632,9 @@ function JunitTableSection({
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
                 className={
-                  isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                  isTransitioning
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
                 }
               >
                 <div className="p-4 space-y-4">

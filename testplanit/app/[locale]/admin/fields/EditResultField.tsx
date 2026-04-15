@@ -1,7 +1,13 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  useCreateFieldOptions, useFindManyCaseFields, useFindManyCaseFieldTypes, useFindManyResultFields, useUpdateFieldOptions, useUpdateManyFieldOptions, useUpdateResultFields
+  useCreateFieldOptions,
+  useFindManyCaseFields,
+  useFindManyCaseFieldTypes,
+  useFindManyResultFields,
+  useUpdateFieldOptions,
+  useUpdateManyFieldOptions,
+  useUpdateResultFields,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +28,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {
@@ -202,7 +208,6 @@ export function EditResultField({
     resultfield.fieldOptions,
     resultfield.initialHeight,
   ]);
-
 
   const handleDropdownOptionsChange = (
     newOptions: FieldOptions[] | ((options: FieldOptions[]) => FieldOptions[])
@@ -671,7 +676,11 @@ export function EditResultField({
         data-testid="result-field-dialog"
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="result-field-form">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+            data-testid="result-field-form"
+          >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -831,10 +840,19 @@ export function EditResultField({
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={onClose} data-testid="result-field-cancel-button">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={onClose}
+                data-testid="result-field-cancel-button"
+              >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting} data-testid="result-field-submit-button">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="result-field-submit-button"
+              >
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

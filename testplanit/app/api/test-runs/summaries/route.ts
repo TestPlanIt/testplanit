@@ -90,10 +90,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (testRuns.length === 0) {
-      return NextResponse.json(
-        { summaries: {} },
-        { status: 200 }
-      );
+      return NextResponse.json({ summaries: {} }, { status: 200 });
     }
 
     // Separate JUnit runs from regular runs
@@ -164,7 +161,12 @@ export async function GET(req: NextRequest) {
 
 async function getBatchRegularRunSummaries(
   testRunIds: number[]
-): Promise<Map<number, Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">>> {
+): Promise<
+  Map<
+    number,
+    Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
+  >
+> {
   if (testRunIds.length === 0) {
     return new Map();
   }
@@ -272,9 +274,7 @@ async function getBatchRegularRunSummaries(
     where: { id: { in: testRunIds } },
     select: { id: true, forecastManual: true },
   });
-  const forecastMap = new Map(
-    testRuns.map((tr) => [tr.id, tr.forecastManual])
-  );
+  const forecastMap = new Map(testRuns.map((tr) => [tr.id, tr.forecastManual]));
 
   // Build summary map
   const summaries = new Map<
@@ -315,7 +315,7 @@ async function getBatchRegularRunSummaries(
   });
 
   // Group case details by test run
-  const caseDetailsByRun = new Map<number, Array<typeof caseDetails[0]>>();
+  const caseDetailsByRun = new Map<number, Array<(typeof caseDetails)[0]>>();
   caseDetails.forEach((detail) => {
     if (!caseDetailsByRun.has(detail.testRunId)) {
       caseDetailsByRun.set(detail.testRunId, []);
@@ -326,7 +326,10 @@ async function getBatchRegularRunSummaries(
   // Build summaries for each test run
   testRunIds.forEach((testRunId) => {
     const statusCountsForRun = statusCountsByRun.get(testRunId) || [];
-    const totalCases = statusCountsForRun.reduce((sum, sc) => sum + sc.count, 0);
+    const totalCases = statusCountsForRun.reduce(
+      (sum, sc) => sum + sc.count,
+      0
+    );
     const completedCases = statusCountsForRun
       .filter((sc) => sc.isCompleted === true)
       .reduce((sum, sc) => sum + sc.count, 0);
@@ -368,7 +371,12 @@ async function getBatchRegularRunSummaries(
 
 async function getBatchJUnitRunSummaries(
   testRunIds: number[]
-): Promise<Map<number, Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">>> {
+): Promise<
+  Map<
+    number,
+    Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
+  >
+> {
   if (testRunIds.length === 0) {
     return new Map();
   }
@@ -536,7 +544,9 @@ async function getBatchJUnitRunSummaries(
     const completedTests = aggregates
       .filter(
         (agg) =>
-          agg.type === "PASSED" || agg.type === "ERROR" || agg.type === "FAILURE"
+          agg.type === "PASSED" ||
+          agg.type === "ERROR" ||
+          agg.type === "FAILURE"
       )
       .reduce((sum, agg) => sum + agg.count, 0);
     const completionRate =

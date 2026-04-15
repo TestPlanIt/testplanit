@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import {
-  useFindFirstRepositoryCases, useFindManyRepositoryCases
+  useFindFirstRepositoryCases,
+  useFindManyRepositoryCases,
 } from "~/lib/hooks/repository-cases";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
@@ -8,10 +9,14 @@ import { extractTextFromNode } from "~/utils/extractTextFromJson";
  * Filters out orphaned field values from a test case
  * (field values that are not part of the test case's current template)
  */
-export function filterOrphanedFieldValues<T extends { template?: any; caseFieldValues?: any[] }>(
-  testCase: T
-): T {
-  if (!testCase || !testCase.template?.caseFields || !testCase.caseFieldValues) {
+export function filterOrphanedFieldValues<
+  T extends { template?: any; caseFieldValues?: any[] },
+>(testCase: T): T {
+  if (
+    !testCase ||
+    !testCase.template?.caseFields ||
+    !testCase.caseFieldValues
+  ) {
     return testCase;
   }
 
@@ -32,14 +37,18 @@ export function filterOrphanedFieldValues<T extends { template?: any; caseFieldV
 /**
  * Apply text operator filter to a string value
  */
-export function matchesTextOperator(value: any, operator: string, searchValue: string): boolean {
+export function matchesTextOperator(
+  value: any,
+  operator: string,
+  searchValue: string
+): boolean {
   if (!value) return false;
 
   // Handle TipTap JSON documents (Text Long fields) and plain strings (Text String fields)
   let textValue: string;
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     textValue = value;
-  } else if (typeof value === 'object') {
+  } else if (typeof value === "object") {
     textValue = extractTextFromNode(value);
     if (!textValue) return false;
   } else {
@@ -50,15 +59,15 @@ export function matchesTextOperator(value: any, operator: string, searchValue: s
   const lowerSearch = searchValue.toLowerCase();
 
   switch (operator) {
-    case 'contains':
+    case "contains":
       return lowerValue.includes(lowerSearch);
-    case 'startsWith':
+    case "startsWith":
       return lowerValue.startsWith(lowerSearch);
-    case 'endsWith':
+    case "endsWith":
       return lowerValue.endsWith(lowerSearch);
-    case 'equals':
+    case "equals":
       return lowerValue === lowerSearch;
-    case 'notContains':
+    case "notContains":
       return !lowerValue.includes(lowerSearch);
     default:
       return false;
@@ -68,24 +77,30 @@ export function matchesTextOperator(value: any, operator: string, searchValue: s
 /**
  * Apply link operator filter to a URL string
  */
-export function matchesLinkOperator(value: any, operator: string, searchValue: string): boolean {
-  if (!value || typeof value !== 'string') return false;
+export function matchesLinkOperator(
+  value: any,
+  operator: string,
+  searchValue: string
+): boolean {
+  if (!value || typeof value !== "string") return false;
   const lowerValue = value.toLowerCase();
   const lowerSearch = searchValue.toLowerCase();
 
   switch (operator) {
-    case 'contains':
+    case "contains":
       return lowerValue.includes(lowerSearch);
-    case 'startsWith':
+    case "startsWith":
       return lowerValue.startsWith(lowerSearch);
-    case 'endsWith':
+    case "endsWith":
       return lowerValue.endsWith(lowerSearch);
-    case 'equals':
+    case "equals":
       return lowerValue === lowerSearch;
-    case 'domain':
+    case "domain":
       // Extract domain from URL and match
       try {
-        const url = new URL(value.startsWith('http') ? value : `https://${value}`);
+        const url = new URL(
+          value.startsWith("http") ? value : `https://${value}`
+        );
         return url.hostname.toLowerCase().includes(lowerSearch);
       } catch {
         // If not a valid URL, try simple domain matching
@@ -101,7 +116,12 @@ export function matchesLinkOperator(value: any, operator: string, searchValue: s
  * For built-in Steps, the testCase object has a `steps` relation array
  * For custom Steps fields, the value would be in caseFieldValues
  */
-export function matchesStepsOperator(testCase: any, operator: string, count1: number, count2?: number): boolean {
+export function matchesStepsOperator(
+  testCase: any,
+  operator: string,
+  count1: number,
+  count2?: number
+): boolean {
   // Check if testCase has the built-in steps relation
   const steps = testCase?.steps;
   if (!Array.isArray(steps)) return false;
@@ -110,18 +130,20 @@ export function matchesStepsOperator(testCase: any, operator: string, count1: nu
   const stepsCount = steps.length;
 
   switch (operator) {
-    case 'eq':
+    case "eq":
       return stepsCount === count1;
-    case 'lt':
+    case "lt":
       return stepsCount < count1;
-    case 'lte':
+    case "lte":
       return stepsCount <= count1;
-    case 'gt':
+    case "gt":
       return stepsCount > count1;
-    case 'gte':
+    case "gte":
       return stepsCount >= count1;
-    case 'between':
-      return count2 !== undefined && stepsCount >= count1 && stepsCount <= count2;
+    case "between":
+      return (
+        count2 !== undefined && stepsCount >= count1 && stepsCount <= count2
+      );
     default:
       return false;
   }
@@ -129,7 +151,7 @@ export function matchesStepsOperator(testCase: any, operator: string, count1: nu
 
 export interface PostFetchFilter {
   fieldId: number;
-  type: 'text' | 'link' | 'steps';
+  type: "text" | "link" | "steps";
   operator: string;
   value1?: string | number;
   value2?: number;
@@ -153,7 +175,10 @@ export function useFindManyRepositoryCasesFiltered(
   // First apply filtering (without pagination)
   const { filteredCases, totalFilteredCount } = useMemo(() => {
     if (!result.data || !Array.isArray(result.data)) {
-      return { filteredCases: result.data, totalFilteredCount: resultTotalCount ?? 0 };
+      return {
+        filteredCases: result.data,
+        totalFilteredCount: resultTotalCount ?? 0,
+      };
     }
 
     // First filter orphaned field values
@@ -171,11 +196,25 @@ export function useFindManyRepositoryCasesFiltered(
 
           let matches = false;
 
-          if (filter.type === 'text' && typeof filter.value1 === 'string') {
-            matches = matchesTextOperator(fieldValue?.value, filter.operator, filter.value1);
-          } else if (filter.type === 'link' && typeof filter.value1 === 'string') {
-            matches = matchesLinkOperator(fieldValue?.value, filter.operator, filter.value1);
-          } else if (filter.type === 'steps' && typeof filter.value1 === 'number') {
+          if (filter.type === "text" && typeof filter.value1 === "string") {
+            matches = matchesTextOperator(
+              fieldValue?.value,
+              filter.operator,
+              filter.value1
+            );
+          } else if (
+            filter.type === "link" &&
+            typeof filter.value1 === "string"
+          ) {
+            matches = matchesLinkOperator(
+              fieldValue?.value,
+              filter.operator,
+              filter.value1
+            );
+          } else if (
+            filter.type === "steps" &&
+            typeof filter.value1 === "number"
+          ) {
             // Pass the entire testCase for built-in steps relation
             matches = matchesStepsOperator(
               testCase,
@@ -196,9 +235,10 @@ export function useFindManyRepositoryCasesFiltered(
     }
 
     // Return filtered cases and the total count (before pagination)
-    const totalCount = postFetchFilters && postFetchFilters.length > 0
-      ? cases.length
-      : resultTotalCount ?? 0;
+    const totalCount =
+      postFetchFilters && postFetchFilters.length > 0
+        ? cases.length
+        : (resultTotalCount ?? 0);
 
     return { filteredCases: cases, totalFilteredCount: totalCount };
   }, [result.data, resultTotalCount, postFetchFilters]);
@@ -209,7 +249,9 @@ export function useFindManyRepositoryCasesFiltered(
 
     if (clientPagination && clientPagination.skip !== undefined) {
       const start = clientPagination.skip;
-      const end = clientPagination.take ? start + clientPagination.take : undefined;
+      const end = clientPagination.take
+        ? start + clientPagination.take
+        : undefined;
       return filteredCases.slice(start, end);
     }
 

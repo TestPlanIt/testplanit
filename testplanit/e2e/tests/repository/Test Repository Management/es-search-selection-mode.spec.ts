@@ -69,7 +69,10 @@ async function openModalAndGoToStep2(
   // The state select is inside a SelectTrigger with a SelectValue.
   // When stateId is valid, the SelectValue renders the workflow name (not the placeholder).
   // We wait for any SelectTrigger in the dialog to NOT contain the placeholder text.
-  const stateSelect = dialog.locator('label:has-text("State")').locator('..').locator('[role="combobox"]');
+  const stateSelect = dialog
+    .locator('label:has-text("State")')
+    .locator("..")
+    .locator('[role="combobox"]');
   await expect(stateSelect).toBeVisible({ timeout: 10000 });
   // Wait until the state select has a value (not empty/placeholder)
   await expect(async () => {
@@ -97,9 +100,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E ES Search ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E ES Search ${Date.now()}`);
     const folderId = await api.createFolder(projectId, "ES Search Folder");
     await api.createTestCase(
       projectId,
@@ -111,7 +112,10 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const dialog = await openModalAndGoToStep2(page, `ES Search Run ${Date.now()}`);
+    const dialog = await openModalAndGoToStep2(
+      page,
+      `ES Search Run ${Date.now()}`
+    );
 
     // In step 2, the ProjectRepository is rendered in selection mode
     // The ES search input should be visible
@@ -125,9 +129,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E ES Filter ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E ES Filter ${Date.now()}`);
     const folderName = `ES Filter Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
@@ -143,7 +145,10 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const dialog = await openModalAndGoToStep2(page, `Filter Run ${Date.now()}`);
+    const dialog = await openModalAndGoToStep2(
+      page,
+      `Filter Run ${Date.now()}`
+    );
 
     // Wait for step 2 to load
     const esSearchInput = dialog.locator(
@@ -180,9 +185,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E ES Clear ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E ES Clear ${Date.now()}`);
     const folderName = `ES Clear Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
@@ -224,9 +227,11 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     });
 
     // Click the clear (X) button next to the search input
-    const clearButton = dialog.locator(
-      'input[placeholder*="Search in this project"] + button, input[placeholder*="Search in this project"] ~ button'
-    ).first();
+    const clearButton = dialog
+      .locator(
+        'input[placeholder*="Search in this project"] + button, input[placeholder*="Search in this project"] ~ button'
+      )
+      .first();
 
     // If clear button exists, click it; otherwise clear the input
     if (await clearButton.isVisible()) {
@@ -251,9 +256,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E ES Select ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E ES Select ${Date.now()}`);
     const folderName = `ES Select Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
@@ -267,7 +270,10 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
-    const dialog = await openModalAndGoToStep2(page, `Select Run ${Date.now()}`);
+    const dialog = await openModalAndGoToStep2(
+      page,
+      `Select Run ${Date.now()}`
+    );
 
     const esSearchInput = dialog.locator(
       'input[placeholder*="Search in this project"]'
@@ -306,11 +312,11 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     // The selected case should still be selected after clearing search
     // Look for indication of selection (e.g., selected count badge, drawer count)
     // The selected test cases drawer or count should show 1 selected
-    const selectedIndicator = dialog.locator(
-      'text=/1 (case|test|selected)/i'
-    );
+    const selectedIndicator = dialog.locator("text=/1 (case|test|selected)/i");
     // This is a soft check - the exact UI may vary
-    if (await selectedIndicator.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (
+      await selectedIndicator.isVisible({ timeout: 3000 }).catch(() => false)
+    ) {
       await expect(selectedIndicator).toBeVisible();
     }
   });

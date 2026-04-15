@@ -1,8 +1,12 @@
 import type {
-  LlmAdapterConfig, LlmModelInfo, LlmRequest,
+  LlmAdapterConfig,
+  LlmModelInfo,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse, OllamaModel,
-  OllamaPullProgress, RateLimitInfo
+  LlmStreamResponse,
+  OllamaModel,
+  OllamaPullProgress,
+  RateLimitInfo,
 } from "../types";
 import { BaseLlmAdapter } from "./base.adapter";
 
@@ -81,14 +85,15 @@ export class OllamaAdapter extends BaseLlmAdapter {
 
     const ollamaRequest: OllamaGenerateRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages.map(msg => ({
+      messages: request.messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       })),
       stream: false,
       ...(request.disableThinking ? { think: false } : {}),
       options: {
-        temperature: request.temperature ?? this.config.config.defaultTemperature,
+        temperature:
+          request.temperature ?? this.config.config.defaultTemperature,
         num_predict: request.maxTokens ?? this.config.config.defaultMaxTokens,
       },
       keep_alive: this.keepAlive,
@@ -97,12 +102,15 @@ export class OllamaAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetchLongRunning(`${this.baseUrl}/api/chat`, {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify(ollamaRequest),
-        signal: AbortSignal.timeout(timeout),
-      });
+      const response = await this.safeFetchLongRunning(
+        `${this.baseUrl}/api/chat`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(ollamaRequest),
+          signal: AbortSignal.timeout(timeout),
+        }
+      );
 
       if (!response.ok) {
         await this.handleErrorResponse(response);
@@ -123,12 +131,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
       };
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw this.createError(
-          "Request timeout",
-          "TIMEOUT",
-          408,
-          true
-        );
+        throw this.createError("Request timeout", "TIMEOUT", 408, true);
       }
       throw error;
     }
@@ -141,14 +144,15 @@ export class OllamaAdapter extends BaseLlmAdapter {
 
     const ollamaRequest: OllamaGenerateRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages.map(msg => ({
+      messages: request.messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       })),
       stream: true,
       ...(request.disableThinking ? { think: false } : {}),
       options: {
-        temperature: request.temperature ?? this.config.config.defaultTemperature,
+        temperature:
+          request.temperature ?? this.config.config.defaultTemperature,
         num_predict: request.maxTokens ?? this.config.config.defaultMaxTokens,
       },
       keep_alive: this.keepAlive,
@@ -159,12 +163,15 @@ export class OllamaAdapter extends BaseLlmAdapter {
     // Use safeFetchLongRunning to bypass undici's 5-min body timeout — Ollama
     // may pause for a long time before the first token on large prompts.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetchLongRunning(`${this.baseUrl}/api/chat`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify(ollamaRequest),
-      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
-    });
+    const response = await this.safeFetchLongRunning(
+      `${this.baseUrl}/api/chat`,
+      {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(ollamaRequest),
+        signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
+      }
+    );
 
     if (!response.ok) {
       await this.handleErrorResponse(response);
@@ -195,7 +202,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
           if (line.trim()) {
             try {
               const chunk = JSON.parse(line) as OllamaStreamChunk;
-              
+
               if (chunk.message?.content || chunk.response) {
                 yield {
                   delta: chunk.message?.content || chunk.response || "",
@@ -203,7 +210,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
                   finishReason: chunk.done ? "stop" : undefined,
                 };
               }
-              
+
               if (chunk.done) {
                 return;
               }
@@ -234,8 +241,8 @@ export class OllamaAdapter extends BaseLlmAdapter {
       }
 
       const data = await response.json();
-      
-      return (data.models || []).map((model: OllamaModel) => 
+
+      return (data.models || []).map((model: OllamaModel) =>
         this.mapOllamaModelInfo(model)
       );
     } catch (error) {
@@ -249,7 +256,9 @@ export class OllamaAdapter extends BaseLlmAdapter {
     return models.some((m) => m.id === modelId);
   }
 
-  async *pullModel(modelName: string): AsyncGenerator<OllamaPullProgress, void, unknown> {
+  async *pullModel(
+    modelName: string
+  ): AsyncGenerator<OllamaPullProgress, void, unknown> {
     const response = await this.safeFetch(`${this.baseUrl}/api/pull`, {
       method: "POST",
       headers: this.getHeaders(),
@@ -286,7 +295,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
             try {
               const progress = JSON.parse(line) as OllamaPullProgress;
               yield progress;
-              
+
               if (progress.status === "success") {
                 return;
               }
@@ -360,13 +369,9 @@ export class OllamaAdapter extends BaseLlmAdapter {
         throw this.createError(message, "BAD_REQUEST", 400);
       case 404:
         if (message.includes("model") && message.includes("not found")) {
-          throw this.createError(
-            message,
-            "MODEL_NOT_FOUND",
-            404,
-            false,
-            { suggestion: "Try pulling the model first" }
-          );
+          throw this.createError(message, "MODEL_NOT_FOUND", 404, false, {
+            suggestion: "Try pulling the model first",
+          });
         }
         throw this.createError(message, "NOT_FOUND", 404);
       case 500:
@@ -374,47 +379,43 @@ export class OllamaAdapter extends BaseLlmAdapter {
       case 503:
         throw this.createError(message, "SERVER_ERROR", response.status, true);
       default:
-        throw this.createError(
-          message,
-          "UNKNOWN_ERROR",
-          response.status
-        );
+        throw this.createError(message, "UNKNOWN_ERROR", response.status);
     }
   }
 
   private mapOllamaModelInfo(model: OllamaModel): LlmModelInfo {
     const knownModels: Record<string, Partial<LlmModelInfo>> = {
-      "llama2": {
+      llama2: {
         contextWindow: 4096,
         maxOutputTokens: 4096,
         capabilities: ["text", "code"],
       },
-      "llama3": {
+      llama3: {
         contextWindow: 8192,
         maxOutputTokens: 8192,
         capabilities: ["text", "code"],
       },
-      "mistral": {
+      mistral: {
         contextWindow: 8192,
         maxOutputTokens: 8192,
         capabilities: ["text", "code"],
       },
-      "mixtral": {
+      mixtral: {
         contextWindow: 32768,
         maxOutputTokens: 32768,
         capabilities: ["text", "code"],
       },
-      "phi": {
+      phi: {
         contextWindow: 2048,
         maxOutputTokens: 2048,
         capabilities: ["text"],
       },
-      "phi3": {
+      phi3: {
         contextWindow: 128000,
         maxOutputTokens: 4096,
         capabilities: ["text", "code"],
       },
-      "codellama": {
+      codellama: {
         contextWindow: 16384,
         maxOutputTokens: 16384,
         capabilities: ["code"],
@@ -424,12 +425,12 @@ export class OllamaAdapter extends BaseLlmAdapter {
         maxOutputTokens: 16384,
         capabilities: ["code"],
       },
-      "gemma": {
+      gemma: {
         contextWindow: 8192,
         maxOutputTokens: 8192,
         capabilities: ["text", "code"],
       },
-      "qwen": {
+      qwen: {
         contextWindow: 32768,
         maxOutputTokens: 32768,
         capabilities: ["text", "code"],
@@ -458,6 +459,6 @@ export class OllamaAdapter extends BaseLlmAdapter {
     const sizes = ["B", "KB", "MB", "GB"];
     if (bytes === 0) return "0 B";
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${Math.round(bytes / Math.pow(1024, i) * 10) / 10} ${sizes[i]}`;
+    return `${Math.round((bytes / Math.pow(1024, i)) * 10) / 10} ${sizes[i]}`;
   }
 }

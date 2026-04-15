@@ -33,19 +33,19 @@ const newCase = await prisma.repositoryCases.create({
     name: "My Test Case",
     // ... other fields
     // currentVersion: 1 (default from schema)
-  }
+  },
 });
 
 // Step 2: Create version 1 snapshot (matches currentVersion = 1)
 const response = await fetch(`/api/repository/cases/${newCase.id}/versions`, {
-  method: 'POST',
+  method: "POST",
   body: JSON.stringify({
     // No version specified - will use currentVersion (1)
     overrides: {
       // Any fields that differ from what's in the test case
       // For new cases, typically no overrides needed
-    }
-  })
+    },
+  }),
 });
 ```
 
@@ -59,19 +59,19 @@ await prisma.repositoryCases.update({
     name: "Updated Test Name",
     currentVersion: testCase.currentVersion + 1, // 1 → 2
     // ... other fields
-  }
+  },
 });
 
 // Step 2: Create version snapshot (matches new currentVersion = 2)
 const response = await fetch(`/api/repository/cases/${caseId}/versions`, {
-  method: 'POST',
+  method: "POST",
   body: JSON.stringify({
     // No version specified - will use currentVersion (2)
     overrides: {
       // Any fields that differ from what's in the test case
       // Typically you'd override steps, tags, issues, attachments
-    }
-  })
+    },
+  }),
 });
 ```
 
@@ -87,7 +87,7 @@ await prisma.$transaction(async (tx) => {
         name: newName,
         currentVersion: { increment: 1 }, // Atomic increment
         // ... other fields
-      }
+      },
     });
 
     // Step 2: Create version snapshot using helper function
@@ -95,7 +95,7 @@ await prisma.$transaction(async (tx) => {
       overrides: {
         name: newName,
         // ... other overrides
-      }
+      },
     });
   }
 });
@@ -110,20 +110,20 @@ await prisma.repositoryCases.create({
     name: "Imported Test",
     currentVersion: 5, // Set to match imported version
     // ... other fields
-  }
+  },
 });
 
 // Create version with explicit version number
 const response = await fetch(`/api/repository/cases/${newCase.id}/versions`, {
-  method: 'POST',
+  method: "POST",
   body: JSON.stringify({
     version: 5, // Explicit version to match import data
     creatorId: importedCreatorId, // Preserve original creator
     createdAt: importedDate, // Preserve original date
     overrides: {
       // ... imported data
-    }
-  })
+    },
+  }),
 });
 ```
 
@@ -134,6 +134,7 @@ const response = await fetch(`/api/repository/cases/${newCase.id}/versions`, {
 Creates a version snapshot of a test case.
 
 **Request Body:**
+
 ```typescript
 {
   // Optional: explicit version number (for imports)
@@ -171,6 +172,7 @@ Creates a version snapshot of a test case.
 ```
 
 **Response:**
+
 ```typescript
 {
   success: true;
@@ -185,7 +187,7 @@ Creates a version snapshot of a test case.
 Use this helper when you're already in a Prisma transaction context (e.g., bulk operations, workers).
 
 ```typescript
-import { createTestCaseVersionInTransaction } from '~/lib/services/testCaseVersionService';
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
 await prisma.$transaction(async (tx) => {
   // Update the test case first
@@ -194,7 +196,7 @@ await prisma.$transaction(async (tx) => {
     data: {
       name: "New Name",
       currentVersion: { increment: 1 },
-    }
+    },
   });
 
   // Then create the version snapshot
@@ -202,7 +204,7 @@ await prisma.$transaction(async (tx) => {
     overrides: {
       name: "New Name",
       // ... other overrides
-    }
+    },
   });
 });
 ```
@@ -216,7 +218,7 @@ await prisma.$transaction(async (tx) => {
 await createVersion(caseId, { overrides: { name: "New Name" } });
 await prisma.repositoryCases.update({
   where: { id: caseId },
-  data: { currentVersion: 2 }
+  data: { currentVersion: 2 },
 });
 ```
 
@@ -226,7 +228,7 @@ await prisma.repositoryCases.update({
 // Only updates the case, doesn't create a version
 await prisma.repositoryCases.update({
   where: { id: caseId },
-  data: { name: "New Name" }
+  data: { name: "New Name" },
   // Missing: currentVersion: { increment: 1 }
 });
 ```
@@ -239,11 +241,11 @@ await prisma.repositoryCases.update({
   data: {
     name: "New Name",
     currentVersion: { increment: 1 },
-  }
+  },
 });
 
 await createVersion(caseId, {
-  overrides: { name: "New Name" }
+  overrides: { name: "New Name" },
 });
 ```
 

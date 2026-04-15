@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ResultFields } from "@prisma/client";
 import { SquareCheck } from "lucide-react";

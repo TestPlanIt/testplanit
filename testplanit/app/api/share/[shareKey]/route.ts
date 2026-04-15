@@ -210,7 +210,10 @@ export async function POST(
           }
 
           // Verify password
-          const isValid = await bcrypt.compare(password, shareLink.passwordHash);
+          const isValid = await bcrypt.compare(
+            password,
+            shareLink.passwordHash
+          );
           if (!isValid) {
             return NextResponse.json(
               { error: "Invalid password" },
@@ -233,7 +236,10 @@ export async function POST(
           }
 
           // Verify password
-          const isValid = await bcrypt.compare(password, shareLink.passwordHash);
+          const isValid = await bcrypt.compare(
+            password,
+            shareLink.passwordHash
+          );
           if (!isValid) {
             return NextResponse.json(
               { error: "Invalid password" },
@@ -301,12 +307,16 @@ export async function POST(
           // Generate title from entity type and project
           if (shareLink.entityType === "REPORT" && shareLink.entityConfig) {
             const config = shareLink.entityConfig as any;
-            const reportType = config.reportType ? config.reportType.replace(/-/g, " ") : "report";
+            const reportType = config.reportType
+              ? config.reportType.replace(/-/g, " ")
+              : "report";
             notificationTitle = shareLink.project?.name
               ? `${reportType} for ${shareLink.project.name}`
               : reportType;
           } else {
-            const entityType = shareLink.entityType.toLowerCase().replace(/_/g, " ");
+            const entityType = shareLink.entityType
+              .toLowerCase()
+              .replace(/_/g, " ");
             notificationTitle = shareLink.project?.name
               ? `${entityType} for ${shareLink.project.name}`
               : entityType;

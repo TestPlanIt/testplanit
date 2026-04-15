@@ -50,9 +50,7 @@ export class RepoFileCache {
   /**
    * Retrieve cached file list. Returns null on cache miss or Valkey unavailable.
    */
-  async getFiles(
-    projectConfigId: number
-  ): Promise<RepoFileEntry[] | null> {
+  async getFiles(projectConfigId: number): Promise<RepoFileEntry[] | null> {
     if (!this.valkey) return null;
 
     const key = this.getFilesKey(projectConfigId);

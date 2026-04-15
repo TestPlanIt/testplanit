@@ -3,7 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import React from "react";
 import { Link } from "~/lib/navigation";
@@ -29,7 +29,10 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
       <ProjectIcon iconUrl={iconUrl} width={16} height={16} />
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger type="button" className="text-left truncate max-w-[200px] inline-block">
+          <TooltipTrigger
+            type="button"
+            className="text-left truncate max-w-[200px] inline-block"
+          >
             {projectName}
           </TooltipTrigger>
           <TooltipContent>
@@ -51,5 +54,7 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
     );
   }
 
-  return <span className={`inline-flex items-center ${className}`}>{content}</span>;
+  return (
+    <span className={`inline-flex items-center ${className}`}>{content}</span>
+  );
 };

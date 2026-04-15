@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildDateFilter, dimensionToDraggableField,
-  draggableFieldToDimension, getReportSummary, getSortValue,
-  getSourceDisplayInfo, getUserIdFromRow
+  buildDateFilter,
+  dimensionToDraggableField,
+  draggableFieldToDimension,
+  getReportSummary,
+  getSortValue,
+  getSourceDisplayInfo,
+  getUserIdFromRow,
 } from "./reportUtils";
 
 describe("reportUtils", () => {
@@ -301,10 +305,7 @@ describe("reportUtils", () => {
     });
 
     it("should use custom date field", () => {
-      const result = buildDateFilter(
-        { startDate: "2024-01-15" },
-        "createdAt"
-      );
+      const result = buildDateFilter({ startDate: "2024-01-15" }, "createdAt");
       expect(result).toHaveProperty("createdAt");
       expect(result.createdAt).toHaveProperty("gte");
     });

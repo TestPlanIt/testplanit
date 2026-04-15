@@ -15,7 +15,11 @@ interface ShareContentProps {
   session: Session | null;
 }
 
-export function ShareContent({ shareKey, shareData, session }: ShareContentProps) {
+export function ShareContent({
+  shareKey,
+  shareData,
+  session,
+}: ShareContentProps) {
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("common.errors");
   const tAuthBypass = useTranslations("reports.authBypass");
@@ -78,10 +82,23 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
             if (config.reportType) params.set("reportType", config.reportType);
             if (config.startDate) params.set("startDate", config.startDate);
             if (config.endDate) params.set("endDate", config.endDate);
-            if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
-            if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+            if (config.dimensions)
+              params.set(
+                "dimensions",
+                Array.isArray(config.dimensions)
+                  ? config.dimensions.join(",")
+                  : config.dimensions
+              );
+            if (config.metrics)
+              params.set(
+                "metrics",
+                Array.isArray(config.metrics)
+                  ? config.metrics.join(",")
+                  : config.metrics
+              );
             if (config.page) params.set("page", config.page.toString());
-            if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+            if (config.pageSize)
+              params.set("pageSize", config.pageSize.toString());
 
             reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
           }
@@ -89,15 +106,17 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
           toast.success(tAuthBypass("title"), {
             description: tAuthBypass("description", {
               userName,
-              projectName: shareData.projectName
+              projectName: shareData.projectName,
             }),
             duration: 5000,
-            action: reportUrl ? {
-              label: tAuthBypass("viewInApp"),
-              onClick: () => {
-                window.location.href = reportUrl;
-              },
-            } : undefined,
+            action: reportUrl
+              ? {
+                  label: tAuthBypass("viewInApp"),
+                  onClick: () => {
+                    window.location.href = reportUrl;
+                  },
+                }
+              : undefined,
           });
         }
 
@@ -159,7 +178,11 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       setAccessGranted(true);
 
       // Show toast notification for auth bypass (same as in checkProjectAccess)
-      if (session && shareData.projectName && shareData.mode === "PASSWORD_PROTECTED") {
+      if (
+        session &&
+        shareData.projectName &&
+        shareData.mode === "PASSWORD_PROTECTED"
+      ) {
         const userName = session.user.name || session.user.email || "User";
 
         // Build full report URL with configuration
@@ -171,10 +194,23 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
           if (config.reportType) params.set("reportType", config.reportType);
           if (config.startDate) params.set("startDate", config.startDate);
           if (config.endDate) params.set("endDate", config.endDate);
-          if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
-          if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+          if (config.dimensions)
+            params.set(
+              "dimensions",
+              Array.isArray(config.dimensions)
+                ? config.dimensions.join(",")
+                : config.dimensions
+            );
+          if (config.metrics)
+            params.set(
+              "metrics",
+              Array.isArray(config.metrics)
+                ? config.metrics.join(",")
+                : config.metrics
+            );
           if (config.page) params.set("page", config.page.toString());
-          if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+          if (config.pageSize)
+            params.set("pageSize", config.pageSize.toString());
 
           reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
         }
@@ -182,15 +218,17 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
         toast.success(tAuthBypass("title"), {
           description: tAuthBypass("description", {
             userName,
-            projectName: shareData.projectName
+            projectName: shareData.projectName,
           }),
           duration: 5000,
-          action: reportUrl ? {
-            label: tAuthBypass("viewInApp"),
-            onClick: () => {
-              window.location.href = reportUrl;
-            },
-          } : undefined,
+          action: reportUrl
+            ? {
+                label: tAuthBypass("viewInApp"),
+                onClick: () => {
+                  window.location.href = reportUrl;
+                },
+              }
+            : undefined,
         });
       }
     } catch (error) {
@@ -288,8 +326,20 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       if (config.reportType) params.set("reportType", config.reportType);
       if (config.startDate) params.set("startDate", config.startDate);
       if (config.endDate) params.set("endDate", config.endDate);
-      if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
-      if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+      if (config.dimensions)
+        params.set(
+          "dimensions",
+          Array.isArray(config.dimensions)
+            ? config.dimensions.join(",")
+            : config.dimensions
+        );
+      if (config.metrics)
+        params.set(
+          "metrics",
+          Array.isArray(config.metrics)
+            ? config.metrics.join(",")
+            : config.metrics
+        );
       if (config.page) params.set("page", config.page.toString());
       if (config.pageSize) params.set("pageSize", config.pageSize.toString());
 

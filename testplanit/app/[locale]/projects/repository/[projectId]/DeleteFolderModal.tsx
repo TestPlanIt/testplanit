@@ -2,7 +2,12 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -10,8 +15,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  useFindManyRepositoryCases, useUpdateManyRepositoryCases,
-  useUpdateRepositoryFolders
+  useFindManyRepositoryCases,
+  useUpdateManyRepositoryCases,
+  useUpdateRepositoryFolders,
 } from "~/lib/hooks";
 
 export interface FolderNode {

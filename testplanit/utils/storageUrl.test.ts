@@ -78,7 +78,9 @@ describe("getStorageUrl", () => {
       process.env.IS_HOSTED = "true";
       delete process.env.AWS_PUBLIC_ENDPOINT_URL;
       // Invalid URL should fall back to original
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       const result = getStorageUrl("not-a-valid-url");
       expect(result).toBe("not-a-valid-url");
       consoleSpy.mockRestore();
@@ -155,7 +157,9 @@ describe("getStorageUrlClient", () => {
     });
 
     it("should return original URL for invalid URLs that look internal", () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       // This is an internal-looking URL but invalid
       const result = getStorageUrlClient("http://minio:9000");
       // Since URL parsing may work but path extraction might not, check behavior

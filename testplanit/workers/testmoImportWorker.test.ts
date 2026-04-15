@@ -140,9 +140,8 @@ describe("testmoImportWorker multi-tenant support", () => {
 
   describe("cache clearing for multi-tenant isolation", () => {
     it("should clear caches to prevent cross-tenant pollution", async () => {
-      const { clearAutomationImportCaches } = await import(
-        "./testmoImport/automationImports"
-      );
+      const { clearAutomationImportCaches } =
+        await import("./testmoImport/automationImports");
 
       // Verify the function is called (which clears caches)
       clearAutomationImportCaches();

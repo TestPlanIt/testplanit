@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { handleReportGET, handleReportPOST } from "~/utils/reportApiUtils";
 import {
   createIssueTrackingDimensionRegistry,
-  createIssueTrackingMetricRegistry
+  createIssueTrackingMetricRegistry,
 } from "~/utils/reportUtils";
 
 const config = {

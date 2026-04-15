@@ -3,7 +3,9 @@ import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import {
-  ColumnMetadata, ColumnSelection, CustomColumnDef
+  ColumnMetadata,
+  ColumnSelection,
+  CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -14,34 +16,50 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Prisma } from "@prisma/client";
 import {
   RowSelectionState,
-  Updater as TableUpdater
+  Updater as TableUpdater,
 } from "@tanstack/react-table";
 import {
   ArrowRightLeft,
   PenSquare,
-  PlayCircle, ScrollText,
-  Tags, Upload
+  PlayCircle,
+  ScrollText,
+  Tags,
+  Upload,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import {
   useCallback,
-  useDeferredValue, useEffect,
-  useLayoutEffect, useMemo, useRef, useState, useTransition
+  useDeferredValue,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
 } from "react";
 import { toast } from "sonner";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  PostFetchFilter, useFindManyRepositoryCasesFiltered
+  PostFetchFilter,
+  useFindManyRepositoryCasesFiltered,
 } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import {
   useCountProjects,
   useCountRepositoryCases,
-  useCountTestRunCases, useFindFirstTestRuns, useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates, useFindManyTestRunCases, useFindUniqueProjects, useUpdateRepositoryCases, useUpdateTestRunCases
+  useCountTestRunCases,
+  useFindFirstTestRuns,
+  useFindManyProjectLlmIntegration,
+  useFindManyRepositoryFolders,
+  useFindManyTemplates,
+  useFindManyTestRunCases,
+  useFindUniqueProjects,
+  useUpdateRepositoryCases,
+  useUpdateTestRunCases,
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
@@ -216,8 +234,11 @@ export default function Cases({
   const [isCopyMoveOpen, setIsCopyMoveOpen] = useState(false);
 
   // Folder copy/move state — driven by props from ProjectRepository
-  const [activeCopyMoveFolderId, setActiveCopyMoveFolderId] = useState<number | null>(null);
-  const [activeCopyMoveFolderName, setActiveCopyMoveFolderName] = useState<string>("");
+  const [activeCopyMoveFolderId, setActiveCopyMoveFolderId] = useState<
+    number | null
+  >(null);
+  const [activeCopyMoveFolderName, setActiveCopyMoveFolderName] =
+    useState<string>("");
 
   // Store rowSelection state here, it will be controlled by the useLayoutEffect
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -240,9 +261,10 @@ export default function Cases({
   }>({ inProgress: false, cases: null });
 
   // Fetch permissions
-  const {
-    permissions: testRunResultPermissions,
-  } = useProjectPermissions(projectId, "TestRunResults");
+  const { permissions: testRunResultPermissions } = useProjectPermissions(
+    projectId,
+    "TestRunResults"
+  );
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
   // Check if user has access to more than 1 project (needed for copy/move visibility)
@@ -252,21 +274,20 @@ export default function Cases({
   const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
   // *** NEW: Fetch total project case count ***
-  const { data: totalProjectCasesCountData } =
-    useCountRepositoryCases(
-      {
-        where: {
-          projectId: projectId,
-          isDeleted: false,
-          isArchived: false,
-        },
+  const { data: totalProjectCasesCountData } = useCountRepositoryCases(
+    {
+      where: {
+        projectId: projectId,
+        isDeleted: false,
+        isArchived: false,
       },
-      {
-        // Correctly pass boolean for enabled option
-        enabled: !!(isValidProjectId && session?.user),
-        refetchOnWindowFocus: false,
-      }
-    );
+    },
+    {
+      // Correctly pass boolean for enabled option
+      enabled: !!(isValidProjectId && session?.user),
+      refetchOnWindowFocus: false,
+    }
+  );
   const totalProjectCases = totalProjectCasesCountData ?? 0;
 
   // QuickScript feature flag
@@ -277,10 +298,14 @@ export default function Cases({
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
 
   // Check if project has an active LLM integration (for auto-tag)
-  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration({
-    where: { projectId },
-  }, { enabled: isValidProjectId });
-  const hasLlmIntegration = projectLlmIntegrations && projectLlmIntegrations.length > 0;
+  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration(
+    {
+      where: { projectId },
+    },
+    { enabled: isValidProjectId }
+  );
+  const hasLlmIntegration =
+    projectLlmIntegrations && projectLlmIntegrations.length > 0;
 
   // Lightweight project-wide template field discovery
   const { data: projectTemplates, isLoading: isTemplatesLoading } =
@@ -369,7 +394,9 @@ export default function Cases({
   // Add state for the export modal
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
-  const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(null);
+  const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(
+    null
+  );
   const [isAutoTagOpen, setIsAutoTagOpen] = useState(false);
 
   // Reset auto-select guard when switching away from folders view
@@ -1248,7 +1275,14 @@ export default function Cases({
         AND: baseConditions,
       };
       return finalWhereClause;
-    }, [deferredSearchString, projectId, viewType, folderId, filterId, descendantFolderIds]);
+    }, [
+      deferredSearchString,
+      projectId,
+      viewType,
+      folderId,
+      filterId,
+      descendantFolderIds,
+    ]);
 
   // Build post-fetch filters for text/link/steps operators
   const postFetchFilters: PostFetchFilter[] = useMemo(() => {
@@ -1713,8 +1747,8 @@ export default function Cases({
               viewType === "folders" && selectedFolderCaseCount === 0
               ? false
               : !isRunMode && // Don't run this in run mode
-                  ((!!session?.user && deferredSearchString.length === 0) ||
-                    deferredSearchString.length > 0)
+                ((!!session?.user && deferredSearchString.length === 0) ||
+                  deferredSearchString.length > 0)
         ),
         refetchOnWindowFocus: false,
         // Keep previous data to prevent count from dropping to 0 during refetch
@@ -2054,8 +2088,8 @@ export default function Cases({
             viewType === "folders" && selectedFolderCaseCount === 0
             ? false
             : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
-                ((!!session?.user && deferredSearchString.length === 0) ||
-                  deferredSearchString.length > 0)
+              ((!!session?.user && deferredSearchString.length === 0) ||
+                deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
     },
@@ -2280,18 +2314,22 @@ export default function Cases({
       setSearchDataLoading(true);
       try {
         // Paginate the IDs client-side, then fetch the page via POST
-        const skip = (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0);
+        const skip =
+          (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0);
         const take = typeof pageSize === "number" ? pageSize : undefined;
 
-        const response = await fetch(`/api/projects/${projectId}/cases/fetch-many`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            caseIds: searchResultIds,
-            skip,
-            take,
-          }),
-        });
+        const response = await fetch(
+          `/api/projects/${projectId}/cases/fetch-many`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              caseIds: searchResultIds,
+              skip,
+              take,
+            }),
+          }
+        );
 
         if (cancelled) return;
 
@@ -2307,7 +2345,9 @@ export default function Cases({
     };
 
     fetchSearchData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [searchResultIds, currentPage, pageSize, projectId]);
 
   // Calculate total count based on mode
@@ -2412,7 +2452,14 @@ export default function Cases({
       }));
     }
     return [];
-  }, [isRunMode, testRunCasesData, data, optimisticReorder, searchResultIds, searchData]);
+  }, [
+    isRunMode,
+    testRunCasesData,
+    data,
+    optimisticReorder,
+    searchResultIds,
+    searchData,
+  ]);
 
   const uniqueCaseFieldList = useMemo(() => {
     const caseFieldMap = new Map();
@@ -3588,10 +3635,14 @@ export default function Cases({
           onSaveSuccess={() => handleCloseBulkEditModal(true)}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           projectId={projectId}
-          onCopyMove={showCopyMove ? () => {
-            setIsBulkEditModalOpen(false);
-            setIsCopyMoveOpen(true);
-          } : undefined}
+          onCopyMove={
+            showCopyMove
+              ? () => {
+                  setIsBulkEditModalOpen(false);
+                  setIsCopyMoveOpen(true);
+                }
+              : undefined
+          }
         />
       )}
 

@@ -70,9 +70,7 @@ async function main() {
         const keys = await valkeyConnection.keys(`bull:${name}:*`);
         if (keys.length > 0) {
           await valkeyConnection.del(...keys);
-          console.log(
-            `Deleted ${keys.length} raw keys for queue "${name}".`
-          );
+          console.log(`Deleted ${keys.length} raw keys for queue "${name}".`);
         } else {
           console.log(`No keys found for queue "${name}".`);
         }

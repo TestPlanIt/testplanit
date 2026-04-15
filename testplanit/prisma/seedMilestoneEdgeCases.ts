@@ -1,6 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 
-export async function seedMilestoneEdgeCases(prisma: PrismaClient, projectId: number, adminUserId: string, milestoneTypeId: number) {
+export async function seedMilestoneEdgeCases(
+  prisma: PrismaClient,
+  projectId: number,
+  adminUserId: string,
+  milestoneTypeId: number
+) {
   console.log("Seeding milestone edge cases for comprehensive testing...");
 
   // Edge Case 1: Milestone that is completed but not started (data inconsistency)

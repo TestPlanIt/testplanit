@@ -12,12 +12,13 @@ interface PeriodData {
 
 type DateGrouping = "daily" | "weekly" | "monthly" | "quarterly" | "annually";
 
-function getPeriodDates(date: Date, grouping: DateGrouping): { start: Date; end: Date } {
-  const utcDate = new Date(Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate()
-  ));
+function getPeriodDates(
+  date: Date,
+  grouping: DateGrouping
+): { start: Date; end: Date } {
+  const utcDate = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
 
   switch (grouping) {
     case "daily": {
@@ -39,24 +40,44 @@ function getPeriodDates(date: Date, grouping: DateGrouping): { start: Date; end:
       return { start, end };
     }
     case "monthly": {
-      const start = new Date(Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), 1, 0, 0, 0, 0));
+      const start = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), 1, 0, 0, 0, 0)
+      );
       // End is the last millisecond of the last day of the month
-      const end = new Date(Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+      const end = new Date(
+        Date.UTC(
+          utcDate.getUTCFullYear(),
+          utcDate.getUTCMonth() + 1,
+          1,
+          0,
+          0,
+          0,
+          0
+        )
+      );
       end.setUTCMilliseconds(-1); // Go back 1ms from start of next month
       return { start, end };
     }
     case "quarterly": {
       const quarter = Math.floor(utcDate.getUTCMonth() / 3);
-      const start = new Date(Date.UTC(utcDate.getUTCFullYear(), quarter * 3, 1, 0, 0, 0, 0));
+      const start = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), quarter * 3, 1, 0, 0, 0, 0)
+      );
       // End is the last millisecond of the last day of the quarter
-      const end = new Date(Date.UTC(utcDate.getUTCFullYear(), quarter * 3 + 3, 1, 0, 0, 0, 0));
+      const end = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), quarter * 3 + 3, 1, 0, 0, 0, 0)
+      );
       end.setUTCMilliseconds(-1); // Go back 1ms from start of next quarter
       return { start, end };
     }
     case "annually": {
-      const start = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1, 0, 0, 0, 0));
+      const start = new Date(
+        Date.UTC(utcDate.getUTCFullYear(), 0, 1, 0, 0, 0, 0)
+      );
       // End is the last millisecond of December 31st
-      const end = new Date(Date.UTC(utcDate.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0));
+      const end = new Date(
+        Date.UTC(utcDate.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0)
+      );
       end.setUTCMilliseconds(-1); // Go back 1ms from start of next year
       return { start, end };
     }
@@ -96,7 +117,8 @@ export async function handleAutomationTrendsPOST(
     } = body;
 
     // Handle pageSize "All" - since we return all data anyway, just normalize it
-    const pageSize = pageSizeParam === "All" ? undefined : Number(pageSizeParam);
+    const pageSize =
+      pageSizeParam === "All" ? undefined : Number(pageSizeParam);
 
     // Extract all filter values
     const projectIds = body.projectIds || [];
@@ -125,14 +147,12 @@ export async function handleAutomationTrendsPOST(
     // Build base where clause with standard filters
     const baseWhere: any = {
       ...(isCrossProject
-        ? (projectIds.length > 0
-            ? { projectId: { in: projectIds.map(Number) } } // Filtered projects for cross-project
-            : {}) // All projects for cross-project
+        ? projectIds.length > 0
+          ? { projectId: { in: projectIds.map(Number) } } // Filtered projects for cross-project
+          : {} // All projects for cross-project
         : { projectId: Number(projectId) }), // Single project
       isDeleted: false,
-      ...(Object.keys(dateFilter).length > 0
-        ? { createdAt: dateFilter }
-        : {}),
+      ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
     };
 
     // Add templateIds filter if provided
@@ -184,7 +204,7 @@ export async function handleAutomationTrendsPOST(
             where: { fieldId: { in: fieldIds } },
             select: {
               fieldId: true,
-              value: true
+              value: true,
             },
           },
         },
@@ -195,28 +215,36 @@ export async function handleAutomationTrendsPOST(
 
       // Filter by dynamic field values in JavaScript
       // Case must match ALL dynamic field filters
-      allCases = allCasesRaw.filter(testCase => {
+      allCases = allCasesRaw.filter((testCase) => {
         // Check each dynamic field filter
-        return Object.entries(dynamicFieldFilters).every(([fieldIdStr, filterValues]) => {
-          const fieldId = parseInt(fieldIdStr);
-          const values = filterValues as (string | number)[];
-          const fieldValue = testCase.caseFieldValues.find(cfv => cfv.fieldId === fieldId);
+        return Object.entries(dynamicFieldFilters).every(
+          ([fieldIdStr, filterValues]) => {
+            const fieldId = parseInt(fieldIdStr);
+            const values = filterValues as (string | number)[];
+            const fieldValue = testCase.caseFieldValues.find(
+              (cfv) => cfv.fieldId === fieldId
+            );
 
-          if (!fieldValue || fieldValue.value === null || fieldValue.value === undefined) {
-            return false;
+            if (
+              !fieldValue ||
+              fieldValue.value === null ||
+              fieldValue.value === undefined
+            ) {
+              return false;
+            }
+
+            const value = fieldValue.value;
+
+            // Handle both single values and arrays (for multi-select)
+            if (Array.isArray(value)) {
+              // Multi-select: check if any selected value is in the array
+              return values.some((v: string | number) => value.includes(v));
+            } else {
+              // Single value: check if it matches any selected value
+              return values.includes(value as string | number);
+            }
           }
-
-          const value = fieldValue.value;
-
-          // Handle both single values and arrays (for multi-select)
-          if (Array.isArray(value)) {
-            // Multi-select: check if any selected value is in the array
-            return values.some((v: string | number) => value.includes(v));
-          } else {
-            // Single value: check if it matches any selected value
-            return values.includes(value as string | number);
-          }
-        });
+        );
       });
     } else {
       // Fetch without caseFieldValues
@@ -255,7 +283,10 @@ export async function handleAutomationTrendsPOST(
     const periodMap = new Map<string, { start: Date; end: Date }>();
 
     allCases.forEach((testCase) => {
-      const period = getPeriodDates(new Date(testCase.createdAt), dateGrouping as DateGrouping);
+      const period = getPeriodDates(
+        new Date(testCase.createdAt),
+        dateGrouping as DateGrouping
+      );
       const key = `${period.start.toISOString()}_${period.end.toISOString()}`;
       periodKeys.add(key);
       if (!periodMap.has(key)) {
@@ -263,7 +294,9 @@ export async function handleAutomationTrendsPOST(
       }
     });
 
-    const sortedPeriods = Array.from(periodKeys).sort().map(key => periodMap.get(key)!);
+    const sortedPeriods = Array.from(periodKeys)
+      .sort()
+      .map((key) => periodMap.get(key)!);
 
     // Get unique projects
     const projectsMap = new Map<number, string>();
@@ -295,7 +328,8 @@ export async function handleAutomationTrendsPOST(
           if (testCase.projectId !== project.id) return;
 
           const createdDate = new Date(testCase.createdAt);
-          const existedInPeriod = createdDate <= period.end && !testCase.isDeleted;
+          const existedInPeriod =
+            createdDate <= period.end && !testCase.isDeleted;
 
           if (existedInPeriod) {
             if (testCase.automated) {
@@ -315,7 +349,8 @@ export async function handleAutomationTrendsPOST(
         row[`${projectPrefix}_automated`] = automatedCount;
         row[`${projectPrefix}_manual`] = manualCount;
         row[`${projectPrefix}_total`] = totalCount;
-        row[`${projectPrefix}_percentAutomated`] = Math.round(percentAutomated * 100) / 100;
+        row[`${projectPrefix}_percentAutomated`] =
+          Math.round(percentAutomated * 100) / 100;
       });
 
       return row;
@@ -328,13 +363,23 @@ export async function handleAutomationTrendsPOST(
 
       projects.forEach((project) => {
         const projectPrefix = project.name.replace(/\s+/g, "");
-        const currentAuto = currentPeriod[`${projectPrefix}_automated`] as number;
-        const previousAuto = previousPeriod[`${projectPrefix}_automated`] as number;
-        const currentManual = currentPeriod[`${projectPrefix}_manual`] as number;
-        const previousManual = previousPeriod[`${projectPrefix}_manual`] as number;
+        const currentAuto = currentPeriod[
+          `${projectPrefix}_automated`
+        ] as number;
+        const previousAuto = previousPeriod[
+          `${projectPrefix}_automated`
+        ] as number;
+        const currentManual = currentPeriod[
+          `${projectPrefix}_manual`
+        ] as number;
+        const previousManual = previousPeriod[
+          `${projectPrefix}_manual`
+        ] as number;
 
-        currentPeriod[`${projectPrefix}_automatedChange`] = currentAuto - previousAuto;
-        currentPeriod[`${projectPrefix}_manualChange`] = currentManual - previousManual;
+        currentPeriod[`${projectPrefix}_automatedChange`] =
+          currentAuto - previousAuto;
+        currentPeriod[`${projectPrefix}_manualChange`] =
+          currentManual - previousManual;
       });
     }
 

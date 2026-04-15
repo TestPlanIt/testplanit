@@ -21,7 +21,7 @@ const mockPromptResolver = {
 function makePair(
   caseAId: number,
   caseBId: number,
-  overrides: Partial<PairWithCaseContent> = {},
+  overrides: Partial<PairWithCaseContent> = {}
 ): PairWithCaseContent {
   return {
     caseAId,
@@ -63,7 +63,12 @@ describe("DuplicateAnalysisService", () => {
   // ── Test 1: Empty pairs array ─────────────────────────────────────────────
 
   it("returns empty array when given no pairs", async () => {
-    const result = await service.analyzePairs([], 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      [],
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
     expect(result).toEqual([]);
     expect(mockLlmManager.resolveIntegration).not.toHaveBeenCalled();
   });
@@ -74,7 +79,12 @@ describe("DuplicateAnalysisService", () => {
     mockLlmManager.resolveIntegration.mockResolvedValue(null);
 
     const pairs = makePairs(3);
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     expect(result).toHaveLength(3);
     for (const item of result) {
@@ -104,7 +114,12 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = [makePair(1, 101), makePair(2, 102)];
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     // Only pair 0 (YES) kept
     expect(result).toHaveLength(1);
@@ -146,7 +161,12 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = makePairs(50);
-    const result = await service.analyzePairs(pairs, 1, "user-1", TOKEN_BUDGET_FOR_OVERFLOW);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      TOKEN_BUDGET_FOR_OVERFLOW
+    );
 
     // All 50 pairs returned (some semantic, some fuzzy overflow)
     expect(result).toHaveLength(50);
@@ -227,12 +247,19 @@ describe("DuplicateAnalysisService", () => {
 
     // TINY_TOKEN_BUDGET ensures at least 2 batches for 5 pairs
     const pairs = makePairs(5);
-    const result = await service.analyzePairs(pairs, 1, "user-1", TINY_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      TINY_TOKEN_BUDGET
+    );
 
     // All pairs returned — first batch semantic, second batch fuzzy
     expect(result).toHaveLength(5);
 
-    const semanticPairs = result.filter((r) => r.detectionMethod === "semantic");
+    const semanticPairs = result.filter(
+      (r) => r.detectionMethod === "semantic"
+    );
     const fuzzyPairs = result.filter((r) => r.detectionMethod === "fuzzy");
 
     expect(semanticPairs.length).toBeGreaterThan(0);
@@ -252,7 +279,12 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = [makePair(1, 101)]; // Single pair — can't split further
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     expect(result).toHaveLength(1);
     expect(result[0]!.detectionMethod).toBe("fuzzy");
@@ -269,11 +301,17 @@ describe("DuplicateAnalysisService", () => {
 
     const pairs = [makePair(1, 101)];
     const retryOptions = { maxRetries: 2, baseDelayMs: 500 };
-    await service.analyzePairs(pairs, 5, "user-xyz", LARGE_TOKEN_BUDGET, retryOptions);
+    await service.analyzePairs(
+      pairs,
+      5,
+      "user-xyz",
+      LARGE_TOKEN_BUDGET,
+      retryOptions
+    );
 
     expect(mockLlmManager.resolveIntegration).toHaveBeenCalledWith(
       LLM_FEATURES.DUPLICATE_DETECTION,
-      5,
+      5
     );
 
     const chatCall = mockLlmManager.chat.mock.calls[0]!;
@@ -299,7 +337,12 @@ describe("DuplicateAnalysisService", () => {
     });
 
     const pairs = [makePair(1, 101), makePair(2, 102)];
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     // Pair 0 YES → semantic HIGH; pair 1 missing → fuzzy
     expect(result).toHaveLength(2);
@@ -330,14 +373,21 @@ describe("DuplicateAnalysisService", () => {
       }
       // Subsequent calls (split sub-batches of 1): succeed
       return Promise.resolve({
-        content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+        content: JSON.stringify({
+          results: [{ pairIndex: 0, verdict: "YES" }],
+        }),
         totalTokens: 10,
         finishReason: "stop",
       });
     });
 
     const pairs = [makePair(1, 101), makePair(2, 102)];
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     // Original batch split → each sub-batch processed → both return YES → 2 semantic pairs
     expect(result).toHaveLength(2);
@@ -362,7 +412,9 @@ describe("DuplicateAnalysisService", () => {
       }
       // Subsequent calls (split sub-batches): succeed
       return Promise.resolve({
-        content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+        content: JSON.stringify({
+          results: [{ pairIndex: 0, verdict: "YES" }],
+        }),
         totalTokens: 50,
         finishReason: "stop",
       });
@@ -370,7 +422,12 @@ describe("DuplicateAnalysisService", () => {
 
     // 4 pairs all fit in one batch with large budget
     const pairs = makePairs(4);
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     // First call timed out → split into 2 sub-batches → 2 more calls = 3 total
     expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);
@@ -395,7 +452,9 @@ describe("DuplicateAnalysisService", () => {
       }
       // Subsequent calls (split sub-batches): succeed
       return Promise.resolve({
-        content: JSON.stringify({ results: [{ pairIndex: 0, verdict: "YES" }] }),
+        content: JSON.stringify({
+          results: [{ pairIndex: 0, verdict: "YES" }],
+        }),
         totalTokens: 50,
         finishReason: "stop",
       });
@@ -403,7 +462,12 @@ describe("DuplicateAnalysisService", () => {
 
     // 4 pairs all fit in one batch with large budget
     const pairs = makePairs(4);
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     // First call parse failed → split → 2 retry calls = 3 total
     expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);
@@ -425,7 +489,12 @@ describe("DuplicateAnalysisService", () => {
     // 2 pairs: depth 0 → truncated → split to 1+1 at depth 1
     // Each single-pair call returns truncated but size=1 so no further split → fuzzy fallback
     const pairs = [makePair(1, 101), makePair(2, 102)];
-    const result = await service.analyzePairs(pairs, 1, "user-1", LARGE_TOKEN_BUDGET);
+    const result = await service.analyzePairs(
+      pairs,
+      1,
+      "user-1",
+      LARGE_TOKEN_BUDGET
+    );
 
     // 1 call for batch of 2, then 2 calls for single pairs = 3 total
     expect(mockLlmManager.chat).toHaveBeenCalledTimes(3);

@@ -59,7 +59,9 @@ export async function setCachedTokenInfo(
  * any time. Called from the Prisma apiToken update/delete hooks so the
  * 30-second cache window never outlives a revocation.
  */
-export async function invalidateApiTokenCache(tokenHash: string): Promise<void> {
+export async function invalidateApiTokenCache(
+  tokenHash: string
+): Promise<void> {
   if (!valkeyConnection) return;
   try {
     await valkeyConnection.del(`${API_TOKEN_CACHE_PREFIX}${tokenHash}`);

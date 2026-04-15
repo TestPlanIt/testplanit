@@ -125,7 +125,9 @@ describe("External API Access Control", () => {
 
       expect(response.status).toBe(403);
       const body = await response.json();
-      expect(body.error).toBe("External API access not enabled for this account");
+      expect(body.error).toBe(
+        "External API access not enabled for this account"
+      );
     });
   });
 
@@ -288,7 +290,10 @@ describe("External API Access Control", () => {
         isApi: false,
       });
 
-      const request = createMockRequest("/api/projects/123/cases/bulk-edit", {});
+      const request = createMockRequest(
+        "/api/projects/123/cases/bulk-edit",
+        {}
+      );
 
       const response = await middlewareWithPreferences(request);
 

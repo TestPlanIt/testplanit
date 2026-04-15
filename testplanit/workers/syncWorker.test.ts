@@ -47,9 +47,8 @@ describe("SyncWorker", () => {
       });
 
       // Import the sync service to test it directly
-      const { syncService } = await import(
-        "../lib/integrations/services/SyncService"
-      );
+      const { syncService } =
+        await import("../lib/integrations/services/SyncService");
 
       const mockJob = {
         id: "job-123",
@@ -83,9 +82,8 @@ describe("SyncWorker", () => {
         errors: ["Error 1", "Error 2"],
       });
 
-      const { syncService } = await import(
-        "../lib/integrations/services/SyncService"
-      );
+      const { syncService } =
+        await import("../lib/integrations/services/SyncService");
 
       const result = await syncService.performSync(
         "user-123",
@@ -112,9 +110,8 @@ describe("SyncWorker", () => {
         success: true,
       });
 
-      const { syncService } = await import(
-        "../lib/integrations/services/SyncService"
-      );
+      const { syncService } =
+        await import("../lib/integrations/services/SyncService");
 
       const result = await syncService.performIssueRefresh(
         jobData.userId,
@@ -136,9 +133,8 @@ describe("SyncWorker", () => {
         error: "Issue not found",
       });
 
-      const { syncService } = await import(
-        "../lib/integrations/services/SyncService"
-      );
+      const { syncService } =
+        await import("../lib/integrations/services/SyncService");
 
       const result = await syncService.performIssueRefresh(
         "user-123",
@@ -171,9 +167,8 @@ describe("SyncService interface", () => {
       errors: ["Connection timeout", "Rate limit exceeded"],
     });
 
-    const { syncService } = await import(
-      "../lib/integrations/services/SyncService"
-    );
+    const { syncService } =
+      await import("../lib/integrations/services/SyncService");
 
     const result = await syncService.performSync(
       "user-123",
@@ -189,9 +184,8 @@ describe("SyncService interface", () => {
   it("should handle performSync throwing an error", async () => {
     mockPerformSync.mockRejectedValue(new Error("Network error"));
 
-    const { syncService } = await import(
-      "../lib/integrations/services/SyncService"
-    );
+    const { syncService } =
+      await import("../lib/integrations/services/SyncService");
 
     await expect(
       syncService.performSync("user-123", 456, "1", {}, {} as Job)
@@ -201,9 +195,8 @@ describe("SyncService interface", () => {
   it("should handle performIssueRefresh throwing an error", async () => {
     mockPerformIssueRefresh.mockRejectedValue(new Error("Database error"));
 
-    const { syncService } = await import(
-      "../lib/integrations/services/SyncService"
-    );
+    const { syncService } =
+      await import("../lib/integrations/services/SyncService");
 
     await expect(
       syncService.performIssueRefresh("user-123", 456, "123")

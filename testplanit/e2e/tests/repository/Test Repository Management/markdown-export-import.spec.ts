@@ -50,7 +50,8 @@ test.describe("Markdown Export & Import", () => {
       (f: { displayName: string }) => f.displayName === "Expected Result"
     );
     if (stepsField) await api.assignFieldToTemplate(templateId, stepsField.id);
-    if (expectedField) await api.assignFieldToTemplate(templateId, expectedField.id);
+    if (expectedField)
+      await api.assignFieldToTemplate(templateId, expectedField.id);
 
     return { descriptionFieldId: descriptionField.id, templateId };
   }
@@ -239,7 +240,10 @@ test.describe("Markdown Export & Import", () => {
     );
 
     // Ensure the Description field is on the project's template
-    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(api, projectId);
+    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(
+      api,
+      projectId
+    );
 
     // Create test case with rich TipTap JSON content in the Description field
     const caseName = `MD Export Case ${uniqueId}`;
@@ -264,9 +268,9 @@ test.describe("Markdown Export & Import", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for the case to be visible
-    await expect(
-      page.locator(`text="${caseName}"`).first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open export modal
     const exportButton = page
@@ -338,7 +342,10 @@ test.describe("Markdown Export & Import", () => {
     );
 
     // Ensure the Description field is on the project's template
-    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(api, projectId);
+    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(
+      api,
+      projectId
+    );
 
     const caseName = `JSON Export Case ${uniqueId}`;
     await api.createTestCaseWithFieldValues(projectId, folderId, caseName, {
@@ -349,9 +356,9 @@ test.describe("Markdown Export & Import", () => {
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
-    await expect(
-      page.locator(`text="${caseName}"`).first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Open export modal - JSON is the default Text Long format
     const exportButton = page
@@ -497,9 +504,9 @@ test.describe("Markdown Export & Import", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify the case appears in the table
-    await expect(
-      page.locator(`text="${caseName}"`).first()
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 15000,
+    });
 
     // Verify via API that the Description field is stored as TipTap JSON (not raw markdown)
     // First find the imported case
@@ -647,9 +654,9 @@ test.describe("Markdown Export & Import", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify case appears
-    await expect(
-      page.locator(`text="${caseName}"`).first()
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 15000,
+    });
 
     // Verify via API that it's stored as TipTap JSON (plain text wrapped in paragraph)
     const caseResponse = await request.get(
@@ -724,7 +731,10 @@ test.describe("Markdown Export & Import", () => {
     const sourceFolderId = await api.createFolder(projectId, sourceFolderName);
 
     // Ensure the Description field is on the project's template
-    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(api, projectId);
+    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(
+      api,
+      projectId
+    );
 
     const originalCaseName = `RT Original Case ${uniqueId}`;
     await api.createTestCaseWithFieldValues(

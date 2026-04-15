@@ -4,7 +4,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Combine, LinkIcon, PlayCircle } from "lucide-react";
 import { useTranslations } from "next-intl";

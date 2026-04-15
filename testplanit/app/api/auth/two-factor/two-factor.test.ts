@@ -163,7 +163,9 @@ describe("Two-Factor Authentication API Routes", () => {
     it("should return 401 when user is not authenticated", async () => {
       mockGetServerSession.mockResolvedValue(null);
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -177,7 +179,9 @@ describe("Two-Factor Authentication API Routes", () => {
         force2FANonSSO: false,
       });
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -193,7 +197,9 @@ describe("Two-Factor Authentication API Routes", () => {
         force2FANonSSO: true,
       });
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -218,7 +224,9 @@ describe("Two-Factor Authentication API Routes", () => {
       mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(404);
@@ -234,7 +242,9 @@ describe("Two-Factor Authentication API Routes", () => {
         twoFactorBackupCodes: null,
       });
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -252,7 +262,9 @@ describe("Two-Factor Authentication API Routes", () => {
       mockDecryptSecret.mockReturnValue("decrypted-secret");
       mockVerifyTOTP.mockReturnValue(false);
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -271,7 +283,9 @@ describe("Two-Factor Authentication API Routes", () => {
       mockVerifyTOTP.mockReturnValue(true);
       mockPrisma.user.update.mockResolvedValue({});
 
-      const response = await disableTwoFactor(createRequest({ token: "123456" }));
+      const response = await disableTwoFactor(
+        createRequest({ token: "123456" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -292,7 +306,10 @@ describe("Two-Factor Authentication API Routes", () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
-        twoFactorBackupCodes: JSON.stringify(["hashed-code-1", "hashed-code-2"]),
+        twoFactorBackupCodes: JSON.stringify([
+          "hashed-code-1",
+          "hashed-code-2",
+        ]),
       });
       mockDecryptSecret.mockReturnValue("decrypted-secret");
       mockVerifyTOTP.mockReturnValue(false);
@@ -310,11 +327,14 @@ describe("Two-Factor Authentication API Routes", () => {
 
   describe("POST /api/auth/two-factor/verify-sso", () => {
     const createRequest = (body: object) => {
-      return new NextRequest("http://localhost/api/auth/two-factor/verify-sso", {
-        method: "POST",
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-      });
+      return new NextRequest(
+        "http://localhost/api/auth/two-factor/verify-sso",
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     };
 
     it("should return 401 when user is not authenticated", async () => {
@@ -418,7 +438,10 @@ describe("Two-Factor Authentication API Routes", () => {
         id: "user-123",
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
-        twoFactorBackupCodes: JSON.stringify(["hashed-code-1", "hashed-code-2"]),
+        twoFactorBackupCodes: JSON.stringify([
+          "hashed-code-1",
+          "hashed-code-2",
+        ]),
       });
       mockDecryptSecret.mockReturnValue("decrypted-secret");
       mockVerifyTOTP.mockReturnValue(false);
@@ -453,7 +476,9 @@ describe("Two-Factor Authentication API Routes", () => {
     it("should return 401 when user is not authenticated", async () => {
       mockGetServerSession.mockResolvedValue(null);
 
-      const response = await setup(new NextRequest("http://localhost/api/auth/two-factor/setup"));
+      const response = await setup(
+        new NextRequest("http://localhost/api/auth/two-factor/setup")
+      );
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -464,7 +489,9 @@ describe("Two-Factor Authentication API Routes", () => {
       mockGetServerSession.mockResolvedValue(mockSession);
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      const response = await setup(new NextRequest("http://localhost/api/auth/two-factor/setup"));
+      const response = await setup(
+        new NextRequest("http://localhost/api/auth/two-factor/setup")
+      );
       const data = await response.json();
 
       expect(response.status).toBe(404);
@@ -478,7 +505,9 @@ describe("Two-Factor Authentication API Routes", () => {
         twoFactorEnabled: true,
       });
 
-      const response = await setup(new NextRequest("http://localhost/api/auth/two-factor/setup"));
+      const response = await setup(
+        new NextRequest("http://localhost/api/auth/two-factor/setup")
+      );
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -492,11 +521,15 @@ describe("Two-Factor Authentication API Routes", () => {
         twoFactorEnabled: false,
       });
       mockGenerateTOTPSecret.mockReturnValue("ABCDEFGHIJ123456");
-      mockGenerateQRCodeDataURL.mockResolvedValue("data:image/png;base64,qrcode");
+      mockGenerateQRCodeDataURL.mockResolvedValue(
+        "data:image/png;base64,qrcode"
+      );
       mockEncryptSecret.mockReturnValue("encrypted-secret");
       mockPrisma.user.update.mockResolvedValue({});
 
-      const response = await setup(new NextRequest("http://localhost/api/auth/two-factor/setup"));
+      const response = await setup(
+        new NextRequest("http://localhost/api/auth/two-factor/setup")
+      );
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -512,7 +545,9 @@ describe("Two-Factor Authentication API Routes", () => {
       mockGetServerSession.mockResolvedValue(mockSession);
       mockPrisma.user.findUnique.mockRejectedValue(new Error("Database error"));
 
-      const response = await setup(new NextRequest("http://localhost/api/auth/two-factor/setup"));
+      const response = await setup(
+        new NextRequest("http://localhost/api/auth/two-factor/setup")
+      );
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -628,7 +663,11 @@ describe("Two-Factor Authentication API Routes", () => {
         where: { id: "user-123" },
         data: {
           twoFactorEnabled: true,
-          twoFactorBackupCodes: JSON.stringify(["hashed1", "hashed2", "hashed3"]),
+          twoFactorBackupCodes: JSON.stringify([
+            "hashed1",
+            "hashed2",
+            "hashed3",
+          ]),
         },
       });
     });

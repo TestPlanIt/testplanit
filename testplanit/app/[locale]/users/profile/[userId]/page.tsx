@@ -11,7 +11,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -29,7 +29,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -40,28 +40,38 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { UserMentionedComments } from "@/components/UserMentionedComments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  DateFormat, ItemsPerPage, Locale, NotificationMode,
-  Theme, TimeFormat
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
 } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Circle, Moon, PenSquare, Sun, SunMoon, UserLock, X } from "lucide-react";
+import {
+  Check,
+  Circle,
+  Moon,
+  PenSquare,
+  Sun,
+  SunMoon,
+  UserLock,
+  X,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import {
-  useFindFirstUser,
-  useFindUniqueAppConfig
-} from "~/lib/hooks";
+import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
 import { ChangePasswordModal } from "./ChangePasswordModal";
@@ -81,7 +91,10 @@ interface TimezoneOption {
 
 const sampleDate = new Date("2024-05-19T16:20:00");
 
-const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _searchParams }) => {
+const UserProfile: React.FC<UserProfileProps> = ({
+  params,
+  searchParams: _searchParams,
+}) => {
   // Resolve the params and searchParams promises using React's `use`
   const { userId } = use(params);
 
@@ -147,23 +160,34 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
     () => ({
       name: user?.name || "",
       email: user?.email || "",
-      theme: user?.userPreferences?.theme ?? session?.user?.preferences?.theme ?? Theme.Purple,
-      locale: user?.userPreferences?.locale ?? session?.user?.preferences?.locale ?? Locale.en_US,
+      theme:
+        user?.userPreferences?.theme ??
+        session?.user?.preferences?.theme ??
+        Theme.Purple,
+      locale:
+        user?.userPreferences?.locale ??
+        session?.user?.preferences?.locale ??
+        Locale.en_US,
       itemsPerPage:
-        user?.userPreferences?.itemsPerPage ?? session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
+        user?.userPreferences?.itemsPerPage ??
+        session?.user?.preferences?.itemsPerPage ??
+        ItemsPerPage.P10,
       dateFormat:
-        user?.userPreferences?.dateFormat ?? session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
-      timeFormat: user?.userPreferences?.timeFormat ?? session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
-      timezone: user?.userPreferences?.timezone ?? session?.user?.preferences?.timezone ?? "Etc/UTC",
+        user?.userPreferences?.dateFormat ??
+        session?.user?.preferences?.dateFormat ??
+        DateFormat.MM_DD_YYYY_DASH,
+      timeFormat:
+        user?.userPreferences?.timeFormat ??
+        session?.user?.preferences?.timeFormat ??
+        TimeFormat.HH_MM_A,
+      timezone:
+        user?.userPreferences?.timezone ??
+        session?.user?.preferences?.timezone ??
+        "Etc/UTC",
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
-    [
-      user?.name,
-      user?.email,
-      user?.userPreferences,
-      session?.user?.preferences,
-    ]
+    [user?.name, user?.email, user?.userPreferences, session?.user?.preferences]
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -277,7 +301,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
           type: "custom",
           message: tCommon("errors.emailExists"),
         });
-      } else if (err.message?.includes("Forbidden") || err.message?.includes("Unauthorized")) {
+      } else if (
+        err.message?.includes("Forbidden") ||
+        err.message?.includes("Unauthorized")
+      ) {
         form.setError("root", {
           type: "custom",
           message: tCommon("errors.unknown"),
@@ -419,7 +446,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
   }
 
   // Allow users with NONE access to view their own profile, but not other users' profiles
-  const canViewProfile = session.user.access !== "NONE" || user?.id === session?.user?.id;
+  const canViewProfile =
+    session.user.access !== "NONE" || user?.id === session?.user?.id;
 
   // Redirect to 404 if user doesn't have permission to view this profile
   if (!canViewProfile) {
@@ -569,9 +597,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
                               {changePasswordOpen && (
                                 <ChangePasswordModal
                                   open={changePasswordOpen}
-                                  onClose={() =>
-                                    setChangePasswordOpen(false)
-                                  }
+                                  onClose={() => setChangePasswordOpen(false)}
                                 />
                               )}
                             </>
@@ -859,7 +885,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams: _search
 
                                 <Separator className="opacity-50" />
 
-                                <div className="flex items-center justify-between" data-testid="user-locale-display">
+                                <div
+                                  className="flex items-center justify-between"
+                                  data-testid="user-locale-display"
+                                >
                                   <span className="text-sm">
                                     {tCommon("fields.locale")}
                                   </span>

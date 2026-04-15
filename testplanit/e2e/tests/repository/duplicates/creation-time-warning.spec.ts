@@ -102,8 +102,16 @@ test.describe("Creation-Time Duplicate Warning", () => {
     const folderName = `E2E Multi Duplicate Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
 
-    const caseAId = await api.createTestCase(projectId, folderId, "Login test A");
-    const caseBId = await api.createTestCase(projectId, folderId, "Login test B");
+    const caseAId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Login test A"
+    );
+    const caseBId = await api.createTestCase(
+      projectId,
+      folderId,
+      "Login test B"
+    );
 
     // Mock the check-new endpoint to return multiple matches
     await page.route("**/api/duplicate-scan/check-new", async (route) => {

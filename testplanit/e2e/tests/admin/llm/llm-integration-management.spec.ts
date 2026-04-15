@@ -170,15 +170,12 @@ test.describe("LLM Integration Management - Add Integration", () => {
         const found = await findResponse.json();
         const integrationId = found?.data?.id || found?.id;
         if (integrationId) {
-          await request.post(
-            `${apiBase}/api/model/llmIntegration/update`,
-            {
-              data: {
-                where: { id: integrationId },
-                data: { isDeleted: true },
-              },
-            }
-          );
+          await request.post(`${apiBase}/api/model/llmIntegration/update`, {
+            data: {
+              where: { id: integrationId },
+              data: { isDeleted: true },
+            },
+          });
         }
       }
     } catch (e) {
@@ -236,9 +233,7 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find the row with the integration name
-      const row = page
-        .locator("tbody tr")
-        .filter({ hasText: integrationName });
+      const row = page.locator("tbody tr").filter({ hasText: integrationName });
       await expect(row).toBeVisible({ timeout: 10000 });
 
       // Click the edit button using its test ID
@@ -254,7 +249,12 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
       const closeButton = dialog
         .locator("button")
         .filter({ hasText: /Close|Cancel/i });
-      if (await closeButton.first().isVisible({ timeout: 1000 }).catch(() => false)) {
+      if (
+        await closeButton
+          .first()
+          .isVisible({ timeout: 1000 })
+          .catch(() => false)
+      ) {
         await closeButton.first().click();
       } else {
         await page.keyboard.press("Escape");
@@ -385,9 +385,7 @@ test.describe("LLM Integration Management - Test Connection", () => {
     );
 
     if (!createResponse.ok()) {
-      console.warn(
-        "Could not create LLM integration via API, skipping test"
-      );
+      console.warn("Could not create LLM integration via API, skipping test");
       return;
     }
 
@@ -398,9 +396,7 @@ test.describe("LLM Integration Management - Test Connection", () => {
       await page.goto("/en-US/admin/llm");
       await page.waitForLoadState("networkidle");
 
-      const row = page
-        .locator("tbody tr")
-        .filter({ hasText: integrationName });
+      const row = page.locator("tbody tr").filter({ hasText: integrationName });
       await expect(row).toBeVisible({ timeout: 10000 });
 
       // Click the test button using its test ID

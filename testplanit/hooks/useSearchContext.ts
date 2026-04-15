@@ -4,10 +4,7 @@ import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { usePathname } from "~/lib/navigation";
-import {
-  SearchableEntityType,
-  SearchContext
-} from "~/types/search";
+import { SearchableEntityType, SearchContext } from "~/types/search";
 
 /**
  * Hook to determine search context based on current route

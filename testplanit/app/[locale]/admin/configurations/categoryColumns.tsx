@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { ConfigCategories } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";

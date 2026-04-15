@@ -1,8 +1,10 @@
 "use client";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Globe } from "lucide-react";
 import { useSession } from "next-auth/react";

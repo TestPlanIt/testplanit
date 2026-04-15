@@ -130,9 +130,8 @@ describe("Milestone Due Notifications Job", () => {
 
   describe("JOB_MILESTONE_DUE_NOTIFICATIONS", () => {
     it("should export correct job name constant", async () => {
-      const { JOB_MILESTONE_DUE_NOTIFICATIONS } = await import(
-        "./forecastWorker"
-      );
+      const { JOB_MILESTONE_DUE_NOTIFICATIONS } =
+        await import("./forecastWorker");
       expect(JOB_MILESTONE_DUE_NOTIFICATIONS).toBe(
         "milestone-due-notifications"
       );

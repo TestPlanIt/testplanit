@@ -4,7 +4,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "@prisma/client";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
@@ -119,7 +119,11 @@ export function useTestCaseHealthColumns(
           const status = info.getValue() as HealthStatus;
           const statusConfig: Record<
             HealthStatus,
-            { label: string; variant: "default" | "destructive" | "secondary" | "outline"; className: string }
+            {
+              label: string;
+              variant: "default" | "destructive" | "secondary" | "outline";
+              className: string;
+            }
           > = {
             healthy: {
               label: t("reports.ui.testCaseHealth.healthStatus.healthy"),
@@ -129,17 +133,20 @@ export function useTestCaseHealthColumns(
             never_executed: {
               label: t("reports.ui.testCaseHealth.healthStatus.neverExecuted"),
               variant: "secondary",
-              className: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
+              className:
+                "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
             },
             always_passing: {
               label: t("reports.ui.testCaseHealth.healthStatus.alwaysPassing"),
               variant: "outline",
-              className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+              className:
+                "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
             },
             always_failing: {
               label: t("reports.ui.testCaseHealth.healthStatus.alwaysFailing"),
               variant: "destructive",
-              className: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+              className:
+                "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
             },
           };
 
@@ -155,7 +162,10 @@ export function useTestCaseHealthColumns(
           }
 
           return (
-            <Badge variant={config.variant} className={cn("font-medium", config.className)}>
+            <Badge
+              variant={config.variant}
+              className={cn("font-medium", config.className)}
+            >
               {config.label}
             </Badge>
           );
@@ -168,7 +178,8 @@ export function useTestCaseHealthColumns(
             always_passing: 3,
             healthy: 4,
           };
-          const statusDiff = statusPriority[rowA.original.healthStatus] -
+          const statusDiff =
+            statusPriority[rowA.original.healthStatus] -
             statusPriority[rowB.original.healthStatus];
           if (statusDiff !== 0) return statusDiff;
           // Secondary sort: stale tests first within same status
@@ -186,7 +197,9 @@ export function useTestCaseHealthColumns(
     columns.push(
       columnHelper.accessor("isStale", {
         id: "isStale",
-        header: () => <span>{t("reports.ui.testCaseHealth.healthStatus.stale")}</span>,
+        header: () => (
+          <span>{t("reports.ui.testCaseHealth.healthStatus.stale")}</span>
+        ),
         cell: (info) => {
           const isStale = info.getValue();
           return isStale ? (
@@ -194,9 +207,7 @@ export function useTestCaseHealthColumns(
               {t("common.yes")}
             </span>
           ) : (
-            <span className="text-muted-foreground">
-              {t("common.no")}
-            </span>
+            <span className="text-muted-foreground">{t("common.no")}</span>
           );
         },
         enableSorting: true,
@@ -219,7 +230,9 @@ export function useTestCaseHealthColumns(
             return "text-red-600 dark:text-red-400";
           };
           return (
-            <span className={cn("font-mono font-semibold", getScoreColor(score))}>
+            <span
+              className={cn("font-mono font-semibold", getScoreColor(score))}
+            >
               {score}
             </span>
           );
@@ -234,7 +247,9 @@ export function useTestCaseHealthColumns(
     columns.push(
       columnHelper.accessor("lastExecutedAt", {
         id: "lastExecutedAt",
-        header: () => <span>{t("reports.ui.testCaseHealth.lastExecuted")}</span>,
+        header: () => (
+          <span>{t("reports.ui.testCaseHealth.lastExecuted")}</span>
+        ),
         cell: (info) => {
           const lastExecuted = info.getValue();
           if (!lastExecuted) {
@@ -279,9 +294,7 @@ export function useTestCaseHealthColumns(
       columnHelper.accessor("totalExecutions", {
         id: "totalExecutions",
         header: () => <span>{t("reports.ui.testCaseHealth.executions")}</span>,
-        cell: (info) => (
-          <span className="font-mono">{info.getValue()}</span>
-        ),
+        cell: (info) => <span className="font-mono">{info.getValue()}</span>,
         enableSorting: true,
         size: 100,
         minSize: 80,
@@ -309,7 +322,12 @@ export function useTestCaseHealthColumns(
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className={cn("font-mono font-semibold cursor-default", getPassRateColor(rate))}>
+                  <span
+                    className={cn(
+                      "font-mono font-semibold cursor-default",
+                      getPassRateColor(rate)
+                    )}
+                  >
                     {rate}
                     {"%"}
                   </span>
@@ -317,10 +335,12 @@ export function useTestCaseHealthColumns(
                 <TooltipContent>
                   <div className="text-xs space-y-1">
                     <div>
-                      {t("reports.ui.testCaseHealth.passCount")}: {info.row.original.passCount}
+                      {t("reports.ui.testCaseHealth.passCount")}:{" "}
+                      {info.row.original.passCount}
                     </div>
                     <div>
-                      {t("reports.ui.testCaseHealth.failCount")}: {info.row.original.failCount}
+                      {t("reports.ui.testCaseHealth.failCount")}:{" "}
+                      {info.row.original.failCount}
                     </div>
                   </div>
                 </TooltipContent>

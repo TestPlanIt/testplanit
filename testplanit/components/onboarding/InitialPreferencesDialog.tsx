@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -17,14 +17,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -33,7 +33,7 @@ import {
   Locale,
   NotificationMode,
   Theme,
-  TimeFormat
+  TimeFormat,
 } from "@prisma/client";
 import { Circle, Moon, Sun, SunMoon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -45,7 +45,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import {
   useFindFirstUserPreferences,
-  useUpdateUserPreferences
+  useUpdateUserPreferences,
 } from "~/lib/hooks";
 
 type TimezoneOption = {
@@ -68,8 +68,12 @@ export function InitialPreferencesDialog() {
   const t = useTranslations("home.initialPreferences");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const tNotificationsMode = useTranslations("users.profile.notifications.mode");
-  const tNotificationDefaultMode = useTranslations("admin.notifications.defaultMode");
+  const tNotificationsMode = useTranslations(
+    "users.profile.notifications.mode"
+  );
+  const tNotificationDefaultMode = useTranslations(
+    "admin.notifications.defaultMode"
+  );
   const tUserMenu = useTranslations("userMenu");
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,7 +123,8 @@ export function InitialPreferencesDialog() {
   useEffect(() => {
     if (isOpen && originalThemeRef.current === undefined) {
       // Store the current theme preference from user preferences, not the active theme
-      originalThemeRef.current = userPreferences?.theme?.toLowerCase() ?? "system";
+      originalThemeRef.current =
+        userPreferences?.theme?.toLowerCase() ?? "system";
     }
   }, [isOpen, userPreferences?.theme]);
 
@@ -235,11 +240,23 @@ export function InitialPreferencesDialog() {
         requestAnimationFrame(() => {
           const html = document.documentElement;
           // Remove all theme classes
-          html.classList.remove("light", "dark", "system", "green", "orange", "purple");
+          html.classList.remove(
+            "light",
+            "dark",
+            "system",
+            "green",
+            "orange",
+            "purple"
+          );
           // Add the new theme class
           html.classList.add(themeLower);
           // Update color scheme for browser native elements
-          html.style.colorScheme = themeLower === "dark" ? "dark" : themeLower === "light" ? "light" : "";
+          html.style.colorScheme =
+            themeLower === "dark"
+              ? "dark"
+              : themeLower === "light"
+                ? "light"
+                : "";
         });
       }
     },
@@ -345,9 +362,21 @@ export function InitialPreferencesDialog() {
       // Also manually restore the theme class
       if (typeof document !== "undefined") {
         const html = document.documentElement;
-        html.classList.remove("light", "dark", "system", "green", "orange", "purple");
+        html.classList.remove(
+          "light",
+          "dark",
+          "system",
+          "green",
+          "orange",
+          "purple"
+        );
         html.classList.add(originalTheme);
-        html.style.colorScheme = originalTheme === "dark" ? "dark" : originalTheme === "light" ? "light" : "";
+        html.style.colorScheme =
+          originalTheme === "dark"
+            ? "dark"
+            : originalTheme === "light"
+              ? "light"
+              : "";
       }
     }
 
@@ -471,7 +500,9 @@ export function InitialPreferencesDialog() {
                 name="itemsPerPage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tGlobal("common.fields.itemsPerPage")}</FormLabel>
+                    <FormLabel>
+                      {tGlobal("common.fields.itemsPerPage")}
+                    </FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -508,7 +539,9 @@ export function InitialPreferencesDialog() {
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tNotificationsMode("label")} />
+                          <SelectValue
+                            placeholder={tNotificationsMode("label")}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {notificationModeOptions.map((option) => (

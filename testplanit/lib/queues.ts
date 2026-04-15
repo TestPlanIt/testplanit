@@ -1,8 +1,20 @@
 import { Queue } from "bullmq";
 import {
-  AUDIT_LOG_QUEUE_NAME, AUTO_TAG_QUEUE_NAME, BUDGET_ALERT_QUEUE_NAME, COPY_MOVE_QUEUE_NAME, DUPLICATE_SCAN_QUEUE_NAME, ELASTICSEARCH_REINDEX_QUEUE_NAME, EMAIL_QUEUE_NAME, FORECAST_QUEUE_NAME,
-  GENERATE_FROM_URL_QUEUE_NAME, MAGIC_SELECT_QUEUE_NAME, NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME, STEP_SCAN_QUEUE_NAME, SYNC_QUEUE_NAME,
-  TESTMO_IMPORT_QUEUE_NAME
+  AUDIT_LOG_QUEUE_NAME,
+  AUTO_TAG_QUEUE_NAME,
+  BUDGET_ALERT_QUEUE_NAME,
+  COPY_MOVE_QUEUE_NAME,
+  DUPLICATE_SCAN_QUEUE_NAME,
+  ELASTICSEARCH_REINDEX_QUEUE_NAME,
+  EMAIL_QUEUE_NAME,
+  FORECAST_QUEUE_NAME,
+  GENERATE_FROM_URL_QUEUE_NAME,
+  MAGIC_SELECT_QUEUE_NAME,
+  NOTIFICATION_QUEUE_NAME,
+  REPO_CACHE_QUEUE_NAME,
+  STEP_SCAN_QUEUE_NAME,
+  SYNC_QUEUE_NAME,
+  TESTMO_IMPORT_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 
@@ -523,7 +535,9 @@ export function getStepScanQueue(): Queue | null {
 export function getMagicSelectQueue(): Queue | null {
   if (_magicSelectQueue) return _magicSelectQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${MAGIC_SELECT_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${MAGIC_SELECT_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _magicSelectQueue = new Queue(MAGIC_SELECT_QUEUE_NAME, {
@@ -548,7 +562,9 @@ export function getMagicSelectQueue(): Queue | null {
 export function getGenerateFromUrlQueue(): Queue | null {
   if (_generateFromUrlQueue) return _generateFromUrlQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${GENERATE_FROM_URL_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${GENERATE_FROM_URL_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _generateFromUrlQueue = new Queue(GENERATE_FROM_URL_QUEUE_NAME, {

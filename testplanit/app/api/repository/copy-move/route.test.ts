@@ -138,13 +138,13 @@ function setupDefaultMocks(opts?: { userAccess?: string }) {
 
   // templateProjectAssignment
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
-    baseTargetTemplateAssignments,
+    baseTargetTemplateAssignments
   );
   mockEnhancedDb.templateProjectAssignment.create.mockResolvedValue({});
 
   // workflow assignments
   mockEnhancedDb.projectWorkflowAssignment.findMany.mockResolvedValue(
-    baseTargetWorkflowAssignments,
+    baseTargetWorkflowAssignments
   );
 
   // repository
@@ -183,7 +183,7 @@ describe("POST /api/repository/copy-move", () => {
     mockGetServerSession.mockResolvedValue(baseSession);
     const { POST } = await import("./route");
     const res = await POST(
-      makeRequest({ ...validBody, conflictResolution: "overwrite" }),
+      makeRequest({ ...validBody, conflictResolution: "overwrite" })
     );
     expect(res.status).toBe(400);
     const data = await res.json();
@@ -238,7 +238,16 @@ describe("POST /api/repository/copy-move", () => {
     mockPrismaUserFindUnique.mockResolvedValue({
       ...baseUser,
       access: "USER",
-      role: { rolePermissions: [{ area: "TestCaseRepository", canAddEdit: false, canDelete: false, canClose: false }] },
+      role: {
+        rolePermissions: [
+          {
+            area: "TestCaseRepository",
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
     });
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockGetCopyMoveQueue.mockReturnValue(mockQueue);
@@ -246,9 +255,7 @@ describe("POST /api/repository/copy-move", () => {
       .mockResolvedValueOnce({ id: 10 }) // source
       .mockResolvedValueOnce({ id: 20 }); // target
     const { POST } = await import("./route");
-    const res = await POST(
-      makeRequest({ ...validBody, operation: "move" }),
-    );
+    const res = await POST(makeRequest({ ...validBody, operation: "move" }));
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.error).toMatch(/update/i);
@@ -272,16 +279,18 @@ describe("POST /api/repository/copy-move", () => {
         targetTemplateId: 99,
         targetRepositoryId: 200,
         targetDefaultWorkflowStateId: 100,
-      }),
+      })
     );
     expect(res.status).toBe(200);
-    expect(mockEnhancedDb.templateProjectAssignment.create).toHaveBeenCalledWith(
+    expect(
+      mockEnhancedDb.templateProjectAssignment.create
+    ).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           templateId: 99,
           projectId: 20,
         }),
-      }),
+      })
     );
     const data = await res.json();
     expect(data.jobId).toBe("job-123");
@@ -302,16 +311,18 @@ describe("POST /api/repository/copy-move", () => {
         targetTemplateId: 88,
         targetRepositoryId: 200,
         targetDefaultWorkflowStateId: 100,
-      }),
+      })
     );
     expect(res.status).toBe(200);
-    expect(mockEnhancedDb.templateProjectAssignment.create).toHaveBeenCalledWith(
+    expect(
+      mockEnhancedDb.templateProjectAssignment.create
+    ).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           templateId: 88,
           projectId: 20,
         }),
-      }),
+      })
     );
   });
 
@@ -330,11 +341,11 @@ describe("POST /api/repository/copy-move", () => {
         targetTemplateId: 77,
         targetRepositoryId: 200,
         targetDefaultWorkflowStateId: 100,
-      }),
+      })
     );
     expect(res.status).toBe(200);
     expect(
-      mockEnhancedDb.templateProjectAssignment.create,
+      mockEnhancedDb.templateProjectAssignment.create
     ).not.toHaveBeenCalled();
     const data = await res.json();
     expect(data.jobId).toBeDefined();
@@ -354,11 +365,11 @@ describe("POST /api/repository/copy-move", () => {
           isActive: true,
           isDeleted: false,
         }),
-      }),
+      })
     );
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
-      expect.objectContaining({ targetRepositoryId: 200 }),
+      expect.objectContaining({ targetRepositoryId: 200 })
     );
   });
 
@@ -370,7 +381,7 @@ describe("POST /api/repository/copy-move", () => {
     expect(res.status).toBe(200);
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
-      expect.objectContaining({ targetDefaultWorkflowStateId: 100 }),
+      expect.objectContaining({ targetDefaultWorkflowStateId: 100 })
     );
   });
 
@@ -382,7 +393,7 @@ describe("POST /api/repository/copy-move", () => {
     expect(res.status).toBe(200);
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
-      expect.objectContaining({ targetTemplateId: 10 }),
+      expect.objectContaining({ targetTemplateId: 10 })
     );
   });
 
@@ -407,7 +418,7 @@ describe("POST /api/repository/copy-move", () => {
         targetRepositoryId: 200,
         targetDefaultWorkflowStateId: 100,
         targetTemplateId: 10,
-      }),
+      })
     );
   });
 

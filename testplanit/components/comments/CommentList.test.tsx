@@ -23,7 +23,12 @@ vi.mock("./CommentEditor", () => ({
         onClick={() =>
           onSubmit({
             type: "doc",
-            content: [{ type: "paragraph", content: [{ type: "text", text: "New comment" }] }],
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "New comment" }],
+              },
+            ],
           })
         }
         disabled={isLoading}
@@ -67,11 +72,20 @@ vi.mock("~/components/ui/separator", () => ({
 }));
 
 // Helper to create a mock comment
-const makeMockComment = (id: string, creatorId: string, creatorName: string) => ({
+const makeMockComment = (
+  id: string,
+  creatorId: string,
+  creatorName: string
+) => ({
   id,
   content: {
     type: "doc" as const,
-    content: [{ type: "paragraph", content: [{ type: "text", text: `Comment by ${creatorName}` }] }],
+    content: [
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: `Comment by ${creatorName}` }],
+      },
+    ],
   },
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-01"),
@@ -131,7 +145,11 @@ describe("CommentList", () => {
   it("shows edit button for current user's comments", () => {
     const comments = [makeMockComment("c1", "user-1", "Alice")];
     render(
-      <CommentList {...defaultProps} initialComments={comments} currentUserId="user-1" />
+      <CommentList
+        {...defaultProps}
+        initialComments={comments}
+        currentUserId="user-1"
+      />
     );
     expect(screen.getByTestId("edit-btn-c1")).toBeInTheDocument();
   });
@@ -139,7 +157,11 @@ describe("CommentList", () => {
   it("does not show edit button for other users' comments", () => {
     const comments = [makeMockComment("c1", "user-2", "Bob")];
     render(
-      <CommentList {...defaultProps} initialComments={comments} currentUserId="user-1" />
+      <CommentList
+        {...defaultProps}
+        initialComments={comments}
+        currentUserId="user-1"
+      />
     );
     expect(screen.queryByTestId("edit-btn-c1")).not.toBeInTheDocument();
   });

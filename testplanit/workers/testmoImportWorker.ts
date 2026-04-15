@@ -1,8 +1,12 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import {
   Access,
-  ApplicationArea, Prisma, PrismaClient, WorkflowScope,
-  WorkflowType, type TestmoImportJob
+  ApplicationArea,
+  Prisma,
+  PrismaClient,
+  WorkflowScope,
+  WorkflowType,
+  type TestmoImportJob,
 } from "@prisma/client";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
@@ -15,59 +19,83 @@ import { pathToFileURL } from "node:url";
 import { emptyEditorContent } from "../app/constants/backend";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob, isMultiTenantMode, validateMultiTenantJobData,
-  type MultiTenantJobData
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  validateMultiTenantJobData,
+  type MultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import {
-  getElasticsearchReindexQueue, TESTMO_IMPORT_QUEUE_NAME
+  getElasticsearchReindexQueue,
+  TESTMO_IMPORT_QUEUE_NAME,
 } from "../lib/queues";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
 import valkeyConnection from "../lib/valkey";
 import {
   normalizeMappingConfiguration,
-  serializeMappingConfiguration
+  serializeMappingConfiguration,
 } from "../services/imports/testmo/configuration";
 import { analyzeTestmoExport } from "../services/imports/testmo/TestmoExportAnalyzer";
 import type {
   TestmoDatasetSummary,
-  TestmoMappingConfiguration
+  TestmoMappingConfiguration,
 } from "../services/imports/testmo/types";
 import { generateRandomPassword } from "../utils/randomPassword";
 import type { ReindexJobData } from "./elasticsearchReindexWorker";
 import {
-  clearAutomationImportCaches, importAutomationCases, importAutomationRunFields,
-  importAutomationRunLinks, importAutomationRuns, importAutomationRunTags, importAutomationRunTestFields, importAutomationRunTests
+  clearAutomationImportCaches,
+  importAutomationCases,
+  importAutomationRunFields,
+  importAutomationRunLinks,
+  importAutomationRuns,
+  importAutomationRunTags,
+  importAutomationRunTestFields,
+  importAutomationRunTests,
 } from "./testmoImport/automationImports";
 import {
-  importConfigurations, importGroups, importMilestoneTypes, importRoles, importTags, importUserGroups, importWorkflows
+  importConfigurations,
+  importGroups,
+  importMilestoneTypes,
+  importRoles,
+  importTags,
+  importUserGroups,
+  importWorkflows,
 } from "./testmoImport/configurationImports";
 import {
   buildNumberIdMap,
   buildStringIdMap,
   buildTemplateFieldMaps,
-  resolveUserId, toBooleanValue,
-  toDateValue, toInputJsonValue, toNumberValue,
-  toStringValue
+  resolveUserId,
+  toBooleanValue,
+  toDateValue,
+  toInputJsonValue,
+  toNumberValue,
+  toStringValue,
 } from "./testmoImport/helpers";
 import {
-  createProjectIntegrations, importIssues, importIssueTargets, importMilestoneIssues,
+  createProjectIntegrations,
+  importIssues,
+  importIssueTargets,
+  importMilestoneIssues,
   importRepositoryCaseIssues,
   importRunIssues,
   importRunResultIssues,
   importSessionIssues,
-  importSessionResultIssues
+  importSessionResultIssues,
 } from "./testmoImport/issueImports";
 import {
-  importMilestoneLinks, importProjectLinks, importRunLinks
+  importMilestoneLinks,
+  importProjectLinks,
+  importRunLinks,
 } from "./testmoImport/linkImports";
 import {
   importRepositoryCaseTags,
   importRunTags,
-  importSessionTags
+  importSessionTags,
 } from "./testmoImport/tagImports";
 import {
-  importTemplateFields, importTemplates
+  importTemplateFields,
+  importTemplates,
 } from "./testmoImport/templateImports";
 
 // TODO(testmo-import): Remaining datasets to implement:
@@ -101,7 +129,6 @@ import {
 //
 // TAGS
 // - milestone_automation_tags
-
 
 const projectNameCache = new Map<number, string>();
 const templateNameCache = new Map<number, string>();
@@ -286,7 +313,9 @@ const s3Client = new S3Client({
 
 const FINAL_STATUSES = new Set(["COMPLETED", "FAILED", "CANCELED"]);
 
-const _VALID_APPLICATION_AREAS = new Set<string>(Object.values(ApplicationArea));
+const _VALID_APPLICATION_AREAS = new Set<string>(
+  Object.values(ApplicationArea)
+);
 const _VALID_WORKFLOW_TYPES = new Set<string>(Object.values(WorkflowType));
 const _VALID_WORKFLOW_SCOPES = new Set<string>(Object.values(WorkflowScope));
 const SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -2496,7 +2525,10 @@ const importRepositories = async (
   let folderRows = datasetRows.get("repository_folders") ?? [];
   let caseRows = datasetRows.get("repository_cases") ?? [];
 
-  const repositoriesByProject = new Map<number, Array<Record<string, unknown>>>();
+  const repositoriesByProject = new Map<
+    number,
+    Array<Record<string, unknown>>
+  >();
   for (const row of repositoryRows) {
     const record = row as Record<string, unknown>;
     const repoId = toNumberValue(record.id);
@@ -2504,8 +2536,7 @@ const importRepositories = async (
     if (repoId === null || projectSourceId === null) {
       continue;
     }
-    const collection =
-      repositoriesByProject.get(projectSourceId) ?? [];
+    const collection = repositoriesByProject.get(projectSourceId) ?? [];
     collection.push(record);
     repositoriesByProject.set(projectSourceId, collection);
   }
@@ -2527,8 +2558,8 @@ const importRepositories = async (
         explicitMasters.length > 0
           ? explicitMasters
           : nonSnapshotRows.length > 0
-          ? nonSnapshotRows
-          : rows.slice(0, 1);
+            ? nonSnapshotRows
+            : rows.slice(0, 1);
 
       const repoSet = new Set<number>();
       for (const record of selectedRows) {
@@ -2592,7 +2623,9 @@ const importRepositories = async (
   }
 
   const baseRepositoryRows =
-    canonicalRepositoryRows.length > 0 ? canonicalRepositoryRows : repositoryRows;
+    canonicalRepositoryRows.length > 0
+      ? canonicalRepositoryRows
+      : repositoryRows;
 
   if (
     baseRepositoryRows.length === 0 &&
@@ -3437,10 +3470,7 @@ const importRepositoryCases = async (
             caseIdMap.set(caseSourceId, existing.id);
             const existingKey = toStringValue(record.key);
             if (existingKey) {
-              caseKeyMap.set(
-                `${projectSourceId}:${existingKey}`,
-                existing.id
-              );
+              caseKeyMap.set(`${projectSourceId}:${existingKey}`, existing.id);
             }
             summary.total += 1;
             summary.mapped += 1;
@@ -5406,7 +5436,12 @@ async function importStatuses(
   return summary;
 }
 
-async function processImportMode(importJob: TestmoImportJob, jobId: string, prisma: PrismaClient, tenantId?: string) {
+async function processImportMode(
+  importJob: TestmoImportJob,
+  jobId: string,
+  prisma: PrismaClient,
+  tenantId?: string
+) {
   if (FINAL_STATUSES.has(importJob.status)) {
     return { status: importJob.status };
   }
@@ -6110,14 +6145,14 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
       );
     }
     if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filtered = (datasetRowsByName.get("repository_folders") ?? []).filter(
-        (row: any) => {
-          const repoId = toNumberValue(row.repo_id);
-          return repoId === null
-            ? true
-            : repositoryImport.masterRepositoryIds.has(repoId);
-        }
-      );
+      const filtered = (
+        datasetRowsByName.get("repository_folders") ?? []
+      ).filter((row: any) => {
+        const repoId = toNumberValue(row.repo_id);
+        return repoId === null
+          ? true
+          : repositoryImport.masterRepositoryIds.has(repoId);
+      });
       datasetRowsByName.set("repository_folders", filtered);
     }
 
@@ -6151,14 +6186,12 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     }
     if (repositoryImport.masterRepositoryIds.size > 0) {
       const filteredCases =
-        datasetRowsByName
-          .get("repository_cases")
-          ?.filter((row: any) => {
-            const repoId = toNumberValue(row.repo_id);
-            return repoId === null
-              ? true
-              : repositoryImport.masterRepositoryIds.has(repoId);
-          }) ?? [];
+        datasetRowsByName.get("repository_cases")?.filter((row: any) => {
+          const repoId = toNumberValue(row.repo_id);
+          return repoId === null
+            ? true
+            : repositoryImport.masterRepositoryIds.has(repoId);
+        }) ?? [];
       datasetRowsByName.set("repository_cases", filteredCases);
     }
     if (datasetRowsByName.get("repository_case_steps")?.length === 0) {
@@ -6169,14 +6202,12 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     }
     if (repositoryImport.masterRepositoryIds.size > 0) {
       const filteredSteps =
-        datasetRowsByName
-          .get("repository_case_steps")
-          ?.filter((row: any) => {
-            const repoId = toNumberValue(row.repo_id);
-            return repoId === null
-              ? true
-              : repositoryImport.masterRepositoryIds.has(repoId);
-          }) ?? [];
+        datasetRowsByName.get("repository_case_steps")?.filter((row: any) => {
+          const repoId = toNumberValue(row.repo_id);
+          return repoId === null
+            ? true
+            : repositoryImport.masterRepositoryIds.has(repoId);
+        }) ?? [];
       datasetRowsByName.set("repository_case_steps", filteredSteps);
     }
 
@@ -6193,14 +6224,12 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     }
     if (repositoryImport.masterRepositoryIds.size > 0) {
       const filteredCaseValues =
-        datasetRowsByName
-          .get("repository_case_values")
-          ?.filter((row: any) => {
-            const repoId = toNumberValue(row.repo_id);
-            return repoId === null
-              ? true
-              : repositoryImport.masterRepositoryIds.has(repoId);
-          }) ?? [];
+        datasetRowsByName.get("repository_case_values")?.filter((row: any) => {
+          const repoId = toNumberValue(row.repo_id);
+          return repoId === null
+            ? true
+            : repositoryImport.masterRepositoryIds.has(repoId);
+        }) ?? [];
       datasetRowsByName.set("repository_case_values", filteredCaseValues);
     }
 
@@ -6268,7 +6297,9 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     // Closed runs in Testmo reference snapshot repositories, so run_tests.case_id
     // may point to a snapshot case ID. The `key` field is stable across master and
     // snapshot copies of the same case, allowing us to map back to the imported case.
-    const snapshotCaseKeys = await loadDatasetFromStaging("_snapshot_case_keys");
+    const snapshotCaseKeys = await loadDatasetFromStaging(
+      "_snapshot_case_keys"
+    );
     if (snapshotCaseKeys.length > 0) {
       let resolvedCount = 0;
       let alreadyMappedCount = 0;
@@ -6772,12 +6803,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     await persistProgress("issueTargets", "Processing issue targets");
 
     const issueTargetsImport = await withTransaction((tx) =>
-      importIssueTargets(
-        tx,
-        normalizedConfiguration,
-        context,
-        persistProgress
-      )
+      importIssueTargets(tx, normalizedConfiguration, context, persistProgress)
     );
     recordEntitySummary(context, issueTargetsImport.summary);
     await persistProgress(
@@ -6791,10 +6817,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     await persistProgress("issues", "Processing issues");
 
     if (datasetRowsByName.get("issues")?.length === 0) {
-      datasetRowsByName.set(
-        "issues",
-        await loadDatasetFromStaging("issues")
-      );
+      datasetRowsByName.set("issues", await loadDatasetFromStaging("issues"));
     }
 
     const issuesImport = await withTransaction((tx) =>
@@ -7171,7 +7194,9 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
 
 type TestmoQueueMode = "analyze" | "import";
 
-async function processor(job: Job<{ jobId: string; mode?: TestmoQueueMode } & MultiTenantJobData>) {
+async function processor(
+  job: Job<{ jobId: string; mode?: TestmoQueueMode } & MultiTenantJobData>
+) {
   const { jobId, mode = "analyze" } = job.data;
 
   if (!jobId) {
@@ -7556,7 +7581,7 @@ async function startWorker() {
 
   const worker = new Worker(TESTMO_IMPORT_QUEUE_NAME, processor, {
     connection: valkeyConnection as any,
-    concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || '1', 10),
+    concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
   });
 
   worker.on("completed", (job) => {
@@ -7593,8 +7618,8 @@ async function startWorker() {
 if (
   (typeof import.meta !== "undefined" &&
     import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  (typeof import.meta === "undefined" ||
-    (import.meta as any).url === undefined)
+  typeof import.meta === "undefined" ||
+  (import.meta as any).url === undefined
 ) {
   startWorker().catch((err) => {
     console.error("Failed to start Testmo import worker:", err);

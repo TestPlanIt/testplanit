@@ -1,7 +1,10 @@
 import type {
-  LlmAdapterConfig, LlmModelInfo, LlmRequest,
+  LlmAdapterConfig,
+  LlmModelInfo,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse, RateLimitInfo
+  LlmStreamResponse,
+  RateLimitInfo,
 } from "../types";
 import { BaseLlmAdapter } from "./base.adapter";
 
@@ -64,7 +67,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
   constructor(config: LlmAdapterConfig) {
     super(config);
-    
+
     const settings = config.integration.settings as CustomLlmSettings | null;
     this.endpoint = config.baseUrl || settings?.endpoint || "";
     this.apiKey = config.apiKey || settings?.apiKey;
@@ -101,15 +104,13 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
       }
 
       const data = (await response.json()) as CustomApiResponse;
-      return this.mapCustomResponse(data, request.model || this.getDefaultModel());
+      return this.mapCustomResponse(
+        data,
+        request.model || this.getDefaultModel()
+      );
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw this.createError(
-          "Request timeout",
-          "TIMEOUT",
-          408,
-          true
-        );
+        throw this.createError("Request timeout", "TIMEOUT", 408, true);
       }
       throw error;
     }
@@ -148,7 +149,9 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
     const decoder = new TextDecoder();
     let buffer = "";
-    const isSSE = response.headers.get("content-type")?.includes("text/event-stream");
+    const isSSE = response.headers
+      .get("content-type")
+      ?.includes("text/event-stream");
 
     try {
       while (true) {
@@ -156,7 +159,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
+
         if (isSSE) {
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
@@ -170,7 +173,10 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
               try {
                 const chunk = JSON.parse(data);
-                const mapped = this.mapStreamChunk(chunk, request.model || this.getDefaultModel());
+                const mapped = this.mapStreamChunk(
+                  chunk,
+                  request.model || this.getDefaultModel()
+                );
                 if (mapped.delta) {
                   yield mapped;
                 }
@@ -187,7 +193,10 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
             if (line.trim()) {
               try {
                 const chunk = JSON.parse(line);
-                const mapped = this.mapStreamChunk(chunk, request.model || this.getDefaultModel());
+                const mapped = this.mapStreamChunk(
+                  chunk,
+                  request.model || this.getDefaultModel()
+                );
                 if (mapped.delta) {
                   yield mapped;
                 }
@@ -204,9 +213,10 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
   }
 
   async getAvailableModels(): Promise<LlmModelInfo[]> {
-    const settings = this.config.integration.settings as CustomLlmSettings | null;
+    const settings = this.config.integration
+      .settings as CustomLlmSettings | null;
     const modelsEndpoint = settings?.modelsEndpoint;
-    
+
     if (!modelsEndpoint) {
       return this.getConfiguredModels();
     }
@@ -226,9 +236,11 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
       }
 
       const data = await response.json();
-      const modelsPath = (this.config.integration.settings as CustomLlmSettings | null)?.modelsResponsePath || "models";
+      const modelsPath =
+        (this.config.integration.settings as CustomLlmSettings | null)
+          ?.modelsResponsePath || "models";
       const models = this.getNestedValue(data, modelsPath) || [];
-      
+
       return models.map((model: any) => this.mapCustomModelInfo(model));
     } catch (error) {
       console.error("Failed to fetch custom models:", error);
@@ -263,7 +275,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
         body: JSON.stringify(testRequest),
         signal: AbortSignal.timeout(5000),
       });
-      
+
       return response.status === 200 || response.status === 400;
     } catch {
       return false;
@@ -275,8 +287,10 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
   }
 
   protected extractErrorMessage(error: any): string {
-    const errorPath = (this.config.integration.settings as CustomLlmSettings | null)?.errorMessagePath;
-    
+    const errorPath = (
+      this.config.integration.settings as CustomLlmSettings | null
+    )?.errorMessagePath;
+
     if (errorPath) {
       const message = this.getNestedValue(error, errorPath);
       if (message) return String(message);
@@ -285,30 +299,35 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     if (error?.error?.message) return error.error.message;
     if (error?.message) return error.message;
     if (error?.error) return String(error.error);
-    
+
     return "Unknown custom API error";
   }
 
   private getCustomHeaders(): Record<string, string> {
     const headers = this.getHeaders();
-    
+
     if (this.apiKey) {
-      const settings = this.config.integration.settings as CustomLlmSettings | null;
+      const settings = this.config.integration
+        .settings as CustomLlmSettings | null;
       const authHeader = settings?.authHeader || "Authorization";
       const authPrefix = settings?.authPrefix || "Bearer";
       headers[authHeader] = `${authPrefix} ${this.apiKey}`;
     }
 
-    const settings = this.config.integration.settings as CustomLlmSettings | null;
+    const settings = this.config.integration
+      .settings as CustomLlmSettings | null;
     const additionalHeaders = settings?.headers || {};
     Object.assign(headers, additionalHeaders);
 
     return headers;
   }
 
-  private buildCustomRequest(request: LlmRequest, stream: boolean): CustomApiRequest {
+  private buildCustomRequest(
+    request: LlmRequest,
+    stream: boolean
+  ): CustomApiRequest {
     const template = { ...this.requestTemplate };
-    
+
     const customRequest: CustomApiRequest = {
       model: request.model || this.getDefaultModel(),
       messages: request.messages,
@@ -318,9 +337,10 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
       ...template,
     };
 
-    const settings = this.config.integration.settings as CustomLlmSettings | null;
+    const settings = this.config.integration
+      .settings as CustomLlmSettings | null;
     const fieldMappings = settings?.requestFieldMappings || {};
-    
+
     for (const [standardField, customField] of Object.entries(fieldMappings)) {
       if (customRequest[standardField] !== undefined) {
         customRequest[customField as string] = customRequest[standardField];
@@ -333,7 +353,10 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     return customRequest;
   }
 
-  private mapCustomResponse(data: CustomApiResponse, model: string): LlmResponse {
+  private mapCustomResponse(
+    data: CustomApiResponse,
+    model: string
+  ): LlmResponse {
     let content = "";
     let promptTokens = 0;
     let completionTokens = 0;
@@ -341,28 +364,28 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     if (this.responseMapping.content) {
       content = this.getNestedValue(data, this.responseMapping.content) || "";
     } else {
-      content = data.content || 
-                data.text || 
-                data.response ||
-                data.choices?.[0]?.message?.content ||
-                data.choices?.[0]?.text ||
-                "";
+      content =
+        data.content ||
+        data.text ||
+        data.response ||
+        data.choices?.[0]?.message?.content ||
+        data.choices?.[0]?.text ||
+        "";
     }
 
     if (this.responseMapping.promptTokens) {
-      promptTokens = this.getNestedValue(data, this.responseMapping.promptTokens) || 0;
+      promptTokens =
+        this.getNestedValue(data, this.responseMapping.promptTokens) || 0;
     } else {
-      promptTokens = data.usage?.prompt_tokens || 
-                     data.usage?.input_tokens || 
-                     0;
+      promptTokens = data.usage?.prompt_tokens || data.usage?.input_tokens || 0;
     }
 
     if (this.responseMapping.completionTokens) {
-      completionTokens = this.getNestedValue(data, this.responseMapping.completionTokens) || 0;
+      completionTokens =
+        this.getNestedValue(data, this.responseMapping.completionTokens) || 0;
     } else {
-      completionTokens = data.usage?.completion_tokens || 
-                         data.usage?.output_tokens || 
-                         0;
+      completionTokens =
+        data.usage?.completion_tokens || data.usage?.output_tokens || 0;
     }
 
     return {
@@ -379,15 +402,17 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     let delta = "";
 
     if (this.streamResponseMapping.delta) {
-      delta = this.getNestedValue(chunk, this.streamResponseMapping.delta) || "";
+      delta =
+        this.getNestedValue(chunk, this.streamResponseMapping.delta) || "";
     } else {
-      delta = chunk.delta?.content ||
-              chunk.delta?.text ||
-              chunk.content ||
-              chunk.text ||
-              chunk.choices?.[0]?.delta?.content ||
-              chunk.choices?.[0]?.text ||
-              "";
+      delta =
+        chunk.delta?.content ||
+        chunk.delta?.text ||
+        chunk.content ||
+        chunk.text ||
+        chunk.choices?.[0]?.delta?.content ||
+        chunk.choices?.[0]?.text ||
+        "";
     }
 
     return {
@@ -398,26 +423,54 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
   }
 
   private mapCustomModelInfo(model: any): LlmModelInfo {
-    const settings = this.config.integration.settings as CustomLlmSettings | null;
+    const settings = this.config.integration
+      .settings as CustomLlmSettings | null;
     const modelMapping = settings?.modelFieldMappings || {};
-    
+
     return {
-      id: this.getNestedValue(model, modelMapping.id || "id") || model.id || model.name || "unknown",
-      name: this.getNestedValue(model, modelMapping.name || "name") || model.name || model.id || "Unknown Model",
-      contextWindow: this.getNestedValue(model, modelMapping.contextWindow || "context_window") || 
-                     model.context_window || model.max_context || 4096,
-      maxOutputTokens: this.getNestedValue(model, modelMapping.maxOutputTokens || "max_tokens") || 
-                       model.max_tokens || model.max_output || 4096,
-      inputCostPer1k: this.getNestedValue(model, modelMapping.inputCost || "input_cost") || 0,
-      outputCostPer1k: this.getNestedValue(model, modelMapping.outputCost || "output_cost") || 0,
-      capabilities: this.getNestedValue(model, modelMapping.capabilities || "capabilities") || ["text"],
+      id:
+        this.getNestedValue(model, modelMapping.id || "id") ||
+        model.id ||
+        model.name ||
+        "unknown",
+      name:
+        this.getNestedValue(model, modelMapping.name || "name") ||
+        model.name ||
+        model.id ||
+        "Unknown Model",
+      contextWindow:
+        this.getNestedValue(
+          model,
+          modelMapping.contextWindow || "context_window"
+        ) ||
+        model.context_window ||
+        model.max_context ||
+        4096,
+      maxOutputTokens:
+        this.getNestedValue(
+          model,
+          modelMapping.maxOutputTokens || "max_tokens"
+        ) ||
+        model.max_tokens ||
+        model.max_output ||
+        4096,
+      inputCostPer1k:
+        this.getNestedValue(model, modelMapping.inputCost || "input_cost") || 0,
+      outputCostPer1k:
+        this.getNestedValue(model, modelMapping.outputCost || "output_cost") ||
+        0,
+      capabilities: this.getNestedValue(
+        model,
+        modelMapping.capabilities || "capabilities"
+      ) || ["text"],
     };
   }
 
   private getConfiguredModels(): LlmModelInfo[] {
-    const settings = this.config.integration.settings as CustomLlmSettings | null;
+    const settings = this.config.integration
+      .settings as CustomLlmSettings | null;
     const configuredModels = settings?.models || [];
-    
+
     return configuredModels.map((model: any) => ({
       id: model.id || model.name,
       name: model.name || model.id,
@@ -456,23 +509,15 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
         throw this.createError(message, "NOT_FOUND", 404);
       case 429:
         const retryAfter = response.headers.get("retry-after");
-        throw this.createError(
-          message,
-          "RATE_LIMIT_EXCEEDED",
-          429,
-          true,
-          { retryAfter: retryAfter ? parseInt(retryAfter) : undefined }
-        );
+        throw this.createError(message, "RATE_LIMIT_EXCEEDED", 429, true, {
+          retryAfter: retryAfter ? parseInt(retryAfter) : undefined,
+        });
       case 500:
       case 502:
       case 503:
         throw this.createError(message, "SERVER_ERROR", response.status, true);
       default:
-        throw this.createError(
-          message,
-          "UNKNOWN_ERROR",
-          response.status
-        );
+        throw this.createError(message, "UNKNOWN_ERROR", response.status);
     }
   }
 }

@@ -15,7 +15,8 @@ const CURRENT_PREFIX = "v2:";
 // backward-compatible decryption of existing v1 records; new writes always
 // use the shared ENCRYPTION_KEY via getMasterKey().
 function getLegacyKey(): string {
-  const key = process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
+  const key =
+    process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
   if (!key) {
     throw new Error("Encryption key not configured");
   }
@@ -52,7 +53,10 @@ export async function generateQRCodeDataURL(
 /**
  * Verify a TOTP token against a secret
  */
-export async function verifyTOTP(token: string, secret: string): Promise<boolean> {
+export async function verifyTOTP(
+  token: string,
+  secret: string
+): Promise<boolean> {
   try {
     const result = await verify({
       token,
@@ -97,10 +101,7 @@ export function hashBackupCode(code: string): string {
  * Verify a backup code against stored hashed codes
  * Returns the index of the matching code, or -1 if not found
  */
-export function verifyBackupCode(
-  code: string,
-  hashedCodes: string[]
-): number {
+export function verifyBackupCode(code: string, hashedCodes: string[]): number {
   const hashedInput = hashBackupCode(code);
   return hashedCodes.findIndex((hashed) => hashed === hashedInput);
 }

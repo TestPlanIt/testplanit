@@ -2,7 +2,7 @@ import {
   CaseFields,
   CaseFieldTypes,
   Prisma,
-  RepositoryCaseSource
+  RepositoryCaseSource,
 } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
@@ -668,7 +668,8 @@ export async function POST(request: NextRequest) {
                   where: { repositoryCaseId: newCase.id },
                   orderBy: { version: "desc" },
                 });
-              versionNumber = caseData.version || (latestVersion?.version || 0) + 1;
+              versionNumber =
+                caseData.version || (latestVersion?.version || 0) + 1;
 
               // Update the case's currentVersion
               await enhancedDb.repositoryCases.update({
@@ -691,12 +692,12 @@ export async function POST(request: NextRequest) {
               version: versionNumber,
               creatorId: isUpdate ? session.user.id : creatorId,
               creatorName: isUpdate
-                ? (session.user.name || session.user.email || "")
-                : (caseData.createdByName ||
-                    session.user.name ||
-                    session.user.email ||
-                    ""),
-              createdAt: isUpdate ? new Date() : (createdAt || new Date()),
+                ? session.user.name || session.user.email || ""
+                : caseData.createdByName ||
+                  session.user.name ||
+                  session.user.email ||
+                  "",
+              createdAt: isUpdate ? new Date() : createdAt || new Date(),
               overrides: {
                 name: caseData.name,
                 stateId: stateId,
@@ -869,16 +870,23 @@ export async function POST(request: NextRequest) {
         // Audit the bulk import
         if (importedCount > 0) {
           auditBulkCreate("RepositoryCases", importedCount, body.projectId, {
-            source: body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
+            source:
+              body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
             templateId: body.templateId,
             importLocation: body.importLocation,
           }).catch((error) =>
-            console.error("[AuditLog] Failed to audit repository import:", error)
+            console.error(
+              "[AuditLog] Failed to audit repository import:",
+              error
+            )
           );
         }
 
         // Advisory duplicate warnings — never blocks import
-        let duplicateWarnings: Array<{ caseName: string; similarTo: Array<{ id: number; name: string; confidence: string }> }> = [];
+        let duplicateWarnings: Array<{
+          caseName: string;
+          similarTo: Array<{ id: number; name: string; confidence: string }>;
+        }> = [];
         try {
           const esClient = getElasticsearchClient();
           if (esClient) {
@@ -891,18 +899,27 @@ export async function POST(request: NextRequest) {
               const similar = await scanService.findSimilarCases(
                 { name: caseData.name },
                 body.projectId,
-                tenantId,
+                tenantId
               );
               if (similar.length > 0) {
                 // Look up case names for top 3 matches
-                const caseIds = similar.slice(0, 3).map(s => s.caseAId === 0 ? s.caseBId : s.caseAId);
-                const cases = await prisma.repositoryCases.findMany({ where: { id: { in: caseIds } }, select: { id: true, name: true } });
+                const caseIds = similar
+                  .slice(0, 3)
+                  .map((s) => (s.caseAId === 0 ? s.caseBId : s.caseAId));
+                const cases = await prisma.repositoryCases.findMany({
+                  where: { id: { in: caseIds } },
+                  select: { id: true, name: true },
+                });
                 duplicateWarnings.push({
                   caseName: caseData.name,
-                  similarTo: similar.slice(0, 3).map(s => {
+                  similarTo: similar.slice(0, 3).map((s) => {
                     const caseId = s.caseAId === 0 ? s.caseBId : s.caseAId;
-                    const found = cases.find(c => c.id === caseId);
-                    return { id: caseId, name: found?.name || `Case #${caseId}`, confidence: s.confidence };
+                    const found = cases.find((c) => c.id === caseId);
+                    return {
+                      id: caseId,
+                      name: found?.name || `Case #${caseId}`,
+                      confidence: s.confidence,
+                    };
                   }),
                 });
               }
@@ -910,12 +927,22 @@ export async function POST(request: NextRequest) {
           }
         } catch (e) {
           // Silently ignore — duplicate check is advisory
-          console.warn("Duplicate check during import failed (non-blocking):", e);
+          console.warn(
+            "Duplicate check during import failed (non-blocking):",
+            e
+          );
         }
 
         // Send completion (with advisory duplicate warnings)
-        const completeData = { complete: true as const, importedCount, errors, duplicateWarnings };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(completeData)}\n\n`));
+        const completeData = {
+          complete: true as const,
+          importedCount,
+          errors,
+          duplicateWarnings,
+        };
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(completeData)}\n\n`)
+        );
         controller.close();
       } catch (error) {
         sendError(error instanceof Error ? error.message : "Import failed");
@@ -1022,8 +1049,7 @@ function validateFieldValue(
         const ids: number[] = [];
         for (const val of values) {
           const matchingOption = field.fieldOptions.find(
-            (fo: any) =>
-              fo.fieldOption.name.toLowerCase() === val.toLowerCase()
+            (fo: any) => fo.fieldOption.name.toLowerCase() === val.toLowerCase()
           );
           if (matchingOption) {
             ids.push(matchingOption.fieldOption.id);

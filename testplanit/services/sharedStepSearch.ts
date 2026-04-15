@@ -2,7 +2,9 @@ import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
-  createEntityIndex, getElasticsearchClient, getEntityIndexName
+  createEntityIndex,
+  getElasticsearchClient,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
 type PrismaClientType = typeof defaultPrisma;
@@ -125,7 +127,10 @@ export async function indexSharedStep(
   const client = getElasticsearchClient();
   if (!client) return false;
 
-  const indexName = getEntityIndexName(SearchableEntityType.SHARED_STEP, tenantId);
+  const indexName = getEntityIndexName(
+    SearchableEntityType.SHARED_STEP,
+    tenantId
+  );
 
   try {
     await client.index({
@@ -134,7 +139,9 @@ export async function indexSharedStep(
       document: stepData,
     });
 
-    console.log(`Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`);
+    console.log(
+      `Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`
+    );
     return true;
   } catch (error) {
     console.error(`Failed to index shared step ${stepData.id}:`, error);
@@ -154,7 +161,10 @@ export async function deleteSharedStep(
   const client = getElasticsearchClient();
   if (!client) return false;
 
-  const indexName = getEntityIndexName(SearchableEntityType.SHARED_STEP, tenantId);
+  const indexName = getEntityIndexName(
+    SearchableEntityType.SHARED_STEP,
+    tenantId
+  );
 
   try {
     await client.delete({
@@ -162,7 +172,9 @@ export async function deleteSharedStep(
       id: stepId.toString(),
     });
 
-    console.log(`Deleted shared step ${stepId} from Elasticsearch index ${indexName}`);
+    console.log(
+      `Deleted shared step ${stepId} from Elasticsearch index ${indexName}`
+    );
     return true;
   } catch (error) {
     // 404 is expected if document doesn't exist

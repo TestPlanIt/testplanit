@@ -68,17 +68,24 @@ export default function testLifecycle() {
     statuses.data.find((s) => !s.isSuccess && !s.isFailure) || statuses.data[0];
   const passedStatus =
     statuses.data.find((s) => s.isSuccess) || statuses.data[0];
-  const failedStatus =
-    statuses.data.find((s) => s.isFailure) || defaultStatus;
+  const failedStatus = statuses.data.find((s) => s.isFailure) || defaultStatus;
 
   // Get default run workflow state
   const runWorkflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "RUNS" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "RUNS" },
+      select: { id: true },
+      take: 1,
+    },
     { scenarioTag: TAG }
   );
   const runStateId = runWorkflows?.data?.[0]?.id;
-  if (!runStateId) { console.warn("No run workflow state"); sleep(2); return; }
+  if (!runStateId) {
+    console.warn("No run workflow state");
+    sleep(2);
+    return;
+  }
 
   sleep(0.5);
 
@@ -142,7 +149,7 @@ export default function testLifecycle() {
     const rand = Math.random();
     if (rand < 0.05) continue; // skip
 
-    const statusId = rand < 0.80 ? passedStatus.id : failedStatus.id;
+    const statusId = rand < 0.8 ? passedStatus.id : failedStatus.id;
     const elapsed = Math.floor(500 + Math.random() * 30000); // 0.5s to 30s
 
     const body = {

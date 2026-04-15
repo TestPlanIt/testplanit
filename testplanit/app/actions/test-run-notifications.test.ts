@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
-import { notifyBulkTestCaseAssignment, notifyTestCaseAssignment } from "./test-run-notifications";
+import {
+  notifyBulkTestCaseAssignment,
+  notifyTestCaseAssignment,
+} from "./test-run-notifications";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({
@@ -59,8 +62,12 @@ describe("test-run-notifications", () => {
 
     it("should create notification when test case is assigned to a new user", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findUnique).mockResolvedValue(mockTestRunCase as any);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Jane Smith" } as any);
+      vi.mocked(prisma.testRunCases.findUnique).mockResolvedValue(
+        mockTestRunCase as any
+      );
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "Jane Smith",
+      } as any);
 
       await notifyTestCaseAssignment(1, "assignee-456", null);
 
@@ -68,7 +75,8 @@ describe("test-run-notifications", () => {
         userId: "assignee-456",
         type: "WORK_ASSIGNED",
         title: "New Test Case Assignment",
-        message: 'John Doe assigned you to test case "Test Login Flow" in project "E-Commerce App"',
+        message:
+          'John Doe assigned you to test case "Test Login Flow" in project "E-Commerce App"',
         relatedEntityId: "1",
         relatedEntityType: "TestRunCase",
         data: expect.objectContaining({
@@ -123,9 +131,13 @@ describe("test-run-notifications", () => {
 
     it("should handle errors gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findUnique).mockRejectedValue(new Error("Database error"));
+      vi.mocked(prisma.testRunCases.findUnique).mockRejectedValue(
+        new Error("Database error")
+      );
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       await notifyTestCaseAssignment(1, "assignee-456", null);
 
@@ -197,7 +209,9 @@ describe("test-run-notifications", () => {
 
     it("should create bulk notification for multiple test case assignments", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue(mockTestRunCases as any);
+      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue(
+        mockTestRunCases as any
+      );
 
       await notifyBulkTestCaseAssignment([1, 2, 3], "assignee-456", 100);
 
@@ -250,20 +264,23 @@ describe("test-run-notifications", () => {
 
     it("should group test cases by test run", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue(mockTestRunCases as any);
+      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue(
+        mockTestRunCases as any
+      );
 
       await notifyBulkTestCaseAssignment([1, 2, 3], "assignee-456", 100);
 
-      const notificationCall = vi.mocked(NotificationService.createNotification).mock.calls[0][0];
+      const notificationCall = vi.mocked(NotificationService.createNotification)
+        .mock.calls[0][0];
       const testRunGroups = notificationCall.data.testRunGroups;
 
       // Should have 2 groups (Sprint 1 and Sprint 2)
       expect(testRunGroups).toHaveLength(2);
-      
+
       // Sprint 1 should have 2 test cases
       const sprint1Group = testRunGroups.find((g: any) => g.testRunId === 10);
       expect(sprint1Group.testCases).toHaveLength(2);
-      
+
       // Sprint 2 should have 1 test case
       const sprint2Group = testRunGroups.find((g: any) => g.testRunId === 11);
       expect(sprint2Group.testCases).toHaveLength(1);

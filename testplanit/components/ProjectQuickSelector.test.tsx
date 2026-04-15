@@ -27,7 +27,13 @@ vi.mock("next-intl", () => ({
 // Mock next/image as a simple img tag
 vi.mock("next/image", () => ({
   default: ({ src, alt, width, height, className }: any) => (
-    <img src={src} alt={alt} width={width} height={height} className={className} />
+    <img
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+    />
   ),
 }));
 
@@ -37,7 +43,10 @@ vi.mock("@/components/ui/popover", () => ({
     <div data-testid="popover" data-open={String(open)}>
       {/* Pass down toggle to trigger */}
       {React.Children.map(children, (child) =>
-        React.cloneElement(child as React.ReactElement<any>, { _onOpenChange: onOpenChange, _open: open })
+        React.cloneElement(child as React.ReactElement<any>, {
+          _onOpenChange: onOpenChange,
+          _open: open,
+        })
       )}
     </div>
   ),
@@ -89,7 +98,13 @@ vi.mock("@/components/ui/command", () => ({
 
 // Mock Button
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, variant, className, "aria-expanded": ariaExpanded }: any) => (
+  Button: ({
+    children,
+    onClick,
+    variant,
+    className,
+    "aria-expanded": ariaExpanded,
+  }: any) => (
     <button
       onClick={onClick}
       data-variant={variant}
@@ -193,7 +208,9 @@ describe("ProjectQuickSelector", () => {
       render(<ProjectQuickSelector />);
       fireEvent.click(screen.getByTestId("popover-button"));
 
-      expect(screen.getByTestId("command-item-view-all-projects")).toBeDefined();
+      expect(
+        screen.getByTestId("command-item-view-all-projects")
+      ).toBeDefined();
     });
 
     it("renders project name text for each project", () => {
@@ -255,7 +272,9 @@ describe("ProjectQuickSelector", () => {
 
       expect(screen.getByTestId("command-empty")).toBeDefined();
       // Translation mock returns "noProjectsFound" last key
-      expect(screen.getByTestId("command-empty").textContent).toContain("noProjectsFound");
+      expect(screen.getByTestId("command-empty").textContent).toContain(
+        "noProjectsFound"
+      );
     });
 
     it("does not render project items when data is empty", () => {

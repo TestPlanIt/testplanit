@@ -74,12 +74,24 @@ describe("useSearchContext", () => {
 
     const { result } = renderHook(() => useSearchContext());
 
-    expect(result.current.availableEntities).toContain(SearchableEntityType.PROJECT);
-    expect(result.current.availableEntities).toContain(SearchableEntityType.REPOSITORY_CASE);
-    expect(result.current.availableEntities).toContain(SearchableEntityType.TEST_RUN);
-    expect(result.current.availableEntities).toContain(SearchableEntityType.SESSION);
-    expect(result.current.availableEntities).toContain(SearchableEntityType.ISSUE);
-    expect(result.current.availableEntities).toContain(SearchableEntityType.MILESTONE);
+    expect(result.current.availableEntities).toContain(
+      SearchableEntityType.PROJECT
+    );
+    expect(result.current.availableEntities).toContain(
+      SearchableEntityType.REPOSITORY_CASE
+    );
+    expect(result.current.availableEntities).toContain(
+      SearchableEntityType.TEST_RUN
+    );
+    expect(result.current.availableEntities).toContain(
+      SearchableEntityType.SESSION
+    );
+    expect(result.current.availableEntities).toContain(
+      SearchableEntityType.ISSUE
+    );
+    expect(result.current.availableEntities).toContain(
+      SearchableEntityType.MILESTONE
+    );
   });
 
   it("returns empty availableEntities for user with NONE access", () => {
@@ -99,13 +111,17 @@ describe("useSearchContext", () => {
 
     const { result } = renderHook(() => useSearchContext());
 
-    expect(result.current.currentEntity).toBe(SearchableEntityType.REPOSITORY_CASE);
+    expect(result.current.currentEntity).toBe(
+      SearchableEntityType.REPOSITORY_CASE
+    );
     expect(result.current.projectId).toBe(42);
     expect(result.current.isGlobalSearch).toBe(false);
     expect(result.current.defaultFilters.entityTypes).toContain(
       SearchableEntityType.REPOSITORY_CASE
     );
-    expect(result.current.defaultFilters.repositoryCase?.projectIds).toContain(42);
+    expect(result.current.defaultFilters.repositoryCase?.projectIds).toContain(
+      42
+    );
   });
 
   it("returns TEST_RUN context on runs path", () => {
@@ -117,7 +133,9 @@ describe("useSearchContext", () => {
 
     expect(result.current.currentEntity).toBe(SearchableEntityType.TEST_RUN);
     expect(result.current.projectId).toBe(42);
-    expect(result.current.defaultFilters.entityTypes).toContain(SearchableEntityType.TEST_RUN);
+    expect(result.current.defaultFilters.entityTypes).toContain(
+      SearchableEntityType.TEST_RUN
+    );
   });
 
   it("returns SESSION context on sessions path", () => {
@@ -176,7 +194,9 @@ describe("useSearchContext", () => {
 
     expect(result.current.currentEntity).toBe(SearchableEntityType.PROJECT);
     expect(result.current.projectId).toBeNull();
-    expect(result.current.availableEntities).toEqual([SearchableEntityType.PROJECT]);
+    expect(result.current.availableEntities).toEqual([
+      SearchableEntityType.PROJECT,
+    ]);
   });
 
   it("returns project overview context with all entity filters when on a project overview page", () => {
@@ -190,7 +210,9 @@ describe("useSearchContext", () => {
     expect(result.current.projectId).toBe(42);
     expect(result.current.isGlobalSearch).toBe(false);
     // All entity filters include the projectId
-    expect(result.current.defaultFilters.repositoryCase?.projectIds).toContain(42);
+    expect(result.current.defaultFilters.repositoryCase?.projectIds).toContain(
+      42
+    );
     expect(result.current.defaultFilters.testRun?.projectIds).toContain(42);
     expect(result.current.defaultFilters.session?.projectIds).toContain(42);
   });
@@ -202,7 +224,9 @@ describe("useSearchContext", () => {
 
     const { result } = renderHook(() => useSearchContext());
 
-    expect(result.current.currentEntity).toBe(SearchableEntityType.REPOSITORY_CASE);
+    expect(result.current.currentEntity).toBe(
+      SearchableEntityType.REPOSITORY_CASE
+    );
     expect(result.current.projectId).toBe(5);
   });
 
@@ -220,13 +244,17 @@ describe("useSearchContext", () => {
 
 describe("getEntityLabel", () => {
   it("returns human-readable labels for all entity types", () => {
-    expect(getEntityLabel(SearchableEntityType.REPOSITORY_CASE)).toBe("Repository Cases");
+    expect(getEntityLabel(SearchableEntityType.REPOSITORY_CASE)).toBe(
+      "Repository Cases"
+    );
     expect(getEntityLabel(SearchableEntityType.TEST_RUN)).toBe("Test Runs");
     expect(getEntityLabel(SearchableEntityType.SESSION)).toBe("Sessions");
     expect(getEntityLabel(SearchableEntityType.PROJECT)).toBe("Projects");
     expect(getEntityLabel(SearchableEntityType.ISSUE)).toBe("Issues");
     expect(getEntityLabel(SearchableEntityType.MILESTONE)).toBe("Milestones");
-    expect(getEntityLabel(SearchableEntityType.SHARED_STEP)).toBe("Shared Steps");
+    expect(getEntityLabel(SearchableEntityType.SHARED_STEP)).toBe(
+      "Shared Steps"
+    );
   });
 
   it("returns the entity type as fallback for unknown types", () => {
@@ -237,7 +265,9 @@ describe("getEntityLabel", () => {
 
 describe("getEntityIcon", () => {
   it("returns icon names for all entity types", () => {
-    expect(getEntityIcon(SearchableEntityType.REPOSITORY_CASE)).toBe("list-checks");
+    expect(getEntityIcon(SearchableEntityType.REPOSITORY_CASE)).toBe(
+      "list-checks"
+    );
     expect(getEntityIcon(SearchableEntityType.TEST_RUN)).toBe("play-circle");
     expect(getEntityIcon(SearchableEntityType.SESSION)).toBe("compass");
     expect(getEntityIcon(SearchableEntityType.PROJECT)).toBe("boxes");
@@ -286,7 +316,9 @@ describe("useSearchScope", () => {
 
     const currentScope = result.current.find((s) => s.value === "current");
     expect(currentScope).toBeDefined();
-    expect(currentScope?.entityTypes).toContain(SearchableEntityType.REPOSITORY_CASE);
+    expect(currentScope?.entityTypes).toContain(
+      SearchableEntityType.REPOSITORY_CASE
+    );
   });
 
   it("only includes 'All Projects' scope on non-project pages", () => {

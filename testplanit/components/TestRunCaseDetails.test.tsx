@@ -95,11 +95,14 @@ vi.mock("@/projects/repository/[projectId]/AddResultModal", () => ({
     isOpen ? <div data-testid="add-result-modal">Add Result Modal</div> : null,
 }));
 
-vi.mock("@/projects/repository/[projectId]/[caseId]/FieldValueRenderer", () => ({
-  default: ({ fieldType }: { fieldType: string }) => (
-    <div data-testid="field-value-renderer">{fieldType}</div>
-  ),
-}));
+vi.mock(
+  "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer",
+  () => ({
+    default: ({ fieldType }: { fieldType: string }) => (
+      <div data-testid="field-value-renderer">{fieldType}</div>
+    ),
+  })
+);
 
 vi.mock("@/components/AttachmentsCarousel", () => ({
   AttachmentsCarousel: () => <div data-testid="attachments-carousel" />,

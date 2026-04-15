@@ -8,7 +8,7 @@ import { useCallback, useState } from "react";
 import { logDataExport } from "~/lib/services/auditClient";
 import type {
   DrillDownContext,
-  DrillDownRecord
+  DrillDownRecord,
 } from "~/lib/types/reportDrillDown";
 import { toHumanReadable } from "~/utils/duration";
 

@@ -19,13 +19,17 @@ export const submitSchema = z.object({
   targetRepositoryId: z.number().int().positive().optional(),
   targetDefaultWorkflowStateId: z.number().int().positive().optional(),
   targetTemplateId: z.number().int().positive().optional(),
-  folderTree: z.array(z.object({
-    localKey: z.string(),
-    sourceFolderId: z.number().int().positive(),
-    name: z.string().min(1),
-    parentLocalKey: z.string().nullable(),
-    caseIds: z.array(z.number().int().positive()),
-  })).optional(),
+  folderTree: z
+    .array(
+      z.object({
+        localKey: z.string(),
+        sourceFolderId: z.number().int().positive(),
+        name: z.string().min(1),
+        parentLocalKey: z.string().nullable(),
+        caseIds: z.array(z.number().int().positive()),
+      })
+    )
+    .optional(),
 });
 
 export interface PreflightResponse {

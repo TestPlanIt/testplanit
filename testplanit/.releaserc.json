@@ -29,7 +29,11 @@
             { "type": "enhance", "section": "Enhancements" },
             { "type": "enhancement", "section": "Enhancements" },
             { "type": "perf", "section": "Performance Improvements" },
-            { "type": "refactor", "section": "Code Refactoring", "hidden": true },
+            {
+              "type": "refactor",
+              "section": "Code Refactoring",
+              "hidden": true
+            },
             { "type": "docs", "section": "Documentation", "hidden": true },
             { "type": "chore", "section": "Chores", "hidden": true }
           ]

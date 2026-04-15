@@ -5,14 +5,14 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { CalendarDays, Check, X } from "lucide-react";
@@ -21,7 +21,15 @@ import { useEffect, useState } from "react";
 import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 
-type DateOperator = "on" | "before" | "after" | "between" | "last7" | "last30" | "last90" | "thisYear";
+type DateOperator =
+  | "on"
+  | "before"
+  | "after"
+  | "between"
+  | "last7"
+  | "last30"
+  | "last90"
+  | "thisYear";
 
 interface DateFilterInputProps {
   fieldId: number;
@@ -136,9 +144,14 @@ export function DateFilterInput({
     return true;
   };
 
-  const needsDateInput = !["last7", "last30", "last90", "thisYear"].includes(operator);
+  const needsDateInput = !["last7", "last30", "last90", "thisYear"].includes(
+    operator
+  );
 
-  const hasActiveFilter = currentFilter !== null && currentFilter !== undefined && currentFilter !== "";
+  const hasActiveFilter =
+    currentFilter !== null &&
+    currentFilter !== undefined &&
+    currentFilter !== "";
 
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
@@ -182,7 +195,8 @@ export function DateFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")}{" "}
+            {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -202,7 +216,10 @@ export function DateFilterInput({
         </div>
       )}
 
-      <Select value={operator} onValueChange={(val) => setOperator(val as DateOperator)}>
+      <Select
+        value={operator}
+        onValueChange={(val) => setOperator(val as DateOperator)}
+      >
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Select operator" />
         </SelectTrigger>
@@ -251,7 +268,9 @@ export function DateFilterInput({
 
           {operator === "between" && (
             <>
-              <span className="text-xs text-muted-foreground">{t("common.and")}</span>
+              <span className="text-xs text-muted-foreground">
+                {t("common.and")}
+              </span>
               <Popover open={popover2Open} onOpenChange={setPopover2Open}>
                 <PopoverTrigger asChild>
                   <Button
@@ -298,17 +317,15 @@ export function DateFilterInput({
       )}
 
       {!needsDateInput && (
-        <Button
-          size="sm"
-          onClick={handleApply}
-          className="h-8 w-full text-xs"
-        >
+        <Button size="sm" onClick={handleApply} className="h-8 w-full text-xs">
           {t("search.filters.applyFilter")}
         </Button>
       )}
 
       {operator === "between" && date1 && date2 && date1 >= date2 && (
-        <p className="text-xs text-destructive">{t("search.filters.validation.firstDateMustBeBeforeSecond")}</p>
+        <p className="text-xs text-destructive">
+          {t("search.filters.validation.firstDateMustBeBeforeSecond")}
+        </p>
       )}
     </div>
   );

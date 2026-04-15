@@ -46,7 +46,10 @@ describe("useTabState", () => {
 
   it("should read initial tab value from URL search params", () => {
     Object.defineProperty(window, "location", {
-      value: { search: "?tab=completed", href: "http://localhost/?tab=completed" },
+      value: {
+        search: "?tab=completed",
+        href: "http://localhost/?tab=completed",
+      },
       writable: true,
     });
 
@@ -106,15 +109,17 @@ describe("useTabState", () => {
     });
 
     expect(mockRouterPush).toHaveBeenCalledTimes(1);
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      "/projects/42?tab=completed",
-      { scroll: false }
-    );
+    expect(mockRouterPush).toHaveBeenCalledWith("/projects/42?tab=completed", {
+      scroll: false,
+    });
   });
 
   it("should remove param from URL when setTab is called with default value", () => {
     Object.defineProperty(window, "location", {
-      value: { search: "?tab=completed", href: "http://localhost/projects/42?tab=completed" },
+      value: {
+        search: "?tab=completed",
+        href: "http://localhost/projects/42?tab=completed",
+      },
       writable: true,
     });
     mockPathname.mockReturnValue("/projects/42");
@@ -126,10 +131,9 @@ describe("useTabState", () => {
     });
 
     // Should navigate to URL without the tab param
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      "/projects/42",
-      { scroll: false }
-    );
+    expect(mockRouterPush).toHaveBeenCalledWith("/projects/42", {
+      scroll: false,
+    });
   });
 
   it("should preserve other URL params when changing tab", () => {
@@ -166,7 +170,10 @@ describe("useTabState", () => {
     // Simulate browser back navigation that changes the URL
     act(() => {
       Object.defineProperty(window, "location", {
-        value: { search: "?tab=completed", href: "http://localhost/?tab=completed" },
+        value: {
+          search: "?tab=completed",
+          href: "http://localhost/?tab=completed",
+        },
         writable: true,
       });
       window.dispatchEvent(new PopStateEvent("popstate"));
@@ -206,6 +213,9 @@ describe("useTabState", () => {
 
     unmount();
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith("popstate", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "popstate",
+      expect.any(Function)
+    );
   });
 });

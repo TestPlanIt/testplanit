@@ -3,7 +3,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useCreateAppConfig, useFindUniqueAppConfig, useUpdateAppConfig
+  useCreateAppConfig,
+  useFindUniqueAppConfig,
+  useUpdateAppConfig,
 } from "~/lib/hooks";
 import NotificationSettingsPage from "./page";
 

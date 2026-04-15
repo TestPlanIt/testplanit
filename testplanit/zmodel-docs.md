@@ -398,6 +398,7 @@ Categorizes workflows based on their general state (NOT_STARTED, IN_PROGRESS, DO
 ### Account
 
 Stores user account information for OAuth providers, required by NextAuth for authentication.
+
 ```mermaid
 erDiagram
 "Account" {
@@ -426,6 +427,7 @@ erDiagram
 ### AllowedEmailDomain
 
 Manages a list of email domains allowed for user registration, used to restrict who can sign up for the application.
+
 ```mermaid
 erDiagram
 "AllowedEmailDomain" {
@@ -447,6 +449,7 @@ erDiagram
 ### ApiToken
 
 Manages API tokens for programmatic access to the application, including CLI, CI/CD, and integrations.
+
 ```mermaid
 erDiagram
 "ApiToken" {
@@ -474,6 +477,7 @@ erDiagram
 ### AppConfig
 
 Stores application-wide configuration settings as key-value pairs.
+
 ```mermaid
 erDiagram
 "AppConfig" {
@@ -492,6 +496,7 @@ erDiagram
 ### Attachments
 
 Manages file attachments for various entities like test cases, sessions, and test runs.
+
 ```mermaid
 erDiagram
 "Attachments" {
@@ -530,6 +535,7 @@ erDiagram
 ### AuditLog
 
 Records audit trails of significant user actions and system events for security, compliance, and debugging purposes.
+
 ```mermaid
 erDiagram
 "AuditLog" {
@@ -558,6 +564,7 @@ erDiagram
 ### CaseFieldAssignment
 
 Assigns 'FieldOptions' to 'CaseFields', for example, defining the possible values for a dropdown field.
+
 ```mermaid
 erDiagram
 "CaseFieldAssignment" {
@@ -577,6 +584,7 @@ erDiagram
 ### CaseFields
 
 Defines custom fields that can be used for test cases, including their display name, system name, type, validation rules, and default values.
+
 ```mermaid
 erDiagram
 "CaseFields" {
@@ -611,6 +619,7 @@ erDiagram
 ### CaseFieldTypes
 
 Defines the available data types for custom case and result fields (e.g., text, number, boolean, date).
+
 ```mermaid
 erDiagram
 "CaseFieldTypes" {
@@ -631,6 +640,7 @@ erDiagram
 ### CaseFieldValues
 
 Stores the values for custom 'CaseFields' associated with 'RepositoryCases'.
+
 ```mermaid
 erDiagram
 "CaseFieldValues" {
@@ -665,6 +675,7 @@ erDiagram
 ### CaseFieldVersionValues
 
 Stores the values for custom fields for a specific version of a test case.
+
 ```mermaid
 erDiagram
 "CaseFieldVersionValues" {
@@ -698,6 +709,7 @@ erDiagram
 ### Color
 
 Defines specific colors, grouped by color family, which can be used for UI elements or field options.
+
 ```mermaid
 erDiagram
 "Color" {
@@ -721,6 +733,7 @@ erDiagram
 ### ColorFamily
 
 Organizes colors into families for better management and selection.
+
 ```mermaid
 erDiagram
 "ColorFamily" {
@@ -740,6 +753,7 @@ erDiagram
 ### Comment
 
 Represents user comments on various entities (cases, runs, sessions, milestones), supporting rich text content and user mentions.
+
 ```mermaid
 erDiagram
 "Comment" {
@@ -783,6 +797,7 @@ erDiagram
 ### CommentMention
 
 Records mentions of users within comments, facilitating notification and communication.
+
 ```mermaid
 erDiagram
 "CommentMention" {
@@ -805,6 +820,7 @@ erDiagram
 ### ConfigCategories
 
 Organizes configurations into logical categories.
+
 ```mermaid
 erDiagram
 "ConfigCategories" {
@@ -824,6 +840,7 @@ erDiagram
 ### ConfigurationConfigVariant
 
 Links configurations to their specific variants, forming a complete configuration.
+
 ```mermaid
 erDiagram
 "ConfigurationConfigVariant" {
@@ -843,6 +860,7 @@ erDiagram
 ### Configurations
 
 Defines specific configurations, composed of variants, which can be applied to sessions and test runs.
+
 ```mermaid
 erDiagram
 "Configurations" {
@@ -865,6 +883,7 @@ erDiagram
 ### ConfigVariants
 
 Represents variations within configuration categories (e.g., 'OS' category might have 'Windows', 'macOS' variants).
+
 ```mermaid
 erDiagram
 "ConfigVariants" {
@@ -887,6 +906,7 @@ erDiagram
 ### FieldIcon
 
 Stores icons that can be associated with various fields and types.
+
 ```mermaid
 erDiagram
 "FieldIcon" {
@@ -907,6 +927,7 @@ erDiagram
 ### FieldOptions
 
 Provides options for 'CaseFields' and 'ResultFields', such as dropdown choices with associated icons and colors.
+
 ```mermaid
 erDiagram
 "FieldOptions" {
@@ -934,6 +955,7 @@ erDiagram
 ### GroupAssignment
 
 Links users to groups, indicating which users belong to which groups.
+
 ```mermaid
 erDiagram
 "GroupAssignment" {
@@ -953,6 +975,7 @@ erDiagram
 ### GroupProjectPermission
 
 Defines explicit access permissions for a user group on a specific project.
+
 ```mermaid
 erDiagram
 "GroupProjectPermission" {
@@ -980,6 +1003,7 @@ erDiagram
 ### Groups
 
 Represents groups of users within the application, used for managing permissions.
+
 ```mermaid
 erDiagram
 "Groups" {
@@ -1003,6 +1027,7 @@ erDiagram
 ### Integration
 
 Configures external integrations (e.g., Jira, GitHub) at a global level, including credentials and provider-specific settings.
+
 ```mermaid
 erDiagram
 "Integration" {
@@ -1032,6 +1057,7 @@ erDiagram
 ### Issue
 
 Represents an issue, potentially linked to external issue tracking systems, associated with various testing entities like cases, runs, and sessions.
+
 ```mermaid
 erDiagram
 "Issue" {
@@ -1079,6 +1105,7 @@ erDiagram
 ### JUnitAttachment
 
 Stores attachments linked to JUnit test results, associated with a repository case.
+
 ```mermaid
 erDiagram
 "JUnitAttachment" {
@@ -1110,6 +1137,7 @@ erDiagram
 ### JUnitProperty
 
 Stores properties associated with JUnit test suites or repository cases, often used for additional metadata from test reports.
+
 ```mermaid
 erDiagram
 "JUnitProperty" {
@@ -1139,6 +1167,7 @@ erDiagram
 ### JUnitTestResult
 
 Stores individual JUnit test results, linked to a test suite and a repository case.
+
 ```mermaid
 erDiagram
 "JUnitTestResult" {
@@ -1181,6 +1210,7 @@ erDiagram
 ### JUnitTestStep
 
 Stores individual steps associated with JUnit test cases, linked to a repository case, providing granular detail for automated tests.
+
 ```mermaid
 erDiagram
 "JUnitTestStep" {
@@ -1213,6 +1243,7 @@ erDiagram
 ### JUnitTestSuite
 
 Represents a JUnit test suite, containing properties and test results, often imported from automated test reports.
+
 ```mermaid
 erDiagram
 "JUnitTestSuite" {
@@ -1257,6 +1288,7 @@ erDiagram
 ### LlmFeatureConfig
 
 Configures LLM features on a per-project basis, including enabling, specific models, templates, and usage limits.
+
 ```mermaid
 erDiagram
 "LlmFeatureConfig" {
@@ -1293,6 +1325,7 @@ erDiagram
 ### LlmIntegration
 
 Configures integration with Large Language Models (LLMs) globally, including provider details, credentials, and status.
+
 ```mermaid
 erDiagram
 "LlmIntegration" {
@@ -1325,6 +1358,7 @@ erDiagram
 ### LlmPromptTemplate
 
 Defines reusable prompt templates for various LLM features, including system and user prompts, variables, and model preferences.
+
 ```mermaid
 erDiagram
 "LlmPromptTemplate" {
@@ -1362,6 +1396,7 @@ erDiagram
 ### LlmProviderConfig
 
 Stores detailed configuration settings for an LLM provider, including models, rate limiting, cost tracking, and default parameters.
+
 ```mermaid
 erDiagram
 "LlmProviderConfig" {
@@ -1397,6 +1432,7 @@ erDiagram
 ### LlmRateLimit
 
 Manages rate limits for LLM usage at different scopes (global, integration, project, user) to control consumption.
+
 ```mermaid
 erDiagram
 "LlmRateLimit" {
@@ -1432,6 +1468,7 @@ erDiagram
 ### LlmResponseCache
 
 Caches LLM responses to improve performance and reduce costs, storing responses based on feature, model, and prompt hashes.
+
 ```mermaid
 erDiagram
 "LlmResponseCache" {
@@ -1464,6 +1501,7 @@ erDiagram
 ### LlmUsage
 
 Tracks the usage and cost of LLM integrations per feature, project, and user.
+
 ```mermaid
 erDiagram
 "LlmUsage" {
@@ -1499,6 +1537,7 @@ erDiagram
 ### Milestones
 
 Represents project milestones, which can have hierarchical relationships and track progress.
+
 ```mermaid
 erDiagram
 "Milestones" {
@@ -1551,6 +1590,7 @@ erDiagram
 ### MilestoneTypes
 
 Defines different types of milestones, often with an associated icon.
+
 ```mermaid
 erDiagram
 "MilestoneTypes" {
@@ -1574,6 +1614,7 @@ erDiagram
 ### MilestoneTypesAssignment
 
 Assigns specific milestone types to projects.
+
 ```mermaid
 erDiagram
 "MilestoneTypesAssignment" {
@@ -1593,6 +1634,7 @@ erDiagram
 ### Notification
 
 Stores notifications for users, including type, title, message, and read/delete status.
+
 ```mermaid
 erDiagram
 "Notification" {
@@ -1623,6 +1665,7 @@ erDiagram
 ### OllamaModelRegistry
 
 Manages the registry and status of Ollama models, including their installation status, capabilities, and usage.
+
 ```mermaid
 erDiagram
 "OllamaModelRegistry" {
@@ -1655,6 +1698,7 @@ erDiagram
 ### ProjectAssignment
 
 Links users to projects, indicating their direct involvement.
+
 ```mermaid
 erDiagram
 "ProjectAssignment" {
@@ -1674,6 +1718,7 @@ erDiagram
 ### ProjectIntegration
 
 Associates an external integration with a specific project, allowing project-specific configurations, field mappings, and sync status.
+
 ```mermaid
 erDiagram
 "ProjectIntegration" {
@@ -1711,6 +1756,7 @@ erDiagram
 ### ProjectLlmIntegration
 
 Associates an LLM integration with a specific project and provides project-specific LLM configuration overrides.
+
 ```mermaid
 erDiagram
 "ProjectLlmIntegration" {
@@ -1735,6 +1781,7 @@ erDiagram
 ### Projects
 
 Represents a project in the application, serving as a container for test assets, runs, and other related data. Includes detailed access control for users and groups.
+
 ```mermaid
 erDiagram
 "Projects" {
@@ -1805,6 +1852,7 @@ erDiagram
 ### ProjectStatusAssignment
 
 Associates statuses with specific projects.
+
 ```mermaid
 erDiagram
 "ProjectStatusAssignment" {
@@ -1824,6 +1872,7 @@ erDiagram
 ### ProjectWorkflowAssignment
 
 Associates workflows with specific projects.
+
 ```mermaid
 erDiagram
 "ProjectWorkflowAssignment" {
@@ -1843,6 +1892,7 @@ erDiagram
 ### RegistrationSettings
 
 Configures application-wide user registration settings, including email domain restrictions, open registration, and 2FA policies.
+
 ```mermaid
 erDiagram
 "RegistrationSettings" {
@@ -1866,6 +1916,7 @@ erDiagram
 ### Repositories
 
 Organizes test cases within a project, acting as a container for test folders and cases.
+
 ```mermaid
 erDiagram
 "Repositories" {
@@ -1905,6 +1956,7 @@ erDiagram
 ### RepositoryCaseLink
 
 Defines links between test cases (e.g., dependency, same test different source).
+
 ```mermaid
 erDiagram
 "RepositoryCaseLink" {
@@ -1940,6 +1992,7 @@ erDiagram
 ### RepositoryCases
 
 Represents individual test cases within a repository, including details like name, source, workflow state, and custom field values.
+
 ```mermaid
 erDiagram
 "RepositoryCases" {
@@ -2008,6 +2061,7 @@ erDiagram
 ### RepositoryCaseVersions
 
 Stores historical versions of test cases, preserving their state at different points in time.
+
 ```mermaid
 erDiagram
 "RepositoryCaseVersions" {
@@ -2066,6 +2120,7 @@ erDiagram
 ### RepositoryFolders
 
 Organizes test cases hierarchically within repositories.
+
 ```mermaid
 erDiagram
 "RepositoryFolders" {
@@ -2108,6 +2163,7 @@ erDiagram
 ### ResultFieldAssignment
 
 Assigns 'FieldOptions' to 'ResultFields', for example, defining the possible values for a dropdown result field.
+
 ```mermaid
 erDiagram
 "ResultFieldAssignment" {
@@ -2128,6 +2184,7 @@ erDiagram
 ### ResultFields
 
 Defines custom fields specifically for test run results, similar to case fields but for recording outcomes.
+
 ```mermaid
 erDiagram
 "ResultFields" {
@@ -2161,6 +2218,7 @@ erDiagram
 ### ResultFieldValues
 
 Stores values for custom 'ResultFields' associated with 'SessionResults' or 'TestRunResults'.
+
 ```mermaid
 erDiagram
 "ResultFieldValues" {
@@ -2187,6 +2245,7 @@ erDiagram
 ### RolePermission
 
 Defines specific permissions for a role within an application area (e.g., whether a role can add/edit in 'TestCaseRepository').
+
 ```mermaid
 erDiagram
 "RolePermission" {
@@ -2208,6 +2267,7 @@ erDiagram
 ### Roles
 
 Defines user roles within the system, with associated permissions.
+
 ```mermaid
 erDiagram
 "Roles" {
@@ -2233,6 +2293,7 @@ erDiagram
 ### SamlConfiguration
 
 Stores SAML-specific configuration details for SSO providers, including entry points, certificates, and attribute mapping.
+
 ```mermaid
 erDiagram
 "SamlConfiguration" {
@@ -2260,6 +2321,7 @@ erDiagram
 ### SessionFieldValues
 
 Stores values for custom 'CaseFields' associated with 'Sessions'.
+
 ```mermaid
 erDiagram
 "SessionFieldValues" {
@@ -2290,6 +2352,7 @@ erDiagram
 ### SessionResults
 
 Stores the results of an exploratory test session, including status, elapsed time, and associated issues.
+
 ```mermaid
 erDiagram
 "SessionResults" {
@@ -2336,6 +2399,7 @@ erDiagram
 ### Sessions
 
 Represents an exploratory test session, including its purpose, configuration, assigned testers, and progress.
+
 ```mermaid
 erDiagram
 "Sessions" {
@@ -2399,6 +2463,7 @@ erDiagram
 ### SessionVersions
 
 Stores historical versions of test sessions, capturing changes over time.
+
 ```mermaid
 erDiagram
 "SessionVersions" {
@@ -2461,6 +2526,7 @@ erDiagram
 ### SharedStepGroup
 
 Groups together reusable test steps that can be included in multiple test cases, promoting reusability and consistency.
+
 ```mermaid
 erDiagram
 "SharedStepGroup" {
@@ -2498,6 +2564,7 @@ erDiagram
 ### SharedStepItem
 
 Represents an individual step within a shared step group, containing its description and expected result.
+
 ```mermaid
 erDiagram
 "SharedStepItem" {
@@ -2531,6 +2598,7 @@ erDiagram
 ### SsoProvider
 
 Configures various Single Sign-On (SSO) providers like Google or SAML, enabling/disabling them and storing provider-specific settings.
+
 ```mermaid
 erDiagram
 "SsoProvider" {
@@ -2554,6 +2622,7 @@ erDiagram
 ### Status
 
 Defines various statuses used throughout the application for test cases, results, and other entities, including their color and behavior.
+
 ```mermaid
 erDiagram
 "Status" {
@@ -2589,6 +2658,7 @@ erDiagram
 ### StatusScope
 
 Defines the scope for which a status is applicable (e.g., 'CASES', 'RUNS', 'SESSIONS').
+
 ```mermaid
 erDiagram
 "StatusScope" {
@@ -2608,6 +2678,7 @@ erDiagram
 ### StatusScopeAssignment
 
 Links statuses to their applicable scopes.
+
 ```mermaid
 erDiagram
 "StatusScopeAssignment" {
@@ -2627,6 +2698,7 @@ erDiagram
 ### Steps
 
 Defines individual steps within a test case, including description and expected result.
+
 ```mermaid
 erDiagram
 "Steps" {
@@ -2662,6 +2734,7 @@ erDiagram
 ### Tags
 
 Custom tags for categorizing test cases, sessions, and test runs for better organization and filtering.
+
 ```mermaid
 erDiagram
 "Tags" {
@@ -2684,6 +2757,7 @@ erDiagram
 ### TemplateCaseAssignment
 
 Associates 'CaseFields' with 'Templates', defining which fields are included in a particular template.
+
 ```mermaid
 erDiagram
 "TemplateCaseAssignment" {
@@ -2704,6 +2778,7 @@ erDiagram
 ### TemplateProjectAssignment
 
 Links templates to specific projects, making them available within that project.
+
 ```mermaid
 erDiagram
 "TemplateProjectAssignment" {
@@ -2723,6 +2798,7 @@ erDiagram
 ### TemplateResultAssignment
 
 Associates 'ResultFields' with 'Templates', defining which result fields are included in a template.
+
 ```mermaid
 erDiagram
 "TemplateResultAssignment" {
@@ -2743,6 +2819,7 @@ erDiagram
 ### Templates
 
 Provides reusable templates for test cases and sessions, pre-configuring fields and other settings to streamline creation.
+
 ```mermaid
 erDiagram
 "Templates" {
@@ -2768,6 +2845,7 @@ erDiagram
 ### TestmoImportDataset
 
 Represents a dataset within a Testmo import job, including row counts and sample data.
+
 ```mermaid
 erDiagram
 "TestmoImportDataset" {
@@ -2794,6 +2872,7 @@ erDiagram
 ### TestmoImportJob
 
 Tracks the status and progress of data import jobs from Testmo, an external test management tool.
+
 ```mermaid
 erDiagram
 "TestmoImportJob" {
@@ -2846,6 +2925,7 @@ erDiagram
 ### TestmoImportMapping
 
 Stores mappings between Testmo entities and internal application entities during an import process.
+
 ```mermaid
 erDiagram
 "TestmoImportMapping" {
@@ -2869,6 +2949,7 @@ erDiagram
 ### TestmoImportStaging
 
 Stores raw data from Testmo imports in a staging area for processing, including row data and any errors encountered.
+
 ```mermaid
 erDiagram
 "TestmoImportStaging" {
@@ -2899,6 +2980,7 @@ erDiagram
 ### TestRunCases
 
 Links specific test cases from the repository to a test run, including their status and assigned tester.
+
 ```mermaid
 erDiagram
 "TestRunCases" {
@@ -2950,6 +3032,7 @@ erDiagram
 ### TestRunResults
 
 Records the overall result for a specific test case within a test run, including execution details and associated attachments.
+
 ```mermaid
 erDiagram
 "TestRunResults" {
@@ -2998,6 +3081,7 @@ erDiagram
 ### TestRuns
 
 Represents a planned test run, which executes a set of test cases against specific configurations.
+
 ```mermaid
 erDiagram
 "TestRuns" {
@@ -3057,6 +3141,7 @@ erDiagram
 ### TestRunStepResults
 
 Records the result for individual steps within a test case inside a test run.
+
 ```mermaid
 erDiagram
 "TestRunStepResults" {
@@ -3098,6 +3183,7 @@ erDiagram
 ### User
 
 Represents a user in the system with personal details, authentication method, access level, roles, and relationships to various application entities. It also includes two-factor authentication settings.
+
 ```mermaid
 erDiagram
 "User" {
@@ -3174,6 +3260,7 @@ erDiagram
 ### UserIntegrationAuth
 
 Stores user-specific authentication details for external integrations (e.g., OAuth tokens), enabling personalized integration access.
+
 ```mermaid
 erDiagram
 "UserIntegrationAuth" {
@@ -3203,6 +3290,7 @@ erDiagram
 ### UserPreferences
 
 Stores individual user preferences for the application's UI, locale, date/time formats, and notification settings.
+
 ```mermaid
 erDiagram
 "UserPreferences" {
@@ -3233,6 +3321,7 @@ erDiagram
 ### UserProjectPermission
 
 Defines explicit access permissions for a specific user on a specific project, potentially overriding global roles.
+
 ```mermaid
 erDiagram
 "UserProjectPermission" {
@@ -3260,6 +3349,7 @@ erDiagram
 ### VerificationToken
 
 Stores tokens used for magic link (email) authentication, required by NextAuth.
+
 ```mermaid
 erDiagram
 "VerificationToken" {
@@ -3277,6 +3367,7 @@ erDiagram
 ### Workflows
 
 Defines workflows used for managing the state of test cases, runs, and sessions, including their icons and colors.
+
 ```mermaid
 erDiagram
 "Workflows" {

@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { repositoryCaseMapping, REPOSITORY_CASE_INDEX } from "./elasticsearchService";
+import {
+  repositoryCaseMapping,
+  REPOSITORY_CASE_INDEX,
+} from "./elasticsearchService";
 
 describe("elasticsearchService", () => {
   describe("repositoryCaseMapping", () => {
     it("should have correct mapping structure", () => {
       expect(repositoryCaseMapping.properties).toBeDefined();
-      
+
       // Check basic fields
       expect(repositoryCaseMapping.properties.id).toEqual({ type: "integer" });
-      expect(repositoryCaseMapping.properties.projectId).toEqual({ type: "integer" });
-      expect(repositoryCaseMapping.properties.projectName).toEqual({ type: "keyword" });
-      
+      expect(repositoryCaseMapping.properties.projectId).toEqual({
+        type: "integer",
+      });
+      expect(repositoryCaseMapping.properties.projectName).toEqual({
+        type: "keyword",
+      });
+
       // Check text field with analyzer
       expect(repositoryCaseMapping.properties.name).toEqual({
         type: "text",
@@ -20,7 +27,7 @@ describe("elasticsearchService", () => {
           suggest: { type: "completion" },
         },
       });
-      
+
       // Check nested fields
       expect(repositoryCaseMapping.properties.tags).toEqual({
         type: "nested",
@@ -29,7 +36,7 @@ describe("elasticsearchService", () => {
           name: { type: "keyword" },
         },
       });
-      
+
       expect(repositoryCaseMapping.properties.customFields).toEqual({
         type: "nested",
         properties: {
@@ -39,7 +46,7 @@ describe("elasticsearchService", () => {
           value: { type: "text" },
         },
       });
-      
+
       // Check steps with shared step fields
       expect(repositoryCaseMapping.properties.steps).toEqual({
         type: "nested",
@@ -53,12 +60,16 @@ describe("elasticsearchService", () => {
           sharedStepGroupName: { type: "text" },
         },
       });
-      
+
       // Check searchable content field
-      expect(repositoryCaseMapping.properties.searchableContent).toEqual({ type: "text" });
-      
+      expect(repositoryCaseMapping.properties.searchableContent).toEqual({
+        type: "text",
+      });
+
       // Check that folderPath is keyword (not text) to match unified service
-      expect(repositoryCaseMapping.properties.folderPath).toEqual({ type: "keyword" });
+      expect(repositoryCaseMapping.properties.folderPath).toEqual({
+        type: "keyword",
+      });
     });
   });
 
@@ -67,5 +78,4 @@ describe("elasticsearchService", () => {
       expect(REPOSITORY_CASE_INDEX).toBe("testplanit-repository-cases");
     });
   });
-
 });

@@ -1,18 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted runs before vi.mock hoisting — safe to reference in factories
-const {
-  mockPrisma,
-  mockGetServerAuthSession,
-  mockCheckProjectHasCodeContext,
-} = vi.hoisted(() => ({
-  mockPrisma: {
-    projectLlmIntegration: { findFirst: vi.fn() },
-    projectCodeRepositoryConfig: { findUnique: vi.fn() },
-  },
-  mockGetServerAuthSession: vi.fn(),
-  mockCheckProjectHasCodeContext: vi.fn(),
-}));
+const { mockPrisma, mockGetServerAuthSession, mockCheckProjectHasCodeContext } =
+  vi.hoisted(() => ({
+    mockPrisma: {
+      projectLlmIntegration: { findFirst: vi.fn() },
+      projectCodeRepositoryConfig: { findUnique: vi.fn() },
+    },
+    mockGetServerAuthSession: vi.fn(),
+    mockCheckProjectHasCodeContext: vi.fn(),
+  }));
 
 // Mock all server-side dependencies to prevent env var access errors
 vi.mock("~/lib/prisma", () => ({ prisma: mockPrisma }));

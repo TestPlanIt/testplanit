@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 // Stable mock refs via vi.hoisted()
 const { mockColumns, mockExportToCSV } = vi.hoisted(() => ({
   mockColumns: [
-    { id: "name", accessorKey: "name", header: "Name", cell: ({ row }: any) => row.getValue("name") },
+    {
+      id: "name",
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }: any) => row.getValue("name"),
+    },
   ],
   mockExportToCSV: vi.fn(),
 }));
@@ -21,7 +26,10 @@ vi.mock("~/hooks/useDrillDownColumns", () => ({
 
 // Mock useDrillDownExport
 vi.mock("~/hooks/useDrillDownExport", () => ({
-  useDrillDownExport: () => ({ isExporting: false, exportToCSV: mockExportToCSV }),
+  useDrillDownExport: () => ({
+    isExporting: false,
+    exportToCSV: mockExportToCSV,
+  }),
 }));
 
 // Mock DataTable
@@ -29,7 +37,9 @@ vi.mock("~/components/tables/DataTable", () => ({
   DataTable: ({ data }: { data: any[] }) => (
     <div data-testid="data-table">
       {data.map((row, i) => (
-        <div key={i} data-testid="data-table-row">{row.name}</div>
+        <div key={i} data-testid="data-table-row">
+          {row.name}
+        </div>
       ))}
     </div>
   ),
@@ -44,16 +54,34 @@ vi.mock("~/components/LoadingSpinner", () => ({
 vi.mock("@/components/ui/drawer", () => ({
   Drawer: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
     open ? <div role="dialog">{children}</div> : null,
-  DrawerContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DrawerHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DrawerTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-  DrawerDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
-  DrawerFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DrawerClose: ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
+  DrawerContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DrawerHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DrawerTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
+  ),
+  DrawerDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
+  DrawerFooter: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DrawerClose: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    asChild?: boolean;
+  }) => <>{children}</>,
 }));
 
 import { DrillDownDrawer } from "./DrillDownDrawer";
-import type { DrillDownContext, DrillDownRecord } from "~/lib/types/reportDrillDown";
+import type {
+  DrillDownContext,
+  DrillDownRecord,
+} from "~/lib/types/reportDrillDown";
 
 const mockContext: DrillDownContext = {
   metricId: "testResults",
@@ -120,7 +148,9 @@ describe("DrillDownDrawer", () => {
   });
 
   it("shows 'no records' message when not loading and records are empty", () => {
-    render(<DrillDownDrawer {...defaultProps} isLoading={false} records={[]} />);
+    render(
+      <DrillDownDrawer {...defaultProps} isLoading={false} records={[]} />
+    );
     expect(screen.getByText("noRecords")).toBeInTheDocument();
   });
 
@@ -180,7 +210,12 @@ describe("DrillDownDrawer", () => {
     const aggregates = {
       passRate: 75.5,
       statusCounts: [
-        { statusId: 1, statusName: "Passed", statusColor: "#00ff00", count: 15 },
+        {
+          statusId: 1,
+          statusName: "Passed",
+          statusColor: "#00ff00",
+          count: 15,
+        },
         { statusId: 2, statusName: "Failed", statusColor: "#ff0000", count: 5 },
       ],
     };

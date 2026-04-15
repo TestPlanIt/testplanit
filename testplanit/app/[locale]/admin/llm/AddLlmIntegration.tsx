@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -16,7 +16,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,10 +38,12 @@ import { toast } from "sonner";
 import * as z from "zod";
 import {
   useCreateLlmIntegration,
-  useFindManyLlmIntegration
+  useFindManyLlmIntegration,
 } from "~/lib/hooks/llm-integration";
 import {
-  useCreateLlmProviderConfig, useFindManyLlmProviderConfig, useUpdateLlmProviderConfig
+  useCreateLlmProviderConfig,
+  useFindManyLlmProviderConfig,
+  useUpdateLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 
 const createFormSchema = (t: any, existingNames: string[]) =>
@@ -89,7 +91,12 @@ interface AddLlmIntegrationProps {
 }
 
 // Providers that support dynamic model fetching
-const PROVIDERS_WITH_DYNAMIC_MODELS = ["OPENAI", "ANTHROPIC", "GEMINI", "OLLAMA"];
+const PROVIDERS_WITH_DYNAMIC_MODELS = [
+  "OPENAI",
+  "ANTHROPIC",
+  "GEMINI",
+  "OLLAMA",
+];
 
 const providerDefaults: Record<string, Partial<FormData>> = {
   OPENAI: {
@@ -665,9 +672,9 @@ export function AddLlmIntegration({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                    {t("maxTokensPerRequest")}
-                    <HelpPopover helpKey="llm.maxTokensPerRequest" />
-                  </FormLabel>
+                      {t("maxTokensPerRequest")}
+                      <HelpPopover helpKey="llm.maxTokensPerRequest" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -688,9 +695,9 @@ export function AddLlmIntegration({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                    {t("maxRequestsPerMinute")}
-                    <HelpPopover helpKey="llm.maxRequestsPerMinute" />
-                  </FormLabel>
+                      {t("maxRequestsPerMinute")}
+                      <HelpPopover helpKey="llm.maxRequestsPerMinute" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -713,9 +720,9 @@ export function AddLlmIntegration({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                    {t("costPerInputToken")}
-                    <HelpPopover helpKey="llm.costPerInputToken" />
-                  </FormLabel>
+                      {t("costPerInputToken")}
+                      <HelpPopover helpKey="llm.costPerInputToken" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -737,9 +744,9 @@ export function AddLlmIntegration({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                    {t("costPerOutputToken")}
-                    <HelpPopover helpKey="llm.costPerOutputToken" />
-                  </FormLabel>
+                      {t("costPerOutputToken")}
+                      <HelpPopover helpKey="llm.costPerOutputToken" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -790,9 +797,9 @@ export function AddLlmIntegration({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                    {t("defaultTemperature")}
-                    <HelpPopover helpKey="llm.defaultTemperature" />
-                  </FormLabel>
+                      {t("defaultTemperature")}
+                      <HelpPopover helpKey="llm.defaultTemperature" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -816,9 +823,9 @@ export function AddLlmIntegration({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                    {t("defaultMaxTokens")}
-                    <HelpPopover helpKey="llm.defaultMaxTokens" />
-                  </FormLabel>
+                      {t("defaultMaxTokens")}
+                      <HelpPopover helpKey="llm.defaultMaxTokens" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"

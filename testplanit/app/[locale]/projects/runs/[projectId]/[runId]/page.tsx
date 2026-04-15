@@ -18,7 +18,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,23 +27,25 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import {
-  ResizableHandle, ResizablePanel, ResizablePanelGroup
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -51,22 +53,37 @@ import {
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ApplicationArea, Attachments, RepositoryCases,
-  Tags
+  ApplicationArea,
+  Attachments,
+  RepositoryCases,
+  Tags,
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {
-  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, Copy, FileDown, Maximize2, Save, SquarePen, Trash2, TriangleAlert
+  ArrowLeft,
+  ChevronLeft,
+  CircleCheckBig,
+  CircleSlash2,
+  Copy,
+  FileDown,
+  Maximize2,
+  Save,
+  SquarePen,
+  Trash2,
+  TriangleAlert,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -82,9 +99,18 @@ import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import {
-  useCreateAttachments, useDeleteManyTestRunResults,
+  useCreateAttachments,
+  useDeleteManyTestRunResults,
   useDeleteManyTestRunStepResults,
-  useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstStatusScope, useFindManyJUnitTestSuite, useFindManyMilestones, useFindManyWorkflows, useFindUniqueTestRuns, useUpdateAttachments, useUpdateTestRuns
+  useFindFirstProjects,
+  useFindFirstRepositoryCases,
+  useFindFirstStatusScope,
+  useFindManyJUnitTestSuite,
+  useFindManyMilestones,
+  useFindManyWorkflows,
+  useFindUniqueTestRuns,
+  useUpdateAttachments,
+  useUpdateTestRuns,
 } from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
@@ -94,13 +120,14 @@ import { useExportTestRunPdf } from "~/hooks/pdf/useExportTestRunPdf";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import AddTestRunModal from "../AddTestRunModal";
 import DuplicateTestRunDialog, {
-  AddTestRunModalInitProps
+  AddTestRunModalInitProps,
 } from "../DuplicateTestRunDialog";
 import CompleteTestRunDialog from "./CompleteTestRunDialog";
 import { DeleteTestRunModal } from "./DeleteTestRun";
 import JunitTableSection from "./JunitTableSection";
 import {
-  SelectedConfigurationInfo, TestCasesSection
+  SelectedConfigurationInfo,
+  TestCasesSection,
 } from "./TestCasesSection";
 import TestRunFormControls from "./TestRunFormControls";
 
@@ -1401,7 +1428,6 @@ export default function TestRunPage() {
           setNoteContent={setNoteContent}
           contentLoaded={contentLoaded}
           handleCancel={handleCancel}
-
           workflows={workflows}
           milestones={milestoneOptions}
           statusScope={statusScope}
@@ -1541,9 +1567,7 @@ export default function TestRunPage() {
                           </Button>
                         )}
                         {canAddEditRun &&
-                          !isAutomatedTestRunType(
-                            testRunData?.testRunType
-                          ) && (
+                          !isAutomatedTestRunType(testRunData?.testRunType) && (
                             <Button
                               type="button"
                               variant="secondary"
@@ -1586,9 +1610,7 @@ export default function TestRunPage() {
                             {isCompleteDialogOpen && (
                               <CompleteTestRunDialog
                                 open={isCompleteDialogOpen}
-                                onClose={() =>
-                                  setIsCompleteDialogOpen(false)
-                                }
+                                onClose={() => setIsCompleteDialogOpen(false)}
                                 testRunId={Number(runId)}
                                 projectId={Number(projectId)}
                                 stateId={testRunData?.stateId || 0}
@@ -1597,7 +1619,7 @@ export default function TestRunPage() {
                             )}
                           </>
                         )}
-                        </div>
+                      </div>
                     ) : (
                       // Edit Mode Buttons for NON-COMPLETED runs
                       <div className="flex flex-col gap-2">
@@ -1924,7 +1946,6 @@ export default function TestRunPage() {
                     testRun={testRunData}
                     control={control}
                     errors={errors}
-          
                     workflows={workflows}
                     milestones={milestoneOptions}
                     selectedTags={selectedTags}

@@ -7,13 +7,18 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
-type LinkOperator = "contains" | "startsWith" | "endsWith" | "equals" | "domain";
+type LinkOperator =
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "equals"
+  | "domain";
 
 interface LinkFilterInputProps {
   fieldId: number;
@@ -74,7 +79,10 @@ export function LinkFilterInput({
     return value.trim().length > 0;
   };
 
-  const hasActiveFilter = currentFilter !== null && currentFilter !== undefined && currentFilter !== "";
+  const hasActiveFilter =
+    currentFilter !== null &&
+    currentFilter !== undefined &&
+    currentFilter !== "";
 
   // Format the current filter for display
   const formatFilterDisplay = (filter: string) => {
@@ -91,7 +99,8 @@ export function LinkFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")}{" "}
+            {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -110,7 +119,10 @@ export function LinkFilterInput({
         </div>
       )}
 
-      <Select value={operator} onValueChange={(val) => setOperator(val as LinkOperator)}>
+      <Select
+        value={operator}
+        onValueChange={(val) => setOperator(val as LinkOperator)}
+      >
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Select operator" />
         </SelectTrigger>
@@ -126,7 +138,9 @@ export function LinkFilterInput({
       <div className="flex gap-2 items-center">
         <Input
           type="text"
-          placeholder={operator === "domain" ? "example.com" : "Enter URL pattern..."}
+          placeholder={
+            operator === "domain" ? "example.com" : "Enter URL pattern..."
+          }
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyPress={handleKeyPress}

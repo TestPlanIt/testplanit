@@ -143,7 +143,10 @@ export const getColumns = (
         const projects = row.original.projects || [];
         return (
           <div className="text-center">
-            <ProjectListDisplay projects={projects} isLoading={isLoadingCounts} />
+            <ProjectListDisplay
+              projects={projects}
+              isLoading={isLoadingCounts}
+            />
           </div>
         );
       },

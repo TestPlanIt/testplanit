@@ -1,6 +1,7 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import {
-  AttachmentChanges, AttachmentsDisplay
+  AttachmentChanges,
+  AttachmentsDisplay,
 } from "@/components/AttachmentsDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import { DurationDisplay } from "@/components/DurationDisplay";

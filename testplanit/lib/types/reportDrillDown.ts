@@ -262,27 +262,35 @@ export interface DrillDownResponse {
 export function isTestExecutionRecord(
   record: DrillDownRecord
 ): record is TestExecutionRecord {
-  return "testCaseId" in record && "testRunId" in record && "executedAt" in record;
+  return (
+    "testCaseId" in record && "testRunId" in record && "executedAt" in record
+  );
 }
 
 /**
  * Type guard to check if a record is a test run record
  */
-export function isTestRunRecord(record: DrillDownRecord): record is TestRunRecord {
+export function isTestRunRecord(
+  record: DrillDownRecord
+): record is TestRunRecord {
   return "startedAt" in record && "passed" in record;
 }
 
 /**
  * Type guard to check if a record is a test case record
  */
-export function isTestCaseRecord(record: DrillDownRecord): record is TestCaseRecord {
+export function isTestCaseRecord(
+  record: DrillDownRecord
+): record is TestCaseRecord {
   return "folderId" in record && "priority" in record;
 }
 
 /**
  * Type guard to check if a record is a session record
  */
-export function isSessionRecord(record: DrillDownRecord): record is SessionRecord {
+export function isSessionRecord(
+  record: DrillDownRecord
+): record is SessionRecord {
   return "charter" in record && "duration" in record;
 }
 

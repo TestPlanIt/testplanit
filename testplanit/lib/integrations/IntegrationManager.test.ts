@@ -258,7 +258,9 @@ describe("IntegrationManager", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () =>
-          Promise.resolve([{ id: "cloud-123", url: "https://test.atlassian.net" }]),
+          Promise.resolve([
+            { id: "cloud-123", url: "https://test.atlassian.net" },
+          ]),
       });
       global.fetch = mockFetch;
 

@@ -14,7 +14,7 @@ const _extensionConfig = {
     inline: true,
     allowBase64: true,
     HTMLAttributes: {
-      style: 'max-width: 100%; height: auto;',
+      style: "max-width: 100%; height: auto;",
     },
   },
 };
@@ -24,52 +24,52 @@ const _extensionConfig = {
  */
 export function generateHTMLFallback(content: any): string {
   if (!content || !content.content) {
-    return '<div></div>';
+    return "<div></div>";
   }
 
   function processNode(node: any): string {
-    if (!node) return '';
+    if (!node) return "";
 
     switch (node.type) {
-      case 'doc':
-        return node.content?.map(processNode).join('') || '';
+      case "doc":
+        return node.content?.map(processNode).join("") || "";
 
-      case 'paragraph':
-        const pContent = node.content?.map(processNode).join('') || '';
+      case "paragraph":
+        const pContent = node.content?.map(processNode).join("") || "";
         return `<p>${pContent}</p>`;
 
-      case 'text':
-        let text = node.text || '';
+      case "text":
+        let text = node.text || "";
         if (node.marks) {
           for (const mark of node.marks) {
             switch (mark.type) {
-              case 'bold':
+              case "bold":
                 text = `<strong>${text}</strong>`;
                 break;
-              case 'italic':
+              case "italic":
                 text = `<em>${text}</em>`;
                 break;
-              case 'code':
+              case "code":
                 text = `<code>${text}</code>`;
                 break;
-              case 'strike':
+              case "strike":
                 text = `<s>${text}</s>`;
                 break;
-              case 'underline':
+              case "underline":
                 text = `<u>${text}</u>`;
                 break;
-              case 'highlight':
+              case "highlight":
                 text = `<mark>${text}</mark>`;
                 break;
-              case 'subscript':
+              case "subscript":
                 text = `<sub>${text}</sub>`;
                 break;
-              case 'superscript':
+              case "superscript":
                 text = `<sup>${text}</sup>`;
                 break;
-              case 'link':
-                const href = mark.attrs?.href || '#';
-                const target = mark.attrs?.target || '_blank';
+              case "link":
+                const href = mark.attrs?.href || "#";
+                const target = mark.attrs?.target || "_blank";
                 text = `<a href="${href}" target="${target}" rel="noopener noreferrer">${text}</a>`;
                 break;
             }
@@ -77,61 +77,63 @@ export function generateHTMLFallback(content: any): string {
         }
         return text;
 
-      case 'heading':
+      case "heading":
         const level = node.attrs?.level || 1;
-        const hContent = node.content?.map(processNode).join('') || '';
+        const hContent = node.content?.map(processNode).join("") || "";
         return `<h${level}>${hContent}</h${level}>`;
 
-      case 'bulletList':
-        const ulContent = node.content?.map(processNode).join('') || '';
+      case "bulletList":
+        const ulContent = node.content?.map(processNode).join("") || "";
         return `<ul>${ulContent}</ul>`;
 
-      case 'orderedList':
-        const olContent = node.content?.map(processNode).join('') || '';
+      case "orderedList":
+        const olContent = node.content?.map(processNode).join("") || "";
         const start = node.attrs?.start || 1;
-        return start > 1 ? `<ol start="${start}">${olContent}</ol>` : `<ol>${olContent}</ol>`;
+        return start > 1
+          ? `<ol start="${start}">${olContent}</ol>`
+          : `<ol>${olContent}</ol>`;
 
-      case 'listItem':
-        const liContent = node.content?.map(processNode).join('') || '';
+      case "listItem":
+        const liContent = node.content?.map(processNode).join("") || "";
         return `<li>${liContent}</li>`;
 
-      case 'blockquote':
-        const bqContent = node.content?.map(processNode).join('') || '';
+      case "blockquote":
+        const bqContent = node.content?.map(processNode).join("") || "";
         return `<blockquote>${bqContent}</blockquote>`;
 
-      case 'codeBlock':
-        const cbContent = node.content?.map(processNode).join('') || '';
+      case "codeBlock":
+        const cbContent = node.content?.map(processNode).join("") || "";
         return `<pre><code>${cbContent}</code></pre>`;
 
-      case 'hardBreak':
-        return '<br>';
+      case "hardBreak":
+        return "<br>";
 
-      case 'horizontalRule':
-        return '<hr>';
+      case "horizontalRule":
+        return "<hr>";
 
-      case 'table':
-        const tableContent = node.content?.map(processNode).join('') || '';
+      case "table":
+        const tableContent = node.content?.map(processNode).join("") || "";
         return `<table>${tableContent}</table>`;
 
-      case 'tableRow':
-        const trContent = node.content?.map(processNode).join('') || '';
+      case "tableRow":
+        const trContent = node.content?.map(processNode).join("") || "";
         return `<tr>${trContent}</tr>`;
 
-      case 'tableCell':
-        const tdContent = node.content?.map(processNode).join('') || '';
+      case "tableCell":
+        const tdContent = node.content?.map(processNode).join("") || "";
         return `<td>${tdContent}</td>`;
 
-      case 'tableHeader':
-        const thContent = node.content?.map(processNode).join('') || '';
+      case "tableHeader":
+        const thContent = node.content?.map(processNode).join("") || "";
         return `<th>${thContent}</th>`;
 
-      case 'image':
-        const src = node.attrs?.src || '';
-        const alt = node.attrs?.alt || '';
+      case "image":
+        const src = node.attrs?.src || "";
+        const alt = node.attrs?.alt || "";
         return `<img src="${src}" alt="${alt}" style="max-width: 100%; height: auto;" />`;
 
       default:
-        return node.content?.map(processNode).join('') || '';
+        return node.content?.map(processNode).join("") || "";
     }
   }
 
@@ -179,7 +181,11 @@ export function tiptapToHtml(json: any): string {
 export function isTipTapContent(content: any): boolean {
   try {
     const parsed = typeof content === "string" ? JSON.parse(content) : content;
-    return !!(parsed && typeof parsed === "object" && (parsed.type === "doc" || parsed.content));
+    return !!(
+      parsed &&
+      typeof parsed === "object" &&
+      (parsed.type === "doc" || parsed.content)
+    );
   } catch {
     return false;
   }

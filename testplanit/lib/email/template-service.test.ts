@@ -53,23 +53,23 @@ describe("Email Template Service", () => {
   describe("Handlebars Helpers", () => {
     beforeEach(() => {
       // Register helpers manually for testing
-      Handlebars.registerHelper("formatDate", function (
-        this: any,
-        date: Date | string
-      ) {
-        const locale = this.locale || "en-US";
-        const d = typeof date === "string" ? new Date(date) : date;
-        return d.toLocaleDateString(locale);
-      });
+      Handlebars.registerHelper(
+        "formatDate",
+        function (this: any, date: Date | string) {
+          const locale = this.locale || "en-US";
+          const d = typeof date === "string" ? new Date(date) : date;
+          return d.toLocaleDateString(locale);
+        }
+      );
 
-      Handlebars.registerHelper("formatDateTime", function (
-        this: any,
-        date: Date | string
-      ) {
-        const locale = this.locale || "en-US";
-        const d = typeof date === "string" ? new Date(date) : date;
-        return d.toLocaleString(locale);
-      });
+      Handlebars.registerHelper(
+        "formatDateTime",
+        function (this: any, date: Date | string) {
+          const locale = this.locale || "en-US";
+          const d = typeof date === "string" ? new Date(date) : date;
+          return d.toLocaleString(locale);
+        }
+      );
 
       Handlebars.registerHelper("eq", (a: any, b: any) => a === b);
       Handlebars.registerHelper("ne", (a: any, b: any) => a !== b);
@@ -78,28 +78,27 @@ describe("Email Template Service", () => {
       Handlebars.registerHelper("lt", (a: any, b: any) => a < b);
       Handlebars.registerHelper("lte", (a: any, b: any) => a <= b);
 
-      Handlebars.registerHelper("t", function (
-        this: any,
-        key: string,
-        options?: any
-      ) {
-        const translations =
-          (options?.data?.root?.translations || this.translations) || {};
-        const value = translations[key] || key;
+      Handlebars.registerHelper(
+        "t",
+        function (this: any, key: string, options?: any) {
+          const translations =
+            options?.data?.root?.translations || this.translations || {};
+          const value = translations[key] || key;
 
-        if (options && options.hash) {
-          return value.replace(
-            /\{(\w+)\}/g,
-            (match: string, param: string) => {
-              return options.hash[param] !== undefined
-                ? options.hash[param]
-                : match;
-            }
-          );
+          if (options && options.hash) {
+            return value.replace(
+              /\{(\w+)\}/g,
+              (match: string, param: string) => {
+                return options.hash[param] !== undefined
+                  ? options.hash[param]
+                  : match;
+              }
+            );
+          }
+
+          return value;
         }
-
-        return value;
-      });
+      );
     });
 
     describe("formatDate helper", () => {
@@ -303,9 +302,7 @@ describe("Email Template Service", () => {
       const layoutTemplate = Handlebars.compile(
         "<html><head><title>{{subject}}</title></head><body>{{{content}}}</body></html>"
       );
-      const contentTemplate = Handlebars.compile(
-        "<p>Hello, {{userName}}</p>"
-      );
+      const contentTemplate = Handlebars.compile("<p>Hello, {{userName}}</p>");
 
       const data = { subject: "Welcome", userName: "Alice", content: "" };
       data.content = contentTemplate(data);
@@ -320,7 +317,10 @@ describe("Email Template Service", () => {
     beforeEach(() => {
       // Register test partials
       Handlebars.registerPartial("header", "<header>{{title}}</header>");
-      Handlebars.registerPartial("footer", "<footer>Copyright {{year}}</footer>");
+      Handlebars.registerPartial(
+        "footer",
+        "<footer>Copyright {{year}}</footer>"
+      );
     });
 
     afterEach(() => {
@@ -329,11 +329,11 @@ describe("Email Template Service", () => {
     });
 
     it("should render partials", () => {
-      const template = Handlebars.compile(
-        "{{> header}}{{> footer}}"
-      );
+      const template = Handlebars.compile("{{> header}}{{> footer}}");
       const result = template({ title: "My Site", year: 2024 });
-      expect(result).toBe("<header>My Site</header><footer>Copyright 2024</footer>");
+      expect(result).toBe(
+        "<header>My Site</header><footer>Copyright 2024</footer>"
+      );
     });
 
     it("should pass context to partials", () => {

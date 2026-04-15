@@ -3,7 +3,14 @@
 import { Projects } from "@prisma/client";
 import { useEffect, useState } from "react";
 import {
-  useCreateManyTemplateCaseAssignment, useCreateManyTemplateProjectAssignment, useCreateManyTemplateResultAssignment, useCreateTemplates, useFindManyCaseFields, useFindManyProjects, useFindManyResultFields, useUpdateManyTemplates
+  useCreateManyTemplateCaseAssignment,
+  useCreateManyTemplateProjectAssignment,
+  useCreateManyTemplateResultAssignment,
+  useCreateTemplates,
+  useFindManyCaseFields,
+  useFindManyProjects,
+  useFindManyResultFields,
+  useUpdateManyTemplates,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +19,7 @@ import { z } from "zod/v4";
 
 import {
   DraggableField,
-  DraggableList
+  DraggableList,
 } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +33,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {
@@ -287,9 +294,16 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
+      <DialogContent
+        className="sm:max-w-[600px] lg:max-w-[1000px]"
+        data-testid="template-dialog"
+      >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="template-form">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+            data-testid="template-form"
+          >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -499,7 +513,11 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting} data-testid="template-submit-button">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="template-submit-button"
+              >
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

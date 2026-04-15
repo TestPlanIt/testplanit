@@ -339,7 +339,9 @@ describe("AnthropicAdapter", () => {
       const config = createTestConfig();
       const adapter = new AnthropicAdapter(config);
 
-      const result = await adapter.isModelAvailable("claude-3-5-sonnet-20241022");
+      const result = await adapter.isModelAvailable(
+        "claude-3-5-sonnet-20241022"
+      );
       expect(result).toBe(true);
     });
 

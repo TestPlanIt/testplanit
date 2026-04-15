@@ -79,7 +79,11 @@ describe("WorkflowDragPreview", () => {
 
   it("renders icon when item has an icon property", () => {
     dragState.isDragging = true;
-    dragState.item = { id: 1, name: "Workflow With Icon", icon: { name: "star" } };
+    dragState.item = {
+      id: 1,
+      name: "Workflow With Icon",
+      icon: { name: "star" },
+    };
     dragState.itemType = "workflow";
     dragState.initialOffset = { x: 50, y: 50 };
     dragState.currentOffset = { x: 100, y: 200 };
@@ -110,7 +114,9 @@ describe("WorkflowDragPreview", () => {
   it("renders workflow name from draggedItems when single item", () => {
     dragState.isDragging = true;
     dragState.item = {
-      draggedItems: [{ id: 1, name: "Single Dragged Workflow", icon: { name: "star" } }],
+      draggedItems: [
+        { id: 1, name: "Single Dragged Workflow", icon: { name: "star" } },
+      ],
     };
     dragState.itemType = "workflow";
     dragState.initialOffset = { x: 50, y: 50 };

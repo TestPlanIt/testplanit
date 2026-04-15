@@ -23,7 +23,10 @@ export function extractTiptapText(json: unknown): string {
       .filter(Boolean);
     // Join inline text nodes (within same block) without extra spaces
     // The text nodes already contain their own spacing
-    return parts.join(" ").replace(/\s{2,}/g, " ").trim();
+    return parts
+      .join(" ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
   }
 
   return "";
@@ -57,7 +60,7 @@ export function extractFieldValue(fieldValue: {
 export function extractEntityContent(
   entity: any,
   entityType: EntityType,
-  folderPath?: string,
+  folderPath?: string
 ): EntityContent {
   const id: number = entity.id;
   const name: string = entity.name ?? "";
@@ -92,9 +95,7 @@ export function extractEntityContent(
 
       // Tags
       if (Array.isArray(entity.tags)) {
-        existingTagNames = entity.tags.map(
-          (t: any) => t.name ?? String(t),
-        );
+        existingTagNames = entity.tags.map((t: any) => t.name ?? String(t));
       }
       break;
     }
@@ -107,9 +108,7 @@ export function extractEntityContent(
       if (docs) textParts.push(docs);
 
       if (Array.isArray(entity.tags)) {
-        existingTagNames = entity.tags.map(
-          (t: any) => t.name ?? String(t),
-        );
+        existingTagNames = entity.tags.map((t: any) => t.name ?? String(t));
       }
       break;
     }
@@ -133,9 +132,7 @@ export function extractEntityContent(
       }
 
       if (Array.isArray(entity.tags)) {
-        existingTagNames = entity.tags.map(
-          (t: any) => t.name ?? String(t),
-        );
+        existingTagNames = entity.tags.map((t: any) => t.name ?? String(t));
       }
       break;
     }

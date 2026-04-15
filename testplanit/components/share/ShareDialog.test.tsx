@@ -14,7 +14,9 @@ vi.mock("next-intl", () => ({
 // Mock next-auth/react
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
-    data: { user: { id: "user-1", name: "Test User", email: "test@example.com" } },
+    data: {
+      user: { id: "user-1", name: "Test User", email: "test@example.com" },
+    },
     status: "authenticated",
   }),
 }));
@@ -30,7 +32,9 @@ vi.mock("~/lib/hooks", () => ({
 // Mock server actions
 vi.mock("@/actions/share-links", () => ({
   auditShareLinkCreation: vi.fn().mockResolvedValue(undefined),
-  prepareShareLinkData: vi.fn().mockResolvedValue({ shareKey: "test-key", passwordHash: null }),
+  prepareShareLinkData: vi
+    .fn()
+    .mockResolvedValue({ shareKey: "test-key", passwordHash: null }),
 }));
 
 // Mock @prisma/client ShareLinkMode enum
@@ -102,7 +106,9 @@ describe("ShareDialog", () => {
 
   it("does not show password fields by default (AUTHENTICATED mode)", () => {
     render(<ShareDialog {...defaultProps} />);
-    expect(screen.queryByTestId("share-password-input")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("share-password-input")
+    ).not.toBeInTheDocument();
   });
 
   it("shows password fields when PASSWORD_PROTECTED mode is selected", () => {
@@ -110,7 +116,9 @@ describe("ShareDialog", () => {
     const passwordRadio = screen.getByTestId("share-mode-password");
     fireEvent.click(passwordRadio);
     expect(screen.getByTestId("share-password-input")).toBeInTheDocument();
-    expect(screen.getByTestId("share-confirm-password-input")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("share-confirm-password-input")
+    ).toBeInTheDocument();
   });
 
   it("shows title and description inputs", () => {

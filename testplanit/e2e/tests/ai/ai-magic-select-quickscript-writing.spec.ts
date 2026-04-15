@@ -112,11 +112,16 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     });
 
     // The MagicSelectButton should appear in the "Select Test Cases" dialog
-    const selectCasesDialog = page.locator('[role="dialog"]').filter({ hasText: "Select Test Cases" }).last();
+    const selectCasesDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: "Select Test Cases" })
+      .last();
     await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
 
     // Magic Select button should be visible and enabled with LLM integration
-    const magicSelectButton = selectCasesDialog.getByRole("button", { name: "Magic Select" }).first();
+    const magicSelectButton = selectCasesDialog
+      .getByRole("button", { name: "Magic Select" })
+      .first();
     await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
     await expect(magicSelectButton).toBeEnabled();
 
@@ -124,7 +129,10 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     await magicSelectButton.dispatchEvent("click");
 
     // The magic select dialog should open
-    const magicDialog = page.locator('[role="dialog"]').filter({ hasText: "Magic Select" }).last();
+    const magicDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: "Magic Select" })
+      .last();
     await expect(magicDialog).toBeVisible({ timeout: 10000 });
   });
 
@@ -177,10 +185,15 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     });
 
     // Magic Select button should still be visible (error only surfaces when clicked)
-    const selectCasesDialog = page.locator('[role="dialog"]').filter({ hasText: "Select Test Cases" }).last();
+    const selectCasesDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: "Select Test Cases" })
+      .last();
     await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
 
-    const magicSelectButton = selectCasesDialog.getByRole("button", { name: "Magic Select" }).first();
+    const magicSelectButton = selectCasesDialog
+      .getByRole("button", { name: "Magic Select" })
+      .first();
     await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
   });
 });
@@ -211,13 +224,13 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await folderNode.click();
 
     // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    const caseCheckbox = page
+      .locator('[data-testid^="case-checkbox-"]')
+      .first();
     await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
     // Select all cases via header checkbox
-    const headerCheckbox = page
-      .locator('thead [role="checkbox"]')
-      .first();
+    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
     await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
 
@@ -276,13 +289,13 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await folderNode.click();
 
     // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    const caseCheckbox = page
+      .locator('[data-testid^="case-checkbox-"]')
+      .first();
     await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
     // Select all cases via header checkbox
-    const headerCheckbox = page
-      .locator('thead [role="checkbox"]')
-      .first();
+    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
     await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
 
@@ -295,7 +308,9 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
 
     // Check for AI export toggle
     const aiToggle = qsDialog.getByTestId("ai-export-toggle");
-    const aiToggleVisible = await aiToggle.isVisible({ timeout: 3000 }).catch(() => false);
+    const aiToggleVisible = await aiToggle
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
 
     if (aiToggleVisible) {
       // Enable AI export
@@ -307,12 +322,16 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
       await qsGenerateButton.click();
 
       // Wait for SSE streaming to complete — preview should show generated code
-      const previewContent = qsDialog.locator('[data-testid="preview-pane"], pre, code').first();
+      const previewContent = qsDialog
+        .locator('[data-testid="preview-pane"], pre, code')
+        .first();
       await expect(previewContent).toBeVisible({ timeout: 10000 });
     }
 
     // Template selector should always be visible regardless of AI toggle
-    await expect(qsDialog.getByTestId("quickscript-template-select")).toBeVisible({ timeout: 5000 });
+    await expect(
+      qsDialog.getByTestId("quickscript-template-select")
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("should mock template-only fallback for QuickScript when no LLM available", async ({
@@ -323,7 +342,10 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     const projectId = await api.createProject(`E2E QS Fallback ${ts}`);
     // Enable QuickScript but do NOT add LLM integration — tests fallback path
     await api.enableQuickScript(projectId);
-    const folderId = await api.createFolder(projectId, `QS Fallback Folder ${ts}`);
+    const folderId = await api.createFolder(
+      projectId,
+      `QS Fallback Folder ${ts}`
+    );
     await api.createTestCase(projectId, folderId, `QS Fallback Case ${ts}`);
 
     // Mock SSE stream to return fallback (template-only) response
@@ -351,13 +373,13 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await folderNode.click();
 
     // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page.locator('[data-testid^="case-checkbox-"]').first();
+    const caseCheckbox = page
+      .locator('[data-testid^="case-checkbox-"]')
+      .first();
     await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
     // Select all cases via header checkbox
-    const headerCheckbox = page
-      .locator('thead [role="checkbox"]')
-      .first();
+    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
     await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
     await headerCheckbox.click();
 
@@ -390,13 +412,19 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     await page.waitForLoadState("networkidle");
 
     // Enter edit mode
-    const editButton = page.getByRole("button", { name: /Edit Documentation/i });
+    const editButton = page.getByRole("button", {
+      name: /Edit Documentation/i,
+    });
     await expect(editButton).toBeVisible({ timeout: 15000 });
     await editButton.click();
 
     // TipTap toolbar should be visible
-    await expect(page.getByTestId("tiptap-bold")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId("tiptap-italic")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("tiptap-bold")).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.getByTestId("tiptap-italic")).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("should show AI writing assistant button in TipTap toolbar when LLM configured", async ({
@@ -431,22 +459,30 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     await page.waitForLoadState("networkidle");
 
     // Enter edit mode
-    const editButton = page.getByRole("button", { name: /Edit Documentation/i });
+    const editButton = page.getByRole("button", {
+      name: /Edit Documentation/i,
+    });
     await expect(editButton).toBeVisible({ timeout: 15000 });
     await editButton.click();
 
     // Wait for editor
-    await expect(
-      page.locator('[contenteditable="true"]')
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[contenteditable="true"]')).toBeVisible({
+      timeout: 5000,
+    });
 
     // AI writing assistant button may not render if LLM integration isn't configured at instance level
     const aiButtonCount = await page
-      .locator('[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")')
+      .locator(
+        '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
+      )
       .count();
     if (aiButtonCount > 0) {
       await expect(
-        page.locator('[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")').first()
+        page
+          .locator(
+            '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
+          )
+          .first()
       ).toBeVisible({ timeout: 5000 });
     }
   });
@@ -482,7 +518,9 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("button", { name: /Edit Documentation/i })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: /Edit Documentation/i })
+    ).toBeVisible({
       timeout: 15000,
     });
 
@@ -498,16 +536,22 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     await editor.type("Testing documentation");
 
     // The TipTap toolbar should be visible with standard formatting options
-    await expect(page.getByTestId("tiptap-bold")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("tiptap-bold")).toBeVisible({
+      timeout: 5000,
+    });
 
     // AI button may not render if LLM integration isn't configured at instance level
     const aiButtonCount = await page
-      .locator('[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")')
+      .locator(
+        '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")'
+      )
       .count();
 
     if (aiButtonCount > 0) {
       const aiButton = page
-        .locator('[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")')
+        .locator(
+          '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")'
+        )
         .first();
       await expect(aiButton).toBeVisible({ timeout: 5000 });
 
@@ -515,9 +559,11 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
       await aiButton.click();
 
       // After clicking, the writing assistant should show a dialog, popover, or dropdown
-      const assistantUI = page.locator(
-        '[role="dialog"], [role="tooltip"], [data-radix-popper-content-wrapper], [role="menu"]'
-      ).first();
+      const assistantUI = page
+        .locator(
+          '[role="dialog"], [role="tooltip"], [data-radix-popper-content-wrapper], [role="menu"]'
+        )
+        .first();
       await expect(assistantUI).toBeVisible({ timeout: 5000 });
     }
   });

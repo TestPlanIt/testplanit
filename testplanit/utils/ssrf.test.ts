@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockLookup = vi.hoisted(() => vi.fn());
-const mockGetAllowedPrivateHosts = vi.hoisted(() => vi.fn(() => new Set<string>()));
+const mockGetAllowedPrivateHosts = vi.hoisted(() =>
+  vi.fn(() => new Set<string>())
+);
 
 vi.mock("node:dns/promises", () => ({
   default: { lookup: mockLookup },
@@ -56,7 +58,9 @@ describe("isSsrfSafe", () => {
 
   describe("blocks AWS metadata / link-local", () => {
     it("blocks 169.254.x.x", () => {
-      expect(isSsrfSafe("https://169.254.169.254/latest/meta-data")).toBe(false);
+      expect(isSsrfSafe("https://169.254.169.254/latest/meta-data")).toBe(
+        false
+      );
     });
   });
 
@@ -132,7 +136,9 @@ describe("isSsrfSafe", () => {
 
   describe("respects ALLOWED_PRIVATE_HOSTS", () => {
     it("allows private IP when hostname is in allowlist", () => {
-      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["192.168.1.100"]));
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(
+        new Set(["192.168.1.100"])
+      );
       expect(isSsrfSafe("http://192.168.1.100:3000/api")).toBe(true);
     });
 
@@ -165,7 +171,10 @@ describe("assertSsrfSafeResolved", () => {
 
   describe("blocks DNS rebinding attacks", () => {
     it("throws when hostname resolves to loopback", async () => {
-      mockLookup.mockResolvedValueOnce({ address: "127.0.0.1", family: 4 } as any);
+      mockLookup.mockResolvedValueOnce({
+        address: "127.0.0.1",
+        family: 4,
+      } as any);
 
       await expect(
         assertSsrfSafeResolved("https://evil.example.com/api")
@@ -173,7 +182,10 @@ describe("assertSsrfSafeResolved", () => {
     });
 
     it("throws when hostname resolves to private 10.x.x.x", async () => {
-      mockLookup.mockResolvedValueOnce({ address: "10.0.0.1", family: 4 } as any);
+      mockLookup.mockResolvedValueOnce({
+        address: "10.0.0.1",
+        family: 4,
+      } as any);
 
       await expect(
         assertSsrfSafeResolved("https://evil.example.com/api")
@@ -181,7 +193,10 @@ describe("assertSsrfSafeResolved", () => {
     });
 
     it("throws when hostname resolves to 192.168.x.x", async () => {
-      mockLookup.mockResolvedValueOnce({ address: "192.168.1.1", family: 4 } as any);
+      mockLookup.mockResolvedValueOnce({
+        address: "192.168.1.1",
+        family: 4,
+      } as any);
 
       await expect(
         assertSsrfSafeResolved("https://evil.example.com/api")
@@ -189,7 +204,10 @@ describe("assertSsrfSafeResolved", () => {
     });
 
     it("throws when hostname resolves to AWS metadata IP", async () => {
-      mockLookup.mockResolvedValueOnce({ address: "169.254.169.254", family: 4 } as any);
+      mockLookup.mockResolvedValueOnce({
+        address: "169.254.169.254",
+        family: 4,
+      } as any);
 
       await expect(
         assertSsrfSafeResolved("https://evil.example.com/api")
@@ -199,7 +217,10 @@ describe("assertSsrfSafeResolved", () => {
 
   describe("allows safe resolved addresses", () => {
     it("passes when hostname resolves to a public IP", async () => {
-      mockLookup.mockResolvedValueOnce({ address: "140.82.121.4", family: 4 } as any);
+      mockLookup.mockResolvedValueOnce({
+        address: "140.82.121.4",
+        family: 4,
+      } as any);
 
       await expect(
         assertSsrfSafeResolved("https://github.com/api")

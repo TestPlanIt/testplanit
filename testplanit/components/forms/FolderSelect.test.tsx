@@ -82,11 +82,7 @@ describe("FolderSelect", () => {
 
   it("renders the select trigger", () => {
     render(
-      <FolderSelect
-        value={null}
-        onChange={vi.fn()}
-        folders={sampleFolders}
-      />
+      <FolderSelect value={null} onChange={vi.fn()} folders={sampleFolders} />
     );
 
     // Radix Select renders a button with role="combobox"
@@ -109,11 +105,7 @@ describe("FolderSelect", () => {
 
   it("uses translation default placeholder when no placeholder prop", () => {
     render(
-      <FolderSelect
-        value={null}
-        onChange={vi.fn()}
-        folders={sampleFolders}
-      />
+      <FolderSelect value={null} onChange={vi.fn()} folders={sampleFolders} />
     );
 
     // Translation key "repository.cases.selectFolder" maps to "Select Folder" in test map
@@ -135,13 +127,7 @@ describe("FolderSelect", () => {
   });
 
   it("is disabled when folders array is empty", () => {
-    render(
-      <FolderSelect
-        value={null}
-        onChange={vi.fn()}
-        folders={[]}
-      />
-    );
+    render(<FolderSelect value={null} onChange={vi.fn()} folders={[]} />);
 
     const trigger = screen.getByRole("combobox");
     expect(trigger).toBeDisabled();

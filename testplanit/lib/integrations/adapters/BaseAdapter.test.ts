@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BaseAdapter } from "./BaseAdapter";
 import type {
-  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
+  AuthenticationData,
+  CreateIssueData,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
 } from "./IssueAdapter";
 
 // Create a concrete implementation for testing
@@ -40,7 +45,10 @@ class TestAdapter extends BaseAdapter {
     };
   }
 
-  async updateIssue(issueId: string, data: UpdateIssueData): Promise<IssueData> {
+  async updateIssue(
+    issueId: string,
+    data: UpdateIssueData
+  ): Promise<IssueData> {
     return {
       id: issueId,
       key: `TEST-${issueId}`,
@@ -533,9 +541,9 @@ describe("BaseAdapter", () => {
     });
 
     it("processWebhook should throw not supported error", async () => {
-      await expect(
-        adapter.processWebhook?.({ event: "test" })
-      ).rejects.toThrow("Webhook processing is not supported");
+      await expect(adapter.processWebhook?.({ event: "test" })).rejects.toThrow(
+        "Webhook processing is not supported"
+      );
     });
   });
 

@@ -64,8 +64,20 @@ vi.mock("d3", () => ({
 describe("ReportBarChart", () => {
   const mockData: SimpleChartDataPoint[] = [
     { id: "a", name: "Category A", value: 30, formattedValue: "30" },
-    { id: "b", name: "Category B", value: 50, formattedValue: "50", color: "#ef4444" },
-    { id: "c", name: "Category C", value: 20, formattedValue: "20", color: "#22c55e" },
+    {
+      id: "b",
+      name: "Category B",
+      value: 50,
+      formattedValue: "50",
+      color: "#ef4444",
+    },
+    {
+      id: "c",
+      name: "Category C",
+      value: 20,
+      formattedValue: "20",
+      color: "#22c55e",
+    },
   ];
 
   beforeEach(() => {

@@ -5,8 +5,10 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
 
 import {
-  Card, CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";

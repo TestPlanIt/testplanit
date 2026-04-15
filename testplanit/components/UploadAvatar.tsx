@@ -4,7 +4,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -87,7 +87,9 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
     <Card>
       <CardHeader>
         <CardTitle>{tGlobal("common.upload.title")}</CardTitle>
-        <CardDescription>{tGlobal("common.upload.description")}</CardDescription>
+        <CardDescription>
+          {tGlobal("common.upload.description")}
+        </CardDescription>
       </CardHeader>
       <CardContent
         className={`flex flex-col items-center justify-center border-2 ${

@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Save baseWhere BEFORE applying dynamic field filters
-    const baseWhereWithoutDynamicFilters = JSON.parse(JSON.stringify(baseWhere));
+    const baseWhereWithoutDynamicFilters = JSON.parse(
+      JSON.stringify(baseWhere)
+    );
 
     // Apply dynamic field filters (custom fields)
     let dynamicFieldFilteredCaseIds: number[] | null = null;
@@ -119,10 +121,15 @@ export async function POST(request: NextRequest) {
             paramIndex++;
           }
 
-          const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+          const whereClause =
+            whereClauses.length > 0
+              ? `WHERE ${whereClauses.join(" AND ")}`
+              : "";
 
           // Use raw SQL with subquery to avoid bind variable limit
-          const caseFieldValues = await prisma.$queryRawUnsafe<Array<{ testCaseId: number; value: any }>>(
+          const caseFieldValues = await prisma.$queryRawUnsafe<
+            Array<{ testCaseId: number; value: any }>
+          >(
             `
             SELECT cfv."testCaseId", cfv."value"
             FROM "CaseFieldValues" cfv
@@ -461,10 +468,13 @@ export async function POST(request: NextRequest) {
           paramIndex++;
         }
 
-        const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+        const whereClause =
+          whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
         // Use raw SQL with subquery to avoid bind variable limit
-        const rawFieldValues = await prisma.$queryRawUnsafe<Array<{ value: any }>>(
+        const rawFieldValues = await prisma.$queryRawUnsafe<
+          Array<{ value: any }>
+        >(
           `
           SELECT cfv."value"
           FROM "CaseFieldValues" cfv
@@ -531,7 +541,7 @@ export async function POST(request: NextRequest) {
       {
         error: "Failed to fetch view options",
         details: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     );

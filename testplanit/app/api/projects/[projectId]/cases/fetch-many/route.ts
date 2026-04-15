@@ -113,9 +113,13 @@ export async function POST(
     const totalCount = validatedData.caseIds.length;
 
     // Apply pagination: slice the caseIds array first to maintain order
-    const paginatedCaseIds = validatedData.skip !== undefined && validatedData.take !== undefined
-      ? validatedData.caseIds.slice(validatedData.skip, validatedData.skip + validatedData.take)
-      : validatedData.caseIds;
+    const paginatedCaseIds =
+      validatedData.skip !== undefined && validatedData.take !== undefined
+        ? validatedData.caseIds.slice(
+            validatedData.skip,
+            validatedData.skip + validatedData.take
+          )
+        : validatedData.caseIds;
 
     // Fetch the cases with all necessary includes
     const cases = await prisma.repositoryCases.findMany({
@@ -177,13 +181,13 @@ export async function POST(
 
     // Maintain the original order from caseIds
     const orderedCases = paginatedCaseIds
-      .map(id => cases.find(c => c.id === id))
-      .filter(c => c !== undefined);
+      .map((id) => cases.find((c) => c.id === id))
+      .filter((c) => c !== undefined);
 
     // Convert BigInt fields to strings for JSON serialization
-    const serializedCases = orderedCases.map(c => ({
+    const serializedCases = orderedCases.map((c) => ({
       ...c,
-      attachments: c.attachments?.map(a => ({
+      attachments: c.attachments?.map((a) => ({
         ...a,
         size: a.size.toString(),
       })),

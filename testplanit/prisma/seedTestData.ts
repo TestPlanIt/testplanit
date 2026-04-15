@@ -657,7 +657,9 @@ export async function seedTestData() {
   console.log(`  - 5 Test Cases`);
   console.log(`  - 4 Test Runs (3 with results, 1 empty)`);
   console.log(`  - 4 Sessions (3 with results, 1 empty)`);
-  console.log(`  - Multiple test results and session results with varied statuses`);
+  console.log(
+    `  - Multiple test results and session results with varied statuses`
+  );
 }
 
 // Allow running this file directly for testing

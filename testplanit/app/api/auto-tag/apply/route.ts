@@ -11,7 +11,7 @@ const applySchema = z.object({
         entityId: z.number(),
         entityType: z.enum(["repositoryCase", "testRun", "session"]),
         tagName: z.string().min(1).max(255),
-      }),
+      })
     )
     .min(1),
 });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -101,11 +101,11 @@ export async function POST(request: Request) {
           }
         }
       },
-      { timeout: 30000 },
+      { timeout: 30000 }
     );
 
     const tagsCreated = uniqueTagNames.filter(
-      (name) => !existingTagNames.has(name),
+      (name) => !existingTagNames.has(name)
     ).length;
 
     return NextResponse.json({
@@ -124,13 +124,13 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: "One or more entities not found" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     return NextResponse.json(
       { error: "Failed to apply tags" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

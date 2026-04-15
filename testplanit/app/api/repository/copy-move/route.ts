@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
     body = parsed.data;
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (!queue) {
     return NextResponse.json(
       { error: "Background job queue is not available" },
-      { status: 503 },
+      { status: 503 }
     );
   }
 
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     if (!sourceProject) {
       return NextResponse.json(
         { error: "No access to source project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     if (!targetProject) {
       return NextResponse.json(
         { error: "No write access to target project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
             error:
               "No update access on source project for move operation (soft-delete requires edit permission)",
           },
-          { status: 403 },
+          { status: 403 }
         );
       }
     }
@@ -107,8 +107,8 @@ export async function POST(request: Request) {
 
         const targetTemplateIdSet = new Set(
           targetTemplateAssignments.map(
-            (a: { templateId: number }) => a.templateId,
-          ),
+            (a: { templateId: number }) => a.templateId
+          )
         );
 
         // Fetch unique templateIds from source cases
@@ -122,12 +122,12 @@ export async function POST(request: Request) {
 
         const uniqueSourceTemplateIds = [
           ...new Set(
-            sourceCases.map((c: { templateId: number }) => c.templateId),
+            sourceCases.map((c: { templateId: number }) => c.templateId)
           ),
         ];
 
         const missingTemplateIds = uniqueSourceTemplateIds.filter(
-          (id) => !targetTemplateIdSet.has(id),
+          (id) => !targetTemplateIdSet.has(id)
         );
 
         // Create missing assignments (wrap each in try/catch — ZenStack may reject project admins without project access)
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
           } catch (err) {
             console.warn(
               "[copy-move/submit] auto-assign templateProjectAssignment failed, continuing:",
-              err,
+              err
             );
           }
         }
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
       if (!targetRepository) {
         return NextResponse.json(
           { error: "No active repository found in target project" },
-          { status: 400 },
+          { status: 400 }
         );
       }
       resolvedTargetRepositoryId = targetRepository.id;
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
         });
 
       const defaultWorkflow = targetWorkflowAssignments.find(
-        (a: { workflow: { isDefault: boolean } }) => a.workflow.isDefault,
+        (a: { workflow: { isDefault: boolean } }) => a.workflow.isDefault
       );
       const fallbackWorkflow = targetWorkflowAssignments[0];
 
@@ -187,7 +187,7 @@ export async function POST(request: Request) {
       if (!resolvedWorkflow) {
         return NextResponse.json(
           { error: "No default workflow state found in target project" },
-          { status: 400 },
+          { status: 400 }
         );
       }
       resolvedTargetDefaultWorkflowStateId = resolvedWorkflow.workflow.id;
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       if (!targetTemplateAssignments[0]) {
         return NextResponse.json(
           { error: "No template assignment found in target project" },
-          { status: 400 },
+          { status: 400 }
         );
       }
       resolvedTargetTemplateId = targetTemplateAssignments[0].templateId;
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
     console.error("[copy-move/submit] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

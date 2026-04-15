@@ -24,15 +24,15 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
   const tCommon = useTranslations("common");
 
   // Resolve the current value's name for display
-  const { data: currentConfig } = useFindFirstConfigurations(
-    {
-      where: { id: value ?? undefined },
-      select: { id: true, name: true },
-    },
-  );
+  const { data: currentConfig } = useFindFirstConfigurations({
+    where: { id: value ?? undefined },
+    select: { id: true, name: true },
+  });
 
   const resolvedValue: ConfigOption | null =
-    value && currentConfig ? { id: currentConfig.id, name: currentConfig.name } : null;
+    value && currentConfig
+      ? { id: currentConfig.id, name: currentConfig.name }
+      : null;
 
   return (
     <AsyncCombobox<ConfigOption>

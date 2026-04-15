@@ -1,6 +1,9 @@
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { getCrossProjectReportTypes, getProjectReportTypes } from "~/lib/config/reportTypes";
+import {
+  getCrossProjectReportTypes,
+  getProjectReportTypes,
+} from "~/lib/config/reportTypes";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -108,10 +111,7 @@ export async function GET(
         shareLink.project.userPermissions.length > 0;
 
       if (!hasProjectAccess) {
-        return NextResponse.json(
-          { error: "Access denied" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
     }
 
@@ -133,7 +133,9 @@ export async function GET(
 
     // Get all available report types
     const projectReportTypes = getProjectReportTypes((key: string) => key);
-    const crossProjectReportTypes = getCrossProjectReportTypes((key: string) => key);
+    const crossProjectReportTypes = getCrossProjectReportTypes(
+      (key: string) => key
+    );
     const allReportTypes = [...projectReportTypes, ...crossProjectReportTypes];
 
     // Find the report type configuration
@@ -217,8 +219,9 @@ export async function GET(
 
     // Check if this is a pre-built report (empty dimensions/metrics in config)
     // Pre-built reports save empty arrays because they don't use the standard dimension/metric selector
-    const isPreBuiltReport = (!config.dimensions || config.dimensions.length === 0) &&
-                             (!config.metrics || config.metrics.length === 0);
+    const isPreBuiltReport =
+      (!config.dimensions || config.dimensions.length === 0) &&
+      (!config.metrics || config.metrics.length === 0);
 
     let dimensionsWithLabels: any[] = [];
     let metricsWithLabels: any[] = [];
@@ -236,15 +239,23 @@ export async function GET(
     } else {
       // Dynamic reports: Map dimension and metric IDs to their full metadata objects
       dimensionsWithLabels = config.dimensions.map((dimId: string) => {
-        const metadataDim = metadata.dimensions.find((d: any) => d.id === dimId);
+        const metadataDim = metadata.dimensions.find(
+          (d: any) => d.id === dimId
+        );
         // ReportChart expects { value, label } format
-        return metadataDim ? { value: metadataDim.id, label: metadataDim.label } : { value: dimId, label: dimId };
+        return metadataDim
+          ? { value: metadataDim.id, label: metadataDim.label }
+          : { value: dimId, label: dimId };
       });
 
       metricsWithLabels = config.metrics.map((metricId: string) => {
-        const metadataMetric = metadata.metrics.find((m: any) => m.id === metricId);
+        const metadataMetric = metadata.metrics.find(
+          (m: any) => m.id === metricId
+        );
         // ReportChart expects { value, label } format
-        return metadataMetric ? { value: metadataMetric.id, label: metadataMetric.label } : { value: metricId, label: metricId };
+        return metadataMetric
+          ? { value: metadataMetric.id, label: metadataMetric.label }
+          : { value: metricId, label: metricId };
       });
 
       results = reportData.results;
@@ -266,8 +277,12 @@ export async function GET(
       // Pass through additional fields for specialized reports (automation-trends, flaky-tests, etc.)
       ...(reportData.projects && { projects: reportData.projects }),
       ...(reportData.dateGrouping && { dateGrouping: reportData.dateGrouping }),
-      ...(reportData.consecutiveRuns && { consecutiveRuns: reportData.consecutiveRuns }),
-      ...(reportData.totalFlakyTests && { totalFlakyTests: reportData.totalFlakyTests }),
+      ...(reportData.consecutiveRuns && {
+        consecutiveRuns: reportData.consecutiveRuns,
+      }),
+      ...(reportData.totalFlakyTests && {
+        totalFlakyTests: reportData.totalFlakyTests,
+      }),
     };
 
     return NextResponse.json(responsePayload);

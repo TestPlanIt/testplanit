@@ -44,7 +44,10 @@ function cancelKey(jobId: string | undefined): string {
 export async function processStepScan(
   job: Job<StepScanJobData>,
   prisma: any,
-  redis: { get: (key: string) => Promise<string | null>; del: (key: string) => Promise<number> }
+  redis: {
+    get: (key: string) => Promise<string | null>;
+    del: (key: string) => Promise<number>;
+  }
 ): Promise<StepScanJobResult> {
   console.log(
     `Processing step-scan job ${job.id} for project ${job.data.projectId}` +
@@ -95,17 +98,21 @@ export async function processStepScan(
 
   // 6. Run the step sequence scan (check cancel key periodically during processing)
   const service = new StepSequenceScanService();
-  const groups = await service.findSharedSequences(resolvedCases, job.data.minSteps, async (compared, total) => {
-    await job.updateProgress({ analyzed: compared, total });
-    // Check for mid-scan cancellation every 100 progress updates
-    if (compared % 100 === 0) {
-      const cancelled = await redis.get(cancelKey(job.id));
-      if (cancelled) {
-        await redis.del(cancelKey(job.id));
-        throw new Error("Job cancelled by user");
+  const groups = await service.findSharedSequences(
+    resolvedCases,
+    job.data.minSteps,
+    async (compared, total) => {
+      await job.updateProgress({ analyzed: compared, total });
+      // Check for mid-scan cancellation every 100 progress updates
+      if (compared % 100 === 0) {
+        const cancelled = await redis.get(cancelKey(job.id));
+        if (cancelled) {
+          await redis.del(cancelKey(job.id));
+          throw new Error("Job cancelled by user");
+        }
       }
     }
-  });
+  );
 
   // 6. Soft-delete old PENDING matches for this project (all prior scans)
   await prisma.stepSequenceMatch.updateMany({
@@ -170,7 +177,9 @@ export function startStepSequenceScanWorker() {
   }
 
   if (!valkeyConnection) {
-    console.warn("Valkey connection not available. Step-scan worker not started.");
+    console.warn(
+      "Valkey connection not available. Step-scan worker not started."
+    );
     return null;
   }
 

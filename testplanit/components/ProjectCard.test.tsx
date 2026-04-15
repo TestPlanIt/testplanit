@@ -26,7 +26,9 @@ vi.mock("~/lib/navigation", () => ({
 
 // Mock sub-components with complex dependencies
 vi.mock("@/components/DateFormatter", () => ({
-  DateFormatter: ({ date }: any) => <span data-testid="date-formatter">{String(date)}</span>,
+  DateFormatter: ({ date }: any) => (
+    <span data-testid="date-formatter">{String(date)}</span>
+  ),
 }));
 
 vi.mock("@/components/LoadingSpinner", () => ({
@@ -43,7 +45,11 @@ vi.mock("@/components/ProjectIcon", () => ({
 
 vi.mock("@/components/MemberList", () => ({
   MemberList: ({ users, maxUsers }: any) => (
-    <div data-testid="member-list" data-users={users.length} data-max={maxUsers} />
+    <div
+      data-testid="member-list"
+      data-users={users.length}
+      data-max={maxUsers}
+    />
   ),
 }));
 
@@ -54,7 +60,9 @@ vi.mock("@/components/ui/card", () => ({
       {children}
     </div>
   ),
-  CardHeader: ({ children }: any) => <div data-testid="card-header">{children}</div>,
+  CardHeader: ({ children }: any) => (
+    <div data-testid="card-header">{children}</div>
+  ),
   CardTitle: ({ className, children }: any) => (
     <div data-testid="card-title" className={className}>
       {children}
@@ -99,7 +107,10 @@ const baseProject = {
 const mockUsers = [{ userId: "user-1" }, { userId: "user-2" }];
 
 beforeEach(() => {
-  mockUseSession.mockReturnValue({ data: mockSession, status: "authenticated" });
+  mockUseSession.mockReturnValue({
+    data: mockSession,
+    status: "authenticated",
+  });
   // useTranslations returns a function that yields the last key segment
   mockUseTranslations.mockReturnValue((key: string, _opts?: any) => {
     const parts = key.split(".");
@@ -203,7 +214,13 @@ describe("ProjectCard", () => {
         issues: 5,
       },
     };
-    render(<ProjectCard project={project} users={mockUsers} isLoadingIssueCounts={true} />);
+    render(
+      <ProjectCard
+        project={project}
+        users={mockUsers}
+        isLoadingIssueCounts={true}
+      />
+    );
 
     // Loading spinner should be shown instead of the issue count link
     expect(screen.getByTestId("loading-spinner")).toBeDefined();
@@ -223,7 +240,13 @@ describe("ProjectCard", () => {
         issues: 7,
       },
     };
-    render(<ProjectCard project={project} users={mockUsers} isLoadingIssueCounts={false} />);
+    render(
+      <ProjectCard
+        project={project}
+        users={mockUsers}
+        isLoadingIssueCounts={false}
+      />
+    );
 
     expect(screen.queryByTestId("loading-spinner")).toBeNull();
     expect(screen.getByText("7")).toBeDefined();
@@ -299,7 +322,8 @@ describe("ProjectCard", () => {
     render(<ProjectCard project={project} users={mockUsers} />);
 
     const repositoryLink = screen.getByRole("link", {
-      name: (_name, el) => (el as HTMLAnchorElement).href?.includes("/projects/repository/1"),
+      name: (_name, el) =>
+        (el as HTMLAnchorElement).href?.includes("/projects/repository/1"),
     });
     expect(repositoryLink).toBeDefined();
   });

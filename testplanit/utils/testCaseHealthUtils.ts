@@ -185,9 +185,10 @@ export async function handleTestCaseHealthPOST(
       20
     );
     // 0 means "all time" - no lookback limit
-    const lookback = Number(lookbackDays) === 0
-      ? 0
-      : Math.min(Math.max(Number(lookbackDays), 30), 365);
+    const lookback =
+      Number(lookbackDays) === 0
+        ? 0
+        : Math.min(Math.max(Number(lookbackDays), 30), 365);
 
     // For project-specific, require projectId
     if (!isCrossProject && !projectId) {

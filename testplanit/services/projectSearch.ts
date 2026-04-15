@@ -4,7 +4,7 @@ import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   getElasticsearchClient,
-  getEntityIndexName
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
 type PrismaClientType = typeof defaultPrisma;
@@ -35,11 +35,7 @@ export async function indexProject(
   const noteText = project.note ? extractTextFromNode(project.note) : "";
   const docsText = project.docs ? extractTextFromNode(project.docs) : "";
 
-  const searchableContent = [
-    project.name,
-    noteText,
-    docsText,
-  ].join(" ");
+  const searchableContent = [project.name, noteText, docsText].join(" ");
 
   const document = {
     id: project.id,
@@ -150,7 +146,9 @@ export async function syncAllProjectsToElasticsearch(
   const prisma = prismaClient || defaultPrisma;
   const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
 
-  console.log(`Starting project sync${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+  console.log(
+    `Starting project sync${tenantId ? ` (tenant: ${tenantId})` : ""}`
+  );
 
   const projects = await prisma.projects.findMany({
     where: {
@@ -171,11 +169,7 @@ export async function syncAllProjectsToElasticsearch(
     const noteText = project.note ? extractTextFromNode(project.note) : "";
     const docsText = project.docs ? extractTextFromNode(project.docs) : "";
 
-    const searchableContent = [
-      project.name,
-      noteText,
-      docsText,
-    ].join(" ");
+    const searchableContent = [project.name, noteText, docsText].join(" ");
 
     bulkBody.push({
       index: {

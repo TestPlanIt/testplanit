@@ -34,7 +34,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (job.createdById !== session.user.id && session.user.access !== "ADMIN") {
+    if (
+      job.createdById !== session.user.id &&
+      session.user.access !== "ADMIN"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -82,7 +85,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const action = body?.action;
 
     if (action !== "cancel") {
-      return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Unsupported action" },
+        { status: 400 }
+      );
     }
 
     const job = await db.testmoImportJob.findUnique({
@@ -94,7 +100,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (job.createdById !== session.user.id && session.user.access !== "ADMIN") {
+    if (
+      job.createdById !== session.user.id &&
+      session.user.access !== "ADMIN"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

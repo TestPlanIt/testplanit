@@ -6,12 +6,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
@@ -22,12 +17,18 @@ import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateSessionVersions, useFindFirstProjects, useFindFirstSessions,
+  useCreateAttachments,
+  useCreateSessionVersions,
+  useFindFirstProjects,
+  useFindFirstSessions,
   useFindManyMilestones,
   useFindManySessionResults,
   useFindManySessions,
   useFindManySessionVersions,
-  useFindManyTemplates, useFindManyWorkflows, useUpdateAttachments, useUpdateSessions
+  useFindManyTemplates,
+  useFindManyWorkflows,
+  useUpdateAttachments,
+  useUpdateSessions,
 } from "~/lib/hooks";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
@@ -40,7 +41,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import {
   MilestoneSelect,
-  transformMilestones
+  transformMilestones,
 } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
@@ -58,19 +59,21 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,9 +83,16 @@ import type { Attachments, Sessions } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
 import type { JSONContent } from "@tiptap/react";
 import {
-  ArrowLeft, ChevronLeft,
-  ChevronRight, CircleCheckBig, CircleSlash2, Combine, FileDown, Save,
-  SquarePen, Trash2
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  CircleCheckBig,
+  CircleSlash2,
+  Combine,
+  FileDown,
+  Save,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -96,7 +106,8 @@ import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import {
-  CompletableSession, CompleteSessionDialog
+  CompletableSession,
+  CompleteSessionDialog,
 } from "./CompleteSessionDialog";
 import { DeleteSessionModal } from "./DeleteSession";
 
@@ -409,27 +420,27 @@ function SessionFormControls({
         control={control}
         name="configId"
         render={({ field }) => (
-            <FormItem>
-              <FormLabel>{tGlobal("common.fields.configuration")}</FormLabel>
-              <FormControl>
-                {isEditMode ? (
-                  <ConfigurationSelect
-                    value={field.value}
-                    onChange={(val) => field.onChange(val)}
-                    disabled={isSubmitting}
+          <FormItem>
+            <FormLabel>{tGlobal("common.fields.configuration")}</FormLabel>
+            <FormControl>
+              {isEditMode ? (
+                <ConfigurationSelect
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  disabled={isSubmitting}
+                />
+              ) : (
+                <div className="flex items-center gap-1">
+                  <DynamicIcon
+                    name="combine"
+                    className="h-4 w-4 shrink-0 mt-1"
                   />
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <DynamicIcon
-                      name="combine"
-                      className="h-4 w-4 shrink-0 mt-1"
-                    />
-                    {testSession?.configuration?.name || tCommon("access.none")}
-                  </div>
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+                  {testSession?.configuration?.name || tCommon("access.none")}
+                </div>
+              )}
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
       />
 
@@ -508,9 +519,7 @@ function SessionFormControls({
                     <UserNameCell userId={user.id} hideLink />
                   )}
                   getOptionValue={(user) => user.id}
-                  placeholder={tGlobal(
-                    "sessions.placeholders.selectUser"
-                  )}
+                  placeholder={tGlobal("sessions.placeholders.selectUser")}
                   disabled={isSubmitting}
                   className="w-full"
                   pageSize={20}
@@ -1015,17 +1024,19 @@ export default function SessionPage() {
         );
       }
       const start = page * pageSize;
-      return { results: filtered.slice(start, start + pageSize), total: filtered.length };
+      return {
+        results: filtered.slice(start, start + pageSize),
+        total: filtered.length,
+      };
     },
     [siblingList]
   );
 
   // Fetch versions
-  const { data: versions } =
-    useFindManySessionVersions({
-      where: { sessionId: Number(sessionId) },
-      orderBy: { version: "desc" },
-    });
+  const { data: versions } = useFindManySessionVersions({
+    where: { sessionId: Number(sessionId) },
+    orderBy: { version: "desc" },
+  });
 
   // Fetch session results for PDF export
   const { data: sessionResultsForExport } = useFindManySessionResults({
@@ -1034,7 +1045,14 @@ export default function SessionPage() {
       status: { include: { color: true } },
       createdBy: { select: { name: true } },
       attachments: { where: { isDeleted: false } },
-      issues: { select: { name: true, title: true, externalId: true, externalKey: true } },
+      issues: {
+        select: {
+          name: true,
+          title: true,
+          externalId: true,
+          externalKey: true,
+        },
+      },
       resultFieldValues: {
         include: {
           field: { include: { type: true } },
@@ -1056,7 +1074,6 @@ export default function SessionPage() {
       sessionData: sessionExportData,
       locale: locale,
     });
-
 
   // Set up form with proper typing
   const form = useForm<FormValues>({
@@ -1134,7 +1151,6 @@ export default function SessionPage() {
       },
       orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
     }) as { data: Milestone[]; isLoading: boolean };
-
 
   // Update form initialization
   useEffect(() => {
@@ -1265,7 +1281,6 @@ export default function SessionPage() {
     }
     setTimeout(() => setIsTransitioningRight(false), 300);
   };
-
 
   // Fix the useEffect for content initialization
   useEffect(() => {
@@ -1414,7 +1429,7 @@ export default function SessionPage() {
           assignedToId: transformedData.assignedToId || null,
           assignedToName:
             sessionData?.assignedTo?.id === transformedData.assignedToId
-              ? sessionData?.assignedTo?.name ?? null
+              ? (sessionData?.assignedTo?.name ?? null)
               : null,
           createdById: session!.user.id,
           createdByName: session!.user.name || "Unknown User",
@@ -1837,7 +1852,9 @@ export default function SessionPage() {
                 onCollapse={() => setIsCollapsedLeft(true)}
                 onExpand={() => setIsCollapsedLeft(false)}
                 className={
-                  isTransitioningLeft ? "transition-all duration-300 ease-in-out" : ""
+                  isTransitioningLeft
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
                 }
               >
                 <div className="flex flex-col h-full p-4">
@@ -1962,7 +1979,10 @@ export default function SessionPage() {
                           <AsyncCombobox<SiblingSession>
                             value={currentSibling}
                             onValueChange={(selected) => {
-                              if (selected && selected.id !== Number(sessionId)) {
+                              if (
+                                selected &&
+                                selected.id !== Number(sessionId)
+                              ) {
                                 router.push(
                                   `/projects/sessions/${projectId}/${selected.id}`
                                 );
@@ -1973,13 +1993,17 @@ export default function SessionPage() {
                               <div className="flex items-center gap-2">
                                 <ConfigurationNameDisplay
                                   configuration={option.configuration}
-                                  name={option.configuration?.name || option.name}
+                                  name={
+                                    option.configuration?.name || option.name
+                                  }
                                   truncate
                                 />
                               </div>
                             )}
                             getOptionValue={(option) => option.id}
-                            placeholder={tCommon("placeholders.selectConfiguration")}
+                            placeholder={tCommon(
+                              "placeholders.selectConfiguration"
+                            )}
                             className="flex-1"
                           />
                         </div>
@@ -2076,7 +2100,9 @@ export default function SessionPage() {
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
                 className={
-                  isTransitioningRight ? "transition-all duration-300 ease-in-out" : ""
+                  isTransitioningRight
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
                 }
               >
                 <div className="p-4 space-y-4">
@@ -2096,9 +2122,7 @@ export default function SessionPage() {
                     handleFileSelect={handleFileSelect}
                     handleSelect={handleSelect}
                     issues={sessionData.issues}
-                    projectIntegration={
-                      projectData?.projectIntegrations?.[0]
-                    }
+                    projectIntegration={projectData?.projectIntegrations?.[0]}
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                   />

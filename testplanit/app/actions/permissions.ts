@@ -1,10 +1,6 @@
 "use server";
 
-import {
-  ApplicationArea,
-  ProjectAccessType,
-  Roles
-} from "@prisma/client";
+import { ApplicationArea, ProjectAccessType, Roles } from "@prisma/client";
 import { Session } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { isAdmin, isProjectAdmin } from "~/utils/permissions";
@@ -79,13 +75,10 @@ export async function getUserProjectPermissions(
     effectiveRole: null,
     permissions: area
       ? { canAddEdit: false, canDelete: false, canClose: false }
-      : (Object.values(ApplicationArea).reduce(
-          (acc, key) => {
-            acc[key] = { canAddEdit: false, canDelete: false, canClose: false };
-            return acc;
-          },
-          {} as AllAreaPermissions
-        )),
+      : Object.values(ApplicationArea).reduce((acc, key) => {
+          acc[key] = { canAddEdit: false, canDelete: false, canClose: false };
+          return acc;
+        }, {} as AllAreaPermissions),
   };
 
   // Fetch all necessary data in parallel
@@ -165,8 +158,7 @@ export async function getUserProjectPermissions(
     );
 
     if (specificRolePermission) {
-      effectiveRole =
-        specificRolePermission.role as RoleWithPermissions | null;
+      effectiveRole = specificRolePermission.role as RoleWithPermissions | null;
     }
   }
 
@@ -194,13 +186,10 @@ export async function getUserProjectPermissions(
     if (area) {
       permissions = { canAddEdit: true, canDelete: true, canClose: true };
     } else {
-      permissions = Object.values(ApplicationArea).reduce(
-        (acc, enumArea) => {
-          acc[enumArea] = { canAddEdit: true, canDelete: true, canClose: true };
-          return acc;
-        },
-        {} as AllAreaPermissions
-      );
+      permissions = Object.values(ApplicationArea).reduce((acc, enumArea) => {
+        acc[enumArea] = { canAddEdit: true, canDelete: true, canClose: true };
+        return acc;
+      }, {} as AllAreaPermissions);
     }
     return {
       hasAccess: true,
@@ -211,13 +200,10 @@ export async function getUserProjectPermissions(
     if (area) {
       permissions = getPermissionsForArea(effectiveRole, area);
     } else {
-      permissions = Object.values(ApplicationArea).reduce(
-        (acc, enumArea) => {
-          acc[enumArea] = getPermissionsForArea(effectiveRole, enumArea);
-          return acc;
-        },
-        {} as AllAreaPermissions
-      );
+      permissions = Object.values(ApplicationArea).reduce((acc, enumArea) => {
+        acc[enumArea] = getPermissionsForArea(effectiveRole, enumArea);
+        return acc;
+      }, {} as AllAreaPermissions);
     }
     return {
       hasAccess: true,
@@ -247,7 +233,12 @@ export async function checkUserPermission(
   area: ApplicationArea,
   permission: keyof AreaPermissions
 ): Promise<boolean> {
-  const result = await getUserProjectPermissions(userId, projectId, session, area);
+  const result = await getUserProjectPermissions(
+    userId,
+    projectId,
+    session,
+    area
+  );
   if (!result.hasAccess) {
     return false;
   }

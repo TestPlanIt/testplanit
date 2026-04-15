@@ -3,7 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow, type Locale } from "date-fns";
 import { useSession } from "next-auth/react";
@@ -33,14 +33,17 @@ export function RelativeTimeTooltip({
 }: RelativeTimeTooltipProps) {
   const { data: session } = useSession();
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  
+
   // Use user's preferred formats from session, fallback to props, then defaults
   const userDateFormat = session?.user?.preferences?.dateFormat || dateFormat;
   const userTimeFormat = session?.user?.preferences?.timeFormat || timeFormat;
   const userTimezone = session?.user?.preferences?.timezone || timezone;
-  
-  const formatString = userDateFormat && userTimeFormat ? `${userDateFormat} ${userTimeFormat}` : undefined;
-  
+
+  const formatString =
+    userDateFormat && userTimeFormat
+      ? `${userDateFormat} ${userTimeFormat}`
+      : undefined;
+
   const relativeTime = !isPending
     ? formatDistanceToNow(dateObj, {
         addSuffix: true,

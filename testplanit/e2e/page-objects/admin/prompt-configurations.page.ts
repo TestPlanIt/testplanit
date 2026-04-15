@@ -30,9 +30,7 @@ export class PromptConfigurationsPage extends BasePage {
     this.addButton = page.locator("button", {
       hasText: "Add Prompt Configuration",
     });
-    this.filterInput = page.getByPlaceholder(
-      "Filter prompt configurations..."
-    );
+    this.filterInput = page.getByPlaceholder("Filter prompt configurations...");
     this.dataTable = page.locator("table");
 
     // Dialog elements
@@ -94,13 +92,19 @@ export class PromptConfigurationsPage extends BasePage {
   async getTableRowCount(): Promise<number> {
     // Wait for the pagination info to appear, indicating data has loaded
     const paginationInfo = this.page.locator(
-      'text=/Showing \\d+-\\d+ of \\d+ item|No items found/i'
+      "text=/Showing \\d+-\\d+ of \\d+ item|No items found/i"
     );
-    await paginationInfo.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+    await paginationInfo
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 })
+      .catch(() => {});
 
     // Wait for any loading skeletons to disappear
     const skeleton = this.dataTable.locator('[data-slot="skeleton"]');
-    await skeleton.first().waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
+    await skeleton
+      .first()
+      .waitFor({ state: "hidden", timeout: 5000 })
+      .catch(() => {});
 
     const rows = this.dataTable.locator("tbody tr");
     const count = await rows.count();
@@ -127,7 +131,11 @@ export class PromptConfigurationsPage extends BasePage {
 
   async clickEditOnRow(name: string): Promise<void> {
     const row = this.dataTable.locator("tbody tr", { hasText: name });
-    const editButton = row.locator('button:has(svg.lucide-square-pen), button:has(svg[class*="lucide-pencil"]), button:has(svg[class*="edit"])').first();
+    const editButton = row
+      .locator(
+        'button:has(svg.lucide-square-pen), button:has(svg[class*="lucide-pencil"]), button:has(svg[class*="edit"])'
+      )
+      .first();
     await editButton.click();
     await expect(this.dialog).toBeVisible();
   }

@@ -1,7 +1,8 @@
 import { indexRepositoryCase } from "../services/elasticsearchIndexing";
 import type { RepositoryCaseDocument } from "../services/elasticsearchService";
 import {
-  createRepositoryCaseIndex, testElasticsearchConnection
+  createRepositoryCaseIndex,
+  testElasticsearchConnection,
 } from "../services/elasticsearchService";
 
 async function testElasticsearchIntegration() {

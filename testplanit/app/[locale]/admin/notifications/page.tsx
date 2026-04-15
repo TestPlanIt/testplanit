@@ -7,9 +7,11 @@ import { PaginationInfo } from "@/components/tables/PaginationControls";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,14 +25,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner"; // cspell:ignore sonner
 import {
   createSystemNotification,
-  getSystemNotificationHistory
+  getSystemNotificationHistory,
 } from "~/app/actions/admin-system-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
-  useCreateAppConfig, useFindUniqueAppConfig, useUpdateAppConfig
+  useCreateAppConfig,
+  useFindUniqueAppConfig,
+  useUpdateAppConfig,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -84,7 +89,10 @@ function NotificationSettingsContent() {
     [dateFormat, timezone, timeFormat]
   );
 
-  const columns = useMemo(() => getColumns(userPreferences, t, tCommon), [userPreferences, t, tCommon]);
+  const columns = useMemo(
+    () => getColumns(userPreferences, t, tCommon),
+    [userPreferences, t, tCommon]
+  );
 
   const tableData: NotificationHistoryItem[] = useMemo(
     () =>
@@ -139,7 +147,11 @@ function NotificationSettingsContent() {
 
           // If email server is not configured and default mode is email-based,
           // fall back to IN_APP mode
-          if (!data.configured && (defaultMode === "IN_APP_EMAIL_IMMEDIATE" || defaultMode === "IN_APP_EMAIL_DAILY")) {
+          if (
+            !data.configured &&
+            (defaultMode === "IN_APP_EMAIL_IMMEDIATE" ||
+              defaultMode === "IN_APP_EMAIL_DAILY")
+          ) {
             setDefaultMode("IN_APP");
           }
         }

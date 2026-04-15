@@ -9,19 +9,19 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
@@ -30,7 +30,8 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
   useCreateSessionVersions,
-  useFindManyWorkflows, useUpdateSessions
+  useFindManyWorkflows,
+  useUpdateSessions,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
@@ -122,7 +123,7 @@ export function CompleteSessionDialog({
   if (!open || !session) {
     return null;
   }
-  
+
   // If no workflows configured, show a message instead of preventing render
   if (!workflows || workflows.length === 0) {
     return (

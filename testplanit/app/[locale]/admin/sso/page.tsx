@@ -3,14 +3,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent, CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,20 +25,34 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Access, SsoProviderType } from "@prisma/client";
 import {
-  Edit, KeyRound, Mail, Plus, Settings, Shield, ShieldUser, X
+  Edit,
+  KeyRound,
+  Mail,
+  Plus,
+  Settings,
+  Shield,
+  ShieldUser,
+  X,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  useCreateAllowedEmailDomain, useCreateSsoProvider, useDeleteAllowedEmailDomain,
-  useFindFirstRegistrationSettings, useFindManyAllowedEmailDomain, useFindManySsoProvider, useUpdateAllowedEmailDomain, useUpdateSsoProvider, useUpsertRegistrationSettings
+  useCreateAllowedEmailDomain,
+  useCreateSsoProvider,
+  useDeleteAllowedEmailDomain,
+  useFindFirstRegistrationSettings,
+  useFindManyAllowedEmailDomain,
+  useFindManySsoProvider,
+  useUpdateAllowedEmailDomain,
+  useUpdateSsoProvider,
+  useUpsertRegistrationSettings,
 } from "~/lib/hooks";
 
 export default function SSOAdminPage() {
@@ -218,8 +237,7 @@ export default function SSOAdminPage() {
       for (const p of ssoProviders) {
         serverState[p.type] = p.enabled;
       }
-      serverState.forceSso =
-        ssoProviders.some((p) => p.forceSso) || false;
+      serverState.forceSso = ssoProviders.some((p) => p.forceSso) || false;
       setToggleState((prev) => ({ ...prev, ...serverState }));
     }
   }, [ssoProviders]);
@@ -381,7 +399,10 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch {
-      setToggleState((prev) => ({ ...prev, [SsoProviderType.GOOGLE]: !enabled }));
+      setToggleState((prev) => ({
+        ...prev,
+        [SsoProviderType.GOOGLE]: !enabled,
+      }));
       toast.error(t("admin.sso.messages.googleUpdateFailed"));
     }
   };
@@ -470,7 +491,10 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch {
-      setToggleState((prev) => ({ ...prev, [SsoProviderType.APPLE]: !enabled }));
+      setToggleState((prev) => ({
+        ...prev,
+        [SsoProviderType.APPLE]: !enabled,
+      }));
       toast.error(t("admin.sso.messages.appleUpdateFailed"));
     }
   };
@@ -526,7 +550,10 @@ export default function SSOAdminPage() {
   };
 
   const handleToggleMicrosoft = async (enabled: boolean) => {
-    setToggleState((prev) => ({ ...prev, [SsoProviderType.MICROSOFT]: enabled }));
+    setToggleState((prev) => ({
+      ...prev,
+      [SsoProviderType.MICROSOFT]: enabled,
+    }));
     try {
       const existingMicrosoft = ssoProviders?.find(
         (p) => p.type === SsoProviderType.MICROSOFT
@@ -558,13 +585,19 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch {
-      setToggleState((prev) => ({ ...prev, [SsoProviderType.MICROSOFT]: !enabled }));
+      setToggleState((prev) => ({
+        ...prev,
+        [SsoProviderType.MICROSOFT]: !enabled,
+      }));
       toast.error(t("admin.sso.messages.microsoftUpdateFailed"));
     }
   };
 
   const handleToggleMagicLink = async (enabled: boolean) => {
-    setToggleState((prev) => ({ ...prev, [SsoProviderType.MAGIC_LINK]: enabled }));
+    setToggleState((prev) => ({
+      ...prev,
+      [SsoProviderType.MAGIC_LINK]: enabled,
+    }));
     try {
       const existingMagicLink = ssoProviders?.find(
         (p) => p.type === SsoProviderType.MAGIC_LINK
@@ -596,7 +629,10 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch {
-      setToggleState((prev) => ({ ...prev, [SsoProviderType.MAGIC_LINK]: !enabled }));
+      setToggleState((prev) => ({
+        ...prev,
+        [SsoProviderType.MAGIC_LINK]: !enabled,
+      }));
       toast.error(t("admin.sso.messages.magicLinkUpdateFailed"));
     }
   };

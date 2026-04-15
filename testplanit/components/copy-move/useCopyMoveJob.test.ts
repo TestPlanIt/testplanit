@@ -120,9 +120,11 @@ describe("useCopyMoveJob", () => {
       "/api/repository/copy-move/preflight",
       expect.objectContaining({
         method: "POST",
-        headers: expect.objectContaining({ "Content-Type": "application/json" }),
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify(PREFLIGHT_ARGS),
-      }),
+      })
     );
     expect(result.current.preflight).toEqual(preflightResponse);
   });
@@ -137,7 +139,7 @@ describe("useCopyMoveJob", () => {
         ok: true,
         status: 200,
         json: () => Promise.resolve({ hasSourceReadAccess: true }),
-      })),
+      }))
     );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -158,7 +160,7 @@ describe("useCopyMoveJob", () => {
 
   it("runPreflight sets error on non-ok response", async () => {
     fetchMock.mockResolvedValueOnce(
-      errorResponse(403, { error: "Access denied" }),
+      errorResponse(403, { error: "Access denied" })
     );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -189,9 +191,11 @@ describe("useCopyMoveJob", () => {
       "/api/repository/copy-move",
       expect.objectContaining({
         method: "POST",
-        headers: expect.objectContaining({ "Content-Type": "application/json" }),
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify(SUBMIT_ARGS),
-      }),
+      })
     );
     expect(result.current.jobId).toBe("job-cm-001");
     expect(result.current.isSubmitting).toBe(false);
@@ -207,7 +211,7 @@ describe("useCopyMoveJob", () => {
         ok: true,
         status: 200,
         json: () => Promise.resolve({ jobId: "job-cm-002" }),
-      })),
+      }))
     );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -230,7 +234,7 @@ describe("useCopyMoveJob", () => {
     fetchMock
       .mockResolvedValueOnce(okResponse({ jobId: "job-cm-003" }))
       .mockResolvedValueOnce(
-        okResponse({ state: "active", progress: { processed: 1, total: 3 } }),
+        okResponse({ state: "active", progress: { processed: 1, total: 3 } })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -241,10 +245,12 @@ describe("useCopyMoveJob", () => {
 
     // Polling fires immediately after jobId is set
     const statusCall = fetchMock.mock.calls.find(([url]: any) =>
-      url.includes("copy-move/status"),
+      url.includes("copy-move/status")
     );
     expect(statusCall).toBeDefined();
-    expect(statusCall![0]).toContain("/api/repository/copy-move/status/job-cm-003");
+    expect(statusCall![0]).toContain(
+      "/api/repository/copy-move/status/job-cm-003"
+    );
   });
 
   // ── Polling ───────────────────────────────────────────────────────────────
@@ -254,11 +260,11 @@ describe("useCopyMoveJob", () => {
       .mockResolvedValueOnce(okResponse({ jobId: "job-poll-1" }))
       // first poll: waiting
       .mockResolvedValueOnce(
-        okResponse({ state: "waiting", progress: { processed: 0, total: 5 } }),
+        okResponse({ state: "waiting", progress: { processed: 0, total: 5 } })
       )
       // second poll: active with progress
       .mockResolvedValueOnce(
-        okResponse({ state: "active", progress: { processed: 2, total: 5 } }),
+        okResponse({ state: "active", progress: { processed: 2, total: 5 } })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -293,7 +299,7 @@ describe("useCopyMoveJob", () => {
           state: "completed",
           progress: { processed: 3, total: 3 },
           result: jobResult,
-        }),
+        })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -317,7 +323,7 @@ describe("useCopyMoveJob", () => {
         okResponse({
           state: "failed",
           failedReason: "Copy operation failed: permission denied",
-        }),
+        })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -331,7 +337,9 @@ describe("useCopyMoveJob", () => {
     });
 
     expect(result.current.status).toBe("failed");
-    expect(result.current.error).toBe("Copy operation failed: permission denied");
+    expect(result.current.error).toBe(
+      "Copy operation failed: permission denied"
+    );
   });
 
   it("polling stops (clearInterval) on completed state", async () => {
@@ -342,8 +350,14 @@ describe("useCopyMoveJob", () => {
       .mockResolvedValueOnce(
         okResponse({
           state: "completed",
-          result: { copiedCount: 1, movedCount: 0, skippedCount: 0, droppedLinkCount: 0, errors: [] },
-        }),
+          result: {
+            copiedCount: 1,
+            movedCount: 0,
+            skippedCount: 0,
+            droppedLinkCount: 0,
+            errors: [],
+          },
+        })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -376,7 +390,7 @@ describe("useCopyMoveJob", () => {
       .mockResolvedValueOnce(okResponse({ jobId: "job-cancel-1" }))
       // immediate poll
       .mockResolvedValueOnce(
-        okResponse({ state: "active", progress: { processed: 1, total: 3 } }),
+        okResponse({ state: "active", progress: { processed: 1, total: 3 } })
       )
       // cancel endpoint
       .mockResolvedValueOnce(okResponse({ cancelled: true }));
@@ -392,10 +406,12 @@ describe("useCopyMoveJob", () => {
     });
 
     const cancelCall = fetchMock.mock.calls.find(([url]: any) =>
-      url.includes("copy-move/cancel"),
+      url.includes("copy-move/cancel")
     );
     expect(cancelCall).toBeDefined();
-    expect(cancelCall![0]).toBe("/api/repository/copy-move/cancel/job-cancel-1");
+    expect(cancelCall![0]).toBe(
+      "/api/repository/copy-move/cancel/job-cancel-1"
+    );
     expect(cancelCall![1]).toMatchObject({ method: "POST" });
 
     expect(result.current.status).toBe("idle");
@@ -445,8 +461,14 @@ describe("useCopyMoveJob", () => {
       .mockResolvedValueOnce(
         okResponse({
           state: "completed",
-          result: { copiedCount: 2, movedCount: 0, skippedCount: 0, droppedLinkCount: 0, errors: [] },
-        }),
+          result: {
+            copiedCount: 2,
+            movedCount: 0,
+            skippedCount: 0,
+            droppedLinkCount: 0,
+            errors: [],
+          },
+        })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -483,11 +505,11 @@ describe("useCopyMoveJob", () => {
       .mockResolvedValueOnce(okResponse({ jobId: "job-eq-1" }))
       // first poll: active
       .mockResolvedValueOnce(
-        okResponse({ state: "active", progress: sameProgress }),
+        okResponse({ state: "active", progress: sameProgress })
       )
       // second poll: same values
       .mockResolvedValueOnce(
-        okResponse({ state: "active", progress: { processed: 2, total: 5 } }),
+        okResponse({ state: "active", progress: { processed: 2, total: 5 } })
       );
 
     const { result } = renderHook(() => useCopyMoveJob());
@@ -519,7 +541,7 @@ describe("useCopyMoveJob", () => {
     fetchMock
       .mockResolvedValueOnce(okResponse({ jobId: "job-unmount-1" }))
       .mockResolvedValue(
-        okResponse({ state: "active", progress: { processed: 1, total: 5 } }),
+        okResponse({ state: "active", progress: { processed: 1, total: 5 } })
       );
 
     const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");

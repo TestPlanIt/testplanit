@@ -3,7 +3,10 @@
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  useCreateCaseFields, useFindManyCaseFields, useFindManyCaseFieldTypes, useFindManyResultFields
+  useCreateCaseFields,
+  useFindManyCaseFields,
+  useFindManyCaseFieldTypes,
+  useFindManyResultFields,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +29,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {
@@ -44,7 +47,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
@@ -700,9 +703,16 @@ export function AddCaseFieldModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="case-field-dialog">
+      <DialogContent
+        className="sm:max-w-[600px] lg:max-w-[1000px]"
+        data-testid="case-field-dialog"
+      >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="case-field-form">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+            data-testid="case-field-form"
+          >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -893,10 +903,19 @@ export function AddCaseFieldModal({
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel} data-testid="case-field-cancel-button">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleCancel}
+                data-testid="case-field-cancel-button"
+              >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting} data-testid="case-field-submit-button">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="case-field-submit-button"
+              >
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : (submitLabel ?? tCommon("actions.submit"))}

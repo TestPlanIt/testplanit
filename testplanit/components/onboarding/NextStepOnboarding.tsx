@@ -9,15 +9,18 @@ import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import {
   CardComponentProps,
-  NavigationAdapter, NextStep,
-  NextStepProvider, Tour, useNextStep
+  NavigationAdapter,
+  NextStep,
+  NextStepProvider,
+  Tour,
+  useNextStep,
 } from "nextstepjs";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useFindFirstUserPreferences,
   useFindManyProjects,
-  useUpdateUserPreferences
+  useUpdateUserPreferences,
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
@@ -953,7 +956,13 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   const { data: allProjects = [] } = useFindManyProjects({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
-    select: { id: true, name: true, iconUrl: true, isCompleted: true, isDeleted: true },
+    select: {
+      id: true,
+      name: true,
+      iconUrl: true,
+      isCompleted: true,
+      isDeleted: true,
+    },
   });
   const demoProject = allProjects.find((p: any) => p.name === "Demo Project");
 

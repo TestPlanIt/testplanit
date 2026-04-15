@@ -333,7 +333,9 @@ describe("AuditLogWorker", () => {
       const dbError = new Error("Database connection failed");
       mockPrisma.auditLog.create.mockRejectedValue(dbError);
 
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const { processor } = await import("./auditLogWorker");
 
@@ -343,7 +345,9 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>;
 
-      await expect(processor(mockJob)).rejects.toThrow("Database connection failed");
+      await expect(processor(mockJob)).rejects.toThrow(
+        "Database connection failed"
+      );
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         "[AuditLogWorker] Failed to create audit log:",

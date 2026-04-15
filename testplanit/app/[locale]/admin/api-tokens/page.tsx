@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
@@ -26,13 +27,15 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,57 +113,56 @@ function ApiTokensList() {
   const updateApiTokenRef = useRef(updateApiToken);
   updateApiTokenRef.current = updateApiToken;
 
-  const { data: totalFilteredTokens } =
-    useFindManyApiToken(
-      {
-        orderBy: { [sortField]: sortConfig?.direction || "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
+  const { data: totalFilteredTokens } = useFindManyApiToken(
+    {
+      orderBy: { [sortField]: sortConfig?.direction || "desc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
           },
         },
-        where: {
-          AND: [
-            {
-              OR: [
-                {
+      },
+      where: {
+        AND: [
+          {
+            OR: [
+              {
+                name: {
+                  contains: debouncedSearchString,
+                  mode: "insensitive",
+                },
+              },
+              {
+                user: {
                   name: {
                     contains: debouncedSearchString,
                     mode: "insensitive",
                   },
                 },
-                {
-                  user: {
-                    name: {
-                      contains: debouncedSearchString,
-                      mode: "insensitive",
-                    },
+              },
+              {
+                user: {
+                  email: {
+                    contains: debouncedSearchString,
+                    mode: "insensitive",
                   },
                 },
-                {
-                  user: {
-                    email: {
-                      contains: debouncedSearchString,
-                      mode: "insensitive",
-                    },
-                  },
-                },
-              ],
-            },
-            showRevokedTokens ? {} : { isActive: true },
-          ],
-        },
+              },
+            ],
+          },
+          showRevokedTokens ? {} : { isActive: true },
+        ],
       },
-      {
-        enabled: !!session?.user,
-        refetchOnWindowFocus: true,
-      }
-    );
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   // Update total items in pagination context
   useEffect(() => {
@@ -308,12 +310,7 @@ function ApiTokensList() {
     } finally {
       setIsRevokingAll(false);
     }
-  }, [
-    revokeAllConfirmText,
-    totalFilteredTokens,
-    t,
-    refetchTokens,
-  ]);
+  }, [revokeAllConfirmText, totalFilteredTokens, t, refetchTokens]);
 
   // Extract stable primitives from session to avoid column remounts when session object changes
   const dateFormat = session?.user?.preferences?.dateFormat;

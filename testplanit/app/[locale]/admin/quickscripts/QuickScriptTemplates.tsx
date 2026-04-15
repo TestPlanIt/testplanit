@@ -4,12 +4,17 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +25,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CaseExportTemplate } from "@prisma/client";
@@ -31,7 +36,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   useFindManyCaseExportTemplate,
   useUpdateCaseExportTemplate,
-  useUpdateManyCaseExportTemplate
+  useUpdateManyCaseExportTemplate,
 } from "~/lib/hooks";
 import { AddQuickScriptTemplate } from "./AddQuickScriptTemplate";
 import { DeleteQuickScriptTemplate } from "./DeleteQuickScriptTemplate";

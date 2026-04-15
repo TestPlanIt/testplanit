@@ -3,8 +3,9 @@
 import type { HTMLMotionProps as OriginalHTMLMotionProps } from "framer-motion";
 
 declare module "framer-motion" {
-  export interface HTMLMotionProps<T extends keyof HTMLElementTagNameMap>
-    extends OriginalHTMLMotionProps<T> {
+  export interface HTMLMotionProps<
+    T extends keyof HTMLElementTagNameMap,
+  > extends OriginalHTMLMotionProps<T> {
     initial?: unknown;
     animate?: unknown;
     exit?: unknown;

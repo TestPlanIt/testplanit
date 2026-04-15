@@ -169,7 +169,9 @@ describe("Header", () => {
   it("renders ProjectQuickSelector for authenticated user with access", async () => {
     render(<Header />);
 
-    expect(screen.getByTestId("project-quick-selector-mock")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("project-quick-selector-mock")
+    ).toBeInTheDocument();
   });
 
   it("does not render navigation links when user access is NONE", () => {
@@ -216,9 +218,9 @@ describe("Header", () => {
     render(<Header />);
 
     // The admin link text comes from translation key common.access.admin
-    const adminLink = screen.getAllByRole("link").find(
-      (link) => link.getAttribute("href") === "/admin"
-    );
+    const adminLink = screen
+      .getAllByRole("link")
+      .find((link) => link.getAttribute("href") === "/admin");
     expect(adminLink).toBeDefined();
   });
 
@@ -240,7 +242,9 @@ describe("Header", () => {
   });
 
   it("shows trial badge when API returns trial info", async () => {
-    const trialEndDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+    const trialEndDate = new Date(
+      Date.now() + 5 * 24 * 60 * 60 * 1000
+    ).toISOString();
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -264,7 +268,9 @@ describe("Header", () => {
   it("does not show FeedbackBanner when no feedbackSurveyUrl", () => {
     render(<Header />);
 
-    expect(screen.queryByTestId("feedback-banner-mock")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("feedback-banner-mock")
+    ).not.toBeInTheDocument();
   });
 
   it("shows FeedbackBanner when feedbackSurveyUrl is returned", async () => {

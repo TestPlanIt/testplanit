@@ -14,14 +14,14 @@ import {
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
@@ -139,9 +139,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
             >
               <SelectTrigger>
                 <SelectValue
-                  placeholder={t(
-                    "common.placeholders.selectState"
-                  )}
+                  placeholder={t("common.placeholders.selectState")}
                 />
               </SelectTrigger>
               <SelectContent>
@@ -178,9 +176,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
                   {selectedDate ? (
                     format(selectedDate, "PPP")
                   ) : (
-                    <span>
-                      {t("sessions.complete.placeholders.pickDate")}
-                    </span>
+                    <span>{t("sessions.complete.placeholders.pickDate")}</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -201,11 +197,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             {t("common.cancel")}
           </Button>
           <Button

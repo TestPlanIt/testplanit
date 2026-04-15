@@ -1,12 +1,16 @@
 import {
-  Breadcrumb, BreadcrumbItem,
-  BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Folders } from "lucide-react";
 import React from "react";
@@ -43,7 +47,10 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                 <BreadcrumbPage className="overflow-hidden">
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger type="button" className="text-muted-foreground font-bold">
+                      <TooltipTrigger
+                        type="button"
+                        className="text-muted-foreground font-bold"
+                      >
                         <div className="cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button">
                           <span className="truncate">{folder.text}</span>
                         </div>

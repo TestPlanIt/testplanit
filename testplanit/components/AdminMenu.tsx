@@ -1,14 +1,41 @@
 "use client";
 
 import {
-  Accordion, AccordionContent, AccordionItem,
-  AccordionTrigger
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Activity, Bell, Boxes, Bug, ChartNoAxesCombined, CircleCheckBig,
-  Combine, Drama, GitBranch, ImportIcon, KeyRound, LayoutList, MessageSquareCode, Milestone, Plug, ScrollText, Search, Settings, Share2, ShieldCheck, ShieldUser, Sparkles, Tags, Trash2, User, Users, Workflow
+  Activity,
+  Bell,
+  Boxes,
+  Bug,
+  ChartNoAxesCombined,
+  CircleCheckBig,
+  Combine,
+  Drama,
+  GitBranch,
+  ImportIcon,
+  KeyRound,
+  LayoutList,
+  MessageSquareCode,
+  Milestone,
+  Plug,
+  ScrollText,
+  Search,
+  Settings,
+  Share2,
+  ShieldCheck,
+  ShieldUser,
+  Sparkles,
+  Tags,
+  Trash2,
+  User,
+  Users,
+  Workflow,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";

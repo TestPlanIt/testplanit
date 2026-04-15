@@ -36,9 +36,7 @@ test.describe("Session Multi-Configuration Creation", () => {
 
     // The Configurations field should have a MultiAsyncCombobox
     // Look for the label "Configurations" (plural, indicating multi-select)
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     await expect(configLabel).toBeVisible({ timeout: 5000 });
 
     // The MultiAsyncCombobox renders a button[role="combobox"]
@@ -60,9 +58,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(
-      `E2E MultiSelect ${ts}`
-    );
+    const projectId = await api.createProject(`E2E MultiSelect ${ts}`);
     const config1Name = `Chrome ${ts}`;
     const config2Name = `Firefox ${ts}`;
     await api.createConfiguration(config1Name);
@@ -79,9 +75,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Open the configurations combobox
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
@@ -113,9 +107,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(
-      `E2E MultiCreate ${ts}`
-    );
+    const projectId = await api.createProject(`E2E MultiCreate ${ts}`);
     const config1Name = `Safari ${ts}`;
     const config2Name = `Edge ${ts}`;
     await api.createConfiguration(config1Name);
@@ -137,9 +129,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     await nameInput.fill(sessionName);
 
     // Select both configurations
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
@@ -178,9 +168,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     expect(sessions).toHaveLength(2);
 
     // Both should share the same configurationGroupId
-    const groupIds = sessions.map(
-      (s: any) => s.configurationGroupId
-    );
+    const groupIds = sessions.map((s: any) => s.configurationGroupId);
     expect(groupIds[0]).not.toBeNull();
     expect(groupIds[0]).toBe(groupIds[1]);
 
@@ -199,9 +187,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(
-      `E2E ClearAll ${ts}`
-    );
+    const projectId = await api.createProject(`E2E ClearAll ${ts}`);
     const configName = `ClearMe ${ts}`;
     await api.createConfiguration(configName);
 
@@ -216,16 +202,14 @@ test.describe("Session Multi-Configuration Creation", () => {
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // Select a configuration
-    const configLabel = dialog.locator(
-      'label:has-text("Configurations")'
-    );
+    const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
     await configCombobox.click();
 
     // Search for the specific config to filter out configs from other tests
-    const searchInput = page.locator('[cmdk-input]');
+    const searchInput = page.locator("[cmdk-input]");
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill(configName);
     await page.waitForTimeout(500);

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
     body = parsed.data;
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     if (cases.length !== body.affectedCaseIds.length) {
       return NextResponse.json(
         { error: "One or more case IDs do not belong to this project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     if (!project) {
       return NextResponse.json(
         { error: "No access to project" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       body.sharedStepGroupName,
       body.affectedCaseIds,
       session.user.id,
-      body.editedSteps,
+      body.editedSteps
     );
 
     // 8. Return result with sharedStepGroupId for UI linking (CONV-05)
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
         error: "Conversion failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

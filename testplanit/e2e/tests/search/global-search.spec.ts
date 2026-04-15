@@ -34,7 +34,9 @@ test.describe("Global Search", () => {
     await expect(sheet).toBeVisible({ timeout: 5000 });
 
     // Also verify it is accessible as a dialog
-    const dialog = page.locator('[role="dialog"]').filter({ hasText: /search/i });
+    const dialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /search/i });
     await expect(dialog).toBeVisible();
 
     // Close with Escape and verify it closes
@@ -47,9 +49,21 @@ test.describe("Global Search", () => {
     const uniqueId = Date.now();
 
     // Create test cases with unique names
-    await api.createTestCase(projectId, folderId, `SearchableCase Alpha ${uniqueId}`);
-    await api.createTestCase(projectId, folderId, `SearchableCase Beta ${uniqueId}`);
-    await api.createTestCase(projectId, folderId, `OtherCase Gamma ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `SearchableCase Alpha ${uniqueId}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `SearchableCase Beta ${uniqueId}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `OtherCase Gamma ${uniqueId}`
+    );
 
     // Wait for Elasticsearch indexing
     await page.waitForTimeout(2000);
@@ -58,19 +72,31 @@ test.describe("Global Search", () => {
     await unifiedSearch.open();
     await unifiedSearch.search(`SearchableCase ${uniqueId}`);
 
-    const searchDialog = page.locator('[role="dialog"]').filter({ hasText: /search/i });
+    const searchDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /search/i });
 
     // Both searchable cases should appear in results
     await expect(
-      searchDialog.getByRole("heading", { name: new RegExp(`SearchableCase Alpha ${uniqueId}`) })
+      searchDialog.getByRole("heading", {
+        name: new RegExp(`SearchableCase Alpha ${uniqueId}`),
+      })
     ).toBeVisible({ timeout: 10000 });
     await expect(
-      searchDialog.getByRole("heading", { name: new RegExp(`SearchableCase Beta ${uniqueId}`) })
+      searchDialog.getByRole("heading", {
+        name: new RegExp(`SearchableCase Beta ${uniqueId}`),
+      })
     ).toBeVisible({ timeout: 5000 });
   });
 
-  test("Clicking result navigates to test case detail", async ({ page, api }) => {
-    const folderId = await api.createFolder(projectId, "Navigation Test Folder");
+  test("Clicking result navigates to test case detail", async ({
+    page,
+    api,
+  }) => {
+    const folderId = await api.createFolder(
+      projectId,
+      "Navigation Test Folder"
+    );
     const uniqueId = Date.now();
     const caseName = `NavigationCase ${uniqueId}`;
 
@@ -82,7 +108,9 @@ test.describe("Global Search", () => {
     await unifiedSearch.open();
     await unifiedSearch.search(caseName);
 
-    const searchDialog = page.locator('[role="dialog"]').filter({ hasText: /search/i });
+    const searchDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /search/i });
 
     // Wait for result to appear
     const resultHeading = searchDialog.getByRole("heading", {
@@ -102,7 +130,10 @@ test.describe("Global Search", () => {
     expect(currentUrl).toContain(`/projects/repository/${projectId}/${caseId}`);
   });
 
-  test("Cross-entity search returns results from multiple types", async ({ page, api }) => {
+  test("Cross-entity search returns results from multiple types", async ({
+    page,
+    api,
+  }) => {
     const folderId = await api.createFolder(projectId, "Cross-Entity Folder");
     const uniqueId = Date.now();
     const searchTerm = `CrossEntity${uniqueId}`;
@@ -116,17 +147,23 @@ test.describe("Global Search", () => {
     await unifiedSearch.open();
     await unifiedSearch.search(searchTerm);
 
-    const searchDialog = page.locator('[role="dialog"]').filter({ hasText: /search/i });
+    const searchDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /search/i });
 
     // Should find the repository case
     await expect(
-      searchDialog.getByRole("heading", { name: new RegExp(`${searchTerm} Case`) })
+      searchDialog.getByRole("heading", {
+        name: new RegExp(`${searchTerm} Case`),
+      })
     ).toBeVisible({ timeout: 10000 });
 
     // Verify at least one result entity type section is visible in results
     // (The search dialog shows results grouped or labeled by entity type)
-    const resultsContainer = searchDialog.locator('[data-testid="search-results"]');
-    const hasResults = await resultsContainer.count() > 0;
+    const resultsContainer = searchDialog.locator(
+      '[data-testid="search-results"]'
+    );
+    const hasResults = (await resultsContainer.count()) > 0;
     if (hasResults) {
       await expect(resultsContainer).toBeVisible({ timeout: 5000 });
     }
@@ -138,7 +175,9 @@ test.describe("Global Search", () => {
     await unifiedSearch.search(`xyzNoMatchGibberish${Date.now()}abc`);
 
     // Verify empty state is shown
-    const searchDialog = page.locator('[role="dialog"]').filter({ hasText: /search/i });
+    const searchDialog = page
+      .locator('[role="dialog"]')
+      .filter({ hasText: /search/i });
     await page.waitForLoadState("networkidle");
 
     // Check for "no results" message

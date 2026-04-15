@@ -14,7 +14,10 @@ interface ShareLayoutContentProps {
   children: React.ReactNode;
 }
 
-export function ShareLayoutContent({ session, children }: ShareLayoutContentProps) {
+export function ShareLayoutContent({
+  session,
+  children,
+}: ShareLayoutContentProps) {
   const [, setMounted] = useState(false);
   const t = useTranslations("reports.shareDialog.footer");
   const tBranding = useTranslations("common.branding");
@@ -69,7 +72,9 @@ export function ShareLayoutContent({ session, children }: ShareLayoutContentProp
 
         {/* Branding footer */}
         <footer className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{t("poweredBy")}</span>
+          <span className="text-xs text-muted-foreground">
+            {t("poweredBy")}
+          </span>
           <Link
             href="/"
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -77,7 +82,12 @@ export function ShareLayoutContent({ session, children }: ShareLayoutContentProp
             rel="noopener noreferrer"
           >
             <span className="font-semibold flex items-center">
-              <Image src="/tpi_logo.svg" alt={tBranding("logoAlt")} width={16} height={16} />
+              <Image
+                src="/tpi_logo.svg"
+                alt={tBranding("logoAlt")}
+                width={16}
+                height={16}
+              />
               {tBranding("name")}
             </span>
           </Link>

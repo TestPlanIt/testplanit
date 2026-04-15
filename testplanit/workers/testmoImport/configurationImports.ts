@@ -1,21 +1,22 @@
 import { ApplicationArea, Prisma } from "@prisma/client";
 import type {
   TestmoConfigurationMappingConfig,
-  TestmoConfigVariantMappingConfig, TestmoMappingConfiguration
+  TestmoConfigVariantMappingConfig,
+  TestmoMappingConfiguration,
 } from "../../services/imports/testmo/types";
 import { toNumberValue } from "./helpers";
 import type { EntitySummaryResult } from "./types";
 
-const ensureWorkflowType = (value: unknown): "NOT_STARTED" | "IN_PROGRESS" | "DONE" => {
+const ensureWorkflowType = (
+  value: unknown
+): "NOT_STARTED" | "IN_PROGRESS" | "DONE" => {
   if (value === "NOT_STARTED" || value === "IN_PROGRESS" || value === "DONE") {
     return value;
   }
   return "NOT_STARTED";
 };
 
-const ensureWorkflowScope = (
-  value: unknown
-): "CASES" | "RUNS" | "SESSIONS" => {
+const ensureWorkflowScope = (value: unknown): "CASES" | "RUNS" | "SESSIONS" => {
   if (value === "CASES" || value === "RUNS" || value === "SESSIONS") {
     return value;
   }

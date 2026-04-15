@@ -47,6 +47,11 @@ jobs:
           pnpm zenstack generate
           pnpm prisma generate
 
+      - name: Check formatting
+        run: |
+          cd testplanit
+          pnpm format:check
+
       - name: Run linter
         run: |
           cd testplanit

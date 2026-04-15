@@ -1,11 +1,19 @@
 import {
-  closestCenter, DndContext, KeyboardSensor, PointerActivationConstraint, PointerSensor, useSensor,
-  useSensors
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerActivationConstraint,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   arrayMove,
-  SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useState } from "react";

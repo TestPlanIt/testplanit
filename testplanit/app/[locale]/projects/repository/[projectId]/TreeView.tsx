@@ -1,27 +1,37 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RepositoryFolders } from "@prisma/client";
 import {
-  ArrowRightLeft, ChevronRight, Folder,
-  FolderOpen, MoreVertical,
+  ArrowRightLeft,
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  MoreVertical,
   SquarePenIcon,
-  Trash2Icon
+  Trash2Icon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import React, {
-  useCallback, useEffect, useMemo,
-  useRef, useState
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { NodeApi, Tree, TreeApi } from "react-arborist";
 import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import {
-  useFindManyRepositoryFolders, useUpdateRepositoryCases, useUpdateRepositoryFolders
+  useFindManyRepositoryFolders,
+  useUpdateRepositoryCases,
+  useUpdateRepositoryFolders,
 } from "~/lib/hooks";
 import { ItemTypes } from "~/types/dndTypes";
 import { DeleteFolderModal } from "./DeleteFolderModal";

@@ -139,19 +139,16 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
   }) => {
     expect(issueId).toBeTruthy();
 
-    const response = await request.get(
-      `${baseURL}/api/model/issue/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              id: issueId,
-              repositoryCases: { some: { id: testCaseId } },
-            },
-          }),
-        },
-      }
-    );
+    const response = await request.get(`${baseURL}/api/model/issue/findFirst`, {
+      params: {
+        q: JSON.stringify({
+          where: {
+            id: issueId,
+            repositoryCases: { some: { id: testCaseId } },
+          },
+        }),
+      },
+    });
 
     expect(response.status()).toBe(200);
     const result = await response.json();
@@ -186,19 +183,16 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
   }) => {
     expect(issueId).toBeTruthy();
 
-    const response = await request.get(
-      `${baseURL}/api/model/issue/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              id: issueId,
-              repositoryCases: { some: { id: testCaseId } },
-            },
-          }),
-        },
-      }
-    );
+    const response = await request.get(`${baseURL}/api/model/issue/findFirst`, {
+      params: {
+        q: JSON.stringify({
+          where: {
+            id: issueId,
+            repositoryCases: { some: { id: testCaseId } },
+          },
+        }),
+      },
+    });
 
     expect(response.status()).toBe(200);
     const result = await response.json();
@@ -218,7 +212,7 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
     );
     if (linkResponse.ok()) {
       const links = await linkResponse.json();
-      for (const link of (links.data || [])) {
+      for (const link of links.data || []) {
         await request.delete(`${baseURL}/api/model/projectIntegration/delete`, {
           data: { where: { id: link.id } },
         });
@@ -328,7 +322,9 @@ test.describe("Issue Operations - External Provider Error Handling", () => {
 
   test.afterAll(async ({ request, baseURL }) => {
     if (githubIntegrationId) {
-      await request.delete(`${baseURL}/api/integrations/${githubIntegrationId}`);
+      await request.delete(
+        `${baseURL}/api/integrations/${githubIntegrationId}`
+      );
     }
   });
 });
@@ -404,9 +400,7 @@ test.describe("Issue Operations - Sync Endpoint", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/issues/999999/sync`
-    );
+    const response = await request.post(`${baseURL}/api/issues/999999/sync`);
 
     expect(response.status()).toBe(404);
     const body = await response.json();
@@ -469,9 +463,12 @@ test.describe("Issue Operations - Auth Enforcement", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -495,9 +492,12 @@ test.describe("Issue Operations - Auth Enforcement", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -516,9 +516,12 @@ test.describe("Issue Operations - Auth Enforcement", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -539,9 +542,12 @@ test.describe("Issue Operations - Auth Enforcement", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -562,9 +568,12 @@ test.describe("Issue Operations - Auth Enforcement", () => {
     page,
   }) => {
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {

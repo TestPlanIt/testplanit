@@ -85,8 +85,7 @@ export function mapLanguageToPrism(language: string): string {
  * Falls back to JavaScript if the grammar is not loaded.
  */
 export function highlightCode(code: string, prismLanguage: string): string {
-  const grammar =
-    Prism.languages[prismLanguage] || Prism.languages.javascript;
+  const grammar = Prism.languages[prismLanguage] || Prism.languages.javascript;
   const effectiveLang = Prism.languages[prismLanguage]
     ? prismLanguage
     : "javascript";

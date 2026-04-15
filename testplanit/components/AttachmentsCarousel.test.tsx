@@ -30,7 +30,9 @@ vi.mock("~/lib/hooks", () => ({
 }));
 
 vi.mock("~/utils/storageUrl", () => ({
-  getStorageUrlClient: vi.fn((url: string) => `https://storage.example.com/${url}`),
+  getStorageUrlClient: vi.fn(
+    (url: string) => `https://storage.example.com/${url}`
+  ),
 }));
 
 vi.mock("@/components/AttachmentPreview", () => ({
@@ -55,7 +57,12 @@ vi.mock("@/components/tables/UserNameCell", () => ({
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, disabled, variant, ...props }: any) => (
-    <button onClick={onClick} disabled={disabled} data-variant={variant} {...props}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      data-variant={variant}
+      {...props}
+    >
       {children}
     </button>
   ),
@@ -91,28 +98,52 @@ vi.mock("@/components/ui/carousel", () => {
 });
 
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children, open, onOpenChange }: any) => (
-    open ? <div data-testid="dialog" onClick={() => onOpenChange?.(false)}>{children}</div> : null
+  Dialog: ({ children, open, onOpenChange }: any) =>
+    open ? (
+      <div data-testid="dialog" onClick={() => onOpenChange?.(false)}>
+        {children}
+      </div>
+    ) : null,
+  DialogContent: ({ children }: any) => (
+    <div data-testid="dialog-content">{children}</div>
   ),
-  DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
-  DialogDescription: ({ children }: any) => <div data-testid="dialog-description">{children}</div>,
-  DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
-  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
-  DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
+  DialogDescription: ({ children }: any) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
+  DialogFooter: ({ children }: any) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
+  DialogHeader: ({ children }: any) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: any) => (
+    <div data-testid="dialog-title">{children}</div>
+  ),
 }));
 
 vi.mock("@/components/ui/input", () => ({
   Input: ({ value, onChange, ...props }: any) => (
-    <input value={value} onChange={onChange} data-testid="edit-name-input" {...props} />
+    <input
+      value={value}
+      onChange={onChange}
+      data-testid="edit-name-input"
+      {...props}
+    />
   ),
 }));
 
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children, open }: any) => (
-    <div data-testid="popover" data-open={open}>{children}</div>
+    <div data-testid="popover" data-open={open}>
+      {children}
+    </div>
   ),
-  PopoverContent: ({ children }: any) => <div data-testid="popover-content">{children}</div>,
-  PopoverTrigger: ({ children }: any) => <div data-testid="popover-trigger">{children}</div>,
+  PopoverContent: ({ children }: any) => (
+    <div data-testid="popover-content">{children}</div>
+  ),
+  PopoverTrigger: ({ children }: any) => (
+    <div data-testid="popover-trigger">{children}</div>
+  ),
 }));
 
 vi.mock("@/components/ui/separator", () => ({
@@ -121,7 +152,12 @@ vi.mock("@/components/ui/separator", () => ({
 
 vi.mock("@/components/ui/textarea", () => ({
   Textarea: ({ value, onChange, ...props }: any) => (
-    <textarea value={value} onChange={onChange} data-testid="edit-note-textarea" {...props} />
+    <textarea
+      value={value}
+      onChange={onChange}
+      data-testid="edit-note-textarea"
+      {...props}
+    />
   ),
 }));
 
@@ -196,7 +232,12 @@ describe("AttachmentsCarousel", () => {
 
   it("renders attachment metadata (size, date, creator)", () => {
     const attachments = [
-      makeAttachment({ id: "a1", name: "doc.pdf", size: BigInt(2048), createdById: "user-42" }),
+      makeAttachment({
+        id: "a1",
+        name: "doc.pdf",
+        size: BigInt(2048),
+        createdById: "user-42",
+      }),
     ];
     render(
       <AttachmentsCarousel
@@ -254,7 +295,9 @@ describe("AttachmentsCarousel", () => {
   });
 
   it("shows name input and note textarea when editing", () => {
-    const attachments = [makeAttachment({ id: "a1", name: "original.png", note: "original note" })];
+    const attachments = [
+      makeAttachment({ id: "a1", name: "original.png", note: "original note" }),
+    ];
     render(
       <AttachmentsCarousel
         attachments={attachments}
@@ -288,7 +331,9 @@ describe("AttachmentsCarousel", () => {
   });
 
   it("shows note text when note exists", () => {
-    const attachments = [makeAttachment({ id: "a1", note: "My important note" })];
+    const attachments = [
+      makeAttachment({ id: "a1", note: "My important note" }),
+    ];
     render(
       <AttachmentsCarousel
         attachments={attachments}

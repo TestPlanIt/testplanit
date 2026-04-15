@@ -9,7 +9,7 @@ import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Issue } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";

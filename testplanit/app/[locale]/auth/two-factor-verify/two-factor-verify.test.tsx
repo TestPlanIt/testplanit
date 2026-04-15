@@ -95,7 +95,9 @@ describe("TwoFactorVerifyPage", () => {
     expect(otpContainer).toBeInTheDocument();
 
     // Should have 6 slots
-    const _otpSlots = document.querySelectorAll("[data-input-otp-container] > *");
+    const _otpSlots = document.querySelectorAll(
+      "[data-input-otp-container] > *"
+    );
     // The OTP group should contain slots
     const inputOtpGroup = document.querySelector("[data-input-otp-container]");
     expect(inputOtpGroup).toBeInTheDocument();
@@ -130,7 +132,9 @@ describe("TwoFactorVerifyPage", () => {
 
     // Initially, OTP input is shown
     expect(document.querySelector("[data-input-otp]")).toBeInTheDocument();
-    expect(document.querySelector("input[placeholder='XXXXXXXX']")).not.toBeInTheDocument();
+    expect(
+      document.querySelector("input[placeholder='XXXXXXXX']")
+    ).not.toBeInTheDocument();
 
     // Find and click the toggle button (shows "use backup code" text)
     const toggleButton = screen.getByRole("button", {
@@ -141,7 +145,9 @@ describe("TwoFactorVerifyPage", () => {
 
     // After toggle, backup code input should appear (8 char placeholder)
     await waitFor(() => {
-      expect(document.querySelector("input[placeholder='XXXXXXXX']")).toBeInTheDocument();
+      expect(
+        document.querySelector("input[placeholder='XXXXXXXX']")
+      ).toBeInTheDocument();
     });
 
     // OTP input should be gone
@@ -159,7 +165,9 @@ describe("TwoFactorVerifyPage", () => {
     await user.click(toggleToBackup);
 
     await waitFor(() => {
-      expect(document.querySelector("input[placeholder='XXXXXXXX']")).toBeInTheDocument();
+      expect(
+        document.querySelector("input[placeholder='XXXXXXXX']")
+      ).toBeInTheDocument();
     });
 
     // Click again to switch back to authenticator
@@ -172,7 +180,9 @@ describe("TwoFactorVerifyPage", () => {
       expect(document.querySelector("[data-input-otp]")).toBeInTheDocument();
     });
 
-    expect(document.querySelector("input[placeholder='XXXXXXXX']")).not.toBeInTheDocument();
+    expect(
+      document.querySelector("input[placeholder='XXXXXXXX']")
+    ).not.toBeInTheDocument();
   });
 
   it("shows error message when verification API call fails", async () => {
@@ -194,11 +204,15 @@ describe("TwoFactorVerifyPage", () => {
     await user.click(toggleButton);
 
     await waitFor(() => {
-      expect(document.querySelector("input[placeholder='XXXXXXXX']")).toBeInTheDocument();
+      expect(
+        document.querySelector("input[placeholder='XXXXXXXX']")
+      ).toBeInTheDocument();
     });
 
     // Type an 8-character backup code
-    const backupInput = document.querySelector("input[placeholder='XXXXXXXX']") as HTMLInputElement;
+    const backupInput = document.querySelector(
+      "input[placeholder='XXXXXXXX']"
+    ) as HTMLInputElement;
     await user.type(backupInput, "ABCD1234");
 
     // Verify button should be enabled now
@@ -234,11 +248,15 @@ describe("TwoFactorVerifyPage", () => {
     await user.click(toggleButton);
 
     await waitFor(() => {
-      expect(document.querySelector("input[placeholder='XXXXXXXX']")).toBeInTheDocument();
+      expect(
+        document.querySelector("input[placeholder='XXXXXXXX']")
+      ).toBeInTheDocument();
     });
 
     // Type only 4 characters (less than 8)
-    const backupInput = document.querySelector("input[placeholder='XXXXXXXX']") as HTMLInputElement;
+    const backupInput = document.querySelector(
+      "input[placeholder='XXXXXXXX']"
+    ) as HTMLInputElement;
     await user.type(backupInput, "ABCD");
 
     // Verify button should be disabled (backup code needs 8 chars)
@@ -260,8 +278,11 @@ describe("TwoFactorVerifyPage", () => {
     // signOut is dynamically imported, so we check the fetch or mock differently
     // The component does: const { signOut } = await import("next-auth/react")
     // We can verify it tried to sign out by waiting for the mock to be called
-    await waitFor(() => {
-      expect(mockSignOut).toHaveBeenCalledWith({ callbackUrl: "/signin" });
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(mockSignOut).toHaveBeenCalledWith({ callbackUrl: "/signin" });
+      },
+      { timeout: 3000 }
+    );
   });
 });

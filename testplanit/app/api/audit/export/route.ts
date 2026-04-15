@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   extractAuditContextFromRequest,
-  runWithAuditContext
+  runWithAuditContext,
 } from "~/lib/auditContext";
 import { auditDataExport } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";

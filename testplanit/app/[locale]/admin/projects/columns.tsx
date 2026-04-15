@@ -3,7 +3,8 @@ import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
 import {
-  MilestoneListDisplay, MilestonesWithTypes
+  MilestoneListDisplay,
+  MilestonesWithTypes,
 } from "@/components/tables/MilestoneListDisplay";
 import { MilestoneTypeListDisplay } from "@/components/tables/MilestoneTypeListDisplay";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
@@ -12,8 +13,11 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
-  Integration, MilestoneTypesAssignment, ProjectIntegration, Projects,
-  User
+  Integration,
+  MilestoneTypesAssignment,
+  ProjectIntegration,
+  Projects,
+  User,
 } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { Bug, GitBranchIcon, SquarePen, Trash2 } from "lucide-react";
@@ -199,13 +203,21 @@ export const getColumns = (
         const hasActive = activeModels && activeModels.length > 0;
         if (!hasActive) {
           return (
-            <span className="text-muted-foreground text-sm" data-testid="ai-model-indicator" data-active={false}>
+            <span
+              className="text-muted-foreground text-sm"
+              data-testid="ai-model-indicator"
+              data-active={false}
+            >
               {tCommon("status.notApplicable")}
             </span>
           );
         }
         return (
-          <div className="flex flex-wrap gap-1" data-testid="ai-model-indicator" data-active={true}>
+          <div
+            className="flex flex-wrap gap-1"
+            data-testid="ai-model-indicator"
+            data-active={true}
+          >
             {activeModels.map((m) => (
               <LlmProviderBadge
                 key={m.llmIntegration.name}

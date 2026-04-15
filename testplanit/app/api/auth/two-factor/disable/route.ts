@@ -18,9 +18,15 @@ export async function POST(request: NextRequest) {
 
     // Check if system settings require 2FA
     const registrationSettings = await prisma.registrationSettings.findFirst();
-    if (registrationSettings?.force2FAAllLogins || registrationSettings?.force2FANonSSO) {
+    if (
+      registrationSettings?.force2FAAllLogins ||
+      registrationSettings?.force2FANonSSO
+    ) {
       return NextResponse.json(
-        { error: "Two-factor authentication is required by your organization and cannot be disabled" },
+        {
+          error:
+            "Two-factor authentication is required by your organization and cannot be disabled",
+        },
         { status: 403 }
       );
     }

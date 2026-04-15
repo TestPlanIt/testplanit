@@ -4,10 +4,12 @@ import { DatePickerField } from "@/components/forms/DatePickerField";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent,
+  Select,
+  SelectContent,
   SelectGroup,
-  SelectItem, SelectTrigger,
-  SelectValue
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";

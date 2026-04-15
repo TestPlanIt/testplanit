@@ -19,7 +19,9 @@ test.describe("Search & Filter", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E SearchFilter ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E SearchFilter ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Search Test Cases", async ({ api, page }) => {
@@ -39,7 +41,9 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify both test cases are visible initially
-    await expect(page.locator(`text="${searchableName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${searchableName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Find the search input
     const searchInput = page.getByTestId("search-input");
@@ -50,10 +54,14 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify only the matching test case is shown
-    await expect(page.locator(`text="${searchableName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${searchableName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Other case should not be visible (filtered out)
-    await expect(page.locator('text="Other Case"')).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator('text="Other Case"')).not.toBeVisible({
+      timeout: 3000,
+    });
   });
 
   test("Search with No Results", async ({ api, page }) => {
@@ -62,7 +70,11 @@ test.describe("Search & Filter", () => {
     // Create a folder with test cases so we have something to search within
     const folderName = `No Results Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `Existing Case ${Date.now()}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Existing Case ${Date.now()}`
+    );
     await api.createTestCase(projectId, folderId, `Another Case ${Date.now()}`);
 
     await repositoryPage.goto(projectId);
@@ -83,8 +95,10 @@ test.describe("Search & Filter", () => {
     // Verify "no test cases" message is shown in the main content area (not in folder tree)
     // The message is "No test cases in this folder." from translation key repository.cases.noTestCases
     // Use the right panel area to avoid matching the folder name "No Results Folder" in the tree
-    const casesArea = page.getByTestId("repository-right-panel-header").locator(".."); // Get parent container
-    const noResults = casesArea.locator('text=/No test cases/i').first();
+    const casesArea = page
+      .getByTestId("repository-right-panel-header")
+      .locator(".."); // Get parent container
+    const noResults = casesArea.locator("text=/No test cases/i").first();
     await expect(noResults).toBeVisible({ timeout: 10000 });
   });
 
@@ -107,8 +121,12 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify both test cases are visible before filtering
-    await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${nonMatchingName}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${nonMatchingName}"`).first()).toBeVisible(
+      { timeout: 5000 }
+    );
 
     // Find and use the search input to filter within the folder
     const filterInput = page.getByTestId("search-input");
@@ -119,10 +137,14 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify only the matching case is shown
-    await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify the non-matching case is NOT visible
-    await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Filter Persists When Switching Folders", async ({ api, page }) => {
@@ -152,8 +174,12 @@ test.describe("Search & Filter", () => {
     // Select folder 1 and verify both cases are visible initially
     await repositoryPage.selectFolder(folder1Id);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text="${folder1MatchingCase}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${folder1NonMatchingCase}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator(`text="${folder1MatchingCase}"`).first()
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator(`text="${folder1NonMatchingCase}"`).first()
+    ).toBeVisible({ timeout: 5000 });
 
     // Apply filter in folder 1
     const filterInput = page.getByTestId("search-input");
@@ -162,8 +188,12 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify filter works in folder 1 - only matching case visible
-    await expect(page.locator(`text="${folder1MatchingCase}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${folder1NonMatchingCase}"`)).not.toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator(`text="${folder1MatchingCase}"`).first()
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator(`text="${folder1NonMatchingCase}"`)
+    ).not.toBeVisible({ timeout: 5000 });
 
     // Switch to folder 2
     await repositoryPage.selectFolder(folder2Id);
@@ -173,8 +203,12 @@ test.describe("Search & Filter", () => {
     await expect(filterInput).toHaveValue(searchTerm);
 
     // Verify filter is still applied in folder 2 - only matching case visible
-    await expect(page.locator(`text="${folder2MatchingCase}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${folder2NonMatchingCase}"`)).not.toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator(`text="${folder2MatchingCase}"`).first()
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator(`text="${folder2NonMatchingCase}"`)
+    ).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Clear Search Filter", async ({ api, page }) => {
@@ -196,8 +230,12 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify both test cases are visible initially
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Apply a search filter
     const searchInput = page.getByTestId("search-input");
@@ -206,16 +244,24 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Only one case should be visible
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${case2Name}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case2Name}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
 
     // Clear the search
     await searchInput.clear();
     await page.waitForLoadState("networkidle");
 
     // Both cases should be visible again
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Search is Case Insensitive", async ({ api, page }) => {
@@ -242,10 +288,14 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // The matching case should be visible (case insensitive match)
-    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // The other case should not be visible
-    await expect(page.locator(`text="Other ${uniqueId}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="Other ${uniqueId}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
   });
 
   test("Search with Partial Match", async ({ api, page }) => {
@@ -272,10 +322,14 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // The matching case should be visible
-    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // The other case should not be visible
-    await expect(page.locator(`text="Different ${uniqueId}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="Different ${uniqueId}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
   });
 
   test("Search Input Has Placeholder Text", async ({ api, page }) => {
@@ -345,7 +399,9 @@ test.describe("Search & Filter", () => {
     await expect(page.locator(`text="${case3Name}"`).first()).toBeVisible();
 
     // Non-matching case should not be visible
-    await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
   });
 
   test("Search with Special Characters", async ({ api, page }) => {
@@ -374,10 +430,14 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // The special character case should be visible
-    await expect(page.locator(`text="${specialCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${specialCaseName}"`).first()).toBeVisible(
+      { timeout: 10000 }
+    );
 
     // Normal case should not be visible
-    await expect(page.locator(`text="${normalCaseName}"`)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`text="${normalCaseName}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
   });
 
   test("Search Works with Sequential Typing", async ({ api, page }) => {
@@ -398,7 +458,9 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify both cases are visible initially
-    await expect(page.locator(`text="${targetCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${targetCaseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Type character by character (simulating real user typing)
     const searchInput = page.getByTestId("search-input");
@@ -409,8 +471,12 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // After typing completes and debounce triggers, only the target case should be visible
-    await expect(page.locator(`text="${targetCaseName}"`).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(`text="Other ${uniqueId}"`)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${targetCaseName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="Other ${uniqueId}"`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Search Updates Pagination Count", async ({ api, page }) => {
@@ -436,7 +502,9 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify initial count shows 15 items
-    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/of 15 items/")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Apply search filter for "Alpha"
     const searchInput = page.getByTestId("search-input");
@@ -444,17 +512,24 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify count updated to show only 5 items
-    await expect(page.locator('text=/of 5 items/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/of 5 items/")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Clear the filter
     await searchInput.clear();
     await page.waitForLoadState("networkidle");
 
     // Verify count is back to 15 items
-    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/of 15 items/")).toBeVisible({
+      timeout: 5000,
+    });
   });
 
-  test("Search Removes Pagination When Results Fit One Page", async ({ api, page }) => {
+  test("Search Removes Pagination When Results Fit One Page", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with enough test cases to trigger pagination (>10)
@@ -468,7 +543,11 @@ test.describe("Search & Filter", () => {
       await api.createTestCase(projectId, folderId, `${searchTerm} Case ${i}`);
     }
     for (let i = 0; i < 12; i++) {
-      await api.createTestCase(projectId, folderId, `Other Case ${i} ${uniqueId}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Other Case ${i} ${uniqueId}`
+      );
     }
 
     await repositoryPage.goto(projectId);
@@ -490,7 +569,9 @@ test.describe("Search & Filter", () => {
     await expect(paginationNav).not.toBeVisible({ timeout: 5000 });
 
     // Verify only 3 items are shown
-    await expect(page.locator('text=/of 3 items/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/of 3 items/")).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Search Resets to First Page", async ({ api, page }) => {
@@ -504,7 +585,11 @@ test.describe("Search & Filter", () => {
     // Create 25 test cases - some with "Target" prefix distributed across pages
     for (let i = 0; i < 25; i++) {
       const prefix = i % 3 === 0 ? "Target" : "Other";
-      await api.createTestCase(projectId, folderId, `${prefix} ${i} ${uniqueId}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `${prefix} ${i} ${uniqueId}`
+      );
     }
 
     await repositoryPage.goto(projectId);
@@ -521,7 +606,9 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify we're on page 2
-    await expect(page.locator('text=/Showing 11-20 of/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Showing 11-20 of/")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Apply search filter
     const searchInput = page.getByTestId("search-input");
@@ -529,6 +616,8 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify we're reset to page 1 of filtered results (starts with "Showing 1-")
-    await expect(page.locator('text=/Showing 1-/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Showing 1-/")).toBeVisible({
+      timeout: 5000,
+    });
   });
 });

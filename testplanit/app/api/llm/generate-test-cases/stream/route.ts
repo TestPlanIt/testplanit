@@ -41,17 +41,24 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { projectId, issue, template, context, quantity, autoGenerateTags, feature: featureOverride } =
-    body as {
-      projectId: number;
-      issue: IssueData;
-      template: TemplateData;
-      context: GenerationContext;
-      quantity?: string;
-      autoGenerateTags?: boolean;
-      /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
-      feature?: string;
-    };
+  const {
+    projectId,
+    issue,
+    template,
+    context,
+    quantity,
+    autoGenerateTags,
+    feature: featureOverride,
+  } = body as {
+    projectId: number;
+    issue: IssueData;
+    template: TemplateData;
+    context: GenerationContext;
+    quantity?: string;
+    autoGenerateTags?: boolean;
+    /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
+    feature?: string;
+  };
 
   if (!projectId || !issue || !template) {
     return NextResponse.json(
@@ -69,9 +76,7 @@ export async function POST(req: NextRequest) {
   ): void {
     if (controllerClosed) return;
     try {
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-      );
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
     } catch {
       controllerClosed = true;
     }
@@ -163,11 +168,9 @@ export async function POST(req: NextRequest) {
 
         const manager = LlmManager.getInstance(prisma);
         const resolver = new PromptResolver(prisma);
-        const llmFeature = (featureOverride as any) ?? LLM_FEATURES.TEST_CASE_GENERATION;
-        const resolvedPrompt = await resolver.resolve(
-          llmFeature,
-          projectId
-        );
+        const llmFeature =
+          (featureOverride as any) ?? LLM_FEATURES.TEST_CASE_GENERATION;
+        const resolvedPrompt = await resolver.resolve(llmFeature, projectId);
 
         const resolved = await manager.resolveIntegration(
           llmFeature,
@@ -203,15 +206,15 @@ export async function POST(req: NextRequest) {
 
         // TOKEN-02: Read provider config
         let maxTokensPerRequest = 4096;
-        let maxTokens =
-          resolvedPrompt.maxOutputTokens ?? 4096;
+        let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
 
-        const providerConfig = await (prisma as any).llmProviderConfig.findFirst(
-          { where: { llmIntegrationId: resolved.integrationId } }
-        );
+        const providerConfig = await (
+          prisma as any
+        ).llmProviderConfig.findFirst({
+          where: { llmIntegrationId: resolved.integrationId },
+        });
         if (providerConfig) {
-          maxTokensPerRequest =
-            providerConfig.maxTokensPerRequest ?? 4096;
+          maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
           maxTokens =
             providerConfig.defaultMaxTokens ??
             resolvedPrompt.maxOutputTokens ??
@@ -230,16 +233,29 @@ export async function POST(req: NextRequest) {
           ...context,
           existingTestCases: [],
         };
-        const baseUserPrompt = buildUserPrompt(issue, contextWithoutCases, userPromptBase);
+        const baseUserPrompt = buildUserPrompt(
+          issue,
+          contextWithoutCases,
+          userPromptBase
+        );
         const basePromptTokens = Math.ceil(baseUserPrompt.length / 4);
 
         // Allocate remaining token budget to existing test case context
-        const contextTokenBudget = Math.max(0, contentBudget - basePromptTokens);
+        const contextTokenBudget = Math.max(
+          0,
+          contentBudget - basePromptTokens
+        );
 
         // Fetch prioritised context from folder hierarchy (server-side)
-        const hierarchyContext = contextTokenBudget > 0
-          ? await fetchHierarchyContext(prisma, projectId, context.folderContext, contextTokenBudget)
-          : [];
+        const hierarchyContext =
+          contextTokenBudget > 0
+            ? await fetchHierarchyContext(
+                prisma,
+                projectId,
+                context.folderContext,
+                contextTokenBudget
+              )
+            : [];
 
         // Build the final context with server-fetched cases
         const enrichedContext: GenerationContext = {
@@ -247,7 +263,11 @@ export async function POST(req: NextRequest) {
           existingTestCases: hierarchyContext,
         };
 
-        let userPrompt = buildUserPrompt(issue, enrichedContext, userPromptBase);
+        let userPrompt = buildUserPrompt(
+          issue,
+          enrichedContext,
+          userPromptBase
+        );
         let wasTruncated = false;
 
         // If still over budget (large issue comments), truncate comments
@@ -305,10 +325,7 @@ export async function POST(req: NextRequest) {
             }
           }
         } catch (err) {
-          console.error(
-            "[generate-test-cases/stream] LLM stream failed:",
-            err
-          );
+          console.error("[generate-test-cases/stream] LLM stream failed:", err);
           send(controller, {
             type: "error",
             message: formatError(err),
@@ -329,8 +346,7 @@ export async function POST(req: NextRequest) {
         console.error("[generate-test-cases/stream] Setup failed:", err);
         send(controller, {
           type: "error",
-          message:
-            err instanceof Error ? err.message : "Internal server error",
+          message: err instanceof Error ? err.message : "Internal server error",
         });
       } finally {
         clearInterval(heartbeat);

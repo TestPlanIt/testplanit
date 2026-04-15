@@ -35,12 +35,14 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
     const hostname = parsedEndpoint.hostname.toLowerCase();
     // Restrict to Azure OpenAI endpoints to prevent SSRF
     if (!hostname.endsWith(".openai.azure.com")) {
-      throw new Error("Azure endpoint hostname is not a valid Azure OpenAI endpoint");
+      throw new Error(
+        "Azure endpoint hostname is not a valid Azure OpenAI endpoint"
+      );
     }
 
     const resourceName = hostname.split(".")[0];
 
-   const normalizedEndpoint = parsedEndpoint.origin;
+    const normalizedEndpoint = parsedEndpoint.origin;
 
     const azureConfig: LlmAdapterConfig = {
       ...config,
@@ -171,7 +173,9 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      const sanitizedUrl = this.validateAndSanitizeUrl(this.getChatCompletionsUrl());
+      const sanitizedUrl = this.validateAndSanitizeUrl(
+        this.getChatCompletionsUrl()
+      );
       if (!sanitizedUrl) {
         return false;
       }

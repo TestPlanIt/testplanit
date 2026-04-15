@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
@@ -17,7 +17,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { AlertTriangle, CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -59,8 +59,12 @@ export function CompleteMilestoneDialog({
   const [impactData, setImpactData] = useState<CompletionImpact | null>(null);
   const [completeTestRuns, setCompleteTestRuns] = useState(true);
   const [completeSessions, setCompleteSessions] = useState(true);
-  const [selectedTestRunStateId, setSelectedTestRunStateId] = useState<number | null>(null);
-  const [selectedSessionStateId, setSelectedSessionStateId] = useState<number | null>(null);
+  const [selectedTestRunStateId, setSelectedTestRunStateId] = useState<
+    number | null
+  >(null);
+  const [selectedSessionStateId, setSelectedSessionStateId] = useState<
+    number | null
+  >(null);
 
   const form = useForm<CompleteMilestoneFormValues>({
     defaultValues: {
@@ -281,27 +285,40 @@ export function CompleteMilestoneDialog({
                       (completeSessions && impactData.activeSessions > 0) ||
                       impactData.descendantMilestonesToComplete > 0) && (
                       <>
-                        <p>{t("milestones.completeDialog.confirmDescription")}</p>
+                        <p>
+                          {t("milestones.completeDialog.confirmDescription")}
+                        </p>
                         <ul className="list-disc pl-5 mt-2 text-sm">
-                          {completeTestRuns && impactData.activeTestRuns > 0 && (
-                            <li>
-                              {t("milestones.completeDialog.impactActiveTestRuns", {
-                                count: impactData.activeTestRuns,
-                              })}
-                            </li>
-                          )}
-                          {completeSessions && impactData.activeSessions > 0 && (
-                            <li>
-                              {t("milestones.completeDialog.impactActiveSessions", {
-                                count: impactData.activeSessions,
-                              })}
-                            </li>
-                          )}
+                          {completeTestRuns &&
+                            impactData.activeTestRuns > 0 && (
+                              <li>
+                                {t(
+                                  "milestones.completeDialog.impactActiveTestRuns",
+                                  {
+                                    count: impactData.activeTestRuns,
+                                  }
+                                )}
+                              </li>
+                            )}
+                          {completeSessions &&
+                            impactData.activeSessions > 0 && (
+                              <li>
+                                {t(
+                                  "milestones.completeDialog.impactActiveSessions",
+                                  {
+                                    count: impactData.activeSessions,
+                                  }
+                                )}
+                              </li>
+                            )}
                           {impactData.descendantMilestonesToComplete > 0 && (
                             <li>
                               {t(
                                 "milestones.completeDialog.impactDescendantMilestones",
-                                { count: impactData.descendantMilestonesToComplete }
+                                {
+                                  count:
+                                    impactData.descendantMilestonesToComplete,
+                                }
                               )}
                             </li>
                           )}
@@ -313,22 +330,32 @@ export function CompleteMilestoneDialog({
                     {((!completeTestRuns && impactData.activeTestRuns > 0) ||
                       (!completeSessions && impactData.activeSessions > 0)) && (
                       <>
-                        <p className="mt-4">{t("milestones.completeDialog.itemsRemaining")}</p>
+                        <p className="mt-4">
+                          {t("milestones.completeDialog.itemsRemaining")}
+                        </p>
                         <ul className="list-disc pl-5 mt-2 text-sm">
-                          {!completeTestRuns && impactData.activeTestRuns > 0 && (
-                            <li>
-                              {t("milestones.completeDialog.impactActiveTestRuns", {
-                                count: impactData.activeTestRuns,
-                              })}
-                            </li>
-                          )}
-                          {!completeSessions && impactData.activeSessions > 0 && (
-                            <li>
-                              {t("milestones.completeDialog.impactActiveSessions", {
-                                count: impactData.activeSessions,
-                              })}
-                            </li>
-                          )}
+                          {!completeTestRuns &&
+                            impactData.activeTestRuns > 0 && (
+                              <li>
+                                {t(
+                                  "milestones.completeDialog.impactActiveTestRuns",
+                                  {
+                                    count: impactData.activeTestRuns,
+                                  }
+                                )}
+                              </li>
+                            )}
+                          {!completeSessions &&
+                            impactData.activeSessions > 0 && (
+                              <li>
+                                {t(
+                                  "milestones.completeDialog.impactActiveSessions",
+                                  {
+                                    count: impactData.activeSessions,
+                                  }
+                                )}
+                              </li>
+                            )}
                         </ul>
                       </>
                     )}
@@ -354,49 +381,71 @@ export function CompleteMilestoneDialog({
                             <Checkbox
                               id="complete-test-runs"
                               checked={completeTestRuns}
-                              onCheckedChange={(checked) => setCompleteTestRuns(!!checked)}
+                              onCheckedChange={(checked) =>
+                                setCompleteTestRuns(!!checked)
+                              }
                               disabled={isSubmitting}
                             />
                             <label
                               htmlFor="complete-test-runs"
                               className="text-sm font-medium leading-none cursor-pointer"
                             >
-                              {t("milestones.completeDialog.completeTestRunsLabel", {
-                                count: impactData.activeTestRuns,
-                              })}
+                              {t(
+                                "milestones.completeDialog.completeTestRunsLabel",
+                                {
+                                  count: impactData.activeTestRuns,
+                                }
+                              )}
                             </label>
                           </div>
 
-                          {completeTestRuns && runWorkflows && runWorkflows.length > 0 && (
-                            <div className="ml-6 space-y-2">
-                              <label className="text-sm font-medium">
-                                {t("milestones.completeDialog.testRunStateLabel")}
-                              </label>
-                              <Select
-                                value={selectedTestRunStateId?.toString() || ""}
-                                onValueChange={(value) => setSelectedTestRunStateId(Number(value))}
-                                disabled={isSubmitting}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder={tCommon("placeholders.selectState")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {runWorkflows.map((workflow) => (
-                                    <SelectItem key={workflow.id} value={workflow.id.toString()}>
-                                      <div className="flex items-center gap-2">
-                                        <DynamicIcon
-                                          name={workflow.icon?.name as IconName}
-                                          color={workflow.color?.value}
-                                          className="h-4 w-4"
-                                        />
-                                        {workflow.name}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
+                          {completeTestRuns &&
+                            runWorkflows &&
+                            runWorkflows.length > 0 && (
+                              <div className="ml-6 space-y-2">
+                                <label className="text-sm font-medium">
+                                  {t(
+                                    "milestones.completeDialog.testRunStateLabel"
+                                  )}
+                                </label>
+                                <Select
+                                  value={
+                                    selectedTestRunStateId?.toString() || ""
+                                  }
+                                  onValueChange={(value) =>
+                                    setSelectedTestRunStateId(Number(value))
+                                  }
+                                  disabled={isSubmitting}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue
+                                      placeholder={tCommon(
+                                        "placeholders.selectState"
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {runWorkflows.map((workflow) => (
+                                      <SelectItem
+                                        key={workflow.id}
+                                        value={workflow.id.toString()}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <DynamicIcon
+                                            name={
+                                              workflow.icon?.name as IconName
+                                            }
+                                            color={workflow.color?.value}
+                                            className="h-4 w-4"
+                                          />
+                                          {workflow.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                         </div>
                       )}
 
@@ -407,49 +456,71 @@ export function CompleteMilestoneDialog({
                             <Checkbox
                               id="complete-sessions"
                               checked={completeSessions}
-                              onCheckedChange={(checked) => setCompleteSessions(!!checked)}
+                              onCheckedChange={(checked) =>
+                                setCompleteSessions(!!checked)
+                              }
                               disabled={isSubmitting}
                             />
                             <label
                               htmlFor="complete-sessions"
                               className="text-sm font-medium leading-none cursor-pointer"
                             >
-                              {t("milestones.completeDialog.completeSessionsLabel", {
-                                count: impactData.activeSessions,
-                              })}
+                              {t(
+                                "milestones.completeDialog.completeSessionsLabel",
+                                {
+                                  count: impactData.activeSessions,
+                                }
+                              )}
                             </label>
                           </div>
 
-                          {completeSessions && sessionWorkflows && sessionWorkflows.length > 0 && (
-                            <div className="ml-6 space-y-2">
-                              <label className="text-sm font-medium">
-                                {t("milestones.completeDialog.sessionStateLabel")}
-                              </label>
-                              <Select
-                                value={selectedSessionStateId?.toString() || ""}
-                                onValueChange={(value) => setSelectedSessionStateId(Number(value))}
-                                disabled={isSubmitting}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder={tCommon("placeholders.selectState")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {sessionWorkflows.map((workflow) => (
-                                    <SelectItem key={workflow.id} value={workflow.id.toString()}>
-                                      <div className="flex items-center gap-2">
-                                        <DynamicIcon
-                                          name={workflow.icon?.name as IconName}
-                                          color={workflow.color?.value}
-                                          className="h-4 w-4"
-                                        />
-                                        {workflow.name}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
+                          {completeSessions &&
+                            sessionWorkflows &&
+                            sessionWorkflows.length > 0 && (
+                              <div className="ml-6 space-y-2">
+                                <label className="text-sm font-medium">
+                                  {t(
+                                    "milestones.completeDialog.sessionStateLabel"
+                                  )}
+                                </label>
+                                <Select
+                                  value={
+                                    selectedSessionStateId?.toString() || ""
+                                  }
+                                  onValueChange={(value) =>
+                                    setSelectedSessionStateId(Number(value))
+                                  }
+                                  disabled={isSubmitting}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue
+                                      placeholder={tCommon(
+                                        "placeholders.selectState"
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {sessionWorkflows.map((workflow) => (
+                                      <SelectItem
+                                        key={workflow.id}
+                                        value={workflow.id.toString()}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <DynamicIcon
+                                            name={
+                                              workflow.icon?.name as IconName
+                                            }
+                                            color={workflow.color?.value}
+                                            className="h-4 w-4"
+                                          />
+                                          {workflow.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                         </div>
                       )}
                     </div>

@@ -10,7 +10,10 @@ interface EditIntegrationButtonProps {
   onEdit: (integration: Integration) => void;
 }
 
-export function EditIntegrationButton({ integration, onEdit }: EditIntegrationButtonProps) {
+export function EditIntegrationButton({
+  integration,
+  onEdit,
+}: EditIntegrationButtonProps) {
   const tCommon = useTranslations("common");
 
   return (

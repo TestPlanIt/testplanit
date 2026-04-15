@@ -195,7 +195,12 @@ describe("JiraAdapter", () => {
       // Create issue call
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ id: "10001", key: "TEST-123", self: "https://test.atlassian.net/rest/api/3/issue/10001" }),
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
       });
       // Get issue call (to fetch full details)
       mockFetch.mockResolvedValueOnce({
@@ -228,7 +233,12 @@ describe("JiraAdapter", () => {
     it("should create issue with project ID", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ id: "10001", key: "TEST-123", self: "https://test.atlassian.net/rest/api/3/issue/10001" }),
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
       });
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -252,7 +262,12 @@ describe("JiraAdapter", () => {
     it("should handle TipTap JSON description", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ id: "10001", key: "TEST-123", self: "https://test.atlassian.net/rest/api/3/issue/10001" }),
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
       });
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -289,7 +304,12 @@ describe("JiraAdapter", () => {
     it("should handle HTML description", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ id: "10001", key: "TEST-123", self: "https://test.atlassian.net/rest/api/3/issue/10001" }),
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
       });
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -314,7 +334,12 @@ describe("JiraAdapter", () => {
     it("should handle plain text description", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ id: "10001", key: "TEST-123", self: "https://test.atlassian.net/rest/api/3/issue/10001" }),
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
       });
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -348,7 +373,12 @@ describe("JiraAdapter", () => {
     it("should include assignee when provided", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ id: "10001", key: "TEST-123", self: "https://test.atlassian.net/rest/api/3/issue/10001" }),
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
       });
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -873,7 +903,9 @@ describe("JiraAdapter", () => {
     it("should return null on error", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       const result = await adapter.getCurrentUser();
 
       expect(result).toBeNull();
@@ -947,9 +979,9 @@ describe("JiraAdapter", () => {
         text: () => Promise.resolve("Invalid code"),
       });
 
-      await expect(adapter.exchangeCodeForTokens("invalid-code")).rejects.toThrow(
-        "Failed to exchange code for tokens"
-      );
+      await expect(
+        adapter.exchangeCodeForTokens("invalid-code")
+      ).rejects.toThrow("Failed to exchange code for tokens");
 
       vi.unstubAllEnvs();
     });

@@ -6,13 +6,22 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ApplicationArea, Attachments, Color as PrismaColor, SharedStepGroup as PrismaSharedStepGroup,
+  ApplicationArea,
+  Attachments,
+  Color as PrismaColor,
+  SharedStepGroup as PrismaSharedStepGroup,
   SharedStepItem as PrismaSharedStepItem,
-  Status as PrismaStatus, Steps
+  Status as PrismaStatus,
+  Steps,
 } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Bug, Combine, Layers, ListChecks, LockIcon, SearchCheck
+  Bug,
+  Combine,
+  Layers,
+  ListChecks,
+  LockIcon,
+  SearchCheck,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -24,11 +33,22 @@ import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateResultFieldValues, useCreateTestRunStepResults, useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstWorkflows, useFindManyIssue, useFindManySharedStepItem, useFindManyStatus, useFindManyTemplateResultAssignment, useFindManyTestRunResults, useUpdateTestRunCases
+  useCreateAttachments,
+  useCreateResultFieldValues,
+  useCreateTestRunStepResults,
+  useFindFirstProjects,
+  useFindFirstRepositoryCases,
+  useFindFirstWorkflows,
+  useFindManyIssue,
+  useFindManySharedStepItem,
+  useFindManyStatus,
+  useFindManyTemplateResultAssignment,
+  useFindManyTestRunResults,
+  useUpdateTestRunCases,
 } from "~/lib/hooks";
 import {
   isPermissionDeniedSubmitResultError,
-  submitTestRunResult
+  submitTestRunResult,
 } from "~/lib/test-run-result-submit";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -41,7 +61,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -49,7 +69,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,7 +77,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 
 import { MAX_DURATION } from "~/app/constants";
@@ -233,8 +253,7 @@ export function AddResultModal({
     await queryClient.invalidateQueries();
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [, setSelectedStatusColor] =
-    useState<string>("#3b82f6");
+  const [, setSelectedStatusColor] = useState<string>("#3b82f6");
   const [editorKey, setEditorKey] = useState<number>(0);
   const [uploadAttachmentsKey, setUploadAttachmentsKey] = useState<number>(0);
   const [, setTrackedSeconds] = useState(0);
@@ -494,9 +513,7 @@ export function AddResultModal({
   });
 
   // Fetch permissions
-  const {
-    permissions: restrictedFieldsPermissions,
-  } = useProjectPermissions(
+  const { permissions: restrictedFieldsPermissions } = useProjectPermissions(
     projectId,
     ApplicationArea.TestRunResultRestrictedFields
   );

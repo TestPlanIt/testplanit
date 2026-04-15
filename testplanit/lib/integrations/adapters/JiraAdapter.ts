@@ -1,6 +1,11 @@
 import { BaseAdapter } from "./BaseAdapter";
 import {
-  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
+  AuthenticationData,
+  CreateIssueData,
+  IssueAdapterCapabilities,
+  IssueData,
+  IssueSearchOptions,
+  UpdateIssueData,
 } from "./IssueAdapter";
 
 /**

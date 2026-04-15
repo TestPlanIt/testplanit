@@ -216,10 +216,7 @@ export default function StepDuplicatesPage() {
             </div>
           )}
           {!isScanning && (
-            <Button
-              variant="outline"
-              onClick={handleRescan}
-            >
+            <Button variant="outline" onClick={handleRescan}>
               <RefreshCw className="h-4 w-4" />
               {t("rescan")}
             </Button>

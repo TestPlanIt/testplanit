@@ -3,13 +3,15 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockUseFindManyIssue, mockUseFindManyProjectIntegration, mockUseFindManyIntegrationProject } = vi.hoisted(
-  () => ({
-    mockUseFindManyIssue: vi.fn(),
-    mockUseFindManyProjectIntegration: vi.fn(),
-    mockUseFindManyIntegrationProject: vi.fn(),
-  })
-);
+const {
+  mockUseFindManyIssue,
+  mockUseFindManyProjectIntegration,
+  mockUseFindManyIntegrationProject,
+} = vi.hoisted(() => ({
+  mockUseFindManyIssue: vi.fn(),
+  mockUseFindManyProjectIntegration: vi.fn(),
+  mockUseFindManyIntegrationProject: vi.fn(),
+}));
 
 // --- Mocks ---
 
@@ -254,12 +256,7 @@ describe("SearchIssuesDialog", () => {
     const issue = makeInternalIssue(5);
     mockUseFindManyIssue.mockReturnValue({ data: [issue], isLoading: false });
 
-    render(
-      <SearchIssuesDialog
-        {...defaultProps}
-        linkedIssueIds={[5]}
-      />
-    );
+    render(<SearchIssuesDialog {...defaultProps} linkedIssueIds={[5]} />);
 
     // Type to show results
     const searchInput = screen.getByRole("textbox");
@@ -340,7 +337,9 @@ describe("SearchIssuesDialog", () => {
     await waitFor(() => {
       const loader = document.querySelector(".animate-spin");
       // It's OK if the loading finished quickly in test env
-      expect(loader !== null || screen.queryByRole("dialog") !== null).toBe(true);
+      expect(loader !== null || screen.queryByRole("dialog") !== null).toBe(
+        true
+      );
     });
   });
 
@@ -515,12 +514,12 @@ describe("SearchIssuesDialog", () => {
           .filter((url) => url.includes("/search"));
 
         // Each project's externalProjectId should be in separate calls
-        expect(
-          searchUrls.some((url) => url.includes("projectId=10005"))
-        ).toBe(true);
-        expect(
-          searchUrls.some((url) => url.includes("projectId=10400"))
-        ).toBe(true);
+        expect(searchUrls.some((url) => url.includes("projectId=10005"))).toBe(
+          true
+        );
+        expect(searchUrls.some((url) => url.includes("projectId=10400"))).toBe(
+          true
+        );
       });
     });
 
@@ -543,7 +542,12 @@ describe("SearchIssuesDialog", () => {
             status: 200,
             json: async () => ({
               issues: [
-                { id: "liv-1", key: "LIV-1", title: "LIV Story", status: "Done" },
+                {
+                  id: "liv-1",
+                  key: "LIV-1",
+                  title: "LIV Story",
+                  status: "Done",
+                },
               ],
             }),
           });
@@ -611,7 +615,12 @@ describe("SearchIssuesDialog", () => {
             status: 200,
             json: async () => ({
               issues: [
-                { id: "abt-1", key: "ABT-1", title: "Success Bug", status: "Open" },
+                {
+                  id: "abt-1",
+                  key: "ABT-1",
+                  title: "Success Bug",
+                  status: "Open",
+                },
               ],
             }),
           });

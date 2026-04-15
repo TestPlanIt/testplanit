@@ -31,10 +31,15 @@ export const reportRequestSchema = z
     startDate: z.iso.datetime().optional(),
     endDate: z.iso.datetime().optional(),
     page: z.number().int().positive().optional().default(1),
-    pageSize: z.union([z.number().int().positive(), z.literal("All")]).optional(),
+    pageSize: z
+      .union([z.number().int().positive(), z.literal("All")])
+      .optional(),
     sortColumn: z.string().optional(),
     sortDirection: z.enum(["asc", "desc"]).optional(),
-    dateGrouping: z.enum(["daily", "weekly", "monthly", "quarterly", "annually"]).optional().default("weekly"),
+    dateGrouping: z
+      .enum(["daily", "weekly", "monthly", "quarterly", "annually"])
+      .optional()
+      .default("weekly"),
   })
   .superRefine((data, ctx) => {
     // Rule: If endDate is provided, startDate must also be provided

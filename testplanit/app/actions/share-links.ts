@@ -11,9 +11,7 @@ import { authOptions } from "~/server/auth";
  * Server action to prepare share link data
  * Generates share key and hashes password if needed
  */
-export async function prepareShareLinkData(data: {
-  password?: string | null;
-}) {
+export async function prepareShareLinkData(data: { password?: string | null }) {
   const shareKey = generateShareKey();
 
   let passwordHash: string | null = null;

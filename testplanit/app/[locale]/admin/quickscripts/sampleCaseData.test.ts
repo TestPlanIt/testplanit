@@ -113,16 +113,12 @@ describe("buildSampleFields", () => {
   });
 
   it("should fall back to 'Sample value' when type is null", () => {
-    const result = buildSampleFields([
-      { systemName: "noType", type: null },
-    ]);
+    const result = buildSampleFields([{ systemName: "noType", type: null }]);
     expect(result).toEqual({ noType: "Sample value" });
   });
 
   it("should fall back to 'Sample value' when type is undefined", () => {
-    const result = buildSampleFields([
-      { systemName: "noType" },
-    ]);
+    const result = buildSampleFields([{ systemName: "noType" }]);
     expect(result).toEqual({ noType: "Sample value" });
   });
 

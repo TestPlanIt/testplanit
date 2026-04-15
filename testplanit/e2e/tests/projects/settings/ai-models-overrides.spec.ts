@@ -15,7 +15,9 @@ test.describe("Project AI Models - Feature Overrides Table", () => {
     api,
   }) => {
     // Create a fresh project so we have a valid projectId
-    const projectId = await api.createProject(`E2E AI Models Features ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E AI Models Features ${Date.now()}`
+    );
 
     await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
     await page.waitForLoadState("networkidle");
@@ -40,10 +42,7 @@ test.describe("Project AI Models - Feature Overrides Table", () => {
 });
 
 test.describe("Project AI Models - Assign Per-Feature Override", () => {
-  test("Assign LLM override for a feature", async ({
-    page,
-    api,
-  }) => {
+  test("Assign LLM override for a feature", async ({ page, api }) => {
     const ts = Date.now();
     const llmName = `E2E Override ${ts}`;
 

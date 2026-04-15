@@ -160,7 +160,9 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
       (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
@@ -176,7 +178,9 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
       (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
@@ -203,7 +207,9 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
       (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
@@ -288,7 +294,9 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
       (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
@@ -313,7 +321,9 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
       (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
@@ -337,8 +347,12 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
-      (prisma.promptConfig.create as any).mockRejectedValue(new Error("DB error"));
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
+      (prisma.promptConfig.create as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);
@@ -352,7 +366,9 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(mockIntegrations);
+      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+        mockIntegrations
+      );
       (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);

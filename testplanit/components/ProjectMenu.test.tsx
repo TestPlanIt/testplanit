@@ -45,7 +45,10 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
 // Mock ProjectDropdownMenu as a simple div
 vi.mock("@/components/ProjectDropdownMenu", () => ({
   ProjectDropdownMenu: ({ isCollapsed }: any) => (
-    <div data-testid="project-dropdown-menu" data-collapsed={String(isCollapsed)} />
+    <div
+      data-testid="project-dropdown-menu"
+      data-collapsed={String(isCollapsed)}
+    />
   ),
 }));
 
@@ -68,7 +71,11 @@ vi.mock("@/components/ui/card", () => ({
 // Mock Accordion components
 vi.mock("@/components/ui/accordion", () => ({
   Accordion: ({ children, value, onValueChange }: any) => (
-    <div data-testid="accordion" data-value={JSON.stringify(value)} onClick={() => onValueChange?.([])}>
+    <div
+      data-testid="accordion"
+      data-value={JSON.stringify(value)}
+      onClick={() => onValueChange?.([])}
+    >
       {children}
     </div>
   ),
@@ -148,9 +155,15 @@ beforeEach(() => {
   const store: Record<string, string> = {};
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, val: string) => { store[key] = val; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { Object.keys(store).forEach(k => delete store[k]); },
+    setItem: (key: string, val: string) => {
+      store[key] = val;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      Object.keys(store).forEach((k) => delete store[k]);
+    },
   });
 });
 
@@ -187,7 +200,9 @@ describe("ProjectsMenu", () => {
 
     it("renders management section", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
-      expect(screen.getByTestId("project-menu-section-management")).toBeDefined();
+      expect(
+        screen.getByTestId("project-menu-section-management")
+      ).toBeDefined();
     });
 
     it("renders settings section for ADMIN user", () => {
@@ -209,7 +224,9 @@ describe("ProjectsMenu", () => {
 
     it("shows settings section for PROJECTADMIN user", () => {
       mockUseSession.mockReturnValue({
-        data: { user: { id: "pa-user", access: "PROJECTADMIN", preferences: {} } },
+        data: {
+          user: { id: "pa-user", access: "PROJECTADMIN", preferences: {} },
+        },
         status: "authenticated",
       });
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
@@ -222,7 +239,9 @@ describe("ProjectsMenu", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const overviewLink = document.getElementById("overview-link");
       expect(overviewLink).toBeDefined();
-      expect(overviewLink?.getAttribute("href")).toContain("/projects/overview/42");
+      expect(overviewLink?.getAttribute("href")).toContain(
+        "/projects/overview/42"
+      );
     });
 
     it("renders test-cases link in management section", () => {
@@ -253,7 +272,11 @@ describe("ProjectsMenu", () => {
         if (callCount === 1) {
           // SharedSteps area
           return {
-            permissions: { canAddEdit: false, canDelete: false, canClose: false },
+            permissions: {
+              canAddEdit: false,
+              canDelete: false,
+              canClose: false,
+            },
             isLoading: false,
             error: null,
           };
@@ -274,7 +297,9 @@ describe("ProjectsMenu", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const link = document.getElementById("settings-integrations-link");
       expect(link).toBeDefined();
-      expect(link?.getAttribute("href")).toContain("/projects/settings/42/integrations");
+      expect(link?.getAttribute("href")).toContain(
+        "/projects/settings/42/integrations"
+      );
     });
 
     it("renders milestones link", () => {

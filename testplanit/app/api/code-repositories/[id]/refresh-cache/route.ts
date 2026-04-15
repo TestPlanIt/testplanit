@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import {
   refreshRepoCache,
-  refreshRepoCacheContentsOnly
+  refreshRepoCacheContentsOnly,
 } from "~/lib/services/repoCacheRefreshService";
 import { authOptions } from "~/server/auth";
 
@@ -23,10 +23,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       select: { access: true },
     });
 
-    if (
-      !user?.access ||
-      !["ADMIN", "PROJECTADMIN"].includes(user.access)
-    ) {
+    if (!user?.access || !["ADMIN", "PROJECTADMIN"].includes(user.access)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -68,14 +65,20 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
-        { status: result.error === "File caching is disabled for this project" ? 400 : 500 }
+        {
+          status:
+            result.error === "File caching is disabled for this project"
+              ? 400
+              : 500,
+        }
       );
     }
 
     return NextResponse.json(result);
   } catch (err: unknown) {
     console.error("[POST refresh-cache]:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }

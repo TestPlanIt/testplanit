@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { CommentService } from "~/lib/services/commentService";
 import {
   extractMentionedUserIds,
-  isValidTipTapContent
+  isValidTipTapContent,
 } from "~/lib/utils/tiptapMentions";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -299,7 +299,8 @@ export async function updateComment(input: UpdateCommentInput) {
       entityType = "Milestone";
       entityName = existingComment.milestone.name;
       entityId = existingComment.milestone.id.toString();
-      milestoneTypeIconName = existingComment.milestone.milestoneType?.icon?.name;
+      milestoneTypeIconName =
+        existingComment.milestone.milestoneType?.icon?.name;
     } else {
       throw new Error("Comment entity not found");
     }

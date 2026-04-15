@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Form, FormControl } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -38,9 +38,7 @@ const CombinationSelectionDialog: React.FC<CombinationSelectionDialogProps> = ({
   onNext,
   categories,
 }) => {
-  const [selectedCombinations] = useState<number[][]>(
-    []
-  );
+  const [selectedCombinations] = useState<number[][]>([]);
   const [allCombinations, setAllCombinations] = useState<
     { combination: number[]; selected: boolean }[]
   >([]);
@@ -169,7 +167,9 @@ const CombinationSelectionDialog: React.FC<CombinationSelectionDialogProps> = ({
           <form onSubmit={form.handleSubmit(handleNext)} className="space-y-2">
             <DialogHeader>
               <DialogTitle>{t("selectCombination")}</DialogTitle>
-              <div className="text-muted-foreground text-sm">{tGlobal("common.fields.step")}</div>
+              <div className="text-muted-foreground text-sm">
+                {tGlobal("common.fields.step")}
+              </div>
             </DialogHeader>
             <DialogDescription>
               {t("selectCombinationDescription")}

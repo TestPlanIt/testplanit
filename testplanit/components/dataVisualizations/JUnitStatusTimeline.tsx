@@ -170,16 +170,14 @@ const JUnitStatusTimeline: React.FC<JUnitStatusTimelineProps> = ({
         // Add event handlers before animation
         segments
           .on("mouseover", function (event, d) {
-            tooltip
-              .style("display", "block")
-              .html(
-                `<strong>${d.testCaseName}</strong><br/>` +
-                  t("charts.status", { status: d.statusName }) +
-                  "<br/>" +
-                  t("common.ui.charts.duration", {
-                    seconds: d.duration.toFixed(2),
-                  })
-              );
+            tooltip.style("display", "block").html(
+              `<strong>${d.testCaseName}</strong><br/>` +
+                t("charts.status", { status: d.statusName }) +
+                "<br/>" +
+                t("common.ui.charts.duration", {
+                  seconds: d.duration.toFixed(2),
+                })
+            );
             d3.select(this).attr("opacity", 0.8);
           })
           .on("mousemove", function (event) {

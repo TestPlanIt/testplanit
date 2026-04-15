@@ -2,9 +2,11 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import type {
   LlmAdapterConfig,
-  LlmModelInfo, LlmRequest,
+  LlmModelInfo,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse, RateLimitInfo
+  LlmStreamResponse,
+  RateLimitInfo,
 } from "../types";
 import { BaseLlmAdapter } from "./base.adapter";
 

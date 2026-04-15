@@ -21,7 +21,9 @@ export class NotificationService {
   static async createNotification(params: CreateNotificationParams) {
     const notificationQueue = getNotificationQueue();
     if (!notificationQueue) {
-      console.warn("Notification queue not available, notification not created");
+      console.warn(
+        "Notification queue not available, notification not created"
+      );
       return;
     }
 
@@ -31,12 +33,18 @@ export class NotificationService {
         tenantId: params.tenantId ?? getCurrentTenantId(),
       };
 
-      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
-        removeOnComplete: true,
-        removeOnFail: false,
-      });
+      const job = await notificationQueue.add(
+        JOB_CREATE_NOTIFICATION,
+        jobData,
+        {
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      );
 
-      console.log(`Queued notification job ${job.id} for user ${params.userId}`);
+      console.log(
+        `Queued notification job ${job.id} for user ${params.userId}`
+      );
       return job.id;
     } catch (error) {
       console.error("Failed to queue notification:", error);
@@ -61,7 +69,10 @@ export class NotificationService {
 
     return this.createNotification({
       userId: assignedToId,
-      type: entityType === "TestRunCase" ? NotificationType.WORK_ASSIGNED : NotificationType.SESSION_ASSIGNED,
+      type:
+        entityType === "TestRunCase"
+          ? NotificationType.WORK_ASSIGNED
+          : NotificationType.SESSION_ASSIGNED,
       title,
       message,
       relatedEntityId: entityId,
@@ -78,7 +89,10 @@ export class NotificationService {
   /**
    * Mark notifications as read
    */
-  static async markNotificationsAsRead(notificationIds: string[], _userId: string) {
+  static async markNotificationsAsRead(
+    notificationIds: string[],
+    _userId: string
+  ) {
     // This will be handled by the API endpoint using ZenStack hooks
     // The service method is here for consistency
     return notificationIds;
@@ -141,7 +155,7 @@ export class NotificationService {
   ) {
     // Import db directly to avoid circular dependencies
     const { db } = await import("~/server/db");
-    
+
     try {
       // Find all users with ADMIN access
       const systemAdmins = await db.user.findMany({
@@ -183,7 +197,9 @@ export class NotificationService {
       );
 
       await Promise.all(notificationPromises);
-      console.log(`Created user registration notifications for ${systemAdmins.length} system administrators`);
+      console.log(
+        `Created user registration notifications for ${systemAdmins.length} system administrators`
+      );
     } catch (error) {
       console.error("Failed to create user registration notifications:", error);
       // Don't throw error as this is a non-critical operation

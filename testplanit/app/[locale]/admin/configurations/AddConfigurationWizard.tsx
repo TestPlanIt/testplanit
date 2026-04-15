@@ -5,7 +5,8 @@ import { PlusCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import {
-  useCreateConfigurations, useFindManyConfigCategories
+  useCreateConfigurations,
+  useFindManyConfigCategories,
 } from "~/lib/hooks";
 import CombinationSelectionDialog from "./CombinationSelectionDialog";
 import ConfirmationDialog from "./ConfirmationDialog";

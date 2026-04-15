@@ -55,16 +55,18 @@ function buildDuplicationDefaults(
 
 describe("AddSessionModal - Multi-Configuration Logic", () => {
   it("creates a single session with null config when no configs selected", () => {
-    const { configsToCreate, configurationGroupId } =
-      resolveConfigsToCreate([]);
+    const { configsToCreate, configurationGroupId } = resolveConfigsToCreate(
+      []
+    );
 
     expect(configsToCreate).toEqual([null]);
     expect(configurationGroupId).toBeNull();
   });
 
   it("creates a single session with no group ID when one config selected", () => {
-    const { configsToCreate, configurationGroupId } =
-      resolveConfigsToCreate([42]);
+    const { configsToCreate, configurationGroupId } = resolveConfigsToCreate([
+      42,
+    ]);
 
     expect(configsToCreate).toEqual([42]);
     expect(configurationGroupId).toBeNull();

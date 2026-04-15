@@ -1,5 +1,6 @@
 import {
-  AttachmentChanges, AttachmentsDisplay
+  AttachmentChanges,
+  AttachmentsDisplay,
 } from "@/components/AttachmentsDisplay";
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
@@ -11,15 +12,19 @@ import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
-  FormControl, FormField,
+  FormControl,
+  FormField,
   FormItem,
-  FormLabel, FormMessage
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import UploadAttachments from "@/components/UploadAttachments";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -256,40 +261,40 @@ function TestRunFormControls({
         control={control}
         name="configId"
         render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                {!isEditMode && selectedConfigurationsForDisplay.length > 1
-                  ? t("common.fields.configurations")
-                  : t("common.fields.configuration")}
-              </FormLabel>
-              <FormControl>
-                {isEditMode ? (
-                  <ConfigurationSelect
-                    value={field.value}
-                    onChange={(val) => field.onChange(val)}
-                    disabled={isSubmitting || !canAddEdit}
-                  />
-                ) : selectedConfigurationsForDisplay.length > 1 ? (
-                  <div className="flex flex-col gap-1">
-                    {selectedConfigurationsForDisplay.map((config) => (
-                      <ConfigurationNameDisplay
-                        key={config.id}
-                        name={config.configuration?.name || config.name}
-                        iconClassName="mt-0.5 shrink-0"
-                        truncate
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <ConfigurationNameDisplay
-                    name={testRun?.configuration?.name}
-                    className="items-start"
-                    iconClassName="mt-0.5"
-                  />
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          <FormItem>
+            <FormLabel>
+              {!isEditMode && selectedConfigurationsForDisplay.length > 1
+                ? t("common.fields.configurations")
+                : t("common.fields.configuration")}
+            </FormLabel>
+            <FormControl>
+              {isEditMode ? (
+                <ConfigurationSelect
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  disabled={isSubmitting || !canAddEdit}
+                />
+              ) : selectedConfigurationsForDisplay.length > 1 ? (
+                <div className="flex flex-col gap-1">
+                  {selectedConfigurationsForDisplay.map((config) => (
+                    <ConfigurationNameDisplay
+                      key={config.id}
+                      name={config.configuration?.name || config.name}
+                      iconClassName="mt-0.5 shrink-0"
+                      truncate
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ConfigurationNameDisplay
+                  name={testRun?.configuration?.name}
+                  className="items-start"
+                  iconClassName="mt-0.5"
+                />
+              )}
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
       />
       {/* Milestone */}
@@ -341,33 +346,33 @@ function TestRunFormControls({
           />
         ) : (
           <div className="flex flex-wrap gap-2">
-            {testRun?.issues && testRun.issues.length > 0
-              ? testRun.issues.map((issue) => (
-                  <IssuesDisplay
-                    key={issue.id}
-                    id={issue.id}
-                    name={issue.name}
-                    externalId={issue.externalId}
-                    externalUrl={issue.externalUrl}
-                    title={issue.title}
-                    status={issue.externalStatus}
-                    projectIds={[Number(projectId)]}
-                    size="small"
-                    data={issue.data}
-                    integrationProvider={
-                      projectIntegration?.integration?.provider
-                    }
-                    integrationId={projectIntegration?.integration?.id}
-                    lastSyncedAt={issue.lastSyncedAt}
-                    issueTypeName={issue.issueTypeName}
-                    issueTypeIconUrl={issue.issueTypeIconUrl}
-                  />
-                ))
-              : (
-                  <span className="text-muted-foreground text-sm">
-                    {t("common.access.none")}
-                  </span>
-                )}
+            {testRun?.issues && testRun.issues.length > 0 ? (
+              testRun.issues.map((issue) => (
+                <IssuesDisplay
+                  key={issue.id}
+                  id={issue.id}
+                  name={issue.name}
+                  externalId={issue.externalId}
+                  externalUrl={issue.externalUrl}
+                  title={issue.title}
+                  status={issue.externalStatus}
+                  projectIds={[Number(projectId)]}
+                  size="small"
+                  data={issue.data}
+                  integrationProvider={
+                    projectIntegration?.integration?.provider
+                  }
+                  integrationId={projectIntegration?.integration?.id}
+                  lastSyncedAt={issue.lastSyncedAt}
+                  issueTypeName={issue.issueTypeName}
+                  issueTypeIconUrl={issue.issueTypeIconUrl}
+                />
+              ))
+            ) : (
+              <span className="text-muted-foreground text-sm">
+                {t("common.access.none")}
+              </span>
+            )}
           </div>
         )}
       </div>

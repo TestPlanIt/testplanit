@@ -47,7 +47,8 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
     const checkHeight = () => {
       if (contentRef.current) {
         // Check if there's actual overflow by comparing scrollHeight with clientHeight
-        const hasOverflow = contentRef.current.scrollHeight > contentRef.current.clientHeight;
+        const hasOverflow =
+          contentRef.current.scrollHeight > contentRef.current.clientHeight;
         setShowButton(expandable && hasOverflow);
       }
     };
@@ -62,7 +63,10 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
     const resizeObserver = new ResizeObserver(checkHeight);
 
     if (contentRef.current) {
-      mutationObserver.observe(contentRef.current, { childList: true, subtree: true });
+      mutationObserver.observe(contentRef.current, {
+        childList: true,
+        subtree: true,
+      });
       resizeObserver.observe(contentRef.current);
     }
 

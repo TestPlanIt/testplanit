@@ -58,9 +58,7 @@ function defaultNameField(dialog: Locator): Locator {
  * Waits for the dialog to be gone.
  */
 async function closeDialog(page: Page) {
-  const cancelButton = page
-    .getByRole("button", { name: /^cancel$/i })
-    .last();
+  const cancelButton = page.getByRole("button", { name: /^cancel$/i }).last();
   if (await cancelButton.isVisible().catch(() => false)) {
     await cancelButton.click();
   } else {
@@ -111,10 +109,7 @@ test("Repository AddFolder modal resets between opens", async ({
 
 // ---- Repository: AddCase -------------------------------------------------
 
-test("Repository AddCase modal resets between opens", async ({
-  page,
-  api,
-}) => {
+test("Repository AddCase modal resets between opens", async ({ page, api }) => {
   // AddCase needs a folder to live in. Create a project + folder first.
   const projectId = await api.createProject(
     `E2E Modal Reset Case ${Date.now()}-${Math.random().toString(36).substring(7)}`

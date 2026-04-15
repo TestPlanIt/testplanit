@@ -18,7 +18,11 @@ export interface MentionUser {
 
 export interface MentionSuggestionProps {
   items: MentionUser[];
-  command: (props: { id: string; label: string; image?: string | null }) => void;
+  command: (props: {
+    id: string;
+    label: string;
+    image?: string | null;
+  }) => void;
 }
 
 export interface MentionSuggestionRef {
@@ -130,11 +134,13 @@ export const MentionSuggestion = forwardRef<
                 )}
               </div>
               {item.name && (
-                <span className={cn(
-                  "text-xs truncate text-muted-foreground",
-                  "group-hover:text-accent-foreground/70",
-                  index === selectedIndex && "text-accent-foreground/70"
-                )}>
+                <span
+                  className={cn(
+                    "text-xs truncate text-muted-foreground",
+                    "group-hover:text-accent-foreground/70",
+                    index === selectedIndex && "text-accent-foreground/70"
+                  )}
+                >
                   {item.email}
                 </span>
               )}

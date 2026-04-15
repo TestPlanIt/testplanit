@@ -20,10 +20,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { jobId } = await context.params;
 
     if (!jobId || typeof jobId !== "string") {
-      return NextResponse.json(
-        { error: "Invalid job id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid job id" }, { status: 400 });
     }
 
     const datasets = await db.testmoImportDataset.findMany({

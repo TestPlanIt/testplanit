@@ -17,7 +17,9 @@ test.describe("Bulk Operations", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Bulk Edit Selected Test Cases", async ({ api, page }) => {
@@ -25,8 +27,16 @@ test.describe("Bulk Operations", () => {
 
     const folderName = `Bulk Edit Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const case1Id = await api.createTestCase(projectId, folderId, `Bulk Edit 1 ${Date.now()}`);
-    const case2Id = await api.createTestCase(projectId, folderId, `Bulk Edit 2 ${Date.now()}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Edit 1 ${Date.now()}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Edit 2 ${Date.now()}`
+    );
     await api.createTestCase(projectId, folderId, `Bulk Edit 3 ${Date.now()}`);
 
     await repositoryPage.goto(projectId);
@@ -47,12 +57,14 @@ test.describe("Bulk Operations", () => {
     await checkbox2.click();
 
     // Open bulk edit modal
-    const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]').first();
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
     await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
     await bulkEditButton.click();
 
     // Verify bulk edit modal opens (Dialog component)
-    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
+    const bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Verify it shows count of selected items in the title or content
@@ -65,8 +77,16 @@ test.describe("Bulk Operations", () => {
 
     const folderName = `Bulk State Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const case1Id = await api.createTestCase(projectId, folderId, `Bulk State 1 ${Date.now()}`);
-    const case2Id = await api.createTestCase(projectId, folderId, `Bulk State 2 ${Date.now()}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk State 1 ${Date.now()}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk State 2 ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
 
@@ -85,17 +105,19 @@ test.describe("Bulk Operations", () => {
     await checkbox2.click();
 
     // Open bulk edit modal
-    const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]').first();
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
     await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
     await bulkEditButton.click();
 
     // Wait for modal to open
-    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
+    const bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Enable editing of the "state" field by clicking its checkbox
     // The checkbox has id="edit-state"
-    const stateCheckbox = bulkEditModal.locator('#edit-state').first();
+    const stateCheckbox = bulkEditModal.locator("#edit-state").first();
     await expect(stateCheckbox).toBeVisible({ timeout: 5000 });
     await stateCheckbox.click();
 
@@ -151,25 +173,31 @@ test.describe("Bulk Operations", () => {
     await checkbox2.click();
 
     // Open bulk edit modal (delete is inside the modal)
-    const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]').first();
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
     await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
     await bulkEditButton.click();
 
     // Wait for modal to open - use a more specific selector for the bulk edit modal
-    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
+    const bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Click delete button in the modal footer (has Trash2 icon and destructive variant)
-    const deleteButton = bulkEditModal.locator('button:has(svg.lucide-trash-2)').first();
+    const deleteButton = bulkEditModal
+      .locator("button:has(svg.lucide-trash-2)")
+      .first();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
 
     // Wait for the popover to appear (it renders in a portal outside the dialog)
-    const popoverContent = page.locator('[data-radix-popper-content-wrapper]');
+    const popoverContent = page.locator("[data-radix-popper-content-wrapper]");
     await expect(popoverContent).toBeVisible({ timeout: 5000 });
 
     // The confirm delete button is inside the popover and has destructive variant with Trash2 icon
-    const confirmDeleteButton = popoverContent.locator('button:has(svg.lucide-trash-2)').first();
+    const confirmDeleteButton = popoverContent
+      .locator("button:has(svg.lucide-trash-2)")
+      .first();
     await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
     await confirmDeleteButton.click();
 
@@ -178,8 +206,12 @@ test.describe("Bulk Operations", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify test cases are deleted (no longer visible)
-    await expect(page.locator(`text="${case1Name}"`)).not.toBeVisible({ timeout: 5000 });
-    await expect(page.locator(`text="${case2Name}"`)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${case1Name}"`)).not.toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.locator(`text="${case2Name}"`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Bulk Delete Confirmation Shows Count", async ({ api, page }) => {
@@ -187,9 +219,21 @@ test.describe("Bulk Operations", () => {
 
     const folderName = `Bulk Count Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const case1Id = await api.createTestCase(projectId, folderId, `Bulk Count 1 ${Date.now()}`);
-    const case2Id = await api.createTestCase(projectId, folderId, `Bulk Count 2 ${Date.now()}`);
-    const case3Id = await api.createTestCase(projectId, folderId, `Bulk Count 3 ${Date.now()}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Count 1 ${Date.now()}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Count 2 ${Date.now()}`
+    );
+    const case3Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Bulk Count 3 ${Date.now()}`
+    );
 
     await repositoryPage.goto(projectId);
 
@@ -211,26 +255,32 @@ test.describe("Bulk Operations", () => {
     await checkbox3.click();
 
     // Open bulk edit modal
-    const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]').first();
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
     await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
     await bulkEditButton.click();
 
     // Wait for modal to open
-    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
+    const bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Click delete button
-    const deleteButton = bulkEditModal.locator('button:has(svg.lucide-trash-2)').first();
+    const deleteButton = bulkEditModal
+      .locator("button:has(svg.lucide-trash-2)")
+      .first();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
 
     // Verify confirmation popover shows count (3 cases)
-    const popoverContent = page.locator('[data-radix-popper-content-wrapper]');
+    const popoverContent = page.locator("[data-radix-popper-content-wrapper]");
     await expect(popoverContent).toBeVisible({ timeout: 5000 });
     await expect(popoverContent).toContainText(/3/);
 
     // Cancel to not actually delete
-    const cancelButton = popoverContent.locator('button:has-text("Cancel")').first();
+    const cancelButton = popoverContent
+      .locator('button:has-text("Cancel")')
+      .first();
     await cancelButton.click();
 
     // Popover should close
@@ -264,43 +314,58 @@ test.describe("Bulk Operations", () => {
     await checkbox2.click();
 
     // Open bulk edit modal
-    const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]').first();
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
     await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
     await bulkEditButton.click();
 
     // Wait for modal to open
-    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
+    const bulkEditModal = page.getByRole("dialog", { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Click delete button to open confirmation
-    const deleteButton = bulkEditModal.locator('button:has(svg.lucide-trash-2)').first();
+    const deleteButton = bulkEditModal
+      .locator("button:has(svg.lucide-trash-2)")
+      .first();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
 
     // Verify popover shows
-    const popoverContent = page.locator('[data-radix-popper-content-wrapper]');
+    const popoverContent = page.locator("[data-radix-popper-content-wrapper]");
     await expect(popoverContent).toBeVisible({ timeout: 5000 });
 
     // Cancel
-    const cancelButton = popoverContent.locator('button:has-text("Cancel")').first();
+    const cancelButton = popoverContent
+      .locator('button:has-text("Cancel")')
+      .first();
     await cancelButton.click();
 
     // Popover should close
     await expect(popoverContent).not.toBeVisible({ timeout: 5000 });
 
     // Close modal without saving
-    const closeButton = bulkEditModal.locator('button[aria-label="Close"], button:has(svg.lucide-x)').first();
+    const closeButton = bulkEditModal
+      .locator('button[aria-label="Close"], button:has(svg.lucide-x)')
+      .first();
     await closeButton.click();
 
     // Modal should close
     await expect(bulkEditModal).not.toBeVisible({ timeout: 5000 });
 
     // Test cases should still exist
-    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 5000 });
-    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
-  test("Move Test Cases to Different Folder via Detail Page", async ({ api, page }) => {
+  test("Move Test Cases to Different Folder via Detail Page", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create source and target folders via API
@@ -312,7 +377,11 @@ test.describe("Bulk Operations", () => {
 
     // Create a test case in the source folder via API
     const caseName = `Move Case ${uniqueId}`;
-    const caseId = await api.createTestCase(projectId, sourceFolderId, caseName);
+    const caseId = await api.createTestCase(
+      projectId,
+      sourceFolderId,
+      caseName
+    );
 
     // Navigate to the case detail page
     await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
@@ -332,14 +401,19 @@ test.describe("Bulk Operations", () => {
     // The FolderSelect (a Radix Select) should be visible in the card title area
     // It renders as a SelectTrigger with role="combobox", showing the current folder name
     // We need to find the one that shows the source folder name (not the project selector)
-    const folderSelect = page.locator('[role="combobox"]').filter({
-      hasText: sourceFolderName
-    }).first();
+    const folderSelect = page
+      .locator('[role="combobox"]')
+      .filter({
+        hasText: sourceFolderName,
+      })
+      .first();
     await expect(folderSelect).toBeVisible({ timeout: 10000 });
     await folderSelect.click();
 
     // Wait for select options to appear and click the target folder
-    const targetFolderOption = page.locator(`[role="option"]:has-text("${targetFolderName}")`).first();
+    const targetFolderOption = page
+      .locator(`[role="option"]:has-text("${targetFolderName}")`)
+      .first();
     await expect(targetFolderOption).toBeVisible({ timeout: 5000 });
     await targetFolderOption.click();
 
@@ -359,14 +433,18 @@ test.describe("Bulk Operations", () => {
     await page.waitForLoadState("networkidle");
 
     // The case should now be in the target folder
-    await expect(page.locator(`[data-row-id="${caseId}"]`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`[data-row-id="${caseId}"]`).first()).toBeVisible(
+      { timeout: 10000 }
+    );
 
     // Navigate to the source folder and verify the case is no longer there
     await repositoryPage2.selectFolder(sourceFolderId);
     await page.waitForLoadState("networkidle");
 
     // The case should NOT be in the source folder anymore
-    await expect(page.locator(`[data-row-id="${caseId}"]`)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`[data-row-id="${caseId}"]`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Select All Checkbox in Table Header", async ({ api, page }) => {
@@ -418,7 +496,9 @@ test.describe("Bulk Operations", () => {
     // Verify that some rows are now selected by checking if any row checkbox is checked
     // The checkboxes should have aria-checked="true" after selection
     await expect(async () => {
-      const checkedCheckboxes = page.locator('tbody [role="checkbox"][aria-checked="true"], tbody input[type="checkbox"]:checked');
+      const checkedCheckboxes = page.locator(
+        'tbody [role="checkbox"][aria-checked="true"], tbody input[type="checkbox"]:checked'
+      );
       const count = await checkedCheckboxes.count();
       expect(count).toBeGreaterThan(0);
     }).toPass({ timeout: 10000 });
@@ -427,8 +507,12 @@ test.describe("Bulk Operations", () => {
     // Either bulk-edit-button or create-test-run-button should appear when items are selected
     await expect(async () => {
       const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]');
-      const createRunButton = page.locator('[data-testid="create-test-run-button"]');
-      const eitherButtonVisible = await bulkEditButton.isVisible() || await createRunButton.isVisible();
+      const createRunButton = page.locator(
+        '[data-testid="create-test-run-button"]'
+      );
+      const eitherButtonVisible =
+        (await bulkEditButton.isVisible()) ||
+        (await createRunButton.isVisible());
       expect(eitherButtonVisible).toBe(true);
     }).toPass({ timeout: 10000 });
   });

@@ -7,14 +7,14 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -22,7 +22,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   Table,
@@ -30,11 +30,22 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
-  AlertCircle, CheckCircle2, ChevronLeft,
-  ChevronRight, ChevronUp, Clock, Eye, Loader2, RefreshCw, RotateCcw, Trash2, X, XCircle
+  AlertCircle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  Eye,
+  Loader2,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+  X,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useState } from "react";

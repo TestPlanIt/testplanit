@@ -15,12 +15,12 @@ interface CustomColumnMeta {
 
 // Extract the column visibility logic from DataTable for testing
 function getVisibleColumns<TData>(
-  columns: ColumnDef<TData>[], 
+  columns: ColumnDef<TData>[],
   columnVisibility: Record<string, boolean>,
   effectiveColumnVisibility: Record<string, boolean>
 ): ColumnDef<TData>[] {
   // This mirrors the visibleColumns logic from DataTable.tsx lines 229-265
-  
+
   // If we have effectiveColumnVisibility set, use it but still respect enableHiding: false
   if (Object.keys(effectiveColumnVisibility).length > 0) {
     return columns.filter((column) => {
@@ -71,14 +71,16 @@ describe("DataTable Column Visibility Logic", () => {
     },
     {
       id: "description",
-      header: "Description", 
+      header: "Description",
       accessorKey: "description",
       meta: { isVisible: true },
     },
     {
       id: "actions",
       header: "Actions",
-      cell: () => {"Edit"},
+      cell: () => {
+        "Edit";
+      },
       enableHiding: false, // Cannot be hidden
     },
   ];
@@ -93,7 +95,7 @@ describe("DataTable Column Visibility Logic", () => {
     {
       id: "description",
       header: "Description",
-      accessorKey: "description", 
+      accessorKey: "description",
       meta: { isVisible: true },
     },
     {
@@ -105,7 +107,9 @@ describe("DataTable Column Visibility Logic", () => {
     {
       id: "actions",
       header: "Actions",
-      cell: () => {"Edit"},
+      cell: () => {
+        "Edit";
+      },
       enableHiding: false,
     },
   ];
@@ -113,21 +117,25 @@ describe("DataTable Column Visibility Logic", () => {
   describe("Static columns", () => {
     it("should show all static columns with isVisible: true by default", () => {
       const visible = getVisibleColumns(staticColumns, {}, {});
-      
+
       expect(visible).toHaveLength(3);
-      expect(visible.map(col => col.id)).toEqual(["name", "description", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual([
+        "name",
+        "description",
+        "actions",
+      ]);
     });
 
     it("should always show columns with enableHiding: false", () => {
       const visible = getVisibleColumns(
-        staticColumns, 
-        {}, 
+        staticColumns,
+        {},
         { name: false, description: false, actions: false }
       );
-      
+
       // name and actions should still be visible because enableHiding: false
       expect(visible).toHaveLength(2);
-      expect(visible.map(col => col.id)).toEqual(["name", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual(["name", "actions"]);
     });
 
     it("should hide columns when effectiveColumnVisibility is explicitly false", () => {
@@ -138,17 +146,21 @@ describe("DataTable Column Visibility Logic", () => {
       );
 
       expect(visible).toHaveLength(2);
-      expect(visible.map(col => col.id)).toEqual(["name", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual(["name", "actions"]);
     });
   });
 
   describe("Dynamic columns", () => {
     it("should hide dynamic columns with isVisible: false by default", () => {
       const visible = getVisibleColumns(dynamicColumns, {}, {});
-      
+
       // customField should be hidden due to meta: { isVisible: false }
       expect(visible).toHaveLength(3);
-      expect(visible.map(col => col.id)).toEqual(["name", "description", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual([
+        "name",
+        "description",
+        "actions",
+      ]);
     });
 
     it("should show dynamic columns when explicitly set to visible", () => {
@@ -159,7 +171,12 @@ describe("DataTable Column Visibility Logic", () => {
       );
 
       expect(visible).toHaveLength(4);
-      expect(visible.map(col => col.id)).toEqual(["name", "description", "customField", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual([
+        "name",
+        "description",
+        "customField",
+        "actions",
+      ]);
     });
 
     it("should keep dynamic columns hidden when explicitly set to false", () => {
@@ -170,7 +187,11 @@ describe("DataTable Column Visibility Logic", () => {
       );
 
       expect(visible).toHaveLength(3);
-      expect(visible.map(col => col.id)).toEqual(["name", "description", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual([
+        "name",
+        "description",
+        "actions",
+      ]);
     });
   });
 
@@ -191,7 +212,7 @@ describe("DataTable Column Visibility Logic", () => {
       {
         id: "last",
         header: "Last Column",
-        accessorKey: "customField", 
+        accessorKey: "customField",
         meta: { isVisible: false }, // Should still show because it's last
       },
     ];
@@ -200,7 +221,7 @@ describe("DataTable Column Visibility Logic", () => {
       const visible = getVisibleColumns(orderedColumns, {}, {});
 
       expect(visible).toHaveLength(2);
-      expect(visible.map(col => col.id)).toEqual(["first", "last"]);
+      expect(visible.map((col) => col.id)).toEqual(["first", "last"]);
     });
   });
 
@@ -227,7 +248,9 @@ describe("DataTable Column Visibility Logic", () => {
       {
         id: "actions",
         header: "Actions",
-        cell: () => {"Edit"},
+        cell: () => {
+          "Edit";
+        },
         enableHiding: false, // Always visible
       },
     ];
@@ -238,7 +261,11 @@ describe("DataTable Column Visibility Logic", () => {
       // Should show: name (enableHiding: false), description (isVisible: true), actions (enableHiding: false)
       // Should hide: customField (isVisible: false)
       expect(visible).toHaveLength(3);
-      expect(visible.map(col => col.id)).toEqual(["name", "description", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual([
+        "name",
+        "description",
+        "actions",
+      ]);
     });
 
     it("should respect effectiveColumnVisibility over meta properties", () => {
@@ -250,7 +277,11 @@ describe("DataTable Column Visibility Logic", () => {
 
       // effectiveColumnVisibility should override meta properties
       expect(visible).toHaveLength(3);
-      expect(visible.map(col => col.id)).toEqual(["name", "customField", "actions"]);
+      expect(visible.map((col) => col.id)).toEqual([
+        "name",
+        "customField",
+        "actions",
+      ]);
     });
   });
 });

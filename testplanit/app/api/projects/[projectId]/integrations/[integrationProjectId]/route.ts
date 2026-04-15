@@ -24,10 +24,13 @@ export async function PATCH(
     const projectId = parseInt(projectIdParam);
 
     // Check if user has Manager or Admin access to this project
-    const isSystemAdmin = session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
+    const isSystemAdmin =
+      session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
 
     const project = isSystemAdmin
-      ? await prisma.projects.findUnique({ where: { id: projectId, isDeleted: false } })
+      ? await prisma.projects.findUnique({
+          where: { id: projectId, isDeleted: false },
+        })
       : await prisma.projects.findFirst({
           where: {
             id: projectId,
@@ -98,10 +101,13 @@ export async function DELETE(
     const projectId = parseInt(projectIdParam);
 
     // Check if user has Manager or Admin access to this project
-    const isSystemAdmin = session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
+    const isSystemAdmin =
+      session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
 
     const project = isSystemAdmin
-      ? await prisma.projects.findUnique({ where: { id: projectId, isDeleted: false } })
+      ? await prisma.projects.findUnique({
+          where: { id: projectId, isDeleted: false },
+        })
       : await prisma.projects.findFirst({
           where: {
             id: projectId,

@@ -40,15 +40,27 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test("Field order persists after page refresh", async ({ api, page: _page }) => {
+  test("Field order persists after page refresh", async ({
+    api,
+    page: _page,
+  }) => {
     // Create fields
     const field1 = `E2E Order A ${Date.now()}`;
     const field2 = `E2E Order B ${Date.now()}`;
     const field3 = `E2E Order C ${Date.now()}`;
 
-    const id1 = await api.createCaseField({ displayName: field1, typeName: "Text String" });
-    const id2 = await api.createCaseField({ displayName: field2, typeName: "Number" });
-    const id3 = await api.createCaseField({ displayName: field3, typeName: "Checkbox" });
+    const id1 = await api.createCaseField({
+      displayName: field1,
+      typeName: "Text String",
+    });
+    const id2 = await api.createCaseField({
+      displayName: field2,
+      typeName: "Number",
+    });
+    const id3 = await api.createCaseField({
+      displayName: field3,
+      typeName: "Checkbox",
+    });
 
     // Create template with specific field order
     const templateName = `E2E Order Test ${Date.now()}`;
@@ -110,7 +122,8 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.goto();
 
     // Verify initial field count
-    let fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
+    let fieldCount =
+      await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBe(1);
 
     // Delete the field
@@ -132,8 +145,14 @@ test.describe("Template-Field Relationships", () => {
     const field1 = `E2E Count A ${Date.now()}`;
     const field2 = `E2E Count B ${Date.now()}`;
 
-    const id1 = await api.createCaseField({ displayName: field1, typeName: "Text String" });
-    const id2 = await api.createCaseField({ displayName: field2, typeName: "Number" });
+    const id1 = await api.createCaseField({
+      displayName: field1,
+      typeName: "Text String",
+    });
+    const id2 = await api.createCaseField({
+      displayName: field2,
+      typeName: "Number",
+    });
 
     // Create template with fields
     const templateName = `E2E Count Test ${Date.now()}`;
@@ -145,7 +164,8 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.goto();
 
     // Verify count
-    const fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
+    const fieldCount =
+      await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBe(2);
   });
 
@@ -170,7 +190,8 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.goto();
 
     // Verify the field shows it's assigned to 2 templates
-    const templateCount = await templatesPage.getCaseFieldTemplatesCount(fieldName);
+    const templateCount =
+      await templatesPage.getCaseFieldTemplatesCount(fieldName);
     expect(templateCount).toBe(2);
   });
 
@@ -179,8 +200,14 @@ test.describe("Template-Field Relationships", () => {
     const field1 = `E2E Reorder A ${Date.now()}`;
     const field2 = `E2E Reorder B ${Date.now()}`;
 
-    const id1 = await api.createCaseField({ displayName: field1, typeName: "Text String" });
-    const id2 = await api.createCaseField({ displayName: field2, typeName: "Text String" });
+    const id1 = await api.createCaseField({
+      displayName: field1,
+      typeName: "Text String",
+    });
+    const id2 = await api.createCaseField({
+      displayName: field2,
+      typeName: "Text String",
+    });
 
     // Create template
     const templateName = `E2E Reorder Test ${Date.now()}`;
@@ -228,7 +255,8 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.expectTemplateInTable(template2);
 
     // Field should show count of 2 templates
-    const templateCount = await templatesPage.getCaseFieldTemplatesCount(fieldName);
+    const templateCount =
+      await templatesPage.getCaseFieldTemplatesCount(fieldName);
     expect(templateCount).toBe(2);
   });
 
@@ -280,7 +308,9 @@ test.describe("Project Assignments", () => {
 
   test("Deselect projects", async ({ api }) => {
     // Create a template with projects
-    const projectId = await api.createProject(`E2E Deselect Proj ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E Deselect Proj ${Date.now()}`
+    );
     const templateName = `E2E Deselect Test ${Date.now()}`;
     await api.createTemplate({
       name: templateName,
@@ -319,7 +349,9 @@ test.describe("Project Assignments", () => {
 
   test("Template appears in project dropdown", async ({ api }) => {
     // Create a template and assign it to a project
-    const projectId = await api.createProject(`E2E Proj Dropdown ${Date.now()}`);
+    const projectId = await api.createProject(
+      `E2E Proj Dropdown ${Date.now()}`
+    );
     const templateName = `E2E Tmpl In Proj ${Date.now()}`;
     await api.createTemplate({
       name: templateName,

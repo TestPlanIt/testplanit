@@ -14,7 +14,8 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("~/lib/schemas/reportRequestSchema", async (importOriginal) => {
-  const original = await importOriginal<typeof import("~/lib/schemas/reportRequestSchema")>();
+  const original =
+    await importOriginal<typeof import("~/lib/schemas/reportRequestSchema")>();
   return original;
 });
 

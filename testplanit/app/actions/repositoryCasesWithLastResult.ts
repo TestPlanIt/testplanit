@@ -129,7 +129,10 @@ const repositoryCaseSelectClause = {
   steps: {
     where: {
       isDeleted: false,
-      OR: [{ sharedStepGroupId: null }, { sharedStepGroup: { isDeleted: false } }],
+      OR: [
+        { sharedStepGroupId: null },
+        { sharedStepGroup: { isDeleted: false } },
+      ],
     },
     orderBy: { order: "asc" as const },
     select: {
@@ -326,7 +329,9 @@ export async function fetchRepositoryCasesWithLastResult(
  */
 export async function countRepositoryCasesWithLastResult(
   where: Prisma.RepositoryCasesWhereInput
-): Promise<{ success: true; count: number } | { success: false; error: string; count: 0 }> {
+): Promise<
+  { success: true; count: number } | { success: false; error: string; count: 0 }
+> {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return { success: false, error: "Unauthorized", count: 0 };

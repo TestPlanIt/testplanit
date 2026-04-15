@@ -9,7 +9,7 @@ describe("TestCaseSearchResult Component", () => {
         id: 1,
         name: "Test Case Name",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
       expect(screen.getByText("Test Case Name")).toBeInTheDocument();
     });
@@ -18,14 +18,14 @@ describe("TestCaseSearchResult Component", () => {
       const testCase = {
         id: 123,
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
       expect(screen.getByText("Case 123")).toBeInTheDocument();
     });
 
     it("should render fallback with Unknown when both name and id are missing", () => {
       const testCase = {};
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
       expect(screen.getByText("Case Unknown")).toBeInTheDocument();
     });
@@ -34,7 +34,7 @@ describe("TestCaseSearchResult Component", () => {
       const testCase = {
         id: "test-123",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
       expect(screen.getByText("Case test-123")).toBeInTheDocument();
     });
@@ -46,11 +46,13 @@ describe("TestCaseSearchResult Component", () => {
         name: "Deleted Test",
         isDeleted: true,
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
-      
+
       // Lucide icons render as SVG elements
-      const icon = screen.getByText("Deleted Test").parentElement?.querySelector("svg");
+      const icon = screen
+        .getByText("Deleted Test")
+        .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("lucide-trash-2");
     });
@@ -60,10 +62,12 @@ describe("TestCaseSearchResult Component", () => {
         name: "Automated Test",
         source: "JUNIT",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
-      
-      const icon = screen.getByText("Automated Test").parentElement?.querySelector("svg");
+
+      const icon = screen
+        .getByText("Automated Test")
+        .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("lucide-bot");
     });
@@ -73,10 +77,12 @@ describe("TestCaseSearchResult Component", () => {
         name: "Manual Test",
         source: "MANUAL",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
-      
-      const icon = screen.getByText("Manual Test").parentElement?.querySelector("svg");
+
+      const icon = screen
+        .getByText("Manual Test")
+        .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("lucide-list-checks");
     });
@@ -85,10 +91,12 @@ describe("TestCaseSearchResult Component", () => {
       const testCase = {
         name: "Default Test",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
-      
-      const icon = screen.getByText("Default Test").parentElement?.querySelector("svg");
+
+      const icon = screen
+        .getByText("Default Test")
+        .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("lucide-list-checks");
     });
@@ -98,9 +106,9 @@ describe("TestCaseSearchResult Component", () => {
         name: "No Icon Test",
         source: "JUNIT",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} showIcon={false} />);
-      
+
       const container = screen.getByText("No Icon Test").parentElement;
       const icon = container?.querySelector("svg");
       expect(icon).not.toBeInTheDocument();
@@ -112,10 +120,12 @@ describe("TestCaseSearchResult Component", () => {
         source: "JUNIT",
         isDeleted: true,
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
-      
-      const icon = screen.getByText("Deleted JUNIT Test").parentElement?.querySelector("svg");
+
+      const icon = screen
+        .getByText("Deleted JUNIT Test")
+        .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("lucide-trash-2");
       expect(icon).not.toHaveClass("lucide-bot");
@@ -128,9 +138,11 @@ describe("TestCaseSearchResult Component", () => {
         name: "Test Case",
       };
       const highlight = "Test <mark>Case</mark>";
-      
-      render(<TestCaseSearchResult testCase={testCase} highlight={highlight} />);
-      
+
+      render(
+        <TestCaseSearchResult testCase={testCase} highlight={highlight} />
+      );
+
       const highlightedElement = screen.getByText((content, element) => {
         return element?.innerHTML === highlight;
       });
@@ -142,9 +154,11 @@ describe("TestCaseSearchResult Component", () => {
         name: "Original Name",
       };
       const highlight = "Highlighted <mark>Name</mark>";
-      
-      render(<TestCaseSearchResult testCase={testCase} highlight={highlight} />);
-      
+
+      render(
+        <TestCaseSearchResult testCase={testCase} highlight={highlight} />
+      );
+
       expect(screen.queryByText("Original Name")).not.toBeInTheDocument();
       const highlightedElement = screen.getByText((content, element) => {
         return element?.innerHTML === highlight;
@@ -156,9 +170,9 @@ describe("TestCaseSearchResult Component", () => {
       const testCase = {
         name: "Test Case",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} highlight="" />);
-      
+
       expect(screen.getByText("Test Case")).toBeInTheDocument();
     });
   });
@@ -168,11 +182,13 @@ describe("TestCaseSearchResult Component", () => {
       const testCase = {
         name: "Test Case",
       };
-      
-      const { container } = render(<TestCaseSearchResult testCase={testCase} />);
-      
+
+      const { container } = render(
+        <TestCaseSearchResult testCase={testCase} />
+      );
+
       // The component returns a span with flex classes
-      const flexContainer = container.querySelector('.flex');
+      const flexContainer = container.querySelector(".flex");
       expect(flexContainer).toBeInTheDocument();
       expect(flexContainer).toHaveClass("flex");
       expect(flexContainer).toHaveClass("items-center");
@@ -189,21 +205,21 @@ describe("TestCaseSearchResult Component", () => {
         isDeleted: false,
       };
       const highlight = "Complete <mark>Test</mark>";
-      
+
       render(
-        <TestCaseSearchResult 
-          testCase={testCase} 
+        <TestCaseSearchResult
+          testCase={testCase}
           highlight={highlight}
           showIcon={true}
         />
       );
-      
+
       // Should show highlighted text
       const highlightedElement = screen.getByText((content, element) => {
         return element?.innerHTML === highlight;
       });
       expect(highlightedElement).toBeInTheDocument();
-      
+
       // Should show bot icon (not deleted)
       const icon = highlightedElement.parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
@@ -212,7 +228,7 @@ describe("TestCaseSearchResult Component", () => {
 
     it("should handle minimal props", () => {
       render(<TestCaseSearchResult testCase={{}} />);
-      
+
       expect(screen.getByText("Case Unknown")).toBeInTheDocument();
     });
 
@@ -221,7 +237,7 @@ describe("TestCaseSearchResult Component", () => {
         id: 789,
         name: "",
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
       expect(screen.getByText("Case 789")).toBeInTheDocument();
     });
@@ -231,7 +247,7 @@ describe("TestCaseSearchResult Component", () => {
         id: null as any,
         name: undefined as any,
       };
-      
+
       render(<TestCaseSearchResult testCase={testCase} />);
       expect(screen.getByText("Case Unknown")).toBeInTheDocument();
     });

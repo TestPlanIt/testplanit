@@ -4,12 +4,14 @@ import { ProjectAccessType, Roles, User } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
-  Control, UseFormGetValues, UseFormSetValue,
-  UseFormWatch
+  Control,
+  UseFormGetValues,
+  UseFormSetValue,
+  UseFormWatch,
 } from "react-hook-form";
 import {
   getBatchUserEffectiveProjectAccess,
-  UserEffectiveAccess
+  UserEffectiveAccess,
 } from "~/app/actions/getUserEffectiveProjectAccess";
 import { EditProjectFormData } from "./EditProject";
 
@@ -21,7 +23,9 @@ import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
-  SelectItem, SelectSeparator, SelectTrigger
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
 } from "@/components/ui/select";
 import { Loader2, Trash2 } from "lucide-react";
 

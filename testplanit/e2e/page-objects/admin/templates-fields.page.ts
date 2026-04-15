@@ -68,9 +68,9 @@ export class TemplatesFieldsPage extends BasePage {
     this.resultFieldsSection = page.getByTestId("result-fields-section");
 
     // Tables - inside each section
-    this.templatesTable = this.templatesSection.locator('table').first();
-    this.caseFieldsTable = this.caseFieldsSection.locator('table').first();
-    this.resultFieldsTable = this.resultFieldsSection.locator('table').first();
+    this.templatesTable = this.templatesSection.locator("table").first();
+    this.caseFieldsTable = this.caseFieldsSection.locator("table").first();
+    this.resultFieldsTable = this.resultFieldsSection.locator("table").first();
 
     // Add buttons - using test IDs
     this.addTemplateButton = page.getByTestId("add-template-button");
@@ -79,9 +79,15 @@ export class TemplatesFieldsPage extends BasePage {
 
     // Dialog/Modal
     this.dialog = page.locator('[role="dialog"]');
-    this.dialogTitle = this.dialog.locator('[role="dialog"] h2, [role="dialog"] [class*="DialogTitle"]').first();
-    this.submitButton = this.dialog.locator('button[type="submit"], button:has-text("Submit")').first();
-    this.cancelButton = this.dialog.locator('button:has-text("Cancel")').first();
+    this.dialogTitle = this.dialog
+      .locator('[role="dialog"] h2, [role="dialog"] [class*="DialogTitle"]')
+      .first();
+    this.submitButton = this.dialog
+      .locator('button[type="submit"], button:has-text("Submit")')
+      .first();
+    this.cancelButton = this.dialog
+      .locator('button:has-text("Cancel")')
+      .first();
   }
 
   // ============================================
@@ -130,7 +136,8 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async toggleTemplateEnabled(enabled: boolean): Promise<void> {
     const enabledSwitch = this.page.getByTestId("template-enabled-switch");
-    const currentState = await enabledSwitch.getAttribute("aria-checked") === "true";
+    const currentState =
+      (await enabledSwitch.getAttribute("aria-checked")) === "true";
     if (currentState !== enabled) {
       await enabledSwitch.click();
     }
@@ -141,7 +148,8 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async toggleTemplateDefault(isDefault: boolean): Promise<void> {
     const defaultSwitch = this.page.getByTestId("template-default-switch");
-    const currentState = await defaultSwitch.getAttribute("aria-checked") === "true";
+    const currentState =
+      (await defaultSwitch.getAttribute("aria-checked")) === "true";
     if (currentState !== isDefault) {
       await defaultSwitch.click();
     }
@@ -162,9 +170,12 @@ export class TemplatesFieldsPage extends BasePage {
     await this.page.waitForSelector('[role="listbox"]', { timeout: 5000 });
 
     // Wait for the specific option to appear in the listbox
-    const option = this.page.locator('[role="option"]').filter({
-      hasText: fieldName,
-    }).first();
+    const option = this.page
+      .locator('[role="option"]')
+      .filter({
+        hasText: fieldName,
+      })
+      .first();
     await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
@@ -187,9 +198,12 @@ export class TemplatesFieldsPage extends BasePage {
     await this.page.waitForSelector('[role="listbox"]', { timeout: 5000 });
 
     // Wait for the specific option to appear in the listbox
-    const option = this.page.locator('[role="option"]').filter({
-      hasText: fieldName,
-    }).first();
+    const option = this.page
+      .locator('[role="option"]')
+      .filter({
+        hasText: fieldName,
+      })
+      .first();
     await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
@@ -202,14 +216,22 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async selectProject(projectName: string): Promise<void> {
     // Find the projects multi-select
-    const projectsLabel = this.dialog.locator('label:has-text("Projects")').first();
-    const projectSelector = projectsLabel.locator('..').locator('[class*="select"], [class*="Select"]').first();
+    const projectsLabel = this.dialog
+      .locator('label:has-text("Projects")')
+      .first();
+    const projectSelector = projectsLabel
+      .locator("..")
+      .locator('[class*="select"], [class*="Select"]')
+      .first();
     await projectSelector.click();
 
     // Select the project from the dropdown
-    const option = this.page.locator('[class*="option"], [role="option"]').filter({
-      hasText: projectName,
-    }).first();
+    const option = this.page
+      .locator('[class*="option"], [role="option"]')
+      .filter({
+        hasText: projectName,
+      })
+      .first();
     await option.click();
 
     // Click outside to close the dropdown
@@ -258,7 +280,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Click the edit button for a template in the table
    */
   async clickEditTemplate(templateName: string): Promise<void> {
-    const row = this.templatesTable.locator("tr").filter({ hasText: templateName }).first();
+    const row = this.templatesTable
+      .locator("tr")
+      .filter({ hasText: templateName })
+      .first();
     const editButton = row.getByTestId("edit-template-button");
     await editButton.click();
     await expect(this.dialog).toBeVisible({ timeout: 5000 });
@@ -270,7 +295,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Click the delete button for a template in the table
    */
   async clickDeleteTemplate(templateName: string): Promise<void> {
-    const row = this.templatesTable.locator("tr").filter({ hasText: templateName }).first();
+    const row = this.templatesTable
+      .locator("tr")
+      .filter({ hasText: templateName })
+      .first();
     const deleteButton = row.getByTestId("delete-template-button");
     await deleteButton.click();
   }
@@ -281,7 +309,11 @@ export class TemplatesFieldsPage extends BasePage {
   async confirmDelete(): Promise<void> {
     const alertDialog = this.page.locator('[role="alertdialog"]');
     await expect(alertDialog).toBeVisible({ timeout: 5000 });
-    const confirmButton = alertDialog.locator('button:has-text("Delete"), button:has-text("Confirm"), button:has-text("Yes")').first();
+    const confirmButton = alertDialog
+      .locator(
+        'button:has-text("Delete"), button:has-text("Confirm"), button:has-text("Yes")'
+      )
+      .first();
     await confirmButton.click();
     await expect(alertDialog).not.toBeVisible({ timeout: 10000 });
     await this.page.waitForLoadState("networkidle");
@@ -291,7 +323,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle template enabled via the table switch
    */
   async toggleTemplateEnabledInTable(templateName: string): Promise<void> {
-    const row = this.templatesTable.locator("tr").filter({ hasText: templateName }).first();
+    const row = this.templatesTable
+      .locator("tr")
+      .filter({ hasText: templateName })
+      .first();
     // The enabled switch is typically in the 5th column (after Name, Case Fields, Result Fields, Projects)
     const enabledSwitch = row.locator('[role="switch"]').first();
 
@@ -302,7 +337,9 @@ export class TemplatesFieldsPage extends BasePage {
     await enabledSwitch.click();
 
     // Wait for the switch to change state
-    await expect(enabledSwitch).toHaveAttribute("aria-checked", expectedState, { timeout: 5000 });
+    await expect(enabledSwitch).toHaveAttribute("aria-checked", expectedState, {
+      timeout: 5000,
+    });
     await this.page.waitForLoadState("networkidle");
   }
 
@@ -310,7 +347,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle template default via the table switch
    */
   async toggleTemplateDefaultInTable(templateName: string): Promise<void> {
-    const row = this.templatesTable.locator("tr").filter({ hasText: templateName }).first();
+    const row = this.templatesTable
+      .locator("tr")
+      .filter({ hasText: templateName })
+      .first();
     // The default switch is typically the second switch in the row
     const defaultSwitch = row.locator('[role="switch"]').nth(1);
     await defaultSwitch.click();
@@ -341,7 +381,9 @@ export class TemplatesFieldsPage extends BasePage {
    * Fill the case field system name
    */
   async fillCaseFieldSystemName(name: string): Promise<void> {
-    const systemNameInput = this.dialog.locator('input[name="systemName"], input[placeholder*="System Name" i]').first();
+    const systemNameInput = this.dialog
+      .locator('input[name="systemName"], input[placeholder*="System Name" i]')
+      .first();
     // Clear and fill
     await systemNameInput.clear();
     await systemNameInput.fill(name);
@@ -351,7 +393,11 @@ export class TemplatesFieldsPage extends BasePage {
    * Fill the case field hint
    */
   async fillCaseFieldHint(hint: string): Promise<void> {
-    const hintInput = this.dialog.locator('input[name="hint"], textarea[name="hint"], input[placeholder*="Hint" i]').first();
+    const hintInput = this.dialog
+      .locator(
+        'input[name="hint"], textarea[name="hint"], input[placeholder*="Hint" i]'
+      )
+      .first();
     await hintInput.fill(hint);
   }
 
@@ -363,9 +409,12 @@ export class TemplatesFieldsPage extends BasePage {
     await typeSelector.click();
 
     // Select the type from the dropdown
-    const option = this.page.locator('[role="option"], [role="menuitem"]').filter({
-      hasText: new RegExp(`^${type}$`, "i"),
-    }).first();
+    const option = this.page
+      .locator('[role="option"], [role="menuitem"]')
+      .filter({
+        hasText: new RegExp(`^${type}$`, "i"),
+      })
+      .first();
     await option.click();
   }
 
@@ -373,14 +422,22 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle case field enabled
    */
   async toggleCaseFieldEnabled(enabled: boolean): Promise<void> {
-    const enabledLabel = this.dialog.locator('label:has-text("Enabled")').first();
-    const enabledSwitch = enabledLabel.locator('..').locator('[role="switch"]').first();
+    const enabledLabel = this.dialog
+      .locator('label:has-text("Enabled")')
+      .first();
+    const enabledSwitch = enabledLabel
+      .locator("..")
+      .locator('[role="switch"]')
+      .first();
 
     // Fallback: first switch
     const fallbackSwitch = this.dialog.locator('[role="switch"]').first();
-    const targetSwitch = await enabledSwitch.isVisible() ? enabledSwitch : fallbackSwitch;
+    const targetSwitch = (await enabledSwitch.isVisible())
+      ? enabledSwitch
+      : fallbackSwitch;
 
-    const currentState = await targetSwitch.getAttribute("aria-checked") === "true";
+    const currentState =
+      (await targetSwitch.getAttribute("aria-checked")) === "true";
     if (currentState !== enabled) {
       await targetSwitch.click();
     }
@@ -390,10 +447,16 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle case field required
    */
   async toggleCaseFieldRequired(required: boolean): Promise<void> {
-    const requiredLabel = this.dialog.locator('label:has-text("Required")').first();
-    const requiredSwitch = requiredLabel.locator('..').locator('[role="switch"]').first();
+    const requiredLabel = this.dialog
+      .locator('label:has-text("Required")')
+      .first();
+    const requiredSwitch = requiredLabel
+      .locator("..")
+      .locator('[role="switch"]')
+      .first();
 
-    const currentState = await requiredSwitch.getAttribute("aria-checked") === "true";
+    const currentState =
+      (await requiredSwitch.getAttribute("aria-checked")) === "true";
     if (currentState !== required) {
       await requiredSwitch.click();
     }
@@ -403,10 +466,16 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle case field restricted
    */
   async toggleCaseFieldRestricted(restricted: boolean): Promise<void> {
-    const restrictedLabel = this.dialog.locator('label:has-text("Restricted")').first();
-    const restrictedSwitch = restrictedLabel.locator('..').locator('[role="switch"]').first();
+    const restrictedLabel = this.dialog
+      .locator('label:has-text("Restricted")')
+      .first();
+    const restrictedSwitch = restrictedLabel
+      .locator("..")
+      .locator('[role="switch"]')
+      .first();
 
-    const currentState = await restrictedSwitch.getAttribute("aria-checked") === "true";
+    const currentState =
+      (await restrictedSwitch.getAttribute("aria-checked")) === "true";
     if (currentState !== restricted) {
       await restrictedSwitch.click();
     }
@@ -416,7 +485,9 @@ export class TemplatesFieldsPage extends BasePage {
    * Set the default value for text fields
    */
   async setCaseFieldDefaultValue(value: string): Promise<void> {
-    const defaultValueInput = this.dialog.getByTestId("case-field-defaultValue");
+    const defaultValueInput = this.dialog.getByTestId(
+      "case-field-defaultValue"
+    );
     await defaultValueInput.fill(value);
   }
 
@@ -464,11 +535,17 @@ export class TemplatesFieldsPage extends BasePage {
    * Set the default checked state for checkbox fields
    */
   async setCaseFieldDefaultChecked(checked: boolean): Promise<void> {
-    const defaultLabel = this.dialog.locator('label:has-text("Default"), label:has-text("Checked")').first();
-    const defaultSwitch = defaultLabel.locator('..').locator('[role="switch"], input[type="checkbox"]').first();
+    const defaultLabel = this.dialog
+      .locator('label:has-text("Default"), label:has-text("Checked")')
+      .first();
+    const defaultSwitch = defaultLabel
+      .locator("..")
+      .locator('[role="switch"], input[type="checkbox"]')
+      .first();
 
-    const currentState = await defaultSwitch.getAttribute("aria-checked") === "true" ||
-      await defaultSwitch.isChecked?.() === true;
+    const currentState =
+      (await defaultSwitch.getAttribute("aria-checked")) === "true" ||
+      (await defaultSwitch.isChecked?.()) === true;
     if (currentState !== checked) {
       await defaultSwitch.click();
     }
@@ -494,9 +571,12 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async setDropdownOptionDefault(optionName: string): Promise<void> {
     // Find the option row by name - it's a div with class "cursor-ns-resize"
-    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
-      hasText: optionName,
-    }).first();
+    const optionRow = this.dialog
+      .locator("div.cursor-ns-resize")
+      .filter({
+        hasText: optionName,
+      })
+      .first();
 
     // Find and click the radio button (role="radio") in that row
     const radioButton = optionRow.locator('button[role="radio"]').first();
@@ -509,12 +589,17 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async setDropdownOptionIcon(optionName: string): Promise<void> {
     // Find the option row - it's a div with class "cursor-ns-resize"
-    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
-      hasText: optionName,
-    }).first();
+    const optionRow = this.dialog
+      .locator("div.cursor-ns-resize")
+      .filter({
+        hasText: optionName,
+      })
+      .first();
 
     // Click the icon picker button (has aria-label="icon-picker")
-    const iconButton = optionRow.locator('button[aria-label="icon-picker"]').first();
+    const iconButton = optionRow
+      .locator('button[aria-label="icon-picker"]')
+      .first();
     await iconButton.click();
     await this.page.waitForTimeout(300);
 
@@ -529,12 +614,17 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async setDropdownOptionColor(optionName: string): Promise<void> {
     // Find the option row - it's a div with class "cursor-ns-resize"
-    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
-      hasText: optionName,
-    }).first();
+    const optionRow = this.dialog
+      .locator("div.cursor-ns-resize")
+      .filter({
+        hasText: optionName,
+      })
+      .first();
 
     // Click the color picker button (has aria-label="color-picker")
-    const colorButton = optionRow.locator('button[aria-label="color-picker"]').first();
+    const colorButton = optionRow
+      .locator('button[aria-label="color-picker"]')
+      .first();
     await colorButton.click();
     await this.page.waitForTimeout(300);
 
@@ -549,9 +639,12 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async toggleDropdownOptionEnabled(optionName: string): Promise<void> {
     // Find the option row - it's a div with class "cursor-ns-resize"
-    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
-      hasText: optionName,
-    }).first();
+    const optionRow = this.dialog
+      .locator("div.cursor-ns-resize")
+      .filter({
+        hasText: optionName,
+      })
+      .first();
 
     // Find and click the switch button (role="switch") in that row
     const switchButton = optionRow.locator('button[role="switch"]').first();
@@ -564,12 +657,15 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async removeDropdownOption(optionName: string): Promise<void> {
     // Find the option row - it's a div with class "cursor-ns-resize"
-    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
-      hasText: optionName,
-    }).first();
+    const optionRow = this.dialog
+      .locator("div.cursor-ns-resize")
+      .filter({
+        hasText: optionName,
+      })
+      .first();
 
     // Click the remove button (the Trash2 icon button with destructive class)
-    const removeButton = optionRow.locator('button.text-destructive').first();
+    const removeButton = optionRow.locator("button.text-destructive").first();
     await removeButton.click();
     await this.page.waitForTimeout(200);
   }
@@ -607,7 +703,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Click edit for a case field in the table
    */
   async clickEditCaseField(fieldName: string): Promise<void> {
-    const row = this.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.caseFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const editButton = row.getByTestId("edit-case-field-button");
     await editButton.click();
     await expect(this.dialog).toBeVisible({ timeout: 5000 });
@@ -617,7 +716,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Click delete for a case field in the table
    */
   async clickDeleteCaseField(fieldName: string): Promise<void> {
-    const row = this.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.caseFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const deleteButton = row.getByTestId("delete-case-field-button");
     await deleteButton.click();
   }
@@ -626,7 +728,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle case field enabled in the table
    */
   async toggleCaseFieldEnabledInTable(fieldName: string): Promise<void> {
-    const row = this.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.caseFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const enabledSwitch = row.locator('[role="switch"]').first();
     await enabledSwitch.click();
     await this.page.waitForLoadState("networkidle");
@@ -636,7 +741,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle case field required in the table
    */
   async toggleCaseFieldRequiredInTable(fieldName: string): Promise<void> {
-    const row = this.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.caseFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const requiredSwitch = row.locator('[role="switch"]').nth(1);
     await requiredSwitch.click();
     await this.page.waitForLoadState("networkidle");
@@ -646,7 +754,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle case field restricted in the table
    */
   async toggleCaseFieldRestrictedInTable(fieldName: string): Promise<void> {
-    const row = this.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.caseFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const restrictedSwitch = row.locator('[role="switch"]').nth(2);
     await restrictedSwitch.click();
     await this.page.waitForLoadState("networkidle");
@@ -694,9 +805,12 @@ export class TemplatesFieldsPage extends BasePage {
     await typeSelector.click();
 
     // Select the type from the dropdown
-    const option = this.page.locator('[role="option"], [role="menuitem"]').filter({
-      hasText: new RegExp(`^${type}$`, "i"),
-    }).first();
+    const option = this.page
+      .locator('[role="option"], [role="menuitem"]')
+      .filter({
+        hasText: new RegExp(`^${type}$`, "i"),
+      })
+      .first();
     await option.click();
   }
 
@@ -725,7 +839,9 @@ export class TemplatesFieldsPage extends BasePage {
    * Set result field default value
    */
   async setResultFieldDefaultValue(value: string): Promise<void> {
-    const defaultValueInput = this.dialog.getByTestId("result-field-defaultValue");
+    const defaultValueInput = this.dialog.getByTestId(
+      "result-field-defaultValue"
+    );
     await defaultValueInput.fill(value);
   }
 
@@ -802,7 +918,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Click edit for a result field in the table
    */
   async clickEditResultField(fieldName: string): Promise<void> {
-    const row = this.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const editButton = row.getByTestId("edit-result-field-button");
     await editButton.click();
     await expect(this.dialog).toBeVisible({ timeout: 5000 });
@@ -812,7 +931,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Click delete for a result field in the table
    */
   async clickDeleteResultField(fieldName: string): Promise<void> {
-    const row = this.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const deleteButton = row.getByTestId("delete-result-field-button");
     await deleteButton.click();
   }
@@ -821,7 +943,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle result field enabled in the table
    */
   async toggleResultFieldEnabledInTable(fieldName: string): Promise<void> {
-    const row = this.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const enabledSwitch = row.locator('[role="switch"]').first();
     await enabledSwitch.click();
     await this.page.waitForLoadState("networkidle");
@@ -831,7 +956,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle result field required in the table
    */
   async toggleResultFieldRequiredInTable(fieldName: string): Promise<void> {
-    const row = this.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const requiredSwitch = row.locator('[role="switch"]').nth(1);
     await requiredSwitch.click();
     await this.page.waitForLoadState("networkidle");
@@ -841,7 +969,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Toggle result field restricted in the table
    */
   async toggleResultFieldRestrictedInTable(fieldName: string): Promise<void> {
-    const row = this.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first();
+    const row = this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: fieldName })
+      .first();
     const restrictedSwitch = row.locator('[role="switch"]').nth(2);
     await restrictedSwitch.click();
     await this.page.waitForLoadState("networkidle");
@@ -855,7 +986,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Verify a template exists in the templates table
    */
   async expectTemplateInTable(name: string): Promise<void> {
-    const row = this.templatesTable.locator("tr").filter({ hasText: name }).first();
+    const row = this.templatesTable
+      .locator("tr")
+      .filter({ hasText: name })
+      .first();
     await expect(row).toBeVisible({ timeout: 10000 });
   }
 
@@ -871,7 +1005,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Verify a case field exists in the case fields table
    */
   async expectCaseFieldInTable(name: string): Promise<void> {
-    const row = this.caseFieldsTable.locator("tr").filter({ hasText: name }).first();
+    const row = this.caseFieldsTable
+      .locator("tr")
+      .filter({ hasText: name })
+      .first();
     await expect(row).toBeVisible({ timeout: 10000 });
   }
 
@@ -887,7 +1024,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Verify a result field exists in the result fields table
    */
   async expectResultFieldInTable(name: string): Promise<void> {
-    const row = this.resultFieldsTable.locator("tr").filter({ hasText: name }).first();
+    const row = this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: name })
+      .first();
     await expect(row).toBeVisible({ timeout: 10000 });
   }
 
@@ -903,9 +1043,12 @@ export class TemplatesFieldsPage extends BasePage {
    * Verify a form error message is displayed
    */
   async expectFormError(message: string): Promise<void> {
-    const errorElement = this.dialog.locator('[class*="error" i], [role="alert"], [class*="destructive"]').filter({
-      hasText: message,
-    }).first();
+    const errorElement = this.dialog
+      .locator('[class*="error" i], [role="alert"], [class*="destructive"]')
+      .filter({
+        hasText: message,
+      })
+      .first();
     await expect(errorElement).toBeVisible({ timeout: 5000 });
   }
 
@@ -927,7 +1070,10 @@ export class TemplatesFieldsPage extends BasePage {
    * Get the result field row from the table
    */
   getResultFieldRow(name: string): Locator {
-    return this.resultFieldsTable.locator("tr").filter({ hasText: name }).first();
+    return this.resultFieldsTable
+      .locator("tr")
+      .filter({ hasText: name })
+      .first();
   }
 
   /**
@@ -939,9 +1085,12 @@ export class TemplatesFieldsPage extends BasePage {
     await typeSelector.click();
 
     // Check if Steps option exists
-    const stepsOption = this.page.locator('[role="option"]').filter({
-      hasText: /^Steps$/i,
-    }).first();
+    const stepsOption = this.page
+      .locator('[role="option"]')
+      .filter({
+        hasText: /^Steps$/i,
+      })
+      .first();
     const isVisible = await stepsOption.isVisible().catch(() => false);
 
     // Close dropdown
@@ -956,7 +1105,7 @@ export class TemplatesFieldsPage extends BasePage {
   async isTemplateEnabled(name: string): Promise<boolean> {
     const row = this.getTemplateRow(name);
     const enabledSwitch = row.locator('[role="switch"]').first();
-    return await enabledSwitch.getAttribute("aria-checked") === "true";
+    return (await enabledSwitch.getAttribute("aria-checked")) === "true";
   }
 
   /**
@@ -965,7 +1114,7 @@ export class TemplatesFieldsPage extends BasePage {
   async isTemplateDefault(name: string): Promise<boolean> {
     const row = this.getTemplateRow(name);
     const defaultSwitch = row.locator('[role="switch"]').nth(1);
-    return await defaultSwitch.getAttribute("aria-checked") === "true";
+    return (await defaultSwitch.getAttribute("aria-checked")) === "true";
   }
 
   /**
@@ -973,9 +1122,12 @@ export class TemplatesFieldsPage extends BasePage {
    */
   async isTemplateDeleteDisabled(name: string): Promise<boolean> {
     const row = this.getTemplateRow(name);
-    const deleteButton = row.locator('button').filter({
-      has: this.page.locator('svg[class*="trash" i], svg[class*="delete" i]'),
-    }).first();
+    const deleteButton = row
+      .locator("button")
+      .filter({
+        has: this.page.locator('svg[class*="trash" i], svg[class*="delete" i]'),
+      })
+      .first();
     const isDisabled = await deleteButton.isDisabled().catch(() => false);
     const isHidden = !(await deleteButton.isVisible().catch(() => false));
     return isDisabled || isHidden;
@@ -999,13 +1151,13 @@ export class TemplatesFieldsPage extends BasePage {
     const caseFieldsCell = row.locator("td").nth(1);
     // The count is inside a button element
     const button = caseFieldsCell.locator("button").first();
-    const buttonExists = await button.count() > 0;
+    const buttonExists = (await button.count()) > 0;
 
     if (!buttonExists) {
       return 0;
     }
 
-    const text = await button.textContent() || "";
+    const text = (await button.textContent()) || "";
     // Extract number from text
     const match = text.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
@@ -1020,13 +1172,13 @@ export class TemplatesFieldsPage extends BasePage {
     const resultFieldsCell = row.locator("td").nth(2);
     // The count is inside a button element
     const button = resultFieldsCell.locator("button").first();
-    const buttonExists = await button.count() > 0;
+    const buttonExists = (await button.count()) > 0;
 
     if (!buttonExists) {
       return 0;
     }
 
-    const text = await button.textContent() || "";
+    const text = (await button.textContent()) || "";
     const match = text.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   }
@@ -1042,7 +1194,7 @@ export class TemplatesFieldsPage extends BasePage {
     const row = this.getCaseFieldRow(name);
     await row.waitFor({ state: "visible", timeout: 10000 });
     const templatesCell = row.locator("td").nth(3); // 4th column: Templates count
-    const text = await templatesCell.textContent() || "";
+    const text = (await templatesCell.textContent()) || "";
     const match = text.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   }
@@ -1053,7 +1205,7 @@ export class TemplatesFieldsPage extends BasePage {
   async getResultFieldTemplatesCount(name: string): Promise<number> {
     const row = this.getResultFieldRow(name);
     const templatesCell = row.locator("td").nth(3); // Assuming 4th column
-    const text = await templatesCell.textContent() || "";
+    const text = (await templatesCell.textContent()) || "";
     const match = text.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   }

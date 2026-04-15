@@ -74,7 +74,13 @@ const defaultProps = {
 
 function setupDefaultMocks() {
   mockMagicSelectDialog.mockImplementation(
-    ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) =>
+    ({
+      open,
+      onOpenChange,
+    }: {
+      open: boolean;
+      onOpenChange: (v: boolean) => void;
+    }) =>
       open ? (
         <div data-testid="magic-select-dialog">
           <button onClick={() => onOpenChange(false)}>Close Dialog</button>
@@ -170,7 +176,13 @@ describe("MagicSelectButton", () => {
 
     // Override MagicSelectDialog to call onAccept immediately
     mockMagicSelectDialog.mockImplementation(
-      ({ open, onAccept }: { open: boolean; onAccept: (ids: number[]) => void }) =>
+      ({
+        open,
+        onAccept,
+      }: {
+        open: boolean;
+        onAccept: (ids: number[]) => void;
+      }) =>
         open ? (
           <div data-testid="magic-select-dialog">
             <button onClick={() => onAccept([2, 3, 4, 5])}>Accept</button>
@@ -196,7 +208,9 @@ describe("MagicSelectButton", () => {
     );
 
     // Open dialog
-    const openButton = screen.getByRole("button", { name: /runs\.magicSelect\.title/i });
+    const openButton = screen.getByRole("button", {
+      name: /runs\.magicSelect\.title/i,
+    });
     user.click(openButton);
 
     // Accept will be called after dialog opens - this is a synchronous mock

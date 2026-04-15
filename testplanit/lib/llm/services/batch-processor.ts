@@ -45,13 +45,13 @@ const DEFAULT_CONTENT_BUDGET_RATIO = 0.65;
 export function createBatches<T extends BatchableItem>(
   items: T[],
   config: BatchConfig,
-  truncateItem?: (item: T, maxChars: number) => T,
+  truncateItem?: (item: T, maxChars: number) => T
 ): T[][] {
   if (items.length === 0) return [];
 
   const ratio = config.contentBudgetRatio ?? DEFAULT_CONTENT_BUDGET_RATIO;
   const contentBudget = Math.floor(
-    config.maxTokensPerRequest * ratio - config.systemPromptTokens,
+    config.maxTokensPerRequest * ratio - config.systemPromptTokens
   );
 
   const batches: T[][] = [];
@@ -137,7 +137,7 @@ export interface BatchExecutionResult<TResult> {
  * are collected in the result.
  */
 export async function executeBatches<T extends BatchableItem, TResult>(
-  options: BatchExecutionOptions<T, TResult>,
+  options: BatchExecutionOptions<T, TResult>
 ): Promise<BatchExecutionResult<TResult>> {
   const { batches, processBatch, onBatchComplete, isCancelled } = options;
 
@@ -170,7 +170,7 @@ export async function executeBatches<T extends BatchableItem, TResult>(
       errors.push(msg);
       failedItemIds.push(...batch.map((item) => item.id));
       console.warn(
-        `[batch-processor] Batch ${i + 1}/${batches.length} failed (${batch.length} items): ${msg}`,
+        `[batch-processor] Batch ${i + 1}/${batches.length} failed (${batch.length} items): ${msg}`
       );
     }
 

@@ -12,8 +12,8 @@ interface TestCaseSearchResultProps {
   showIcon?: boolean;
 }
 
-export function TestCaseSearchResult({ 
-  testCase, 
+export function TestCaseSearchResult({
+  testCase,
   highlight,
   showIcon = true,
 }: TestCaseSearchResultProps) {
@@ -35,7 +35,7 @@ export function TestCaseSearchResult({
       {highlight ? (
         <span dangerouslySetInnerHTML={{ __html: highlight }} />
       ) : (
-        testCase.name || `Case ${testCase.id || 'Unknown'}`
+        testCase.name || `Case ${testCase.id || "Unknown"}`
       )}
     </span>
   );

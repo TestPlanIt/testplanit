@@ -8,8 +8,9 @@ import React, { useState } from "react";
 import { AddSessionModal } from "~/app/[locale]/projects/sessions/[projectId]/AddSessionModal";
 import {
   getStatus,
-  getStatusStyle, MilestonesWithTypes,
-  sortMilestones
+  getStatusStyle,
+  MilestonesWithTypes,
+  sortMilestones,
 } from "./milestoneUtils";
 
 interface HasMilestone {

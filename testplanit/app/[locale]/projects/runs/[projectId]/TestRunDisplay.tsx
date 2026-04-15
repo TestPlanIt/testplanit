@@ -20,8 +20,12 @@ import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
 import {
-  ColorMap, createColorMap, getStatus,
-  getStatusStyle, MilestonesWithTypes, sortMilestones
+  ColorMap,
+  createColorMap,
+  getStatus,
+  getStatusStyle,
+  MilestonesWithTypes,
+  sortMilestones,
 } from "~/utils/milestoneUtils";
 import AddTestRunModal from "./AddTestRunModal";
 import TestRunItem from "./TestRunItem";
@@ -584,7 +588,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       if (!hasTestRuns(milestone)) return null;
 
       const status = getStatus(milestone);
-      const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
+      const { badge } = getStatusStyle(
+        status,
+        resolvedTheme || "light",
+        colorMap
+      );
 
       // Check if there are test runs under this milestone
       const hasTestRunsUnderMilestone =
@@ -643,9 +651,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                       onClick={() => handleAddTestRun(milestone.id)}
                     >
                       <CirclePlus className="h-4 w-4" />
-                      <span className="hidden md:inline">
-                        {t("add.title")}
-                      </span>
+                      <span className="hidden md:inline">{t("add.title")}</span>
                     </Button>
                     {isAddTestRunModalOpen &&
                       selectedMilestoneId === milestone.id && (
@@ -773,10 +779,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 <div className="milestone-dates flex justify-end">
                   {canAddEditRun && (
                     <>
-                      <Button
-                        size="lg"
-                        onClick={() => handleAddTestRun(null)}
-                      >
+                      <Button size="lg" onClick={() => handleAddTestRun(null)}>
                         <CirclePlus className="h-5 w-5" />
                         {tCommon("actions.create")}
                       </Button>

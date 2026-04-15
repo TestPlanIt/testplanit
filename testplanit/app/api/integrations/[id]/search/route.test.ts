@@ -62,7 +62,9 @@ describe("GET /api/integrations/[id]/search", () => {
       issues: [{ id: "1", title: "Test Issue" }],
       total: 1,
     });
-    mockAdapter.getAuthorizationUrl.mockResolvedValue("https://auth.example.com/oauth");
+    mockAdapter.getAuthorizationUrl.mockResolvedValue(
+      "https://auth.example.com/oauth"
+    );
   });
 
   describe("Authentication", () => {
@@ -243,7 +245,9 @@ describe("GET /api/integrations/[id]/search", () => {
         credentials: { apiToken: "key" },
         userIntegrationAuths: [],
       });
-      mockAdapter.searchIssues.mockRejectedValue(new Error("External search failed"));
+      mockAdapter.searchIssues.mockRejectedValue(
+        new Error("External search failed")
+      );
 
       const response = await GET(createRequest("test"), params);
       const data = await response.json();

@@ -46,9 +46,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, folderId, templateId, testCases, sourceInfo } = body as ImportRequest;
+    const { projectId, folderId, templateId, testCases, sourceInfo } =
+      body as ImportRequest;
 
-    if (!projectId || !folderId || !templateId || !testCases || !Array.isArray(testCases)) {
+    if (
+      !projectId ||
+      !folderId ||
+      !templateId ||
+      !testCases ||
+      !Array.isArray(testCases)
+    ) {
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
@@ -213,7 +220,7 @@ export async function POST(request: NextRequest) {
     // Import each test case
     for (let i = 0; i < testCases.length; i++) {
       const testCase = testCases[i];
-      
+
       try {
         // Create the repository case
         const newCase = await prisma.repositoryCases.create({
@@ -246,7 +253,9 @@ export async function POST(request: NextRequest) {
         // Create case field values
         for (const caseField of template.caseFields) {
           const fieldKey = caseField.caseField.displayName;
-          const fieldValue = testCase.fieldValues[fieldKey] || testCase.fieldValues[caseField.caseField.id.toString()];
+          const fieldValue =
+            testCase.fieldValues[fieldKey] ||
+            testCase.fieldValues[caseField.caseField.id.toString()];
 
           // Removed console.log for production
 
@@ -268,33 +277,37 @@ export async function POST(request: NextRequest) {
                 // Try to map option name to ID (single value)
                 if (typeof fieldValue === "string") {
                   const option = caseField.caseField.fieldOptions?.find(
-                    fo => fo.fieldOption.name === fieldValue
+                    (fo) => fo.fieldOption.name === fieldValue
                   );
                   processedValue = option ? option.fieldOption.id : fieldValue;
                 } else if (Array.isArray(fieldValue) && fieldValue.length > 0) {
                   // Take first value if array is provided for dropdown
                   const option = caseField.caseField.fieldOptions?.find(
-                    fo => fo.fieldOption.name === fieldValue[0]
+                    (fo) => fo.fieldOption.name === fieldValue[0]
                   );
-                  processedValue = option ? option.fieldOption.id : fieldValue[0];
+                  processedValue = option
+                    ? option.fieldOption.id
+                    : fieldValue[0];
                 }
                 break;
 
               case "Multi-Select":
                 // Try to map option names to IDs (always return array)
                 if (Array.isArray(fieldValue)) {
-                  processedValue = fieldValue.map(optionName => {
+                  processedValue = fieldValue.map((optionName) => {
                     const option = caseField.caseField.fieldOptions?.find(
-                      fo => fo.fieldOption.name === optionName
+                      (fo) => fo.fieldOption.name === optionName
                     );
                     return option ? option.fieldOption.id : optionName;
                   });
                 } else if (typeof fieldValue === "string") {
                   // Single string value - wrap in array
                   const option = caseField.caseField.fieldOptions?.find(
-                    fo => fo.fieldOption.name === fieldValue
+                    (fo) => fo.fieldOption.name === fieldValue
                   );
-                  processedValue = option ? [option.fieldOption.id] : [fieldValue];
+                  processedValue = option
+                    ? [option.fieldOption.id]
+                    : [fieldValue];
                 }
                 break;
 
@@ -332,16 +345,16 @@ export async function POST(request: NextRequest) {
         // Link to external issue if provided
         if (sourceInfo?.type === "issue" && sourceInfo.issueKey) {
           // Test case generated from external issue
-          
+
           // Try to find existing issue with the same external key
           let existingIssue = await prisma.issue.findFirst({
             where: {
               OR: [
                 { externalKey: sourceInfo.issueKey },
-                { externalId: sourceInfo.issueKey }
+                { externalId: sourceInfo.issueKey },
               ],
-              projectId: projectId
-            }
+              projectId: projectId,
+            },
           });
 
           // If not found, create a new issue
@@ -355,8 +368,8 @@ export async function POST(request: NextRequest) {
                 externalId: sourceInfo.issueKey,
                 externalUrl: sourceInfo.issueUrl,
                 projectId: projectId,
-                createdById: session.user.id
-              }
+                createdById: session.user.id,
+              },
             });
           }
 
@@ -365,19 +378,26 @@ export async function POST(request: NextRequest) {
             where: { id: newCase.id },
             data: {
               issues: {
-                connect: { id: existingIssue.id }
-              }
-            }
+                connect: { id: existingIssue.id },
+              },
+            },
           });
-        } else if (sourceInfo?.type === "document" && sourceInfo.documentTitle) {
+        } else if (
+          sourceInfo?.type === "document" &&
+          sourceInfo.documentTitle
+        ) {
           // Test case generated from requirements document
         }
 
         // Create steps if provided
         if (testCase.steps && Array.isArray(testCase.steps)) {
-          for (let stepIndex = 0; stepIndex < testCase.steps.length; stepIndex++) {
+          for (
+            let stepIndex = 0;
+            stepIndex < testCase.steps.length;
+            stepIndex++
+          ) {
             const step = testCase.steps[stepIndex];
-            
+
             const stepContent = JSON.stringify({
               type: "doc",
               content: [
@@ -412,50 +432,57 @@ export async function POST(request: NextRequest) {
         }
 
         // Create the initial version record using centralized helper
-        const resolvedSteps = testCase.steps?.map(step => ({
-          step: {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: step.step }],
-              },
-            ],
-          },
-          expectedResult: {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: step.expectedResult }],
-              },
-            ],
-          },
-        })) || [];
+        const resolvedSteps =
+          testCase.steps?.map((step) => ({
+            step: {
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: step.step }],
+                },
+              ],
+            },
+            expectedResult: {
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: step.expectedResult }],
+                },
+              ],
+            },
+          })) || [];
 
         // Note: newCase was created with currentVersion: 1 (default)
         // Now create version 1 snapshot
-        const newVersion = await createTestCaseVersionInTransaction(prisma, newCase.id, {
-          version: 1, // Explicit version 1 for new generated case
-          creatorId: session.user.id,
-          creatorName: session.user.name || "",
-          createdAt: new Date(),
-          overrides: {
-            name: testCase.name.slice(0, 255),
-            stateId: defaultWorkflow.id,
-            stateName: defaultWorkflow.name || "",
-            automated: testCase.automated,
-            steps: resolvedSteps,
-            attachments: [], // No attachments for generated cases
-            tags: [], // No tags for generated cases initially
-            issues: [], // Will be linked separately if needed
-          },
-        });
+        const newVersion = await createTestCaseVersionInTransaction(
+          prisma,
+          newCase.id,
+          {
+            version: 1, // Explicit version 1 for new generated case
+            creatorId: session.user.id,
+            creatorName: session.user.name || "",
+            createdAt: new Date(),
+            overrides: {
+              name: testCase.name.slice(0, 255),
+              stateId: defaultWorkflow.id,
+              stateName: defaultWorkflow.name || "",
+              automated: testCase.automated,
+              steps: resolvedSteps,
+              attachments: [], // No attachments for generated cases
+              tags: [], // No tags for generated cases initially
+              issues: [], // Will be linked separately if needed
+            },
+          }
+        );
 
         // Create case field version values (using the same processing as above)
         for (const caseField of template.caseFields) {
           const fieldKey = caseField.caseField.displayName;
-          const fieldValue = testCase.fieldValues[fieldKey] || testCase.fieldValues[caseField.caseField.id.toString()];
+          const fieldValue =
+            testCase.fieldValues[fieldKey] ||
+            testCase.fieldValues[caseField.caseField.id.toString()];
 
           if (fieldValue !== undefined && fieldValue !== null) {
             // Apply the same processing as for the main case field values
@@ -475,15 +502,15 @@ export async function POST(request: NextRequest) {
               case "Multi-Select":
                 // For version values, we can store the processed array of option IDs
                 if (Array.isArray(fieldValue)) {
-                  processedValue = fieldValue.map(optionName => {
+                  processedValue = fieldValue.map((optionName) => {
                     const option = caseField.caseField.fieldOptions?.find(
-                      fo => fo.fieldOption.name === optionName
+                      (fo) => fo.fieldOption.name === optionName
                     );
                     return option ? option.fieldOption.id : optionName;
                   });
                 } else if (typeof fieldValue === "string") {
                   const option = caseField.caseField.fieldOptions?.find(
-                    fo => fo.fieldOption.name === fieldValue
+                    (fo) => fo.fieldOption.name === fieldValue
                   );
                   processedValue = option ? option.fieldOption.id : fieldValue;
                 }
@@ -523,10 +550,11 @@ export async function POST(request: NextRequest) {
           name: newCase.name,
           generatedId: testCase.id,
         });
-
       } catch (error) {
         console.error(`Error importing test case ${testCase.name}:`, error);
-        errors.push(`Failed to import "${testCase.name}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+        errors.push(
+          `Failed to import "${testCase.name}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
     }
 
@@ -550,11 +578,14 @@ export async function POST(request: NextRequest) {
       cases: importedCases,
       errors: errors.length > 0 ? errors : undefined,
     });
-
   } catch (error) {
-    console.error("Error in POST /api/repository/import-generated-test-cases:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to import test cases";
-    
+    console.error(
+      "Error in POST /api/repository/import-generated-test-cases:",
+      error
+    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to import test cases";
+
     return NextResponse.json(
       {
         error: "Failed to import test cases",

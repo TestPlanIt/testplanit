@@ -21,13 +21,15 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import UploadAttachments from "@/components/UploadAttachments";
 import {
-  AlertCircle, CheckCircle2, ChevronLeft,
-  ChevronRight
+  AlertCircle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";

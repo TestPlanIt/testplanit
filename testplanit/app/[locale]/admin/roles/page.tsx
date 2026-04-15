@@ -4,14 +4,17 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { DataTable } from "@/components/tables/DataTable";
 import {
-  useFindManyRoles, useUpdateManyRoles, useUpdateRoles
+  useFindManyRoles,
+  useUpdateManyRoles,
+  useUpdateRoles,
 } from "~/lib/hooks";
 import { ExtendedRoles, getColumns } from "./columns";
 
@@ -20,9 +23,11 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddRole } from "./AddRoles";
@@ -74,36 +79,35 @@ function RoleList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredRoles } =
-    useFindManyRoles(
-      {
-        orderBy: sortConfig
-          ? { [sortConfig.column]: sortConfig.direction }
-          : { name: "asc" },
-        include: {
-          users: true,
-        },
-        where: {
-          AND: [
-            {
-              name: {
-                contains: debouncedSearchString,
-                mode: "insensitive",
-              },
-            },
-            {
-              isDeleted: false,
-            },
-          ],
-        },
+  const { data: totalFilteredRoles } = useFindManyRoles(
+    {
+      orderBy: sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { name: "asc" },
+      include: {
+        users: true,
       },
-      {
-        enabled:
-          (!!session?.user && debouncedSearchString.length === 0) ||
-          debouncedSearchString.length > 0,
-        refetchOnWindowFocus: true,
-      }
-    );
+      where: {
+        AND: [
+          {
+            name: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            isDeleted: false,
+          },
+        ],
+      },
+    },
+    {
+      enabled:
+        (!!session?.user && debouncedSearchString.length === 0) ||
+        debouncedSearchString.length > 0,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   // Update total items in pagination context
   useEffect(() => {

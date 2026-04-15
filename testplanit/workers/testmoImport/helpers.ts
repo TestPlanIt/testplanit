@@ -1,7 +1,5 @@
 import { Prisma } from "@prisma/client";
-import type {
-  TestmoMappingConfiguration
-} from "../../services/imports/testmo/types";
+import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 
 export const toNumberValue = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {

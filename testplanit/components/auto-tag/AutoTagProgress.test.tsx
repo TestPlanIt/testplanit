@@ -67,14 +67,14 @@ beforeEach(() => {
 
 describe("AutoTagProgress", () => {
   it("returns null when status is idle", () => {
-    const { container } = render(<AutoTagProgress {...baseProps} status="idle" />);
+    const { container } = render(
+      <AutoTagProgress {...baseProps} status="idle" />
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
   it("shows starting text and cancel button when status is waiting with no progress", () => {
-    render(
-      <AutoTagProgress {...baseProps} status="waiting" progress={null} />
-    );
+    render(<AutoTagProgress {...baseProps} status="waiting" progress={null} />);
 
     expect(screen.getByText("starting")).toBeInTheDocument();
     // Progress bar rendered without a specific value
@@ -150,9 +150,12 @@ describe("AutoTagProgress", () => {
     );
 
     // The dismiss button is a plain <button> (not a Button component) wrapping X icon
-    const dismissBtn = screen.getAllByRole("button").find(
-      (btn) => btn !== screen.queryByRole("button", { name: /reviewSuggestions/i })
-    );
+    const dismissBtn = screen
+      .getAllByRole("button")
+      .find(
+        (btn) =>
+          btn !== screen.queryByRole("button", { name: /reviewSuggestions/i })
+      );
     expect(dismissBtn).toBeInTheDocument();
     await userEvent.click(dismissBtn!);
     expect(onDismiss).toHaveBeenCalledOnce();
@@ -185,13 +188,13 @@ describe("AutoTagProgress", () => {
     );
 
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /dismiss/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /dismiss/i })
+    ).toBeInTheDocument();
   });
 
   it("shows fallback failed text when status is failed with no error message", () => {
-    render(
-      <AutoTagProgress {...baseProps} status="failed" error={null} />
-    );
+    render(<AutoTagProgress {...baseProps} status="failed" error={null} />);
 
     expect(screen.getByText("failed")).toBeInTheDocument();
   });

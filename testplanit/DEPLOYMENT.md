@@ -215,16 +215,16 @@ docker compose -f docker-compose.prod.yml --profile with-postgres --profile with
 
 ## 9. Troubleshooting
 
-| Symptom | Suggested Fix |
-| --- | --- |
-| Service not starting | Ensure you've included the correct `--profile` flags for the services you want to run. |
+| Symptom                                              | Suggested Fix                                                                                                                                                                                                         |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Service not starting                                 | Ensure you've included the correct `--profile` flags for the services you want to run.                                                                                                                                |
 | `next-auth` or Prisma cannot connect to the database | Verify `DATABASE_URL` points to the correct host (either `postgres` for Docker or your external database host). If using `with-postgres` profile, check that the postgres container is healthy (`docker compose ps`). |
-| Workers cannot connect to Valkey | Verify `VALKEY_URL` points to the correct host (either `valkey://valkey:6379` for Docker or your external Redis endpoint). |
-| Search features not working | Verify `ELASTICSEARCH_NODE` is set correctly. If using `with-elasticsearch` profile, check that the elasticsearch container is healthy. |
-| Images fail to load | Confirm `AWS_ENDPOINT_URL` and `AWS_PUBLIC_ENDPOINT_URL` are configured correctly. If using `with-minio` profile, ensure MinIO and nginx containers are running. |
-| Port already in use | Set `DOCKER_*_PORT` values (for example `DOCKER_PROD_APP_PORT=30001`) in the Compose env context (`.env` or `--env-file`) and restart. `env_file:` does not affect Compose port interpolation. |
-| Containers exit during start | Check logs with `docker compose logs --tail=100 <service>` for the failing service. |
-| Cannot connect to external service | Ensure the application containers can reach external services (check network connectivity, security groups, firewalls). |
+| Workers cannot connect to Valkey                     | Verify `VALKEY_URL` points to the correct host (either `valkey://valkey:6379` for Docker or your external Redis endpoint).                                                                                            |
+| Search features not working                          | Verify `ELASTICSEARCH_NODE` is set correctly. If using `with-elasticsearch` profile, check that the elasticsearch container is healthy.                                                                               |
+| Images fail to load                                  | Confirm `AWS_ENDPOINT_URL` and `AWS_PUBLIC_ENDPOINT_URL` are configured correctly. If using `with-minio` profile, ensure MinIO and nginx containers are running.                                                      |
+| Port already in use                                  | Set `DOCKER_*_PORT` values (for example `DOCKER_PROD_APP_PORT=30001`) in the Compose env context (`.env` or `--env-file`) and restart. `env_file:` does not affect Compose port interpolation.                        |
+| Containers exit during start                         | Check logs with `docker compose logs --tail=100 <service>` for the failing service.                                                                                                                                   |
+| Cannot connect to external service                   | Ensure the application containers can reach external services (check network connectivity, security groups, firewalls).                                                                                               |
 
 ---
 
@@ -249,6 +249,7 @@ docker compose -f docker-compose.prod.yml --profile with-valkey --profile with-e
 ```
 
 Configure `.env.production`:
+
 ```bash
 DATABASE_URL="postgresql://user:pass@your-rds-endpoint.amazonaws.com:5432/testplanit?schema=public"
 ```
@@ -263,6 +264,7 @@ docker compose -f docker-compose.prod.yml up -d
 ```
 
 Configure `.env.production`:
+
 ```bash
 DATABASE_URL="postgresql://user:pass@your-rds-endpoint.amazonaws.com:5432/testplanit?schema=public"
 VALKEY_URL="valkey://your-elasticache-endpoint.cache.amazonaws.com:6379"

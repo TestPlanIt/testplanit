@@ -9,7 +9,7 @@ import {
   TestmoDatasetSummary,
   TestmoExportAnalyzerOptions,
   TestmoExportSummary,
-  TestmoReadableSource
+  TestmoReadableSource,
 } from "./types";
 
 const DEFAULT_SAMPLE_ROW_LIMIT = 5;
@@ -77,9 +77,11 @@ function isReadable(value: unknown): value is Readable {
   );
 }
 
-function resolveSource(
-  source: TestmoReadableSource
-): { stream: Readable; dispose: () => Promise<void>; size?: number } {
+function resolveSource(source: TestmoReadableSource): {
+  stream: Readable;
+  dispose: () => Promise<void>;
+  size?: number;
+} {
   if (typeof source === "string") {
     const stream = createReadStream(source);
     const dispose = async () => {
@@ -106,7 +108,9 @@ function resolveSource(
   if (typeof source === "function") {
     const stream = source();
     if (!isReadable(stream)) {
-      throw new TypeError("Testmo readable factory did not return a readable stream");
+      throw new TypeError(
+        "Testmo readable factory did not return a readable stream"
+      );
     }
     const dispose = async () => {
       if (!stream.destroyed) {
@@ -201,7 +205,10 @@ function sanitizeSampleValue(value: unknown, depth = 0): unknown {
 
   if (typeof value === "string") {
     if (value.length > SAMPLE_TRUNCATION_CONFIG.maxStringLength) {
-      const truncated = value.slice(0, SAMPLE_TRUNCATION_CONFIG.maxStringLength);
+      const truncated = value.slice(
+        0,
+        SAMPLE_TRUNCATION_CONFIG.maxStringLength
+      );
       const remaining = value.length - SAMPLE_TRUNCATION_CONFIG.maxStringLength;
       return `${truncated}\u2026 [${remaining} more characters]`;
     }
@@ -213,7 +220,9 @@ function sanitizeSampleValue(value: unknown, depth = 0): unknown {
       .slice(0, SAMPLE_TRUNCATION_CONFIG.maxArrayItems)
       .map((item) => sanitizeSampleValue(item, depth + 1));
     if (value.length > SAMPLE_TRUNCATION_CONFIG.maxArrayItems) {
-      items.push(`[${value.length - SAMPLE_TRUNCATION_CONFIG.maxArrayItems} more items]`);
+      items.push(
+        `[${value.length - SAMPLE_TRUNCATION_CONFIG.maxArrayItems} more items]`
+      );
     }
     return items;
   }
@@ -221,7 +230,10 @@ function sanitizeSampleValue(value: unknown, depth = 0): unknown {
   if (value && typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
     const result: Record<string, unknown> = {};
-    for (const [key, entryValue] of entries.slice(0, SAMPLE_TRUNCATION_CONFIG.maxObjectKeys)) {
+    for (const [key, entryValue] of entries.slice(
+      0,
+      SAMPLE_TRUNCATION_CONFIG.maxObjectKeys
+    )) {
       result[key] = sanitizeSampleValue(entryValue, depth + 1);
     }
     if (entries.length > SAMPLE_TRUNCATION_CONFIG.maxObjectKeys) {
@@ -380,7 +392,10 @@ export class TestmoExportAnalyzer {
                   purpose: "schema",
                   completed: false,
                   store: (value: unknown) => {
-                    summary.schema = (value ?? null) as Record<string, unknown> | null;
+                    summary.schema = (value ?? null) as Record<
+                      string,
+                      unknown
+                    > | null;
                   },
                 };
                 activeCaptures.push(capture);
@@ -447,44 +462,45 @@ export class TestmoExportAnalyzer {
             break;
           }
 
-        case "endArray": {
-          const entry = stack.pop();
-          if (entry?.datasetName) {
-            const datasetSummary = ensureSummary(entry.datasetName);
-            const truncatedBySample =
-              datasetSummary.rowCount > datasetSummary.sampleRows.length;
-            const truncatedByPreserve = datasetSummary.preserveAllRows
-              ? (datasetSummary.allRows?.length ?? 0) < datasetSummary.rowCount
-              : truncatedBySample;
-            datasetSummary.truncated = truncatedByPreserve;
+          case "endArray": {
+            const entry = stack.pop();
+            if (entry?.datasetName) {
+              const datasetSummary = ensureSummary(entry.datasetName);
+              const truncatedBySample =
+                datasetSummary.rowCount > datasetSummary.sampleRows.length;
+              const truncatedByPreserve = datasetSummary.preserveAllRows
+                ? (datasetSummary.allRows?.length ?? 0) <
+                  datasetSummary.rowCount
+                : truncatedBySample;
+              datasetSummary.truncated = truncatedByPreserve;
 
-            const maybePromise = options.onDatasetComplete?.({
-              name: datasetSummary.name,
-              rowCount: datasetSummary.rowCount,
-              schema: datasetSummary.schema ?? null,
-              sampleRows: datasetSummary.sampleRows,
-              allRows: datasetSummary.allRows,
-              truncated: datasetSummary.truncated,
-            });
+              const maybePromise = options.onDatasetComplete?.({
+                name: datasetSummary.name,
+                rowCount: datasetSummary.rowCount,
+                schema: datasetSummary.schema ?? null,
+                sampleRows: datasetSummary.sampleRows,
+                allRows: datasetSummary.allRows,
+                truncated: datasetSummary.truncated,
+              });
 
-            if (
-              maybePromise &&
-              typeof (maybePromise as Promise<unknown>).then === "function"
-            ) {
-              pipeline.pause();
-              Promise.resolve(maybePromise)
-                .catch((error) => {
-                  pipeline.destroy(error as Error);
-                })
-                .finally(() => {
-                  if (!pipeline.destroyed) {
-                    pipeline.resume();
-                  }
-                });
+              if (
+                maybePromise &&
+                typeof (maybePromise as Promise<unknown>).then === "function"
+              ) {
+                pipeline.pause();
+                Promise.resolve(maybePromise)
+                  .catch((error) => {
+                    pipeline.destroy(error as Error);
+                  })
+                  .finally(() => {
+                    if (!pipeline.destroyed) {
+                      pipeline.resume();
+                    }
+                  });
+              }
             }
+            break;
           }
-          break;
-        }
 
           case "keyValue": {
             lastKey = chunk.value as string;
@@ -529,7 +545,11 @@ export class TestmoExportAnalyzer {
                     parentEntry.key !== null &&
                     DATASET_SCHEMA_KEYS.has(parentEntry.key);
 
-                  if (isAllowedKey && !isParentDataArray && !isParentSchemaObject) {
+                  if (
+                    isAllowedKey &&
+                    !isParentDataArray &&
+                    !isParentSchemaObject
+                  ) {
                     currentEntry.datasetName = nameValue;
                     ensureSummary(nameValue);
                   }
@@ -545,9 +565,10 @@ export class TestmoExportAnalyzer {
               const datasetName = currentDatasetName(stack);
               if (datasetName) {
                 const summary = ensureSummary(datasetName);
-                summary.schema = coercePrimitive(chunk.name, chunk.value) as
-                  | Record<string, unknown>
-                  | null;
+                summary.schema = coercePrimitive(
+                  chunk.name,
+                  chunk.value
+                ) as Record<string, unknown> | null;
               }
               lastKey = null;
               break;

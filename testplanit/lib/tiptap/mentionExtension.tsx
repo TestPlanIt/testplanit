@@ -5,7 +5,7 @@ import tippy, { Instance as TippyInstance } from "tippy.js";
 import {
   MentionSuggestion,
   MentionSuggestionRef,
-  MentionUser
+  MentionUser,
 } from "~/components/comments/MentionSuggestion";
 
 /**
@@ -32,7 +32,9 @@ async function fetchMentionUsers(
     const users = data.users || [];
 
     // Filter out inactive and deleted users
-    const filteredUsers = users.filter((user: MentionUser) => user.isActive && !user.isDeleted);
+    const filteredUsers = users.filter(
+      (user: MentionUser) => user.isActive && !user.isDeleted
+    );
 
     // Sort: project members first, then by name
     return filteredUsers.sort((a: MentionUser, b: MentionUser) => {
@@ -86,7 +88,7 @@ export function createMentionExtension(projectId: number) {
       const userId = node.attrs.id as string;
 
       // Get current locale from URL
-      const locale = window.location.pathname.split('/')[1] || 'en-US';
+      const locale = window.location.pathname.split("/")[1] || "en-US";
 
       // Generate initials (same logic as Avatar component)
       const abbreviateAltText = (altText: string): string => {
@@ -99,13 +101,17 @@ export function createMentionExtension(projectId: number) {
       };
 
       // Generate color code (same logic as stringToColorCode utility)
-      const stringToColorCode = (inputString: string): { colorCode: string; textColor: string } => {
+      const stringToColorCode = (
+        inputString: string
+      ): { colorCode: string; textColor: string } => {
         let hash = 0;
         for (let i = 0; i < inputString.length; i++) {
           hash = inputString.charCodeAt(i) + ((hash << 5) - hash);
         }
         let colorCode = "#";
-        let red = 0, green = 0, blue = 0;
+        let red = 0,
+          green = 0,
+          blue = 0;
 
         for (let i = 0; i < 3; i++) {
           const value = (hash >> (i * 8)) & 0xff;
@@ -128,45 +134,43 @@ export function createMentionExtension(projectId: number) {
       // Build avatar element (image or initials)
       const avatarElement = userImage
         ? [
-            'img',
+            "img",
             {
               src: userImage,
               alt: userName,
-              class: 'inline-block h-4 w-4 rounded-full',
-              style: 'width: 16px; height: 16px;',
+              class: "inline-block h-4 w-4 rounded-full",
+              style: "width: 16px; height: 16px;",
             },
           ]
         : [
-            'div',
+            "div",
             {
-              class: 'inline-flex items-center justify-center h-4 w-4 rounded-full text-[8px] font-semibold',
+              class:
+                "inline-flex items-center justify-center h-4 w-4 rounded-full text-[8px] font-semibold",
               style: `width: 16px; height: 16px; background-color: ${colorCode}; color: ${textColor};`,
             },
             initials,
           ];
 
       return [
-        'span',
+        "span",
         {
           ...HTMLAttributes,
-          class: 'mention inline-flex items-center align-middle mx-0.5',
-          'data-type': 'mention',
-          'data-id': userId,
-          'data-label': userName,
-          'data-image': userImage,
+          class: "mention inline-flex items-center align-middle mx-0.5",
+          "data-type": "mention",
+          "data-id": userId,
+          "data-label": userName,
+          "data-image": userImage,
         },
         [
-          'span',
+          "span",
           {
-            class: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors',
+            class:
+              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors",
             onclick: `window.location.href='/${locale}/users/profile/${userId}'`,
           },
           avatarElement,
-          [
-            'span',
-            { class: 'text-sm' },
-            userName,
-          ],
+          ["span", { class: "text-sm" }, userName],
         ],
       ];
     },

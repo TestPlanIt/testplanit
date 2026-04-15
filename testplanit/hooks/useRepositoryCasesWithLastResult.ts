@@ -3,7 +3,8 @@ import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import {
   countRepositoryCasesWithLastResult,
   FetchCasesWithLastResultArgs,
-  FetchCasesWithLastResultResponse, fetchRepositoryCasesWithLastResult
+  FetchCasesWithLastResultResponse,
+  fetchRepositoryCasesWithLastResult,
 } from "~/app/actions/repositoryCasesWithLastResult";
 
 /**
@@ -41,7 +42,8 @@ export function useCountRepositoryCasesWithLastResult(
   where: Prisma.RepositoryCasesWhereInput,
   options?: Omit<
     UseQueryOptions<
-      { success: true; count: number } | { success: false; error: string; count: 0 },
+      | { success: true; count: number }
+      | { success: false; error: string; count: 0 },
       Error,
       number
     >,

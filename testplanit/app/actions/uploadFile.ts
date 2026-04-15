@@ -8,15 +8,15 @@ const UPLOAD_CONFIGS = {
     folder: "uploads/project-icons",
     maxSize: 4 * 1024 * 1024, // 4MB
   },
-  "avatar": {
+  avatar: {
     folder: "uploads/avatars",
     maxSize: 2 * 1024 * 1024, // 2MB
   },
-  "docimage": {
+  docimage: {
     folder: "uploads/document-images",
     maxSize: 10 * 1024 * 1024, // 10MB
   },
-  "attachment": {
+  attachment: {
     folder: "uploads/attachments",
     maxSize: 10 * 1024 * 1024, // 10MB
   },
@@ -99,7 +99,8 @@ export async function uploadFile(
     };
   } catch (error: unknown) {
     console.error("Upload error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return { error: `Failed to upload file: ${errorMessage}` };
   }
 }

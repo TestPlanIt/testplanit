@@ -1,7 +1,9 @@
 import {
   Color,
   ColorFamily,
-  FieldIcon, Milestones, MilestoneTypes
+  FieldIcon,
+  Milestones,
+  MilestoneTypes,
 } from "@prisma/client";
 import { isAfter, isBefore, parseISO } from "date-fns";
 

@@ -55,7 +55,9 @@ export async function mergeCases(
       where: { repositoryCaseId: survivorId },
       select: { testRunId: true },
     });
-    const conflictRunIds = survivorRuns.map((r: { testRunId: number }) => r.testRunId);
+    const conflictRunIds = survivorRuns.map(
+      (r: { testRunId: number }) => r.testRunId
+    );
 
     // -----------------------------------------------------------------------
     // Step 2: Delete conflicting victim rows (keep survivor's existing result)

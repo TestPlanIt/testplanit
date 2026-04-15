@@ -298,13 +298,19 @@ describe("computeLastTestResult", () => {
             id: 200,
             executedAt: deletedRunDate,
             status: createStatus(1, "Passed"),
-            testSuite: { id: 10, testRun: createTestRun(1, "Deleted Run", true) },
+            testSuite: {
+              id: 10,
+              testRun: createTestRun(1, "Deleted Run", true),
+            },
           },
           {
             id: 201,
             executedAt: activeRunDate,
             status: createStatus(2, "Failed"),
-            testSuite: { id: 11, testRun: createTestRun(2, "Active Run", false) },
+            testSuite: {
+              id: 11,
+              testRun: createTestRun(2, "Active Run", false),
+            },
           },
         ],
       };

@@ -7,7 +7,13 @@
  * use a partial mock of useReactTable that disables column resizing callbacks.
  * Logic-only tests follow the same pattern as DataTable.columnVisibility.test.ts.
  */
-import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -164,7 +170,12 @@ describe("DataTable row model behavior", () => {
 
   const testColumns: ColumnDef<TestRow>[] = [
     { id: "name", accessorKey: "name", header: "Name", enableSorting: true },
-    { id: "status", accessorKey: "status", header: "Status", enableSorting: true },
+    {
+      id: "status",
+      accessorKey: "status",
+      header: "Status",
+      enableSorting: true,
+    },
   ];
 
   it("row model contains all data rows", () => {
@@ -174,7 +185,13 @@ describe("DataTable row model behavior", () => {
         columns: testColumns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        state: { columnVisibility: {}, rowSelection: {}, sorting: [], columnPinning: {}, columnSizing: {} },
+        state: {
+          columnVisibility: {},
+          rowSelection: {},
+          sorting: [],
+          columnPinning: {},
+          columnSizing: {},
+        },
         onSortingChange: vi.fn(),
         onRowSelectionChange: vi.fn(),
         onColumnVisibilityChange: vi.fn(),
@@ -198,7 +215,9 @@ describe("DataTable row model behavior", () => {
     const selectionRef = { value: {} as Record<string, boolean> };
 
     const TableWrapper = () => {
-      const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
+      const [rowSelection, setRowSelection] = React.useState<
+        Record<string, boolean>
+      >({});
 
       const table = useReactTable({
         data: testData,
@@ -215,7 +234,8 @@ describe("DataTable row model behavior", () => {
         },
         onSortingChange: vi.fn(),
         onRowSelectionChange: (updater) => {
-          const next = typeof updater === "function" ? updater(rowSelection) : updater;
+          const next =
+            typeof updater === "function" ? updater(rowSelection) : updater;
           setRowSelection(next);
           selectionRef.value = next;
         },
@@ -244,7 +264,9 @@ describe("DataTable row model behavior", () => {
     render(<TableWrapper />);
 
     // Initially no rows are selected
-    expect(screen.getByTestId("row-1").getAttribute("data-selected")).toBe("false");
+    expect(screen.getByTestId("row-1").getAttribute("data-selected")).toBe(
+      "false"
+    );
 
     // Click to select
     fireEvent.click(screen.getByTestId("row-1"));
@@ -258,7 +280,13 @@ describe("DataTable row model behavior", () => {
         columns: testColumns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        state: { columnVisibility: {}, rowSelection: {}, sorting: [], columnPinning: {}, columnSizing: {} },
+        state: {
+          columnVisibility: {},
+          rowSelection: {},
+          sorting: [],
+          columnPinning: {},
+          columnSizing: {},
+        },
         onSortingChange: vi.fn(),
         onRowSelectionChange: vi.fn(),
         onColumnVisibilityChange: vi.fn(),
@@ -341,7 +369,10 @@ const DataTableTestDouble: React.FC<{
             <tr key={i}>
               {columns.map((col) => (
                 <td key={col.id as string}>
-                  <div data-testid="skeleton" className="animate-pulse h-4 bg-gray-200 rounded" />
+                  <div
+                    data-testid="skeleton"
+                    className="animate-pulse h-4 bg-gray-200 rounded"
+                  />
                 </td>
               ))}
             </tr>
@@ -370,11 +401,7 @@ const DataTableTestDouble: React.FC<{
                       onClick={() => onSortChange?.(header.column.id)}
                       data-testid={`sort-${header.column.id}`}
                     >
-                      {isActive
-                        ? direction === "asc"
-                          ? "↑"
-                          : "↓"
-                        : "↕"}
+                      {isActive ? (direction === "asc" ? "↑" : "↓") : "↕"}
                     </button>
                   )}
                 </th>
@@ -386,7 +413,10 @@ const DataTableTestDouble: React.FC<{
       <tbody>
         {table.getRowModel().rows.length === 0 ? (
           <tr>
-            <td colSpan={columns.length} className="text-center text-muted-foreground">
+            <td
+              colSpan={columns.length}
+              className="text-center text-muted-foreground"
+            >
               {emptyMessage}
             </td>
           </tr>
@@ -447,9 +477,7 @@ describe("DataTable rendering", () => {
   });
 
   it("renders table with column headers", () => {
-    render(
-      <DataTableTestDouble columns={testColumns} data={testData} />
-    );
+    render(<DataTableTestDouble columns={testColumns} data={testData} />);
 
     expect(screen.getByTestId("case-table")).toBeInTheDocument();
     expect(screen.getByText("Name")).toBeInTheDocument();
@@ -458,9 +486,7 @@ describe("DataTable rendering", () => {
   });
 
   it("renders data rows with cell values", () => {
-    render(
-      <DataTableTestDouble columns={testColumns} data={testData} />
-    );
+    render(<DataTableTestDouble columns={testColumns} data={testData} />);
 
     expect(screen.getByTestId("case-row-1")).toBeInTheDocument();
     expect(screen.getByTestId("case-row-2")).toBeInTheDocument();

@@ -117,10 +117,7 @@ export async function fetchCasesForQuickScript(args: {
           displayValue = cfv.value ? "Yes" : "No";
         } else if (fieldType === "Date") {
           try {
-            displayValue = format(
-              new Date(cfv.value as string),
-              "yyyy-MM-dd"
-            );
+            displayValue = format(new Date(cfv.value as string), "yyyy-MM-dd");
           } catch {
             displayValue = String(cfv.value);
           }

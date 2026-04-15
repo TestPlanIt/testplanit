@@ -7,7 +7,8 @@ import { UnifiedSearch } from "./UnifiedSearch";
 // Mock next-intl
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
-  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
 }));
 
 // Mock the hooks
@@ -64,21 +65,31 @@ vi.mock("@/components/Debounce", () => ({
 // Mock dynamic icon to avoid import issues
 vi.mock("@/components/DynamicIcon", () => ({
   default: ({ name, className }: { name: string; className?: string }) => (
-    <span data-testid={`icon-${name}`} className={className}>{name}</span>
+    <span data-testid={`icon-${name}`} className={className}>
+      {name}
+    </span>
   ),
 }));
 
 // Mock other components
 vi.mock("@/components/search/FacetedSearchFilters", () => ({
-  FacetedSearchFilters: ({ filters, onFiltersChange }: { 
-    filters: any; 
+  FacetedSearchFilters: ({
+    filters,
+    onFiltersChange,
+  }: {
+    filters: any;
     onFiltersChange: (filters: any) => void;
   }) => (
     <div data-testid="faceted-filters">
       <div>{"Faceted Filters"}</div>
-      <button 
+      <button
         data-testid="include-deleted-toggle"
-        onClick={() => onFiltersChange({ ...filters, includeDeleted: !filters.includeDeleted })}
+        onClick={() =>
+          onFiltersChange({
+            ...filters,
+            includeDeleted: !filters.includeDeleted,
+          })
+        }
       >
         {filters.includeDeleted ? "Hide Deleted" : "Include Deleted"}
       </button>
@@ -88,31 +99,53 @@ vi.mock("@/components/search/FacetedSearchFilters", () => ({
 
 vi.mock("@/components/search/SearchResultComponents", () => ({
   MetadataList: ({ items }: { items: any[] }) => (
-    <div data-testid="metadata-list">{items.filter(Boolean).length}{" items"}</div>
+    <div data-testid="metadata-list">
+      {items.filter(Boolean).length}
+      {" items"}
+    </div>
   ),
   MetadataItem: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="metadata-item">{children}</span>
   ),
   StatusBadge: ({ isCompleted }: { isCompleted: boolean }) => (
-    <span data-testid="status-badge">{isCompleted ? "Completed" : "Active"}</span>
+    <span data-testid="status-badge">
+      {isCompleted ? "Completed" : "Active"}
+    </span>
   ),
   TimeEstimate: ({ seconds }: { seconds: number }) => (
-    <span data-testid="time-estimate">{seconds}{"s"}</span>
+    <span data-testid="time-estimate">
+      {seconds}
+      {"s"}
+    </span>
   ),
   TagList: ({ tags }: { tags: any[] }) => (
-    <span data-testid="tag-list">{tags.length}{" tags"}</span>
+    <span data-testid="tag-list">
+      {tags.length}
+      {" tags"}
+    </span>
   ),
   BadgeList: ({ items }: { items: any[] }) => (
-    <div data-testid="badge-list">{items.filter(Boolean).length}{" badges"}</div>
+    <div data-testid="badge-list">
+      {items.filter(Boolean).length}
+      {" badges"}
+    </div>
   ),
   ExternalLink: ({ url }: { url: string }) => (
-    <a data-testid="external-link" href={url}>{"Link"}</a>
+    <a data-testid="external-link" href={url}>
+      {"Link"}
+    </a>
   ),
   DateDisplay: ({ date }: { date: string }) => (
     <span data-testid="date-display">{date}</span>
   ),
-  SearchHighlight: ({ highlights }: { highlights?: Record<string, string[]> }) => (
-    <div data-testid="search-highlight">{highlights ? "Has highlights" : "No highlights"}</div>
+  SearchHighlight: ({
+    highlights,
+  }: {
+    highlights?: Record<string, string[]>;
+  }) => (
+    <div data-testid="search-highlight">
+      {highlights ? "Has highlights" : "No highlights"}
+    </div>
   ),
 }));
 
@@ -136,7 +169,10 @@ vi.mock("@/components/search/TestCaseSearchResult", () => ({
 
 vi.mock("@/components/search/CustomFieldDisplay", () => ({
   CustomFieldDisplay: ({ customFields }: { customFields: any[] }) => (
-    <span data-testid="custom-fields">{customFields.length}{" custom fields"}</span>
+    <span data-testid="custom-fields">
+      {customFields.length}
+      {" custom fields"}
+    </span>
   ),
 }));
 
@@ -163,14 +199,14 @@ describe("UnifiedSearch Component", () => {
 
   it("should render search input with placeholder", () => {
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     expect(searchInput).toBeInTheDocument();
   });
 
   it("should show entity selector when multiple entities are available", () => {
     render(<UnifiedSearch showEntitySelector={true} />);
-    
+
     // The getEntityLabel mock returns "Test Cases" for REPOSITORY_CASE
     const entitySelector = screen.getByText("Test Cases");
     expect(entitySelector).toBeInTheDocument();
@@ -178,7 +214,7 @@ describe("UnifiedSearch Component", () => {
 
   it("should not show entity selector when disabled", () => {
     render(<UnifiedSearch showEntitySelector={false} />);
-    
+
     // Check that the dropdown button with entity types is not present
     const entitySelector = screen.queryByText("Test Cases");
     expect(entitySelector).not.toBeInTheDocument();
@@ -186,7 +222,7 @@ describe("UnifiedSearch Component", () => {
 
   it("should show project toggle when in project context", () => {
     render(<UnifiedSearch showProjectToggle={true} />);
-    
+
     // The label shows the translation key in tests
     const projectToggle = screen.getByText("search.currentProjectOnly");
     expect(projectToggle).toBeInTheDocument();
@@ -215,7 +251,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -266,7 +302,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -287,7 +323,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "nonexistent" } });
 
@@ -300,30 +336,37 @@ describe("UnifiedSearch Component", () => {
     (global.fetch as any).mockRejectedValueOnce(new Error("Network error"));
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
-    await waitFor(() => {
-      expect(screen.getByText("search.errors.searchFailed")).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText("search.errors.searchFailed")
+        ).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it("should clear search when X button is clicked", async () => {
     render(<UnifiedSearch />);
-    
-    const searchInput = screen.getByPlaceholderText(/search/i) as HTMLInputElement;
+
+    const searchInput = screen.getByPlaceholderText(
+      /search/i
+    ) as HTMLInputElement;
     fireEvent.change(searchInput, { target: { value: "test" } });
-    
+
     // Wait for the X button to appear
     await waitFor(() => {
       expect(searchInput.value).toBe("test");
     });
-    
+
     // Find the X button - it's the button with the X icon inside the search container
     const searchContainer = searchInput.parentElement;
-    const clearButton = searchContainer?.querySelector('button');
-    
+    const clearButton = searchContainer?.querySelector("button");
+
     if (clearButton) {
       fireEvent.click(clearButton);
       expect(searchInput).toHaveValue("");
@@ -332,7 +375,7 @@ describe("UnifiedSearch Component", () => {
 
   it("should call onResultClick when result is clicked", async () => {
     const mockOnResultClick = vi.fn();
-    
+
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -355,12 +398,14 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch onResultClick={mockOnResultClick} />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
     await waitFor(() => {
-      const resultCard = screen.getByText("Test Case 1").closest(".cursor-pointer");
+      const resultCard = screen
+        .getByText("Test Case 1")
+        .closest(".cursor-pointer");
       fireEvent.click(resultCard!);
     });
 
@@ -374,14 +419,14 @@ describe("UnifiedSearch Component", () => {
 
   it("should show filters sheet when filter button is clicked", () => {
     render(<UnifiedSearch />);
-    
+
     // Find the filter button - it contains the filter icon (svg with lucide-funnel class)
     const buttons = screen.getAllByRole("button");
-    const filterButton = buttons.find(btn => {
-      const svg = btn.querySelector('svg');
-      return svg && svg.classList.contains('lucide-funnel');
+    const filterButton = buttons.find((btn) => {
+      const svg = btn.querySelector("svg");
+      return svg && svg.classList.contains("lucide-funnel");
     });
-    
+
     if (filterButton) {
       fireEvent.click(filterButton);
       expect(screen.getByTestId("faceted-filters")).toBeInTheDocument();
@@ -389,7 +434,8 @@ describe("UnifiedSearch Component", () => {
   });
 
   it("should display active filter count", async () => {
-    const { useSearchState } = await import("~/lib/contexts/SearchStateContext");
+    const { useSearchState } =
+      await import("~/lib/contexts/SearchStateContext");
     (useSearchState as any).mockReturnValue({
       searchState: {
         filters: {
@@ -403,7 +449,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     // Wait for component to render with filters
     // Should show badge with count (1 for projectIds array + 1 for tagIds array = 2)
     await waitFor(() => {
@@ -413,7 +459,7 @@ describe("UnifiedSearch Component", () => {
 
   it("should use custom placeholder when provided", () => {
     render(<UnifiedSearch placeholder="Search for test cases..." />);
-    
+
     const searchInput = screen.getByPlaceholderText("Search for test cases...");
     expect(searchInput).toBeInTheDocument();
   });
@@ -423,23 +469,25 @@ describe("UnifiedSearch Component", () => {
       ok: true,
       json: async () => ({
         total: 100,
-        hits: Array(50).fill(null).map((_, i) => ({
-          id: i + 1,
-          entityType: SearchableEntityType.REPOSITORY_CASE,
-          score: 1.0,
-          source: {
+        hits: Array(50)
+          .fill(null)
+          .map((_, i) => ({
             id: i + 1,
-            name: `Test Case ${i + 1}`,
-            projectName: "Test Project",
-            projectId: 1,
-          },
-        })),
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: {
+              id: i + 1,
+              name: `Test Case ${i + 1}`,
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          })),
         took: 100,
       }),
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -449,7 +497,10 @@ describe("UnifiedSearch Component", () => {
 
       // Check pagination text (rendered at top and bottom)
       const paginationTexts = screen.getAllByText((content, element) => {
-        return element?.textContent === "common.pagination.showing 1-50 common.of 100 common.results";
+        return (
+          element?.textContent ===
+          "common.pagination.showing 1-50 common.of 100 common.results"
+        );
       });
       expect(paginationTexts.length).toBeGreaterThanOrEqual(1);
     });
@@ -459,31 +510,33 @@ describe("UnifiedSearch Component", () => {
       ok: true,
       json: async () => ({
         total: 100,
-        hits: Array(50).fill(null).map((_, i) => ({
-          id: i + 51,
-          entityType: SearchableEntityType.REPOSITORY_CASE,
-          score: 1.0,
-          source: {
+        hits: Array(50)
+          .fill(null)
+          .map((_, i) => ({
             id: i + 51,
-            name: `Test Case ${i + 51}`,
-            projectName: "Test Project",
-            projectId: 1,
-          },
-        })),
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: {
+              id: i + 51,
+              name: `Test Case ${i + 51}`,
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          })),
         took: 100,
       }),
     });
 
     // Find and click the next page button
     const buttons = screen.getAllByRole("button");
-    const nextButton = buttons.find(btn => {
-      const svg = btn.querySelector('svg');
-      return svg && svg.classList.contains('lucide-chevron-right');
+    const nextButton = buttons.find((btn) => {
+      const svg = btn.querySelector("svg");
+      return svg && svg.classList.contains("lucide-chevron-right");
     });
-    
+
     if (nextButton) {
       fireEvent.click(nextButton);
-      
+
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledTimes(2);
       });
@@ -526,7 +579,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -536,7 +589,9 @@ describe("UnifiedSearch Component", () => {
     });
 
     // Check that deleted items have destructive styling classes
-    const deletedCard = screen.getByText("Deleted Test Case").closest(".bg-destructive\\/10");
+    const deletedCard = screen
+      .getByText("Deleted Test Case")
+      .closest(".bg-destructive\\/10");
     expect(deletedCard).toBeInTheDocument();
   });
 
@@ -551,7 +606,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -562,14 +617,14 @@ describe("UnifiedSearch Component", () => {
 
     // Open filters
     const buttons = screen.getAllByRole("button");
-    const filterButton = buttons.find(btn => {
-      const svg = btn.querySelector('svg');
-      return svg && svg.classList.contains('lucide-funnel');
+    const filterButton = buttons.find((btn) => {
+      const svg = btn.querySelector("svg");
+      return svg && svg.classList.contains("lucide-funnel");
     });
-    
+
     if (filterButton) {
       fireEvent.click(filterButton);
-      
+
       await waitFor(() => {
         expect(screen.getByTestId("faceted-filters")).toBeInTheDocument();
       });
@@ -642,8 +697,12 @@ describe("UnifiedSearch Component", () => {
                 description: "This is a test case for authentication flow",
               },
               highlights: {
-                name: ['Test Case with <mark class="search-highlight">Authentication</mark>'],
-                description: ['This is a test case for <mark class="search-highlight">authentication</mark> flow'],
+                name: [
+                  'Test Case with <mark class="search-highlight">Authentication</mark>',
+                ],
+                description: [
+                  'This is a test case for <mark class="search-highlight">authentication</mark> flow',
+                ],
               },
             },
           ],
@@ -657,7 +716,9 @@ describe("UnifiedSearch Component", () => {
       fireEvent.change(searchInput, { target: { value: "authentication" } });
 
       await waitFor(() => {
-        expect(screen.getByText("Test Case with Authentication")).toBeInTheDocument();
+        expect(
+          screen.getByText("Test Case with Authentication")
+        ).toBeInTheDocument();
       });
 
       // Verify that the result is rendered with highlights
@@ -718,7 +779,8 @@ describe("UnifiedSearch Component", () => {
       });
 
       // Verify that step highlights are present
-      const highlightedElements = document.querySelectorAll('.search-highlight');
+      const highlightedElements =
+        document.querySelectorAll(".search-highlight");
       expect(highlightedElements.length).toBeGreaterThan(0);
     });
 
@@ -746,7 +808,9 @@ describe("UnifiedSearch Component", () => {
                 ],
               },
               highlights: {
-                name: ['Test Case for <mark class="search-highlight">Alpha</mark> Testing'],
+                name: [
+                  'Test Case for <mark class="search-highlight">Alpha</mark> Testing',
+                ],
                 "steps.step": [
                   'As a Project Manager, create Project <mark class="search-highlight">Alpha</mark>',
                 ],
@@ -767,11 +831,14 @@ describe("UnifiedSearch Component", () => {
       fireEvent.change(searchInput, { target: { value: "alph*" } });
 
       await waitFor(() => {
-        expect(screen.getByText("Test Case for Alpha Testing")).toBeInTheDocument();
+        expect(
+          screen.getByText("Test Case for Alpha Testing")
+        ).toBeInTheDocument();
       });
 
       // Verify wildcard highlights are rendered
-      const highlightedElements = document.querySelectorAll('.search-highlight');
+      const highlightedElements =
+        document.querySelectorAll(".search-highlight");
       expect(highlightedElements.length).toBeGreaterThan(0);
     });
 
@@ -790,7 +857,8 @@ describe("UnifiedSearch Component", () => {
                 name: "Test Case for Login Flow",
                 projectName: "Test Project",
                 projectId: 1,
-                description: "This test verifies the login flow works correctly",
+                description:
+                  "This test verifies the login flow works correctly",
               },
               highlights: {
                 description: [
@@ -810,7 +878,9 @@ describe("UnifiedSearch Component", () => {
       fireEvent.change(searchInput, { target: { value: '"login flow"' } });
 
       await waitFor(() => {
-        expect(screen.getByText("Test Case for Login Flow")).toBeInTheDocument();
+        expect(
+          screen.getByText("Test Case for Login Flow")
+        ).toBeInTheDocument();
       });
 
       // Verify the search query was sent to the API with quotes (escaped in JSON)
@@ -875,7 +945,7 @@ describe("UnifiedSearch Component", () => {
       });
 
       // Verify that the step with highlights has yellow background
-      const stepWithHighlight = document.querySelector('.bg-yellow-50');
+      const stepWithHighlight = document.querySelector(".bg-yellow-50");
       expect(stepWithHighlight).toBeInTheDocument();
     });
 
@@ -897,7 +967,9 @@ describe("UnifiedSearch Component", () => {
                 description: "Test for other features",
               },
               highlights: {
-                name: ['<mark class="search-highlight">Dashboard</mark> Login Test'],
+                name: [
+                  '<mark class="search-highlight">Dashboard</mark> Login Test',
+                ],
               },
             },
           ],
@@ -956,7 +1028,9 @@ describe("UnifiedSearch Component", () => {
       fireEvent.change(searchInput, { target: { value: "+login +password" } });
 
       await waitFor(() => {
-        expect(screen.getByText("Login with Password Test")).toBeInTheDocument();
+        expect(
+          screen.getByText("Login with Password Test")
+        ).toBeInTheDocument();
         expect(global.fetch).toHaveBeenCalledWith(
           "/api/search",
           expect.objectContaining({
@@ -984,7 +1058,9 @@ describe("UnifiedSearch Component", () => {
                 projectId: 1,
               },
               highlights: {
-                name: ['Manual <mark class="search-highlight">Login</mark> Test'],
+                name: [
+                  'Manual <mark class="search-highlight">Login</mark> Test',
+                ],
               },
             },
           ],
@@ -1039,10 +1115,14 @@ describe("UnifiedSearch Component", () => {
       render(<UnifiedSearch />);
 
       const searchInput = screen.getByPlaceholderText(/search/i);
-      fireEvent.change(searchInput, { target: { value: "login AND authentication" } });
+      fireEvent.change(searchInput, {
+        target: { value: "login AND authentication" },
+      });
 
       await waitFor(() => {
-        expect(screen.getByText("Login and Authentication Test")).toBeInTheDocument();
+        expect(
+          screen.getByText("Login and Authentication Test")
+        ).toBeInTheDocument();
         expect(global.fetch).toHaveBeenCalledWith(
           "/api/search",
           expect.objectContaining({

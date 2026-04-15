@@ -7,14 +7,17 @@ import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  FormControl, FormField,
-  FormItem, FormLabel, FormMessage
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 import type { TestRunItemProps } from "@/projects/runs/[projectId]/TestRunItem";
@@ -22,16 +25,21 @@ import TestRunItem from "@/projects/runs/[projectId]/TestRunItem";
 import { SessionsWithDetails } from "@/projects/sessions/[projectId]/SessionDisplay";
 import SessionItem from "@/projects/sessions/[projectId]/SessionItem";
 import {
-  CompletableSession, CompleteSessionDialog
+  CompletableSession,
+  CompleteSessionDialog,
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, CircleCheckBig, CircleSlash2,
+  ArrowLeft,
+  CircleCheckBig,
+  CircleSlash2,
   Compass,
-  PlayCircle, Save, SquarePen,
-  Trash2
+  PlayCircle,
+  Save,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -47,13 +55,19 @@ import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useFindFirstMilestones, useFindManyColor, useFindManyMilestones,
-  useFindManyMilestoneTypes, useFindManySessions,
-  useFindManyTestRuns, useUpdateMilestones
+  useFindFirstMilestones,
+  useFindManyColor,
+  useFindManyMilestones,
+  useFindManyMilestoneTypes,
+  useFindManySessions,
+  useFindManyTestRuns,
+  useUpdateMilestones,
 } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import {
-  ColorMap, createColorMap, MilestonesWithTypes
+  ColorMap,
+  createColorMap,
+  MilestonesWithTypes,
 } from "~/utils/milestoneUtils";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
@@ -200,7 +214,9 @@ export default function MilestoneDetailsPage() {
   const { data: descendantsData } = useQuery<{ descendantIds: number[] }>({
     queryKey: ["milestoneDescendants", milestoneId],
     queryFn: async () => {
-      const response = await fetch(`/api/milestones/${milestoneId}/descendants`);
+      const response = await fetch(
+        `/api/milestones/${milestoneId}/descendants`
+      );
       if (!response.ok) return { descendantIds: [] };
       return response.json();
     },
@@ -239,10 +255,7 @@ export default function MilestoneDetailsPage() {
       template: true,
       configuration: true,
     },
-    orderBy: [
-      { isCompleted: "asc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ isCompleted: "asc" }, { createdAt: "desc" }],
   });
 
   const { data: milestoneTestRuns } = useFindManyTestRuns({
@@ -277,10 +290,7 @@ export default function MilestoneDetailsPage() {
       // testCases removed - fetched separately via batch summary API to avoid N+1 queries
       createdBy: true,
     },
-    orderBy: [
-      { isCompleted: "asc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ isCompleted: "asc" }, { createdAt: "desc" }],
   });
 
   // Extract test run IDs for batch summary fetch
@@ -657,13 +667,20 @@ export default function MilestoneDetailsPage() {
               className="min-h-[400px]"
               autoSaveId="milestone-panels"
             >
-              <ResizablePanel id="milestone-left" order={1} defaultSize={80} minSize={20}>
+              <ResizablePanel
+                id="milestone-left"
+                order={1}
+                defaultSize={80}
+                minSize={20}
+              >
                 <div className="px-4 h-full space-y-4">
                   <FormField
                     name="docs"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{tGlobal("common.fields.documentation")}</FormLabel>
+                        <FormLabel>
+                          {tGlobal("common.fields.documentation")}
+                        </FormLabel>
                         {isEditMode ||
                         (milestone?.docs &&
                           milestone?.docs !==
@@ -815,7 +832,8 @@ export default function MilestoneDetailsPage() {
                                   testRunType: testRun.testRunType,
                                   isCompleted: testRun.isCompleted,
                                   configuration: testRun.configuration,
-                                  configurationGroupId: testRun.configurationGroupId,
+                                  configurationGroupId:
+                                    testRun.configurationGroupId,
                                   state: {
                                     id: testRun.state.id,
                                     name: testRun.state.name,
@@ -857,8 +875,12 @@ export default function MilestoneDetailsPage() {
                                 <TestRunItem
                                   key={testRun.id}
                                   testRun={transformedTestRun}
-                                  showMilestone={testRun.milestoneId !== Number(milestoneId)}
-                                  summaryData={batchSummaries?.summaries[testRun.id]}
+                                  showMilestone={
+                                    testRun.milestoneId !== Number(milestoneId)
+                                  }
+                                  summaryData={
+                                    batchSummaries?.summaries[testRun.id]
+                                  }
                                 />
                               );
                             })}
@@ -890,7 +912,10 @@ export default function MilestoneDetailsPage() {
                                 isCompleted={testSession.isCompleted}
                                 onComplete={handleCompleteSession}
                                 canComplete={canCompleteSession}
-                                showMilestone={testSession.milestoneId !== Number(milestoneId)}
+                                showMilestone={
+                                  testSession.milestoneId !==
+                                  Number(milestoneId)
+                                }
                               />
                             ))}
                           </div>
@@ -907,7 +932,12 @@ export default function MilestoneDetailsPage() {
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel id="milestone-right" order={2} defaultSize={20} minSize={10}>
+              <ResizablePanel
+                id="milestone-right"
+                order={2}
+                defaultSize={20}
+                minSize={10}
+              >
                 <div className="pl-4 pr-1 pb-1 h-full">
                   <div className="space-y-4">
                     <MilestoneFormControls

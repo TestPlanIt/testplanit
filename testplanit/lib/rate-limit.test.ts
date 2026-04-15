@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  checkPasswordAttemptLimit, clearPasswordAttempts,
-  getAttemptCount, recordPasswordAttempt
+  checkPasswordAttemptLimit,
+  clearPasswordAttempts,
+  getAttemptCount,
+  recordPasswordAttempt,
 } from "./rate-limit";
 
 describe("rate-limit", () => {
@@ -113,7 +115,11 @@ describe("rate-limit", () => {
       it("should use custom window when provided", () => {
         const customWindow = 5 * 60 * 1000; // 5 minutes
         recordPasswordAttempt(testIdentifier, customWindow);
-        const result = checkPasswordAttemptLimit(testIdentifier, 5, customWindow);
+        const result = checkPasswordAttemptLimit(
+          testIdentifier,
+          5,
+          customWindow
+        );
 
         const resetTime = result.resetAt!.getTime();
         const now = Date.now();

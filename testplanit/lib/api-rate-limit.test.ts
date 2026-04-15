@@ -11,7 +11,7 @@ vi.mock("./valkey", () => ({
 import {
   checkApiRateLimit,
   getTierLimit,
-  _resetForTesting
+  _resetForTesting,
 } from "./api-rate-limit";
 
 // Helper to enable the mock Valkey connection for specific tests
@@ -140,8 +140,7 @@ describe("api-rate-limit", () => {
       const result = await checkApiRateLimit();
 
       // resetAt should be 2024-01-01 11:00:00 UTC
-      const expectedResetAt =
-        new Date("2024-01-01T11:00:00Z").getTime() / 1000;
+      const expectedResetAt = new Date("2024-01-01T11:00:00Z").getTime() / 1000;
       expect(result.resetAt).toBe(expectedResetAt);
     });
 
@@ -212,9 +211,7 @@ describe("api-rate-limit", () => {
         expect(result.allowed).toBe(true);
         expect(result.remaining).toBe(999);
         expect(mockIncr).toHaveBeenCalledTimes(1);
-        expect(mockIncr.mock.calls[0][0]).toMatch(
-          /^ratelimit:api:global:\d+$/
-        );
+        expect(mockIncr.mock.calls[0][0]).toMatch(/^ratelimit:api:global:\d+$/);
       });
     });
 

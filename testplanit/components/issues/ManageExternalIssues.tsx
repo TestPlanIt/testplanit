@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Bug, ExternalLink, Loader2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -17,21 +17,24 @@ import { SearchIssuesDialog } from "./search-issues-dialog";
 // Utility function to format provider names for display
 const formatProviderName = (provider: string): string => {
   switch (provider.toLowerCase()) {
-    case 'jira':
-      return 'Jira';
-    case 'github':
-      return 'GitHub';
-    case 'gitlab':
-      return 'GitLab';
-    case 'azure_devops':
-      return 'Azure DevOps';
-    case 'linear':
-      return 'Linear';
-    case 'simple_url':
-      return ''; // Empty string to avoid "Link Issue Issue"
+    case "jira":
+      return "Jira";
+    case "github":
+      return "GitHub";
+    case "gitlab":
+      return "GitLab";
+    case "azure_devops":
+      return "Azure DevOps";
+    case "linear":
+      return "Linear";
+    case "simple_url":
+      return ""; // Empty string to avoid "Link Issue Issue"
     default:
       // Capitalize first letter and replace underscores with spaces
-      return provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase().replace(/_/g, ' ');
+      return (
+        provider.charAt(0).toUpperCase() +
+        provider.slice(1).toLowerCase().replace(/_/g, " ")
+      );
   }
 };
 
@@ -80,7 +83,13 @@ interface ManageExternalIssuesProps {
   provider: string;
   linkedIssueIds?: number[];
   setLinkedIssueIds?: (issueIds: number[]) => void;
-  entityType?: 'testCase' | 'testRun' | 'session' | 'testRunResult' | 'testRunStepResult' | 'sessionResult';
+  entityType?:
+    | "testCase"
+    | "testRun"
+    | "session"
+    | "testRunResult"
+    | "testRunStepResult"
+    | "sessionResult";
 }
 
 // Component for individual linked issue with hover functionality
@@ -201,7 +210,9 @@ function LinkedIssueBadge({
         }}
       >
         <Popover open={isOpen} onOpenChange={setIsOpen}>
-          <PopoverTrigger asChild className="w-full">{badgeContent}</PopoverTrigger>
+          <PopoverTrigger asChild className="w-full">
+            {badgeContent}
+          </PopoverTrigger>
           <PopoverContent
             className="w-96 p-0"
             align="start"
@@ -314,7 +325,9 @@ function LinkedIssueBadge({
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 hover:text-primary"
                     >
-                      {t("issues.viewExternal", { provider: formatProviderName(provider) })}
+                      {t("issues.viewExternal", {
+                        provider: formatProviderName(provider),
+                      })}
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                   )}
@@ -339,7 +352,7 @@ export function ManageExternalIssues({
   provider,
   linkedIssueIds,
   setLinkedIssueIds,
-  entityType = 'testCase',
+  entityType = "testCase",
 }: ManageExternalIssuesProps) {
   const t = useTranslations();
   const [linkedIssues, setLinkedIssues] = useState<ExternalIssue[]>([]);
@@ -374,20 +387,20 @@ export function ManageExternalIssues({
   const fetchLinkedIssues = async () => {
     try {
       let url = `/api/integrations/jira/link-issue?`;
-      if (entityType === 'testRun') {
+      if (entityType === "testRun") {
         url += `testRunId=${testCaseId}`;
-      } else if (entityType === 'session') {
+      } else if (entityType === "session") {
         url += `sessionId=${testCaseId}`;
-      } else if (entityType === 'testRunResult') {
+      } else if (entityType === "testRunResult") {
         url += `testRunResultId=${testCaseId}`;
-      } else if (entityType === 'testRunStepResult') {
+      } else if (entityType === "testRunStepResult") {
         url += `testRunStepResultId=${testCaseId}`;
-      } else if (entityType === 'sessionResult') {
+      } else if (entityType === "sessionResult") {
         url += `sessionResultId=${testCaseId}`;
       } else {
         url += `testCaseId=${testCaseId}`;
       }
-      
+
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
@@ -417,7 +430,7 @@ export function ManageExternalIssues({
           summary: issue.summary,
           status: issue.status,
           url: issue.url,
-          externalId: issue.externalId
+          externalId: issue.externalId,
         };
         const updatedIssues = [...linkedIssues, newIssue];
         setLinkedIssues(updatedIssues);
@@ -437,15 +450,15 @@ export function ManageExternalIssues({
       };
 
       // Add the appropriate entity ID based on entityType
-      if (entityType === 'testRun') {
+      if (entityType === "testRun") {
         body.testRunId = testCaseId;
-      } else if (entityType === 'session') {
+      } else if (entityType === "session") {
         body.sessionId = testCaseId;
-      } else if (entityType === 'testRunResult') {
+      } else if (entityType === "testRunResult") {
         body.testRunResultId = testCaseId;
-      } else if (entityType === 'testRunStepResult') {
+      } else if (entityType === "testRunStepResult") {
         body.testRunStepResultId = testCaseId;
-      } else if (entityType === 'sessionResult') {
+      } else if (entityType === "sessionResult") {
         body.sessionResultId = testCaseId;
       } else {
         body.testCaseId = testCaseId;
@@ -485,7 +498,9 @@ export function ManageExternalIssues({
 
     // If entity doesn't exist yet (testCaseId === 0), just update local state
     if (testCaseId === 0) {
-      const updatedIssues = linkedIssues.filter((issue) => issue.id !== issueId);
+      const updatedIssues = linkedIssues.filter(
+        (issue) => issue.id !== issueId
+      );
       setLinkedIssues(updatedIssues);
       if (setLinkedIssueIds) {
         setLinkedIssueIds(updatedIssues.map((i) => i.id));
@@ -499,15 +514,15 @@ export function ManageExternalIssues({
       };
 
       // Add the appropriate entity ID based on entityType
-      if (entityType === 'testRun') {
+      if (entityType === "testRun") {
         body.testRunId = testCaseId;
-      } else if (entityType === 'session') {
+      } else if (entityType === "session") {
         body.sessionId = testCaseId;
-      } else if (entityType === 'testRunResult') {
+      } else if (entityType === "testRunResult") {
         body.testRunResultId = testCaseId;
-      } else if (entityType === 'testRunStepResult') {
+      } else if (entityType === "testRunStepResult") {
         body.testRunStepResultId = testCaseId;
-      } else if (entityType === 'sessionResult') {
+      } else if (entityType === "sessionResult") {
         body.sessionResultId = testCaseId;
       } else {
         body.testCaseId = testCaseId;
@@ -568,7 +583,9 @@ export function ManageExternalIssues({
         disabled={isLinking}
       >
         <Plus className="h-4 w-4" />
-        {t("issues.linkExternalIssue", { provider: formatProviderName(provider) })}
+        {t("issues.linkExternalIssue", {
+          provider: formatProviderName(provider),
+        })}
       </Button>
 
       <SearchIssuesDialog

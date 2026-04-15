@@ -5,10 +5,15 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Bot, CircleDashed, FolderOpen, LayoutTemplate, LucideIcon, User
+  Bot,
+  CircleDashed,
+  FolderOpen,
+  LayoutTemplate,
+  LucideIcon,
+  User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";

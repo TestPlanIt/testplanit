@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
       const issues = parsed.error.issues;
       const missingFields = issues.map((i) => i.path.join(".")).join(", ");
       return NextResponse.json(
-        { error: `Invalid import data. Issues with: ${missingFields || "name, prompts"}` },
+        {
+          error: `Invalid import data. Issues with: ${missingFields || "name, prompts"}`,
+        },
         { status: 400 }
       );
     }

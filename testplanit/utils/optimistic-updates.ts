@@ -6,7 +6,11 @@ export interface OptimisticUpdateOptions<TData, TVariables> {
   queryKey: unknown[];
   mutationFn: (variables: TVariables) => Promise<TData>;
   updater: (old: TData | undefined, variables: TVariables) => TData;
-  onError?: (error: Error, variables: TVariables, context: { previousData: TData | undefined }) => void;
+  onError?: (
+    error: Error,
+    variables: TVariables,
+    context: { previousData: TData | undefined }
+  ) => void;
   onSuccess?: (data: TData, variables: TVariables) => void;
   errorMessage?: string;
   successMessage?: string;
@@ -29,27 +33,29 @@ export async function performOptimisticUpdate<TData, TVariables>({
   const previousData = queryClient.getQueryData<TData>(queryKey);
 
   // Optimistically update to the new value
-  queryClient.setQueryData<TData>(queryKey, (old) => updater(old, {} as TVariables));
+  queryClient.setQueryData<TData>(queryKey, (old) =>
+    updater(old, {} as TVariables)
+  );
 
   try {
     // Perform the mutation
     const result = await mutationFn({} as TVariables);
-    
+
     if (successMessage) {
       toast.success(successMessage);
     }
-    
+
     onSuccess?.(result, {} as TVariables);
-    
+
     return result;
   } catch (error) {
     // If the mutation fails, use the context returned from onMutate to roll back
     queryClient.setQueryData(queryKey, previousData);
-    
+
     toast.error(errorMessage);
-    
+
     onError?.(error as Error, {} as TVariables, { previousData });
-    
+
     throw error;
   }
 }
@@ -79,7 +85,7 @@ export async function performOptimisticDelete<TData, TId>({
   const idToDelete = getId();
 
   if (previousData) {
-    queryClient.setQueryData<TData[]>(queryKey, (old) => 
+    queryClient.setQueryData<TData[]>(queryKey, (old) =>
       old ? filterDeleted(old, idToDelete) : []
     );
   }
@@ -140,7 +146,10 @@ export interface OptimisticCreateOptions<TData, TVariables> {
   errorMessage?: string;
 }
 
-export async function performOptimisticCreate<TData extends { id?: string | number }, TVariables = any>({
+export async function performOptimisticCreate<
+  TData extends { id?: string | number },
+  TVariables = any,
+>({
   queryClient,
   queryKey,
   createFn,
@@ -151,21 +160,21 @@ export async function performOptimisticCreate<TData extends { id?: string | numb
   await queryClient.cancelQueries({ queryKey });
 
   const previousData = queryClient.getQueryData<TData[]>(queryKey);
-  
+
   const optimisticItem = { id: tempId } as unknown as TData;
 
-  queryClient.setQueryData<TData[]>(queryKey, (old) => 
+  queryClient.setQueryData<TData[]>(queryKey, (old) =>
     old ? [...old, optimisticItem] : [optimisticItem]
   );
 
   try {
     const result = await createFn({} as TVariables);
-    
+
     // Replace temp item with real item
     queryClient.setQueryData<TData[]>(queryKey, (old) =>
-      old ? old.map(item => item.id === tempId ? result : item) : [result]
+      old ? old.map((item) => (item.id === tempId ? result : item)) : [result]
     );
-    
+
     if (successMessage) {
       toast.success(successMessage);
     }
@@ -203,14 +212,16 @@ export async function invalidateModelQueries(
     predicate: (query) => {
       const queryKey = query.queryKey as any[];
       // Check both index 0 (non-ZenStack keys) and index 1 (ZenStack keys)
-      return queryKey[0]?.includes?.(modelName) || queryKey[1]?.includes?.(modelName);
-    }
+      return (
+        queryKey[0]?.includes?.(modelName) || queryKey[1]?.includes?.(modelName)
+      );
+    },
   });
 
   // Invalidate any additional specific queries
   if (additionalKeys) {
     await Promise.all(
-      additionalKeys.map(key => 
+      additionalKeys.map((key) =>
         queryClient.invalidateQueries({ queryKey: key })
       )
     );
@@ -237,14 +248,14 @@ export async function performZenStackOptimisticDelete({
 }) {
   try {
     await deleteFn();
-    
+
     // Invalidate all queries related to this model
     await invalidateModelQueries(queryClient, modelName);
-    
+
     if (successMessage) {
       toast.success(successMessage);
     }
-    
+
     onSuccess?.();
   } catch (error) {
     toast.error(errorMessage);

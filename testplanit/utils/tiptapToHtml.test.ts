@@ -49,7 +49,7 @@ describe("tiptapToHtml", () => {
 
       const html = tiptapToHtml(content);
       expect(html).toContain(">Hello world</p>");
-      expect(html).toContain('font-family:');
+      expect(html).toContain("font-family:");
     });
 
     it("should handle bold and italic text", () => {
@@ -77,8 +77,16 @@ describe("tiptapToHtml", () => {
       const content = {
         type: "doc",
         content: [
-          { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "Heading 1" }] },
-          { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Heading 2" }] },
+          {
+            type: "heading",
+            attrs: { level: 1 },
+            content: [{ type: "text", text: "Heading 1" }],
+          },
+          {
+            type: "heading",
+            attrs: { level: 2 },
+            content: [{ type: "text", text: "Heading 2" }],
+          },
         ],
       };
 
@@ -168,7 +176,7 @@ describe("tiptapToHtml", () => {
       };
 
       const html = tiptapToHtml(content);
-      expect(html).toContain('<img');
+      expect(html).toContain("<img");
       expect(html).toContain('src="https://example.com/image.jpg"');
       expect(html).toContain('alt="Test image"');
       // Note: Style attributes may vary between TipTap versions
@@ -223,7 +231,11 @@ describe("tiptapToHtml", () => {
                   {
                     type: "paragraph",
                     content: [
-                      { type: "text", marks: [{ type: "bold" }], text: "Important" },
+                      {
+                        type: "text",
+                        marks: [{ type: "bold" }],
+                        text: "Important",
+                      },
                       { type: "text", text: " announcement" },
                     ],
                   },
@@ -237,7 +249,9 @@ describe("tiptapToHtml", () => {
               { type: "text", text: "Visit " },
               {
                 type: "text",
-                marks: [{ type: "link", attrs: { href: "https://example.com" } }],
+                marks: [
+                  { type: "link", attrs: { href: "https://example.com" } },
+                ],
                 text: "our website",
               },
               { type: "text", text: " for more info." },

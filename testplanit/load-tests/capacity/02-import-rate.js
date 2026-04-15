@@ -53,12 +53,20 @@ export function setup() {
   const opts = {};
   const folders = findMany(
     "repositoryFolders",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 10 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 10,
+    },
     opts
   );
   const repos = findMany(
     "repositories",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 1 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 1,
+    },
     opts
   );
   const templates = findMany(
@@ -68,7 +76,11 @@ export function setup() {
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "CASES" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "CASES" },
+      select: { id: true },
+      take: 1,
+    },
     opts
   );
 
@@ -85,7 +97,8 @@ export default function importRate(ctx) {
     return;
   }
 
-  const folderId = ctx.folderIds[Math.floor(Math.random() * ctx.folderIds.length)];
+  const folderId =
+    ctx.folderIds[Math.floor(Math.random() * ctx.folderIds.length)];
 
   const start = Date.now();
   const res = create(

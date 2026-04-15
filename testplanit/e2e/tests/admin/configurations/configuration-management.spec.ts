@@ -119,9 +119,9 @@ test.describe("Configuration Management - Page Display", () => {
     // The page title "Configurations" appears in the card header
     // Use the CardTitle text which renders in the page header
     const _pageHeader = page.locator("main > div").first();
-    await expect(
-      page.getByText("Configurations").first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Configurations").first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Categories section should be visible
     await expect(page.getByText("Categories").first()).toBeVisible({
@@ -468,7 +468,9 @@ test.describe("Configuration Management - Variant CRUD", () => {
         `xpath=//tr[td[contains(.,"${categoryName}")]]/following-sibling::tr[1]`
       );
       await expect(
-        refreshedExpandedRow.getByText(updatedVariantName, { exact: true }).first()
+        refreshedExpandedRow
+          .getByText(updatedVariantName, { exact: true })
+          .first()
       ).toBeVisible({ timeout: 10000 });
     } finally {
       await deleteConfigCategory(request, baseURL!, categoryId);
@@ -595,9 +597,9 @@ test.describe("Configuration Management - Configuration Groups", () => {
       await expect(variantDialog).toBeVisible({ timeout: 5000 });
 
       // Verify the category we created is visible in the dialog
-      await expect(
-        variantDialog.getByText(categoryName).first()
-      ).toBeVisible({ timeout: 5000 });
+      await expect(variantDialog.getByText(categoryName).first()).toBeVisible({
+        timeout: 5000,
+      });
 
       // Close the wizard via Escape
       await page.keyboard.press("Escape");

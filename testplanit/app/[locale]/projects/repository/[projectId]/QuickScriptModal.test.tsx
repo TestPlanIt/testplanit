@@ -100,9 +100,10 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogContent: ({
     children,
     ...props
-  }: React.PropsWithChildren<{ className?: string; "data-testid"?: string }>) => (
-    <div {...props}>{children}</div>
-  ),
+  }: React.PropsWithChildren<{
+    className?: string;
+    "data-testid"?: string;
+  }>) => <div {...props}>{children}</div>,
   DialogHeader: ({ children }: React.PropsWithChildren<object>) => (
     <div data-testid="dialog-header">{children}</div>
   ),
@@ -121,7 +122,9 @@ vi.mock("@/components/ui/command", () => ({
   Command: ({ children }: React.PropsWithChildren<object>) => (
     <div data-testid="command">{children}</div>
   ),
-  CommandInput: (props: any) => <input data-testid="command-input" {...props} />,
+  CommandInput: (props: any) => (
+    <input data-testid="command-input" {...props} />
+  ),
   CommandList: ({ children, ...props }: React.PropsWithChildren<object>) => (
     <div data-testid="command-list" {...props}>
       {children}
@@ -145,12 +148,7 @@ vi.mock("@/components/ui/command", () => ({
     value,
     ...props
   }: React.PropsWithChildren<{ onSelect?: () => void; value?: string }>) => (
-    <div
-      data-testid="command-item"
-      onClick={onSelect}
-      role="option"
-      {...props}
-    >
+    <div data-testid="command-item" onClick={onSelect} role="option" {...props}>
       {children}
     </div>
   ),
@@ -275,9 +273,7 @@ vi.mock("@/components/ui/badge", () => ({
 }));
 
 vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: React.PropsWithChildren<object>) => (
-    <>{children}</>
-  ),
+  Tooltip: ({ children }: React.PropsWithChildren<object>) => <>{children}</>,
   TooltipProvider: ({
     children,
   }: React.PropsWithChildren<{ delayDuration?: number }>) => <>{children}</>,
@@ -346,8 +342,32 @@ beforeEach(() => {
   mockFetchCasesForQuickScript.mockResolvedValue({
     success: true,
     data: [
-      { id: 1, name: "Login Test", folder: "", state: "active", estimate: null, automated: false, tags: "", createdBy: "user", createdAt: "2024-01-01", steps: [], fields: {} },
-      { id: 2, name: "Logout Test", folder: "", state: "active", estimate: null, automated: false, tags: "", createdBy: "user", createdAt: "2024-01-01", steps: [], fields: {} },
+      {
+        id: 1,
+        name: "Login Test",
+        folder: "",
+        state: "active",
+        estimate: null,
+        automated: false,
+        tags: "",
+        createdBy: "user",
+        createdAt: "2024-01-01",
+        steps: [],
+        fields: {},
+      },
+      {
+        id: 2,
+        name: "Logout Test",
+        folder: "",
+        state: "active",
+        estimate: null,
+        automated: false,
+        tags: "",
+        createdBy: "user",
+        createdAt: "2024-01-01",
+        steps: [],
+        fields: {},
+      },
     ],
   });
 });
@@ -420,7 +440,9 @@ describe("QuickScriptModal", () => {
 
     // Wait for AI check to complete
     await waitFor(() => {
-      expect(mockCheckAiExportAvailable).toHaveBeenCalledWith({ projectId: 42 });
+      expect(mockCheckAiExportAvailable).toHaveBeenCalledWith({
+        projectId: 42,
+      });
     });
 
     // AI toggle should not be present
@@ -445,7 +467,9 @@ describe("QuickScriptModal", () => {
 
     // Dialog mock gates rendering on open prop
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("quickscript-template-select")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("quickscript-template-select")
+    ).not.toBeInTheDocument();
   });
 
   it("clicking export button calls fetchCasesForQuickScript with correct args", async () => {

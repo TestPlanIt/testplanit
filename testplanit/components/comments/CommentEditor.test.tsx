@@ -7,7 +7,9 @@ vi.mock("@tiptap/react", () => ({
   useEditor: vi.fn(() => ({
     getJSON: vi.fn(() => ({
       type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: "Hello world" }] }],
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Hello world" }] },
+      ],
     })),
     getText: vi.fn(() => "Hello world"),
     isEmpty: false,
@@ -54,7 +56,12 @@ vi.mock("~/utils", () => ({
 
 vi.mock("~/components/ui/button", () => ({
   Button: ({ children, onClick, disabled, type, ...props }: any) => (
-    <button type={type || "button"} onClick={onClick} disabled={disabled} {...props}>
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      disabled={disabled}
+      {...props}
+    >
       {children}
     </button>
   ),
@@ -92,7 +99,9 @@ describe("CommentEditor", () => {
     const { useEditor } = await import("@tiptap/react");
     const mockContent = {
       type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: "My comment" }] }],
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "My comment" }] },
+      ],
     };
     const mockEditor = {
       getJSON: vi.fn(() => mockContent),
@@ -155,11 +164,7 @@ describe("CommentEditor", () => {
   it("calls onCancel when cancel button is clicked", () => {
     const onCancel = vi.fn();
     render(
-      <CommentEditor
-        projectId={1}
-        onSubmit={vi.fn()}
-        onCancel={onCancel}
-      />
+      <CommentEditor projectId={1} onSubmit={vi.fn()} onCancel={onCancel} />
     );
     const cancelButton = screen.getByText("cancel");
     fireEvent.click(cancelButton);

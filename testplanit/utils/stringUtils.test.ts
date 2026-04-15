@@ -60,7 +60,7 @@ describe("stringUtils", () => {
     });
 
     it("should handle all problematic characters at once", () => {
-      expect(sanitizeName('"\'/:*?<>|')).toBe("_________");
+      expect(sanitizeName("\"'/:*?<>|")).toBe("_________");
     });
   });
 
@@ -78,7 +78,7 @@ describe("stringUtils", () => {
     });
 
     it("should replace all problematic characters", () => {
-      expect(replaceProblematicChars('"\'/:*?<>|')).toBe("_________");
+      expect(replaceProblematicChars("\"'/:*?<>|")).toBe("_________");
     });
 
     it("should preserve leading and trailing whitespace", () => {

@@ -1,10 +1,6 @@
 "use server";
 
-import {
-  ApplicationArea,
-  ProjectAccessType,
-  Roles
-} from "@prisma/client";
+import { ApplicationArea, ProjectAccessType, Roles } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
@@ -269,25 +265,39 @@ export async function POST(request: Request) {
     // If checkAccessOnly is true, just return whether the user has access
     if (checkAccessOnly) {
       return NextResponse.json({
-        hasAccess: isSystemAdmin || isSystemProjectAdmin || (!accessDenied && effectiveRole !== null),
-        effectiveRole: isSystemAdmin ? "System Admin" : isSystemProjectAdmin ? "System Project Admin" : effectiveRole?.name || null,
-        accessType: isSystemAdmin 
+        hasAccess:
+          isSystemAdmin ||
+          isSystemProjectAdmin ||
+          (!accessDenied && effectiveRole !== null),
+        effectiveRole: isSystemAdmin
+          ? "System Admin"
+          : isSystemProjectAdmin
+            ? "System Project Admin"
+            : effectiveRole?.name || null,
+        accessType: isSystemAdmin
           ? "SYSTEM_ADMIN"
           : isSystemProjectAdmin
             ? "SYSTEM_PROJECTADMIN"
             : userProjectPermission?.accessType ||
-          (project.defaultAccessType === ProjectAccessType.GLOBAL_ROLE
-            ? "GLOBAL_ROLE"
-            : project.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE
-              ? "SPECIFIC_ROLE"
-              : "NO_ACCESS"),
+              (project.defaultAccessType === ProjectAccessType.GLOBAL_ROLE
+                ? "GLOBAL_ROLE"
+                : project.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE
+                  ? "SPECIFIC_ROLE"
+                  : "NO_ACCESS"),
       });
     }
 
     // Otherwise return the detailed permissions
     return NextResponse.json({
-      hasAccess: isSystemAdmin || isSystemProjectAdmin || (!accessDenied && effectiveRole !== null),
-      effectiveRole: isSystemAdmin ? "System Admin" : isSystemProjectAdmin ? "System Project Admin" : effectiveRole?.name || null,
+      hasAccess:
+        isSystemAdmin ||
+        isSystemProjectAdmin ||
+        (!accessDenied && effectiveRole !== null),
+      effectiveRole: isSystemAdmin
+        ? "System Admin"
+        : isSystemProjectAdmin
+          ? "System Project Admin"
+          : effectiveRole?.name || null,
       permissions: resultData,
     });
   } catch (error) {

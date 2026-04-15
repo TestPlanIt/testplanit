@@ -124,7 +124,9 @@ test.describe("Two-Factor Authentication", () => {
       const twoFADialog = page.locator('[role="dialog"]').first();
       await expect(twoFADialog).toBeVisible({ timeout: 15000 });
       await expect(
-        twoFADialog.getByText(/two.factor|two factor|verification code|authenticator/i).first()
+        twoFADialog
+          .getByText(/two.factor|two factor|verification code|authenticator/i)
+          .first()
       ).toBeVisible({ timeout: 5000 });
 
       // Generate a fresh TOTP code (must be current time-step)
@@ -133,7 +135,9 @@ test.describe("Two-Factor Authentication", () => {
       // The input-otp library renders a hidden <input> behind visual slots.
       // Click the OTP input and fill with the 6-digit code.
       const otpInput = twoFADialog
-        .locator('input[inputmode="numeric"], input[autocomplete="one-time-code"]')
+        .locator(
+          'input[inputmode="numeric"], input[autocomplete="one-time-code"]'
+        )
         .first();
       await otpInput.click();
       await otpInput.fill(freshTotpCode);
@@ -149,11 +153,7 @@ test.describe("Two-Factor Authentication", () => {
     }
   });
 
-  test("2FA verification with backup code", async ({
-    page,
-    api,
-    baseURL,
-  }) => {
+  test("2FA verification with backup code", async ({ page, api, baseURL }) => {
     const timestamp = Date.now();
     const testEmail = `2fa-backup-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
@@ -193,7 +193,9 @@ test.describe("Two-Factor Authentication", () => {
       const twoFADialog = page.locator('[role="dialog"]').first();
       await expect(twoFADialog).toBeVisible({ timeout: 15000 });
       await expect(
-        twoFADialog.getByText(/two.factor|two factor|verification code|authenticator/i).first()
+        twoFADialog
+          .getByText(/two.factor|two factor|verification code|authenticator/i)
+          .first()
       ).toBeVisible({ timeout: 5000 });
 
       // Click the "Use a backup code instead" toggle
@@ -225,11 +227,7 @@ test.describe("Two-Factor Authentication", () => {
     }
   });
 
-  test("2FA with invalid code shows error", async ({
-    page,
-    api,
-    baseURL,
-  }) => {
+  test("2FA with invalid code shows error", async ({ page, api, baseURL }) => {
     const timestamp = Date.now();
     const testEmail = `2fa-invalid-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
@@ -267,12 +265,16 @@ test.describe("Two-Factor Authentication", () => {
       const twoFADialog = page.locator('[role="dialog"]').first();
       await expect(twoFADialog).toBeVisible({ timeout: 15000 });
       await expect(
-        twoFADialog.getByText(/two.factor|two factor|verification code|authenticator/i).first()
+        twoFADialog
+          .getByText(/two.factor|two factor|verification code|authenticator/i)
+          .first()
       ).toBeVisible({ timeout: 5000 });
 
       // Enter an invalid 6-digit code using the hidden OTP input
       const otpInput = twoFADialog
-        .locator('input[inputmode="numeric"], input[autocomplete="one-time-code"]')
+        .locator(
+          'input[inputmode="numeric"], input[autocomplete="one-time-code"]'
+        )
         .first();
       await otpInput.click();
       await otpInput.fill("000000");

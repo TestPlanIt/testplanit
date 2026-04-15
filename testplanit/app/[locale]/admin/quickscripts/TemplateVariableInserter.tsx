@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { CaseFields } from "@prisma/client";
 import { useTranslations } from "next-intl";
@@ -124,7 +124,10 @@ export function TemplateVariableInserter({
           {CASE_VARIABLES.map((v) => (
             <SelectItem key={v.value} value={v.value} className="pl-6">
               {v.label}
-              <Badge variant="outline" className="ml-4 text-xs text-current opacity-60">
+              <Badge
+                variant="outline"
+                className="ml-4 text-xs text-current opacity-60"
+              >
                 {v.type}
               </Badge>
             </SelectItem>
@@ -135,7 +138,10 @@ export function TemplateVariableInserter({
           {STEP_VARIABLES.map((v) => (
             <SelectItem key={v.value} value={v.value} className="pl-6">
               {v.isBlock ? t("stepsBlock") : v.label}
-              <Badge variant="outline" className="ml-4 text-xs text-current opacity-60">
+              <Badge
+                variant="outline"
+                className="ml-4 text-xs text-current opacity-60"
+              >
                 {v.type}
               </Badge>
             </SelectItem>
@@ -151,7 +157,10 @@ export function TemplateVariableInserter({
                 className="pl-6"
               >
                 {field.displayName}
-                <Badge variant="outline" className="ml-4 text-xs text-current opacity-60">
+                <Badge
+                  variant="outline"
+                  className="ml-4 text-xs text-current opacity-60"
+                >
                   {field.type.type}
                 </Badge>
               </SelectItem>

@@ -28,7 +28,16 @@ const searchLatency = {
   typeahead: new Trend("search_typeahead_ms"),
 };
 
-const QUERIES = ["login", "payment", "authentication", "api", "timeout", "error", "mobile", "security"];
+const QUERIES = [
+  "login",
+  "payment",
+  "authentication",
+  "api",
+  "timeout",
+  "error",
+  "mobile",
+  "security",
+];
 
 export const options = {
   // Modest concurrency — we're measuring search quality at data scale,
@@ -56,7 +65,11 @@ export default function searchAtScale() {
   let start = Date.now();
   postApi(
     "/api/repository-cases/search",
-    { query: q, filters: { projectIds: [PROJECT_ID] }, pagination: { page: 1, size: 25 } },
+    {
+      query: q,
+      filters: { projectIds: [PROJECT_ID] },
+      pagination: { page: 1, size: 25 },
+    },
     { scenarioTag: "search" }
   );
   searchLatency.simple.add(Date.now() - start);

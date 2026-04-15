@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  convertHtmlToTipTapJSON, convertMarkdownToTipTapJSON, convertTextToTipTapJSON, ensureTipTapJSON,
+  convertHtmlToTipTapJSON,
+  convertMarkdownToTipTapJSON,
+  convertTextToTipTapJSON,
+  ensureTipTapJSON,
   isLikelyMarkdown,
-  serializeTipTapJSON
+  serializeTipTapJSON,
 } from "./tiptapConversion";
 
 describe("convertTextToTipTapJSON", () => {
@@ -201,9 +204,7 @@ describe("isLikelyMarkdown", () => {
   it("should NOT detect plain text as markdown", () => {
     expect(isLikelyMarkdown("Just a plain sentence.")).toBe(false);
     expect(isLikelyMarkdown("Hello world")).toBe(false);
-    expect(isLikelyMarkdown("This is a normal paragraph of text.")).toBe(
-      false
-    );
+    expect(isLikelyMarkdown("This is a normal paragraph of text.")).toBe(false);
   });
 
   it("should require 2+ weak patterns to classify as markdown", () => {

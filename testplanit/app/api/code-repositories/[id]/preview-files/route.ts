@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import {
   createGitRepoAdapter,
-  RepoFileEntry
+  RepoFileEntry,
 } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { authOptions } from "~/server/auth";
 
@@ -65,10 +65,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     select: { access: true },
   });
 
-  if (
-    !user?.access ||
-    !["ADMIN", "PROJECTADMIN"].includes(user.access)
-  ) {
+  if (!user?.access || !["ADMIN", "PROJECTADMIN"].includes(user.access)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -120,22 +117,29 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
         // Step 2: Fetch files — use path-scoped listing when paths are available
         const basePaths = extractBasePaths(pathPatterns);
-        const scopeLabel = basePaths.length > 0
-          ? basePaths.join(", ")
-          : "repository root";
+        const scopeLabel =
+          basePaths.length > 0 ? basePaths.join(", ") : "repository root";
         send({ type: "progress", step: "listing", scope: scopeLabel });
 
-        const { files: allFiles, truncated } =
-          await adapter.listFilesInPaths(
-            resolvedBranch,
-            basePaths,
-            (filesFound) => {
-              send({ type: "progress", step: "listing", filesFound, scope: scopeLabel });
-            }
-          );
+        const { files: allFiles, truncated } = await adapter.listFilesInPaths(
+          resolvedBranch,
+          basePaths,
+          (filesFound) => {
+            send({
+              type: "progress",
+              step: "listing",
+              filesFound,
+              scope: scopeLabel,
+            });
+          }
+        );
 
         // Step 3: Apply glob pattern filtering
-        send({ type: "progress", step: "filtering", totalFiles: allFiles.length });
+        send({
+          type: "progress",
+          step: "filtering",
+          totalFiles: allFiles.length,
+        });
         const filteredFiles = applyPathPatterns(allFiles, pathPatterns);
 
         const totalSize = filteredFiles.reduce(

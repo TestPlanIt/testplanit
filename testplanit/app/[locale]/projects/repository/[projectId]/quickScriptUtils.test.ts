@@ -27,9 +27,9 @@ describe("sanitizeFilename", () => {
   });
 
   it("should handle a realistic test case name", () => {
-    expect(
-      sanitizeFilename("User Login with Valid Credentials")
-    ).toBe("user-login-with-valid-credentials");
+    expect(sanitizeFilename("User Login with Valid Credentials")).toBe(
+      "user-login-with-valid-credentials"
+    );
   });
 
   it("should strip parentheses and dots", () => {

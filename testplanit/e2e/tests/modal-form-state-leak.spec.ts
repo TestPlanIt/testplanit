@@ -40,9 +40,7 @@ test.describe("Modal form state leak regression", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const addButton = page
-      .getByRole("button", { name: /add/i })
-      .first();
+    const addButton = page.getByRole("button", { name: /add/i }).first();
     await expect(addButton).toBeVisible({ timeout: 10000 });
 
     // --- First open: fill password + name, cancel ---
@@ -259,9 +257,7 @@ async function clickRowEditButton(page: Page, rowIndex: number) {
  * Prefers the Cancel button; falls back to Escape.
  */
 async function closeDialog(page: Page) {
-  const cancelButton = page
-    .getByRole("button", { name: /^cancel$/i })
-    .last();
+  const cancelButton = page.getByRole("button", { name: /^cancel$/i }).last();
   if (await cancelButton.isVisible().catch(() => false)) {
     await cancelButton.click();
   } else {
@@ -324,8 +320,7 @@ const adminCases: AdminModalTestCase[] = [
   {
     label: "Tags",
     url: "/en-US/admin/tags",
-    addButton: (page) =>
-      page.getByRole("button", { name: /add tag/i }).first(),
+    addButton: (page) => page.getByRole("button", { name: /add tag/i }).first(),
   },
   {
     label: "Roles",

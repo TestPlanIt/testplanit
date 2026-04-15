@@ -58,9 +58,7 @@ describe("transformMilestones utility", () => {
   });
 
   it("converts numeric id to string value", () => {
-    const input = [
-      { id: 99, name: "Milestone", parentId: null },
-    ];
+    const input = [{ id: 99, name: "Milestone", parentId: null }];
     const result = transformMilestones(input);
     expect(result[0].value).toBe("99");
   });
@@ -79,9 +77,7 @@ describe("transformMilestones utility", () => {
   });
 
   it("handles missing milestoneType", () => {
-    const input = [
-      { id: 2, name: "Simple", parentId: null },
-    ];
+    const input = [{ id: 2, name: "Simple", parentId: null }];
     const result = transformMilestones(input);
     expect(result[0].milestoneType?.icon).toBeNull();
   });
@@ -126,13 +122,7 @@ describe("MilestoneSelect", () => {
   });
 
   it("is disabled when milestones array is empty", () => {
-    render(
-      <MilestoneSelect
-        value={null}
-        onChange={vi.fn()}
-        milestones={[]}
-      />
-    );
+    render(<MilestoneSelect value={null} onChange={vi.fn()} milestones={[]} />);
 
     const trigger = screen.getByRole("combobox");
     expect(trigger).toBeDisabled();

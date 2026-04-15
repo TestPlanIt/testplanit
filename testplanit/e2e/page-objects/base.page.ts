@@ -39,15 +39,23 @@ export abstract class BasePage {
       // Try to close it by pressing Escape or clicking skip/close button
       await this.page.keyboard.press("Escape");
       // Wait for overlay to potentially close
-      await expect(overlay).not.toBeVisible({ timeout: 2000 }).catch(() => {});
+      await expect(overlay)
+        .not.toBeVisible({ timeout: 2000 })
+        .catch(() => {});
 
       // If still visible, try clicking any skip/close buttons
       if (await overlay.isVisible().catch(() => false)) {
-        const closeButton = this.page.locator('[data-name="nextstep-overlay"] button:has-text("Skip"), [data-name="nextstep-overlay"] button:has-text("Close"), [data-name="nextstep-overlay"] button:has-text("Done")').first();
+        const closeButton = this.page
+          .locator(
+            '[data-name="nextstep-overlay"] button:has-text("Skip"), [data-name="nextstep-overlay"] button:has-text("Close"), [data-name="nextstep-overlay"] button:has-text("Done")'
+          )
+          .first();
         if (await closeButton.isVisible().catch(() => false)) {
           await closeButton.click();
           // Wait for overlay to close after clicking button
-          await expect(overlay).not.toBeVisible({ timeout: 2000 }).catch(() => {});
+          await expect(overlay)
+            .not.toBeVisible({ timeout: 2000 })
+            .catch(() => {});
         }
       }
     }
@@ -64,7 +72,9 @@ export abstract class BasePage {
    * Wait for a toast notification to appear
    */
   async waitForToast(message?: string): Promise<void> {
-    const toastLocator = this.page.locator('[role="status"], [data-sonner-toast]');
+    const toastLocator = this.page.locator(
+      '[role="status"], [data-sonner-toast]'
+    );
     await expect(toastLocator.first()).toBeVisible({ timeout: 10000 });
     if (message) {
       await expect(toastLocator.first()).toContainText(message);
@@ -75,7 +85,9 @@ export abstract class BasePage {
    * Wait for toast to disappear
    */
   async waitForToastToDisappear(): Promise<void> {
-    const toastLocator = this.page.locator('[role="status"], [data-sonner-toast]');
+    const toastLocator = this.page.locator(
+      '[role="status"], [data-sonner-toast]'
+    );
     await expect(toastLocator).not.toBeVisible({ timeout: 10000 });
   }
 

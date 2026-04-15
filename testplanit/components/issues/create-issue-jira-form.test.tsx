@@ -48,7 +48,12 @@ vi.mock("@/components/ui/alert", () => ({
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, type, disabled, ...rest }: any) => (
-    <button type={type || "button"} onClick={onClick} disabled={disabled} {...rest}>
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      disabled={disabled}
+      {...rest}
+    >
       {children}
     </button>
   ),
@@ -300,7 +305,8 @@ describe("CreateIssueJiraForm", () => {
 
   it("passes per-project defaultIssueType for each IntegrationProject record", () => {
     // Verify the mock data has distinct defaultIssueType per project so the logic can be tested
-    const { data: _projects } = mockUseFindManyIntegrationProject.mock.results[0]?.value ?? { data: [] };
+    const { data: _projects } = mockUseFindManyIntegrationProject.mock
+      .results[0]?.value ?? { data: [] };
 
     // Re-call after render to check state was passed correctly
     render(<CreateIssueJiraForm {...defaultProps} />);
@@ -391,7 +397,9 @@ describe("CreateIssueJiraForm", () => {
 
   it("calls onOpenChange(false) when cancel button is clicked", async () => {
     const onOpenChange = vi.fn();
-    render(<CreateIssueJiraForm {...defaultProps} onOpenChange={onOpenChange} />);
+    render(
+      <CreateIssueJiraForm {...defaultProps} onOpenChange={onOpenChange} />
+    );
 
     await waitFor(() => {
       const cancelButton = screen.queryByRole("button", { name: /cancel/i });

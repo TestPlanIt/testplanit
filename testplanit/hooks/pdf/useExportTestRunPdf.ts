@@ -22,8 +22,18 @@ interface TestRunExportData {
   forecastManual?: number | null;
   forecastAutomated?: number | null;
   tags?: { id: number; name: string }[];
-  issues?: { name?: string; title?: string | null; externalId?: string | null; externalKey?: string | null }[];
-  attachments?: { url?: string; name?: string; mimeType?: string | null; isDeleted?: boolean }[];
+  issues?: {
+    name?: string;
+    title?: string | null;
+    externalId?: string | null;
+    externalKey?: string | null;
+  }[];
+  attachments?: {
+    url?: string;
+    name?: string;
+    mimeType?: string | null;
+    isDeleted?: boolean;
+  }[];
   testCases?: {
     id: number;
     order?: number;
@@ -40,7 +50,12 @@ interface TestRunExportData {
       status?: { name?: string; color?: { value?: string } | null } | null;
       elapsed?: number | null;
       comment?: any;
-      attachments?: { url?: string; name?: string; mimeType?: string | null; isDeleted?: boolean }[];
+      attachments?: {
+        url?: string;
+        name?: string;
+        mimeType?: string | null;
+        isDeleted?: boolean;
+      }[];
       stepResults?: {
         step?: { step?: any; expectedResult?: any; order?: number };
         status?: { name?: string } | null;
@@ -78,14 +93,20 @@ export function useExportTestRunPdf({
 
     try {
       const { default: jsPDF } = await import("jspdf");
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
       const pdf = new PdfRenderer(doc);
 
       // --- Title ---
       pdf.renderTitle("Test Run Export");
       pdf.renderMetaLine(
         `Exported: ${new Date().toLocaleString()}`,
-        testRunData.project?.name ? `Project: ${testRunData.project.name}` : undefined
+        testRunData.project?.name
+          ? `Project: ${testRunData.project.name}`
+          : undefined
       );
       pdf.addSpace(4);
 
@@ -101,21 +122,33 @@ export function useExportTestRunPdf({
       pdf.renderField("State", testRunData.state?.name);
       pdf.renderField("Created By", testRunData.createdBy?.name);
       if (testRunData.createdAt) {
-        pdf.renderField("Created", new Date(testRunData.createdAt).toLocaleString());
+        pdf.renderField(
+          "Created",
+          new Date(testRunData.createdAt).toLocaleString()
+        );
       }
       if (testRunData.isCompleted && testRunData.completedAt) {
-        pdf.renderField("Completed", new Date(testRunData.completedAt).toLocaleString());
+        pdf.renderField(
+          "Completed",
+          new Date(testRunData.completedAt).toLocaleString()
+        );
       }
       if (testRunData.forecastManual) {
         pdf.renderField(
           "Forecast (Manual)",
-          toHumanReadable(testRunData.forecastManual, { isSeconds: true, locale })
+          toHumanReadable(testRunData.forecastManual, {
+            isSeconds: true,
+            locale,
+          })
         );
       }
       if (testRunData.forecastAutomated) {
         pdf.renderField(
           "Forecast (Automated)",
-          toHumanReadable(testRunData.forecastAutomated, { isSeconds: true, locale })
+          toHumanReadable(testRunData.forecastAutomated, {
+            isSeconds: true,
+            locale,
+          })
         );
       }
 
@@ -152,11 +185,20 @@ export function useExportTestRunPdf({
       }
 
       // --- Attachments ---
-      if (embedImages && testRunData.attachments && testRunData.attachments.length > 0) {
-        const { images, nonImageNames } = await preloadImages(testRunData.attachments);
+      if (
+        embedImages &&
+        testRunData.attachments &&
+        testRunData.attachments.length > 0
+      ) {
+        const { images, nonImageNames } = await preloadImages(
+          testRunData.attachments
+        );
         pdf.renderImages(images);
         pdf.renderAttachmentNames(nonImageNames);
-      } else if (testRunData.attachments && testRunData.attachments.length > 0) {
+      } else if (
+        testRunData.attachments &&
+        testRunData.attachments.length > 0
+      ) {
         const names = testRunData.attachments
           .filter((a) => !a.isDeleted && a.name)
           .map((a) => a.name!);
@@ -192,8 +234,7 @@ export function useExportTestRunPdf({
 
         // Individual test cases
         for (const tc of testCases) {
-          const caseName =
-            tc.repositoryCase?.name || `Test Case #${tc.id}`;
+          const caseName = tc.repositoryCase?.name || `Test Case #${tc.id}`;
           const latestResult = tc.results?.[0];
           const statusName =
             latestResult?.status?.name || tc.status?.name || "Untested";
@@ -220,7 +261,10 @@ export function useExportTestRunPdf({
             if (latestResult.elapsed) {
               pdf.renderField(
                 "Elapsed",
-                toHumanReadable(latestResult.elapsed, { isSeconds: true, locale })
+                toHumanReadable(latestResult.elapsed, {
+                  isSeconds: true,
+                  locale,
+                })
               );
             }
 
@@ -231,7 +275,10 @@ export function useExportTestRunPdf({
             }
 
             // Step results
-            if (latestResult.stepResults && latestResult.stepResults.length > 0) {
+            if (
+              latestResult.stepResults &&
+              latestResult.stepResults.length > 0
+            ) {
               const sortedSteps = [...latestResult.stepResults].sort(
                 (a, b) => (a.step?.order || 0) - (b.step?.order || 0)
               );
@@ -262,10 +309,14 @@ export function useExportTestRunPdf({
             }
 
             // Result custom fields
-            if (latestResult.resultFieldValues && latestResult.resultFieldValues.length > 0) {
+            if (
+              latestResult.resultFieldValues &&
+              latestResult.resultFieldValues.length > 0
+            ) {
               for (const rfv of latestResult.resultFieldValues) {
                 if (rfv.value === null || rfv.value === undefined) continue;
-                const displayName = rfv.field?.displayName || `Field ${rfv.fieldId}`;
+                const displayName =
+                  rfv.field?.displayName || `Field ${rfv.fieldId}`;
                 const fieldType = rfv.field?.type?.type;
                 const formatted = formatFieldValue(rfv.value, fieldType);
                 if (formatted) {
@@ -275,7 +326,11 @@ export function useExportTestRunPdf({
             }
 
             // Result attachments
-            if (embedImages && latestResult.attachments && latestResult.attachments.length > 0) {
+            if (
+              embedImages &&
+              latestResult.attachments &&
+              latestResult.attachments.length > 0
+            ) {
               const { images, nonImageNames } = await preloadImages(
                 latestResult.attachments
               );

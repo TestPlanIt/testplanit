@@ -1,9 +1,11 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
-  isMultiTenantMode, validateMultiTenantJobData,
-  type MultiTenantJobData
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  validateMultiTenantJobData,
+  type MultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queues";
 import { BudgetAlertService } from "../lib/services/budgetAlertService";
@@ -48,7 +50,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(BUDGET_ALERT_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.BUDGET_ALERT_CONCURRENCY || '2', 10),
+      concurrency: parseInt(process.env.BUDGET_ALERT_CONCURRENCY || "2", 10),
     });
 
     worker.on("completed", (_job) => {
@@ -63,7 +65,9 @@ const startWorker = async () => {
       console.error("[BudgetAlertWorker] Worker error:", err);
     });
 
-    console.log(`[BudgetAlertWorker] Started for queue "${BUDGET_ALERT_QUEUE_NAME}"`);
+    console.log(
+      `[BudgetAlertWorker] Started for queue "${BUDGET_ALERT_QUEUE_NAME}"`
+    );
   } else {
     console.warn(
       "[BudgetAlertWorker] Valkey connection not available. Worker not started."
@@ -98,8 +102,8 @@ const startWorker = async () => {
 if (
   (typeof import.meta !== "undefined" &&
     import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  (typeof import.meta === "undefined" ||
-    (import.meta as unknown as { url?: string })?.url === undefined)
+  typeof import.meta === "undefined" ||
+  (import.meta as unknown as { url?: string })?.url === undefined
 ) {
   console.log("[BudgetAlertWorker] Running as standalone process...");
   startWorker().catch((err) => {

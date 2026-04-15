@@ -74,7 +74,8 @@ export default function search() {
   sleep(0.3);
 
   // 1. Simple full-text search
-  const query = SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)];
+  const query =
+    SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)];
   const { res: searchRes } = postApi(
     "/api/repository-cases/search",
     {
@@ -135,9 +136,7 @@ export default function search() {
 
   // 4. Typeahead simulation — rapid sequential requests
   const sequence =
-    TYPEAHEAD_SEQUENCES[
-      Math.floor(Math.random() * TYPEAHEAD_SEQUENCES.length)
-    ];
+    TYPEAHEAD_SEQUENCES[Math.floor(Math.random() * TYPEAHEAD_SEQUENCES.length)];
 
   for (const prefix of sequence) {
     const { res: suggestRes } = getApi(

@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -15,7 +15,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +25,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import {
-  useFindFirstRepositoryFolders, useUpdateRepositoryFolders
+  useFindFirstRepositoryFolders,
+  useUpdateRepositoryFolders,
 } from "~/lib/hooks";
 
 const parseTipTapContent = (content: any) => {

@@ -9,19 +9,29 @@ import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  AlertTriangle, Check, ChevronDown, Circle, Copy,
-  Download, FileCode,
-  HelpCircle, Loader2, RefreshCw, X
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  Circle,
+  Copy,
+  Download,
+  FileCode,
+  HelpCircle,
+  Loader2,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import type { AiExportResult } from "~/app/actions/aiExportActions";
 import type { ParallelFileProgress } from "./QuickScriptModal";

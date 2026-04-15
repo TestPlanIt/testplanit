@@ -76,7 +76,9 @@ export function getTestRunTypeLabel(type: TestRunType | string): string {
 /**
  * Get a human-readable label for a case source
  */
-export function getCaseSourceLabel(source: RepositoryCaseSource | string): string {
+export function getCaseSourceLabel(
+  source: RepositoryCaseSource | string
+): string {
   const labels: Record<string, string> = {
     MANUAL: "Manual",
     JUNIT: "JUnit",

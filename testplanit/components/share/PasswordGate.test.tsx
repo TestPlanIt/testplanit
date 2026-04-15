@@ -3,7 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock PasswordDialog child component
 vi.mock("./PasswordDialog", () => ({
-  PasswordDialog: ({ onSuccess }: { shareKey: string; projectName: string; onSuccess: (token: string, expiresIn: number) => void }) => (
+  PasswordDialog: ({
+    onSuccess,
+  }: {
+    shareKey: string;
+    projectName: string;
+    onSuccess: (token: string, expiresIn: number) => void;
+  }) => (
     <div data-testid="password-dialog">
       <button
         data-testid="simulate-password-success"
@@ -42,7 +48,10 @@ describe("PasswordGate", () => {
     const onVerified = vi.fn();
     const tokenKey = `share_token_${defaultProps.shareKey}`;
     const validExpiry = new Date(Date.now() + 3600 * 1000).toISOString();
-    sessionStorage.setItem(tokenKey, JSON.stringify({ token: "valid-token", expiresAt: validExpiry }));
+    sessionStorage.setItem(
+      tokenKey,
+      JSON.stringify({ token: "valid-token", expiresAt: validExpiry })
+    );
 
     render(<PasswordGate {...defaultProps} onVerified={onVerified} />);
 
@@ -54,7 +63,10 @@ describe("PasswordGate", () => {
   it("does not render PasswordDialog when valid token found (returns null)", async () => {
     const tokenKey = `share_token_${defaultProps.shareKey}`;
     const validExpiry = new Date(Date.now() + 3600 * 1000).toISOString();
-    sessionStorage.setItem(tokenKey, JSON.stringify({ token: "valid-token", expiresAt: validExpiry }));
+    sessionStorage.setItem(
+      tokenKey,
+      JSON.stringify({ token: "valid-token", expiresAt: validExpiry })
+    );
 
     render(<PasswordGate {...defaultProps} />);
 
@@ -87,7 +99,10 @@ describe("PasswordGate", () => {
   it("removes expired token from sessionStorage and shows dialog", () => {
     const tokenKey = `share_token_${defaultProps.shareKey}`;
     const expiredExpiry = new Date(Date.now() - 1000).toISOString();
-    sessionStorage.setItem(tokenKey, JSON.stringify({ token: "expired-token", expiresAt: expiredExpiry }));
+    sessionStorage.setItem(
+      tokenKey,
+      JSON.stringify({ token: "expired-token", expiresAt: expiredExpiry })
+    );
 
     render(<PasswordGate {...defaultProps} />);
 

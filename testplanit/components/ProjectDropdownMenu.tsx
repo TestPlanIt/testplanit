@@ -4,7 +4,7 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectTrigger
+  SelectTrigger,
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

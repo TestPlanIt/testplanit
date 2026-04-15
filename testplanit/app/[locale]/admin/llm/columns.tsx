@@ -57,9 +57,7 @@ export const getColumns = (
     enableSorting: true,
     enableResizing: true,
     size: 150,
-    cell: ({ row }) => (
-      <LlmProviderBadge provider={row.original.provider} />
-    ),
+    cell: ({ row }) => <LlmProviderBadge provider={row.original.provider} />,
   },
   {
     id: "status",
@@ -281,12 +279,10 @@ export const getColumns = (
           onClick={() => onDeleteIntegration?.(row.original)}
           className="px-2 py-1 h-auto"
           disabled={
-            row.original.llmProviderConfig?.isDefault &&
-            totalIntegrations > 1
+            row.original.llmProviderConfig?.isDefault && totalIntegrations > 1
           }
           title={
-            row.original.llmProviderConfig?.isDefault &&
-            totalIntegrations > 1
+            row.original.llmProviderConfig?.isDefault && totalIntegrations > 1
               ? t("delete.cannotDeleteDefault")
               : undefined
           }

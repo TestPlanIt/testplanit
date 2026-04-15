@@ -63,7 +63,9 @@ test.describe("Session Summary API", () => {
     expect(summary.totalElapsed).toBe(3000);
   });
 
-  test("multiple session summary API calls succeed simultaneously", async ({ request }) => {
+  test("multiple session summary API calls succeed simultaneously", async ({
+    request,
+  }) => {
     // Find the E2E Test Project
     const projectResponse = await request.get(
       `/api/model/projects/findFirst?q=${encodeURIComponent(
@@ -117,7 +119,9 @@ test.describe("Session Summary API", () => {
     expect(summaryResponse.status()).toBe(404);
   });
 
-  test("session summary API returns empty results for new session", async ({ request }) => {
+  test("session summary API returns empty results for new session", async ({
+    request,
+  }) => {
     // Find the E2E Test Project
     const projectResponse = await request.get(
       `/api/model/projects/findFirst?q=${encodeURIComponent(
@@ -143,7 +147,9 @@ test.describe("Session Summary API", () => {
     const session = await sessionResponse.json();
 
     // Get summary
-    const summaryResponse = await request.get(`/api/sessions/${session.data.id}/summary`);
+    const summaryResponse = await request.get(
+      `/api/sessions/${session.data.id}/summary`
+    );
     expect(summaryResponse.ok()).toBeTruthy();
 
     const summary = await summaryResponse.json();

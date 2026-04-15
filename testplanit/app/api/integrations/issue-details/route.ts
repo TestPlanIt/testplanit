@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
           summary: `Issue ${issueKey}`,
           description: `This is a detailed description for issue ${issueKey}. It includes requirements and acceptance criteria that would normally be fetched from Jira.`,
           status: "Open",
-          priority: "Medium", 
+          priority: "Medium",
           issueType: "Story",
           comments: [
             {
@@ -124,10 +124,10 @@ export async function GET(request: NextRequest) {
               created: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
             },
             {
-              author: "Developer", 
+              author: "Developer",
               body: "Implementation notes: This will require changes to the permissions system.",
               created: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
-            }
+            },
           ],
         },
       });
@@ -149,8 +149,9 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error in GET /api/integrations/issue-details:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+
     return NextResponse.json(
       { error: "Failed to fetch issue details", details: errorMessage },
       { status: 500 }

@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -79,7 +79,9 @@ export function PromptVariableInserter({
           {variables.map((v) => (
             <SelectItem key={v.name} value={v.name} className="pl-6">
               <span className="font-mono">{v.name}</span>
-              <span className="ml-3 text-muted-foreground text-xs">{v.description}</span>
+              <span className="ml-3 text-muted-foreground text-xs">
+                {v.description}
+              </span>
             </SelectItem>
           ))}
         </SelectGroup>

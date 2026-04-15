@@ -15,7 +15,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import {
@@ -23,7 +23,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -33,21 +33,31 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Attachments, Issue } from "@prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Bot, ChevronDown,
-  ChevronRight, Combine, History,
-  Layers, LinkIcon, ListOrdered, Pencil, PlayCircle, PlusSquare, SearchCheck, Trash2
+  Bot,
+  ChevronDown,
+  ChevronRight,
+  Combine,
+  History,
+  Layers,
+  LinkIcon,
+  ListOrdered,
+  Pencil,
+  PlayCircle,
+  PlusSquare,
+  SearchCheck,
+  Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useState } from "react";
@@ -58,7 +68,11 @@ import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useCreateTestRunCases,
-  useFindFirstRepositoryCases, useFindManyAppConfig, useFindManyResultFieldValues, useFindManySharedStepItem, useFindManyTestRuns
+  useFindFirstRepositoryCases,
+  useFindManyAppConfig,
+  useFindManyResultFieldValues,
+  useFindManySharedStepItem,
+  useFindManyTestRuns,
 } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
@@ -393,7 +407,9 @@ const StepResultsDisplay = ({
               renderedSharedGroupIds.add(stepResult.step.sharedStepGroupId);
               stepCounter++; // Increment for shared group header
               return (
-                <div key={`result-${resultId}-shared-group-${stepResult.step.sharedStepGroupId}`}>
+                <div
+                  key={`result-${resultId}-shared-group-${stepResult.step.sharedStepGroupId}`}
+                >
                   <div className="font-bold truncate flex items-center mb-1">
                     <div className="flex items-center">
                       <Layers

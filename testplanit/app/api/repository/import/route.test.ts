@@ -262,19 +262,21 @@ describe("CSV Import API Route", () => {
       ...data,
     }));
     mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null);
-    mockEnhancedDb.repositoryCases.findUnique.mockImplementation(({ where }) => ({
-      id: where.id,
-      name: "Test Case",
-      currentVersion: 1,
-      project: mockProject,
-      folder: { id: 1, name: "Test Folder" },
-      template: mockTemplate,
-      state: { id: 1, name: "Not Started" },
-      creator: mockSession.user,
-      tags: [],
-      issues: [],
-      steps: [],
-    }));
+    mockEnhancedDb.repositoryCases.findUnique.mockImplementation(
+      ({ where }) => ({
+        id: where.id,
+        name: "Test Case",
+        currentVersion: 1,
+        project: mockProject,
+        folder: { id: 1, name: "Test Folder" },
+        template: mockTemplate,
+        state: { id: 1, name: "Not Started" },
+        creator: mockSession.user,
+        tags: [],
+        issues: [],
+        steps: [],
+      })
+    );
     mockEnhancedDb.repositoryCaseVersions.create.mockResolvedValue({
       id: 1,
     });

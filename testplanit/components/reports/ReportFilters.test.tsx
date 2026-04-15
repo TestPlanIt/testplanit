@@ -9,7 +9,9 @@ vi.mock("next-intl", () => ({
 
 // Mock DynamicIcon
 vi.mock("@/components/DynamicIcon", () => ({
-  default: ({ name }: { name: string }) => <span data-testid={`icon-${name}`}>{name}</span>,
+  default: ({ name }: { name: string }) => (
+    <span data-testid={`icon-${name}`}>{name}</span>
+  ),
 }));
 
 // Mock ~/utils cn
@@ -75,10 +77,10 @@ describe("ReportFilters", () => {
 
   it("calls onValuesChange with null when 'All' projects clicked", () => {
     const onValuesChange = vi.fn();
-    render(
-      <ReportFilters {...defaultProps} onValuesChange={onValuesChange} />
-    );
-    const allProjectsButton = screen.getByText("allProjects").closest("[role='button']");
+    render(<ReportFilters {...defaultProps} onValuesChange={onValuesChange} />);
+    const allProjectsButton = screen
+      .getByText("allProjects")
+      .closest("[role='button']");
     expect(allProjectsButton).toBeTruthy();
     fireEvent.click(allProjectsButton!);
     expect(onValuesChange).toHaveBeenCalledWith("projects", null);
@@ -86,10 +88,10 @@ describe("ReportFilters", () => {
 
   it("calls onValuesChange with value when a project option clicked", () => {
     const onValuesChange = vi.fn();
-    render(
-      <ReportFilters {...defaultProps} onValuesChange={onValuesChange} />
-    );
-    const projectButton = screen.getByText("Project Alpha").closest("[role='button']");
+    render(<ReportFilters {...defaultProps} onValuesChange={onValuesChange} />);
+    const projectButton = screen
+      .getByText("Project Alpha")
+      .closest("[role='button']");
     expect(projectButton).toBeTruthy();
     fireEvent.click(projectButton!);
     expect(onValuesChange).toHaveBeenCalledWith("projects", [1]);
@@ -104,7 +106,9 @@ describe("ReportFilters", () => {
         onValuesChange={onValuesChange}
       />
     );
-    const projectButton = screen.getByText("Project Alpha").closest("[role='button']");
+    const projectButton = screen
+      .getByText("Project Alpha")
+      .closest("[role='button']");
     fireEvent.click(projectButton!);
     // Removing the only value → null
     expect(onValuesChange).toHaveBeenCalledWith("projects", null);
@@ -112,10 +116,7 @@ describe("ReportFilters", () => {
 
   it("shows active filter badge count when filter has selections", () => {
     render(
-      <ReportFilters
-        {...defaultProps}
-        selectedValues={{ projects: [1, 2] }}
-      />
+      <ReportFilters {...defaultProps} selectedValues={{ projects: [1, 2] }} />
     );
     // Count badge "2" is shown in the select item
     // The SelectContent is not open, but the badge should be rendered inside
@@ -141,12 +142,7 @@ describe("ReportFilters", () => {
   });
 
   it("renders Automated and Manual options for automated filter", () => {
-    render(
-      <ReportFilters
-        {...defaultProps}
-        selectedFilter="automated"
-      />
-    );
+    render(<ReportFilters {...defaultProps} selectedFilter="automated" />);
     // Multiple "Automated" elements may exist (SelectItem + button option); use getAllByText
     expect(screen.getAllByText("Automated").length).toBeGreaterThan(0);
     expect(screen.getByText("Manual")).toBeInTheDocument();
@@ -154,11 +150,7 @@ describe("ReportFilters", () => {
 
   it("handles empty filterItems gracefully", () => {
     render(
-      <ReportFilters
-        {...defaultProps}
-        filterItems={[]}
-        selectedFilter=""
-      />
+      <ReportFilters {...defaultProps} filterItems={[]} selectedFilter="" />
     );
     // No crash, renders select
     expect(screen.getByRole("combobox")).toBeInTheDocument();
@@ -173,7 +165,13 @@ describe("ReportFilters", () => {
         type: "select",
         fieldId: 123,
         options: [
-          { id: 10, name: "High", icon: { name: "circle" }, iconColor: { value: "#ff0000" }, count: 3 },
+          {
+            id: 10,
+            name: "High",
+            icon: { name: "circle" },
+            iconColor: { value: "#ff0000" },
+            count: 3,
+          },
           { id: 11, name: "Low", icon: null, iconColor: null, count: 2 },
         ],
       },

@@ -156,10 +156,7 @@ describe("getProjectEffectiveMembers", () => {
         assignedUsers: [{ userId: "user-direct" }],
         groupPermissions: [],
       });
-      mockUser.findMany.mockResolvedValue([
-        { id: "user-1" },
-        { id: "user-2" },
-      ]);
+      mockUser.findMany.mockResolvedValue([{ id: "user-1" }, { id: "user-2" }]);
 
       const result = await getProjectEffectiveMembers(1);
 
@@ -337,7 +334,9 @@ describe("getProjectEffectiveMembers", () => {
 
   describe("error handling", () => {
     it("should return empty array and log error on exception", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockProjects.findUnique.mockRejectedValue(new Error("Database error"));
 
       const result = await getProjectEffectiveMembers(1);
@@ -351,7 +350,9 @@ describe("getProjectEffectiveMembers", () => {
     });
 
     it("should return empty array when findMany fails for GLOBAL_ROLE", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockProjects.findUnique.mockResolvedValue({
         defaultAccessType: "GLOBAL_ROLE",
         defaultRoleId: 1,

@@ -47,10 +47,7 @@ export function getAuditContext(): AuditContext | undefined {
  * Run a function within an audit context.
  * Used by middleware to establish the context for a request.
  */
-export function runWithAuditContext<T>(
-  context: AuditContext,
-  fn: () => T
-): T {
+export function runWithAuditContext<T>(context: AuditContext, fn: () => T): T {
   return auditContextStorage.run(context, fn);
 }
 
@@ -132,7 +129,9 @@ export function extractIpAddress(headersList: Headers): string | undefined {
  * Extract audit context from request headers.
  * Works with both standard Headers and Next.js ReadonlyHeaders.
  */
-export function extractAuditContextFromHeaders(headersList: Headers): AuditContext {
+export function extractAuditContextFromHeaders(
+  headersList: Headers
+): AuditContext {
   return {
     ipAddress: extractIpAddress(headersList),
     userAgent: headersList.get("user-agent") || undefined,
@@ -144,6 +143,8 @@ export function extractAuditContextFromHeaders(headersList: Headers): AuditConte
  * Extract audit context from a NextRequest object.
  * Useful in API route handlers.
  */
-export function extractAuditContextFromRequest(request: NextRequest): AuditContext {
+export function extractAuditContextFromRequest(
+  request: NextRequest
+): AuditContext {
   return extractAuditContextFromHeaders(request.headers);
 }

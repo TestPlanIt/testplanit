@@ -1,11 +1,8 @@
-import type {
-  TestmoImportDataset,
-  TestmoImportJob
-} from "@prisma/client";
+import type { TestmoImportDataset, TestmoImportJob } from "@prisma/client";
 import type {
   TestmoAnalysisSummaryPayload,
   TestmoDatasetSummaryPayload,
-  TestmoImportJobPayload
+  TestmoImportJobPayload,
 } from "./types";
 
 function toNumber(value: bigint | number | null | undefined): number | null {
@@ -65,9 +62,7 @@ export function serializeImportJob(
   job: TestmoImportJob & { datasets?: TestmoImportDataset[] },
   options: { includeDatasets?: boolean } = {}
 ): TestmoImportJobPayload {
-  const {
-    includeDatasets = false,
-  } = options;
+  const { includeDatasets = false } = options;
 
   const datasets = includeDatasets ? buildDatasets(job.datasets) : undefined;
 
@@ -89,27 +84,27 @@ export function serializeImportJob(
     const metaStartedAt =
       typeof analysisMeta?.startedAt === "string"
         ? analysisMeta.startedAt
-        : toStringISO(job.startedAt) ?? new Date(0).toISOString();
+        : (toStringISO(job.startedAt) ?? new Date(0).toISOString());
     const metaCompletedAt =
       typeof analysisMeta?.completedAt === "string"
         ? analysisMeta.completedAt
-        : toStringISO(job.completedAt) ?? new Date(0).toISOString();
+        : (toStringISO(job.completedAt) ?? new Date(0).toISOString());
     const metaDuration =
       typeof analysisMeta?.durationMs === "number"
         ? analysisMeta.durationMs
-        : job.durationMs ?? 0;
+        : (job.durationMs ?? 0);
     const metaFileSize =
       typeof analysisMeta?.fileSizeBytes === "number"
         ? analysisMeta.fileSizeBytes
-        : toNumber(job.originalFileSize) ?? 0;
+        : (toNumber(job.originalFileSize) ?? 0);
     const metaTotalRows =
       typeof analysisMeta?.totalRows === "number"
         ? analysisMeta.totalRows
-        : toNumber(job.totalRows) ?? 0;
+        : (toNumber(job.totalRows) ?? 0);
     const metaTotalDatasets =
       typeof analysisMeta?.totalDatasets === "number"
         ? analysisMeta.totalDatasets
-        : job.totalDatasets ?? datasets?.length ?? 0;
+        : (job.totalDatasets ?? datasets?.length ?? 0);
 
     summary = {
       meta: {

@@ -4,7 +4,7 @@ import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   getElasticsearchClient,
-  getEntityIndexName
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
 /**
@@ -112,7 +112,9 @@ export async function indexIssue(
 
   // Skip indexing if no project is found (orphaned issue)
   if (!projectInfo) {
-    console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
+    console.warn(
+      `Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`
+    );
     return;
   }
 
@@ -302,7 +304,9 @@ export async function syncProjectIssuesToElasticsearch(
 
   const indexName = getEntityIndexName(SearchableEntityType.ISSUE, tenantId);
 
-  console.log(`Starting issue sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+  console.log(
+    `Starting issue sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`
+  );
 
   // Find issues either by direct projectId or through any relationship
   const issues = await db.issue.findMany({
@@ -312,14 +316,62 @@ export async function syncProjectIssuesToElasticsearch(
         // Direct project relationship (preferred)
         { projectId, project: { isDeleted: false } },
         // Fallback: Find through relationships
-        { repositoryCases: { some: { projectId, project: { isDeleted: false } } } },
-        { sessions: { some: { projectId, isDeleted: false, project: { isDeleted: false } } } },
-        { testRuns: { some: { projectId, isDeleted: false, project: { isDeleted: false } } } },
-        { sessionResults: { some: { session: { projectId, isDeleted: false, project: { isDeleted: false } } } } },
-        { testRunResults: { some: { testRun: { projectId, isDeleted: false, project: { isDeleted: false } } } } },
+        {
+          repositoryCases: {
+            some: { projectId, project: { isDeleted: false } },
+          },
+        },
+        {
+          sessions: {
+            some: {
+              projectId,
+              isDeleted: false,
+              project: { isDeleted: false },
+            },
+          },
+        },
+        {
+          testRuns: {
+            some: {
+              projectId,
+              isDeleted: false,
+              project: { isDeleted: false },
+            },
+          },
+        },
+        {
+          sessionResults: {
+            some: {
+              session: {
+                projectId,
+                isDeleted: false,
+                project: { isDeleted: false },
+              },
+            },
+          },
+        },
+        {
+          testRunResults: {
+            some: {
+              testRun: {
+                projectId,
+                isDeleted: false,
+                project: { isDeleted: false },
+              },
+            },
+          },
+        },
         {
           testRunStepResults: {
-            some: { testRunResult: { testRun: { projectId, isDeleted: false, project: { isDeleted: false } } } },
+            some: {
+              testRunResult: {
+                testRun: {
+                  projectId,
+                  isDeleted: false,
+                  project: { isDeleted: false },
+                },
+              },
+            },
           },
         },
       ],
@@ -346,7 +398,13 @@ export async function syncProjectIssuesToElasticsearch(
         include: { project: true },
       },
       sessionResults: {
-        where: { session: { projectId, isDeleted: false, project: { isDeleted: false } } },
+        where: {
+          session: {
+            projectId,
+            isDeleted: false,
+            project: { isDeleted: false },
+          },
+        },
         take: 1,
         include: {
           session: {
@@ -355,7 +413,13 @@ export async function syncProjectIssuesToElasticsearch(
         },
       },
       testRunResults: {
-        where: { testRun: { projectId, isDeleted: false, project: { isDeleted: false } } },
+        where: {
+          testRun: {
+            projectId,
+            isDeleted: false,
+            project: { isDeleted: false },
+          },
+        },
         take: 1,
         include: {
           testRun: {
@@ -364,7 +428,15 @@ export async function syncProjectIssuesToElasticsearch(
         },
       },
       testRunStepResults: {
-        where: { testRunResult: { testRun: { projectId, isDeleted: false, project: { isDeleted: false } } } },
+        where: {
+          testRunResult: {
+            testRun: {
+              projectId,
+              isDeleted: false,
+              project: { isDeleted: false },
+            },
+          },
+        },
         take: 1,
         include: {
           testRunResult: {
@@ -451,7 +523,9 @@ export async function syncProjectIssuesToElasticsearch(
       const errorItems = bulkResponse.items.filter(
         (item: any) => item.index?.error
       );
-      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      console.error(
+        `Bulk indexing errors: ${errorItems.length} failed documents`
+      );
       // Log detailed error information
       errorItems.slice(0, 10).forEach((item: any) => {
         if (item.index?.error) {
@@ -459,7 +533,9 @@ export async function syncProjectIssuesToElasticsearch(
           console.error(`    Error type: ${item.index.error.type}`);
           console.error(`    Error reason: ${item.index.error.reason}`);
           if (item.index.error.caused_by) {
-            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+            console.error(
+              `    Caused by: ${JSON.stringify(item.index.error.caused_by)}`
+            );
           }
         }
       });

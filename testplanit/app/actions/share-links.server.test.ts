@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { auditShareLinkCreation, prepareShareLinkData, revokeShareLink } from "./share-links";
+import {
+  auditShareLinkCreation,
+  prepareShareLinkData,
+  revokeShareLink,
+} from "./share-links";
 
 // Mock dependencies
 vi.mock("~/lib/share-tokens", () => ({
@@ -8,7 +12,9 @@ vi.mock("~/lib/share-tokens", () => ({
 
 vi.mock("bcrypt", () => ({
   default: {
-    hash: vi.fn((password: string) => Promise.resolve(`$2b$10$hashed_${password}`)),
+    hash: vi.fn((password: string) =>
+      Promise.resolve(`$2b$10$hashed_${password}`)
+    ),
   },
 }));
 
@@ -49,7 +55,9 @@ describe("share-links server actions", () => {
       const result = await prepareShareLinkData({});
 
       expect(generateShareKey).toHaveBeenCalledOnce();
-      expect(result.shareKey).toBe("mock-share-key-43-chars-long-base64url-enc");
+      expect(result.shareKey).toBe(
+        "mock-share-key-43-chars-long-base64url-enc"
+      );
     });
 
     it("should return null passwordHash when no password provided", async () => {
@@ -278,19 +286,25 @@ describe("share-links server actions", () => {
     };
 
     beforeEach(() => {
-      vi.mocked(prisma.shareLink.findUnique).mockResolvedValue(mockShareLink as any);
+      vi.mocked(prisma.shareLink.findUnique).mockResolvedValue(
+        mockShareLink as any
+      );
     });
 
     it("should throw error if no session", async () => {
       vi.mocked(getServerSession).mockResolvedValue(null);
 
-      await expect(revokeShareLink("share-123")).rejects.toThrow("Authentication required");
+      await expect(revokeShareLink("share-123")).rejects.toThrow(
+        "Authentication required"
+      );
     });
 
     it("should throw error if session has no user", async () => {
       vi.mocked(getServerSession).mockResolvedValue({} as any);
 
-      await expect(revokeShareLink("share-123")).rejects.toThrow("Authentication required");
+      await expect(revokeShareLink("share-123")).rejects.toThrow(
+        "Authentication required"
+      );
     });
 
     it("should throw error if share link not found", async () => {
@@ -299,7 +313,9 @@ describe("share-links server actions", () => {
       } as any);
       vi.mocked(prisma.shareLink.findUnique).mockResolvedValue(null);
 
-      await expect(revokeShareLink("share-123")).rejects.toThrow("Share link not found");
+      await expect(revokeShareLink("share-123")).rejects.toThrow(
+        "Share link not found"
+      );
     });
 
     it("should allow admin to revoke any share", async () => {

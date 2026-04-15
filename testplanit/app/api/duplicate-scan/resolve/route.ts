@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         const result = await mergeCases(
           data.survivorId,
           data.victimId,
-          session.user.id,
+          session.user.id
         );
         return NextResponse.json({ action: "merge", ...result });
       }
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
           data.caseAId,
           data.caseBId,
           session.user.id,
-          data.projectId,
+          data.projectId
         );
         return NextResponse.json({ action: "link", ...result });
       }
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
         const result = await dismissPair(
           data.caseAId,
           data.caseBId,
-          data.projectId,
+          data.projectId
         );
         return NextResponse.json({ action: "dismiss", ...result });
       }
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     console.error("Duplicate scan resolve error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

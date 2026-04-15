@@ -7,16 +7,18 @@ import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
-  Card, CardContent,
-  CardDescription, CardHeader,
-  CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import type { VisibilityState } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
@@ -25,10 +27,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Loading } from "~/components/Loading";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
-  PaginationProvider, usePagination
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
-  useCountIssue, useFindFirstProjects, useFindManyIssue, useFindManyProjectIntegration, useGroupByIssue
+  useCountIssue,
+  useFindFirstProjects,
+  useFindManyIssue,
+  useFindManyProjectIntegration,
+  useGroupByIssue,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
@@ -328,7 +335,8 @@ function ProjectIssues() {
   const needsClientSideSorting = ["cases", "testRuns", "sessions"].includes(
     sortConfig.column
   );
-  const shouldPaginate = !needsClientSideSorting && typeof effectivePageSize === "number";
+  const shouldPaginate =
+    !needsClientSideSorting && typeof effectivePageSize === "number";
   const paginationArgs = {
     skip: shouldPaginate ? skip : undefined,
     take: shouldPaginate ? effectivePageSize : undefined,

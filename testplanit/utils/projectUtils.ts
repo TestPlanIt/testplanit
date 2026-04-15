@@ -1,7 +1,5 @@
 import { MilestonesWithTypes } from "@/components/tables/MilestoneListDisplay";
-import {
-  MilestoneTypesAssignment, Prisma, User
-} from "@prisma/client";
+import { MilestoneTypesAssignment, Prisma, User } from "@prisma/client";
 
 // Define the expected input type based on the Prisma query includes
 // Make this more comprehensive based on admin/projects/page.tsx includes
@@ -28,7 +26,10 @@ type ProjectWithAdminDataInput = Prisma.ProjectsGetPayload<{
       select: { id: true; repository: { select: { name: true } } };
     };
     projectLlmIntegrations: {
-      select: { isActive: true; llmIntegration: { select: { name: true; provider: true } } };
+      select: {
+        isActive: true;
+        llmIntegration: { select: { name: true; provider: true } };
+      };
     };
     _count: {
       select: {
@@ -86,7 +87,7 @@ export function processProjectsWithEffectiveMembers(
 
     typedProject.groupPermissions?.forEach((perm) => {
       // Only include users from groups that have access (not NO_ACCESS)
-      if ((perm as any).accessType !== 'NO_ACCESS') {
+      if ((perm as any).accessType !== "NO_ACCESS") {
         perm.group?.assignedUsers?.forEach((assignment) => {
           groupUserIds.add(assignment.userId);
         });
@@ -98,13 +99,13 @@ export function processProjectsWithEffectiveMembers(
 
     // For GLOBAL_ROLE or SPECIFIC_ROLE: include ALL active users except those with access === 'NONE'
     if (
-      ((typedProject as any).defaultAccessType === 'GLOBAL_ROLE' ||
-       (typedProject as any).defaultAccessType === 'SPECIFIC_ROLE') &&
+      ((typedProject as any).defaultAccessType === "GLOBAL_ROLE" ||
+        (typedProject as any).defaultAccessType === "SPECIFIC_ROLE") &&
       allUsers
     ) {
       allUsers.forEach((user) => {
         // Exclude users with access === 'NONE'
-        if (user.access !== 'NONE') {
+        if (user.access !== "NONE") {
           defaultAccessUserIds.add(user.id);
         }
       });

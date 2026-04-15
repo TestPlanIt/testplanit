@@ -6,13 +6,13 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSlot
+  InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Loader2, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -110,7 +110,9 @@ export default function TwoFactorVerifyPage() {
                   placeholder="XXXXXXXX"
                   value={verificationCode}
                   onChange={(e) =>
-                    setVerificationCode(e.target.value.toUpperCase().slice(0, 8))
+                    setVerificationCode(
+                      e.target.value.toUpperCase().slice(0, 8)
+                    )
                   }
                   className="text-center text-lg tracking-widest font-mono"
                   autoComplete="one-time-code"
@@ -158,14 +160,20 @@ export default function TwoFactorVerifyPage() {
             <Button
               className="w-full"
               onClick={handleVerify}
-              disabled={isLoading || verificationCode.length < (useBackupCode ? 8 : 6)}
+              disabled={
+                isLoading || verificationCode.length < (useBackupCode ? 8 : 6)
+              }
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("common.actions.verify")}
             </Button>
 
             <div className="text-center">
-              <Button variant="link" onClick={handleSignOut} className="text-sm">
+              <Button
+                variant="link"
+                onClick={handleSignOut}
+                className="text-sm"
+              >
                 {t("auth.twoFactorVerify.signOut")}
               </Button>
             </div>

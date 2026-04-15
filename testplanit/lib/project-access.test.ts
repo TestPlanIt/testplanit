@@ -1,7 +1,8 @@
 import { ProjectAccessType } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import {
-  buildProjectAccessCondition, buildProjectAccessWhere
+  buildProjectAccessCondition,
+  buildProjectAccessWhere,
 } from "./project-access";
 
 // Type helper to access OR property when it exists
@@ -115,7 +116,8 @@ describe("Project Access Control", () => {
 
         expect(result.OR).toBeDefined();
         const hasAssignedUsersCheck = result.OR!.some(
-          (condition: Record<string, unknown>) => condition.assignedUsers !== undefined
+          (condition: Record<string, unknown>) =>
+            condition.assignedUsers !== undefined
         );
         expect(hasAssignedUsersCheck).toBe(false);
       });
@@ -269,15 +271,22 @@ describe("Project Access Control", () => {
 
   describe("Access control coverage", () => {
     it("covers all required access paths for non-admin users", () => {
-      const result = buildProjectAccessWhere(projectId, userId, false, false) as WithOR;
+      const result = buildProjectAccessWhere(
+        projectId,
+        userId,
+        false,
+        false
+      ) as WithOR;
 
-      const accessPaths = result.OR!.map((condition: Record<string, unknown>) => {
-        if (condition.userPermissions) return "userPermissions";
-        if (condition.groupPermissions) return "groupPermissions";
-        if (condition.defaultAccessType) return "defaultAccessType";
-        if (condition.assignedUsers) return "assignedUsers";
-        return "unknown";
-      });
+      const accessPaths = result.OR!.map(
+        (condition: Record<string, unknown>) => {
+          if (condition.userPermissions) return "userPermissions";
+          if (condition.groupPermissions) return "groupPermissions";
+          if (condition.defaultAccessType) return "defaultAccessType";
+          if (condition.assignedUsers) return "assignedUsers";
+          return "unknown";
+        }
+      );
 
       // Regular users should have these 3 access paths
       expect(accessPaths).toContain("userPermissions");
@@ -287,15 +296,22 @@ describe("Project Access Control", () => {
     });
 
     it("covers all required access paths for PROJECTADMIN users", () => {
-      const result = buildProjectAccessWhere(projectId, userId, false, true) as WithOR;
+      const result = buildProjectAccessWhere(
+        projectId,
+        userId,
+        false,
+        true
+      ) as WithOR;
 
-      const accessPaths = result.OR!.map((condition: Record<string, unknown>) => {
-        if (condition.userPermissions) return "userPermissions";
-        if (condition.groupPermissions) return "groupPermissions";
-        if (condition.defaultAccessType) return "defaultAccessType";
-        if (condition.assignedUsers) return "assignedUsers";
-        return "unknown";
-      });
+      const accessPaths = result.OR!.map(
+        (condition: Record<string, unknown>) => {
+          if (condition.userPermissions) return "userPermissions";
+          if (condition.groupPermissions) return "groupPermissions";
+          if (condition.defaultAccessType) return "defaultAccessType";
+          if (condition.assignedUsers) return "assignedUsers";
+          return "unknown";
+        }
+      );
 
       // PROJECTADMIN users should have these 4 access paths
       expect(accessPaths).toContain("userPermissions");
@@ -307,7 +323,12 @@ describe("Project Access Control", () => {
 
   describe("Regression tests for previous bugs", () => {
     it("does NOT only check userPermissions (the original bug)", () => {
-      const result = buildProjectAccessWhere(projectId, userId, false, false) as WithOR;
+      const result = buildProjectAccessWhere(
+        projectId,
+        userId,
+        false,
+        false
+      ) as WithOR;
 
       // The original bug was only checking userPermissions
       // Make sure we check more than just that
@@ -315,7 +336,12 @@ describe("Project Access Control", () => {
     });
 
     it("includes group permissions (previously missing)", () => {
-      const result = buildProjectAccessWhere(projectId, userId, false, false) as WithOR;
+      const result = buildProjectAccessWhere(
+        projectId,
+        userId,
+        false,
+        false
+      ) as WithOR;
 
       const hasGroupPermissions = result.OR!.some(
         (c: Record<string, unknown>) => c.groupPermissions !== undefined
@@ -324,16 +350,27 @@ describe("Project Access Control", () => {
     });
 
     it("includes GLOBAL_ROLE check (previously missing)", () => {
-      const result = buildProjectAccessWhere(projectId, userId, false, false) as WithOR;
+      const result = buildProjectAccessWhere(
+        projectId,
+        userId,
+        false,
+        false
+      ) as WithOR;
 
       const hasGlobalRole = result.OR!.some(
-        (c: Record<string, unknown>) => c.defaultAccessType === ProjectAccessType.GLOBAL_ROLE
+        (c: Record<string, unknown>) =>
+          c.defaultAccessType === ProjectAccessType.GLOBAL_ROLE
       );
       expect(hasGlobalRole).toBe(true);
     });
 
     it("includes PROJECTADMIN assignedUsers check (previously missing)", () => {
-      const result = buildProjectAccessWhere(projectId, userId, false, true) as WithOR;
+      const result = buildProjectAccessWhere(
+        projectId,
+        userId,
+        false,
+        true
+      ) as WithOR;
 
       const hasAssignedUsers = result.OR!.some(
         (c: Record<string, unknown>) => c.assignedUsers !== undefined

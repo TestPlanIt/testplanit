@@ -318,7 +318,10 @@ describe("ImageWithResize", () => {
       fireEvent.mouseEnter(innerDiv);
 
       fireEvent.click(screen.getByTitle("sizeSmall"));
-      expect(updateAttributes).toHaveBeenCalledWith({ width: "200px", height: "auto" });
+      expect(updateAttributes).toHaveBeenCalledWith({
+        width: "200px",
+        height: "auto",
+      });
     });
 
     it("calls updateAttributes with medium width when medium preset clicked", async () => {
@@ -333,7 +336,10 @@ describe("ImageWithResize", () => {
       fireEvent.mouseEnter(innerDiv);
 
       fireEvent.click(screen.getByTitle("sizeMedium"));
-      expect(updateAttributes).toHaveBeenCalledWith({ width: "400px", height: "auto" });
+      expect(updateAttributes).toHaveBeenCalledWith({
+        width: "400px",
+        height: "auto",
+      });
     });
 
     it("calls updateAttributes with large width when large preset clicked", async () => {
@@ -348,7 +354,10 @@ describe("ImageWithResize", () => {
       fireEvent.mouseEnter(innerDiv);
 
       fireEvent.click(screen.getByTitle("sizeLarge"));
-      expect(updateAttributes).toHaveBeenCalledWith({ width: "600px", height: "auto" });
+      expect(updateAttributes).toHaveBeenCalledWith({
+        width: "600px",
+        height: "auto",
+      });
     });
 
     it("calls updateAttributes with full width when full preset clicked", async () => {
@@ -363,7 +372,10 @@ describe("ImageWithResize", () => {
       fireEvent.mouseEnter(innerDiv);
 
       fireEvent.click(screen.getByTitle("sizeFull"));
-      expect(updateAttributes).toHaveBeenCalledWith({ width: "100%", height: "auto" });
+      expect(updateAttributes).toHaveBeenCalledWith({
+        width: "100%",
+        height: "auto",
+      });
     });
 
     it("calls updateAttributes with rotation incremented by 90 when rotate button clicked", async () => {
@@ -406,7 +418,10 @@ describe("ImageWithResize", () => {
       fireEvent.mouseEnter(innerDiv);
 
       fireEvent.click(screen.getByTitle("resetSize"));
-      expect(updateAttributes).toHaveBeenCalledWith({ width: null, height: null });
+      expect(updateAttributes).toHaveBeenCalledWith({
+        width: null,
+        height: null,
+      });
     });
   });
 

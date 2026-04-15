@@ -3,12 +3,15 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import * as d3 from "d3";
 import {
   Bug,
-  CheckCircle2, FileQuestion, HelpCircle, XCircle
+  CheckCircle2,
+  FileQuestion,
+  HelpCircle,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef } from "react";
@@ -77,19 +80,38 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   // Calculate summary stats
   const summaryStats = useMemo(() => {
     const totalIssues = aggregatedData.length;
-    const totalLinkedTests = aggregatedData.reduce((sum, d) => sum + (d.linkedTestCases || 0), 0);
-    const totalPassed = aggregatedData.reduce((sum, d) => sum + (d.passedTestCases || 0), 0);
-    const totalFailed = aggregatedData.reduce((sum, d) => sum + (d.failedTestCases || 0), 0);
-    const totalUntested = aggregatedData.reduce((sum, d) => sum + (d.untestedTestCases || 0), 0);
+    const totalLinkedTests = aggregatedData.reduce(
+      (sum, d) => sum + (d.linkedTestCases || 0),
+      0
+    );
+    const totalPassed = aggregatedData.reduce(
+      (sum, d) => sum + (d.passedTestCases || 0),
+      0
+    );
+    const totalFailed = aggregatedData.reduce(
+      (sum, d) => sum + (d.failedTestCases || 0),
+      0
+    );
+    const totalUntested = aggregatedData.reduce(
+      (sum, d) => sum + (d.untestedTestCases || 0),
+      0
+    );
 
     // Issues with at least one failing test
-    const issuesWithFailures = aggregatedData.filter((d) => (d.failedTestCases || 0) > 0).length;
+    const issuesWithFailures = aggregatedData.filter(
+      (d) => (d.failedTestCases || 0) > 0
+    ).length;
     // Issues with all tests passing
     const issuesAllPassing = aggregatedData.filter(
-      (d) => (d.passedTestCases || 0) > 0 && (d.failedTestCases || 0) === 0 && (d.untestedTestCases || 0) === 0
+      (d) =>
+        (d.passedTestCases || 0) > 0 &&
+        (d.failedTestCases || 0) === 0 &&
+        (d.untestedTestCases || 0) === 0
     ).length;
     // Issues with untested cases
-    const issuesWithUntested = aggregatedData.filter((d) => (d.untestedTestCases || 0) > 0).length;
+    const issuesWithUntested = aggregatedData.filter(
+      (d) => (d.untestedTestCases || 0) > 0
+    ).length;
 
     const overallPassRate =
       totalPassed + totalFailed > 0
@@ -234,18 +256,29 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     const bubbleData = Array.from(bubbleMap.values());
 
     // Scales
-    const maxLinkedTests = Math.max(...aggregatedData.map((d) => d.linkedTestCases || 0), 1);
-    const maxUntestedTests = Math.max(...aggregatedData.map((d) => d.untestedTestCases || 0), 1);
+    const maxLinkedTests = Math.max(
+      ...aggregatedData.map((d) => d.linkedTestCases || 0),
+      1
+    );
+    const maxUntestedTests = Math.max(
+      ...aggregatedData.map((d) => d.untestedTestCases || 0),
+      1
+    );
 
-    const xScale = d3.scaleLinear().domain([0, maxLinkedTests]).range([0, chartWidth]).nice();
-    const yScale = d3.scaleLinear().domain([0, maxUntestedTests]).range([chartHeight, 0]).nice();
+    const xScale = d3
+      .scaleLinear()
+      .domain([0, maxLinkedTests])
+      .range([0, chartWidth])
+      .nice();
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, maxUntestedTests])
+      .range([chartHeight, 0])
+      .nice();
 
     // Size scale for bubbles (based on number of issues in that bucket)
     const maxCount = Math.max(...bubbleData.map((d) => d.count), 1);
-    const sizeScale = d3
-      .scaleSqrt()
-      .domain([1, maxCount])
-      .range([5, 40]); // Min and max bubble radius
+    const sizeScale = d3.scaleSqrt().domain([1, maxCount]).range([5, 40]); // Min and max bubble radius
 
     // Color mapping
     const colorMap = {
@@ -401,7 +434,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
           </div>
           <div>
             <p className="text-2xl font-bold">{summaryStats.totalIssues}</p>
-            <p className="text-xs text-muted-foreground">{t("stats.totalIssues")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.totalIssues")}
+            </p>
           </div>
         </div>
 
@@ -415,7 +450,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               {summaryStats.issuesWithFailures}
             </p>
             <div className="flex items-center gap-1">
-              <p className="text-xs text-muted-foreground">{t("stats.issuesWithFailures")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("stats.issuesWithFailures")}
+              </p>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -442,7 +479,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               {summaryStats.issuesWithUntested}
             </p>
             <div className="flex items-center gap-1">
-              <p className="text-xs text-muted-foreground">{t("stats.issuesWithUntested")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("stats.issuesWithUntested")}
+              </p>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -468,7 +507,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
             <p className="text-2xl font-bold text-success">
               {summaryStats.issuesAllPassing}
             </p>
-            <p className="text-xs text-muted-foreground">{t("stats.issuesAllPassing")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.issuesAllPassing")}
+            </p>
           </div>
         </div>
 
@@ -482,7 +523,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               {summaryStats.overallPassRate}
               {"%"}
             </p>
-            <p className="text-xs text-muted-foreground">{t("stats.overallPassRate")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.overallPassRate")}
+            </p>
           </div>
         </div>
       </div>
@@ -508,7 +551,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
             className="w-3 h-3 rounded"
             style={{ backgroundColor: statusColors.untested }}
           />
-          <span className="text-muted-foreground">{tCommon("labels.untested")}</span>
+          <span className="text-muted-foreground">
+            {tCommon("labels.untested")}
+          </span>
         </div>
       </div>
 

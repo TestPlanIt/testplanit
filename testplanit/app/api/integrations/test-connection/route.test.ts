@@ -31,14 +31,11 @@ import { getServerSession } from "next-auth";
 import { POST } from "./route";
 
 const createRequest = (body: Record<string, any> = {}): NextRequest => {
-  return new NextRequest(
-    "http://localhost/api/integrations/test-connection",
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  return new NextRequest("http://localhost/api/integrations/test-connection", {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+  });
 };
 
 const mockSession = {
@@ -63,7 +60,10 @@ describe("POST /api/integrations/test-connection", () => {
       (getServerSession as any).mockResolvedValue(null);
 
       const response = await POST(
-        createRequest({ provider: "SIMPLE_URL", settings: { baseUrl: "https://example.com/{issueId}" } })
+        createRequest({
+          provider: "SIMPLE_URL",
+          settings: { baseUrl: "https://example.com/{issueId}" },
+        })
       );
       const data = await response.json();
 
@@ -75,7 +75,10 @@ describe("POST /api/integrations/test-connection", () => {
       (getServerSession as any).mockResolvedValue({});
 
       const response = await POST(
-        createRequest({ provider: "SIMPLE_URL", settings: { baseUrl: "https://example.com/{issueId}" } })
+        createRequest({
+          provider: "SIMPLE_URL",
+          settings: { baseUrl: "https://example.com/{issueId}" },
+        })
       );
       const data = await response.json();
 
@@ -364,7 +367,11 @@ describe("POST /api/integrations/test-connection", () => {
       });
       (isEncrypted as any).mockReturnValue(true);
       (decrypt as any).mockResolvedValue("decrypted-token");
-      mockFetch.mockResolvedValueOnce({ ok: true, status: 200, statusText: "OK" });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+      });
 
       const response = await POST(createRequest({ integrationId: 5 }));
       const data = await response.json();

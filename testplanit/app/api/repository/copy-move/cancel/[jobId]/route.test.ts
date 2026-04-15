@@ -24,8 +24,7 @@ import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 
 import { POST } from "./route";
 
-const createMockParams = (jobId: string) =>
-  Promise.resolve({ jobId });
+const createMockParams = (jobId: string) => Promise.resolve({ jobId });
 
 const createMockRedisConnection = () => ({
   set: vi.fn().mockResolvedValue("OK"),
@@ -49,7 +48,9 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
   it("returns 401 when no session", async () => {
     (getServerSession as any).mockResolvedValue(null);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -60,7 +61,9 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     (getServerSession as any).mockResolvedValue({ user: { id: "user-1" } });
     (getCopyMoveQueue as any).mockReturnValue(null);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(503);
@@ -72,7 +75,9 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(null) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -84,11 +89,15 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     (isMultiTenantMode as any).mockReturnValue(true);
     (getCurrentTenantId as any).mockReturnValue("tenant-2");
 
-    const mockJob = createMockJob({ data: { tenantId: "tenant-1", userId: "user-1" } });
+    const mockJob = createMockJob({
+      data: { tenantId: "tenant-1", userId: "user-1" },
+    });
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -97,11 +106,15 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
 
   it("returns 403 when non-submitter tries to cancel", async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: "user-2" } });
-    const mockJob = createMockJob({ data: { tenantId: "tenant-1", userId: "user-1" } });
+    const mockJob = createMockJob({
+      data: { tenantId: "tenant-1", userId: "user-1" },
+    });
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -116,7 +129,9 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -131,7 +146,9 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     const mockQueue = { getJob: vi.fn().mockResolvedValue(mockJob) };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -151,16 +168,20 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 
-    const response = await POST({} as Request, { params: createMockParams("job-123") });
+    const response = await POST({} as Request, {
+      params: createMockParams("job-123"),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.message).toBe("Cancellation requested, job will stop after current case");
+    expect(data.message).toBe(
+      "Cancellation requested, job will stop after current case"
+    );
     expect(mockConnection.set).toHaveBeenCalledWith(
       "copy-move:cancel:job-123",
       "1",
       "EX",
-      3600,
+      3600
     );
   });
 });

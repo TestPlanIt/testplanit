@@ -50,7 +50,9 @@ export function TagDiffDisplay({
       className={`flex font-extrabold items-center m-1 rounded ${bgColor} ${paddingClass}`}
     >
       {type !== "common" && (
-        <div className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`} />
+        <div
+          className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
+        />
       )}
       {prefix && <span className="relative mr-1">{prefix}</span>}
       <div className="relative">

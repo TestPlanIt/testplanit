@@ -11,6 +11,8 @@
     "postinstall": "NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && node scripts/fix-zenstack-symlink.js",
     "lint": "eslint . && tsc --noEmit",
     "type-check": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "check:modal-pattern": "bash scripts/check-modal-pattern.sh",
     "start": "next start",
     "test": "vitest --config vitest.config.mts",

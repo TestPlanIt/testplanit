@@ -4,8 +4,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent, CardDescription, CardHeader,
-  CardTitle
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +21,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  useCreateSamlConfiguration, useFindUniqueSamlConfiguration, useFindUniqueSsoProvider, useUpdateSamlConfiguration
+  useCreateSamlConfiguration,
+  useFindUniqueSamlConfiguration,
+  useFindUniqueSsoProvider,
+  useUpdateSamlConfiguration,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
@@ -303,13 +308,17 @@ export default function SAMLConfigurationPage() {
                 }
               />
               <Label htmlFor="autoProvision">
-                {t("admin.sso.samlConfiguration.userProvisioning.autoProvision")}
+                {t(
+                  "admin.sso.samlConfiguration.userProvisioning.autoProvision"
+                )}
               </Label>
             </div>
 
             <div className="w-full">
               <Label htmlFor="defaultAccess">
-                {t("admin.sso.samlConfiguration.userProvisioning.defaultAccess")}
+                {t(
+                  "admin.sso.samlConfiguration.userProvisioning.defaultAccess"
+                )}
                 <select
                   title={t(
                     "admin.sso.samlConfiguration.userProvisioning.defaultAccess"
@@ -372,9 +381,7 @@ export default function SAMLConfigurationPage() {
 
             <div>
               <Label htmlFor="attrName">
-                {t(
-                  "admin.sso.samlConfiguration.attributeMapping.displayName"
-                )}
+                {t("admin.sso.samlConfiguration.attributeMapping.displayName")}
               </Label>
               <Input
                 id="attrName"
@@ -414,9 +421,7 @@ export default function SAMLConfigurationPage() {
 
             <div>
               <Label htmlFor="attrFirstName">
-                {t(
-                  "admin.sso.samlConfiguration.attributeMapping.firstName"
-                )}
+                {t("admin.sso.samlConfiguration.attributeMapping.firstName")}
               </Label>
               <Input
                 id="attrFirstName"
@@ -436,9 +441,7 @@ export default function SAMLConfigurationPage() {
 
             <div>
               <Label htmlFor="attrLastName">
-                {t(
-                  "admin.sso.samlConfiguration.attributeMapping.lastName"
-                )}
+                {t("admin.sso.samlConfiguration.attributeMapping.lastName")}
               </Label>
               <Input
                 id="attrLastName"

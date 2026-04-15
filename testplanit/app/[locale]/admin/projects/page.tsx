@@ -4,17 +4,23 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  defaultPageSizeOptions, PaginationProvider, usePagination
+  defaultPageSizeOptions,
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import {
   ColumnSelection,
-  CustomColumnDef
+  CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyProjects, useFindManyUser, useUpdateProjects } from "~/lib/hooks";
+import {
+  useFindManyProjects,
+  useFindManyUser,
+  useUpdateProjects,
+} from "~/lib/hooks";
 import { ExtendedProjects, getColumns } from "./columns";
 
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
@@ -28,13 +34,20 @@ import { EditProjectModal } from "./EditProject";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover, PopoverContent, PopoverTrigger
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -42,7 +55,8 @@ import { CalendarDays, CirclePlus } from "lucide-react";
 import { Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import {
-  ProcessedProject, processProjectsWithEffectiveMembers
+  ProcessedProject,
+  processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
 const validationSchema = z.object({
@@ -166,7 +180,12 @@ function ProjectAdmin() {
   }, []);
 
   // Columns that require client-side sorting (relation counts, not scalar DB fields)
-  const clientSortColumns = new Set(["users", "milestoneTypes", "milestones", "integration"]);
+  const clientSortColumns = new Set([
+    "users",
+    "milestoneTypes",
+    "milestones",
+    "integration",
+  ]);
   const needsClientSideSorting = clientSortColumns.has(sortConfig.column);
 
   // Calculate skip and take based on pageSize
@@ -208,9 +227,10 @@ function ProjectAdmin() {
   const { data: projectsRaw, isLoading: isLoadingProjects } =
     useFindManyProjects(
       {
-        orderBy: !needsClientSideSorting && sortConfig
-          ? { [sortConfig.column]: sortConfig.direction }
-          : { name: "asc" },
+        orderBy:
+          !needsClientSideSorting && sortConfig
+            ? { [sortConfig.column]: sortConfig.direction }
+            : { name: "asc" },
         include: {
           creator: true,
           milestones: {
@@ -492,7 +512,9 @@ function ProjectAdmin() {
           <div className="mt-4 flex justify-between">
             <DataTable
               columns={columns}
-              data={(needsClientSideSorting ? displayedProjects : projects) || []}
+              data={
+                (needsClientSideSorting ? displayedProjects : projects) || []
+              }
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}

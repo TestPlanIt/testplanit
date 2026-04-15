@@ -17,20 +17,22 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,9 +52,17 @@ import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateCaseFieldValues,
-  useCreateCaseFieldVersionValues, useCreateRepositoryCases, useCreateSteps, useFindFirstRepositoryCases, useFindFirstRepositoryFolders, useFindManySharedStepGroup, useFindManyTags, useFindManyTemplates,
-  useFindManyWorkflows
+  useCreateAttachments,
+  useCreateCaseFieldValues,
+  useCreateCaseFieldVersionValues,
+  useCreateRepositoryCases,
+  useCreateSteps,
+  useFindFirstRepositoryCases,
+  useFindFirstRepositoryFolders,
+  useFindManySharedStepGroup,
+  useFindManyTags,
+  useFindManyTemplates,
+  useFindManyWorkflows,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -100,21 +110,31 @@ const mapFieldToZodType = (field: any) => {
     case "Integer":
       let integerBaseSchema = z.union([
         z.number().int(),
-        z.string().transform((val) => (val === "" ? undefined : parseInt(val, 10))),
+        z
+          .string()
+          .transform((val) => (val === "" ? undefined : parseInt(val, 10))),
       ]);
 
       // Apply min/max constraints using refine
-      if (field.caseField.minValue !== undefined && field.caseField.minValue !== null) {
+      if (
+        field.caseField.minValue !== undefined &&
+        field.caseField.minValue !== null
+      ) {
         const minValue = field.caseField.minValue;
         integerBaseSchema = integerBaseSchema.refine(
-          (val) => val === undefined || (typeof val === 'number' && val >= minValue),
+          (val) =>
+            val === undefined || (typeof val === "number" && val >= minValue),
           { message: `Value must be at least ${minValue}` }
         ) as any;
       }
-      if (field.caseField.maxValue !== undefined && field.caseField.maxValue !== null) {
+      if (
+        field.caseField.maxValue !== undefined &&
+        field.caseField.maxValue !== null
+      ) {
         const maxValue = field.caseField.maxValue;
         integerBaseSchema = integerBaseSchema.refine(
-          (val) => val === undefined || (typeof val === 'number' && val <= maxValue),
+          (val) =>
+            val === undefined || (typeof val === "number" && val <= maxValue),
           { message: `Value must be at most ${maxValue}` }
         ) as any;
       }
@@ -124,21 +144,31 @@ const mapFieldToZodType = (field: any) => {
     case "Number":
       let numberBaseSchema = z.union([
         z.number(),
-        z.string().transform((val) => (val === "" ? undefined : parseFloat(val))),
+        z
+          .string()
+          .transform((val) => (val === "" ? undefined : parseFloat(val))),
       ]);
 
       // Apply min/max constraints using refine
-      if (field.caseField.minValue !== undefined && field.caseField.minValue !== null) {
+      if (
+        field.caseField.minValue !== undefined &&
+        field.caseField.minValue !== null
+      ) {
         const minValue = field.caseField.minValue;
         numberBaseSchema = numberBaseSchema.refine(
-          (val) => val === undefined || (typeof val === 'number' && val >= minValue),
+          (val) =>
+            val === undefined || (typeof val === "number" && val >= minValue),
           { message: `Value must be at least ${minValue}` }
         ) as any;
       }
-      if (field.caseField.maxValue !== undefined && field.caseField.maxValue !== null) {
+      if (
+        field.caseField.maxValue !== undefined &&
+        field.caseField.maxValue !== null
+      ) {
         const maxValue = field.caseField.maxValue;
         numberBaseSchema = numberBaseSchema.refine(
-          (val) => val === undefined || (typeof val === 'number' && val <= maxValue),
+          (val) =>
+            val === undefined || (typeof val === "number" && val <= maxValue),
           { message: `Value must be at most ${maxValue}` }
         ) as any;
       }
@@ -147,10 +177,7 @@ const mapFieldToZodType = (field: any) => {
     case "Link":
       return isRequired
         ? z.string().url()
-        : z.union([
-            z.string().url(),
-            z.literal(""),
-          ]).optional();
+        : z.union([z.string().url(), z.literal("")]).optional();
     case "Text String":
       return isRequired ? z.string() : z.string().optional();
     case "Text Long":
@@ -428,7 +455,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     })) || [];
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
-    mode: 'onSubmit',
+    mode: "onSubmit",
     defaultValues: {
       name: "",
       templateId: defaultTemplateId ?? 0,
@@ -458,14 +485,14 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   // allIssues removed - fetched on demand during save to avoid loading all issues
 
   // Fetch Tags permission
-  const { permissions: tagsPermissions } =
-    useProjectPermissions(numericProjectId, ApplicationArea.Tags);
+  const { permissions: tagsPermissions } = useProjectPermissions(
+    numericProjectId,
+    ApplicationArea.Tags
+  );
   const canAddEditTags = tagsPermissions?.canAddEdit ?? false;
 
   // Fetch Restricted Fields permission (NEW)
-  const {
-    permissions: restrictedFieldsPermissions,
-  } = useProjectPermissions(
+  const { permissions: restrictedFieldsPermissions } = useProjectPermissions(
     numericProjectId,
     ApplicationArea.TestCaseRestrictedFields
   );
@@ -719,35 +746,65 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     return null;
   }
 
-  const checkForDuplicates = async (caseName: string, caseId: number, tagNames: string[]) => {
+  const checkForDuplicates = async (
+    caseName: string,
+    caseId: number,
+    tagNames: string[]
+  ) => {
     try {
       const res = await fetch("/api/duplicate-scan/check-new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: Number(projectId), caseId, name: caseName, tags: tagNames }),
+        body: JSON.stringify({
+          projectId: Number(projectId),
+          caseId,
+          name: caseName,
+          tags: tagNames,
+        }),
       });
       if (!res.ok) return;
       const data = await res.json();
       if (data.cases && data.cases.length > 0) {
         const caseLinks = data.cases.map((c: { id: number; name: string }) =>
-          React.createElement("a", {
-            key: c.id,
-            href: `/${locale}/projects/repository/${projectId}/${c.id}`,
-            target: "_blank",
-            rel: "noopener noreferrer",
-            style: { textDecoration: "underline", display: "block", marginTop: 4 },
-          }, c.name),
-        );
-        toast.warning(t("repository.duplicates.duplicateWarning"), {
-          description: React.createElement("div", null,
-            t("repository.duplicates.duplicateWarningDescription", { count: data.cases.length }),
-            ...caseLinks,
-            React.createElement("a", {
-              href: `/${locale}/projects/repository/${projectId}/duplicates`,
+          React.createElement(
+            "a",
+            {
+              key: c.id,
+              href: `/${locale}/projects/repository/${projectId}/${c.id}`,
               target: "_blank",
               rel: "noopener noreferrer",
-              style: { textDecoration: "underline", fontWeight: 500, display: "block", marginTop: 8 },
-            }, t("repository.duplicates.duplicateWarningReview")),
+              style: {
+                textDecoration: "underline",
+                display: "block",
+                marginTop: 4,
+              },
+            },
+            c.name
+          )
+        );
+        toast.warning(t("repository.duplicates.duplicateWarning"), {
+          description: React.createElement(
+            "div",
+            null,
+            t("repository.duplicates.duplicateWarningDescription", {
+              count: data.cases.length,
+            }),
+            ...caseLinks,
+            React.createElement(
+              "a",
+              {
+                href: `/${locale}/projects/repository/${projectId}/duplicates`,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                style: {
+                  textDecoration: "underline",
+                  fontWeight: 500,
+                  display: "block",
+                  marginTop: 8,
+                },
+              },
+              t("repository.duplicates.duplicateWarningReview")
+            )
           ),
           duration: 15000,
         });
@@ -761,15 +818,20 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     setIsSubmitting(true);
 
     // Manual validation for required date fields (since we excluded them from Zod schema)
-    const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
+    const selectedTemplate = templates?.find(
+      (t) => t.id === selectedTemplateId
+    );
     if (selectedTemplate) {
       for (const fieldMeta of selectedTemplate.caseFields) {
-        if (fieldMeta.caseField.type.type === "Date" && fieldMeta.caseField.isRequired) {
+        if (
+          fieldMeta.caseField.type.type === "Date" &&
+          fieldMeta.caseField.isRequired
+        ) {
           const fieldIdStr = fieldMeta.caseField.id.toString();
           const value = data[fieldIdStr];
           if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
             form.setError(fieldIdStr, {
-              type: 'manual',
+              type: "manual",
               message: `${fieldMeta.caseField.displayName} is required`,
             });
             setIsSubmitting(false);
@@ -1014,7 +1076,11 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         );
 
         // Fetch issue details on demand for the version snapshot
-        let issuesDataForVersion: { id: number; name: string; externalId: string | null }[] = [];
+        let issuesDataForVersion: {
+          id: number;
+          name: string;
+          externalId: string | null;
+        }[] = [];
         if (linkedIssueIds.length > 0) {
           try {
             const res = await fetch(
@@ -1113,7 +1179,11 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         setIsSubmitting(false);
 
         // Fire-and-forget duplicate check — never blocks the save
-        checkForDuplicates(convertedData.name, newCase.id, tagNamesForVersion).catch(() => {});
+        checkForDuplicates(
+          convertedData.name,
+          newCase.id,
+          tagNamesForVersion
+        ).catch(() => {});
       }
     } catch (err: any) {
       form.setError("root", {
@@ -1140,7 +1210,10 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1400px]" data-testid="add-case-dialog">
+      <DialogContent
+        className="sm:max-w-[600px] lg:max-w-[1400px]"
+        data-testid="add-case-dialog"
+      >
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {isSubmitting && (
@@ -1227,7 +1300,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   minSize={0}
                   collapsible
                   className={`p-0 m-0 mr-4 ${
-                    isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                    isTransitioning
+                      ? "transition-all duration-300 ease-in-out"
+                      : ""
                   }`}
                 >
                   <div className="mb-4 min-w-[300px] mx-1">

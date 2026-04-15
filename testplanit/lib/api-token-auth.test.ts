@@ -1,7 +1,17 @@
 import { NextRequest } from "next/server";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  authenticateApiToken, extractBearerToken, hasBearerToken
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import {
+  authenticateApiToken,
+  extractBearerToken,
+  hasBearerToken,
 } from "./api-token-auth";
 import { generateApiToken } from "./api-tokens";
 
@@ -482,9 +492,7 @@ describe("API Token Authentication", () => {
       });
 
       // Make update fail
-      (prisma.apiToken.update as any).mockRejectedValue(
-        new Error("DB error")
-      );
+      (prisma.apiToken.update as any).mockRejectedValue(new Error("DB error"));
 
       const request = createMockRequest(`Bearer ${plaintext}`);
       const result = await authenticateApiToken(request);

@@ -30,13 +30,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (job.createdById !== session.user.id && session.user.access !== "ADMIN") {
+    if (
+      job.createdById !== session.user.id &&
+      session.user.access !== "ADMIN"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (job.status !== "READY" && job.status !== "RUNNING" && job.status !== "COMPLETED") {
+    if (
+      job.status !== "READY" &&
+      job.status !== "RUNNING" &&
+      job.status !== "COMPLETED"
+    ) {
       return NextResponse.json(
-        { error: "Analysis is only available after the export has been analyzed" },
+        {
+          error:
+            "Analysis is only available after the export has been analyzed",
+        },
         { status: 400 }
       );
     }
@@ -54,9 +64,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const hasConfigurationData = Boolean(
       analysis?.ambiguousEntities?.configurations &&
-        analysis?.existingEntities?.configurationCategories &&
-        analysis?.existingEntities?.configurationVariants &&
-        analysis?.existingEntities?.configurations
+      analysis?.existingEntities?.configurationCategories &&
+      analysis?.existingEntities?.configurationVariants &&
+      analysis?.existingEntities?.configurations
     );
 
     const needsRecompute =
@@ -67,9 +77,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     if (needsRecompute) {
       const computedAnalysis = await buildMappingAnalysis(job);
-      const serializableAnalysis = JSON.parse(
-        JSON.stringify(computedAnalysis)
-      );
+      const serializableAnalysis = JSON.parse(JSON.stringify(computedAnalysis));
 
       await db.testmoImportJob.update({
         where: { id: jobId },

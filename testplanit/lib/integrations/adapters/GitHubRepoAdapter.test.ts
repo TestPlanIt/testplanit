@@ -5,7 +5,11 @@ import { GitHubRepoAdapter } from "./GitHubRepoAdapter";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-function makeResponse(data: any, status = 200, headers: Record<string, string> = {}) {
+function makeResponse(
+  data: any,
+  status = 200,
+  headers: Record<string, string> = {}
+) {
   return {
     ok: status >= 200 && status < 300,
     status,
@@ -32,9 +36,7 @@ describe("GitHubRepoAdapter", () => {
 
   describe("getDefaultBranch", () => {
     it("returns the default branch from GitHub API", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       const branch = await adapter.getDefaultBranch();
 
@@ -122,9 +124,7 @@ describe("GitHubRepoAdapter", () => {
 
   describe("testConnection", () => {
     it("returns success with default branch", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       const result = await adapter.testConnection();
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getUpgradeNotificationsBetweenVersions,
-  upgradeNotifications
+  upgradeNotifications,
 } from "./upgrade-notifications";
 
 describe("upgrade-notifications", () => {
@@ -113,10 +113,7 @@ describe("upgrade-notifications", () => {
       });
 
       it("should return empty array for non-existent version range", () => {
-        const result = getUpgradeNotificationsBetweenVersions(
-          "0.3.5",
-          "0.4.5"
-        );
+        const result = getUpgradeNotificationsBetweenVersions("0.3.5", "0.4.5");
         expect(result).toEqual([]);
       });
     });

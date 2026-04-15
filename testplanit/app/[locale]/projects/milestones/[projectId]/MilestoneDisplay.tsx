@@ -5,7 +5,9 @@ import React, { useEffect, useState } from "react";
 import { useFindManyColor, useUpdateMilestones } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
-  createColorMap, MilestonesWithTypes, sortMilestones
+  createColorMap,
+  MilestonesWithTypes,
+  sortMilestones,
 } from "~/utils/milestoneUtils";
 import { CompleteMilestoneDialog } from "../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "./DeleteMilestoneModal";

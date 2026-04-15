@@ -35,7 +35,9 @@ test.describe("Report Builder - Drill-Down", () => {
       params.set("metrics", metrics.join(","));
     }
 
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
   }
 
@@ -61,11 +63,25 @@ test.describe("Report Builder - Drill-Down", () => {
 
     // Create test cases so we have data in the repository-stats report
     const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Drill Down TC Alpha ${uniqueId}`);
-    await api.createTestCase(projectId, rootFolderId, `Drill Down TC Beta ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Drill Down TC Alpha ${uniqueId}`
+    );
+    await api.createTestCase(
+      projectId,
+      rootFolderId,
+      `Drill Down TC Beta ${uniqueId}`
+    );
 
     // Navigate to repository-stats with testCase dimension + testCaseCount metric
-    await navigateToReport(page, projectId, "repository-stats", ["testCase"], ["testCaseCount"]);
+    await navigateToReport(
+      page,
+      projectId,
+      "repository-stats",
+      ["testCase"],
+      ["testCaseCount"]
+    );
 
     await runReport(page);
 
@@ -75,11 +91,11 @@ test.describe("Report Builder - Drill-Down", () => {
 
     // Look for a clickable metric cell (cursor-pointer span in a table cell)
     // The metric cells render as <span class="... cursor-pointer ..."> when drill-down is available
-    const clickableMetricCell = table
-      .locator("td span.cursor-pointer")
-      .first();
+    const clickableMetricCell = table.locator("td span.cursor-pointer").first();
 
-    const isCellClickable = await clickableMetricCell.isVisible().catch(() => false);
+    const isCellClickable = await clickableMetricCell
+      .isVisible()
+      .catch(() => false);
 
     if (isCellClickable) {
       await clickableMetricCell.click();
@@ -89,14 +105,16 @@ test.describe("Report Builder - Drill-Down", () => {
       await expect(drawer).toBeVisible({ timeout: 5000 });
 
       // Drawer title should be visible (shows the metric label)
-      const drawerTitle = drawer.locator('[data-slot="drawer-title"]').or(
-        drawer.locator('h2, h3').first()
-      );
+      const drawerTitle = drawer
+        .locator('[data-slot="drawer-title"]')
+        .or(drawer.locator("h2, h3").first());
       await expect(drawerTitle.first()).toBeVisible({ timeout: 3000 });
 
       // Close the drawer
       const closeButton = drawer
-        .locator('button[aria-label="Close"], button:has-text("Close"), button:has-text("close")')
+        .locator(
+          'button[aria-label="Close"], button:has-text("Close"), button:has-text("close")'
+        )
         .first();
       if (await closeButton.isVisible().catch(() => false)) {
         await closeButton.click();
@@ -140,24 +158,21 @@ test.describe("Report Builder - Drill-Down", () => {
     );
 
     // Test the drill-down API directly with a valid context
-    const response = await page.request.post(
-      `/api/report-builder/drill-down`,
-      {
-        data: {
-          context: {
-            metricId: "testCaseCount",
-            metricLabel: "Test Cases Count",
-            metricValue: 1,
-            reportType: "repository-stats",
-            mode: "project",
-            projectId,
-            dimensions: {},
-          },
-          offset: 0,
-          limit: 10,
+    const response = await page.request.post(`/api/report-builder/drill-down`, {
+      data: {
+        context: {
+          metricId: "testCaseCount",
+          metricLabel: "Test Cases Count",
+          metricValue: 1,
+          reportType: "repository-stats",
+          mode: "project",
+          projectId,
+          dimensions: {},
         },
-      }
-    );
+        offset: 0,
+        limit: 10,
+      },
+    });
 
     // Should respond (200 with data/empty, or 400 for invalid config - not 401/403/500)
     expect(response.status()).not.toBe(401);
@@ -184,9 +199,12 @@ test.describe("Report Builder - Drill-Down", () => {
     // E2E server runs on port 3002
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
 
-    const incognitoContext = await page.context().browser()!.newContext({
-      storageState: { cookies: [], origins: [] },
-    });
+    const incognitoContext = await page
+      .context()
+      .browser()!
+      .newContext({
+        storageState: { cookies: [], origins: [] },
+      });
     const incognitoPage = await incognitoContext.newPage();
 
     try {
@@ -240,14 +258,11 @@ test.describe("Report Builder - Forecasting", () => {
     );
 
     // Call the forecasting API with the created case IDs
-    const response = await page.request.post(
-      `/api/repository-cases/forecast`,
-      {
-        data: {
-          caseIds: [caseId1, caseId2],
-        },
-      }
-    );
+    const response = await page.request.post(`/api/repository-cases/forecast`, {
+      data: {
+        caseIds: [caseId1, caseId2],
+      },
+    });
 
     // Should return 200 with forecast data
     expect(response.status()).toBe(200);
@@ -272,14 +287,11 @@ test.describe("Report Builder - Forecasting", () => {
     page,
   }) => {
     // Call forecast with no real case IDs to test graceful empty handling
-    const response = await page.request.post(
-      `/api/repository-cases/forecast`,
-      {
-        data: {
-          caseIds: [], // Empty array - should fail validation
-        },
-      }
-    );
+    const response = await page.request.post(`/api/repository-cases/forecast`, {
+      data: {
+        caseIds: [], // Empty array - should fail validation
+      },
+    });
 
     // The schema requires at least 1 caseId, so this should return 400
     expect(response.status()).toBe(400);
@@ -289,14 +301,11 @@ test.describe("Report Builder - Forecasting", () => {
     page,
   }) => {
     // Use IDs that don't exist - should return empty/zero response
-    const response = await page.request.post(
-      `/api/repository-cases/forecast`,
-      {
-        data: {
-          caseIds: [999999999], // Very unlikely to exist
-        },
-      }
-    );
+    const response = await page.request.post(`/api/repository-cases/forecast`, {
+      data: {
+        caseIds: [999999999], // Very unlikely to exist
+      },
+    });
 
     // Should return 200 with zero counts (not throw an error)
     expect(response.status()).toBe(200);
@@ -308,15 +317,12 @@ test.describe("Report Builder - Forecasting", () => {
   });
 
   test("Forecasting API rejects invalid request body", async ({ page }) => {
-    const response = await page.request.post(
-      `/api/repository-cases/forecast`,
-      {
-        data: {
-          // Missing required caseIds field
-          invalidField: "test",
-        },
-      }
-    );
+    const response = await page.request.post(`/api/repository-cases/forecast`, {
+      data: {
+        // Missing required caseIds field
+        invalidField: "test",
+      },
+    });
 
     // Should return 400 for invalid body
     expect(response.status()).toBe(400);

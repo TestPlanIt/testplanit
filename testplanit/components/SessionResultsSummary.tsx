@@ -7,7 +7,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, MessageCircle, Timer } from "lucide-react";
@@ -294,11 +294,14 @@ export function SessionResultsSummary({
           {summaryData.commentsCount > 0 && (
             <Link
               href={`/projects/sessions/${projectId}/${sessionId}#comments`}
-              className={cn("flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors", {
-                "text-xs": textSize === "xs",
-                "text-sm": textSize === "sm",
-                "text-md": textSize === "md",
-              })}
+              className={cn(
+                "flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors",
+                {
+                  "text-xs": textSize === "xs",
+                  "text-sm": textSize === "sm",
+                  "text-md": textSize === "md",
+                }
+              )}
             >
               <TooltipProvider delayDuration={300}>
                 <Tooltip>

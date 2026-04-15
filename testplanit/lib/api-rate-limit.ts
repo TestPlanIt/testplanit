@@ -116,7 +116,10 @@ export async function checkApiRateLimit(): Promise<RateLimitResult> {
       resetAt,
     };
   } catch (error) {
-    console.error("[API Rate Limit] Valkey error, falling back to in-memory:", error);
+    console.error(
+      "[API Rate Limit] Valkey error, falling back to in-memory:",
+      error
+    );
     return checkFallback();
   }
 }

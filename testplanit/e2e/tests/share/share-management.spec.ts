@@ -20,7 +20,9 @@ test.describe("Share Management", () => {
       dimensions: "testCase",
       metrics: "testCaseCount",
     });
-    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.goto(
+      `/en-US/projects/reports/${projectId}?${params.toString()}`
+    );
     await page.waitForLoadState("networkidle");
 
     const runButton = page.locator('[data-testid="run-report-button"]');
@@ -36,7 +38,7 @@ test.describe("Share Management", () => {
     await runButton.click();
     await page.waitForLoadState("networkidle");
 
-    const resultsCard = page.locator('text=/Results/i');
+    const resultsCard = page.locator("text=/Results/i");
     await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
   }
 
@@ -58,7 +60,9 @@ test.describe("Share Management", () => {
 
     // Check if dialog is showing success screen from previous share
     const successScreenCheck = page.getByTestId("share-url-input");
-    const isSuccessScreen = await successScreenCheck.isVisible({ timeout: 1000 }).catch(() => false);
+    const isSuccessScreen = await successScreenCheck
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
 
     if (isSuccessScreen) {
       // Close and re-open to get fresh dialog
@@ -75,7 +79,8 @@ test.describe("Share Management", () => {
     await page.waitForTimeout(500);
 
     // Select mode - map to correct test ID
-    const modeTestId = mode === "PASSWORD_PROTECTED" ? "password" : mode.toLowerCase();
+    const modeTestId =
+      mode === "PASSWORD_PROTECTED" ? "password" : mode.toLowerCase();
     const modeRadio = page.getByTestId(`share-mode-${modeTestId}`);
     await modeRadio.click();
 
@@ -84,7 +89,9 @@ test.describe("Share Management", () => {
       const passwordInput = page.getByTestId("share-password-input");
       await passwordInput.fill(password);
 
-      const confirmPasswordInput = page.getByTestId("share-confirm-password-input");
+      const confirmPasswordInput = page.getByTestId(
+        "share-confirm-password-input"
+      );
       await confirmPasswordInput.fill(password);
     }
 
@@ -113,7 +120,10 @@ test.describe("Share Management", () => {
     return shareUrl.split("/share/")[1];
   }
 
-  test("View list of shares from project settings @smoke", async ({ api, page }) => {
+  test("View list of shares from project settings @smoke", async ({
+    api,
+    page,
+  }) => {
     const timestamp = Date.now();
     const projectId = await api.createProject(`Share List Test ${timestamp}`);
 
@@ -126,14 +136,22 @@ test.describe("Share Management", () => {
     await runReport(page);
 
     // Create multiple shares
-    const shareKey1 = await createShare(page, "PUBLIC", `Public Share 1 ${timestamp}`);
+    const shareKey1 = await createShare(
+      page,
+      "PUBLIC",
+      `Public Share 1 ${timestamp}`
+    );
     const shareKey2 = await createShare(
       page,
       "PASSWORD_PROTECTED",
       `Password Share ${timestamp}`,
       `TestPass${timestamp}`
     );
-    const shareKey3 = await createShare(page, "AUTHENTICATED", `Auth Share ${timestamp}`);
+    const shareKey3 = await createShare(
+      page,
+      "AUTHENTICATED",
+      `Auth Share ${timestamp}`
+    );
 
     // Track all shares for cleanup
     for (const shareKey of [shareKey1, shareKey2, shareKey3]) {
@@ -158,12 +176,16 @@ test.describe("Share Management", () => {
     await expect(page.locator(`text=Password Share ${timestamp}`)).toBeVisible({
       timeout: 5000,
     });
-    await expect(page.locator(`text=Auth Share ${timestamp}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=Auth Share ${timestamp}`)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Verify mode badges are displayed
-    await expect(page.locator('text=/PUBLIC/i').first()).toBeVisible();
-    await expect(page.locator('text=/PASSWORD.*PROTECTED/i').first()).toBeVisible();
-    await expect(page.locator('text=/AUTHENTICATED/i').first()).toBeVisible();
+    await expect(page.locator("text=/PUBLIC/i").first()).toBeVisible();
+    await expect(
+      page.locator("text=/PASSWORD.*PROTECTED/i").first()
+    ).toBeVisible();
+    await expect(page.locator("text=/AUTHENTICATED/i").first()).toBeVisible();
   });
 
   test("Revoke a share link", async ({ api, page, context }) => {
@@ -179,7 +201,11 @@ test.describe("Share Management", () => {
     await runReport(page);
 
     // Create a public share
-    const shareKey = await createShare(page, "PUBLIC", `Revoke Test Share ${timestamp}`);
+    const shareKey = await createShare(
+      page,
+      "PUBLIC",
+      `Revoke Test Share ${timestamp}`
+    );
     const shareLinkData = await api.getShareLinkByKey(shareKey);
     expect(shareLinkData).toBeTruthy();
     if (shareLinkData) {
@@ -204,7 +230,9 @@ test.describe("Share Management", () => {
     await revokeButton.click();
 
     // Confirm revocation in dialog
-    const confirmRevokeButton = page.locator('[role="alertdialog"] button:has-text("Revoke Link")');
+    const confirmRevokeButton = page.locator(
+      '[role="alertdialog"] button:has-text("Revoke Link")'
+    );
     await expect(confirmRevokeButton).toBeVisible({ timeout: 5000 });
     await confirmRevokeButton.click();
 
@@ -212,7 +240,9 @@ test.describe("Share Management", () => {
     await page.waitForTimeout(1000);
 
     // Verify revoked badge appears
-    await expect(shareRow.locator('text=/revoked/i')).toBeVisible({ timeout: 5000 });
+    await expect(shareRow.locator("text=/revoked/i")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Verify in database
     let updatedShareData = await api.getShareLinkByKey(shareKey);
@@ -230,7 +260,7 @@ test.describe("Share Management", () => {
       await incognitoPage.waitForLoadState("networkidle");
 
       // Should see "Link revoked" message, not the report
-      const revokedMessage = incognitoPage.locator('text=/link.*revoked/i');
+      const revokedMessage = incognitoPage.locator("text=/link.*revoked/i");
       await expect(revokedMessage.first()).toBeVisible({ timeout: 10000 });
     } finally {
       await incognitoPage.close();
@@ -251,7 +281,11 @@ test.describe("Share Management", () => {
     await runReport(page);
 
     // Create a share
-    const shareKey = await createShare(page, "PUBLIC", `Delete Test Share ${timestamp}`);
+    const shareKey = await createShare(
+      page,
+      "PUBLIC",
+      `Delete Test Share ${timestamp}`
+    );
     const shareLinkData = await api.getShareLinkByKey(shareKey);
     expect(shareLinkData).toBeTruthy();
     if (shareLinkData) {
@@ -275,7 +309,9 @@ test.describe("Share Management", () => {
     await deleteButton.click();
 
     // Confirm deletion in dialog
-    const confirmButton = page.locator('[role="alertdialog"] button:has-text("Delete Link")');
+    const confirmButton = page.locator(
+      '[role="alertdialog"] button:has-text("Delete Link")'
+    );
     await expect(confirmButton).toBeVisible({ timeout: 5000 });
     await confirmButton.click();
 
@@ -303,7 +339,11 @@ test.describe("Share Management", () => {
     await runReport(page);
 
     // Create a share
-    const shareKey = await createShare(page, "PUBLIC", `Copy Link Share ${timestamp}`);
+    const shareKey = await createShare(
+      page,
+      "PUBLIC",
+      `Copy Link Share ${timestamp}`
+    );
     const shareLinkData = await api.getShareLinkByKey(shareKey);
     if (shareLinkData) {
       api.trackShareLink(shareLinkData.id);
@@ -314,7 +354,9 @@ test.describe("Share Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify share appears in the list
-    const shareRow = page.locator(`tr:has-text("Copy Link Share ${timestamp}")`);
+    const shareRow = page.locator(
+      `tr:has-text("Copy Link Share ${timestamp}")`
+    );
     await expect(shareRow).toBeVisible({ timeout: 5000 });
 
     // Note: Copy functionality UI varies - just verify the share is accessible
@@ -334,7 +376,11 @@ test.describe("Share Management", () => {
     await runReport(page);
 
     // Create a share
-    const shareKey = await createShare(page, "PUBLIC", `Access Logs Share ${timestamp}`);
+    const shareKey = await createShare(
+      page,
+      "PUBLIC",
+      `Access Logs Share ${timestamp}`
+    );
     const shareLinkData = await api.getShareLinkByKey(shareKey);
     if (shareLinkData) {
       api.trackShareLink(shareLinkData.id);
@@ -352,7 +398,9 @@ test.describe("Share Management", () => {
       await incognitoPage.waitForLoadState("networkidle");
 
       // Wait for report to load
-      const sharedReportViewer = incognitoPage.getByTestId("shared-report-viewer");
+      const sharedReportViewer = incognitoPage.getByTestId(
+        "shared-report-viewer"
+      );
       await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
 
       // Wait for access to be logged
@@ -367,7 +415,9 @@ test.describe("Share Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify share is listed (view count display format may vary)
-    const shareRow = page.locator(`tr:has-text("Access Logs Share ${timestamp}")`);
+    const shareRow = page.locator(
+      `tr:has-text("Access Logs Share ${timestamp}")`
+    );
     await expect(shareRow).toBeVisible({ timeout: 5000 });
 
     // Check that view count is greater than 0 in the database
@@ -388,8 +438,16 @@ test.describe("Share Management", () => {
     await runReport(page);
 
     // Create multiple shares
-    const activeShareKey = await createShare(page, "PUBLIC", `Active Share ${timestamp}`);
-    const revokeShareKey = await createShare(page, "PUBLIC", `To Revoke ${timestamp}`);
+    const activeShareKey = await createShare(
+      page,
+      "PUBLIC",
+      `Active Share ${timestamp}`
+    );
+    const revokeShareKey = await createShare(
+      page,
+      "PUBLIC",
+      `To Revoke ${timestamp}`
+    );
 
     // Track for cleanup and get share IDs
     const activeShareData = await api.getShareLinkByKey(activeShareKey);
@@ -414,32 +472,44 @@ test.describe("Share Management", () => {
     await revokeButton.click();
 
     // Confirm revocation in dialog
-    const confirmRevokeButton = page.locator('[role="alertdialog"] button:has-text("Revoke Link")');
+    const confirmRevokeButton = page.locator(
+      '[role="alertdialog"] button:has-text("Revoke Link")'
+    );
     await expect(confirmRevokeButton).toBeVisible({ timeout: 5000 });
     await confirmRevokeButton.click();
     await page.waitForTimeout(1000);
 
     // Try to find and use filter (if available)
-    const filterButton = page.locator('button:has-text("All"), button:has-text("Status")').first();
+    const filterButton = page
+      .locator('button:has-text("All"), button:has-text("Status")')
+      .first();
     if (await filterButton.isVisible({ timeout: 2000 })) {
       await filterButton.click();
 
       // Filter to active only
-      const activeOption = page.locator('text=/Active/i').first();
+      const activeOption = page.locator("text=/Active/i").first();
       if (await activeOption.isVisible({ timeout: 2000 })) {
         await activeOption.click();
         await page.waitForTimeout(500);
 
         // Should show active share, not revoked
-        await expect(page.locator(`text=Active Share ${timestamp}`)).toBeVisible();
-        await expect(page.locator(`text=To Revoke ${timestamp}`)).not.toBeVisible();
+        await expect(
+          page.locator(`text=Active Share ${timestamp}`)
+        ).toBeVisible();
+        await expect(
+          page.locator(`text=To Revoke ${timestamp}`)
+        ).not.toBeVisible();
       }
     }
 
     // Both shares should be visible when viewing all
     await page.reload();
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text=Active Share ${timestamp}`)).toBeVisible({ timeout: 5000 });
-    await expect(page.locator(`text=To Revoke ${timestamp}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=Active Share ${timestamp}`)).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.locator(`text=To Revoke ${timestamp}`)).toBeVisible({
+      timeout: 5000,
+    });
   });
 });

@@ -54,7 +54,12 @@ vi.mock("@/components/ui/input", () => ({
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, type, disabled, ...rest }: any) => (
-    <button type={type || "button"} onClick={onClick} disabled={disabled} {...rest}>
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      disabled={disabled}
+      {...rest}
+    >
       {children}
     </button>
   ),
@@ -110,7 +115,9 @@ describe("IntegrationConfigForm", () => {
 
       const inputs = screen.getAllByRole("textbox");
       // Should have email, baseUrl (text inputs); apiToken is password type
-      const passwordInputs = document.querySelectorAll('input[type="password"]');
+      const passwordInputs = document.querySelectorAll(
+        'input[type="password"]'
+      );
       expect(inputs.length).toBeGreaterThanOrEqual(1);
       expect(passwordInputs.length).toBeGreaterThanOrEqual(1);
     });
@@ -163,7 +170,9 @@ describe("IntegrationConfigForm", () => {
       // baseUrl placeholder is "jiraUrlPlaceholder" - find input by placeholder
       // In JIRA API_KEY, baseUrl is the last non-password, non-forgeApiKey textbox
       // Use the input with jiraUrl placeholder key
-      const allInputs = document.querySelectorAll("input:not([type=password]):not([readonly])");
+      const allInputs = document.querySelectorAll(
+        "input:not([type=password]):not([readonly])"
+      );
       // Filter inputs that have a placeholder ending in "Placeholder"
       let baseUrlInput: Element | null = null;
       allInputs.forEach((input) => {
@@ -208,7 +217,9 @@ describe("IntegrationConfigForm", () => {
 
       // Should have clientId (text), clientSecret (password), baseUrl (text)
       const inputs = screen.getAllByRole("textbox");
-      const passwordInputs = document.querySelectorAll('input[type="password"]');
+      const passwordInputs = document.querySelectorAll(
+        'input[type="password"]'
+      );
       expect(inputs.length).toBeGreaterThanOrEqual(1);
       expect(passwordInputs.length).toBeGreaterThanOrEqual(1);
     });
@@ -237,7 +248,9 @@ describe("IntegrationConfigForm", () => {
         />
       );
 
-      const passwordInputs = document.querySelectorAll('input[type="password"]');
+      const passwordInputs = document.querySelectorAll(
+        'input[type="password"]'
+      );
       expect(passwordInputs.length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -252,7 +265,9 @@ describe("IntegrationConfigForm", () => {
         />
       );
 
-      const passwordInputs = document.querySelectorAll('input[type="password"]');
+      const passwordInputs = document.querySelectorAll(
+        'input[type="password"]'
+      );
       expect(passwordInputs.length).toBeGreaterThanOrEqual(1);
 
       // organizationUrl is a text input (non-credential)
@@ -278,7 +293,9 @@ describe("IntegrationConfigForm", () => {
       });
 
       expect(onSettingsChange).toHaveBeenCalledWith(
-        expect.objectContaining({ organizationUrl: "https://dev.azure.com/myorg" })
+        expect.objectContaining({
+          organizationUrl: "https://dev.azure.com/myorg",
+        })
       );
     });
   });
@@ -376,7 +393,8 @@ describe("IntegrationConfigForm", () => {
       const badges = screen.queryAllByTestId("badge");
       // May have fewer badges since some credentials are filled in
       expect(
-        badges.every((b) => b.textContent !== "encrypted") || badges.length === 0
+        badges.every((b) => b.textContent !== "encrypted") ||
+          badges.length === 0
       ).toBe(true);
     });
   });
@@ -402,7 +420,9 @@ describe("IntegrationConfigForm", () => {
       if (generateBtn) {
         fireEvent.click(generateBtn);
         expect(onSettingsChange).toHaveBeenCalledWith(
-          expect.objectContaining({ forgeApiKey: expect.stringContaining("tpi_forge_") })
+          expect.objectContaining({
+            forgeApiKey: expect.stringContaining("tpi_forge_"),
+          })
         );
       }
     });

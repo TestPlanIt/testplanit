@@ -51,7 +51,7 @@ test.describe("Group Management", () => {
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
       // Fill in the group name
-      const nameInput = dialog.locator('input[placeholder]').first();
+      const nameInput = dialog.locator("input[placeholder]").first();
       await expect(nameInput).toBeVisible();
       await nameInput.fill(groupName);
 
@@ -133,7 +133,7 @@ test.describe("Group Management", () => {
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
       // Clear and update the name field
-      const nameInput = dialog.locator('input').first();
+      const nameInput = dialog.locator("input").first();
       await expect(nameInput).toBeVisible();
       await nameInput.clear();
       await nameInput.fill(updatedName);

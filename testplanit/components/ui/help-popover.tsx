@@ -10,7 +10,11 @@ interface HelpPopoverProps {
   tabIndex?: number;
 }
 
-export function HelpPopover({ helpKey, side = "bottom", tabIndex }: HelpPopoverProps) {
+export function HelpPopover({
+  helpKey,
+  side = "bottom",
+  tabIndex,
+}: HelpPopoverProps) {
   const tHelp = useTranslations("help");
   let contentToShow: string;
 
@@ -93,7 +97,12 @@ export function HelpPopover({ helpKey, side = "bottom", tabIndex }: HelpPopoverP
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className="ml-2 inline-flex" tabIndex={tabIndex} aria-label="Help">
+        <button
+          type="button"
+          className="ml-2 inline-flex"
+          tabIndex={tabIndex}
+          aria-label="Help"
+        >
           <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
         </button>
       </PopoverTrigger>

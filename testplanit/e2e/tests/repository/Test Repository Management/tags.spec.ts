@@ -17,7 +17,9 @@ test.describe("Tags", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Create Tag", async ({ page }) => {
@@ -312,7 +314,11 @@ test.describe("Tags", () => {
     await expect(tagRow).toBeVisible({ timeout: 5000 });
 
     // Click the edit button in that row - try multiple icon selectors
-    const editButton = tagRow.locator("button:has(svg.lucide-square-pen), button:has(svg.lucide-pencil), button:has(svg[class*='pencil']), button:has(svg[class*='edit'])").first();
+    const editButton = tagRow
+      .locator(
+        "button:has(svg.lucide-square-pen), button:has(svg.lucide-pencil), button:has(svg[class*='pencil']), button:has(svg[class*='edit'])"
+      )
+      .first();
     await expect(editButton).toBeVisible({ timeout: 3000 });
     await editButton.click();
 
@@ -699,8 +705,12 @@ test.describe("Tags", () => {
   test("Tags Are Visible Across Projects", async ({ api, page }) => {
     // Tags are global in the system - verify a tag created globally is visible across projects
     // Create two separate projects for this test - tests should be self-contained
-    const _project1Id = await api.createProject(`E2E Tag Project 1 ${Date.now()}`);
-    const project2Id = await api.createProject(`E2E Tag Project 2 ${Date.now()}`);
+    const _project1Id = await api.createProject(
+      `E2E Tag Project 1 ${Date.now()}`
+    );
+    const project2Id = await api.createProject(
+      `E2E Tag Project 2 ${Date.now()}`
+    );
 
     // Use project1Id implicitly for tag creation (tags are global), and project2Id for the test case
     const uniqueId = Date.now();
@@ -903,8 +913,8 @@ test.describe("Tags", () => {
     await page.waitForLoadState("networkidle");
 
     // Find the specific row containing our tag name, then click its edit button
-    const tableBody = page.locator('table tbody');
-    const tagRow = tableBody.locator('tr').filter({ hasText: activeTagName });
+    const tableBody = page.locator("table tbody");
+    const tagRow = tableBody.locator("tr").filter({ hasText: activeTagName });
     await expect(tagRow).toBeVisible({ timeout: 5000 });
 
     const editButton = tagRow.locator("button:has(svg.lucide-square-pen)");
@@ -935,7 +945,9 @@ test.describe("Tags", () => {
     await page.waitForLoadState("networkidle");
 
     // Look specifically in the table body for the renamed tag (reuse tableBody from above)
-    await expect(tableBody.locator(`text="${deletedTagName}"`).first()).toBeVisible({
+    await expect(
+      tableBody.locator(`text="${deletedTagName}"`).first()
+    ).toBeVisible({
       timeout: 5000,
     });
 

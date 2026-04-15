@@ -193,7 +193,10 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("updates user email", async () => {
-      const updatedUser = { ...mockExistingUser, email: "newemail@example.com" };
+      const updatedUser = {
+        ...mockExistingUser,
+        email: "newemail@example.com",
+      };
       (prisma.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ email: "newemail@example.com" });
@@ -245,10 +248,15 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("updates user avatar image", async () => {
-      const updatedUser = { ...mockExistingUser, image: "https://example.com/avatar.jpg" };
+      const updatedUser = {
+        ...mockExistingUser,
+        image: "https://example.com/avatar.jpg",
+      };
       (prisma.$transaction as any).mockResolvedValue(updatedUser);
 
-      const request = createRequest({ image: "https://example.com/avatar.jpg" });
+      const request = createRequest({
+        image: "https://example.com/avatar.jpg",
+      });
       const context = createContext("user-123");
       const response = await PATCH(request, context);
       const data = await response.json();
@@ -345,7 +353,10 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     it("updates locale preference", async () => {
       const updatedUser = {
         ...mockExistingUser,
-        userPreferences: { ...mockExistingUser.userPreferences, locale: "es_ES" },
+        userPreferences: {
+          ...mockExistingUser.userPreferences,
+          locale: "es_ES",
+        },
       };
       (prisma.$transaction as any).mockResolvedValue(updatedUser);
 
@@ -361,11 +372,16 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     it("updates itemsPerPage preference", async () => {
       const updatedUser = {
         ...mockExistingUser,
-        userPreferences: { ...mockExistingUser.userPreferences, itemsPerPage: "P25" },
+        userPreferences: {
+          ...mockExistingUser.userPreferences,
+          itemsPerPage: "P25",
+        },
       };
       (prisma.$transaction as any).mockResolvedValue(updatedUser);
 
-      const request = createRequest({ userPreferences: { itemsPerPage: "P25" } });
+      const request = createRequest({
+        userPreferences: { itemsPerPage: "P25" },
+      });
       const context = createContext("user-123");
       const response = await PATCH(request, context);
       const data = await response.json();
@@ -458,7 +474,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.data.userPreferences.notificationMode).toBe("IN_APP_EMAIL_IMMEDIATE");
+      expect(data.data.userPreferences.notificationMode).toBe(
+        "IN_APP_EMAIL_IMMEDIATE"
+      );
     });
 
     it("updates date and time format preferences", async () => {
@@ -566,7 +584,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 400 for invalid theme", async () => {
-      const request = createRequest({ userPreferences: { theme: "InvalidTheme" } });
+      const request = createRequest({
+        userPreferences: { theme: "InvalidTheme" },
+      });
       const context = createContext("user-123");
       const response = await PATCH(request, context);
       const data = await response.json();
@@ -576,7 +596,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 400 for invalid locale", async () => {
-      const request = createRequest({ userPreferences: { locale: "invalid_locale" } });
+      const request = createRequest({
+        userPreferences: { locale: "invalid_locale" },
+      });
       const context = createContext("user-123");
       const response = await PATCH(request, context);
       const data = await response.json();
@@ -586,7 +608,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 400 for invalid itemsPerPage", async () => {
-      const request = createRequest({ userPreferences: { itemsPerPage: "P999" } });
+      const request = createRequest({
+        userPreferences: { itemsPerPage: "P999" },
+      });
       const context = createContext("user-123");
       const response = await PATCH(request, context);
       const data = await response.json();
@@ -656,7 +680,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 500 for database transaction failure", async () => {
-      (prisma.$transaction as any).mockRejectedValue(new Error("Database error"));
+      (prisma.$transaction as any).mockRejectedValue(
+        new Error("Database error")
+      );
 
       const request = createRequest({ name: "Updated Name" });
       const context = createContext("user-123");
@@ -668,7 +694,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 500 for unexpected errors", async () => {
-      (prisma.$transaction as any).mockRejectedValue(new Error("Unexpected error"));
+      (prisma.$transaction as any).mockRejectedValue(
+        new Error("Unexpected error")
+      );
 
       const request = createRequest({ name: "Updated Name" });
       const context = createContext("user-123");

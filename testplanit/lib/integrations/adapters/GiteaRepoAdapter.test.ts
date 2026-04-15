@@ -25,7 +25,8 @@ function makeResponse(
     statusText: status === 200 ? "OK" : "Error",
     headers: new Headers(headers),
     json: () => Promise.resolve(data),
-    text: () => Promise.resolve(typeof data === "string" ? data : JSON.stringify(data)),
+    text: () =>
+      Promise.resolve(typeof data === "string" ? data : JSON.stringify(data)),
     url: "https://gitea.example.com",
   };
 }
@@ -61,18 +62,15 @@ describe("GiteaRepoAdapter", () => {
     });
 
     it("throws with null settings since baseUrl is required", () => {
-      expect(() => new GiteaRepoAdapter(
-        { personalAccessToken: "tok" },
-        null
-      )).toThrow();
+      expect(
+        () => new GiteaRepoAdapter({ personalAccessToken: "tok" }, null)
+      ).toThrow();
     });
   });
 
   describe("getDefaultBranch", () => {
     it("returns the default branch from Gitea API", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       const branch = await adapter.getDefaultBranch();
 
@@ -93,7 +91,10 @@ describe("GiteaRepoAdapter", () => {
       // First call: get branch info
       mockFetch.mockResolvedValueOnce(
         makeResponse({
-          commit: { commit: { tree: { sha: "tree-sha-abc" } }, sha: "commit-sha" },
+          commit: {
+            commit: { tree: { sha: "tree-sha-abc" } },
+            sha: "commit-sha",
+          },
         })
       );
       // Second call: get tree
@@ -180,9 +181,7 @@ describe("GiteaRepoAdapter", () => {
     });
 
     it("throws when branch cannot be resolved to a tree SHA", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ commit: {} })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ commit: {} }));
 
       await expect(adapter.listAllFiles("main")).rejects.toThrow(
         "Could not resolve branch to a tree SHA"
@@ -192,7 +191,11 @@ describe("GiteaRepoAdapter", () => {
     it("encodes owner and repo in URL", async () => {
       const a = new GiteaRepoAdapter(
         { personalAccessToken: "tok" },
-        { baseUrl: "https://gitea.example.com", owner: "my org", repo: "my repo" }
+        {
+          baseUrl: "https://gitea.example.com",
+          owner: "my org",
+          repo: "my repo",
+        }
       );
       (a as any).rateLimitDelay = 0;
 
@@ -201,9 +204,7 @@ describe("GiteaRepoAdapter", () => {
           commit: { commit: { tree: { sha: "abc" } } },
         })
       );
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ tree: [] })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ tree: [] }));
 
       await a.listAllFiles("main");
 
@@ -216,9 +217,7 @@ describe("GiteaRepoAdapter", () => {
 
   describe("getFileContent", () => {
     it("fetches raw file content from Gitea API", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse("console.log('hello')")
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse("console.log('hello')"));
 
       const result = await adapter.getFileContent("src/index.ts", "main");
       expect(result).toBe("console.log('hello')");
@@ -262,9 +261,7 @@ describe("GiteaRepoAdapter", () => {
 
   describe("authentication", () => {
     it("sends token in Authorization header", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeResponse({ default_branch: "main" })
-      );
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       await adapter.testConnection();
 

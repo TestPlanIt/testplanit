@@ -67,14 +67,20 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
-vi.mock("~/app/[locale]/projects/repository/[projectId]/EditResultModal", () => ({
-  EditResultModal: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div data-testid="edit-result-modal">Edit Modal</div> : null,
-}));
+vi.mock(
+  "~/app/[locale]/projects/repository/[projectId]/EditResultModal",
+  () => ({
+    EditResultModal: ({ isOpen }: { isOpen: boolean }) =>
+      isOpen ? <div data-testid="edit-result-modal">Edit Modal</div> : null,
+  })
+);
 
-vi.mock("~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer", () => ({
-  default: () => <div data-testid="field-value-renderer" />,
-}));
+vi.mock(
+  "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer",
+  () => ({
+    default: () => <div data-testid="field-value-renderer" />,
+  })
+);
 
 vi.mock("@/components/AttachmentsCarousel", () => ({
   AttachmentsCarousel: () => <div data-testid="attachments-carousel" />,

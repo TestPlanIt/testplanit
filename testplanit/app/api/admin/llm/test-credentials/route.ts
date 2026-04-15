@@ -1,7 +1,10 @@
 import {
   AnthropicAdapter,
-  AzureOpenAIAdapter, CustomLlmAdapter, GeminiAdapter,
-  OllamaAdapter, OpenAIAdapter
+  AzureOpenAIAdapter,
+  CustomLlmAdapter,
+  GeminiAdapter,
+  OllamaAdapter,
+  OpenAIAdapter,
 } from "@/lib/llm/adapters";
 import type { LlmAdapterConfig } from "@/lib/llm/types";
 import { Prisma } from "@prisma/client";

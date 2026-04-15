@@ -69,13 +69,19 @@ test.describe("Admin Workflow Management", () => {
 
       // Select workflow type — find and click the workflow type combobox
       // workflowType combobox shows "Select workflow type" placeholder
-      const typeCombobox = page.getByRole("combobox").filter({ hasText: /select workflow type/i });
-      const typeComboboxVisible = await typeCombobox.isVisible().catch(() => false);
+      const typeCombobox = page
+        .getByRole("combobox")
+        .filter({ hasText: /select workflow type/i });
+      const typeComboboxVisible = await typeCombobox
+        .isVisible()
+        .catch(() => false);
       if (typeComboboxVisible) {
         await typeCombobox.click();
         await page.waitForTimeout(500);
         // Options: "Not Started", "In Progress", "Done"
-        const notStartedOption = page.getByRole("option", { name: /not.?started/i }).first();
+        const notStartedOption = page
+          .getByRole("option", { name: /not.?started/i })
+          .first();
         await notStartedOption.click();
         await page.waitForTimeout(300);
       } else {
@@ -151,7 +157,10 @@ test.describe("Admin Workflow Management", () => {
         `${baseURL}/api/model/fieldIcon/findFirst`,
         {
           params: {
-            q: JSON.stringify({ where: { name: "layout-list" }, select: { id: true } }),
+            q: JSON.stringify({
+              where: { name: "layout-list" },
+              select: { id: true },
+            }),
           },
         }
       );
@@ -269,7 +278,10 @@ test.describe("Admin Workflow Management", () => {
         `${baseURL}/api/model/fieldIcon/findFirst`,
         {
           params: {
-            q: JSON.stringify({ where: { name: "layout-list" }, select: { id: true } }),
+            q: JSON.stringify({
+              where: { name: "layout-list" },
+              select: { id: true },
+            }),
           },
         }
       );
@@ -399,7 +411,10 @@ test.describe("Admin Workflow Management", () => {
       `${baseURL}/api/model/fieldIcon/findFirst`,
       {
         params: {
-          q: JSON.stringify({ where: { name: "layout-list" }, select: { id: true } }),
+          q: JSON.stringify({
+            where: { name: "layout-list" },
+            select: { id: true },
+          }),
         },
       }
     );

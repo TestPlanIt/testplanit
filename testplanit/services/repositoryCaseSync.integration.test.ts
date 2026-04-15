@@ -12,11 +12,11 @@ describe("repositoryCaseSync Integration Tests", () => {
             content: [
               {
                 type: "text",
-                text: "Click the login button"
-              }
-            ]
-          }
-        ]
+                text: "Click the login button",
+              },
+            ],
+          },
+        ],
       };
 
       // Expected extracted text
@@ -35,24 +35,24 @@ describe("repositoryCaseSync Integration Tests", () => {
       const testCases = [
         {
           input: { value: "simple string", type: "text" },
-          expected: "simple string"
+          expected: "simple string",
         },
         {
           input: { value: 42, type: "number" },
-          expected: "42"
+          expected: "42",
         },
         {
           input: { value: [1, 2, 3], type: "multi-select" },
-          expected: "[1,2,3]"
+          expected: "[1,2,3]",
         },
         {
           input: { value: { key: "value" }, type: "object" },
-          expected: '{"key":"value"}'
+          expected: '{"key":"value"}',
         },
         {
           input: { value: {}, type: "empty-object" },
-          expected: "{}"
-        }
+          expected: "{}",
+        },
       ];
 
       testCases.forEach(({ input: _input, expected }) => {
@@ -74,15 +74,15 @@ describe("repositoryCaseSync Integration Tests", () => {
             id: 101,
             order: 0,
             step: "Enter username",
-            expectedResult: "Username field accepts input"
+            expectedResult: "Username field accepts input",
           },
           {
             id: 102,
             order: 1,
             step: "Enter password",
-            expectedResult: "Password field accepts input"
-          }
-        ]
+            expectedResult: "Password field accepts input",
+          },
+        ],
       };
 
       // When a test case references this shared step group,

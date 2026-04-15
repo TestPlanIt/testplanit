@@ -5,11 +5,19 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Calendar, CalendarClock, CheckCircle2, Clock, HelpCircle, ListChecks, Loader2, MessageSquare, User
+  Calendar,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  HelpCircle,
+  ListChecks,
+  Loader2,
+  MessageSquare,
+  User,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -60,7 +68,9 @@ export function TestRunCasesSummary({
     queryFn: async () => {
       if (!isMultiConfig) {
         // Single test run - use existing endpoint with case details for color bar
-        const response = await fetch(`/api/test-runs/${testRunId}/summary?includeCaseDetails=true`);
+        const response = await fetch(
+          `/api/test-runs/${testRunId}/summary?includeCaseDetails=true`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch test run summary");
         }
@@ -70,7 +80,9 @@ export function TestRunCasesSummary({
       // Multi-config - fetch all and aggregate
       const summaries = await Promise.all(
         effectiveTestRunIds.map(async (id) => {
-          const response = await fetch(`/api/test-runs/${id}/summary?includeCaseDetails=true`);
+          const response = await fetch(
+            `/api/test-runs/${id}/summary?includeCaseDetails=true`
+          );
           if (!response.ok) {
             throw new Error(`Failed to fetch test run summary for ${id}`);
           }

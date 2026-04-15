@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from "@prisma/client";
 
 /**
  * Service for managing Testmo import staging data in the database.
@@ -37,16 +37,16 @@ export class TestmoStagingService {
     let text4: string | null = null;
 
     if (
-      datasetName === 'automation_run_test_fields' &&
+      datasetName === "automation_run_test_fields" &&
       rowData &&
-      typeof rowData === 'object' &&
+      typeof rowData === "object" &&
       !Array.isArray(rowData)
     ) {
       const clone = { ...(rowData as Record<string, unknown>) };
       const rawValue = (clone as { value?: unknown }).value;
 
       if (rawValue !== undefined) {
-        if (typeof rawValue === 'string') {
+        if (typeof rawValue === "string") {
           fieldValue = rawValue;
         } else if (rawValue !== null) {
           try {
@@ -59,16 +59,16 @@ export class TestmoStagingService {
       }
 
       const rawName = (rowData as { name?: unknown }).name;
-      if (typeof rawName === 'string') {
+      if (typeof rawName === "string") {
         fieldName = rawName;
       }
 
       sanitizedData = clone as Prisma.InputJsonValue;
     }
     if (
-      datasetName === 'run_result_steps' &&
+      datasetName === "run_result_steps" &&
       rowData &&
-      typeof rowData === 'object' &&
+      typeof rowData === "object" &&
       !Array.isArray(rowData)
     ) {
       const clone = { ...(rowData as Record<string, unknown>) };
@@ -82,7 +82,7 @@ export class TestmoStagingService {
         if (raw === null) {
           return null;
         }
-        if (typeof raw === 'string') {
+        if (typeof raw === "string") {
           return raw;
         }
         try {
@@ -92,10 +92,10 @@ export class TestmoStagingService {
         }
       };
 
-      text1 = extractText('text1');
-      text2 = extractText('text2');
-      text3 = extractText('text3');
-      text4 = extractText('text4');
+      text1 = extractText("text1");
+      text2 = extractText("text2");
+      text3 = extractText("text3");
+      text4 = extractText("text4");
 
       sanitizedData = clone as Prisma.InputJsonValue;
     }
@@ -154,7 +154,7 @@ export class TestmoStagingService {
     entityType: string,
     sourceId: number,
     targetId: string | null,
-    targetType: 'map' | 'create',
+    targetType: "map" | "create",
     metadata?: any
   ) {
     return this.prisma.testmoImportMapping.upsert({
@@ -190,13 +190,13 @@ export class TestmoStagingService {
       entityType: string;
       sourceId: number;
       targetId: string | null;
-      targetType: 'map' | 'create';
+      targetType: "map" | "create";
       metadata?: any;
     }>
   ) {
     if (mappings.length === 0) return { count: 0 };
 
-    const operations = mappings.map(mapping =>
+    const operations = mappings.map((mapping) =>
       this.prisma.testmoImportMapping.upsert({
         where: {
           jobId_entityType_sourceId: {
@@ -288,7 +288,7 @@ export class TestmoStagingService {
         },
         take: batchSize,
         cursor: cursor ? { id: cursor } : undefined,
-        orderBy: { rowIndex: 'asc' }, // Maintain original order
+        orderBy: { rowIndex: "asc" }, // Maintain original order
       });
 
       if (batch.length === 0) break;
@@ -296,7 +296,7 @@ export class TestmoStagingService {
       try {
         // Process the batch and get successfully processed IDs
         const processedIds = await processor(
-          batch.map(b => ({
+          batch.map((b) => ({
             id: b.id,
             rowIndex: b.rowIndex,
             rowData: b.rowData as T,
@@ -320,27 +320,27 @@ export class TestmoStagingService {
 
         // Mark failed rows (those not in processedIds)
         const failedIds = batch
-          .filter(b => !processedIds.includes(b.id))
-          .map(b => b.id);
+          .filter((b) => !processedIds.includes(b.id))
+          .map((b) => b.id);
 
         if (failedIds.length > 0) {
           await this.prisma.testmoImportStaging.updateMany({
             where: { id: { in: failedIds } },
             data: {
               processed: true,
-              error: 'Processing failed',
+              error: "Processing failed",
             },
           });
           errorCount += failedIds.length;
         }
       } catch (error) {
         // If the entire batch fails, mark all as failed
-        const ids = batch.map(b => b.id);
+        const ids = batch.map((b) => b.id);
         await this.prisma.testmoImportStaging.updateMany({
           where: { id: { in: ids } },
           data: {
             processed: true,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: error instanceof Error ? error.message : "Unknown error",
           },
         });
         errorCount += batch.length;
@@ -350,7 +350,7 @@ export class TestmoStagingService {
       cursor = batch[batch.length - 1].id;
 
       // Allow garbage collection between batches
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
     }
 
     return { processedCount, errorCount };
@@ -405,7 +405,8 @@ export class TestmoStagingService {
       processed,
       errors,
       pending: total - processed - errors,
-      percentComplete: total > 0 ? Math.round(((processed + errors) / total) * 100) : 0,
+      percentComplete:
+        total > 0 ? Math.round(((processed + errors) / total) * 100) : 0,
     };
   }
 
@@ -421,7 +422,7 @@ export class TestmoStagingService {
         error: { not: null },
       },
       take: limit,
-      orderBy: { rowIndex: 'asc' },
+      orderBy: { rowIndex: "asc" },
       select: {
         id: true,
         rowIndex: true,
@@ -502,9 +503,9 @@ export class TestmoStagingService {
   async getDatasetNames(jobId: string): Promise<string[]> {
     const results = await this.prisma.testmoImportStaging.findMany({
       where: { jobId },
-      distinct: ['datasetName'],
+      distinct: ["datasetName"],
       select: { datasetName: true },
     });
-    return results.map(r => r.datasetName);
+    return results.map((r) => r.datasetName);
   }
 }

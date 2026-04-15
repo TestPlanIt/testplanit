@@ -6,7 +6,7 @@ import { formatSeconds } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import {
   FolderSelect,
-  transformFolders
+  transformFolders,
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { Loading } from "@/components/Loading";
@@ -20,23 +20,27 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
-  FormControl, FormField,
+  FormControl,
+  FormField,
   FormItem,
-  FormLabel, FormMessage
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import {
-  Select, SelectContent,
+  Select,
+  SelectContent,
   SelectGroup,
-  SelectItem, SelectTrigger,
-  SelectValue
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,14 +48,22 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
 import {
-  AlertCircle, ArrowLeft, Asterisk, ChevronLeft,
-  CircleSlash2, LockIcon, Save, ScrollText, SquarePen, Trash2
+  AlertCircle,
+  ArrowLeft,
+  Asterisk,
+  ChevronLeft,
+  CircleSlash2,
+  LockIcon,
+  Save,
+  ScrollText,
+  SquarePen,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -65,8 +77,25 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
-  useCreateAttachments, useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateSteps, useFindFirstProjects, useFindManyJUnitAttachment,
-  useFindManyJUnitProperty, useFindManyJUnitTestStep, useFindManyRepositoryCaseVersions, useFindManyRepositoryFolders, useFindManySharedStepGroup, useFindManyTags, useFindManyTemplates, useFindManyWorkflows, useFindUniqueProjects, useUpdateAttachments, useUpdateCaseFieldValues, useUpdateManySteps, useUpdateRepositoryCases
+  useCreateAttachments,
+  useCreateCaseFieldValues,
+  useCreateCaseFieldVersionValues,
+  useCreateSteps,
+  useFindFirstProjects,
+  useFindManyJUnitAttachment,
+  useFindManyJUnitProperty,
+  useFindManyJUnitTestStep,
+  useFindManyRepositoryCaseVersions,
+  useFindManyRepositoryFolders,
+  useFindManySharedStepGroup,
+  useFindManyTags,
+  useFindManyTemplates,
+  useFindManyWorkflows,
+  useFindUniqueProjects,
+  useUpdateAttachments,
+  useUpdateCaseFieldValues,
+  useUpdateManySteps,
+  useUpdateRepositoryCases,
 } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
@@ -263,7 +292,10 @@ const createFormSchema = (fields: any[]) => {
     (schema, field) => {
       const fieldName = field.caseField.id.toString();
       // Skip Date fields entirely - we'll handle them manually without validation
-      if (field.caseField.displayName !== "Steps" && field.caseField.type.type !== "Date") {
+      if (
+        field.caseField.displayName !== "Steps" &&
+        field.caseField.type.type !== "Date"
+      ) {
         schema[fieldName] = mapFieldToZodType(field);
       }
       return schema;
@@ -305,19 +337,16 @@ export default function TestCaseDetails() {
   const canAddEdit = projectPermissions?.canAddEdit ?? false;
 
   // Fetch Tags permissions (ADDED)
-  const { permissions: tagsPermissions } =
-    useProjectPermissions(
-      isValidProjectId ? numericProjectId : -1,
-      ApplicationArea.Tags
-    );
+  const { permissions: tagsPermissions } = useProjectPermissions(
+    isValidProjectId ? numericProjectId : -1,
+    ApplicationArea.Tags
+  );
   const canAddEditTags = tagsPermissions?.canAddEdit ?? false;
   const isSuperAdmin = session?.user?.access === "ADMIN";
   const canAddEditTagsPerm = canAddEditTags || isSuperAdmin; // Correct variable name
 
   // Fetch Restricted Fields permission (NEW)
-  const {
-    permissions: restrictedFieldsPermissions,
-  } = useProjectPermissions(
+  const { permissions: restrictedFieldsPermissions } = useProjectPermissions(
     isValidProjectId ? numericProjectId : -1,
     ApplicationArea.TestCaseRestrictedFields
   );
@@ -752,7 +781,7 @@ export default function TestCaseDetails() {
   );
 
   const methods = useForm<any>({
-    mode: 'onSubmit',
+    mode: "onSubmit",
   });
 
   const {
@@ -914,26 +943,29 @@ export default function TestCaseDetails() {
     let hasErrors = false;
 
     // Validate required base fields
-    if (!data.name || (typeof data.name === 'string' && data.name.trim().length < 2)) {
-      methods.setError('name', {
-        type: 'manual',
-        message: 'Please enter a name for the Test Case',
+    if (
+      !data.name ||
+      (typeof data.name === "string" && data.name.trim().length < 2)
+    ) {
+      methods.setError("name", {
+        type: "manual",
+        message: "Please enter a name for the Test Case",
       });
       hasErrors = true;
     }
 
     if (!data.workflowId) {
-      methods.setError('workflowId', {
-        type: 'manual',
-        message: 'Please select a State',
+      methods.setError("workflowId", {
+        type: "manual",
+        message: "Please select a State",
       });
       hasErrors = true;
     }
 
     if (!data.folderId) {
-      methods.setError('folderId', {
-        type: 'manual',
-        message: 'Please select a Folder',
+      methods.setError("folderId", {
+        type: "manual",
+        message: "Please select a Folder",
       });
       hasErrors = true;
     }
@@ -942,17 +974,18 @@ export default function TestCaseDetails() {
     if (data.estimate) {
       const durationInMilliseconds = parseDuration(data.estimate);
       if (durationInMilliseconds === null) {
-        methods.setError('estimate', {
-          type: 'manual',
-          message: 'Invalid duration format. Try something like 30m, 1 week or 1h 25m',
+        methods.setError("estimate", {
+          type: "manual",
+          message:
+            "Invalid duration format. Try something like 30m, 1 week or 1h 25m",
         });
         hasErrors = true;
       } else {
         const durationInSeconds = Math.round(durationInMilliseconds / 1000);
         if (durationInSeconds > MAX_DURATION) {
-          methods.setError('estimate', {
-            type: 'manual',
-            message: 'Estimate is too large',
+          methods.setError("estimate", {
+            type: "manual",
+            message: "Estimate is too large",
           });
           hasErrors = true;
         }
@@ -960,7 +993,7 @@ export default function TestCaseDetails() {
     }
 
     // Validate custom fields
-    const template = templates?.find(t => t.id === selectedTemplateId);
+    const template = templates?.find((t) => t.id === selectedTemplateId);
     if (template) {
       for (const fieldMeta of template.caseFields) {
         const fieldIdStr = fieldMeta.caseField.id.toString();
@@ -973,15 +1006,18 @@ export default function TestCaseDetails() {
           if (fieldType === "Date") {
             if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
               methods.setError(fieldIdStr, {
-                type: 'manual',
+                type: "manual",
                 message: `${fieldMeta.caseField.displayName} is required`,
               });
               hasErrors = true;
             }
           } else if (fieldType === "Text String" || fieldType === "Link") {
-            if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+            if (
+              !value ||
+              (typeof value === "string" && value.trim().length === 0)
+            ) {
               methods.setError(fieldIdStr, {
-                type: 'manual',
+                type: "manual",
                 message: `${fieldMeta.caseField.displayName} is required`,
               });
               hasErrors = true;
@@ -989,15 +1025,19 @@ export default function TestCaseDetails() {
           } else if (fieldType === "Multi-Select") {
             if (!Array.isArray(value) || value.length === 0) {
               methods.setError(fieldIdStr, {
-                type: 'manual',
+                type: "manual",
                 message: `${fieldMeta.caseField.displayName} is required`,
               });
               hasErrors = true;
             }
-          } else if (fieldType === "Dropdown" || fieldType === "Integer" || fieldType === "Number") {
-            if (value === null || value === undefined || value === '') {
+          } else if (
+            fieldType === "Dropdown" ||
+            fieldType === "Integer" ||
+            fieldType === "Number"
+          ) {
+            if (value === null || value === undefined || value === "") {
               methods.setError(fieldIdStr, {
-                type: 'manual',
+                type: "manual",
                 message: `${fieldMeta.caseField.displayName} is required`,
               });
               hasErrors = true;
@@ -1014,7 +1054,7 @@ export default function TestCaseDetails() {
 
     // Transform null date values to undefined
     const cleanedData = { ...data };
-    Object.keys(cleanedData).forEach(key => {
+    Object.keys(cleanedData).forEach((key) => {
       if (cleanedData[key] === null) {
         cleanedData[key] = undefined;
       }
@@ -1324,7 +1364,11 @@ export default function TestCaseDetails() {
         .filter((id: any) => id != null)
         .filter((id: number) => !knownIssues.some((iss: any) => iss.id === id));
 
-      let fetchedNewIssues: { id: number; name: string; externalId: string | null }[] = [];
+      let fetchedNewIssues: {
+        id: number;
+        name: string;
+        externalId: string | null;
+      }[] = [];
       if (newIssueIds.length > 0) {
         try {
           const res = await fetch(
@@ -1348,7 +1392,9 @@ export default function TestCaseDetails() {
       const issuesDataForVersion = issuesArray
         .filter((id: any) => id != null)
         .map((issueId: number) => {
-          const issue = allAvailableIssues.find((iss: any) => iss.id === issueId);
+          const issue = allAvailableIssues.find(
+            (iss: any) => iss.id === issueId
+          );
           return issue
             ? { id: issue.id, name: issue.name, externalId: issue.externalId }
             : null;
@@ -1935,23 +1981,23 @@ export default function TestCaseDetails() {
           </CardHeader>
           {/* Template not assigned to project warning */}
           {testcase?.template &&
-            'projects' in testcase.template &&
-            testcase.template.projects &&
-            !(testcase.template.projects as Array<{ projectId: number }>).some(
-              (p) => p.projectId === Number(projectId)
-            ) ? (
-              <div className="px-6 pb-4">
-                <Alert className="border-warning/50 bg-warning/10">
-                  <AlertCircle className="h-4 w-4 text-warning" />
-                  <AlertDescription className="text-sm text-warning-foreground">
-                    {t("repository.templateNotAssignedWarning", {
-                      templateName: testcase.template?.templateName || "",
-                      projectName: testcase.project?.name || "",
-                    })}
-                  </AlertDescription>
-                </Alert>
-              </div>
-            ) : null}
+          "projects" in testcase.template &&
+          testcase.template.projects &&
+          !(testcase.template.projects as Array<{ projectId: number }>).some(
+            (p) => p.projectId === Number(projectId)
+          ) ? (
+            <div className="px-6 pb-4">
+              <Alert className="border-warning/50 bg-warning/10">
+                <AlertCircle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-sm text-warning-foreground">
+                  {t("repository.templateNotAssignedWarning", {
+                    templateName: testcase.template?.templateName || "",
+                    projectName: testcase.project?.name || "",
+                  })}
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : null}
           <CardContent>
             <ResizablePanelGroup
               direction="horizontal"
@@ -2065,7 +2111,8 @@ export default function TestCaseDetails() {
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-foreground">
                             {t("repository.orphanedStepsWarning", {
-                              templateName: testcase.template?.templateName || "",
+                              templateName:
+                                testcase.template?.templateName || "",
                             })}
                           </AlertDescription>
                         </Alert>
@@ -2084,11 +2131,15 @@ export default function TestCaseDetails() {
                   {/* Orphaned Custom Field Values - field values exist but not in current template */}
                   {(() => {
                     const templateFieldIds = new Set(
-                      testcase?.template?.caseFields?.map((f) => f.caseField.id) || []
+                      testcase?.template?.caseFields?.map(
+                        (f) => f.caseField.id
+                      ) || []
                     );
-                    const orphanedFieldValues = testcase?.caseFieldValues?.filter(
-                      (cfv: any) => !templateFieldIds.has(cfv.fieldId) && cfv.value
-                    ) || [];
+                    const orphanedFieldValues =
+                      testcase?.caseFieldValues?.filter(
+                        (cfv: any) =>
+                          !templateFieldIds.has(cfv.fieldId) && cfv.value
+                      ) || [];
 
                     if (orphanedFieldValues.length === 0) return null;
 
@@ -2099,39 +2150,48 @@ export default function TestCaseDetails() {
                           <AlertDescription className="text-sm text-warning-foreground">
                             {t("repository.orphanedFieldsWarning", {
                               count: orphanedFieldValues.length,
-                              templateName: testcase.template?.templateName || "",
+                              templateName:
+                                testcase.template?.templateName || "",
                             })}
                           </AlertDescription>
                         </Alert>
                         <ul>
-                          {orphanedFieldValues.map((cfv: any, index: number) => (
-                            <li key={`orphaned-field-${cfv.id}-${index}`} className="mb-2">
-                              <div className="font-bold flex items-center">
-                                {cfv.field?.displayName || "Unknown Field"}
-                              </div>
-                              <FieldValueRenderer
-                                fieldValue={cfv.value}
-                                fieldType={cfv.field?.type?.type || "Text String"}
-                                caseId={caseId?.toString() || ""}
-                                projectId={Number(projectIdParam)}
-                                template={{
-                                  caseFields: testcase?.template?.caseFields || [],
-                                }}
-                                fieldId={cfv.fieldId}
-                                fieldIsRestricted={false}
-                                session={session}
-                                isEditMode={false}
-                                isSubmitting={false}
-                                control={control}
-                                errors={errors}
-                                canEditRestricted={false}
-                              />
-                              <Separator
-                                orientation="horizontal"
-                                className="mt-2 bg-primary/30"
-                              />
-                            </li>
-                          ))}
+                          {orphanedFieldValues.map(
+                            (cfv: any, index: number) => (
+                              <li
+                                key={`orphaned-field-${cfv.id}-${index}`}
+                                className="mb-2"
+                              >
+                                <div className="font-bold flex items-center">
+                                  {cfv.field?.displayName || "Unknown Field"}
+                                </div>
+                                <FieldValueRenderer
+                                  fieldValue={cfv.value}
+                                  fieldType={
+                                    cfv.field?.type?.type || "Text String"
+                                  }
+                                  caseId={caseId?.toString() || ""}
+                                  projectId={Number(projectIdParam)}
+                                  template={{
+                                    caseFields:
+                                      testcase?.template?.caseFields || [],
+                                  }}
+                                  fieldId={cfv.fieldId}
+                                  fieldIsRestricted={false}
+                                  session={session}
+                                  isEditMode={false}
+                                  isSubmitting={false}
+                                  control={control}
+                                  errors={errors}
+                                  canEditRestricted={false}
+                                />
+                                <Separator
+                                  orientation="horizontal"
+                                  className="mt-2 bg-primary/30"
+                                />
+                              </li>
+                            )
+                          )}
                         </ul>
                       </div>
                     );

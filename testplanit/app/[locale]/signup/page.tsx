@@ -2,7 +2,7 @@
 
 import {
   generateEmailVerificationToken,
-  resendVerificationEmail
+  resendVerificationEmail,
 } from "@/components/EmailVerifications";
 import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
@@ -11,7 +11,8 @@ import { useEffect, useState } from "react";
 import { isEmailDomainAllowed } from "~/app/actions/auth";
 import { createUserRegistrationNotification } from "~/app/actions/notifications";
 import {
-  useFindFirstRegistrationSettings, useFindManySsoProvider
+  useFindFirstRegistrationSettings,
+  useFindManySsoProvider,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
@@ -21,7 +22,11 @@ import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -29,7 +34,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
@@ -170,7 +175,8 @@ const Signup: NextPage = () => {
     let newUser;
     try {
       // Check if email verification is required
-      const requireEmailVerification = registrationSettings?.requireEmailVerification ?? true;
+      const requireEmailVerification =
+        registrationSettings?.requireEmailVerification ?? true;
 
       // Use dedicated signup API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with unauthenticated nested creates)
@@ -181,7 +187,9 @@ const Signup: NextPage = () => {
           name: data.name,
           email: data.email,
           password: data.password,
-          emailVerifToken: requireEmailVerification ? await generateEmailVerificationToken() : undefined,
+          emailVerifToken: requireEmailVerification
+            ? await generateEmailVerificationToken()
+            : undefined,
           access: registrationSettings?.defaultAccess || "NONE",
         }),
       });
@@ -236,7 +244,9 @@ const Signup: NextPage = () => {
         // Extract the setup token from the error message
         const token = signInResult.error.replace("2FA_SETUP_REQUIRED:", "");
         // Redirect to 2FA setup page with the token
-        router.push(`/auth/two-factor-setup?token=${encodeURIComponent(token)}`);
+        router.push(
+          `/auth/two-factor-setup?token=${encodeURIComponent(token)}`
+        );
         return;
       }
 
@@ -350,7 +360,10 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.confirmPassword")}
-                        <HelpPopover helpKey="user.confirmPassword" tabIndex={8} />
+                        <HelpPopover
+                          helpKey="user.confirmPassword"
+                          tabIndex={8}
+                        />
                       </FormLabel>
                       <FormControl>
                         <Input {...field} type="password" tabIndex={4} />
@@ -359,7 +372,9 @@ const Signup: NextPage = () => {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" tabIndex={9}>{t("common.actions.signUp")}</Button>
+                <Button type="submit" tabIndex={9}>
+                  {t("common.actions.signUp")}
+                </Button>
                 {submissionError && (
                   <div className="text-destructive">{submissionError}</div>
                 )}

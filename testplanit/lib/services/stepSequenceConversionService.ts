@@ -40,7 +40,7 @@ export async function convertMatch(
   sharedStepGroupName: string,
   requestedCaseIds: number[],
   userId: string,
-  editedSteps?: Array<{ step: string | null; expectedResult: string | null }>,
+  editedSteps?: Array<{ step: string | null; expectedResult: string | null }>
 ): Promise<ConversionResult> {
   const result = await prisma.$transaction(
     async (tx) => {
@@ -61,14 +61,16 @@ export async function convertMatch(
       }
 
       // Filter to only cases whose caseId is in requestedCaseIds
-      const affectedCases = (match.members as Array<{
-        id: number;
-        matchId: number;
-        caseId: number;
-        startStepId: number;
-        endStepId: number;
-        isDeleted: boolean;
-      }>).filter((c) => requestedCaseIds.includes(c.caseId));
+      const affectedCases = (
+        match.members as Array<{
+          id: number;
+          matchId: number;
+          caseId: number;
+          startStepId: number;
+          endStepId: number;
+          isDeleted: boolean;
+        }>
+      ).filter((c) => requestedCaseIds.includes(c.caseId));
 
       if (affectedCases.length === 0) {
         throw new Error("No matching cases found for the requested case IDs");
@@ -114,7 +116,8 @@ export async function convertMatch(
 
       // If editedSteps is a full replacement set (user added/deleted steps),
       // use it directly. Otherwise merge per-index with canonical steps.
-      const isFullReplacement = editedSteps && editedSteps.every((s) => s.step !== null);
+      const isFullReplacement =
+        editedSteps && editedSteps.every((s) => s.step !== null);
 
       if (isFullReplacement) {
         // User-defined step set — ignore canonical steps entirely
@@ -124,32 +127,39 @@ export async function convertMatch(
             data: {
               sharedStepGroupId: newGroup.id,
               step: (edited.step ?? emptyEditorContent) as any,
-              expectedResult: (edited.expectedResult ?? emptyEditorContent) as any,
+              expectedResult: (edited.expectedResult ??
+                emptyEditorContent) as any,
               order: idx,
             },
           });
         }
       } else if (canonicalSteps.length >= 1) {
         // Merge edits with canonical steps
-        const startOrder = Math.min(...canonicalSteps.map((s: { order: number }) => s.order));
-        const endOrder = Math.max(...canonicalSteps.map((s: { order: number }) => s.order));
+        const startOrder = Math.min(
+          ...canonicalSteps.map((s: { order: number }) => s.order)
+        );
+        const endOrder = Math.max(
+          ...canonicalSteps.map((s: { order: number }) => s.order)
+        );
 
-        const canonicalMatchedSteps = canonicalSteps.length >= 2
-          ? await tx.steps.findMany({
-              where: {
-                testCaseId: canonicalCase.caseId,
-                order: { gte: startOrder, lte: endOrder },
-                isDeleted: false,
-              },
-              orderBy: { order: "asc" },
-            })
-          : canonicalSteps;
+        const canonicalMatchedSteps =
+          canonicalSteps.length >= 2
+            ? await tx.steps.findMany({
+                where: {
+                  testCaseId: canonicalCase.caseId,
+                  order: { gte: startOrder, lte: endOrder },
+                  isDeleted: false,
+                },
+                orderBy: { order: "asc" },
+              })
+            : canonicalSteps;
 
         for (let idx = 0; idx < canonicalMatchedSteps.length; idx++) {
           const step = canonicalMatchedSteps[idx];
           const edited = editedSteps?.[idx];
           const stepContent = edited?.step ?? step.step ?? emptyEditorContent;
-          const erContent = edited?.expectedResult ?? step.expectedResult ?? emptyEditorContent;
+          const erContent =
+            edited?.expectedResult ?? step.expectedResult ?? emptyEditorContent;
           await tx.sharedStepItem.create({
             data: {
               sharedStepGroupId: newGroup.id,
@@ -186,8 +196,12 @@ export async function convertMatch(
         }
 
         // b. Determine matched step range (by order)
-        const startOrder = Math.min(...boundarySteps.map((s: { order: number }) => s.order));
-        const endOrder = Math.max(...boundarySteps.map((s: { order: number }) => s.order));
+        const startOrder = Math.min(
+          ...boundarySteps.map((s: { order: number }) => s.order)
+        );
+        const endOrder = Math.max(
+          ...boundarySteps.map((s: { order: number }) => s.order)
+        );
 
         const matchedSteps = await tx.steps.findMany({
           where: {
@@ -263,8 +277,9 @@ export async function convertMatch(
       console.error("ES sync failed for case", caseId, err)
     );
   }
-  syncSharedStepToElasticsearch(result.sharedStepGroupId).catch((err: unknown) =>
-    console.error("ES sync failed for group", result.sharedStepGroupId, err)
+  syncSharedStepToElasticsearch(result.sharedStepGroupId).catch(
+    (err: unknown) =>
+      console.error("ES sync failed for group", result.sharedStepGroupId, err)
   );
 
   return result;

@@ -794,14 +794,20 @@ describe("useAutoTagJob", () => {
     });
 
     // Initially: 2 tags assigned, 1 new
-    expect(result.current.summary).toMatchObject({ assignCount: 2, newCount: 1 });
+    expect(result.current.summary).toMatchObject({
+      assignCount: 2,
+      newCount: 1,
+    });
 
     act(() => {
       result.current.setTagForAll("new-tag", false);
     });
 
     // After disabling: 1 tag assigned, 0 new
-    expect(result.current.summary).toMatchObject({ assignCount: 1, newCount: 0 });
+    expect(result.current.summary).toMatchObject({
+      assignCount: 1,
+      newCount: 0,
+    });
   });
 
   // ── Cleanup on unmount ──────────────────────────────────────────────────

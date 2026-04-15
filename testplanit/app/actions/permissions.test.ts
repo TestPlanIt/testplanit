@@ -1,9 +1,7 @@
 import { ApplicationArea, ProjectAccessType } from "@prisma/client";
 import type { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  checkUserPermission, getUserProjectPermissions
-} from "./permissions";
+import { checkUserPermission, getUserProjectPermissions } from "./permissions";
 
 // Mock prisma
 vi.mock("~/lib/prisma", () => ({
@@ -107,7 +105,11 @@ describe("Permissions", () => {
       mockPrisma.projects.findUnique.mockResolvedValue(null);
       mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
 
-      const result = await getUserProjectPermissions("user-123", 999, mockSession);
+      const result = await getUserProjectPermissions(
+        "user-123",
+        999,
+        mockSession
+      );
 
       expect(result.hasAccess).toBe(false);
       expect(result.effectiveRole).toBeNull();
@@ -323,7 +325,9 @@ describe("Permissions", () => {
       );
 
       expect(result.hasAccess).toBe(true);
-      expect(result.permissions).toHaveProperty(ApplicationArea.TestCaseRepository);
+      expect(result.permissions).toHaveProperty(
+        ApplicationArea.TestCaseRepository
+      );
       expect(result.permissions).toHaveProperty(ApplicationArea.TestRuns);
     });
 

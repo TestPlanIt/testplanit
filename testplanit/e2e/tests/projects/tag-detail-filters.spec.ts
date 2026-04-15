@@ -76,21 +76,17 @@ test.describe("Tag Detail Page Filters", () => {
   });
 
   test("should display filter bar with all controls", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/tags/${projectId}/${tagId}`
-    );
+    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
     await page.waitForLoadState("load");
 
     // Filter bar should be visible
-    await expect(
-      page.getByTestId("case-type-filter-select")
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("case-type-filter-select")).toBeVisible({
+      timeout: 10000,
+    });
     await expect(
       page.getByTestId("hide-completed-sessions-switch")
     ).toBeVisible();
-    await expect(
-      page.getByTestId("hide-completed-runs-switch")
-    ).toBeVisible();
+    await expect(page.getByTestId("hide-completed-runs-switch")).toBeVisible();
   });
 
   test("should filter test cases by type", async ({ page }) => {
@@ -106,9 +102,7 @@ test.describe("Tag Detail Page Filters", () => {
     );
     expect(response.ok()).toBeTruthy();
 
-    await page.goto(
-      `/en-US/projects/tags/${projectId}/${tagId}`
-    );
+    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
     await page.waitForLoadState("load");
 
     // Should show both cases by default (tab count = 2)
@@ -137,9 +131,7 @@ test.describe("Tag Detail Page Filters", () => {
   });
 
   test("should hide completed sessions", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/tags/${projectId}/${tagId}`
-    );
+    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
     await page.waitForLoadState("load");
 
     // Click sessions tab
@@ -159,9 +151,7 @@ test.describe("Tag Detail Page Filters", () => {
   });
 
   test("should hide completed test runs", async ({ page }) => {
-    await page.goto(
-      `/en-US/projects/tags/${projectId}/${tagId}`
-    );
+    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
     await page.waitForLoadState("load");
 
     // Check test runs tab
@@ -183,15 +173,13 @@ test.describe("Tag Detail Page Filters", () => {
   test("should show active filter count and allow clearing", async ({
     page,
   }) => {
-    await page.goto(
-      `/en-US/projects/tags/${projectId}/${tagId}`
-    );
+    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
     await page.waitForLoadState("load");
 
     // No clear button initially
-    await expect(
-      page.getByTestId("clear-all-filters")
-    ).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("clear-all-filters")).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Enable a filter
     await page.getByTestId("hide-completed-sessions-switch").click();
@@ -209,9 +197,7 @@ test.describe("Tag Detail Page Filters", () => {
     await clearButton.click();
 
     // Filters should be reset
-    await expect(
-      page.getByTestId("clear-all-filters")
-    ).not.toBeVisible();
+    await expect(page.getByTestId("clear-all-filters")).not.toBeVisible();
 
     // Counts should be back to full
     const sessionsTab = page.getByRole("tab", { name: /Sessions/ });
@@ -233,9 +219,7 @@ test.describe("Tag Detail Page Filters", () => {
     );
     await api.addTagToSession(completedSessionId, emptyTagId);
 
-    await page.goto(
-      `/en-US/projects/tags/${projectId}/${emptyTagId}`
-    );
+    await page.goto(`/en-US/projects/tags/${projectId}/${emptyTagId}`);
     await page.waitForLoadState("load");
 
     // Click sessions tab

@@ -124,7 +124,8 @@ function toCaseContext(row: any): ExistingTestCaseContext {
 
 /** Rough token estimate for a single context case. */
 function estimateCaseTokens(c: ExistingTestCaseContext): number {
-  let chars = c.name.length + (c.template?.length ?? 0) + (c.description?.length ?? 0);
+  let chars =
+    c.name.length + (c.template?.length ?? 0) + (c.description?.length ?? 0);
   if (c.steps) {
     for (const s of c.steps) {
       chars += s.step.length + s.expectedResult.length;
@@ -145,7 +146,7 @@ export async function fetchHierarchyContext(
   prisma: any,
   projectId: number,
   folderId: number,
-  tokenBudget: number,
+  tokenBudget: number
 ): Promise<ExistingTestCaseContext[]> {
   // Shared select shape for case queries
   const caseSelect = {
@@ -154,7 +155,9 @@ export async function fetchHierarchyContext(
     caseFieldValues: {
       select: {
         value: true,
-        field: { select: { displayName: true, type: { select: { type: true } } } },
+        field: {
+          select: { displayName: true, type: { select: { type: true } } },
+        },
       },
     },
     steps: {
@@ -208,9 +211,9 @@ export async function fetchHierarchyContext(
   // 4. Fetch cases in priority order. We batch into one query per group
   //    to avoid N+1, then concatenate in priority order.
   const groups: number[][] = [
-    [folderId],              // highest priority
-    ancestorIds,             // next
-    descendantIds,           // lowest
+    [folderId], // highest priority
+    ancestorIds, // next
+    descendantIds, // lowest
   ];
 
   const results: ExistingTestCaseContext[] = [];
@@ -228,8 +231,9 @@ export async function fetchHierarchyContext(
     // For ancestors, sort nearest-first (match ancestorIds order)
     if (folderIds === ancestorIds && ancestorIds.length > 1) {
       const orderMap = new Map(ancestorIds.map((id, i) => [id, i]));
-      rows.sort((a: any, b: any) =>
-        (orderMap.get(a.folderId) ?? 999) - (orderMap.get(b.folderId) ?? 999)
+      rows.sort(
+        (a: any, b: any) =>
+          (orderMap.get(a.folderId) ?? 999) - (orderMap.get(b.folderId) ?? 999)
       );
     }
 
@@ -320,8 +324,14 @@ export function buildSystemPrompt(
               break;
             case "steps":
               exampleValue = [
-                { "step": "Specific action to perform", "expectedResult": "Expected outcome" },
-                { "step": "Another action to verify", "expectedResult": "Another expected outcome" },
+                {
+                  step: "Specific action to perform",
+                  expectedResult: "Expected outcome",
+                },
+                {
+                  step: "Another action to verify",
+                  expectedResult: "Another expected outcome",
+                },
               ];
               break;
             default:
@@ -558,7 +568,7 @@ export function parseAndValidateTestCases(
   template: TemplateData,
   issue: IssueData,
   autoGenerateTags?: boolean,
-  quantity?: string,
+  quantity?: string
 ): {
   testCases: GeneratedTestCase[];
   parseError?: {
@@ -607,14 +617,9 @@ export function parseAndValidateTestCases(
               0,
               lastQuoteIndex + 1
             );
-            const afterLastQuote = incompleteJson.substring(
-              lastQuoteIndex + 1
-            );
+            const afterLastQuote = incompleteJson.substring(lastQuoteIndex + 1);
 
-            if (
-              afterLastQuote.trim() &&
-              !afterLastQuote.trim().endsWith('"')
-            ) {
+            if (afterLastQuote.trim() && !afterLastQuote.trim().endsWith('"')) {
               incompleteJson =
                 beforeLastQuote + afterLastQuote.split(/[,}\]]/)[0] + '"';
             }
@@ -655,8 +660,7 @@ export function parseAndValidateTestCases(
                 name: `Test case for ${issue.title.substring(0, 50)}`,
                 fieldValues: template.fields.reduce(
                   (acc, field) => {
-                    acc[field.name] =
-                      field.options?.[0] || "To be determined";
+                    acc[field.name] = field.options?.[0] || "To be determined";
                     return acc;
                   },
                   {} as Record<string, string>
@@ -783,8 +787,7 @@ export function parseAndValidateTestCases(
                 option.toLowerCase().includes(lowerValue) ||
                 lowerValue.includes(option.toLowerCase())
             );
-            validatedFieldValues[field.name] =
-              mappedOption || field.options[0];
+            validatedFieldValues[field.name] = mappedOption || field.options[0];
           }
         }
       });
@@ -793,7 +796,8 @@ export function parseAndValidateTestCases(
       // move them into fieldValues for any Steps-type field
       if (Array.isArray(tc.steps) && tc.steps.length > 0) {
         const stepsFieldDef = template.fields.find(
-          (f) => f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
+          (f) =>
+            f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
         );
         if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
           validatedFieldValues[stepsFieldDef.name] = tc.steps;
@@ -803,8 +807,8 @@ export function parseAndValidateTestCases(
       // If the LLM put priority at the top level instead of in fieldValues,
       // move it into fieldValues for any priority-like field
       if (tc.priority && typeof tc.priority === "string") {
-        const priorityFieldDef = template.fields.find(
-          (f) => f.name.toLowerCase().includes("priority")
+        const priorityFieldDef = template.fields.find((f) =>
+          f.name.toLowerCase().includes("priority")
         );
         if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
           validatedFieldValues[priorityFieldDef.name] = tc.priority;
@@ -817,9 +821,7 @@ export function parseAndValidateTestCases(
         fieldValues: validatedFieldValues,
         tags: Array.isArray(tc.tags)
           ? tc.tags
-              .filter(
-                (tag) => typeof tag === "string" && tag.trim().length > 0
-              )
+              .filter((tag) => typeof tag === "string" && tag.trim().length > 0)
               .map((tag) => tag.trim())
           : [],
       };
@@ -852,7 +854,15 @@ function extractRawTestCaseStrings(text: string): string[] {
 
   while (i < len) {
     // Skip whitespace and commas between objects
-    while (i < len && (text[i] === " " || text[i] === "\n" || text[i] === "\r" || text[i] === "\t" || text[i] === ",")) i++;
+    while (
+      i < len &&
+      (text[i] === " " ||
+        text[i] === "\n" ||
+        text[i] === "\r" ||
+        text[i] === "\t" ||
+        text[i] === ",")
+    )
+      i++;
     if (i >= len || text[i] !== "{") break;
 
     // Track brace depth to find the matching closing brace
@@ -911,7 +921,7 @@ function extractRawTestCaseStrings(text: string): string[] {
 export function validateTestCase(
   tc: GeneratedTestCase,
   index: number,
-  template: TemplateData,
+  template: TemplateData
 ): GeneratedTestCase {
   const validatedFieldValues = { ...tc.fieldValues };
   template.fields.forEach((field) => {
@@ -940,7 +950,8 @@ export function validateTestCase(
   // If the LLM put steps at the top level, move into fieldValues
   if (Array.isArray(tc.steps) && tc.steps.length > 0) {
     const stepsFieldDef = template.fields.find(
-      (f) => f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
+      (f) =>
+        f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
     );
     if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
       validatedFieldValues[stepsFieldDef.name] = tc.steps;
@@ -949,8 +960,8 @@ export function validateTestCase(
 
   // If the LLM put priority at the top level, move into fieldValues
   if (tc.priority && typeof tc.priority === "string") {
-    const priorityFieldDef = template.fields.find(
-      (f) => f.name.toLowerCase().includes("priority")
+    const priorityFieldDef = template.fields.find((f) =>
+      f.name.toLowerCase().includes("priority")
     );
     if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
       validatedFieldValues[priorityFieldDef.name] = tc.priority;
@@ -980,7 +991,7 @@ export function validateTestCase(
 export function extractStreamedTestCases(
   accumulated: string,
   template: TemplateData,
-  alreadyYielded: number,
+  alreadyYielded: number
 ): GeneratedTestCase[] {
   const rawStrings = extractRawTestCaseStrings(accumulated);
 

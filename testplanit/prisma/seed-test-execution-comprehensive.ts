@@ -161,7 +161,12 @@ export async function seedComprehensiveTestExecutionData() {
           repositoryId: repository.id,
           templateId: 1, // Assuming default template ID
           creatorId: i % 2 === 0 ? adminUser.id : regularUser.id,
-          stateId: i === 0 ? defaultState.id : i === 1 ? inProgressState.id : doneState.id,
+          stateId:
+            i === 0
+              ? defaultState.id
+              : i === 1
+                ? inProgressState.id
+                : doneState.id,
         },
       })
     ),
@@ -223,12 +228,15 @@ export async function seedComprehensiveTestExecutionData() {
         testRuns.push(testRun);
 
         // Add test cases to this run (select a subset)
-        const casesToAdd = testCases.slice((runIndex - 1) * 3, runIndex * 3 + 2);
-        
+        const casesToAdd = testCases.slice(
+          (runIndex - 1) * 3,
+          runIndex * 3 + 2
+        );
+
         for (let i = 0; i < casesToAdd.length; i++) {
           const testCase = casesToAdd[i];
           const assignedUser = i % 2 === 0 ? adminUser : regularUser;
-          
+
           const testRunCase = await prisma.testRunCases.create({
             data: {
               testRunId: testRun.id,
@@ -251,16 +259,18 @@ export async function seedComprehensiveTestExecutionData() {
 
           // Create results with different dates and users
           const baseDate = new Date("2025-06-01");
-          
+
           for (let j = 0; j < 3; j++) {
             const status = statusesToUse[j % statusesToUse.length];
             const executor = j % 2 === 0 ? adminUser : regularUser;
             const executionDate = new Date(baseDate);
-            executionDate.setDate(baseDate.getDate() + (runIndex + j) % 30);
+            executionDate.setDate(baseDate.getDate() + ((runIndex + j) % 30));
 
             // Only create elapsed time for executed statuses
-            const hasElapsedTime = ["Passed", "Failed", "Retest"].includes(status.name);
-            
+            const hasElapsedTime = ["Passed", "Failed", "Retest"].includes(
+              status.name
+            );
+
             const result = await prisma.testRunResults.create({
               data: {
                 testRunId: testRun.id,
@@ -268,7 +278,9 @@ export async function seedComprehensiveTestExecutionData() {
                 executedById: executor.id,
                 statusId: status.id,
                 executedAt: executionDate,
-                elapsed: hasElapsedTime ? Math.floor(Math.random() * 3600) + 300 : null, // 5-65 minutes
+                elapsed: hasElapsedTime
+                  ? Math.floor(Math.random() * 3600) + 300
+                  : null, // 5-65 minutes
               },
             });
             testResults.push(result);

@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,7 +105,9 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
           </div>
           <div className="flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
-              {t("wizard.projectsSelected", { count: selectedProjectIds.length })}
+              {t("wizard.projectsSelected", {
+                count: selectedProjectIds.length,
+              })}
             </div>
             <div className="flex gap-2">
               <Button
@@ -154,7 +156,11 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
                       className="flex items-center gap-2 cursor-pointer flex-1"
                     >
                       <div className="w-6 h-6">
-                        <ProjectIcon iconUrl={project.iconUrl} height={24} width={24} />
+                        <ProjectIcon
+                          iconUrl={project.iconUrl}
+                          height={24}
+                          width={24}
+                        />
                       </div>
                       <span>{project.name}</span>
                     </Label>

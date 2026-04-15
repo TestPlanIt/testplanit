@@ -3,7 +3,17 @@
 import { Projects, Templates } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  useCreateManyTemplateCaseAssignment, useCreateManyTemplateProjectAssignment, useCreateManyTemplateResultAssignment, useDeleteManyTemplateCaseAssignment, useDeleteManyTemplateProjectAssignment, useDeleteManyTemplateResultAssignment, useFindManyCaseFields, useFindManyProjects, useFindManyResultFields, useUpdateManyTemplates, useUpdateTemplates
+  useCreateManyTemplateCaseAssignment,
+  useCreateManyTemplateProjectAssignment,
+  useCreateManyTemplateResultAssignment,
+  useDeleteManyTemplateCaseAssignment,
+  useDeleteManyTemplateProjectAssignment,
+  useDeleteManyTemplateResultAssignment,
+  useFindManyCaseFields,
+  useFindManyProjects,
+  useFindManyResultFields,
+  useUpdateManyTemplates,
+  useUpdateTemplates,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +21,8 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import {
-  DraggableField, DraggableList
+  DraggableField,
+  DraggableList,
 } from "@/components/DraggableCaseFields";
 import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
 
@@ -28,7 +39,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import {
@@ -77,11 +88,7 @@ interface EditTemplateProps {
   onClose: () => void;
 }
 
-export function EditTemplate({
-  template,
-  open,
-  onClose,
-}: EditTemplateProps) {
+export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   const t = useTranslations("admin.templates.edit");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -356,9 +363,16 @@ export function EditTemplate({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
+      <DialogContent
+        className="sm:max-w-[600px] lg:max-w-[1000px]"
+        data-testid="template-dialog"
+      >
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit" data-testid="template-form">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4 w-fit"
+            data-testid="template-form"
+          >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -546,7 +560,11 @@ export function EditTemplate({
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting} data-testid="template-submit-button">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="template-submit-button"
+              >
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

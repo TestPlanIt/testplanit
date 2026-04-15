@@ -174,14 +174,17 @@ export async function createTestCaseVersionInTransaction(
   if (overrides.steps !== undefined) {
     stepsJson = overrides.steps;
   } else if (testCase.steps && testCase.steps.length > 0) {
-    stepsJson = testCase.steps.map((step: { step: any; expectedResult: any }) => ({
-      step: step.step,
-      expectedResult: step.expectedResult,
-    }));
+    stepsJson = testCase.steps.map(
+      (step: { step: any; expectedResult: any }) => ({
+        step: step.step,
+        expectedResult: step.expectedResult,
+      })
+    );
   }
 
   // Convert tags to array of tag names
-  const tagsArray = overrides.tags ?? testCase.tags.map((tag: { name: string }) => tag.name);
+  const tagsArray =
+    overrides.tags ?? testCase.tags.map((tag: { name: string }) => tag.name);
 
   // Convert issues to array of objects
   const issuesArray = overrides.issues ?? testCase.issues;
@@ -269,7 +272,9 @@ export async function createTestCaseVersionInTransaction(
   }
 
   if (!newVersion) {
-    throw new Error(`Failed to create version for case ${caseId} after retries`);
+    throw new Error(
+      `Failed to create version for case ${caseId} after retries`
+    );
   }
 
   return newVersion;

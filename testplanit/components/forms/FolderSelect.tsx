@@ -1,9 +1,11 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { FolderOpen } from "lucide-react"; // Default folder icon
 import { useTranslations } from "next-intl";

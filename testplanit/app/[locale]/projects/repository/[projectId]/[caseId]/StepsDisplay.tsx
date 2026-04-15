@@ -4,10 +4,14 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  ChevronRightCircle, Layers, Minus, Plus, SearchCheck
+  ChevronRightCircle,
+  Layers,
+  Minus,
+  Plus,
+  SearchCheck,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";

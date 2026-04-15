@@ -110,9 +110,9 @@ test.describe("Test Run Creation Wizard", () => {
 
     // After saving, we should be redirected to the new run's detail page
     // or the run list. Either way, the run name should appear.
-    await expect(
-      page.locator(`text="${runName}"`).first()
-    ).toBeVisible({ timeout: 20000 });
+    await expect(page.locator(`text="${runName}"`).first()).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   test("should create a test run with configuration selection", async ({
@@ -179,9 +179,9 @@ test.describe("Test Run Creation Wizard", () => {
     await expect(dialog).not.toBeVisible({ timeout: 15000 });
 
     // Verify the run was created — the run name should appear on the page
-    await expect(
-      page.getByText(runName).first()
-    ).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(runName).first()).toBeVisible({
+      timeout: 20000,
+    });
   });
 
   test("should show validation error when name is too short", async ({

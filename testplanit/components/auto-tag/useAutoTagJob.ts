@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import type {
-  AutoTagJobState, AutoTagSelection, AutoTagSuggestionEntity, UseAutoTagJobReturn
+  AutoTagJobState,
+  AutoTagSelection,
+  AutoTagSuggestionEntity,
+  UseAutoTagJobReturn,
 } from "./types";
 
 const POLL_INTERVAL_MS = 1000;
@@ -27,14 +30,11 @@ function clearPersistedJobId(key: string): void {
 
 /** Initialize selections with all tags accepted (opt-out model) */
 function initSelections(
-  suggestions: AutoTagSuggestionEntity[],
+  suggestions: AutoTagSuggestionEntity[]
 ): AutoTagSelection {
   const map = new Map<number, Set<string>>();
   for (const entity of suggestions) {
-    map.set(
-      entity.entityId,
-      new Set(entity.tags.map((t) => t.tagName)),
-    );
+    map.set(entity.entityId, new Set(entity.tags.map((t) => t.tagName)));
   }
   return map;
 }
@@ -73,7 +73,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       entityIds: number[],
       entityType: EntityType,
       projectId: number,
-      options?: { allowNewTags?: boolean },
+      options?: { allowNewTags?: boolean }
     ) => {
       setIsSubmitting(true);
       setStatus("waiting");
@@ -114,7 +114,9 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
         // If cancelled while submit was in flight, cancel the newly created job
         if (abortController.signal.aborted) {
-          fetch(`/api/auto-tag/cancel/${data.jobId}`, { method: "POST" }).catch(() => {});
+          fetch(`/api/auto-tag/cancel/${data.jobId}`, { method: "POST" }).catch(
+            () => {}
+          );
           return;
         }
 
@@ -129,7 +131,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         setIsSubmitting(false);
       }
     },
-    [persistKey],
+    [persistKey]
   );
 
   // ── Restore persisted job on mount ─────────────────────────────────────
@@ -240,22 +242,19 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
   // ── Toggle tag selection ────────────────────────────────────────────────
 
-  const toggleTag = useCallback(
-    (entityId: number, tagName: string) => {
-      setSelections((prev) => {
-        const next = new Map(prev);
-        const entitySet = new Set(next.get(entityId) ?? []);
-        if (entitySet.has(tagName)) {
-          entitySet.delete(tagName);
-        } else {
-          entitySet.add(tagName);
-        }
-        next.set(entityId, entitySet);
-        return next;
-      });
-    },
-    [],
-  );
+  const toggleTag = useCallback((entityId: number, tagName: string) => {
+    setSelections((prev) => {
+      const next = new Map(prev);
+      const entitySet = new Set(next.get(entityId) ?? []);
+      if (entitySet.has(tagName)) {
+        entitySet.delete(tagName);
+      } else {
+        entitySet.add(tagName);
+      }
+      next.set(entityId, entitySet);
+      return next;
+    });
+  }, []);
 
   // ── Toggle tag for all entities ──────────────────────────────────────────
 
@@ -279,7 +278,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         return next;
       });
     },
-    [suggestions],
+    [suggestions]
   );
 
   // ── Edit tag name ───────────────────────────────────────────────────────
@@ -321,13 +320,13 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
                     isExisting: matchesExisting,
                     matchedExistingTag: matchesExisting ? newName : undefined,
                   }
-                : t,
+                : t
             ),
           };
         });
       });
     },
-    [],
+    []
   );
 
   // ── Apply accepted tags ─────────────────────────────────────────────────
@@ -394,10 +393,13 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
     }
 
     // Use persisted jobId as fallback if state hasn't been set yet (race with submit)
-    const effectiveJobId = jobId ?? (persistKey ? getPersistedJobId(persistKey) : null);
+    const effectiveJobId =
+      jobId ?? (persistKey ? getPersistedJobId(persistKey) : null);
     if (effectiveJobId) {
       try {
-        await fetch(`/api/auto-tag/cancel/${effectiveJobId}`, { method: "POST" });
+        await fetch(`/api/auto-tag/cancel/${effectiveJobId}`, {
+          method: "POST",
+        });
       } catch {
         // Best effort -- cancel may fail if job already completed
       }
@@ -505,6 +507,6 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       summary,
       isApplying,
       isSubmitting,
-    ],
+    ]
   );
 }

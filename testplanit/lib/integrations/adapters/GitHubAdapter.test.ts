@@ -24,10 +24,7 @@ describe("GitHubAdapter", () => {
       login: "assignee-user",
       email: "assignee@example.com",
     },
-    labels: [
-      { name: "bug" },
-      { name: "priority:high" },
-    ],
+    labels: [{ name: "bug" }, { name: "priority:high" }],
     repository_url: "https://api.github.com/repos/testowner/testrepo",
   };
 
@@ -87,7 +84,7 @@ describe("GitHubAdapter", () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             "Content-Type": "application/json",
-            "Authorization": "token ghp_valid_token",
+            Authorization: "token ghp_valid_token",
           }),
         })
       );
@@ -99,7 +96,9 @@ describe("GitHubAdapter", () => {
           type: "oauth",
           accessToken: "some_token",
         })
-      ).rejects.toThrow("GitHub adapter only supports Personal Access Token authentication");
+      ).rejects.toThrow(
+        "GitHub adapter only supports Personal Access Token authentication"
+      );
     });
 
     it("should throw error when PAT is missing", async () => {
@@ -107,7 +106,9 @@ describe("GitHubAdapter", () => {
         adapter.authenticate({
           type: "api_key",
         })
-      ).rejects.toThrow("Personal Access Token is required for GitHub authentication");
+      ).rejects.toThrow(
+        "Personal Access Token is required for GitHub authentication"
+      );
     });
 
     it("should throw error for invalid PAT", async () => {
@@ -217,7 +218,10 @@ describe("GitHubAdapter", () => {
         ok: true,
         json: () => Promise.resolve({ login: "testuser" }),
       });
-      await adapterNoRepo.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+      await adapterNoRepo.authenticate({
+        type: "api_key",
+        apiKey: "ghp_test_token",
+      });
 
       await expect(
         adapterNoRepo.createIssue({
@@ -240,7 +244,8 @@ describe("GitHubAdapter", () => {
     it("should update issue title", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ ...mockGitHubIssue, title: "Updated Title" }),
+        json: () =>
+          Promise.resolve({ ...mockGitHubIssue, title: "Updated Title" }),
       });
 
       await adapter.updateIssue("42", { title: "Updated Title" });
@@ -370,7 +375,10 @@ describe("GitHubAdapter", () => {
         ok: true,
         json: () => Promise.resolve({ login: "testuser" }),
       });
-      await adapterNoRepo.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+      await adapterNoRepo.authenticate({
+        type: "api_key",
+        apiKey: "ghp_test_token",
+      });
 
       await expect(adapterNoRepo.getIssue("42")).rejects.toThrow(
         "GitHub repository not configured"
@@ -474,10 +482,11 @@ describe("GitHubAdapter", () => {
     it("should indicate hasMore when results are incomplete", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          ...mockSearchResponse,
-          incomplete_results: true,
-        }),
+        json: () =>
+          Promise.resolve({
+            ...mockSearchResponse,
+            incomplete_results: true,
+          }),
       });
 
       const result = await adapter.searchIssues({});
@@ -498,10 +507,11 @@ describe("GitHubAdapter", () => {
     it("should return user repositories", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve([
-          { full_name: "user/repo1", name: "repo1" },
-          { full_name: "user/repo2", name: "repo2" },
-        ]),
+        json: () =>
+          Promise.resolve([
+            { full_name: "user/repo1", name: "repo1" },
+            { full_name: "user/repo2", name: "repo2" },
+          ]),
       });
 
       const result = await adapter.getProjects();
@@ -618,11 +628,12 @@ describe("GitHubAdapter", () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          total_count: 1,
-          incomplete_results: false,
-          items: [searchResult],
-        }),
+        json: () =>
+          Promise.resolve({
+            total_count: 1,
+            incomplete_results: false,
+            items: [searchResult],
+          }),
       });
 
       const result = await adapter.searchIssues({ query: "test" });

@@ -10,7 +10,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -26,11 +26,22 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { ShareLinkEntityType } from "@prisma/client";
 import { format, isPast } from "date-fns";
-import { Ban, Bell, BellOff, CheckCircle2, Copy, Eye, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  Ban,
+  Bell,
+  BellOff,
+  CheckCircle2,
+  Copy,
+  Eye,
+  Loader2,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,7 +54,11 @@ interface ShareLinkListProps {
   showProjectColumn?: boolean;
 }
 
-export function ShareLinkList({ projectId, entityType, showProjectColumn = false }: ShareLinkListProps) {
+export function ShareLinkList({
+  projectId,
+  entityType,
+  showProjectColumn = false,
+}: ShareLinkListProps) {
   const t = useTranslations("reports.shareDialog.shareList");
   const tCommon = useTranslations("common");
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
@@ -54,7 +69,11 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
   const [selectedShare, setSelectedShare] = useState<any>(null);
 
   // Fetch shares (exclude deleted)
-  const { data: shares, isLoading, refetch } = useFindManyShareLink({
+  const {
+    data: shares,
+    isLoading,
+    refetch,
+  } = useFindManyShareLink({
     where: {
       ...(projectId !== undefined && { projectId }),
       ...(entityType && { entityType }),
@@ -72,7 +91,8 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
     },
   });
 
-  const { mutateAsync: updateShareLink, isPending: isRevoking } = useUpdateShareLink();
+  const { mutateAsync: updateShareLink, isPending: isRevoking } =
+    useUpdateShareLink();
 
   const handleCopyLink = async (shareKey: string, shareId: string) => {
     const protocol = window.location.protocol;
@@ -144,7 +164,10 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
     }
   };
 
-  const handleToggleNotifications = async (shareId: string, currentValue: boolean) => {
+  const handleToggleNotifications = async (
+    shareId: string,
+    currentValue: boolean
+  ) => {
     try {
       await updateShareLink({
         where: { id: shareId },
@@ -152,7 +175,9 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
       });
 
       toast.success(
-        currentValue ? t("toast.notificationsDisabled") : t("toast.notificationsEnabled"),
+        currentValue
+          ? t("toast.notificationsDisabled")
+          : t("toast.notificationsEnabled"),
         {
           description: currentValue
             ? t("toast.notificationsDisabledDescription")
@@ -191,7 +216,9 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
         <Table>
           <TableHeader>
             <TableRow>
-              {showProjectColumn && <TableHead>{tCommon("fields.project")}</TableHead>}
+              {showProjectColumn && (
+                <TableHead>{tCommon("fields.project")}</TableHead>
+              )}
               <TableHead>{tCommon("fields.title")}</TableHead>
               <TableHead>{t("columns.mode")}</TableHead>
               <TableHead className="text-right">{t("columns.views")}</TableHead>
@@ -204,7 +231,8 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
           </TableHeader>
           <TableBody>
             {shares.map((share: any) => {
-              const isExpired = share.expiresAt && isPast(new Date(share.expiresAt));
+              const isExpired =
+                share.expiresAt && isPast(new Date(share.expiresAt));
               const isActive = !share.isRevoked && !isExpired;
 
               return (
@@ -222,7 +250,8 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {share.title || t("defaultTitle", { entityType: share.entityType })}
+                        {share.title ||
+                          t("defaultTitle", { entityType: share.entityType })}
                       </Link>
                       {share.description && (
                         <p className="text-sm text-muted-foreground line-clamp-1">
@@ -232,7 +261,10 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-xs w-fit whitespace-nowrap">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs w-fit whitespace-nowrap"
+                    >
                       {share.mode.replace("_", " ")}
                     </Badge>
                   </TableCell>
@@ -246,19 +278,25 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleToggleNotifications(share.id, share.notifyOnView)}
+                      onClick={() =>
+                        handleToggleNotifications(share.id, share.notifyOnView)
+                      }
                       disabled={!isActive}
                       className="h-8 gap-2"
                     >
                       {share.notifyOnView ? (
                         <>
                           <Bell className="h-4 w-4 text-primary" />
-                          <span className="text-xs">{t("notifications.enabled")}</span>
+                          <span className="text-xs">
+                            {t("notifications.enabled")}
+                          </span>
                         </>
                       ) : (
                         <>
                           <BellOff className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{t("notifications.disabled")}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {t("notifications.disabled")}
+                          </span>
                         </>
                       )}
                     </Button>
@@ -272,7 +310,9 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                         {format(new Date(share.expiresAt), "MMM d, yyyy")}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">{tCommon("never")}</span>
+                      <span className="text-muted-foreground">
+                        {tCommon("never")}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -296,13 +336,17 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                           className="h-8 w-8 p-0"
                         >
                           <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">{tCommon("actions.actionsLabel")}</span>
+                          <span className="sr-only">
+                            {tCommon("actions.actionsLabel")}
+                          </span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           data-testid={`share-copy-${share.id}`}
-                          onClick={() => handleCopyLink(share.shareKey, share.id)}
+                          onClick={() =>
+                            handleCopyLink(share.shareKey, share.id)
+                          }
                         >
                           {copiedId === share.id ? (
                             <>

@@ -172,7 +172,11 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
       (bcrypt.compare as any).mockResolvedValue(false);
       (checkPasswordAttemptLimit as any)
         .mockReturnValueOnce(mockAllowed) // initial check
-        .mockReturnValueOnce({ allowed: true, remainingAttempts: 3, resetAt: null }); // after recording
+        .mockReturnValueOnce({
+          allowed: true,
+          remainingAttempts: 3,
+          resetAt: null,
+        }); // after recording
 
       const [req, ctx] = createRequest("abc123", { password: "wrongpassword" });
       const response = await POST(req, ctx);
@@ -188,7 +192,9 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
       (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(true);
 
-      const [req, ctx] = createRequest("abc123", { password: "correctpassword" });
+      const [req, ctx] = createRequest("abc123", {
+        password: "correctpassword",
+      });
       const response = await POST(req, ctx);
       const data = await response.json();
 
@@ -202,7 +208,9 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
       (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(true);
 
-      const [req, ctx] = createRequest("abc123", { password: "correctpassword" });
+      const [req, ctx] = createRequest("abc123", {
+        password: "correctpassword",
+      });
       await POST(req, ctx);
 
       expect(clearPasswordAttempts).toHaveBeenCalledOnce();
@@ -225,7 +233,9 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
 
   describe("Error handling", () => {
     it("returns 500 when database throws", async () => {
-      (prisma.shareLink.findUnique as any).mockRejectedValue(new Error("DB error"));
+      (prisma.shareLink.findUnique as any).mockRejectedValue(
+        new Error("DB error")
+      );
 
       const [req, ctx] = createRequest("abc123", { password: "pass" });
       const response = await POST(req, ctx);

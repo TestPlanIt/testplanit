@@ -18,15 +18,32 @@ import { create, findMany } from "../helpers/api.js";
 import { projectName, folderName, testCaseName } from "../helpers/data.js";
 
 const TIERS = {
-  small: { projects: 5, casesPerProject: 500, foldersPerProject: 10, runsPerProject: 20 },
-  medium: { projects: 20, casesPerProject: 2000, foldersPerProject: 30, runsPerProject: 50 },
-  large: { projects: 50, casesPerProject: 10000, foldersPerProject: 50, runsPerProject: 100 },
+  small: {
+    projects: 5,
+    casesPerProject: 500,
+    foldersPerProject: 10,
+    runsPerProject: 20,
+  },
+  medium: {
+    projects: 20,
+    casesPerProject: 2000,
+    foldersPerProject: 30,
+    runsPerProject: 50,
+  },
+  large: {
+    projects: 50,
+    casesPerProject: 10000,
+    foldersPerProject: 50,
+    runsPerProject: 100,
+  },
 };
 
 const TIER = __ENV.TIER || "medium";
 const config = TIERS[TIER];
 if (!config) {
-  throw new Error(`Unknown TIER: ${TIER}. Valid: ${Object.keys(TIERS).join(", ")}`);
+  throw new Error(
+    `Unknown TIER: ${TIER}. Valid: ${Object.keys(TIERS).join(", ")}`
+  );
 }
 
 export const options = {
@@ -41,7 +58,9 @@ export default function seedTier() {
   console.log(`  Projects: ${config.projects}`);
   console.log(`  Cases/project: ${config.casesPerProject}`);
   console.log(`  Runs/project: ${config.runsPerProject}`);
-  console.log(`  Target total: ${config.projects * config.casesPerProject} cases`);
+  console.log(
+    `  Target total: ${config.projects * config.casesPerProject} cases`
+  );
   console.log("");
 
   // Look up the admin user (needed for project creator)
@@ -58,7 +77,11 @@ export default function seedTier() {
   console.log(`  Admin user: ${adminUserId}`);
 
   // Look up lookup data once (same for every project)
-  const templates = findMany("templates", { where: { isDefault: true }, select: { id: true }, take: 1 });
+  const templates = findMany("templates", {
+    where: { isDefault: true },
+    select: { id: true },
+    take: 1,
+  });
   const caseWorkflows = findMany("workflows", {
     where: { isDeleted: false, isDefault: true, scope: "CASES" },
     select: { id: true },
@@ -77,9 +100,13 @@ export default function seedTier() {
   const templateId = templates?.data?.[0]?.id;
   const caseStateId = caseWorkflows?.data?.[0]?.id;
   const runStateId = runWorkflows?.data?.[0]?.id;
-  const defaultStatus = statuses?.data?.find((s) => !s.isSuccess && !s.isFailure) || statuses?.data?.[0];
-  const passedStatus = statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
-  const failedStatus = statuses?.data?.find((s) => s.isFailure) || defaultStatus;
+  const defaultStatus =
+    statuses?.data?.find((s) => !s.isSuccess && !s.isFailure) ||
+    statuses?.data?.[0];
+  const passedStatus =
+    statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
+  const failedStatus =
+    statuses?.data?.find((s) => s.isFailure) || defaultStatus;
 
   if (!templateId || !caseStateId || !runStateId || !defaultStatus) {
     throw new Error("Missing core seed data (template/workflow/status)");
@@ -110,7 +137,9 @@ export default function seedTier() {
     });
     const repoId = repo?.data?.id;
     if (!repoId) {
-      console.warn(`  Failed to create repo for project ${projectId}, skipping`);
+      console.warn(
+        `  Failed to create repo for project ${projectId}, skipping`
+      );
       continue;
     }
 
@@ -169,12 +198,18 @@ export default function seedTier() {
 
       // 20-50 cases per run
       const runSize = 20 + Math.floor(Math.random() * 31);
-      const shuffled = [...caseIds].sort(() => Math.random() - 0.5).slice(0, runSize);
+      const shuffled = [...caseIds]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, runSize);
 
       for (let i = 0; i < shuffled.length; i++) {
         const rand = Math.random();
         const statusId =
-          rand < 0.7 ? passedStatus.id : rand < 0.9 ? failedStatus.id : defaultStatus.id;
+          rand < 0.7
+            ? passedStatus.id
+            : rand < 0.9
+              ? failedStatus.id
+              : defaultStatus.id;
 
         create("testRunCases", {
           order: i + 1,

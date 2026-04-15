@@ -54,7 +54,7 @@ test.describe("Role Management", () => {
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
       // Fill in the role name
-      const nameInput = dialog.locator('input').first();
+      const nameInput = dialog.locator("input").first();
       await expect(nameInput).toBeVisible();
       await nameInput.fill(roleName);
 
@@ -126,7 +126,7 @@ test.describe("Role Management", () => {
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
       // Update the name field
-      const nameInput = dialog.locator('input').first();
+      const nameInput = dialog.locator("input").first();
       await expect(nameInput).toBeVisible();
       await nameInput.clear();
       await nameInput.fill(updatedName);

@@ -8,12 +8,6 @@
     // E2E tests don't need incremental compilation
     "incremental": false
   },
-  "include": [
-    "./**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "test-results",
-    "playwright-report"
-  ]
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "test-results", "playwright-report"]
 }

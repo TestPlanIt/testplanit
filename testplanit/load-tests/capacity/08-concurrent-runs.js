@@ -60,23 +60,38 @@ export const options = {
 export function setup() {
   const cases = findMany(
     "repositoryCases",
-    { where: { projectId: PROJECT_ID, isDeleted: false }, select: { id: true }, take: 500 },
+    {
+      where: { projectId: PROJECT_ID, isDeleted: false },
+      select: { id: true },
+      take: 500,
+    },
     {}
   );
   const statuses = findMany(
     "status",
-    { where: { isDeleted: false, isEnabled: true }, select: { id: true, isSuccess: true, isFailure: true } },
+    {
+      where: { isDeleted: false, isEnabled: true },
+      select: { id: true, isSuccess: true, isFailure: true },
+    },
     {}
   );
   const workflows = findMany(
     "workflows",
-    { where: { isDeleted: false, isDefault: true, scope: "RUNS" }, select: { id: true }, take: 1 },
+    {
+      where: { isDeleted: false, isDefault: true, scope: "RUNS" },
+      select: { id: true },
+      take: 1,
+    },
     {}
   );
 
-  const defaultStatus = statuses?.data?.find((s) => !s.isSuccess && !s.isFailure) || statuses?.data?.[0];
-  const passedStatus = statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
-  const failedStatus = statuses?.data?.find((s) => s.isFailure) || defaultStatus;
+  const defaultStatus =
+    statuses?.data?.find((s) => !s.isSuccess && !s.isFailure) ||
+    statuses?.data?.[0];
+  const passedStatus =
+    statuses?.data?.find((s) => s.isSuccess) || defaultStatus;
+  const failedStatus =
+    statuses?.data?.find((s) => s.isFailure) || defaultStatus;
   const runStateId = workflows?.data?.[0]?.id;
 
   if (!cases?.data?.length || !defaultStatus || !runStateId) {
@@ -117,7 +132,10 @@ export default function concurrentRuns(ctx) {
 
   // 2. Attach cases
   const shuffled = [...ctx.caseIds].sort(() => Math.random() - 0.5);
-  const selectedCases = shuffled.slice(0, Math.min(CASES_PER_RUN, ctx.caseIds.length));
+  const selectedCases = shuffled.slice(
+    0,
+    Math.min(CASES_PER_RUN, ctx.caseIds.length)
+  );
   const testRunCaseIds = [];
 
   for (let i = 0; i < selectedCases.length; i++) {
@@ -145,7 +163,7 @@ export default function concurrentRuns(ctx) {
     const rand = Math.random();
     // 80% pass, 15% fail, 5% skip
     if (rand < 0.05) continue;
-    const statusId = rand < 0.80 ? ctx.passedStatusId : ctx.failedStatusId;
+    const statusId = rand < 0.8 ? ctx.passedStatusId : ctx.failedStatusId;
 
     postApi(
       "/api/test-runs/submit-result",

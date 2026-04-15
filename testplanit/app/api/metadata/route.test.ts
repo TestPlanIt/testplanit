@@ -271,7 +271,9 @@ describe("GET /api/metadata", () => {
 
   describe("Error handling", () => {
     it("returns generic TestPlanIt fallback when prisma throws", async () => {
-      mockEnhancedDb.testRuns.findUnique.mockRejectedValue(new Error("DB error"));
+      mockEnhancedDb.testRuns.findUnique.mockRejectedValue(
+        new Error("DB error")
+      );
 
       const request = createRequest({ type: "test-run", id: "1" });
       const response = await GET(request);

@@ -65,11 +65,11 @@ describe("getBackgroundStyle", () => {
   it("should return default blue background for null/undefined hex", () => {
     // When color is null, it uses the default COLOR but the PROVIDED opacity
     expect(getBackgroundStyle(null as any, 0.3)).toEqual({
-      backgroundColor: 'rgba(59, 130, 246, 0.3)', // Expecting opacity 0.3
+      backgroundColor: "rgba(59, 130, 246, 0.3)", // Expecting opacity 0.3
     });
     // When color is undefined and opacity is default, uses default color and default opacity
     expect(getBackgroundStyle(undefined as any)).toEqual({
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      backgroundColor: "rgba(59, 130, 246, 0.1)",
     });
   });
 });

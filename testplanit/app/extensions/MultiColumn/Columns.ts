@@ -1,26 +1,26 @@
-import { Node } from '@tiptap/core'
+import { Node } from "@tiptap/core";
 
 export enum ColumnLayout {
-  SidebarLeft = 'sidebar-left',
-  SidebarRight = 'sidebar-right',
-  TwoColumn = 'two-column',
+  SidebarLeft = "sidebar-left",
+  SidebarRight = "sidebar-right",
+  TwoColumn = "two-column",
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     columns: {
-      setColumns: () => ReturnType
-      setLayout: (layout: ColumnLayout) => ReturnType
-    }
+      setColumns: () => ReturnType;
+      setLayout: (layout: ColumnLayout) => ReturnType;
+    };
   }
 }
 
 export const Columns = Node.create({
-  name: 'columns',
+  name: "columns",
 
-  group: 'columns',
+  group: "columns",
 
-  content: 'column column',
+  content: "column column",
 
   defining: true,
 
@@ -31,7 +31,7 @@ export const Columns = Node.create({
       layout: {
         default: ColumnLayout.TwoColumn,
       },
-    }
+    };
   },
 
   addCommands(): any {
@@ -40,17 +40,21 @@ export const Columns = Node.create({
         () =>
         ({ commands }: any) =>
           commands.insertContent(
-            `<div data-type="columns"><div data-type="column" data-position="left"><p></p></div><div data-type="column" data-position="right"><p></p></div></div>`,
+            `<div data-type="columns"><div data-type="column" data-position="left"><p></p></div><div data-type="column" data-position="right"><p></p></div></div>`
           ),
       setLayout:
         (layout: ColumnLayout) =>
         ({ commands }: any) =>
-          commands.updateAttributes('columns', { layout }),
-    }
+          commands.updateAttributes("columns", { layout }),
+    };
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
-    return ['div', { 'data-type': 'columns', class: `layout-${HTMLAttributes.layout}` }, 0]
+    return [
+      "div",
+      { "data-type": "columns", class: `layout-${HTMLAttributes.layout}` },
+      0,
+    ];
   },
 
   parseHTML() {
@@ -58,8 +62,8 @@ export const Columns = Node.create({
       {
         tag: 'div[data-type="columns"]',
       },
-    ]
+    ];
   },
-})
+});
 
-export default Columns
+export default Columns;

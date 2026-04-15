@@ -128,13 +128,15 @@ const baseJobData = {
 function makeMockJob(
   overrides: Partial<{
     id: string;
-    data: Partial<typeof baseJobData & {
-      templateId?: number;
-      folderId?: number;
-      userNotes?: string;
-      quantity?: string;
-      autoGenerateTags?: boolean;
-    }>;
+    data: Partial<
+      typeof baseJobData & {
+        templateId?: number;
+        folderId?: number;
+        userNotes?: string;
+        quantity?: string;
+        autoGenerateTags?: boolean;
+      }
+    >;
   }> = {}
 ): unknown {
   return {
@@ -314,8 +316,14 @@ describe("GenerateFromUrlWorker", () => {
       };
 
       mockSsrfSafeFetch
-        .mockResolvedValueOnce({ body: "<html>p1</html>", finalUrl: "https://example.com/docs" })
-        .mockResolvedValueOnce({ body: "<html>p2</html>", finalUrl: "https://example.com/page2" });
+        .mockResolvedValueOnce({
+          body: "<html>p1</html>",
+          finalUrl: "https://example.com/docs",
+        })
+        .mockResolvedValueOnce({
+          body: "<html>p2</html>",
+          finalUrl: "https://example.com/page2",
+        });
 
       mockExtractContent
         .mockReturnValueOnce({ markdown: "# Page 1", spaWarning: false })
@@ -344,10 +352,19 @@ describe("GenerateFromUrlWorker", () => {
       };
 
       mockSsrfSafeFetch
-        .mockResolvedValueOnce({ body: "<html>p1</html>", finalUrl: "https://example.com/docs" })
-        .mockResolvedValueOnce({ body: "<html>p2</html>", finalUrl: "https://example.com/page2" });
+        .mockResolvedValueOnce({
+          body: "<html>p1</html>",
+          finalUrl: "https://example.com/docs",
+        })
+        .mockResolvedValueOnce({
+          body: "<html>p2</html>",
+          finalUrl: "https://example.com/page2",
+        });
 
-      mockExtractContent.mockReturnValue({ markdown: "# Same content", spaWarning: false });
+      mockExtractContent.mockReturnValue({
+        markdown: "# Same content",
+        spaWarning: false,
+      });
 
       // Same hash = duplicate
       mockHashContent.mockReturnValue("same-hash");
@@ -384,7 +401,10 @@ describe("GenerateFromUrlWorker", () => {
         finalUrl: "https://www.example.com/docs",
       });
 
-      mockExtractContent.mockReturnValue({ markdown: "# Redirected", spaWarning: false });
+      mockExtractContent.mockReturnValue({
+        markdown: "# Redirected",
+        spaWarning: false,
+      });
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob() as Job);
@@ -406,14 +426,26 @@ describe("GenerateFromUrlWorker", () => {
       mockFetchRobots.mockResolvedValue(mockRobotsParser);
 
       mockSsrfSafeFetch
-        .mockResolvedValueOnce({ body: "<html>p1</html>", finalUrl: "https://example.com/docs" })
-        .mockResolvedValueOnce({ body: "<html>p2</html>", finalUrl: "https://example.com/public" });
+        .mockResolvedValueOnce({
+          body: "<html>p1</html>",
+          finalUrl: "https://example.com/docs",
+        })
+        .mockResolvedValueOnce({
+          body: "<html>p2</html>",
+          finalUrl: "https://example.com/public",
+        });
 
-      mockExtractContent.mockReturnValue({ markdown: "# Page", spaWarning: false });
+      mockExtractContent.mockReturnValue({
+        markdown: "# Page",
+        spaWarning: false,
+      });
       mockHashContent.mockReturnValueOnce("h1").mockReturnValueOnce("h2");
 
       mockExtractLinks
-        .mockReturnValueOnce(["https://example.com/private", "https://example.com/public"])
+        .mockReturnValueOnce([
+          "https://example.com/private",
+          "https://example.com/public",
+        ])
         .mockReturnValue([]);
 
       const { processor } = await loadWorker();
@@ -473,9 +505,9 @@ describe("GenerateFromUrlWorker", () => {
       mockHashContent.mockReturnValue("hash-unique");
 
       mockRedisGet
-        .mockResolvedValueOnce(null)  // pre-start: not cancelled
-        .mockResolvedValueOnce(null)  // first BFS iteration check
-        .mockResolvedValueOnce("1");  // second BFS iteration: cancel signal
+        .mockResolvedValueOnce(null) // pre-start: not cancelled
+        .mockResolvedValueOnce(null) // first BFS iteration check
+        .mockResolvedValueOnce("1"); // second BFS iteration: cancel signal
 
       const { processor } = await loadWorker();
       // Should complete with partial results (1 page), not throw
@@ -490,9 +522,9 @@ describe("GenerateFromUrlWorker", () => {
       mockSsrfSafeFetch.mockRejectedValue(new Error("Network error"));
 
       const { processor } = await loadWorker();
-      await expect(
-        processor(makeMockJob() as Job)
-      ).rejects.toThrow("No content could be extracted");
+      await expect(processor(makeMockJob() as Job)).rejects.toThrow(
+        "No content could be extracted"
+      );
     });
 
     it("should skip non-fetchable pages and continue crawling", async () => {
@@ -502,15 +534,27 @@ describe("GenerateFromUrlWorker", () => {
       };
 
       mockSsrfSafeFetch
-        .mockResolvedValueOnce({ body: "<html>p1</html>", finalUrl: "https://example.com/docs" })
+        .mockResolvedValueOnce({
+          body: "<html>p1</html>",
+          finalUrl: "https://example.com/docs",
+        })
         .mockRejectedValueOnce(new Error("404"))
-        .mockResolvedValueOnce({ body: "<html>p3</html>", finalUrl: "https://example.com/page3" });
+        .mockResolvedValueOnce({
+          body: "<html>p3</html>",
+          finalUrl: "https://example.com/page3",
+        });
 
-      mockExtractContent.mockReturnValue({ markdown: "# Page", spaWarning: false });
+      mockExtractContent.mockReturnValue({
+        markdown: "# Page",
+        spaWarning: false,
+      });
       mockHashContent.mockReturnValueOnce("h1").mockReturnValueOnce("h3");
 
       mockExtractLinks
-        .mockReturnValueOnce(["https://example.com/page2", "https://example.com/page3"])
+        .mockReturnValueOnce([
+          "https://example.com/page2",
+          "https://example.com/page3",
+        ])
         .mockReturnValue([]);
 
       const { processor } = await loadWorker();

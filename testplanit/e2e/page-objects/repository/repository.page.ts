@@ -44,11 +44,15 @@ export class RepositoryPage extends BasePage {
     this.folderCancelButton = page.getByTestId("folder-cancel-button");
 
     // Cases table
-    this.casesTable = page.locator('[data-testid="cases-table"], table').first();
-    this.addCaseButton = page.getByTestId("add-case-button").or(
-      page.locator('button:has-text("Add Case")').first()
-    );
-    this.searchInput = page.locator('input[placeholder*="Search"], input[placeholder*="Filter"]').first();
+    this.casesTable = page
+      .locator('[data-testid="cases-table"], table')
+      .first();
+    this.addCaseButton = page
+      .getByTestId("add-case-button")
+      .or(page.locator('button:has-text("Add Case")').first());
+    this.searchInput = page
+      .locator('input[placeholder*="Search"], input[placeholder*="Filter"]')
+      .first();
   }
 
   /**
@@ -77,11 +81,13 @@ export class RepositoryPage extends BasePage {
    * This ensures deeply nested folders are visible and interactable
    */
   async resizeLeftPanel(width: number = 350): Promise<void> {
-    const separator = this.page.locator('[data-panel-resize-handle-id], [role="separator"]').first();
+    const separator = this.page
+      .locator('[data-panel-resize-handle-id], [role="separator"]')
+      .first();
 
     // Wait for separator to be visible
     try {
-      await separator.waitFor({ state: 'visible', timeout: 3000 });
+      await separator.waitFor({ state: "visible", timeout: 3000 });
     } catch {
       // Separator may not exist in all layouts
       return;
@@ -135,13 +141,13 @@ export class RepositoryPage extends BasePage {
     await expect(folder).toBeVisible({ timeout: 10000 });
 
     // Close any open dropdown menus by pressing Escape
-    await this.page.keyboard.press('Escape');
+    await this.page.keyboard.press("Escape");
     await this.page.waitForTimeout(100);
 
     // Use retry logic to ensure the folder is actually selected
     await expect(async () => {
       // Close any menus that may have opened
-      await this.page.keyboard.press('Escape');
+      await this.page.keyboard.press("Escape");
 
       // Scroll folder into view
       await folder.scrollIntoViewIfNeeded();
@@ -149,7 +155,7 @@ export class RepositoryPage extends BasePage {
       // Find the folder icon specifically (svg element after the button)
       // The structure is: <button>(chevron)</button> <svg class="w-4 h-4">(icon)</svg>
       // Click on the icon which should trigger the folder click without opening menu
-      const folderIcon = folder.locator('svg').nth(1); // Second svg is the folder icon
+      const folderIcon = folder.locator("svg").nth(1); // Second svg is the folder icon
       const iconVisible = await folderIcon.isVisible().catch(() => false);
 
       if (iconVisible) {
@@ -173,9 +179,11 @@ export class RepositoryPage extends BasePage {
 
       // Verify this folder is now selected (has bg-secondary class indicating selection)
       const isSelected = await folder.evaluate((el) => {
-        return el.classList.contains('bg-secondary') ||
-               el.getAttribute('aria-selected') === 'true' ||
-               el.closest('[aria-selected="true"]') !== null;
+        return (
+          el.classList.contains("bg-secondary") ||
+          el.getAttribute("aria-selected") === "true" ||
+          el.closest('[aria-selected="true"]') !== null
+        );
       });
       expect(isSelected).toBe(true);
     }).toPass({ timeout: 15000 });
@@ -208,8 +216,13 @@ export class RepositoryPage extends BasePage {
       await this.page.waitForLoadState("networkidle");
 
       // Check if already expanded (has aria-expanded="true" or [expanded] attribute)
-      const isExpanded = await folder.getAttribute("aria-expanded") === "true" ||
-        await folder.evaluate((el) => el.hasAttribute("data-expanded") || el.classList.contains("expanded"));
+      const isExpanded =
+        (await folder.getAttribute("aria-expanded")) === "true" ||
+        (await folder.evaluate(
+          (el) =>
+            el.hasAttribute("data-expanded") ||
+            el.classList.contains("expanded")
+        ));
 
       if (isExpanded) {
         // Already expanded, no need to click
@@ -249,16 +262,23 @@ export class RepositoryPage extends BasePage {
     // Hover to make the menu button visible
     await folder.hover();
     // Find the "more" button (MoreVertical icon) - it's a button inside the folder row
-    const moreButton = folder.locator('button').filter({
-      has: this.page.locator('svg.lucide-more-vertical, svg[class*="lucide-ellipsis"]')
-    }).first();
+    const moreButton = folder
+      .locator("button")
+      .filter({
+        has: this.page.locator(
+          'svg.lucide-more-vertical, svg[class*="lucide-ellipsis"]'
+        ),
+      })
+      .first();
     // If the specific icon isn't found, try a more generic approach - look for any button that's not the expand button
-    const menuButton = await moreButton.isVisible()
+    const menuButton = (await moreButton.isVisible())
       ? moreButton
-      : folder.locator('button').last();
+      : folder.locator("button").last();
     await menuButton.click();
     // Wait for dropdown menu to appear
-    await this.page.locator('[role="menu"], [data-radix-menu-content]').waitFor({ state: 'visible', timeout: 5000 });
+    await this.page
+      .locator('[role="menu"], [data-radix-menu-content]')
+      .waitFor({ state: "visible", timeout: 5000 });
   }
 
   /**
@@ -269,22 +289,32 @@ export class RepositoryPage extends BasePage {
     // Hover to make the menu button visible
     await folder.hover();
     // Find the "more" button (MoreVertical icon)
-    const moreButton = folder.locator('button').filter({
-      has: this.page.locator('svg.lucide-more-vertical, svg[class*="lucide-ellipsis"]')
-    }).first();
-    const menuButton = await moreButton.isVisible()
+    const moreButton = folder
+      .locator("button")
+      .filter({
+        has: this.page.locator(
+          'svg.lucide-more-vertical, svg[class*="lucide-ellipsis"]'
+        ),
+      })
+      .first();
+    const menuButton = (await moreButton.isVisible())
       ? moreButton
-      : folder.locator('button').last();
+      : folder.locator("button").last();
     await menuButton.click();
     // Wait for dropdown menu to appear
-    await this.page.locator('[role="menu"], [data-radix-menu-content]').waitFor({ state: 'visible', timeout: 5000 });
+    await this.page
+      .locator('[role="menu"], [data-radix-menu-content]')
+      .waitFor({ state: "visible", timeout: 5000 });
   }
 
   /**
    * Click on a menu item in the folder context menu
    */
   async clickFolderMenuItem(itemText: string): Promise<void> {
-    const menuItem = this.page.locator('[role="menuitem"]').filter({ hasText: itemText }).first();
+    const menuItem = this.page
+      .locator('[role="menuitem"]')
+      .filter({ hasText: itemText })
+      .first();
     await menuItem.click();
   }
 
@@ -305,12 +335,17 @@ export class RepositoryPage extends BasePage {
     // If a parent folder is shown, click the X button to create at root level instead
     // This ensures the folder is visible without needing to expand a parent
     // Wait for the parent folder query to load and display the button
-    const removeParentButton = this.page.getByTestId('remove-parent-folder-button');
+    const removeParentButton = this.page.getByTestId(
+      "remove-parent-folder-button"
+    );
     try {
-      await removeParentButton.waitFor({ state: 'visible', timeout: 3000 });
+      await removeParentButton.waitFor({ state: "visible", timeout: 3000 });
       await removeParentButton.click();
       // Wait for "Root folder" text to appear (indicates parent was removed)
-      await this.page.getByText('Root folder').first().waitFor({ state: 'visible', timeout: 2000 });
+      await this.page
+        .getByText("Root folder")
+        .first()
+        .waitFor({ state: "visible", timeout: 2000 });
     } catch {
       // No parent folder shown, creating at root level
     }
@@ -348,7 +383,10 @@ export class RepositoryPage extends BasePage {
   /**
    * Create a nested folder under a parent
    */
-  async createNestedFolder(name: string, parentFolderId: number): Promise<void> {
+  async createNestedFolder(
+    name: string,
+    parentFolderId: number
+  ): Promise<void> {
     // First select the parent folder
     await this.selectFolder(parentFolderId);
     // Open the add folder modal from context or button
@@ -411,12 +449,15 @@ export class RepositoryPage extends BasePage {
   async openAddCaseModal(): Promise<void> {
     await this.addCaseButton.click();
     // Wait for modal to be visible
-    await expect(
-      this.page.locator('[role="dialog"]')
-    ).toBeVisible({ timeout: 5000 });
+    await expect(this.page.locator('[role="dialog"]')).toBeVisible({
+      timeout: 5000,
+    });
 
     // Wait for templates to load - the template combobox should be visible and enabled
-    const templateCombobox = this.page.getByTestId("add-case-dialog").locator('[role="combobox"]').first();
+    const templateCombobox = this.page
+      .getByTestId("add-case-dialog")
+      .locator('[role="combobox"]')
+      .first();
     await expect(templateCombobox).toBeVisible({ timeout: 10000 });
 
     // Small delay to ensure React has finished initial render
@@ -435,7 +476,9 @@ export class RepositoryPage extends BasePage {
     await nameInput.fill(name);
 
     // Submit the form - button says "Create Test Case"
-    const submitButton = this.page.locator('[role="dialog"] button:has-text("Create Test Case")').first();
+    const submitButton = this.page
+      .locator('[role="dialog"] button:has-text("Create Test Case")')
+      .first();
     await expect(submitButton).toBeEnabled({ timeout: 5000 });
 
     // Wait for the API call to complete
@@ -452,11 +495,15 @@ export class RepositoryPage extends BasePage {
     const response = await responsePromise;
     if (!response.ok()) {
       const text = await response.text();
-      throw new Error(`Test case creation failed: ${response.status()} - ${text}`);
+      throw new Error(
+        `Test case creation failed: ${response.status()} - ${text}`
+      );
     }
 
     // Wait for modal to close (indicates success)
-    await expect(this.page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+    await expect(this.page.locator('[role="dialog"]')).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Wait for network to settle after creation - the mutation should trigger query invalidation
     await this.page.waitForLoadState("networkidle");
@@ -496,7 +543,9 @@ export class RepositoryPage extends BasePage {
     const cancelButton = this.page.getByTestId("case-cancel-button");
     await cancelButton.click();
     // Wait for dialog to close
-    await expect(this.page.getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 5000 });
+    await expect(this.page.getByTestId("add-case-dialog")).not.toBeVisible({
+      timeout: 5000,
+    });
   }
 
   /**
@@ -519,7 +568,9 @@ export class RepositoryPage extends BasePage {
     const labelText = await fieldLabel.textContent();
 
     // Use getByLabel to find the input - this is more reliable than navigating the DOM
-    const fieldInput = this.page.getByLabel(labelText?.trim() || '', { exact: false });
+    const fieldInput = this.page.getByLabel(labelText?.trim() || "", {
+      exact: false,
+    });
 
     await fieldInput.fill(value);
   }
@@ -535,7 +586,9 @@ export class RepositoryPage extends BasePage {
     await templateSelect.click();
     await this.page.waitForTimeout(500);
 
-    const option = this.page.locator(`[role="option"]:has-text("${templateName}")`);
+    const option = this.page.locator(
+      `[role="option"]:has-text("${templateName}")`
+    );
     await option.click();
 
     // Wait for network to settle and fields to load
@@ -550,7 +603,10 @@ export class RepositoryPage extends BasePage {
   /**
    * Wait for a specific field to appear after template selection
    */
-  async waitForFieldToLoad(systemName: string, timeout: number = 10000): Promise<void> {
+  async waitForFieldToLoad(
+    systemName: string,
+    timeout: number = 10000
+  ): Promise<void> {
     const fieldContainer = this.page.getByTestId(`field-${systemName}`);
     await expect(fieldContainer).toBeVisible({ timeout });
   }
@@ -583,9 +639,11 @@ export class RepositoryPage extends BasePage {
     // Click delete option
     await this.page.locator('[role="menuitem"]:has-text("Delete")').click();
     // Confirm deletion
-    const confirmButton = this.page.locator(
-      '[role="alertdialog"] button:has-text("Delete"), button:has-text("Confirm")'
-    ).first();
+    const confirmButton = this.page
+      .locator(
+        '[role="alertdialog"] button:has-text("Delete"), button:has-text("Confirm")'
+      )
+      .first();
     await confirmButton.click();
     await this.waitForToast();
   }

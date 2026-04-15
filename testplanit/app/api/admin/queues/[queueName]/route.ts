@@ -6,7 +6,9 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
 
 // Helper to check admin authentication (session or API token)
-async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+async function checkAdminAuth(
+  request: NextRequest
+): Promise<{ error?: NextResponse; userId?: string }> {
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
   let userAccess: string | undefined;
@@ -41,7 +43,10 @@ async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextRespo
 
   if (userAccess !== "ADMIN") {
     return {
-      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+      error: NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      ),
     };
   }
 
@@ -51,19 +56,19 @@ async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextRespo
 function getQueueByName(queueName: string): Queue | null {
   const allQueues = getAllQueues();
   const queueMap: Record<string, Queue | null> = {
-    'forecast-updates': allQueues.forecastQueue,
-    'notifications': allQueues.notificationQueue,
-    'emails': allQueues.emailQueue,
-    'issue-sync': allQueues.syncQueue,
-    'testmo-imports': allQueues.testmoImportQueue,
-    'elasticsearch-reindex': allQueues.elasticsearchReindexQueue,
-    'audit-logs': allQueues.auditLogQueue,
-    'budget-alerts': allQueues.budgetAlertQueue,
-    'auto-tag': allQueues.autoTagQueue,
-    'repo-cache': allQueues.repoCacheQueue,
-    'copy-move': allQueues.copyMoveQueue,
-    'duplicate-scan': allQueues.duplicateScanQueue,
-    'step-scan': allQueues.stepScanQueue
+    "forecast-updates": allQueues.forecastQueue,
+    notifications: allQueues.notificationQueue,
+    emails: allQueues.emailQueue,
+    "issue-sync": allQueues.syncQueue,
+    "testmo-imports": allQueues.testmoImportQueue,
+    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
+    "audit-logs": allQueues.auditLogQueue,
+    "budget-alerts": allQueues.budgetAlertQueue,
+    "auto-tag": allQueues.autoTagQueue,
+    "repo-cache": allQueues.repoCacheQueue,
+    "copy-move": allQueues.copyMoveQueue,
+    "duplicate-scan": allQueues.duplicateScanQueue,
+    "step-scan": allQueues.stepScanQueue,
   };
   return queueMap[queueName] ?? null;
 }
@@ -79,10 +84,10 @@ async function removeJob(
   let repeatKey: string | undefined;
 
   // Check if this is a repeatable job (ID starts with "repeat:")
-  if (jobId && jobId.startsWith('repeat:')) {
+  if (jobId && jobId.startsWith("repeat:")) {
     isRepeatable = true;
     // Extract the repeat key from the job ID format: repeat:{key}:{timestamp}
-    const parts = jobId.split(':');
+    const parts = jobId.split(":");
     if (parts.length >= 2) {
       repeatKey = parts[1];
     }
@@ -90,9 +95,11 @@ async function removeJob(
 
   // Check if job is currently locked (active)
   const state = await job.getState();
-  if (state === 'active' && !force) {
-    const jobType = isRepeatable ? 'active scheduled' : 'active';
-    throw new Error(`Cannot remove ${jobType} job. The job is currently being processed by a worker. Please wait for it to complete or use force removal.`);
+  if (state === "active" && !force) {
+    const jobType = isRepeatable ? "active scheduled" : "active";
+    throw new Error(
+      `Cannot remove ${jobType} job. The job is currently being processed by a worker. Please wait for it to complete or use force removal.`
+    );
   }
 
   // For repeatable jobs, remove the schedule first
@@ -100,14 +107,14 @@ async function removeJob(
     try {
       // Get all repeatable jobs to find the one with matching key
       const repeatableJobs = await queue.getRepeatableJobs();
-      const repeatableJob = repeatableJobs.find(rj => rj.key === repeatKey);
+      const repeatableJob = repeatableJobs.find((rj) => rj.key === repeatKey);
 
       if (repeatableJob) {
         // Remove the repeatable schedule (prevents future jobs)
         await queue.removeRepeatableByKey(repeatKey);
       }
     } catch (error: any) {
-      console.warn('Failed to remove repeatable schedule:', error.message);
+      console.warn("Failed to remove repeatable schedule:", error.message);
       // Continue anyway to try to remove the current instance
     }
   }
@@ -116,9 +123,11 @@ async function removeJob(
   try {
     await job.remove();
   } catch (error: any) {
-    if (error.message?.includes('locked')) {
+    if (error.message?.includes("locked")) {
       if (!force) {
-        throw new Error('Job is locked by a worker. Use force removal to remove it anyway.');
+        throw new Error(
+          "Job is locked by a worker. Use force removal to remove it anyway."
+        );
       }
 
       // Force removal: Try multiple times with delays
@@ -127,20 +136,22 @@ async function removeJob(
 
       while (attempts < maxAttempts) {
         attempts++;
-        await new Promise(resolve => setTimeout(resolve, 200 * attempts));
+        await new Promise((resolve) => setTimeout(resolve, 200 * attempts));
 
         try {
           await job.remove();
           return true; // Success!
         } catch (retryError: any) {
-          if (!retryError.message?.includes('locked')) {
+          if (!retryError.message?.includes("locked")) {
             throw retryError; // Different error, throw it
           }
         }
       }
 
       // All attempts failed
-      throw new Error(`Failed to remove locked job after ${maxAttempts} attempts. ${isRepeatable ? 'The repeatable schedule has been removed, but this job instance is still locked. ' : ''}Try again later or restart the worker.`);
+      throw new Error(
+        `Failed to remove locked job after ${maxAttempts} attempts. ${isRepeatable ? "The repeatable schedule has been removed, but this job instance is still locked. " : ""}Try again later or restart the worker.`
+      );
     } else {
       throw error;
     }
@@ -168,46 +179,60 @@ export async function POST(
     const { action, grace, limit, jobTypes: _jobTypes } = await request.json();
 
     switch (action) {
-      case 'pause':
+      case "pause":
         await queue.pause();
-        return NextResponse.json({ success: true, message: 'Queue paused' });
+        return NextResponse.json({ success: true, message: "Queue paused" });
 
-      case 'resume':
+      case "resume":
         await queue.resume();
-        return NextResponse.json({ success: true, message: 'Queue resumed' });
+        return NextResponse.json({ success: true, message: "Queue resumed" });
 
-      case 'clean':
+      case "clean":
         // Clean completed and failed jobs
         const cleanOptions = {
           grace: grace || 0, // Grace period in milliseconds
-          limit: limit || 100 // Max number of jobs to clean
+          limit: limit || 100, // Max number of jobs to clean
         };
 
-        const completedCleaned = await queue.clean(cleanOptions.grace, cleanOptions.limit, 'completed');
-        const failedCleaned = await queue.clean(cleanOptions.grace, cleanOptions.limit, 'failed');
+        const completedCleaned = await queue.clean(
+          cleanOptions.grace,
+          cleanOptions.limit,
+          "completed"
+        );
+        const failedCleaned = await queue.clean(
+          cleanOptions.grace,
+          cleanOptions.limit,
+          "failed"
+        );
 
         return NextResponse.json({
           success: true,
-          message: 'Queue cleaned',
+          message: "Queue cleaned",
           cleaned: {
             completed: completedCleaned.length,
             failed: failedCleaned.length,
-            total: completedCleaned.length + failedCleaned.length
-          }
+            total: completedCleaned.length + failedCleaned.length,
+          },
         });
 
-      case 'drain':
+      case "drain":
         // Remove all waiting jobs
         await queue.drain();
-        return NextResponse.json({ success: true, message: 'Queue drained (all waiting jobs removed)' });
+        return NextResponse.json({
+          success: true,
+          message: "Queue drained (all waiting jobs removed)",
+        });
 
-      case 'obliterate':
+      case "obliterate":
         // DANGEROUS: Completely wipe the queue
         await queue.obliterate({ force: true });
-        return NextResponse.json({ success: true, message: 'Queue obliterated (all data removed)' });
+        return NextResponse.json({
+          success: true,
+          message: "Queue obliterated (all data removed)",
+        });
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error: any) {
     console.error("Error performing queue action:", error);
@@ -235,11 +260,14 @@ export async function DELETE(
     }
 
     const { searchParams } = new URL(request.url);
-    const jobId = searchParams.get('jobId');
-    const force = searchParams.get('force') === 'true';
+    const jobId = searchParams.get("jobId");
+    const force = searchParams.get("force") === "true";
 
     if (!jobId) {
-      return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Job ID is required" },
+        { status: 400 }
+      );
     }
 
     const job = await queue.getJob(jobId);
@@ -250,15 +278,15 @@ export async function DELETE(
     const result = await removeJob(queue, job, force);
 
     // Handle partial success (repeatable job schedule removed but instance locked)
-    if (typeof result === 'object' && result.partialSuccess) {
+    if (typeof result === "object" && result.partialSuccess) {
       return NextResponse.json({
         success: true,
         partialSuccess: true,
-        message: result.message
+        message: result.message,
       });
     }
 
-    return NextResponse.json({ success: true, message: 'Job removed' });
+    return NextResponse.json({ success: true, message: "Job removed" });
   } catch (error: any) {
     console.error("Error removing job:", error);
     return NextResponse.json(

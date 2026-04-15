@@ -18,8 +18,14 @@ function makeStep(
   overrides: Partial<StepWithSharedRef> & { id: number; order: number }
 ): StepWithSharedRef {
   return {
-    step: { type: "doc", content: [{ type: "text", text: `Step ${overrides.id}` }] },
-    expectedResult: { type: "doc", content: [{ type: "text", text: `ER ${overrides.id}` }] },
+    step: {
+      type: "doc",
+      content: [{ type: "text", text: `Step ${overrides.id}` }],
+    },
+    expectedResult: {
+      type: "doc",
+      content: [{ type: "text", text: `ER ${overrides.id}` }],
+    },
     isDeleted: false,
     sharedStepGroupId: null,
     ...overrides,
@@ -31,8 +37,14 @@ function makeSharedItem(id: number, groupId: number, order: number) {
     id,
     sharedStepGroupId: groupId,
     order,
-    step: { type: "doc", content: [{ type: "text", text: `Shared step ${id}` }] },
-    expectedResult: { type: "doc", content: [{ type: "text", text: `Shared ER ${id}` }] },
+    step: {
+      type: "doc",
+      content: [{ type: "text", text: `Shared step ${id}` }],
+    },
+    expectedResult: {
+      type: "doc",
+      content: [{ type: "text", text: `Shared ER ${id}` }],
+    },
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -47,10 +59,7 @@ describe("resolveSharedSteps", () => {
     const cases = [
       {
         id: 1,
-        steps: [
-          makeStep({ id: 10, order: 0 }),
-          makeStep({ id: 11, order: 1 }),
-        ],
+        steps: [makeStep({ id: 10, order: 0 }), makeStep({ id: 11, order: 1 })],
       },
     ];
 
@@ -204,16 +213,14 @@ describe("resolveSharedSteps", () => {
       },
     ];
 
-    mockFindMany.mockResolvedValue([
-      makeSharedItem(201, 100, 0),
-    ] as any);
+    mockFindMany.mockResolvedValue([makeSharedItem(201, 100, 0)] as any);
 
     const result = await resolveSharedSteps(cases);
 
     // Both shared references expand to the same items
     expect(result[0].steps).toHaveLength(3);
     expect(result[0].steps![0].id).toBe(201); // first shared ref expanded
-    expect(result[0].steps![1].id).toBe(11);  // regular step
+    expect(result[0].steps![1].id).toBe(11); // regular step
     expect(result[0].steps![2].id).toBe(201); // second shared ref expanded
   });
 

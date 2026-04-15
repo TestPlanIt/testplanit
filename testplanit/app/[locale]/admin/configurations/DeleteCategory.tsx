@@ -7,13 +7,22 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
-  useFindManyConfigurations, useFindManyConfigVariants, useUpdateConfigCategories, useUpdateManyConfigurations, useUpdateManyConfigVariants
+  useFindManyConfigurations,
+  useFindManyConfigVariants,
+  useUpdateConfigCategories,
+  useUpdateManyConfigurations,
+  useUpdateManyConfigVariants,
 } from "~/lib/hooks";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface DeleteConfigCategoryProps {

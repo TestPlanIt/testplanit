@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Attachments } from "@prisma/client";
 import { Paperclip } from "lucide-react";
@@ -38,7 +38,10 @@ export const AttachmentsListDisplay: React.FC<AttachmentsListProps> = ({
         </Badge>
       </PopoverTrigger>
       <PopoverContent key={attachments.length}>
-        <div className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]" onWheel={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]"
+          onWheel={(e) => e.stopPropagation()}
+        >
           {attachments.map((attachment, index) => (
             <div
               key={attachment.id}

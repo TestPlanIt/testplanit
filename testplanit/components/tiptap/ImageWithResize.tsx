@@ -2,9 +2,16 @@
 import { Image } from "@tiptap/extension-image";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import {
-  AlignCenter, AlignLeft, AlignRight,
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Maximize,
-  Minimize, RectangleHorizontal, RotateCw, Smartphone, Square, Trash2
+  Minimize,
+  RectangleHorizontal,
+  RotateCw,
+  Smartphone,
+  Square,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";

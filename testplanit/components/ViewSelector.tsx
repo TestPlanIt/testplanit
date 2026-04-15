@@ -11,11 +11,17 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Bot, CircleCheckBig, CircleDashed, LayoutTemplate, LucideIcon, User, Users,
-  UserX
+  Bot,
+  CircleCheckBig,
+  CircleDashed,
+  LayoutTemplate,
+  LucideIcon,
+  User,
+  Users,
+  UserX,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -697,9 +703,7 @@ export function ViewSelector({
               }
 
               // Handle Integer, Number fields with operator-based filtering
-              if (
-                field?.type === "Integer" || field?.type === "Number"
-              ) {
+              if (field?.type === "Integer" || field?.type === "Number") {
                 const noValueCount = (field as any).counts?.noValue || 0;
                 const hasValueCount = (field as any).counts?.hasValue || 0;
 
@@ -711,12 +715,15 @@ export function ViewSelector({
                     key="no-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("none") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">{t("fields.noValue")}</span>
+                      <span className="truncate opacity-40">
+                        {t("fields.noValue")}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -729,7 +736,8 @@ export function ViewSelector({
                     key="has-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("hasValue") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
@@ -748,14 +756,17 @@ export function ViewSelector({
                     fieldId={field.fieldId}
                     fieldType={field.type}
                     onFilterApply={(operator, value1, value2) => {
-                      const filterValue = value2 !== undefined
-                        ? `${operator}:${value1}:${value2}`
-                        : `${operator}:${value1}`;
+                      const filterValue =
+                        value2 !== undefined
+                          ? `${operator}:${value1}:${value2}`
+                          : `${operator}:${value1}`;
                       handleFilterClick(filterValue, undefined);
                     }}
                     onClearFilter={() => handleFilterClick(null, undefined)}
                     currentFilter={
-                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                      selectedFilter &&
+                      Array.isArray(selectedFilter) &&
+                      selectedFilter.length > 0
                         ? String(selectedFilter[0])
                         : null
                     }
@@ -776,12 +787,15 @@ export function ViewSelector({
                     key="no-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("none") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">{t("fields.noDate")}</span>
+                      <span className="truncate opacity-40">
+                        {t("fields.noDate")}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -794,7 +808,8 @@ export function ViewSelector({
                     key="has-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("hasValue") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
@@ -827,11 +842,15 @@ export function ViewSelector({
                     }}
                     onClearFilter={() => handleFilterClick(null, undefined)}
                     currentFilter={
-                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                      selectedFilter &&
+                      Array.isArray(selectedFilter) &&
+                      selectedFilter.length > 0
                         ? (() => {
                             const filter = String(selectedFilter[0]);
                             // Only pass date operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none" ? null : filter;
+                            return filter === "hasValue" || filter === "none"
+                              ? null
+                              : filter;
                           })()
                         : null
                     }
@@ -854,7 +873,8 @@ export function ViewSelector({
                     key="has-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("hasValue") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
@@ -871,12 +891,15 @@ export function ViewSelector({
                     key="no-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("none") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">{t("fields.noText")}</span>
+                      <span className="truncate opacity-40">
+                        {t("fields.noText")}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -894,11 +917,15 @@ export function ViewSelector({
                     }}
                     onClearFilter={() => handleFilterClick(null, undefined)}
                     currentFilter={
-                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                      selectedFilter &&
+                      Array.isArray(selectedFilter) &&
+                      selectedFilter.length > 0
                         ? (() => {
                             const filter = String(selectedFilter[0]);
                             // Only pass text operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none" ? null : filter;
+                            return filter === "hasValue" || filter === "none"
+                              ? null
+                              : filter;
                           })()
                         : null
                     }
@@ -918,7 +945,8 @@ export function ViewSelector({
                     key="has-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("hasValue") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
@@ -935,12 +963,15 @@ export function ViewSelector({
                     key="no-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("none") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">{t("fields.noLink")}</span>
+                      <span className="truncate opacity-40">
+                        {t("fields.noLink")}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -958,11 +989,15 @@ export function ViewSelector({
                     }}
                     onClearFilter={() => handleFilterClick(null, undefined)}
                     currentFilter={
-                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                      selectedFilter &&
+                      Array.isArray(selectedFilter) &&
+                      selectedFilter.length > 0
                         ? (() => {
                             const filter = String(selectedFilter[0]);
                             // Only pass link operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none" ? null : filter;
+                            return filter === "hasValue" || filter === "none"
+                              ? null
+                              : filter;
                           })()
                         : null
                     }
@@ -982,7 +1017,8 @@ export function ViewSelector({
                     key="has-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("hasValue") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
@@ -999,12 +1035,15 @@ export function ViewSelector({
                     key="no-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("none") &&
+                        "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">{t("fields.noSteps")}</span>
+                      <span className="truncate opacity-40">
+                        {t("fields.noSteps")}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -1029,11 +1068,15 @@ export function ViewSelector({
                     }}
                     onClearFilter={() => handleFilterClick(null, undefined)}
                     currentFilter={
-                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                      selectedFilter &&
+                      Array.isArray(selectedFilter) &&
+                      selectedFilter.length > 0
                         ? (() => {
                             const filter = String(selectedFilter[0]);
                             // Only pass steps operator filters, not hasValue/none
-                            return filter === "hasValue" || filter === "none" ? null : filter;
+                            return filter === "hasValue" || filter === "none"
+                              ? null
+                              : filter;
                           })()
                         : null
                     }

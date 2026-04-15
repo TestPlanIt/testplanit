@@ -1,9 +1,11 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData, validateMultiTenantJobData
+  MultiTenantJobData,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
@@ -33,7 +35,9 @@ export const JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
 export const JOB_SEND_DAILY_DIGEST = "send-daily-digest";
 
 const processor = async (job: Job) => {
-  console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
 
   // Validate multi-tenant job data if in multi-tenant mode
   validateMultiTenantJobData(job.data);
@@ -216,7 +220,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(NOTIFICATION_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.NOTIFICATION_CONCURRENCY || '5', 10),
+      concurrency: parseInt(process.env.NOTIFICATION_CONCURRENCY || "5", 10),
     });
 
     worker.on("completed", (job) => {
@@ -261,8 +265,8 @@ const startWorker = async () => {
 if (
   (typeof import.meta !== "undefined" &&
     import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  (typeof import.meta === "undefined" ||
-    (import.meta as any).url === undefined)
+  typeof import.meta === "undefined" ||
+  (import.meta as any).url === undefined
 ) {
   console.log("Notification worker running...");
   startWorker().catch((err) => {

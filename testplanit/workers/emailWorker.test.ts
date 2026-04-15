@@ -144,9 +144,8 @@ describe("EmailWorker", () => {
       });
 
       const { processor } = await import("./emailWorker");
-      const { getServerTranslation } = await import(
-        "../lib/server-translations"
-      );
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
 
       const mockJob = {
         id: "job-2",
@@ -379,9 +378,8 @@ describe("EmailWorker", () => {
       });
 
       const { processor } = await import("./emailWorker");
-      const { getServerTranslation } = await import(
-        "../lib/server-translations"
-      );
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
 
       const mockJob = {
         id: "job-10",
@@ -416,9 +414,8 @@ describe("EmailWorker", () => {
       });
 
       const { processor } = await import("./emailWorker");
-      const { getServerTranslation } = await import(
-        "../lib/server-translations"
-      );
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
 
       const mockJob = {
         id: "job-11",
@@ -528,8 +525,18 @@ describe("EmailWorker", () => {
         data: {
           userId: "user-1",
           notifications: [
-            { id: "notif-1", title: "t1", message: "m1", createdAt: new Date() },
-            { id: "notif-2", title: "t2", message: "m2", createdAt: new Date() },
+            {
+              id: "notif-1",
+              title: "t1",
+              message: "m1",
+              createdAt: new Date(),
+            },
+            {
+              id: "notif-2",
+              title: "t2",
+              message: "m2",
+              createdAt: new Date(),
+            },
           ],
         },
       } as Job;
@@ -636,8 +643,18 @@ describe("EmailWorker", () => {
         data: {
           userId: "user-1",
           notifications: [
-            { id: "notif-1", title: "t1", message: "m1", createdAt: new Date() },
-            { id: "notif-2", title: "t2", message: "m2", createdAt: new Date() },
+            {
+              id: "notif-1",
+              title: "t1",
+              message: "m1",
+              createdAt: new Date(),
+            },
+            {
+              id: "notif-2",
+              title: "t2",
+              message: "m2",
+              createdAt: new Date(),
+            },
           ],
         },
       } as Job;

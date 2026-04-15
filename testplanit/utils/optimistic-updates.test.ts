@@ -2,8 +2,13 @@ import { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  invalidateModelQueries, performOptimisticCreate, performOptimisticDelete,
-  performOptimisticReorder, performOptimisticUpdate, performZenStackOptimisticDelete, useOptimisticMutation
+  invalidateModelQueries,
+  performOptimisticCreate,
+  performOptimisticDelete,
+  performOptimisticReorder,
+  performOptimisticUpdate,
+  performZenStackOptimisticDelete,
+  useOptimisticMutation,
 } from "./optimistic-updates";
 
 // Mock sonner toast
@@ -100,7 +105,9 @@ describe("optimistic-updates", () => {
       const initialData = { value: 1 };
       queryClient.setQueryData(queryKey, initialData);
 
-      const mutationFn = vi.fn().mockRejectedValue(new Error("Mutation failed"));
+      const mutationFn = vi
+        .fn()
+        .mockRejectedValue(new Error("Mutation failed"));
       const updater = vi.fn().mockReturnValue({ value: 2 });
 
       await expect(
@@ -112,12 +119,16 @@ describe("optimistic-updates", () => {
         })
       ).rejects.toThrow("Mutation failed");
 
-      expect(toast.error).toHaveBeenCalledWith("Operation failed. Please try again.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Operation failed. Please try again."
+      );
       expect(queryClient.getQueryData(queryKey)).toEqual(initialData);
     });
 
     it("should use custom error message when provided", async () => {
-      const mutationFn = vi.fn().mockRejectedValue(new Error("Mutation failed"));
+      const mutationFn = vi
+        .fn()
+        .mockRejectedValue(new Error("Mutation failed"));
       const updater = vi.fn().mockReturnValue({ value: 2 });
 
       await expect(
@@ -137,7 +148,9 @@ describe("optimistic-updates", () => {
       const initialData = { value: 1 };
       queryClient.setQueryData(queryKey, initialData);
 
-      const mutationFn = vi.fn().mockRejectedValue(new Error("Mutation failed"));
+      const mutationFn = vi
+        .fn()
+        .mockRejectedValue(new Error("Mutation failed"));
       const updater = vi.fn().mockReturnValue({ value: 2 });
       const onError = vi.fn();
 
@@ -183,9 +196,11 @@ describe("optimistic-updates", () => {
 
       const deleteFn = vi.fn().mockResolvedValue(undefined);
       const getId = vi.fn().mockReturnValue(2);
-      const filterDeleted = vi.fn().mockImplementation((items, id) =>
-        items.filter((item: any) => item.id !== id)
-      );
+      const filterDeleted = vi
+        .fn()
+        .mockImplementation((items, id) =>
+          items.filter((item: any) => item.id !== id)
+        );
 
       await performOptimisticDelete({
         queryClient,
@@ -224,9 +239,11 @@ describe("optimistic-updates", () => {
 
       const deleteFn = vi.fn().mockRejectedValue(new Error("Delete failed"));
       const getId = vi.fn().mockReturnValue(1);
-      const filterDeleted = vi.fn().mockImplementation((items, id) =>
-        items.filter((item: any) => item.id !== id)
-      );
+      const filterDeleted = vi
+        .fn()
+        .mockImplementation((items, id) =>
+          items.filter((item: any) => item.id !== id)
+        );
 
       await expect(
         performOptimisticDelete({
@@ -238,7 +255,9 @@ describe("optimistic-updates", () => {
         })
       ).rejects.toThrow("Delete failed");
 
-      expect(toast.error).toHaveBeenCalledWith("Failed to delete. Please try again.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Failed to delete. Please try again."
+      );
       expect(queryClient.getQueryData(queryKey)).toEqual(initialData);
     });
 
@@ -333,7 +352,9 @@ describe("optimistic-updates", () => {
         })
       ).rejects.toThrow("Reorder failed");
 
-      expect(toast.error).toHaveBeenCalledWith("Failed to reorder. Please try again.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Failed to reorder. Please try again."
+      );
       expect(queryClient.getQueryData(queryKey)).toEqual(initialData);
     });
 
@@ -408,7 +429,9 @@ describe("optimistic-updates", () => {
         })
       ).rejects.toThrow("Create failed");
 
-      expect(toast.error).toHaveBeenCalledWith("Failed to create. Please try again.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Failed to create. Please try again."
+      );
       expect(queryClient.getQueryData(queryKey)).toEqual(initialData);
     });
 
@@ -576,7 +599,9 @@ describe("optimistic-updates", () => {
         })
       ).rejects.toThrow("Delete failed");
 
-      expect(toast.error).toHaveBeenCalledWith("Failed to delete. Please try again.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Failed to delete. Please try again."
+      );
     });
 
     it("should use custom error message", async () => {

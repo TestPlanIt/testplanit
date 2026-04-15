@@ -2,7 +2,13 @@
 
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, Compass, ListTree, PlayCircle, Search } from "lucide-react";
+import {
+  AlertTriangle,
+  Compass,
+  ListTree,
+  PlayCircle,
+  Search,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
@@ -64,17 +70,28 @@ export function EntityList({
                   "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent/50",
                   selectedEntityId === entity.entityId && "bg-accent",
                   isFailed && "border border-red-500/30 bg-red-500/5",
-                  !hasSuggestions && !isFailed && "opacity-50",
+                  !hasSuggestions && !isFailed && "opacity-50"
                 )}
               >
                 <span className="flex min-w-0 items-center gap-1.5">
                   {isFailed ? (
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                  ) : (() => {
-                    const Icon = ENTITY_TYPE_ICONS[entity.entityType];
-                    return Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null;
-                  })()}
-                  <span className={cn("truncate", isFailed && "text-red-600 dark:text-red-400")}>{entity.entityName}</span>
+                  ) : (
+                    (() => {
+                      const Icon = ENTITY_TYPE_ICONS[entity.entityType];
+                      return Icon ? (
+                        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      ) : null;
+                    })()
+                  )}
+                  <span
+                    className={cn(
+                      "truncate",
+                      isFailed && "text-red-600 dark:text-red-400"
+                    )}
+                  >
+                    {entity.entityName}
+                  </span>
                 </span>
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {isFailed

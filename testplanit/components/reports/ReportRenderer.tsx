@@ -3,11 +3,24 @@
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { DataTable } from "@/components/tables/DataTable";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ResizableHandle, ResizablePanel, ResizablePanelGroup
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { ColumnDef, ExpandedState, OnChangeFn, VisibilityState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  ExpandedState,
+  OnChangeFn,
+  VisibilityState,
+} from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { PaginationComponent } from "~/components/tables/Pagination";
@@ -29,7 +42,7 @@ import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
  * @example getBaseReportType("automation-trends") => "automation-trends"
  */
 function getBaseReportType(reportType: string): string {
-  return reportType.replace(/^cross-project-/, '');
+  return reportType.replace(/^cross-project-/, "");
 }
 
 /**
@@ -141,7 +154,10 @@ export function ReportRenderer({
   const tReports = useTranslations("reports.ui");
 
   // Extract dimension and metric IDs for useReportColumns
-  const dimensionIds = useMemo(() => dimensions.map((d) => d.value), [dimensions]);
+  const dimensionIds = useMemo(
+    () => dimensions.map((d) => d.value),
+    [dimensions]
+  );
   const metricIds = useMemo(() => metrics.map((m) => m.value), [metrics]);
 
   // Generate columns using all the specialized hooks (only if not pre-generated)
@@ -180,32 +196,29 @@ export function ReportRenderer({
 
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
-  const generatedColumns =
-    matchesReportType(reportType, "automation-trends")
-      ? automationTrendsColumns
-      : matchesReportType(reportType, "flaky-tests")
-        ? flakyTestsColumns
-        : matchesReportType(reportType, "test-case-health")
-          ? testCaseHealthColumns
-          : matchesReportType(reportType, "issue-test-coverage")
-            ? issueTestCoverageColumns
-            : standardColumns;
+  const generatedColumns = matchesReportType(reportType, "automation-trends")
+    ? automationTrendsColumns
+    : matchesReportType(reportType, "flaky-tests")
+      ? flakyTestsColumns
+      : matchesReportType(reportType, "test-case-health")
+        ? testCaseHealthColumns
+        : matchesReportType(reportType, "issue-test-coverage")
+          ? issueTestCoverageColumns
+          : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
   // Determine which reports are pre-built
-  const isAutomationTrends =
-    matchesReportType(reportType, "automation-trends");
-  const isFlakyTests =
-    matchesReportType(reportType, "flaky-tests");
-  const isTestCaseHealth =
-    matchesReportType(reportType, "test-case-health");
-  const isIssueTestCoverage =
-    matchesReportType(reportType, "issue-test-coverage");
+  const isAutomationTrends = matchesReportType(reportType, "automation-trends");
+  const isFlakyTests = matchesReportType(reportType, "flaky-tests");
+  const isTestCaseHealth = matchesReportType(reportType, "test-case-health");
+  const isIssueTestCoverage = matchesReportType(
+    reportType,
+    "issue-test-coverage"
+  );
 
   // Calculate pagination
-  const startIndex =
-    pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
+  const startIndex = pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
   const endIndex =
     pageSize === "All"
       ? totalCount
@@ -250,7 +263,8 @@ export function ReportRenderer({
 
           const maxScore =
             executions.length > 0
-              ? (1 - Math.pow(decayFactor, executions.length)) / (1 - decayFactor)
+              ? (1 - Math.pow(decayFactor, executions.length)) /
+                (1 - decayFactor)
               : 1;
           const normalizedRecency = maxScore > 0 ? recencyScore / maxScore : 0;
 
@@ -284,7 +298,8 @@ export function ReportRenderer({
           projectId={projectId}
         />
       ),
-      isTruncated: isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
+      isTruncated:
+        isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
       totalDataPoints: dataForChart.length,
     };
   }, [
@@ -314,7 +329,10 @@ export function ReportRenderer({
             <CardDescription>
               {dimensionIds.length > 0 && metricIds.length > 0
                 ? tReports("noDataMatchingCriteria")
-                : isAutomationTrends || isFlakyTests || isTestCaseHealth || isIssueTestCoverage
+                : isAutomationTrends ||
+                    isFlakyTests ||
+                    isTestCaseHealth ||
+                    isIssueTestCoverage
                   ? tReports("noDataAvailable")
                   : tReports("selectAtLeastOneDimensionAndMetric")}
             </CardDescription>
@@ -328,7 +346,9 @@ export function ReportRenderer({
     <ResizablePanelGroup
       direction="vertical"
       className="h-full min-h-[calc(100vh-14rem)]"
-      autoSaveId={readOnly ? "shared-report-panels" : "report-builder-results-panels"}
+      autoSaveId={
+        readOnly ? "shared-report-panels" : "report-builder-results-panels"
+      }
     >
       {/* Visualization Panel */}
       <ResizablePanel
@@ -344,7 +364,9 @@ export function ReportRenderer({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <CardTitle>{tCommon("visualization")}</CardTitle>
-                {reportSummary && <CardDescription>{reportSummary}</CardDescription>}
+                {reportSummary && (
+                  <CardDescription>{reportSummary}</CardDescription>
+                )}
                 {reportGeneratedAt && (
                   <p className="text-xs text-muted-foreground">
                     {tReports("generatedAt")}{" "}
@@ -368,9 +390,7 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-            <div className="flex-1 min-h-0 w-full">
-              {memoizedChart.chart}
-            </div>
+            <div className="flex-1 min-h-0 w-full">{memoizedChart.chart}</div>
           </CardContent>
         </Card>
       </ResizablePanel>
@@ -407,7 +427,9 @@ export function ReportRenderer({
                     <div className="justify-end -mx-4">
                       <PaginationComponent
                         currentPage={currentPage}
-                        totalPages={Math.ceil(totalCount / (pageSize as number))}
+                        totalPages={Math.ceil(
+                          totalCount / (pageSize as number)
+                        )}
                         onPageChange={onPageChange}
                       />
                     </div>

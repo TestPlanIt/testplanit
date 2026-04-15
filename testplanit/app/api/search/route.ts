@@ -4,15 +4,15 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import {
   buildElasticsearchQuery,
   buildSearchAggregations,
-  buildSort, getEntityTypeCounts, getEntityTypeFromIndex, processFacets
+  buildSort,
+  getEntityTypeCounts,
+  getEntityTypeFromIndex,
+  processFacets,
 } from "~/lib/services/searchQueryBuilder";
 import { authOptions } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { getIndicesForEntityTypes } from "~/services/unifiedElasticsearchService";
-import {
-  SearchHit, SearchOptions,
-  UnifiedSearchResult
-} from "~/types/search";
+import { SearchHit, SearchOptions, UnifiedSearchResult } from "~/types/search";
 
 /**
  * POST /api/search
@@ -139,7 +139,9 @@ export async function POST(request: NextRequest) {
                 allStepHighlights.push(...nestedHit.highlight["steps.step"]);
               }
               if (nestedHit.highlight["steps.expectedResult"]) {
-                allExpectedResultHighlights.push(...nestedHit.highlight["steps.expectedResult"]);
+                allExpectedResultHighlights.push(
+                  ...nestedHit.highlight["steps.expectedResult"]
+                );
               }
             }
           });
@@ -160,10 +162,14 @@ export async function POST(request: NextRequest) {
           hit.inner_hits.items.hits.hits.forEach((nestedHit: any) => {
             if (nestedHit.highlight) {
               if (nestedHit.highlight["items.step"]) {
-                allItemStepHighlights.push(...nestedHit.highlight["items.step"]);
+                allItemStepHighlights.push(
+                  ...nestedHit.highlight["items.step"]
+                );
               }
               if (nestedHit.highlight["items.expectedResult"]) {
-                allItemExpectedResultHighlights.push(...nestedHit.highlight["items.expectedResult"]);
+                allItemExpectedResultHighlights.push(
+                  ...nestedHit.highlight["items.expectedResult"]
+                );
               }
             }
           });
@@ -172,7 +178,8 @@ export async function POST(request: NextRequest) {
             highlights["items.step"] = allItemStepHighlights;
           }
           if (allItemExpectedResultHighlights.length > 0) {
-            highlights["items.expectedResult"] = allItemExpectedResultHighlights;
+            highlights["items.expectedResult"] =
+              allItemExpectedResultHighlights;
           }
         }
       }

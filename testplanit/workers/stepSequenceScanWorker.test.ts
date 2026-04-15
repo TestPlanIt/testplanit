@@ -106,21 +106,42 @@ const mockCases = [
   {
     id: 1,
     steps: [
-      { id: 101, step: "Open browser", expectedResult: "Browser opens", order: 0 },
-      { id: 102, step: "Navigate to login", expectedResult: "Login page loads", order: 1 },
+      {
+        id: 101,
+        step: "Open browser",
+        expectedResult: "Browser opens",
+        order: 0,
+      },
+      {
+        id: 102,
+        step: "Navigate to login",
+        expectedResult: "Login page loads",
+        order: 1,
+      },
     ],
   },
   {
     id: 2,
     steps: [
-      { id: 201, step: "Open browser", expectedResult: "Browser opens", order: 0 },
-      { id: 202, step: "Navigate to login", expectedResult: "Login page loads", order: 1 },
+      {
+        id: 201,
+        step: "Open browser",
+        expectedResult: "Browser opens",
+        order: 0,
+      },
+      {
+        id: 202,
+        step: "Navigate to login",
+        expectedResult: "Login page loads",
+        order: 1,
+      },
     ],
   },
 ];
 
 const mockGroup = {
-  fingerprint: "Open browser\nBrowser opens\n---\nNavigate to login\nLogin page loads",
+  fingerprint:
+    "Open browser\nBrowser opens\n---\nNavigate to login\nLogin page loads",
   stepCount: 2,
   members: [
     { caseId: 1, startStepId: 101, endStepId: 102 },
@@ -212,8 +233,18 @@ describe("StepSequenceScanWorker", () => {
       expect(mockMatchCaseCreateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.arrayContaining([
-            expect.objectContaining({ matchId: 42, caseId: 1, startStepId: 101, endStepId: 102 }),
-            expect.objectContaining({ matchId: 42, caseId: 2, startStepId: 201, endStepId: 202 }),
+            expect.objectContaining({
+              matchId: 42,
+              caseId: 1,
+              startStepId: 101,
+              endStepId: 102,
+            }),
+            expect.objectContaining({
+              matchId: 42,
+              caseId: 2,
+              startStepId: 201,
+              endStepId: 202,
+            }),
           ]),
         })
       );
@@ -222,11 +253,21 @@ describe("StepSequenceScanWorker", () => {
     it("soft-deletes old matches before creating new ones", async () => {
       mockFindSharedSequences.mockReturnValue([mockGroup]);
       const callOrder: string[] = [];
-      mockUpdateMany.mockImplementation(async () => { callOrder.push("updateMany"); return { count: 0 }; });
-      mockMatchCreate.mockImplementation(async () => { callOrder.push("matchCreate"); return { id: 42 }; });
+      mockUpdateMany.mockImplementation(async () => {
+        callOrder.push("updateMany");
+        return { count: 0 };
+      });
+      mockMatchCreate.mockImplementation(async () => {
+        callOrder.push("matchCreate");
+        return { id: 42 };
+      });
 
       const { processStepScan } = await loadWorker();
-      await processStepScan(makeMockJob({ id: "job-2" }) as Job, mockPrisma, mockRedisClient);
+      await processStepScan(
+        makeMockJob({ id: "job-2" }) as Job,
+        mockPrisma,
+        mockRedisClient
+      );
 
       // updateMany should have been called with isDeleted: true
       expect(mockUpdateMany).toHaveBeenCalledWith(
@@ -252,7 +293,11 @@ describe("StepSequenceScanWorker", () => {
       const { processStepScan } = await loadWorker();
 
       await expect(
-        processStepScan(makeMockJob({ id: "job-cancel" }) as Job, mockPrisma, mockRedisClient)
+        processStepScan(
+          makeMockJob({ id: "job-cancel" }) as Job,
+          mockPrisma,
+          mockRedisClient
+        )
       ).rejects.toThrow("Job cancelled by user");
 
       // findSharedSequences should NOT be called

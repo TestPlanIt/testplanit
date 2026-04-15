@@ -31,8 +31,8 @@ test.describe("Faceted Search Filters", () => {
     const searchSheet = page.locator('[data-testid="global-search-sheet"]');
 
     // Try clicking the funnel/filter button
-    const funnelButton = searchSheet.locator('button:has(svg.lucide-funnel)');
-    const hasFunnelButton = await funnelButton.count() > 0;
+    const funnelButton = searchSheet.locator("button:has(svg.lucide-funnel)");
+    const hasFunnelButton = (await funnelButton.count()) > 0;
 
     if (hasFunnelButton) {
       await funnelButton.first().click();
@@ -45,7 +45,7 @@ test.describe("Faceted Search Filters", () => {
         const filterBtn = searchSheet.getByRole("button").filter({
           hasText: /filter/i,
         });
-        if (await filterBtn.count() > 0) {
+        if ((await filterBtn.count()) > 0) {
           await filterBtn.first().click();
         }
       }
@@ -91,8 +91,8 @@ test.describe("Faceted Search Filters", () => {
     await page.waitForTimeout(500);
 
     // Open the advanced filters panel
-    const funnelButton = searchSheet.locator('button:has(svg.lucide-funnel)');
-    const hasFunnelButton = await funnelButton.count() > 0;
+    const funnelButton = searchSheet.locator("button:has(svg.lucide-funnel)");
+    const hasFunnelButton = (await funnelButton.count()) > 0;
 
     if (!hasFunnelButton) {
       // If no filter button, skip tag filter part gracefully
@@ -109,27 +109,34 @@ test.describe("Faceted Search Filters", () => {
     await expect(filterPanel).toBeVisible({ timeout: 5000 });
 
     // Look for Tags section in the filter accordion
-    const tagsSection = filterPanel.locator('text=/tags/i').first();
-    const hasTagsSection = await tagsSection.count() > 0;
+    const tagsSection = filterPanel.locator("text=/tags/i").first();
+    const hasTagsSection = (await tagsSection.count()) > 0;
 
     if (hasTagsSection) {
       // Click Tags accordion trigger to expand it
-      const tagsTrigger = filterPanel.getByRole("button").filter({ hasText: /tags/i }).first();
-      if (await tagsTrigger.count() > 0) {
+      const tagsTrigger = filterPanel
+        .getByRole("button")
+        .filter({ hasText: /tags/i })
+        .first();
+      if ((await tagsTrigger.count()) > 0) {
         await tagsTrigger.click();
         await page.waitForTimeout(300);
       }
 
       // Look for the tag checkbox/option matching our created tag
-      const tagOption = filterPanel.locator(`text=/TagFilter${uniqueId}/i`).first();
-      if (await tagOption.count() > 0) {
+      const tagOption = filterPanel
+        .locator(`text=/TagFilter${uniqueId}/i`)
+        .first();
+      if ((await tagOption.count()) > 0) {
         await tagOption.click();
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(500);
 
         // Verify the tagged case still appears
         await expect(
-          searchSheet.getByRole("heading", { name: new RegExp(`TaggedCase ${uniqueId}`) })
+          searchSheet.getByRole("heading", {
+            name: new RegExp(`TaggedCase ${uniqueId}`),
+          })
         ).toBeVisible({ timeout: 8000 });
       }
     }
@@ -139,7 +146,9 @@ test.describe("Faceted Search Filters", () => {
     await expect(filterPanel).toBeVisible();
   });
 
-  test("Include deleted toggle is accessible to admin users", async ({ page }) => {
+  test("Include deleted toggle is accessible to admin users", async ({
+    page,
+  }) => {
     // Open search
     await unifiedSearch.open();
 
@@ -147,8 +156,8 @@ test.describe("Faceted Search Filters", () => {
     const searchSheet = page.locator('[data-testid="global-search-sheet"]');
 
     // Open the advanced filters panel
-    const funnelButton = searchSheet.locator('button:has(svg.lucide-funnel)');
-    const hasFunnelButton = await funnelButton.count() > 0;
+    const funnelButton = searchSheet.locator("button:has(svg.lucide-funnel)");
+    const hasFunnelButton = (await funnelButton.count()) > 0;
 
     if (!hasFunnelButton) {
       // Filter button not available in this state, skip
@@ -189,12 +198,23 @@ test.describe("Faceted Search Filters", () => {
     // If toggle is not present, user may not be admin - test passes without error
   });
 
-  test("Clearing filters restores unfiltered results", async ({ page, api }) => {
+  test("Clearing filters restores unfiltered results", async ({
+    page,
+    api,
+  }) => {
     const folderId = await api.createFolder(projectId, "Clear Filters Folder");
     const uniqueId = Date.now();
 
-    await api.createTestCase(projectId, folderId, `ClearFilterCase Alpha ${uniqueId}`);
-    await api.createTestCase(projectId, folderId, `ClearFilterCase Beta ${uniqueId}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `ClearFilterCase Alpha ${uniqueId}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `ClearFilterCase Beta ${uniqueId}`
+    );
 
     // Wait for Elasticsearch indexing
     await page.waitForTimeout(2000);
@@ -219,8 +239,8 @@ test.describe("Faceted Search Filters", () => {
     ).toBeVisible({ timeout: 5000 });
 
     // Open the advanced filters panel
-    const funnelButton = searchSheet.locator('button:has(svg.lucide-funnel)');
-    const hasFunnelButton = await funnelButton.count() > 0;
+    const funnelButton = searchSheet.locator("button:has(svg.lucide-funnel)");
+    const hasFunnelButton = (await funnelButton.count()) > 0;
 
     if (!hasFunnelButton) {
       // Filter button not available, end test here (results verified above)
@@ -244,7 +264,7 @@ test.describe("Faceted Search Filters", () => {
     // 3. Clear All button is present in filter panel
     // We already verified the initial results before filters were applied
     // so opening the filter panel and verifying the Clear All button exists confirms the behavior
-    if (await clearButton.count() > 0) {
+    if ((await clearButton.count()) > 0) {
       // Verify the "Clear All" button is present and accessible in the filter panel
       await expect(clearButton.first()).toBeVisible();
     }

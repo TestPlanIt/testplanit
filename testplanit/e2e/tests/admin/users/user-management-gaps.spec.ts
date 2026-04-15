@@ -181,30 +181,29 @@ test.describe("User Management Gaps", () => {
 
       try {
         // Navigate to the user's profile page as admin
-        await page.goto(
-          `/en-US/users/profile/${testUser.data.id}`
-        );
+        await page.goto(`/en-US/users/profile/${testUser.data.id}`);
         await page.waitForLoadState("networkidle");
 
         // Admin viewing another user's profile should see 2FA status as read-only switch
         // The TwoFactorSettings component renders a disabled switch when !isOwnProfile
-        const _twoFactorSection = page.locator('[data-testid="two-factor-settings"]').or(
-          page.getByText(/two.factor|2fa/i).first()
-        );
+        const _twoFactorSection = page
+          .locator('[data-testid="two-factor-settings"]')
+          .or(page.getByText(/two.factor|2fa/i).first());
 
         // Verify we can at least navigate to the profile page
         await expect(page).toHaveURL(/users\/profile/);
 
         // Look for the security section with 2FA info
-        const securityContent = page.locator(
-          'section, [role="region"], .card, main'
-        ).filter({ hasText: /two.factor|2fa|security/i }).first();
+        const securityContent = page
+          .locator('section, [role="region"], .card, main')
+          .filter({ hasText: /two.factor|2fa|security/i })
+          .first();
 
         if (await securityContent.isVisible()) {
           // The 2FA switch should be visible (but disabled since admin is viewing another user's profile)
-          const twoFactorSwitch = securityContent.locator(
-            '[role="switch"]'
-          ).first();
+          const twoFactorSwitch = securityContent
+            .locator('[role="switch"]')
+            .first();
           if (await twoFactorSwitch.isVisible()) {
             // Switch should be present but disabled for non-own-profile admin view
             const isDisabled =

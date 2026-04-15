@@ -12,7 +12,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,15 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
-  Form, FormControl, FormField,
+  Form,
+  FormControl,
+  FormField,
   FormItem,
-  FormLabel, FormMessage
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,14 +39,22 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertTriangle,
-  CheckCircle, Eye, GitBranch, Loader2, Plus, RefreshCw, Trash2, Unlink, XCircle
+  CheckCircle,
+  Eye,
+  GitBranch,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Unlink,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -53,7 +64,13 @@ import { toast } from "sonner";
 import * as z from "zod/v4";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
-  useCreateProjectCodeRepositoryConfig, useDeleteProjectCodeRepositoryConfig, useFindFirstProjectCodeRepositoryConfig, useFindFirstProjects, useFindManyCodeRepository, useUpdateProjectCodeRepositoryConfig, useUpdateProjects
+  useCreateProjectCodeRepositoryConfig,
+  useDeleteProjectCodeRepositoryConfig,
+  useFindFirstProjectCodeRepositoryConfig,
+  useFindFirstProjects,
+  useFindManyCodeRepository,
+  useUpdateProjectCodeRepositoryConfig,
+  useUpdateProjects,
 } from "~/lib/hooks";
 import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
@@ -282,7 +299,9 @@ export default function QuickScriptPage() {
       );
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({ error: "Request failed" }));
+        const data = await response
+          .json()
+          .catch(() => ({ error: "Request failed" }));
         setPreview({
           files: [],
           fileCount: 0,
@@ -533,521 +552,534 @@ export default function QuickScriptPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-
-      {/* QuickScript Enable/Disable */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label
-                htmlFor="quickscript-enabled-toggle"
-                className="text-base font-medium"
-              >
-                {t("enableLabel")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("enableDescription")}
-              </p>
-            </div>
-            <Switch
-              id="quickscript-enabled-toggle"
-              checked={project?.quickScriptEnabled ?? false}
-              onCheckedChange={handleToggleQuickScript}
-              disabled={updateProject.isPending}
-              data-testid="quickscript-enabled-toggle"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Export Template Assignment */}
-      <ExportTemplateAssignmentSection
-        projectId={projectId}
-        currentDefaultId={project?.defaultCaseExportTemplateId ?? null}
-      />
-
-      {repositories?.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-            <GitBranch className="h-10 w-10 text-muted-foreground/40" />
-            {session?.user?.access === "ADMIN" ? (
-              <>
-                <div>
-                  <p className="font-medium">{t("noRepos.title")}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("noRepos.adminDescription")}
+          {/* QuickScript Enable/Disable */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label
+                    htmlFor="quickscript-enabled-toggle"
+                    className="text-base font-medium"
+                  >
+                    {t("enableLabel")}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t("enableDescription")}
                   </p>
                 </div>
-                <Button asChild>
-                  <Link href="/admin/code-repositories">
-                    {t("noRepos.adminLink")}
-                  </Link>
-                </Button>
-              </>
-            ) : (
-              <div>
-                <p className="font-medium">{t("noRepos.title")}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t("noRepos.userDescription")}
-                </p>
+                <Switch
+                  id="quickscript-enabled-toggle"
+                  checked={project?.quickScriptEnabled ?? false}
+                  onCheckedChange={handleToggleQuickScript}
+                  disabled={updateProject.isPending}
+                  data-testid="quickscript-enabled-toggle"
+                />
               </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Form {...(form as any)}>
-            <form
-              onSubmit={(form as any).handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
-              {/* Repository Selector */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-                    <CardTitle>{t("repository.title")}</CardTitle>
-                    {existingConfig && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={() => setShowDisconnectDialog(true)}
-                      >
-                        <Unlink className="h-4 w-4" />
-                        {t("disconnect")}
-                      </Button>
-                    )}
-                  </div>
-                  <CardDescription>
-                    {t("repository.description")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control as any}
-                    name="repositoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("repository.title")}</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={t("repository.placeholder")}
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(
-                              (repositories as CodeRepository[] | undefined) ??
-                              []
-                            ).map((repo) => (
-                              <SelectItem key={repo.id} value={String(repo.id)}>
-                                {repo.name} {"("}
-                                {repo.provider}
-                                {")"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            </CardContent>
+          </Card>
 
-                  <FormField
-                    control={form.control as any}
-                    name="branch"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("repository.branchLabel")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder={t("repository.branchPlaceholder")}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+          {/* Export Template Assignment */}
+          <ExportTemplateAssignmentSection
+            projectId={projectId}
+            currentDefaultId={project?.defaultCaseExportTemplateId ?? null}
+          />
 
-              {/* Path Patterns */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("pathPatterns.title")}</CardTitle>
-                  <CardDescription>
-                    {t("pathPatterns.description")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-start gap-2">
-                      <FormField
-                        control={form.control as any}
-                        name={`pathPatterns.${index}.path`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            {index === 0 && (
-                              <FormLabel>
-                                {t("pathPatterns.pathLabel")}
-                              </FormLabel>
-                            )}
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder={t("pathPatterns.pathPlaceholder")}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control as any}
-                        name={`pathPatterns.${index}.pattern`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            {index === 0 && (
-                              <FormLabel>
-                                {t("pathPatterns.patternLabel")}
-                              </FormLabel>
-                            )}
-                            <FormControl>
-                              <Input {...field} placeholder="*" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={index === 0 ? "mt-8" : ""}
-                        onClick={() => remove(index)}
-                        disabled={fields.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+          {repositories?.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+                <GitBranch className="h-10 w-10 text-muted-foreground/40" />
+                {session?.user?.access === "ADMIN" ? (
+                  <>
+                    <div>
+                      <p className="font-medium">{t("noRepos.title")}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t("noRepos.adminDescription")}
+                      </p>
                     </div>
-                  ))}
+                    <Button asChild>
+                      <Link href="/admin/code-repositories">
+                        {t("noRepos.adminLink")}
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <div>
+                    <p className="font-medium">{t("noRepos.title")}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t("noRepos.userDescription")}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Form {...(form as any)}>
+              <form
+                onSubmit={(form as any).handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                {/* Repository Selector */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+                      <CardTitle>{t("repository.title")}</CardTitle>
+                      {existingConfig && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => setShowDisconnectDialog(true)}
+                        >
+                          <Unlink className="h-4 w-4" />
+                          {t("disconnect")}
+                        </Button>
+                      )}
+                    </div>
+                    <CardDescription>
+                      {t("repository.description")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control as any}
+                      name="repositoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("repository.title")}</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={t("repository.placeholder")}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {(
+                                (repositories as
+                                  | CodeRepository[]
+                                  | undefined) ?? []
+                              ).map((repo) => (
+                                <SelectItem
+                                  key={repo.id}
+                                  value={String(repo.id)}
+                                >
+                                  {repo.name} {"("}
+                                  {repo.provider}
+                                  {")"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ path: "", pattern: "*" })}
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t("pathPatterns.addPath")}
-                  </Button>
+                    <FormField
+                      control={form.control as any}
+                      name="branch"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("repository.branchLabel")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder={t("repository.branchPlaceholder")}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
 
-                  {/* Preview */}
-                  <div className="flex items-center gap-3 pt-2">
+                {/* Path Patterns */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("pathPatterns.title")}</CardTitle>
+                    <CardDescription>
+                      {t("pathPatterns.description")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="flex items-start gap-2">
+                        <FormField
+                          control={form.control as any}
+                          name={`pathPatterns.${index}.path`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              {index === 0 && (
+                                <FormLabel>
+                                  {t("pathPatterns.pathLabel")}
+                                </FormLabel>
+                              )}
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder={t(
+                                    "pathPatterns.pathPlaceholder"
+                                  )}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control as any}
+                          name={`pathPatterns.${index}.pattern`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              {index === 0 && (
+                                <FormLabel>
+                                  {t("pathPatterns.patternLabel")}
+                                </FormLabel>
+                              )}
+                              <FormControl>
+                                <Input {...field} placeholder="*" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={index === 0 ? "mt-8" : ""}
+                          onClick={() => remove(index)}
+                          disabled={fields.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={handlePreview}
-                      disabled={isPreviewing || !selectedRepositoryId}
+                      size="sm"
+                      onClick={() => append({ path: "", pattern: "*" })}
                     >
-                      {isPreviewing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      {t("pathPatterns.previewFiles")}
+                      <Plus className="h-4 w-4" />
+                      {t("pathPatterns.addPath")}
                     </Button>
-                    {isPreviewing && previewProgress && (
-                      <span className="text-sm text-muted-foreground">
-                        {previewProgress.step === "branch" &&
-                          t("preview.resolvingBranch")}
-                        {previewProgress.step === "listing" &&
-                          (previewProgress.filesFound != null
-                            ? t("preview.scanningFilesCount", {
-                                count: previewProgress.filesFound,
-                                scope: previewProgress.scope ?? "",
-                              })
-                            : t("preview.scanningFiles", {
-                                scope: previewProgress.scope ?? "",
-                              }))}
-                        {previewProgress.step === "filtering" &&
-                          t("preview.filtering", {
-                            count: previewProgress.totalFiles ?? 0,
-                          })}
-                      </span>
-                    )}
-                  </div>
 
-                  {preview && !preview.error && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>
-                          {t("pathPatterns.files", {
-                            count: preview.fileCount,
-                          })}
-                        </span>
-                        <span>{preview.totalSizeFormatted}</span>
-                        {preview.truncated && (
-                          <Badge variant="secondary">
-                            {t("pathPatterns.truncatedBadge")}
-                          </Badge>
+                    {/* Preview */}
+                    <div className="flex items-center gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handlePreview}
+                        disabled={isPreviewing || !selectedRepositoryId}
+                      >
+                        {isPreviewing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
                         )}
-                      </div>
-
-                      {preview.exceedsLimit && (
-                        <Alert variant="destructive">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription>
-                            {t("pathPatterns.exceedsLimit", {
-                              overflow: formatBytes(preview.overflowBytes),
+                        {t("pathPatterns.previewFiles")}
+                      </Button>
+                      {isPreviewing && previewProgress && (
+                        <span className="text-sm text-muted-foreground">
+                          {previewProgress.step === "branch" &&
+                            t("preview.resolvingBranch")}
+                          {previewProgress.step === "listing" &&
+                            (previewProgress.filesFound != null
+                              ? t("preview.scanningFilesCount", {
+                                  count: previewProgress.filesFound,
+                                  scope: previewProgress.scope ?? "",
+                                })
+                              : t("preview.scanningFiles", {
+                                  scope: previewProgress.scope ?? "",
+                                }))}
+                          {previewProgress.step === "filtering" &&
+                            t("preview.filtering", {
+                              count: previewProgress.totalFiles ?? 0,
                             })}
-                          </AlertDescription>
-                        </Alert>
+                        </span>
                       )}
-
-                      <ScrollArea className="h-48 rounded-md border p-3">
-                        <div className="space-y-1">
-                          {preview.files.map((f) => (
-                            <div
-                              key={f.path}
-                              className="font-mono text-xs text-muted-foreground"
-                            >
-                              {f.path}
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
                     </div>
-                  )}
 
-                  {preview?.error && (
-                    <Alert variant="destructive">
-                      <XCircle className="h-4 w-4" />
-                      <AlertDescription>{preview.error}</AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
+                    {preview && !preview.error && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>
+                            {t("pathPatterns.files", {
+                              count: preview.fileCount,
+                            })}
+                          </span>
+                          <span>{preview.totalSizeFormatted}</span>
+                          {preview.truncated && (
+                            <Badge variant="secondary">
+                              {t("pathPatterns.truncatedBadge")}
+                            </Badge>
+                          )}
+                        </div>
 
-              {/* Cache Settings + Status */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("cache.title")}</CardTitle>
-                  <CardDescription>{t("cache.description")}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Enable/disable cache toggle */}
-                  <FormField
-                    control={form.control as any}
-                    name="cacheEnabled"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-medium">
-                          {t("cache.enableLabel")}
-                        </FormLabel>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {!cacheEnabled && (
-                    <Alert>
-                      <AlertDescription>
-                        {t("cache.disabledWarning")}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {cacheEnabled && (
-                    <>
-                      <FormField
-                        control={form.control as any}
-                        name="cacheTtlDays"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("cache.ttlLabel")}</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="number"
-                                min={1}
-                                max={30}
-                                onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value) || 7)
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+                        {preview.exceedsLimit && (
+                          <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription>
+                              {t("pathPatterns.exceedsLimit", {
+                                overflow: formatBytes(preview.overflowBytes),
+                              })}
+                            </AlertDescription>
+                          </Alert>
                         )}
-                      />
 
-                      {/* Cache Status Panel */}
-                      {configData && (
-                        <>
-                          <Separator />
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-medium">
-                                {t("cache.statusTitle")}
-                              </h4>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleRefreshCache}
-                                disabled={isRefreshing}
+                        <ScrollArea className="h-48 rounded-md border p-3">
+                          <div className="space-y-1">
+                            {preview.files.map((f) => (
+                              <div
+                                key={f.path}
+                                className="font-mono text-xs text-muted-foreground"
                               >
-                                {isRefreshing ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="h-4 w-4" />
-                                )}
-                                {isRefreshing && refreshStep
-                                  ? refreshStep
-                                  : t("cache.refreshButton")}
-                              </Button>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">
-                                  {tCommon("actions.status")}
-                                </span>
-                                <div className="mt-1 flex items-center gap-2">
-                                  {!configData.cacheStatus && (
-                                    <Badge variant="secondary">
-                                      {t("cache.statusNeverFetched")}
-                                    </Badge>
-                                  )}
-                                  {configData.cacheStatus === "success" && (
-                                    <>
-                                      <CheckCircle className="h-4 w-4 text-success" />
-                                      <Badge variant="default">
-                                        {tCommon("fields.success")}
-                                      </Badge>
-                                    </>
-                                  )}
-                                  {configData.cacheStatus === "error" && (
-                                    <>
-                                      <XCircle className="h-4 w-4 text-destructive" />
-                                      <Badge variant="destructive">
-                                        {tCommon("errors.error")}
-                                      </Badge>
-                                    </>
-                                  )}
-                                  {configData.cacheStatus === "pending" && (
-                                    <>
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                      <Badge variant="secondary">
-                                        {t("cache.statusPending")}
-                                      </Badge>
-                                    </>
-                                  )}
-                                </div>
+                                {f.path}
                               </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
 
-                              <div>
-                                <span className="text-muted-foreground">
-                                  {t("cache.lastFetched")}
-                                </span>
-                                <div className="mt-1">
-                                  {configData.cacheLastFetchedAt ? (
-                                    <DateFormatter
-                                      date={
-                                        new Date(configData.cacheLastFetchedAt)
-                                      }
-                                      formatString={
-                                        session?.user.preferences?.dateFormat &&
-                                        session?.user.preferences?.timeFormat
-                                          ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                          : session?.user.preferences
-                                              ?.dateFormat
-                                      }
-                                      timezone={
-                                        session?.user.preferences?.timezone
-                                      }
-                                    />
+                    {preview?.error && (
+                      <Alert variant="destructive">
+                        <XCircle className="h-4 w-4" />
+                        <AlertDescription>{preview.error}</AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Cache Settings + Status */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("cache.title")}</CardTitle>
+                    <CardDescription>{t("cache.description")}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Enable/disable cache toggle */}
+                    <FormField
+                      control={form.control as any}
+                      name="cacheEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-medium">
+                            {t("cache.enableLabel")}
+                          </FormLabel>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {!cacheEnabled && (
+                      <Alert>
+                        <AlertDescription>
+                          {t("cache.disabledWarning")}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {cacheEnabled && (
+                      <>
+                        <FormField
+                          control={form.control as any}
+                          name="cacheTtlDays"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t("cache.ttlLabel")}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  min={1}
+                                  max={30}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseInt(e.target.value) || 7
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Cache Status Panel */}
+                        {configData && (
+                          <>
+                            <Separator />
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-medium">
+                                  {t("cache.statusTitle")}
+                                </h4>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleRefreshCache}
+                                  disabled={isRefreshing}
+                                >
+                                  {isRefreshing ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                   ) : (
-                                    "\u2014"
+                                    <RefreshCw className="h-4 w-4" />
                                   )}
+                                  {isRefreshing && refreshStep
+                                    ? refreshStep
+                                    : t("cache.refreshButton")}
+                                </Button>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {tCommon("actions.status")}
+                                  </span>
+                                  <div className="mt-1 flex items-center gap-2">
+                                    {!configData.cacheStatus && (
+                                      <Badge variant="secondary">
+                                        {t("cache.statusNeverFetched")}
+                                      </Badge>
+                                    )}
+                                    {configData.cacheStatus === "success" && (
+                                      <>
+                                        <CheckCircle className="h-4 w-4 text-success" />
+                                        <Badge variant="default">
+                                          {tCommon("fields.success")}
+                                        </Badge>
+                                      </>
+                                    )}
+                                    {configData.cacheStatus === "error" && (
+                                      <>
+                                        <XCircle className="h-4 w-4 text-destructive" />
+                                        <Badge variant="destructive">
+                                          {tCommon("errors.error")}
+                                        </Badge>
+                                      </>
+                                    )}
+                                    {configData.cacheStatus === "pending" && (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Badge variant="secondary">
+                                          {t("cache.statusPending")}
+                                        </Badge>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t("cache.lastFetched")}
+                                  </span>
+                                  <div className="mt-1">
+                                    {configData.cacheLastFetchedAt ? (
+                                      <DateFormatter
+                                        date={
+                                          new Date(
+                                            configData.cacheLastFetchedAt
+                                          )
+                                        }
+                                        formatString={
+                                          session?.user.preferences
+                                            ?.dateFormat &&
+                                          session?.user.preferences?.timeFormat
+                                            ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                            : session?.user.preferences
+                                                ?.dateFormat
+                                        }
+                                        timezone={
+                                          session?.user.preferences?.timezone
+                                        }
+                                      />
+                                    ) : (
+                                      "\u2014"
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t("cache.filesCached")}
+                                  </span>
+                                  <div className="mt-1">
+                                    {configData.cacheFileCount ?? "\u2014"}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t("cache.totalSize")}
+                                  </span>
+                                  <div className="mt-1">
+                                    {configData.cacheTotalSize != null
+                                      ? formatBytes(
+                                          Number(configData.cacheTotalSize)
+                                        )
+                                      : "\u2014"}
+                                  </div>
                                 </div>
                               </div>
 
-                              <div>
-                                <span className="text-muted-foreground">
-                                  {t("cache.filesCached")}
-                                </span>
-                                <div className="mt-1">
-                                  {configData.cacheFileCount ?? "\u2014"}
-                                </div>
-                              </div>
+                              {configData.cacheStatus === "error" &&
+                                configData.cacheError && (
+                                  <Alert variant="destructive">
+                                    <XCircle className="h-4 w-4" />
+                                    <AlertDescription>
+                                      {configData.cacheError}
+                                    </AlertDescription>
+                                  </Alert>
+                                )}
 
-                              <div>
-                                <span className="text-muted-foreground">
-                                  {t("cache.totalSize")}
-                                </span>
-                                <div className="mt-1">
-                                  {configData.cacheTotalSize != null
-                                    ? formatBytes(
-                                        Number(configData.cacheTotalSize)
-                                      )
-                                    : "\u2014"}
-                                </div>
-                              </div>
-                            </div>
-
-                            {configData.cacheStatus === "error" &&
-                              configData.cacheError && (
+                              {refreshError && (
                                 <Alert variant="destructive">
-                                  <XCircle className="h-4 w-4" />
-                                  <AlertDescription>
-                                    {configData.cacheError}
+                                  <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
+                                    <XCircle className="h-4 w-4 shrink-0" />
+                                    {refreshError}
                                   </AlertDescription>
                                 </Alert>
                               )}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
 
-                            {refreshError && (
-                              <Alert variant="destructive">
-                                <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
-                                  <XCircle className="h-4 w-4 shrink-0" />
-                                  {refreshError}
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("save")}
-                </Button>
-              </div>
-            </form>
-          </Form>
-      )}
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {t("save")}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          )}
         </CardContent>
       </Card>
 
-      <AlertDialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
+      <AlertDialog
+        open={showDisconnectDialog}
+        onOpenChange={setShowDisconnectDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">

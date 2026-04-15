@@ -98,7 +98,8 @@
 }
 
 .swagger-ui .opblock .opblock-summary-path {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.875rem;
   color: hsl(var(--foreground));
 }
@@ -181,7 +182,8 @@
 }
 
 .swagger-ui .opblock-body pre {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.8125rem;
   background: hsl(var(--muted));
   border-radius: 0.375rem;
@@ -204,7 +206,8 @@
 
 /* ===== Parameters ===== */
 .swagger-ui .parameters-col_name {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.8125rem;
   color: hsl(var(--foreground));
 }
@@ -224,7 +227,8 @@
 }
 
 .swagger-ui .parameter__type {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.75rem;
   color: hsl(var(--muted-foreground));
 }
@@ -260,7 +264,8 @@
 }
 
 .swagger-ui .model {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.8125rem;
   color: hsl(var(--foreground));
 }
@@ -350,7 +355,8 @@
 }
 
 .swagger-ui .response-col_status {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.875rem;
   font-weight: 600;
 }

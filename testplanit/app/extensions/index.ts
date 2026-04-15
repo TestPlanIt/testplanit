@@ -42,4 +42,3 @@ export { Selection } from "./Selection";
 export { SlashCommand } from "./SlashCommand";
 export { Table, TableCell, TableHeader, TableRow } from "./Table";
 export { TrailingNode } from "./TrailingNode";
-

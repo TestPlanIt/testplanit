@@ -2,11 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Color, ColorFamily, FieldIcon, Milestones,
-  MilestoneTypes
+  Color,
+  ColorFamily,
+  FieldIcon,
+  Milestones,
+  MilestoneTypes,
 } from "@prisma/client";
 import { Milestone } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -14,8 +17,9 @@ import React, { useEffect, useState } from "react";
 import { useFindManyColor } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import {
-  createColorMap, getStatus,
-  getStatusStyle
+  createColorMap,
+  getStatus,
+  getStatusStyle,
 } from "~/utils/milestoneUtils";
 import DynamicIcon from "../DynamicIcon";
 import LoadingSpinner from "../LoadingSpinner";
@@ -78,10 +82,17 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
           {milestones.length}
         </Badge>
       </PopoverTrigger>
-      <PopoverContent className="flex flex-wrap items-center min-w-[400px] max-w-[600px] overflow-auto max-h-[calc(100vh-400px)]" onWheel={(e) => e.stopPropagation()}>
+      <PopoverContent
+        className="flex flex-wrap items-center min-w-[400px] max-w-[600px] overflow-auto max-h-[calc(100vh-400px)]"
+        onWheel={(e) => e.stopPropagation()}
+      >
         {milestones.map((milestone) => {
           const status = getStatus(milestone);
-          const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
+          const { badge } = getStatusStyle(
+            status,
+            resolvedTheme || "light",
+            colorMap
+          );
 
           return (
             <div key={milestone.id}>

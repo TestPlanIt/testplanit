@@ -40,11 +40,11 @@ export interface CopyMoveJobResult {
 }
 
 export interface FolderTreeNode {
-  localKey: string;          // String(sourceFolderId) — stable client key
-  sourceFolderId: number;    // original source folder ID
+  localKey: string; // String(sourceFolderId) — stable client key
+  sourceFolderId: number; // original source folder ID
   name: string;
-  parentLocalKey: string | null;  // null = root of copied tree
-  caseIds: number[];         // cases directly in this folder
+  parentLocalKey: string | null; // null = root of copied tree
+  caseIds: number[]; // cases directly in this folder
 }
 
 // ─── Redis cancellation key helper ──────────────────────────────────────────
@@ -62,7 +62,11 @@ function cancelKey(jobId: string | undefined): string {
  */
 async function resolveSharedStepGroup(
   tx: any,
-  sourceGroup: { id: number; name: string; items: Array<{ order: number; step: any; expectedResult: any }> },
+  sourceGroup: {
+    id: number;
+    name: string;
+    items: Array<{ order: number; step: any; expectedResult: any }>;
+  },
   jobData: CopyMoveJobData,
   sharedGroupMap: Map<number, number>
 ): Promise<number> {
@@ -138,19 +142,29 @@ function resolveFieldValue(
   }>
 ): any | null {
   // Find the source field definition
-  const sourceField = sourceTemplateFields.find((f) => f.caseFieldId === fieldId);
+  const sourceField = sourceTemplateFields.find(
+    (f) => f.caseFieldId === fieldId
+  );
   if (!sourceField) return null;
 
   // Find corresponding target field by systemName
-  const targetField = targetTemplateFields.find((f) => f.systemName === sourceField.systemName);
+  const targetField = targetTemplateFields.find(
+    (f) => f.systemName === sourceField.systemName
+  );
   if (!targetField) return null;
 
   // For Dropdown/MultiSelect: resolve option IDs by option name
-  if (sourceField.fieldType === "Dropdown" || sourceField.fieldType === "MultiSelect") {
+  if (
+    sourceField.fieldType === "Dropdown" ||
+    sourceField.fieldType === "MultiSelect"
+  ) {
     if (sourceField.fieldType === "Dropdown") {
       // sourceValue is a single option ID (number)
-      const sourceOptionId = typeof sourceValue === "number" ? sourceValue : Number(sourceValue);
-      const sourceOption = sourceField.fieldOptions.find((o) => o.optionId === sourceOptionId);
+      const sourceOptionId =
+        typeof sourceValue === "number" ? sourceValue : Number(sourceValue);
+      const sourceOption = sourceField.fieldOptions.find(
+        (o) => o.optionId === sourceOptionId
+      );
       if (!sourceOption) return null;
 
       const targetOption = targetField.fieldOptions.find(
@@ -164,7 +178,9 @@ function resolveFieldValue(
         : [];
       const resolvedIds: number[] = [];
       for (const srcId of sourceOptionIds) {
-        const sourceOption = sourceField.fieldOptions.find((o) => o.optionId === srcId);
+        const sourceOption = sourceField.fieldOptions.find(
+          (o) => o.optionId === srcId
+        );
         if (!sourceOption) continue;
         const targetOption = targetField.fieldOptions.find(
           (o) => o.optionName === sourceOption.optionName
@@ -188,12 +204,14 @@ function resolveFieldValue(
 async function fetchTemplateFields(
   prisma: any,
   templateId: number
-): Promise<Array<{
-  caseFieldId: number;
-  fieldType: string;
-  systemName: string;
-  fieldOptions: Array<{ optionId: number; optionName: string }>;
-}>> {
+): Promise<
+  Array<{
+    caseFieldId: number;
+    fieldType: string;
+    systemName: string;
+    fieldOptions: Array<{ optionId: number; optionName: string }>;
+  }>
+> {
   // Fetch template-field assignments with field metadata
   const assignments = await prisma.templateCaseAssignment.findMany({
     where: { templateId },
@@ -250,7 +268,9 @@ async function fetchTemplateFields(
 
 // ─── Processor ──────────────────────────────────────────────────────────────
 
-const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> => {
+const processor = async (
+  job: Job<CopyMoveJobData>
+): Promise<CopyMoveJobResult> => {
   console.log(
     `Processing copy-move job ${job.id}: ${job.data.operation} ${job.data.caseIds.length} cases` +
       ` from project ${job.data.sourceProjectId} to ${job.data.targetProjectId}` +
@@ -293,7 +313,9 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
       if (node.parentLocalKey === null) {
         parentTargetId = job.data.targetFolderId;
       } else {
-        const mappedParent = sourceFolderToTargetFolderMap.get(node.parentLocalKey);
+        const mappedParent = sourceFolderToTargetFolderMap.get(
+          node.parentLocalKey
+        );
         if (mappedParent === undefined) {
           throw new Error("Folder tree ordering error: parent not yet created");
         }
@@ -318,7 +340,11 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
       } else {
         // Create new folder under parentTargetId
         const maxFolderOrderRow = await prisma.repositoryFolders.findFirst({
-          where: { projectId: job.data.targetProjectId, repositoryId: job.data.targetRepositoryId, parentId: parentTargetId },
+          where: {
+            projectId: job.data.targetProjectId,
+            repositoryId: job.data.targetRepositoryId,
+            parentId: parentTargetId,
+          },
           orderBy: { order: "desc" },
           select: { order: true },
         });
@@ -339,7 +365,9 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
     }
 
     // Pre-fetch max case orders for each unique target folder created during tree recreation
-    const uniqueTargetFolderIds = [...new Set(sourceFolderToTargetFolderMap.values())];
+    const uniqueTargetFolderIds = [
+      ...new Set(sourceFolderToTargetFolderMap.values()),
+    ];
     for (const fId of uniqueTargetFolderIds) {
       const maxRow = await prisma.repositoryCases.findFirst({
         where: { folderId: fId },
@@ -402,7 +430,9 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
   // Source template ID comes from the first source case (assume all share same template)
   const sourceTemplateId = sourceCases[0]?.templateId;
   const [sourceTemplateFields, targetTemplateFields] = await Promise.all([
-    sourceTemplateId ? fetchTemplateFields(prisma, sourceTemplateId) : Promise.resolve([]),
+    sourceTemplateId
+      ? fetchTemplateFields(prisma, sourceTemplateId)
+      : Promise.resolve([]),
     fetchTemplateFields(prisma, job.data.targetTemplateId),
   ]);
 
@@ -433,9 +463,10 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
 
       // Collision check: skip or rename based on user's conflictResolution choice
       // Collision check — must handle NULL className (PostgreSQL NULL != NULL bypasses unique constraint)
-      const classNameWhere = sourceCase.className === null
-        ? { className: { equals: null as any } }
-        : { className: sourceCase.className };
+      const classNameWhere =
+        sourceCase.className === null
+          ? { className: { equals: null as any } }
+          : { className: sourceCase.className };
 
       const existingCase = await prisma.repositoryCases.findFirst({
         where: {
@@ -479,7 +510,8 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
       // Determine target folder for this case (either from folderTree map or flat targetFolderId)
       const caseFolderKey = String(sourceCase.folderId);
       const caseFolderId = job.data.folderTree
-        ? (sourceFolderToTargetFolderMap.get(caseFolderKey) ?? job.data.targetFolderId)
+        ? (sourceFolderToTargetFolderMap.get(caseFolderKey) ??
+          job.data.targetFolderId)
         : job.data.targetFolderId;
 
       // Determine case order for this folder
@@ -576,7 +608,11 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
           await tx.repositoryCases.update({
             where: { id: newCase.id },
             data: {
-              tags: { connect: sourceCase.tags.map((t: { id: number }) => ({ id: t.id })) },
+              tags: {
+                connect: sourceCase.tags.map((t: { id: number }) => ({
+                  id: t.id,
+                })),
+              },
             },
           });
         }
@@ -586,7 +622,11 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
           await tx.repositoryCases.update({
             where: { id: newCase.id },
             data: {
-              issues: { connect: sourceCase.issues.map((i: { id: number }) => ({ id: i.id })) },
+              issues: {
+                connect: sourceCase.issues.map((i: { id: number }) => ({
+                  id: i.id,
+                })),
+              },
             },
           });
         }
@@ -704,18 +744,26 @@ const processor = async (job: Job<CopyMoveJobData>): Promise<CopyMoveJobResult> 
   }
 
   // 11. Elasticsearch bulk sync after all cases committed (not per-case inside transaction)
-  await job.updateProgress({ processed: sourceCases.length, total: sourceCases.length, finalizing: true });
+  await job.updateProgress({
+    processed: sourceCases.length,
+    total: sourceCases.length,
+    finalizing: true,
+  });
 
   for (const id of createdTargetIds) {
-    syncRepositoryCaseToElasticsearch(id, job.data.tenantId, prisma).catch((err) =>
-      console.error(`ES sync failed for new case ${id}:`, err)
+    syncRepositoryCaseToElasticsearch(id, job.data.tenantId, prisma).catch(
+      (err) => console.error(`ES sync failed for new case ${id}:`, err)
     );
   }
 
   // For move: also remove source cases from ES index (best-effort)
   if (job.data.operation === "move") {
     for (const sourceId of job.data.caseIds) {
-      syncRepositoryCaseToElasticsearch(sourceId, job.data.tenantId, prisma).catch((err) =>
+      syncRepositoryCaseToElasticsearch(
+        sourceId,
+        job.data.tenantId,
+        prisma
+      ).catch((err) =>
         console.error(`ES sync failed for moved source case ${sourceId}:`, err)
       );
     }
@@ -827,9 +875,13 @@ const startWorker = async () => {
       console.error("Copy-move worker error:", err);
     });
 
-    console.log(`Copy-move worker started for queue "${COPY_MOVE_QUEUE_NAME}".`);
+    console.log(
+      `Copy-move worker started for queue "${COPY_MOVE_QUEUE_NAME}".`
+    );
   } else {
-    console.warn("Valkey connection not available. Copy-move worker not started.");
+    console.warn(
+      "Valkey connection not available. Copy-move worker not started."
+    );
   }
 
   // Graceful shutdown

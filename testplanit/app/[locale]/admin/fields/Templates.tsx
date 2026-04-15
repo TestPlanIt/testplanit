@@ -4,7 +4,12 @@ import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +19,12 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  useCreateManyTemplateProjectAssignment, useDeleteManyTemplateProjectAssignment, useFindManyProjects, useFindManyTemplates, useUpdateManyTemplates, useUpdateTemplates
+  useCreateManyTemplateProjectAssignment,
+  useDeleteManyTemplateProjectAssignment,
+  useFindManyProjects,
+  useFindManyTemplates,
+  useUpdateManyTemplates,
+  useUpdateTemplates,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddTemplate } from "./AddTemplate";
@@ -196,9 +206,7 @@ export default function TemplateComponent() {
                   onClick={() => setAddTemplateOpen(true)}
                 >
                   <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">
-                    {t("add.title")}
-                  </span>
+                  <span className="hidden md:inline">{t("add.title")}</span>
                 </Button>
                 {addTemplateOpen && (
                   <AddTemplate

@@ -10,7 +10,9 @@ const { mockRouterPush } = vi.hoisted(() => ({
 }));
 
 const { mockSessionStatus, mockSessionData } = vi.hoisted(() => ({
-  mockSessionStatus: { value: "loading" as "loading" | "authenticated" | "unauthenticated" },
+  mockSessionStatus: {
+    value: "loading" as "loading" | "authenticated" | "unauthenticated",
+  },
   mockSessionData: { value: null as any },
 }));
 

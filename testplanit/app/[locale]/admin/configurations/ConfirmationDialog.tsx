@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Form, FormItem } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -63,7 +63,9 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
-              <div className="text-muted-foreground text-sm">{tGlobal("common.fields.step")}</div>
+              <div className="text-muted-foreground text-sm">
+                {tGlobal("common.fields.step")}
+              </div>
             </DialogHeader>
             <DialogDescription>
               {t("description", {

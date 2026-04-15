@@ -90,7 +90,9 @@ test.describe("Sorting", () => {
     const header = table.locator("th").filter({ hasText: columnName }).first();
     await expect(header).toBeVisible({ timeout: 5000 });
 
-    const sortButton = header.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = header
+      .getByRole("button", { name: "Sort column" })
+      .first();
     await expect(sortButton).toBeVisible({ timeout: 5000 });
     await sortButton.click();
 
@@ -106,9 +108,11 @@ test.describe("Sorting", () => {
   ): Promise<string> {
     const table = page.locator("table").first();
     const header = table.locator("th").filter({ hasText: columnName }).first();
-    const sortButton = header.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = header
+      .getByRole("button", { name: "Sort column" })
+      .first();
     const sortIcon = sortButton.getByRole("img");
-    return await sortIcon.getAttribute("aria-label") || "";
+    return (await sortIcon.getAttribute("aria-label")) || "";
   }
 
   /**
@@ -182,11 +186,16 @@ test.describe("Sorting", () => {
     expect(await rows.count()).toBe(2);
 
     // Find the State column sort button
-    const stateHeader = table.locator('th').filter({ hasText: 'State' }).first();
+    const stateHeader = table
+      .locator("th")
+      .filter({ hasText: "State" })
+      .first();
     await expect(stateHeader).toBeVisible({ timeout: 5000 });
 
     // The sort button is inside the header with accessible name "Sort column"
-    const sortButton = stateHeader.getByRole('button', { name: 'Sort column' }).first();
+    const sortButton = stateHeader
+      .getByRole("button", { name: "Sort column" })
+      .first();
     await expect(sortButton).toBeVisible({ timeout: 5000 });
     await sortButton.click();
 
@@ -203,9 +212,21 @@ test.describe("Sorting", () => {
     const random = Math.random().toString(36).substring(7);
     const folderName = `Maintain Order Folder ${timestamp}-${random}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `First Case ${timestamp}-${random}`);
-    await api.createTestCase(projectId, folderId, `Second Case ${timestamp}-${random}`);
-    await api.createTestCase(projectId, folderId, `Third Case ${timestamp}-${random}`);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `First Case ${timestamp}-${random}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Second Case ${timestamp}-${random}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Third Case ${timestamp}-${random}`
+    );
 
     await repositoryPage.goto(projectId);
 
@@ -234,7 +255,10 @@ test.describe("Sorting", () => {
     expect(await rows.count()).toBe(3);
   });
 
-  test("Sort Cycles Through Default, Ascending, Descending", async ({ api, page }) => {
+  test("Sort Cycles Through Default, Ascending, Descending", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with test cases
@@ -255,28 +279,30 @@ test.describe("Sorting", () => {
     await expect(rows.first()).toBeVisible({ timeout: 10000 });
 
     // Find the Name column header and sort button
-    const nameHeader = table.locator('th').filter({ hasText: 'Name' }).first();
-    const sortButton = nameHeader.getByRole('button', { name: 'Sort column' }).first();
+    const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
+    const sortButton = nameHeader
+      .getByRole("button", { name: "Sort column" })
+      .first();
     await expect(sortButton).toBeVisible({ timeout: 5000 });
 
     // Initial state: "Not sorted" - check the sort icon inside the button
-    const sortIcon = sortButton.getByRole('img');
-    await expect(sortIcon).toHaveAccessibleName('Not sorted');
+    const sortIcon = sortButton.getByRole("img");
+    await expect(sortIcon).toHaveAccessibleName("Not sorted");
 
     // Click 1: Should change to ascending
     await sortButton.click();
     await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    await expect(sortIcon).toHaveAccessibleName('Sorted ascending');
+    await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
     // Click 2: Should change to descending
     await sortButton.click();
     await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    await expect(sortIcon).toHaveAccessibleName('Sorted descending');
+    await expect(sortIcon).toHaveAccessibleName("Sorted descending");
 
     // Click 3: Should return to default (not sorted)
     await sortButton.click();
     await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    await expect(sortIcon).toHaveAccessibleName('Not sorted');
+    await expect(sortIcon).toHaveAccessibleName("Not sorted");
   });
 
   test("Verify Name Column Sort Order - Ascending", async ({ api, page }) => {
@@ -364,7 +390,10 @@ test.describe("Sorting", () => {
       await columnSelectionButton.click();
 
       // Look for the ID checkbox and enable it if not already
-      const idCheckbox = page.locator('label').filter({ hasText: /^ID$/ }).locator('input[type="checkbox"]');
+      const idCheckbox = page
+        .locator("label")
+        .filter({ hasText: /^ID$/ })
+        .locator('input[type="checkbox"]');
       if (await idCheckbox.isVisible()) {
         const isChecked = await idCheckbox.isChecked();
         if (!isChecked) {
@@ -383,7 +412,9 @@ test.describe("Sorting", () => {
 
     // Check if ID column is visible
     if (await idHeader.isVisible()) {
-      const sortButton = idHeader.getByRole("button", { name: "Sort column" }).first();
+      const sortButton = idHeader
+        .getByRole("button", { name: "Sort column" })
+        .first();
       await expect(sortButton).toBeVisible({ timeout: 5000 });
 
       // Click to sort ascending
@@ -423,7 +454,9 @@ test.describe("Sorting", () => {
     const tagsHeader = table.locator("th").filter({ hasText: "Tags" }).first();
 
     if (await tagsHeader.isVisible()) {
-      const sortButton = tagsHeader.getByRole("button", { name: "Sort column" }).first();
+      const sortButton = tagsHeader
+        .getByRole("button", { name: "Sort column" })
+        .first();
 
       if (await sortButton.isVisible()) {
         // Initial state should be "Not sorted"
@@ -458,13 +491,29 @@ test.describe("Sorting", () => {
 
     // Create 15 test cases with alphabetically sortable names
     const names = [
-      "Oscar", "Alfa", "November", "Bravo", "Mike",
-      "Charlie", "Lima", "Delta", "Kilo", "Echo",
-      "Juliet", "Foxtrot", "India", "Golf", "Hotel"
+      "Oscar",
+      "Alfa",
+      "November",
+      "Bravo",
+      "Mike",
+      "Charlie",
+      "Lima",
+      "Delta",
+      "Kilo",
+      "Echo",
+      "Juliet",
+      "Foxtrot",
+      "India",
+      "Golf",
+      "Hotel",
     ];
 
     for (const name of names) {
-      await api.createTestCase(projectId, folderId, `${name} Case ${timestamp}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `${name} Case ${timestamp}`
+      );
     }
 
     await repositoryPage.goto(projectId);
@@ -491,8 +540,13 @@ test.describe("Sorting", () => {
     expect(sortState).toBe("Sorted ascending");
 
     // Navigate to next page if pagination is available
-    const nextPageButton = page.getByRole("button", { name: /next|›/i }).first();
-    if (await nextPageButton.isVisible() && await nextPageButton.isEnabled()) {
+    const nextPageButton = page
+      .getByRole("button", { name: /next|›/i })
+      .first();
+    if (
+      (await nextPageButton.isVisible()) &&
+      (await nextPageButton.isEnabled())
+    ) {
       await nextPageButton.click();
       await waitForTableStable(page);
 
@@ -549,11 +603,26 @@ test.describe("Sorting", () => {
     const folderId = await api.createFolder(projectId, folderName);
 
     // Create test cases with different states
-    await api.createTestCaseWithState(projectId, folderId, `State A Case ${timestamp}`, stateIds[0]);
+    await api.createTestCaseWithState(
+      projectId,
+      folderId,
+      `State A Case ${timestamp}`,
+      stateIds[0]
+    );
     if (stateIds.length > 1) {
-      await api.createTestCaseWithState(projectId, folderId, `State B Case ${timestamp}`, stateIds[1]);
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `State B Case ${timestamp}`,
+        stateIds[1]
+      );
     }
-    await api.createTestCaseWithState(projectId, folderId, `State C Case ${timestamp}`, stateIds[0]);
+    await api.createTestCaseWithState(
+      projectId,
+      folderId,
+      `State C Case ${timestamp}`,
+      stateIds[0]
+    );
 
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
@@ -620,7 +689,11 @@ test.describe("Sorting", () => {
 
     const testCaseCount = 5;
     for (let i = 0; i < testCaseCount; i++) {
-      await api.createTestCase(projectId, folderId, `Case ${i + 1} ${timestamp}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Case ${i + 1} ${timestamp}`
+      );
     }
 
     await repositoryPage.goto(projectId);
@@ -709,7 +782,9 @@ test.describe("Sorting", () => {
 
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
-    const sortButton = nameHeader.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = nameHeader
+      .getByRole("button", { name: "Sort column" })
+      .first();
     const sortIcon = sortButton.getByRole("img");
 
     // Verify all three states have correct aria-labels
@@ -775,7 +850,9 @@ test.describe("Sorting", () => {
 
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
-    const sortButton = nameHeader.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = nameHeader
+      .getByRole("button", { name: "Sort column" })
+      .first();
 
     // Rapid clicks - should cycle through states correctly
     await sortButton.click();
@@ -828,7 +905,10 @@ test.describe("Sorting", () => {
     expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
   });
 
-  test("Header Column Count Preserved When Switching Sort Columns", async ({ api, page }) => {
+  test("Header Column Count Preserved When Switching Sort Columns", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
@@ -867,7 +947,10 @@ test.describe("Sorting", () => {
     expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
   });
 
-  test("Header Column Count Preserved After Multiple Sort Operations", async ({ api, page }) => {
+  test("Header Column Count Preserved After Multiple Sort Operations", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
@@ -889,10 +972,15 @@ test.describe("Sorting", () => {
 
     // Perform many sort operations
     const sortOperations = [
-      "Name", "Name", "Name",      // Full cycle on Name
-      "State", "State",             // Partial cycle on State
-      "Name",                       // Switch back to Name
-      "State", "State", "State",   // Full cycle on State
+      "Name",
+      "Name",
+      "Name", // Full cycle on Name
+      "State",
+      "State", // Partial cycle on State
+      "Name", // Switch back to Name
+      "State",
+      "State",
+      "State", // Full cycle on State
     ];
 
     for (const column of sortOperations) {
@@ -923,7 +1011,9 @@ test.describe("Sorting with ViewSelector Filters", () => {
   ): Promise<number> {
     // Add random suffix to prevent name collisions in parallel execution
     const random = Math.random().toString(36).substring(7);
-    return await api.createProject(`E2E ViewSort Project ${Date.now()}-${random}`);
+    return await api.createProject(
+      `E2E ViewSort Project ${Date.now()}-${random}`
+    );
   }
 
   async function waitForTableStable(page: import("@playwright/test").Page) {
@@ -942,7 +1032,9 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const header = table.locator("th").filter({ hasText: columnName }).first();
     await expect(header).toBeVisible({ timeout: 5000 });
 
-    const sortButton = header.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = header
+      .getByRole("button", { name: "Sort column" })
+      .first();
     await expect(sortButton).toBeVisible({ timeout: 5000 });
     await sortButton.click();
 
@@ -955,9 +1047,11 @@ test.describe("Sorting with ViewSelector Filters", () => {
   ): Promise<string> {
     const table = page.locator("table").first();
     const header = table.locator("th").filter({ hasText: columnName }).first();
-    const sortButton = header.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = header
+      .getByRole("button", { name: "Sort column" })
+      .first();
     const sortIcon = sortButton.getByRole("img");
-    return await sortIcon.getAttribute("aria-label") || "";
+    return (await sortIcon.getAttribute("aria-label")) || "";
   }
 
   async function getColumnCount(
@@ -1005,7 +1099,10 @@ test.describe("Sorting with ViewSelector Filters", () => {
   /**
    * Helper to select a ViewSelector option
    */
-  async function selectView(page: import("@playwright/test").Page, viewName: string) {
+  async function selectView(
+    page: import("@playwright/test").Page,
+    viewName: string
+  ) {
     // Click the view selector dropdown
     const viewSelector = page.locator('[data-testid="view-selector"]').first();
     if (await viewSelector.isVisible()) {
@@ -1013,7 +1110,9 @@ test.describe("Sorting with ViewSelector Filters", () => {
       await page.waitForTimeout(300);
 
       // Select the view option
-      const viewOption = page.getByRole("option", { name: new RegExp(viewName, "i") }).first();
+      const viewOption = page
+        .getByRole("option", { name: new RegExp(viewName, "i") })
+        .first();
       if (await viewOption.isVisible()) {
         await viewOption.click();
         await page.waitForLoadState("networkidle");
@@ -1032,10 +1131,25 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const folderName = `ViewSort States Folder ${timestamp}`;
     const folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCaseWithState(projectId, folderId, `Zebra Case ${timestamp}`, stateIds[0]);
-    await api.createTestCaseWithState(projectId, folderId, `Alpha Case ${timestamp}`, stateIds[0]);
+    await api.createTestCaseWithState(
+      projectId,
+      folderId,
+      `Zebra Case ${timestamp}`,
+      stateIds[0]
+    );
+    await api.createTestCaseWithState(
+      projectId,
+      folderId,
+      `Alpha Case ${timestamp}`,
+      stateIds[0]
+    );
     if (stateIds.length > 1) {
-      await api.createTestCaseWithState(projectId, folderId, `Mike Case ${timestamp}`, stateIds[1]);
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Mike Case ${timestamp}`,
+        stateIds[1]
+      );
     }
 
     await repositoryPage.goto(projectId);
@@ -1130,7 +1244,10 @@ test.describe("Sorting with ViewSelector Filters", () => {
     expect(await getColumnCount(page)).toBe(initialColumnCount);
   });
 
-  test("Sort Preserves Column Count When Switching Views", async ({ api, page }) => {
+  test("Sort Preserves Column Count When Switching Views", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
@@ -1173,7 +1290,10 @@ test.describe("Sorting with ViewSelector Filters", () => {
     expect(await getColumnCount(page)).toBe(initialColumnCount);
   });
 
-  test("Sort with Combined Search and ViewSelector Filter", async ({ api, page }) => {
+  test("Sort with Combined Search and ViewSelector Filter", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
@@ -1223,7 +1343,10 @@ test.describe("Sorting with ViewSelector Filters", () => {
     expect(nameValues[2]).toContain("Delta");
   });
 
-  test("Header Column Count Preserved After View Switch and Sort", async ({ api, page }) => {
+  test("Header Column Count Preserved After View Switch and Sort", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
@@ -1273,10 +1396,17 @@ test.describe("Sorting with ViewSelector Filters", () => {
 test.describe("Run Mode Sorting", () => {
   async function createTestProjectWithTestRun(
     api: import("../../../fixtures/api.fixture").ApiHelper
-  ): Promise<{ projectId: number; testRunId: number; folderId: number; caseIds: number[] }> {
+  ): Promise<{
+    projectId: number;
+    testRunId: number;
+    folderId: number;
+    caseIds: number[];
+  }> {
     // Add random suffix to prevent name collisions in parallel execution
     const random = Math.random().toString(36).substring(7);
-    const projectId = await api.createProject(`E2E Run Mode Project ${Date.now()}-${random}`);
+    const projectId = await api.createProject(
+      `E2E Run Mode Project ${Date.now()}-${random}`
+    );
     const folderId = await api.getRootFolderId(projectId);
 
     // Create test cases with alphabetically sortable names
@@ -1284,12 +1414,19 @@ test.describe("Run Mode Sorting", () => {
     const timestamp = Date.now();
     const names = ["Charlie Case", "Alpha Case", "Bravo Case"];
     for (const name of names) {
-      const caseId = await api.createTestCase(projectId, folderId, `${name} ${timestamp}-${random}`);
+      const caseId = await api.createTestCase(
+        projectId,
+        folderId,
+        `${name} ${timestamp}-${random}`
+      );
       caseIds.push(caseId);
     }
 
     // Create a test run
-    const testRunId = await api.createTestRun(projectId, `Test Run ${Date.now()}`);
+    const testRunId = await api.createTestRun(
+      projectId,
+      `Test Run ${Date.now()}`
+    );
 
     // Add test cases to the test run with specific orders
     await api.addTestCaseToTestRun(testRunId, caseIds[0], { order: 3 }); // Charlie - order 3
@@ -1315,7 +1452,9 @@ test.describe("Run Mode Sorting", () => {
     const header = table.locator("th").filter({ hasText: columnName }).first();
     await expect(header).toBeVisible({ timeout: 5000 });
 
-    const sortButton = header.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = header
+      .getByRole("button", { name: "Sort column" })
+      .first();
     await expect(sortButton).toBeVisible({ timeout: 5000 });
     // Use force: true to bypass element interception in run mode layout
     await sortButton.click({ force: true });
@@ -1329,9 +1468,11 @@ test.describe("Run Mode Sorting", () => {
   ): Promise<string> {
     const table = page.locator("table").first();
     const header = table.locator("th").filter({ hasText: columnName }).first();
-    const sortButton = header.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = header
+      .getByRole("button", { name: "Sort column" })
+      .first();
     const sortIcon = sortButton.getByRole("img");
-    return await sortIcon.getAttribute("aria-label") || "";
+    return (await sortIcon.getAttribute("aria-label")) || "";
   }
 
   async function getColumnCount(
@@ -1377,7 +1518,10 @@ test.describe("Run Mode Sorting", () => {
       await columnSelectionButton.click();
 
       // Look for the ID checkbox and enable it if not already
-      const idCheckbox = page.locator('label').filter({ hasText: /^ID$/ }).locator('input[type="checkbox"]');
+      const idCheckbox = page
+        .locator("label")
+        .filter({ hasText: /^ID$/ })
+        .locator('input[type="checkbox"]');
       if (await idCheckbox.isVisible()) {
         const isChecked = await idCheckbox.isChecked();
         if (!isChecked) {
@@ -1396,7 +1540,9 @@ test.describe("Run Mode Sorting", () => {
 
     // Check if ID column is visible
     if (await idHeader.isVisible()) {
-      const sortButton = idHeader.getByRole("button", { name: "Sort column" }).first();
+      const sortButton = idHeader
+        .getByRole("button", { name: "Sort column" })
+        .first();
       await expect(sortButton).toBeVisible({ timeout: 5000 });
 
       // Sort by ID ascending
@@ -1417,24 +1563,47 @@ test.describe("Run Mode Sorting", () => {
   test("Sort with Status Set on Test Run Cases", async ({ api, page }) => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
-    const projectId = await api.createProject(`E2E Run Mode Status Project ${timestamp}-${random}`);
+    const projectId = await api.createProject(
+      `E2E Run Mode Status Project ${timestamp}-${random}`
+    );
     const folderId = await api.getRootFolderId(projectId);
 
     // Create test cases
-    const caseId1 = await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}-${random}`);
-    const caseId2 = await api.createTestCase(projectId, folderId, `Beta Case ${timestamp}-${random}`);
-    const caseId3 = await api.createTestCase(projectId, folderId, `Charlie Case ${timestamp}-${random}`);
+    const caseId1 = await api.createTestCase(
+      projectId,
+      folderId,
+      `Alpha Case ${timestamp}-${random}`
+    );
+    const caseId2 = await api.createTestCase(
+      projectId,
+      folderId,
+      `Beta Case ${timestamp}-${random}`
+    );
+    const caseId3 = await api.createTestCase(
+      projectId,
+      folderId,
+      `Charlie Case ${timestamp}-${random}`
+    );
 
     // Create a test run
-    const testRunId = await api.createTestRun(projectId, `Status Test Run ${Date.now()}`);
+    const testRunId = await api.createTestRun(
+      projectId,
+      `Status Test Run ${Date.now()}`
+    );
 
     // Get status IDs
     const passedStatusId = await api.getStatusId("passed");
     const failedStatusId = await api.getStatusId("failed");
 
     // Add cases with different statuses
-    const trc1 = await api.addTestCaseToTestRun(testRunId, caseId1, { order: 1, statusId: passedStatusId });
-    const trc2 = await api.addTestCaseToTestRun(testRunId, caseId2, { order: 2, statusId: failedStatusId });
+    const trc1 = await api.addTestCaseToTestRun(testRunId, caseId1, {
+      order: 1,
+      statusId: passedStatusId,
+    });
+    const trc2 = await api.addTestCaseToTestRun(testRunId, caseId2, {
+      order: 2,
+      statusId: failedStatusId,
+    });
     await api.addTestCaseToTestRun(testRunId, caseId3, { order: 3 }); // No status
 
     // Create results for the cases with statuses
@@ -1465,7 +1634,10 @@ test.describe("Run Mode Sorting", () => {
     expect(await getColumnCount(page)).toBe(initialColumnCount);
   });
 
-  test("Header Column Count Preserved in Run Mode After Sort", async ({ api, page }) => {
+  test("Header Column Count Preserved in Run Mode After Sort", async ({
+    api,
+    page,
+  }) => {
     const { projectId, testRunId } = await createTestProjectWithTestRun(api);
 
     await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
@@ -1513,7 +1685,10 @@ test.describe("Run Mode Sorting", () => {
     expect(await rows.count()).toBe(3);
   });
 
-  test("Sort Cycles Through States Correctly in Run Mode", async ({ api, page }) => {
+  test("Sort Cycles Through States Correctly in Run Mode", async ({
+    api,
+    page,
+  }) => {
     const { projectId, testRunId } = await createTestProjectWithTestRun(api);
 
     await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
@@ -1521,7 +1696,9 @@ test.describe("Run Mode Sorting", () => {
 
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
-    const sortButton = nameHeader.getByRole("button", { name: "Sort column" }).first();
+    const sortButton = nameHeader
+      .getByRole("button", { name: "Sort column" })
+      .first();
     const sortIcon = sortButton.getByRole("img");
 
     // Initial state: "Not sorted"
@@ -1543,7 +1720,10 @@ test.describe("Run Mode Sorting", () => {
     await expect(sortIcon).toHaveAccessibleName("Not sorted");
   });
 
-  test("Change Sort Column Resets Previous Sort in Run Mode", async ({ api, page }) => {
+  test("Change Sort Column Resets Previous Sort in Run Mode", async ({
+    api,
+    page,
+  }) => {
     const { projectId, testRunId } = await createTestProjectWithTestRun(api);
 
     await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
@@ -1555,7 +1735,10 @@ test.describe("Run Mode Sorting", () => {
       await columnSelectionButton.click();
 
       // Look for the ID checkbox and enable it if not already
-      const idCheckbox = page.locator('label').filter({ hasText: /^ID$/ }).locator('input[type="checkbox"]');
+      const idCheckbox = page
+        .locator("label")
+        .filter({ hasText: /^ID$/ })
+        .locator('input[type="checkbox"]');
       if (await idCheckbox.isVisible()) {
         const isChecked = await idCheckbox.isChecked();
         if (!isChecked) {
@@ -1577,7 +1760,9 @@ test.describe("Run Mode Sorting", () => {
     const idHeader = table.locator("th").filter({ hasText: /^ID$/ }).first();
 
     if (await idHeader.isVisible()) {
-      const sortButton = idHeader.getByRole("button", { name: "Sort column" }).first();
+      const sortButton = idHeader
+        .getByRole("button", { name: "Sort column" })
+        .first();
       await expect(sortButton).toBeVisible({ timeout: 5000 });
       await sortButton.click({ force: true });
       await waitForTableStable(page);

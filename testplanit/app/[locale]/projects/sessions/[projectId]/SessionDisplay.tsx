@@ -5,17 +5,37 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Color, Configurations, FieldIcon, Sessions,
-  Templates, User, Workflows
+  Color,
+  Configurations,
+  FieldIcon,
+  Sessions,
+  Templates,
+  User,
+  Workflows,
 } from "@prisma/client";
 import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
-import { useFindManyColor, useFindManySessionFieldValues, useFindUniqueSessions } from "~/lib/hooks";
-import { ColorMap, createColorMap, getCondition, getStatus, getStatusStyle, MilestonesWithTypes, sortMilestones } from "~/utils/milestoneUtils";
-import { AddSessionModal, type SessionDuplicationPreset } from "./AddSessionModal";
+import {
+  useFindManyColor,
+  useFindManySessionFieldValues,
+  useFindUniqueSessions,
+} from "~/lib/hooks";
+import {
+  ColorMap,
+  createColorMap,
+  getCondition,
+  getStatus,
+  getStatusStyle,
+  MilestonesWithTypes,
+  sortMilestones,
+} from "~/utils/milestoneUtils";
+import {
+  AddSessionModal,
+  type SessionDuplicationPreset,
+} from "./AddSessionModal";
 import SessionItem from "./SessionItem";
 import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
 
@@ -204,15 +224,19 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     useState<SessionsWithDetails | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newSessionId, setNewSessionId] = useState<number | null>(null);
-  const [, setOpenMilestones] = useState<Record<number, boolean>>(
-    {}
-  );
+  const [, setOpenMilestones] = useState<Record<number, boolean>>({});
 
   // Single AddSessionModal state (handles both add and duplicate)
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addModalMilestoneId, setAddModalMilestoneId] = useState<number | undefined>(undefined);
-  const [duplicationPreset, setDuplicationPreset] = useState<SessionDuplicationPreset | null>(null);
-  const [duplicateSource, setDuplicateSource] = useState<{ id: number; name: string } | null>(null);
+  const [addModalMilestoneId, setAddModalMilestoneId] = useState<
+    number | undefined
+  >(undefined);
+  const [duplicationPreset, setDuplicationPreset] =
+    useState<SessionDuplicationPreset | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   // Fetch source session data when duplicateSource is set
   const { data: duplicateSessionData, isLoading: isDuplicateLoading } =
@@ -251,7 +275,8 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       const preset: SessionDuplicationPreset = {
         originalName: duplicateSessionData.name || duplicateSource.name,
         originalConfigId: duplicateSessionData.configId,
-        originalConfigName: (duplicateSessionData as any).configuration?.name || null,
+        originalConfigName:
+          (duplicateSessionData as any).configuration?.name || null,
         originalMilestoneId: duplicateSessionData.milestoneId,
         originalStateId: duplicateSessionData.stateId,
         originalAssignedToId: duplicateSessionData.assignedToId,
@@ -273,7 +298,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       setAddModalMilestoneId(undefined);
       setAddModalOpen(true);
     }
-  }, [duplicateSource, duplicateSessionData, duplicateFieldValues, isDuplicateLoading]);
+  }, [
+    duplicateSource,
+    duplicateSessionData,
+    duplicateFieldValues,
+    isDuplicateLoading,
+  ]);
 
   useEffect(() => {
     if (colors) {
@@ -389,7 +419,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
       const status = getStatus(milestone);
       const _condition = getCondition(milestone);
-      const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
+      const { badge } = getStatusStyle(
+        status,
+        resolvedTheme || "light",
+        colorMap
+      );
 
       // Check if there are sessions under this milestone
       const hasSessionsUnderMilestone =
@@ -436,11 +470,13 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
             <div className="milestone-dates flex justify-end">
               <div className="grow text-sm text-muted-foreground">
                 {canAddEdit && (
-                  <Button variant="link" className="p-0" onClick={() => handleOpenAddModal(milestone.id)}>
+                  <Button
+                    variant="link"
+                    className="p-0"
+                    onClick={() => handleOpenAddModal(milestone.id)}
+                  >
                     <CirclePlus className="h-4 w-4" />
-                    <span className="hidden md:inline">
-                      {tCommon("add")}
-                    </span>
+                    <span className="hidden md:inline">{tCommon("add")}</span>
                   </Button>
                 )}
                 <DateTextDisplay
@@ -510,7 +546,11 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                 <div className="milestone-status"></div>
                 <div className="milestone-dates flex justify-end">
                   {canAddEdit && (
-                    <Button variant="default" size="sm" onClick={() => handleOpenAddModal()}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => handleOpenAddModal()}
+                    >
                       <CirclePlus className="h-4 w-4" />
                       <span className="hidden md:inline">
                         {t("actions.add")}

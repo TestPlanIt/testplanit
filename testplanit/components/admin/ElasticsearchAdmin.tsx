@@ -8,7 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,10 +18,16 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Activity, AlertCircle, CheckCircle, Database, Loader2, RefreshCw, XCircle
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Database,
+  Loader2,
+  RefreshCw,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -64,7 +70,6 @@ export function ElasticsearchAdmin({
 }: ElasticsearchAdminProps) {
   const t = useTranslations("admin.elasticsearch");
   const tGlobal = useTranslations();
-
 
   const [status, setStatus] = useState<ElasticsearchStatus | null>(null);
   const [loading, setLoading] = useState(true);

@@ -83,7 +83,7 @@ export class StepSequenceScanService {
   async findSharedSequences(
     cases: CaseInput[],
     minSteps = 3,
-    onProgress?: (compared: number, total: number) => Promise<void> | void,
+    onProgress?: (compared: number, total: number) => Promise<void> | void
   ): Promise<StepSequenceGroup[]> {
     if (cases.length < 2) return [];
 
@@ -114,12 +114,13 @@ export class StepSequenceScanService {
 
     // 2. Pre-filter: only keep cases with >= minSteps steps (others can't produce a match)
     const eligibleCaseIds = Array.from(extracted.keys()).filter(
-      (id) => (extracted.get(id)?.length ?? 0) >= minSteps,
+      (id) => (extracted.get(id)?.length ?? 0) >= minSteps
     );
 
     // 3. Pairwise LCS comparison — for each unique pair (i < j)
     const fingerprintToGroup = new Map<string, StepSequenceGroup>();
-    const totalPairs = (eligibleCaseIds.length * (eligibleCaseIds.length - 1)) / 2;
+    const totalPairs =
+      (eligibleCaseIds.length * (eligibleCaseIds.length - 1)) / 2;
     let comparedPairs = 0;
 
     for (let i = 0; i < eligibleCaseIds.length; i++) {
@@ -134,7 +135,10 @@ export class StepSequenceScanService {
         const bTokens = stepTokens.get(bId)!;
         let hasOverlap = false;
         for (const t of aTokens) {
-          if (bTokens.has(t)) { hasOverlap = true; break; }
+          if (bTokens.has(t)) {
+            hasOverlap = true;
+            break;
+          }
         }
         if (!hasOverlap) {
           comparedPairs++;
@@ -158,7 +162,9 @@ export class StepSequenceScanService {
               return s.step + "\n" + s.expectedResult;
             })
             .join("\n---\n");
-          const fingerprint = createHash("md5").update(rawFingerprint).digest("hex");
+          const fingerprint = createHash("md5")
+            .update(rawFingerprint)
+            .digest("hex");
 
           const existing = fingerprintToGroup.get(fingerprint);
           if (existing) {
@@ -222,12 +228,20 @@ export class StepSequenceScanService {
 
       for (const member of g.members) {
         const memberSteps = extracted.get(member.caseId);
-        if (!memberSteps) { allFromSharedGroup = false; break; }
+        if (!memberSteps) {
+          allFromSharedGroup = false;
+          break;
+        }
 
         // Find steps in the matched range by ID
-        const startIdx = memberSteps.findIndex((s) => s.id === member.startStepId);
+        const startIdx = memberSteps.findIndex(
+          (s) => s.id === member.startStepId
+        );
         const endIdx = memberSteps.findIndex((s) => s.id === member.endStepId);
-        if (startIdx === -1 || endIdx === -1) { allFromSharedGroup = false; break; }
+        if (startIdx === -1 || endIdx === -1) {
+          allFromSharedGroup = false;
+          break;
+        }
 
         for (let k = startIdx; k <= endIdx; k++) {
           const sgId = memberSteps[k]?.sharedStepGroupId;
@@ -269,7 +283,7 @@ export class StepSequenceScanService {
  */
 export function extractContiguousRuns(
   pairs: Array<{ aIdx: number; bIdx: number }>,
-  minSteps: number,
+  minSteps: number
 ): Array<Array<{ aIdx: number; bIdx: number }>> {
   if (pairs.length === 0) return [];
 

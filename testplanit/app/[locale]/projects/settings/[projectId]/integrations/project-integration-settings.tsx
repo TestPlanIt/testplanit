@@ -262,8 +262,7 @@ export function ProjectIntegrationSettings({
       setShowAddPanel(false);
     } catch (error: any) {
       console.error("Failed to add projects:", error);
-      const message =
-        error?.info?.message || error?.message || "Unknown error";
+      const message = error?.info?.message || error?.message || "Unknown error";
       toast.error(`${t("integration.saveSettingsError")}: ${message}`);
     } finally {
       setIsAddingProjects(false);
@@ -589,7 +588,9 @@ export function ProjectIntegrationSettings({
                         <span>
                           {project.name}{" "}
                           <span className="text-muted-foreground">
-                            {"("}{project.key}{")"}
+                            {"("}
+                            {project.key}
+                            {")"}
                           </span>
                         </span>
                       )}

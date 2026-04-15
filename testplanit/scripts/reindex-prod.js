@@ -83,19 +83,28 @@ async function reindexAllEntities() {
     }
 
     console.log("\n=== Manual Reindexing Required ===");
-    console.log("Since the production container doesn't include the full TypeScript");
-    console.log("services, you'll need to trigger reindexing through one of these methods:");
+    console.log(
+      "Since the production container doesn't include the full TypeScript"
+    );
+    console.log(
+      "services, you'll need to trigger reindexing through one of these methods:"
+    );
     console.log("");
-    console.log("1. Run the reindex from a development environment that can connect");
+    console.log(
+      "1. Run the reindex from a development environment that can connect"
+    );
     console.log("   to your production Elasticsearch instance:");
     console.log("   ELASTICSEARCH_NODE=<prod-url> pnpm elasticsearch:reindex");
     console.log("");
     console.log("2. Trigger reindexing by updating entities through the UI");
-    console.log("   (the Prisma client extension will sync them automatically)");
+    console.log(
+      "   (the Prisma client extension will sync them automatically)"
+    );
     console.log("");
-    console.log("3. Build a custom Docker image that includes the reindex scripts");
+    console.log(
+      "3. Build a custom Docker image that includes the reindex scripts"
+    );
     console.log("   and TypeScript runtime");
-
   } catch (error) {
     console.error("Error during reindexing:", error);
     process.exit(1);

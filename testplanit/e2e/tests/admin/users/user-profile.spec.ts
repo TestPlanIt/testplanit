@@ -18,10 +18,15 @@ test.describe("User Profile Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify we're on the profile page by checking for the Edit Profile button
-    await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /edit profile|edit/i })
+    ).toBeVisible();
   });
 
-  test("User can edit their own email address", async ({ page, adminUserId }) => {
+  test("User can edit their own email address", async ({
+    page,
+    adminUserId,
+  }) => {
     const newEmail = `updated-${Date.now()}@example.com`;
 
     // Navigate directly to admin user's profile page (faster and more reliable)
@@ -50,7 +55,9 @@ test.describe("User Profile Management", () => {
     await submitButton.click();
 
     // Wait for save to complete
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify email was updated
     await expect(page.getByText(newEmail)).toBeVisible();
@@ -76,7 +83,9 @@ test.describe("User Profile Management", () => {
 
     await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
     await submitButtonRevert.click();
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("User can update their display name", async ({ page, adminUserId }) => {
@@ -105,7 +114,9 @@ test.describe("User Profile Management", () => {
     // Save
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify name was updated - use .first() to handle multiple occurrences
     await expect(page.getByText(newName).first()).toBeVisible();
@@ -131,10 +142,15 @@ test.describe("User Profile Management", () => {
 
     await expect(submitButton).toBeEnabled({ timeout: 5000 });
     await submitButton.click();
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test("Name and avatar updates appear immediately in Header and UserDropdownMenu", async ({ page, adminUserId }) => {
+  test("Name and avatar updates appear immediately in Header and UserDropdownMenu", async ({
+    page,
+    adminUserId,
+  }) => {
     /**
      * This test verifies the bug fix where updating a user's name or avatar
      * should immediately reflect in session-dependent components like:
@@ -179,7 +195,9 @@ test.describe("User Profile Management", () => {
     // Save changes
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Wait for session update to propagate (updateSession() is async after save)
     await page.waitForLoadState("networkidle");
@@ -190,7 +208,9 @@ test.describe("User Profile Management", () => {
     await expect(userMenuContent).toBeVisible();
 
     // Verify the updated name appears in the user menu
-    await expect(userMenuContent.getByText(newName)).toBeVisible({ timeout: 10000 });
+    await expect(userMenuContent.getByText(newName)).toBeVisible({
+      timeout: 10000,
+    });
 
     // Close the menu
     await page.keyboard.press("Escape");
@@ -211,16 +231,24 @@ test.describe("User Profile Management", () => {
 
     await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
     await submitButtonRevert.click();
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify reverted name appears in user menu
     await userMenuTrigger.click();
     await expect(userMenuContent).toBeVisible();
-    await expect(userMenuContent.getByText(originalName)).toBeVisible({ timeout: 5000 });
+    await expect(userMenuContent.getByText(originalName)).toBeVisible({
+      timeout: 5000,
+    });
     await page.keyboard.press("Escape");
   });
 
-  test("Avatar removal updates immediately in Header", async ({ page, adminUserId, api }) => {
+  test("Avatar removal updates immediately in Header", async ({
+    page,
+    adminUserId,
+    api,
+  }) => {
     /**
      * This test verifies that removing a user's avatar immediately updates
      * the Header's UserDropdownMenu to show initials instead of the image.
@@ -230,10 +258,14 @@ test.describe("User Profile Management", () => {
 
     // First, ensure the user has an avatar by uploading one
     // We'll use a simple data URL for a 1x1 transparent PNG
-    const testAvatarUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const testAvatarUrl =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
     // Update user with an avatar via API
-    await api.updateUser({ userId: adminUserId, data: { image: testAvatarUrl } });
+    await api.updateUser({
+      userId: adminUserId,
+      data: { image: testAvatarUrl },
+    });
 
     // Navigate to profile page
     await page.goto(`/en-US/users/profile/${adminUserId}`);
@@ -241,11 +273,11 @@ test.describe("User Profile Management", () => {
 
     // Verify avatar image exists in the header (before removal)
     const userMenuTrigger = page.getByTestId("user-menu-trigger");
-    const avatarImage = userMenuTrigger.locator('img');
+    const avatarImage = userMenuTrigger.locator("img");
     await expect(avatarImage).toBeVisible();
 
     // Find and click the remove avatar button (X button on the avatar)
-    const removeAvatarButton = page.locator('#remove-avatar');
+    const removeAvatarButton = page.locator("#remove-avatar");
     if (await removeAvatarButton.isVisible()) {
       await removeAvatarButton.click();
 
@@ -295,7 +327,9 @@ test.describe("User Profile Management", () => {
     // Save
     await expect(submitButton).toBeEnabled({ timeout: 5000 });
     await submitButton.click();
-    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify preference was saved by checking if we can re-enter edit mode
     await editButton.click();
@@ -327,7 +361,9 @@ test.describe("User Profile Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find and click the test user's profile link
-      const profileLink = page.getByRole("link", { name: /Profile of Test User To Delete/i });
+      const profileLink = page.getByRole("link", {
+        name: /Profile of Test User To Delete/i,
+      });
       await expect(profileLink).toBeVisible();
       await profileLink.click();
       await page.waitForURL(/\/users\/profile\//);
@@ -339,8 +375,12 @@ test.describe("User Profile Management", () => {
         await deleteButton.click();
 
         // Confirm deletion in modal if present
-        const confirmButton = page.getByRole("button", { name: /confirm|yes|delete/i });
-        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        const confirmButton = page.getByRole("button", {
+          name: /confirm|yes|delete/i,
+        });
+        if (
+          await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
           await confirmButton.click();
         }
 
@@ -351,7 +391,9 @@ test.describe("User Profile Management", () => {
         await page.goto("/en-US/admin/users");
         await page.waitForLoadState("networkidle");
 
-        const deletedUserRow = page.locator('tr').filter({ hasText: testEmail });
+        const deletedUserRow = page
+          .locator("tr")
+          .filter({ hasText: testEmail });
         await expect(deletedUserRow).not.toBeVisible({ timeout: 5000 });
       }
     } finally {
@@ -360,7 +402,10 @@ test.describe("User Profile Management", () => {
     }
   });
 
-  test("User can change items per page preference", async ({ page, adminUserId }) => {
+  test("User can change items per page preference", async ({
+    page,
+    adminUserId,
+  }) => {
     // Navigate directly to admin user's profile page (faster and more reliable)
     await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
@@ -381,11 +426,16 @@ test.describe("User Profile Management", () => {
 
       // Save
       await submitButton.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
-  test("Cannot save profile with invalid email", async ({ page, adminUserId }) => {
+  test("Cannot save profile with invalid email", async ({
+    page,
+    adminUserId,
+  }) => {
     // Navigate directly to admin user's profile page (faster and more reliable)
     await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
@@ -405,12 +455,16 @@ test.describe("User Profile Management", () => {
     await submitButton.click();
 
     // Should show validation error
-    await expect(
-      page.getByText(/invalid.*email|email.*valid/i)
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/invalid.*email|email.*valid/i)).toBeVisible({
+      timeout: 5000,
+    });
   });
 
-  test("User preferences are persisted across sessions", async ({ page, api, context }) => {
+  test("User preferences are persisted across sessions", async ({
+    page,
+    api,
+    context,
+  }) => {
     // Create a dedicated test user to avoid data conflicts with other tests
     const timestamp = Date.now();
     const testEmail = `persist-test-${timestamp}@example.com`;
@@ -430,9 +484,15 @@ test.describe("User Profile Management", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
@@ -469,7 +529,9 @@ test.describe("User Profile Management", () => {
 
       // Wait for the PATCH request to the user API
       const updatePromise = page.waitForResponse(
-        (response) => response.url().includes(`/api/users/${userId}`) && response.request().method() === 'PATCH',
+        (response) =>
+          response.url().includes(`/api/users/${userId}`) &&
+          response.request().method() === "PATCH",
         { timeout: 10000 }
       );
 
@@ -479,7 +541,9 @@ test.describe("User Profile Management", () => {
       const response = await updatePromise;
       expect(response.ok()).toBeTruthy();
 
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+        timeout: 10000,
+      });
 
       // Wait for the session update and database transaction to fully complete
       await page.waitForTimeout(1000);
@@ -517,9 +581,15 @@ test.describe("User Profile Management", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill("admin@example.com");
       await passwordInput.fill("admin");
@@ -530,7 +600,10 @@ test.describe("User Profile Management", () => {
     }
   });
 
-  test("All language options are displayed with correct labels", async ({ page, adminUserId }) => {
+  test("All language options are displayed with correct labels", async ({
+    page,
+    adminUserId,
+  }) => {
     // This test ensures all supported languages show proper labels, not raw enum values
 
     await page.goto(`/en-US/users/profile/${adminUserId}`);
@@ -547,26 +620,44 @@ test.describe("User Profile Management", () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
     // Find the locale selector
-    const localeCombobox = page.locator('[role="combobox"]').filter({ hasText: /English|Español|Français/i }).first();
+    const localeCombobox = page
+      .locator('[role="combobox"]')
+      .filter({ hasText: /English|Español|Français/i })
+      .first();
     await expect(localeCombobox).toBeVisible();
 
     // Open the dropdown
     await localeCombobox.click();
 
     // Verify all three languages are displayed with proper labels
-    const englishOption = page.getByRole("option", { name: "English (US)", exact: true });
+    const englishOption = page.getByRole("option", {
+      name: "English (US)",
+      exact: true,
+    });
     await expect(englishOption).toBeVisible({ timeout: 5000 });
 
-    const spanishOption = page.getByRole("option", { name: "Español (ES)", exact: true });
+    const spanishOption = page.getByRole("option", {
+      name: "Español (ES)",
+      exact: true,
+    });
     await expect(spanishOption).toBeVisible();
 
-    const frenchOption = page.getByRole("option", { name: "Français (France)", exact: true });
+    const frenchOption = page.getByRole("option", {
+      name: "Français (France)",
+      exact: true,
+    });
     await expect(frenchOption).toBeVisible();
 
     // Verify raw enum values are NOT displayed
-    await expect(page.getByRole("option", { name: "fr_FR", exact: true })).not.toBeVisible();
-    await expect(page.getByRole("option", { name: "en_US", exact: true })).not.toBeVisible();
-    await expect(page.getByRole("option", { name: "es_ES", exact: true })).not.toBeVisible();
+    await expect(
+      page.getByRole("option", { name: "fr_FR", exact: true })
+    ).not.toBeVisible();
+    await expect(
+      page.getByRole("option", { name: "en_US", exact: true })
+    ).not.toBeVisible();
+    await expect(
+      page.getByRole("option", { name: "es_ES", exact: true })
+    ).not.toBeVisible();
 
     // Close dropdown by pressing Escape
     await page.keyboard.press("Escape");
@@ -580,10 +671,18 @@ test.describe("User Profile Management", () => {
     await expect(localeDisplay).toBeVisible();
 
     // The displayed language should be one of the proper labels, not raw enum
-    await expect(localeDisplay.locator("text=/English \\(US\\)|Español \\(ES\\)|Français \\(France\\)/")).toBeVisible();
+    await expect(
+      localeDisplay.locator(
+        "text=/English \\(US\\)|Español \\(ES\\)|Français \\(France\\)/"
+      )
+    ).toBeVisible();
   });
 
-  test("User can change language and it persists with page reload", async ({ page, adminUserId, context }) => {
+  test("User can change language and it persists with page reload", async ({
+    page,
+    adminUserId,
+    context,
+  }) => {
     // This test verifies the bug fix where changing language from profile page
     // now properly updates the session, cookie, and reloads the page
 
@@ -617,7 +716,9 @@ test.describe("User Profile Management", () => {
 
     // Wait for the PATCH request to complete and page reload
     const updatePromise = page.waitForResponse(
-      (response) => response.url().includes(`/api/users/${adminUserId}`) && response.request().method() === 'PATCH',
+      (response) =>
+        response.url().includes(`/api/users/${adminUserId}`) &&
+        response.request().method() === "PATCH",
       { timeout: 10000 }
     );
 
@@ -645,16 +746,20 @@ test.describe("User Profile Management", () => {
 
     // Verify the NEXT_LOCALE cookie was set correctly
     const cookies = await context.cookies();
-    const localeCookie = cookies.find(c => c.name === "NEXT_LOCALE");
+    const localeCookie = cookies.find((c) => c.name === "NEXT_LOCALE");
     expect(localeCookie).toBeDefined();
     expect(localeCookie?.value).toBe("es-ES");
 
     // Verify Spanish content is displayed (check for Spanish text in the page)
     // The word "Perfil" is "Profile" in Spanish
-    await expect(page.getByText(/perfil|editar perfil/i).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/perfil|editar perfil/i).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Revert back to English for cleanup
-    const editButtonSpanish = page.getByRole("button", { name: /editar|edit/i });
+    const editButtonSpanish = page.getByRole("button", {
+      name: /editar|edit/i,
+    });
     await editButtonSpanish.click();
 
     const submitButtonSpanish = page.getByTestId("profile-submit-button");
@@ -664,7 +769,10 @@ test.describe("User Profile Management", () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
     // Find and open locale combobox again (now in Spanish)
-    const localeComboboxSpanish = page.locator('[role="combobox"]').filter({ hasText: /English|Español/i }).first();
+    const localeComboboxSpanish = page
+      .locator('[role="combobox"]')
+      .filter({ hasText: /English|Español/i })
+      .first();
     await expect(localeComboboxSpanish).toBeVisible();
     await localeComboboxSpanish.click();
 
@@ -673,11 +781,15 @@ test.describe("User Profile Management", () => {
     await expect(englishOption).toBeVisible({ timeout: 5000 });
 
     const revertUpdatePromise = page.waitForResponse(
-      (response) => response.url().includes(`/api/users/${adminUserId}`) && response.request().method() === 'PATCH',
+      (response) =>
+        response.url().includes(`/api/users/${adminUserId}`) &&
+        response.request().method() === "PATCH",
       { timeout: 10000 }
     );
 
-    const revertNavigationPromise = page.waitForURL(/\/en-US\//, { timeout: 15000 });
+    const revertNavigationPromise = page.waitForURL(/\/en-US\//, {
+      timeout: 15000,
+    });
 
     await englishOption.click();
     await page.waitForTimeout(500);
@@ -696,11 +808,17 @@ test.describe("User Profile Management", () => {
 
     // Verify cookie is back to en-US
     const cookiesAfterRevert = await context.cookies();
-    const localeCookieAfterRevert = cookiesAfterRevert.find(c => c.name === "NEXT_LOCALE");
+    const localeCookieAfterRevert = cookiesAfterRevert.find(
+      (c) => c.name === "NEXT_LOCALE"
+    );
     expect(localeCookieAfterRevert?.value).toBe("en-US");
   });
 
-  test("User can change to French language and it displays correctly", async ({ page, api, context }) => {
+  test("User can change to French language and it displays correctly", async ({
+    page,
+    api,
+    context,
+  }) => {
     // This test verifies that French language works end-to-end with proper labels
     // Use a dedicated test user to avoid conflicts with other tests running in parallel
     const timestamp = Date.now();
@@ -721,9 +839,15 @@ test.describe("User Profile Management", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
@@ -735,7 +859,9 @@ test.describe("User Profile Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Enter edit mode
-      const editButton = page.getByRole("button", { name: /edit profile|edit/i });
+      const editButton = page.getByRole("button", {
+        name: /edit profile|edit/i,
+      });
       await editButton.click();
 
       const profileSubmitButton = page.getByTestId("profile-submit-button");
@@ -745,21 +871,31 @@ test.describe("User Profile Management", () => {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
       // Find locale selector
-      const localeCombobox = page.locator('[role="combobox"]').filter({ hasText: /English|Español|Français/i }).first();
+      const localeCombobox = page
+        .locator('[role="combobox"]')
+        .filter({ hasText: /English|Español|Français/i })
+        .first();
       await expect(localeCombobox).toBeVisible();
       await localeCombobox.click();
 
       // Select French (Français)
-      const frenchOption = page.getByRole("option", { name: "Français (France)", exact: true });
+      const frenchOption = page.getByRole("option", {
+        name: "Français (France)",
+        exact: true,
+      });
       await expect(frenchOption).toBeVisible({ timeout: 5000 });
 
       // Wait for API update and navigation
       const updatePromise = page.waitForResponse(
-        (response) => response.url().includes(`/api/users/${userId}`) && response.request().method() === 'PATCH',
+        (response) =>
+          response.url().includes(`/api/users/${userId}`) &&
+          response.request().method() === "PATCH",
         { timeout: 10000 }
       );
 
-      const navigationPromise = page.waitForURL(/\/fr-FR\//, { timeout: 15000 });
+      const navigationPromise = page.waitForURL(/\/fr-FR\//, {
+        timeout: 15000,
+      });
 
       await frenchOption.click();
       await page.waitForTimeout(500);
@@ -779,11 +915,13 @@ test.describe("User Profile Management", () => {
 
       // Verify cookie
       const cookies = await context.cookies();
-      const localeCookie = cookies.find(c => c.name === "NEXT_LOCALE");
+      const localeCookie = cookies.find((c) => c.name === "NEXT_LOCALE");
       expect(localeCookie?.value).toBe("fr-FR");
 
       // Verify French content (Profile = "Profil" in French)
-      await expect(page.getByText(/profil/i).first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(/profil/i).first()).toBeVisible({
+        timeout: 10000,
+      });
     } finally {
       // Cleanup - delete test user
       await api.deleteUser(userId);
@@ -799,7 +937,11 @@ test.describe("User Profile Access Control", () => {
    * be redirected to a 404 page instead of seeing a blank page.
    */
 
-  test("User with NONE access can view their own profile", async ({ page, api, context }) => {
+  test("User with NONE access can view their own profile", async ({
+    page,
+    api,
+    context,
+  }) => {
     // Create a test user with NONE access
     const timestamp = Date.now();
     const testEmail = `none-access-test-${timestamp}@example.com`;
@@ -819,9 +961,15 @@ test.describe("User Profile Access Control", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
@@ -834,10 +982,14 @@ test.describe("User Profile Access Control", () => {
 
       // Verify we can see the profile page (not a blank page or 404)
       // Check for the Edit button which appears on the user's own profile
-      await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.getByRole("button", { name: /edit profile|edit/i })
+      ).toBeVisible({ timeout: 5000 });
 
       // Verify we can see the user's name
-      await expect(page.getByText("None Access Test User").first()).toBeVisible();
+      await expect(
+        page.getByText("None Access Test User").first()
+      ).toBeVisible();
 
       // Verify we can see the email
       await expect(page.getByText(testEmail)).toBeVisible();
@@ -847,7 +999,12 @@ test.describe("User Profile Access Control", () => {
     }
   });
 
-  test("User with NONE access cannot view other users' profiles and gets 404", async ({ page, api, context, adminUserId }) => {
+  test("User with NONE access cannot view other users' profiles and gets 404", async ({
+    page,
+    api,
+    context,
+    adminUserId,
+  }) => {
     // Create a test user with NONE access
     const timestamp = Date.now();
     const testEmail = `none-access-other-${timestamp}@example.com`;
@@ -867,9 +1024,15 @@ test.describe("User Profile Access Control", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
@@ -884,17 +1047,25 @@ test.describe("User Profile Access Control", () => {
       await expect(page).toHaveURL(/\/404/, { timeout: 5000 });
 
       // Verify 404 content is displayed - use heading role to avoid matching multiple elements
-      await expect(page.getByRole("heading", { name: "404" })).toBeVisible({ timeout: 5000 });
+      await expect(page.getByRole("heading", { name: "404" })).toBeVisible({
+        timeout: 5000,
+      });
 
       // Verify we DON'T see the admin profile content
-      await expect(page.getByRole("button", { name: /edit profile|edit/i })).not.toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /edit profile|edit/i })
+      ).not.toBeVisible();
     } finally {
       // Cleanup - delete test user
       await api.deleteUser(userId);
     }
   });
 
-  test("User with NONE access can edit their own profile", async ({ page, api, context }) => {
+  test("User with NONE access can edit their own profile", async ({
+    page,
+    api,
+    context,
+  }) => {
     // Create a test user with NONE access
     const timestamp = Date.now();
     const testEmail = `none-edit-test-${timestamp}@example.com`;
@@ -914,9 +1085,15 @@ test.describe("User Profile Access Control", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
@@ -950,7 +1127,9 @@ test.describe("User Profile Access Control", () => {
       await profileSubmitButton.click();
 
       // Wait for save to complete
-      await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole("button", { name: /edit profile|edit/i })
+      ).toBeVisible({ timeout: 10000 });
 
       // Verify name was updated
       await expect(page.getByText(newName).first()).toBeVisible();
@@ -960,7 +1139,12 @@ test.describe("User Profile Access Control", () => {
     }
   });
 
-  test("User with USER access can view other users' profiles", async ({ page, api, context, adminUserId }) => {
+  test("User with USER access can view other users' profiles", async ({
+    page,
+    api,
+    context,
+    adminUserId,
+  }) => {
     // Create a test user with USER access (to verify non-NONE users can still view other profiles)
     const timestamp = Date.now();
     const testEmail = `user-access-test-${timestamp}@example.com`;
@@ -980,9 +1164,15 @@ test.describe("User Profile Access Control", () => {
       await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
-      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
-      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+      const emailInput = page
+        .locator('input[type="email"], [data-testid="email-input"]')
+        .first();
+      const passwordInput = page
+        .locator('input[type="password"], [data-testid="password-input"]')
+        .first();
+      const submitButton = page
+        .locator('button[type="submit"], [data-testid="signin-button"]')
+        .first();
 
       await emailInput.fill(testEmail);
       await passwordInput.fill(testPassword);
@@ -994,14 +1184,19 @@ test.describe("User Profile Access Control", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we can see the admin's profile (NOT redirected to 404)
-      await expect(page).toHaveURL(new RegExp(`/en-US/users/profile/${adminUserId}`), { timeout: 5000 });
+      await expect(page).toHaveURL(
+        new RegExp(`/en-US/users/profile/${adminUserId}`),
+        { timeout: 5000 }
+      );
 
       // Verify we see profile content (user's info)
       // We should see something - not a blank page or 404
-      await expect(page.locator('body')).not.toBeEmpty();
+      await expect(page.locator("body")).not.toBeEmpty();
 
       // We shouldn't see 404 heading - use specific heading selector
-      await expect(page.getByRole("heading", { name: "404" })).not.toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "404" })
+      ).not.toBeVisible();
     } finally {
       // Cleanup - delete test user
       await api.deleteUser(userId);

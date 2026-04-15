@@ -1,4 +1,15 @@
-import { Activity, Bug, Compass, Heart, Link2, ListTree, PlayCircle, Shuffle, TrendingUp, Users } from "lucide-react";
+import {
+  Activity,
+  Bug,
+  Compass,
+  Heart,
+  Link2,
+  ListTree,
+  PlayCircle,
+  Shuffle,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
 export interface ReportType {
   id: string;
@@ -123,7 +134,9 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
   {
     id: "cross-project-automation-trends",
     label: tReports("crossProjectReportTypes.automationTrends.label"),
-    description: tReports("crossProjectReportTypes.automationTrends.description"),
+    description: tReports(
+      "crossProjectReportTypes.automationTrends.description"
+    ),
     icon: TrendingUp,
     endpoint: "/api/report-builder/cross-project-automation-trends",
     isPreBuilt: true,
@@ -147,7 +160,9 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
   {
     id: "cross-project-issue-test-coverage",
     label: tReports("crossProjectReportTypes.issueTestCoverage.label"),
-    description: tReports("crossProjectReportTypes.issueTestCoverage.description"),
+    description: tReports(
+      "crossProjectReportTypes.issueTestCoverage.description"
+    ),
     icon: Link2,
     endpoint: "/api/report-builder/cross-project-issue-test-coverage",
     isPreBuilt: true,

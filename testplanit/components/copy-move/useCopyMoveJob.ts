@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PreflightResponse } from "~/app/api/repository/copy-move/schemas";
-import type { CopyMoveJobResult, FolderTreeNode } from "~/workers/copyMoveWorker";
+import type {
+  CopyMoveJobResult,
+  FolderTreeNode,
+} from "~/workers/copyMoveWorker";
 
 const POLL_INTERVAL_MS = 2000;
 
@@ -97,7 +100,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
         setIsPrefighting(false);
       }
     },
-    [],
+    []
   );
 
   // ── Submit ────────────────────────────────────────────────────────────────
@@ -159,7 +162,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
         setIsSubmitting(false);
       }
     },
-    [],
+    []
   );
 
   // ── Polling ───────────────────────────────────────────────────────────────
@@ -315,6 +318,6 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
       submit,
       cancel,
       reset,
-    ],
+    ]
   );
 }

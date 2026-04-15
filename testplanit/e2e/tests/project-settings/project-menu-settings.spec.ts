@@ -18,7 +18,9 @@ async function expandSettingsSection(page: import("@playwright/test").Page) {
 
   // Check if the settings section is already expanded by looking for a link inside
   const integrationsLink = page.locator("#settings-integrations-link");
-  if (!(await integrationsLink.isVisible({ timeout: 1000 }).catch(() => false))) {
+  if (
+    !(await integrationsLink.isVisible({ timeout: 1000 }).catch(() => false))
+  ) {
     // Click the accordion trigger to expand
     const trigger = settingsSection.getByRole("button", { name: "Settings" });
     await trigger.click();
@@ -31,9 +33,7 @@ test.describe("Project Menu - Settings Section", () => {
   let testProjectId: number;
 
   test.beforeEach(async ({ api }) => {
-    testProjectId = await api.createProject(
-      `E2E Settings Nav ${Date.now()}`
-    );
+    testProjectId = await api.createProject(`E2E Settings Nav ${Date.now()}`);
   });
 
   test("Settings section is visible in project menu for admin user", async ({
@@ -55,9 +55,7 @@ test.describe("Project Menu - Settings Section", () => {
     await expect(sharesLink).toBeVisible();
   });
 
-  test("Navigate to Issue Integrations from project menu", async ({
-    page,
-  }) => {
+  test("Navigate to Issue Integrations from project menu", async ({ page }) => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
@@ -102,9 +100,7 @@ test.describe("Project Menu - Settings Section", () => {
     );
   });
 
-  test("Project and Management sections are also visible", async ({
-    page,
-  }) => {
+  test("Project and Management sections are also visible", async ({ page }) => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
@@ -122,9 +118,7 @@ test.describe("Project Menu - Settings Section", () => {
 
   test("Settings sub-page highlights correct menu item", async ({ page }) => {
     // Navigate directly to integrations settings page
-    await page.goto(
-      `/en-US/projects/settings/${testProjectId}/integrations`
-    );
+    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
     await page.waitForLoadState("networkidle");
 
     // The Settings section should auto-expand since we're on a settings sub-page,

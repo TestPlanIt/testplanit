@@ -38,11 +38,13 @@ import { getElasticsearchClient } from "~/services/elasticsearchService";
 
 import { GET, POST, PUT } from "./route";
 
-const createMockRequest = (options: {
-  method?: string;
-  authHeader?: string;
-  body?: any;
-} = {}): NextRequest => {
+const createMockRequest = (
+  options: {
+    method?: string;
+    authHeader?: string;
+    body?: any;
+  } = {}
+): NextRequest => {
   const headers = new Headers();
   if (options.authHeader) {
     headers.set("authorization", options.authHeader);
@@ -57,7 +59,9 @@ const createMockRequest = (options: {
 };
 
 const setupAdminSession = () => {
-  (getServerAuthSession as any).mockResolvedValue({ user: { id: "admin-user-1" } });
+  (getServerAuthSession as any).mockResolvedValue({
+    user: { id: "admin-user-1" },
+  });
   (prisma.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
 };
 
@@ -85,7 +89,9 @@ describe("Admin Elasticsearch Settings Route", () => {
     });
 
     it("returns 403 when authenticated as non-admin", async () => {
-      (getServerAuthSession as any).mockResolvedValue({ user: { id: "user-1" } });
+      (getServerAuthSession as any).mockResolvedValue({
+        user: { id: "user-1" },
+      });
       (prisma.user.findUnique as any).mockResolvedValue({ access: "USER" });
 
       const request = createMockRequest();
@@ -106,7 +112,9 @@ describe("Admin Elasticsearch Settings Route", () => {
       });
       (prisma.appConfig.findUnique as any).mockResolvedValue(null);
 
-      const request = createMockRequest({ authHeader: "Bearer tpi_test_token" });
+      const request = createMockRequest({
+        authHeader: "Bearer tpi_test_token",
+      });
       const response = await GET(request);
 
       expect(response.status).toBe(200);

@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
@@ -55,7 +55,7 @@ export function SyncIssue({ issue }: SyncIssueProps) {
       router.refresh();
 
       // Wait a brief moment for the queries to refetch
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Show success message after data is refreshed
       toast.success(t("syncSuccess"), {

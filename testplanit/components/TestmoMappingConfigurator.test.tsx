@@ -5,12 +5,14 @@ import { createContext, useContext, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: vi.fn(() => (key: string, values?: Record<string, unknown>) => {
-    if (values && typeof values.count === "number") {
-      return `${key}:${values.count}`;
+  useTranslations: vi.fn(
+    () => (key: string, values?: Record<string, unknown>) => {
+      if (values && typeof values.count === "number") {
+        return `${key}:${values.count}`;
+      }
+      return key;
     }
-    return key;
-  }),
+  ),
 }));
 
 vi.mock("~/utils/randomPassword", () => ({

@@ -3,14 +3,20 @@ import { describe, expect, it, vi } from "vitest";
 
 // Mock StaticReportViewer
 vi.mock("./StaticReportViewer", () => ({
-  StaticReportViewer: ({ shareData, shareMode, isAuthenticatedUser }: {
+  StaticReportViewer: ({
+    shareData,
+    shareMode,
+    isAuthenticatedUser,
+  }: {
     shareData: any;
     shareMode: string;
     isAuthenticatedUser?: boolean;
   }) => (
     <div data-testid="static-report-viewer">
       <span data-testid="share-mode">{shareMode}</span>
-      <span data-testid="is-authenticated-user">{String(isAuthenticatedUser)}</span>
+      <span data-testid="is-authenticated-user">
+        {String(isAuthenticatedUser)}
+      </span>
       <span data-testid="share-data-key">{shareData?.shareKey}</span>
     </div>
   ),
@@ -32,23 +38,33 @@ const sampleShareData = {
 
 describe("SharedReportViewer", () => {
   it("renders StaticReportViewer with shareData and shareMode props", () => {
-    render(<SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />);
+    render(
+      <SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />
+    );
     expect(screen.getByTestId("static-report-viewer")).toBeInTheDocument();
   });
 
   it("passes shareMode to StaticReportViewer", () => {
-    render(<SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />);
+    render(
+      <SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />
+    );
     expect(screen.getByTestId("share-mode")).toHaveTextContent("PUBLIC");
   });
 
   it("passes shareData to StaticReportViewer", () => {
-    render(<SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />);
+    render(
+      <SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />
+    );
     expect(screen.getByTestId("share-data-key")).toHaveTextContent("abc123");
   });
 
   it("passes isAuthenticatedUser=false by default", () => {
-    render(<SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />);
-    expect(screen.getByTestId("is-authenticated-user")).toHaveTextContent("false");
+    render(
+      <SharedReportViewer shareData={sampleShareData} shareMode="PUBLIC" />
+    );
+    expect(screen.getByTestId("is-authenticated-user")).toHaveTextContent(
+      "false"
+    );
   });
 
   it("passes isAuthenticatedUser=true when provided", () => {
@@ -59,7 +75,9 @@ describe("SharedReportViewer", () => {
         isAuthenticatedUser={true}
       />
     );
-    expect(screen.getByTestId("is-authenticated-user")).toHaveTextContent("true");
+    expect(screen.getByTestId("is-authenticated-user")).toHaveTextContent(
+      "true"
+    );
   });
 
   it("passes PASSWORD_PROTECTED shareMode correctly", () => {
@@ -69,6 +87,8 @@ describe("SharedReportViewer", () => {
         shareMode="PASSWORD_PROTECTED"
       />
     );
-    expect(screen.getByTestId("share-mode")).toHaveTextContent("PASSWORD_PROTECTED");
+    expect(screen.getByTestId("share-mode")).toHaveTextContent(
+      "PASSWORD_PROTECTED"
+    );
   });
 });

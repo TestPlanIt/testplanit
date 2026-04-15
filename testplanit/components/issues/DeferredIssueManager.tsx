@@ -9,7 +9,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   useFindManyIssue,
-  useFindManyProjectIntegration, useUpsertIssue
+  useFindManyProjectIntegration,
+  useUpsertIssue,
 } from "~/lib/hooks";
 import { SearchIssuesDialog } from "./search-issues-dialog";
 

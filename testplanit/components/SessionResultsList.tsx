@@ -10,14 +10,14 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger
+  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
   Dialog,
@@ -25,7 +25,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,7 +33,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,14 +41,19 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments, SessionResults, User } from "@prisma/client";
 import {
-  ChevronRight, Clock,
-  Copy, Edit, FileText, LinkIcon, Trash2
+  ChevronRight,
+  Clock,
+  Copy,
+  Edit,
+  FileText,
+  LinkIcon,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -61,7 +66,15 @@ import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateResultFieldValues, useFindFirstProjects, useFindManySessionResults, useFindManyStatus, useFindManyTemplateResultAssignment, useUpdateAttachments, useUpdateResultFieldValues, useUpdateSessionResults
+  useCreateAttachments,
+  useCreateResultFieldValues,
+  useFindFirstProjects,
+  useFindManySessionResults,
+  useFindManyStatus,
+  useFindManyTemplateResultAssignment,
+  useUpdateAttachments,
+  useUpdateResultFieldValues,
+  useUpdateSessionResults,
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
@@ -1598,271 +1611,277 @@ export function SessionResultsList({
           + dynamicFieldValues state. Without this, modifying result A,
           cancelling, and editing result B would show A's modified values. */}
       {editDialogOpen && (
-      <Dialog
-        key={resultToEdit?.id ?? "edit-session-result"}
-        open={editDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            // When closing the dialog, refresh the results list
-            setRefreshResults((prev) => prev + 1);
-            // Reset all local dialog state so the next open is clean.
-            setResultToEdit(null);
-            setSelectedFiles([]);
-            setPendingAttachmentChanges({ edits: [], deletes: [] });
-            setDynamicFieldValues({});
-            setEditSelectedIssues([]);
-          }
-          setEditDialogOpen(open);
-        }}
-      >
-        <DialogContent className="sm:max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle>{t("edit")}</DialogTitle>
-            <DialogDescription>{t("editDescription")}</DialogDescription>
-          </DialogHeader>
+        <Dialog
+          key={resultToEdit?.id ?? "edit-session-result"}
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              // When closing the dialog, refresh the results list
+              setRefreshResults((prev) => prev + 1);
+              // Reset all local dialog state so the next open is clean.
+              setResultToEdit(null);
+              setSelectedFiles([]);
+              setPendingAttachmentChanges({ edits: [], deletes: [] });
+              setDynamicFieldValues({});
+              setEditSelectedIssues([]);
+            }
+            setEditDialogOpen(open);
+          }}
+        >
+          <DialogContent className="sm:max-w-[800px]">
+            <DialogHeader>
+              <DialogTitle>{t("edit")}</DialogTitle>
+              <DialogDescription>{t("editDescription")}</DialogDescription>
+            </DialogHeader>
 
-          <Form {...form}>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = form.getValues() as FieldFormValues;
+            <Form {...form}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = form.getValues() as FieldFormValues;
 
-                // Log each field for debugging
-                if (editTemplateFields) {
-                  editTemplateFields.forEach((field) => {
-                    const fieldId = field.resultField.id.toString();
+                  // Log each field for debugging
+                  if (editTemplateFields) {
+                    editTemplateFields.forEach((field) => {
+                      const fieldId = field.resultField.id.toString();
 
-                    // Debug: check if field is registered in form
-                    const _isRegistered =
-                      form.getFieldState(fieldId).isDirty !== undefined;
-                  });
-                }
-
-                // Capture all fields that should be saved
-                const fieldsToSave: Record<string, any> = { ...formData };
-
-                // Add any dynamic fields from our state tracker
-                Object.keys(dynamicFieldValues).forEach((fieldId) => {
-                  if (dynamicFieldValues[fieldId] !== undefined) {
-                    fieldsToSave[fieldId] = dynamicFieldValues[fieldId];
+                      // Debug: check if field is registered in form
+                      const _isRegistered =
+                        form.getFieldState(fieldId).isDirty !== undefined;
+                    });
                   }
-                });
 
-                // Add any dynamic fields that might have been missed
-                if (editTemplateFields && formData) {
-                  editTemplateFields.forEach((field) => {
-                    const fieldId = field.resultField.id.toString();
-                    // If we're editing a field that has a value in the UI but not in formData
-                    if (
-                      fieldsToSave[fieldId] === undefined &&
-                      resultToEdit?.resultFieldValues
-                    ) {
-                      // Try to find it in the original result
-                      const existingValue = resultToEdit.resultFieldValues.find(
-                        (fv) => fv.fieldId.toString() === fieldId
-                      );
-                      if (existingValue) {
-                        fieldsToSave[fieldId] = existingValue.value;
-                      }
+                  // Capture all fields that should be saved
+                  const fieldsToSave: Record<string, any> = { ...formData };
+
+                  // Add any dynamic fields from our state tracker
+                  Object.keys(dynamicFieldValues).forEach((fieldId) => {
+                    if (dynamicFieldValues[fieldId] !== undefined) {
+                      fieldsToSave[fieldId] = dynamicFieldValues[fieldId];
                     }
                   });
-                }
 
-                // Call the save handler with the complete data
-                handleSaveEdit(fieldsToSave);
-              }}
-              className="space-y-4"
-            >
-              {/* Status */}
-              <FormField
-                control={form.control}
-                name="statusId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{tCommon("actions.status")}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={tCommon("placeholders.selectStatus")}
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {statuses?.map((status) => (
-                          <SelectItem
-                            key={status.id}
-                            value={status.id.toString()}
-                          >
-                            <div className="flex items-center">
-                              <div
-                                className="w-3 h-3 rounded-full mr-2"
-                                style={{
-                                  backgroundColor: getColorValue(status.color),
-                                }}
-                              ></div>
-                              {status.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  // Add any dynamic fields that might have been missed
+                  if (editTemplateFields && formData) {
+                    editTemplateFields.forEach((field) => {
+                      const fieldId = field.resultField.id.toString();
+                      // If we're editing a field that has a value in the UI but not in formData
+                      if (
+                        fieldsToSave[fieldId] === undefined &&
+                        resultToEdit?.resultFieldValues
+                      ) {
+                        // Try to find it in the original result
+                        const existingValue =
+                          resultToEdit.resultFieldValues.find(
+                            (fv) => fv.fieldId.toString() === fieldId
+                          );
+                        if (existingValue) {
+                          fieldsToSave[fieldId] = existingValue.value;
+                        }
+                      }
+                    });
+                  }
 
-              {/* Notes */}
-              <FormField
-                control={form.control}
-                name="resultData"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("details")}</FormLabel>
-                    <FormControl>
-                      <TipTapEditor
-                        key={`editor-${editorKey}`}
-                        content={field.value || emptyEditorContent}
-                        onUpdate={(content) => {
-                          field.onChange(content);
-                        }}
-                        projectId={projectId.toString()}
-                        className="min-h-[100px] border rounded-md w-full"
-                        placeholder={t("details")}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Elapsed Time */}
-              <FormField
-                control={form.control}
-                name="elapsed"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{tCommon("fields.elapsed")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={tCommon("fields.elapsed")}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Dynamic fields if they exist */}
-              {editTemplateFields && editTemplateFields.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium">
-                    {tCommon("ui.issues.fieldInformation")}
-                  </h3>
-                  <div className="space-y-4">
-                    {editTemplateFields.map((templateField) => {
-                      const fieldId = templateField.resultField.id.toString();
-                      return (
-                        <FormField
-                          key={fieldId}
-                          control={form.control}
-                          name={fieldId}
-                          render={({ field }) =>
-                            renderDynamicFieldEditor(
-                              templateField.resultField,
-                              field
-                            )
-                          }
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Issues Management */}
-              {projectData?.projectIntegrations?.[0] && (
-                <FormItem>
-                  <FormLabel>{tCommon("fields.issues")}</FormLabel>
-                  <FormControl>
-                    <SimpleUnifiedIssueManager
-                      projectData={projectData}
-                      projectId={Number(projectId)}
-                      linkedIssueIds={editSelectedIssues}
-                      setLinkedIssueIds={setEditSelectedIssues}
-                      entityType="sessionResult"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-
-              {/* Attachments */}
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  {tCommon("fields.attachments")}
-                </FormLabel>
-                <FormControl>
-                  <div>
-                    <UploadAttachments
-                      key={uploadAttachmentsKey}
-                      onFileSelect={handleFileSelect}
-                      compact={true}
-                    />
-                    {selectedFiles.length > 0 && (
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {tCommon("upload.attachments.count", {
-                          count: selectedFiles.length,
-                        })}
-                      </div>
-                    )}
-
-                    {/* Display existing attachments */}
-                    {resultToEdit?.attachments &&
-                      resultToEdit.attachments.length > 0 && (
-                        <div className="mt-4">
-                          <div className="text-sm font-medium mb-2">
-                            {tCommon("fields.attachments")}:
-                          </div>
-                          <div className="max-w-[550px]">
-                            <AttachmentsDisplay
-                              key={`attachments-display-${refreshResults}-${uploadAttachmentsKey}`}
-                              attachments={
-                                resultToEdit.attachments as Attachments[]
-                              }
-                              onSelect={handleAttachmentSelect}
-                              preventEditing={false}
-                              deferredMode={true}
-                              onPendingChanges={setPendingAttachmentChanges}
+                  // Call the save handler with the complete data
+                  handleSaveEdit(fieldsToSave);
+                }}
+                className="space-y-4"
+              >
+                {/* Status */}
+                <FormField
+                  control={form.control}
+                  name="statusId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{tCommon("actions.status")}</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue
+                              placeholder={tCommon("placeholders.selectStatus")}
                             />
-                          </div>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {statuses?.map((status) => (
+                            <SelectItem
+                              key={status.id}
+                              value={status.id.toString()}
+                            >
+                              <div className="flex items-center">
+                                <div
+                                  className="w-3 h-3 rounded-full mr-2"
+                                  style={{
+                                    backgroundColor: getColorValue(
+                                      status.color
+                                    ),
+                                  }}
+                                ></div>
+                                {status.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Notes */}
+                <FormField
+                  control={form.control}
+                  name="resultData"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("details")}</FormLabel>
+                      <FormControl>
+                        <TipTapEditor
+                          key={`editor-${editorKey}`}
+                          content={field.value || emptyEditorContent}
+                          onUpdate={(content) => {
+                            field.onChange(content);
+                          }}
+                          projectId={projectId.toString()}
+                          className="min-h-[100px] border rounded-md w-full"
+                          placeholder={t("details")}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Elapsed Time */}
+                <FormField
+                  control={form.control}
+                  name="elapsed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{tCommon("fields.elapsed")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={tCommon("fields.elapsed")}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Dynamic fields if they exist */}
+                {editTemplateFields && editTemplateFields.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">
+                      {tCommon("ui.issues.fieldInformation")}
+                    </h3>
+                    <div className="space-y-4">
+                      {editTemplateFields.map((templateField) => {
+                        const fieldId = templateField.resultField.id.toString();
+                        return (
+                          <FormField
+                            key={fieldId}
+                            control={form.control}
+                            name={fieldId}
+                            render={({ field }) =>
+                              renderDynamicFieldEditor(
+                                templateField.resultField,
+                                field
+                              )
+                            }
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Issues Management */}
+                {projectData?.projectIntegrations?.[0] && (
+                  <FormItem>
+                    <FormLabel>{tCommon("fields.issues")}</FormLabel>
+                    <FormControl>
+                      <SimpleUnifiedIssueManager
+                        projectData={projectData}
+                        projectId={Number(projectId)}
+                        linkedIssueIds={editSelectedIssues}
+                        setLinkedIssueIds={setEditSelectedIssues}
+                        entityType="sessionResult"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+
+                {/* Attachments */}
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {tCommon("fields.attachments")}
+                  </FormLabel>
+                  <FormControl>
+                    <div>
+                      <UploadAttachments
+                        key={uploadAttachmentsKey}
+                        onFileSelect={handleFileSelect}
+                        compact={true}
+                      />
+                      {selectedFiles.length > 0 && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {tCommon("upload.attachments.count", {
+                            count: selectedFiles.length,
+                          })}
                         </div>
                       )}
-                  </div>
-                </FormControl>
-              </FormItem>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                >
-                  {tCommon("cancel")}
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting
-                    ? tCommon("actions.saving")
-                    : tCommon("actions.save")}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                      {/* Display existing attachments */}
+                      {resultToEdit?.attachments &&
+                        resultToEdit.attachments.length > 0 && (
+                          <div className="mt-4">
+                            <div className="text-sm font-medium mb-2">
+                              {tCommon("fields.attachments")}:
+                            </div>
+                            <div className="max-w-[550px]">
+                              <AttachmentsDisplay
+                                key={`attachments-display-${refreshResults}-${uploadAttachmentsKey}`}
+                                attachments={
+                                  resultToEdit.attachments as Attachments[]
+                                }
+                                onSelect={handleAttachmentSelect}
+                                preventEditing={false}
+                                deferredMode={true}
+                                onPendingChanges={setPendingAttachmentChanges}
+                              />
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  </FormControl>
+                </FormItem>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                  >
+                    {tCommon("cancel")}
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting
+                      ? tCommon("actions.saving")
+                      : tCommon("actions.save")}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

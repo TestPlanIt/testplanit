@@ -1,7 +1,10 @@
 import type {
-  LlmAdapterConfig, LlmModelInfo, LlmRequest,
+  LlmAdapterConfig,
+  LlmModelInfo,
+  LlmRequest,
   LlmResponse,
-  LlmStreamResponse, RateLimitInfo
+  LlmStreamResponse,
+  RateLimitInfo,
 } from "../types";
 import { BaseLlmAdapter } from "./base.adapter";
 
@@ -76,7 +79,9 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   async chat(request: LlmRequest): Promise<LlmResponse> {
     this.validateRequest(request);
 
-    const { systemMessage, userMessages } = this.extractMessages(request.messages);
+    const { systemMessage, userMessages } = this.extractMessages(
+      request.messages
+    );
 
     const anthropicRequest: AnthropicRequest = {
       model: request.model || this.getDefaultModel(),
@@ -93,12 +98,15 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetchLongRunning(`${this.baseUrl}/messages`, {
-        method: "POST",
-        headers: this.getAnthropicHeaders(),
-        body: JSON.stringify(anthropicRequest),
-        signal: AbortSignal.timeout(timeout),
-      });
+      const response = await this.safeFetchLongRunning(
+        `${this.baseUrl}/messages`,
+        {
+          method: "POST",
+          headers: this.getAnthropicHeaders(),
+          body: JSON.stringify(anthropicRequest),
+          signal: AbortSignal.timeout(timeout),
+        }
+      );
 
       if (!response.ok) {
         await this.handleErrorResponse(response);
@@ -116,12 +124,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       };
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw this.createError(
-          "Request timeout",
-          "TIMEOUT",
-          408,
-          true
-        );
+        throw this.createError("Request timeout", "TIMEOUT", 408, true);
       }
       throw error;
     }
@@ -132,7 +135,9 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   ): AsyncGenerator<LlmStreamResponse, void, unknown> {
     this.validateRequest(request);
 
-    const { systemMessage, userMessages } = this.extractMessages(request.messages);
+    const { systemMessage, userMessages } = this.extractMessages(
+      request.messages
+    );
 
     const anthropicRequest: AnthropicRequest = {
       model: request.model || this.getDefaultModel(),
@@ -150,12 +155,15 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     // Use safeFetchLongRunning to bypass undici's 5-min body timeout.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetchLongRunning(`${this.baseUrl}/messages`, {
-      method: "POST",
-      headers: this.getAnthropicHeaders(),
-      body: JSON.stringify(anthropicRequest),
-      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
-    });
+    const response = await this.safeFetchLongRunning(
+      `${this.baseUrl}/messages`,
+      {
+        method: "POST",
+        headers: this.getAnthropicHeaders(),
+        body: JSON.stringify(anthropicRequest),
+        signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
+      }
+    );
 
     if (!response.ok) {
       await this.handleErrorResponse(response);
@@ -186,19 +194,25 @@ export class AnthropicAdapter extends BaseLlmAdapter {
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
-            
+
             try {
               const event = JSON.parse(data) as AnthropicStreamEvent;
-              
+
               if (event.type === "message_start" && event.message) {
                 currentModel = event.message.model;
-              } else if (event.type === "content_block_delta" && event.delta?.text) {
+              } else if (
+                event.type === "content_block_delta" &&
+                event.delta?.text
+              ) {
                 yield {
                   delta: event.delta.text,
                   model: currentModel,
                   finishReason: undefined,
                 };
-              } else if (event.type === "message_delta" && event.delta?.stop_reason) {
+              } else if (
+                event.type === "message_delta" &&
+                event.delta?.stop_reason
+              ) {
                 // stop_reason comes in message_delta, not content_block_delta — yield
                 // a zero-delta chunk so callers can detect truncation, etc.
                 yield {
@@ -302,7 +316,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
 
     for (const message of messages) {
       if (message.role === "system") {
-        systemMessage = systemMessage 
+        systemMessage = systemMessage
           ? `${systemMessage}\n\n${message.content}`
           : message.content;
       } else if (message.role === "user" || message.role === "assistant") {
@@ -339,23 +353,15 @@ export class AnthropicAdapter extends BaseLlmAdapter {
         throw this.createError(message, "NOT_FOUND", 404);
       case 429:
         const retryAfter = response.headers.get("retry-after");
-        throw this.createError(
-          message,
-          "RATE_LIMIT_EXCEEDED",
-          429,
-          true,
-          { retryAfter: retryAfter ? parseInt(retryAfter) : undefined }
-        );
+        throw this.createError(message, "RATE_LIMIT_EXCEEDED", 429, true, {
+          retryAfter: retryAfter ? parseInt(retryAfter) : undefined,
+        });
       case 500:
       case 502:
       case 503:
         throw this.createError(message, "SERVER_ERROR", response.status, true);
       default:
-        throw this.createError(
-          message,
-          "UNKNOWN_ERROR",
-          response.status
-        );
+        throw this.createError(message, "UNKNOWN_ERROR", response.status);
     }
   }
 

@@ -69,7 +69,10 @@ export const processor = async (
     select: {
       id: true,
       name: true,
-      steps: { select: { step: true, expectedResult: true }, orderBy: { order: "asc" } },
+      steps: {
+        select: { step: true, expectedResult: true },
+        orderBy: { order: "asc" },
+      },
       tags: { select: { name: true } },
     },
   });
@@ -105,7 +108,11 @@ export const processor = async (
   const BATCH_SIZE = 20;
   let analyzed = 0;
 
-  for (let batchStart = 0; batchStart < cases.length; batchStart += BATCH_SIZE) {
+  for (
+    let batchStart = 0;
+    batchStart < cases.length;
+    batchStart += BATCH_SIZE
+  ) {
     // Check cancellation once per batch
     const isCancelled = await redis.get(cancelKey(job.id));
     if (isCancelled) {
@@ -150,18 +157,29 @@ export const processor = async (
   // 7b. Optional LLM semantic pass — all pairs passed; service handles capping internally.
   //     Gracefully skipped if no LLM integration is configured.
   await job.updateProgress({ analyzed: total, total, phase: "ai" });
-  let finalPairs: Array<typeof allPairs[0] & { detectionMethod: string }>;
+  let finalPairs: Array<(typeof allPairs)[0] & { detectionMethod: string }>;
   try {
-    const llmManager = LlmManager.createForWorker(prisma as any, job.data.tenantId);
+    const llmManager = LlmManager.createForWorker(
+      prisma as any,
+      job.data.tenantId
+    );
     const promptResolver = new PromptResolver(prisma as any);
-    const semanticService = new DuplicateAnalysisService(llmManager, promptResolver);
+    const semanticService = new DuplicateAnalysisService(
+      llmManager,
+      promptResolver
+    );
 
     // Fetch provider config for token limits and retry settings
-    const resolved = await llmManager.resolveIntegration(LLM_FEATURES.DUPLICATE_DETECTION, job.data.projectId);
+    const resolved = await llmManager.resolveIntegration(
+      LLM_FEATURES.DUPLICATE_DETECTION,
+      job.data.projectId
+    );
     let maxTokensPerRequest = 4096;
     let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
     if (resolved) {
-      const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst({
+      const llmProviderConfig = await (
+        prisma as any
+      ).llmProviderConfig.findFirst({
         where: { llmIntegrationId: resolved.integrationId },
       });
       if (llmProviderConfig) {
@@ -176,8 +194,14 @@ export const processor = async (
     const enrichedPairs = allPairs.map((p) => {
       const caseA = caseMap.get(p.caseAId);
       const caseB = caseMap.get(p.caseBId);
-      const formatSteps = (steps: { step: unknown; expectedResult: unknown }[]) =>
-        steps.map((s, i) => `Step ${i + 1}: ${s.step}\nExpected: ${s.expectedResult}`).join("\n");
+      const formatSteps = (
+        steps: { step: unknown; expectedResult: unknown }[]
+      ) =>
+        steps
+          .map(
+            (s, i) => `Step ${i + 1}: ${s.step}\nExpected: ${s.expectedResult}`
+          )
+          .join("\n");
       return {
         ...p,
         caseAName: caseA?.name ?? "",
@@ -201,43 +225,53 @@ export const processor = async (
           aiProgress: pairsAnalyzed,
           aiTotal: totalPairs,
         });
-      },
+      }
     );
     finalPairs = analyzedPairs;
   } catch (err) {
     // LLM pass failed entirely — log and fall back to fuzzy-only
-    console.warn("[duplicate-scan] LLM semantic pass failed, using fuzzy-only results:", (err as Error).message);
+    console.warn(
+      "[duplicate-scan] LLM semantic pass failed, using fuzzy-only results:",
+      (err as Error).message
+    );
     finalPairs = allPairs.map((p) => ({ ...p, detectionMethod: "fuzzy" }));
   }
 
   // 8. Soft-delete old pending results, then insert new ones atomically
   //    Use a longer timeout for large result sets
-  await prisma.$transaction(async (tx: any) => {
-    await tx.duplicateScanResult.updateMany({
-      where: { projectId: job.data.projectId, status: "PENDING", isDeleted: false },
-      data: { isDeleted: true },
-    });
+  await prisma.$transaction(
+    async (tx: any) => {
+      await tx.duplicateScanResult.updateMany({
+        where: {
+          projectId: job.data.projectId,
+          status: "PENDING",
+          isDeleted: false,
+        },
+        data: { isDeleted: true },
+      });
 
-    if (finalPairs.length > 0) {
-      // Batch createMany in chunks of 500 to avoid query size limits
-      const CHUNK_SIZE = 500;
-      for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
-        const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
-        await tx.duplicateScanResult.createMany({
-          data: chunk.map((p) => ({
-            projectId: job.data.projectId,
-            caseAId: p.caseAId,
-            caseBId: p.caseBId,
-            score: p.score,
-            matchedFields: p.matchedFields,
-            detectionMethod: p.detectionMethod,
-            scanJobId: job.id,
-          })),
-          skipDuplicates: true,
-        });
+      if (finalPairs.length > 0) {
+        // Batch createMany in chunks of 500 to avoid query size limits
+        const CHUNK_SIZE = 500;
+        for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
+          const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
+          await tx.duplicateScanResult.createMany({
+            data: chunk.map((p) => ({
+              projectId: job.data.projectId,
+              caseAId: p.caseAId,
+              caseBId: p.caseBId,
+              score: p.score,
+              matchedFields: p.matchedFields,
+              detectionMethod: p.detectionMethod,
+              scanJobId: job.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
-    }
-  }, { timeout: 30000 });
+    },
+    { timeout: 30000 }
+  );
 
   return {
     pairsFound: finalPairs.length,

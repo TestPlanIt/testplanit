@@ -2,13 +2,16 @@ import { JUnitResultType, Prisma, PrismaClient } from "@prisma/client";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import {
-  resolveUserId, toBooleanValue, toDateValue, toNumberValue,
-  toStringValue
+  resolveUserId,
+  toBooleanValue,
+  toDateValue,
+  toNumberValue,
+  toStringValue,
 } from "./helpers";
 import type {
   EntitySummaryResult,
   ImportContext,
-  PersistProgressFn
+  PersistProgressFn,
 } from "./types";
 
 type AutomationCaseGroup = {
@@ -1342,7 +1345,10 @@ export const importAutomationRunTests = async (
 
           testRunCaseIdMap.set(testmoRunTestId, testRunCase.id);
 
-          const resultType = determineJUnitResultType(resolvedStatus, statusName);
+          const resultType = determineJUnitResultType(
+            resolvedStatus,
+            statusName
+          );
 
           const executedAt = testRunTimestampMap.get(testmoRunId) || new Date();
 

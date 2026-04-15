@@ -89,10 +89,7 @@ function splitByHeading(
   let current: { heading: Tokens.Heading; tokens: Token[] } | null = null;
 
   for (const token of tokens) {
-    if (
-      token.type === "heading" &&
-      (token as Tokens.Heading).depth === depth
-    ) {
+    if (token.type === "heading" && (token as Tokens.Heading).depth === depth) {
       if (current) sections.push(current);
       current = { heading: token as Tokens.Heading, tokens: [] };
     } else if (current) {
@@ -252,7 +249,14 @@ function detectColumnsFromCases(cases: ParsedMarkdownCase[]): string[] {
 
     for (const key of Object.keys(c)) {
       if (
-        !["name", "description", "steps", "preconditions", "tags", "folder"].includes(key)
+        ![
+          "name",
+          "description",
+          "steps",
+          "preconditions",
+          "tags",
+          "folder",
+        ].includes(key)
       ) {
         columns.add(key);
       }
@@ -264,9 +268,7 @@ function detectColumnsFromCases(cases: ParsedMarkdownCase[]): string[] {
 
 // --- Format Parsers ---
 
-function parseTableFormat(
-  table: Tokens.Table
-): MarkdownParseResult {
+function parseTableFormat(table: Tokens.Table): MarkdownParseResult {
   const headers = table.header.map((cell) => cell.text.trim());
 
   const cases: ParsedMarkdownCase[] = table.rows.map((row) => {
@@ -324,7 +326,8 @@ function parseTableFormat(
     detectedColumns: headers.map((h) => {
       const n = normalizeColumnName(h);
       // Map known column aliases to canonical names
-      if (n === "title" || n === "test case" || n === "test case name") return "name";
+      if (n === "title" || n === "test case" || n === "test case name")
+        return "name";
       if (n === "step" || n === "test steps") return "steps";
       if (n === "expected result") return "expected results";
       if (n === "precondition" || n === "prerequisites") return "preconditions";
@@ -385,7 +388,8 @@ function parseHeadingFormat(
           break;
         default:
           // Store custom sections by their heading text
-          caseData[sub.heading.text] = tokensToRawMarkdown(contentTokens).trim();
+          caseData[sub.heading.text] =
+            tokensToRawMarkdown(contentTokens).trim();
       }
     }
 
@@ -436,7 +440,10 @@ function parseSingleCaseFormat(tokens: Token[]): MarkdownParseResult {
       const sectionTokens = section.tokens.filter((t) => t.type !== "space");
 
       // If the first heading became the name, skip re-processing it
-      if (section.heading === firstHeading && caseData.name === firstHeading.text) {
+      if (
+        section.heading === firstHeading &&
+        caseData.name === firstHeading.text
+      ) {
         // Process content under the name heading as description
         const desc = tokensToRawMarkdown(sectionTokens).trim();
         if (desc) caseData.description = desc;
@@ -465,7 +472,8 @@ function parseSingleCaseFormat(tokens: Token[]): MarkdownParseResult {
           caseData.description = tokensToRawMarkdown(sectionTokens).trim();
           break;
         default:
-          caseData[section.heading.text] = tokensToRawMarkdown(sectionTokens).trim();
+          caseData[section.heading.text] =
+            tokensToRawMarkdown(sectionTokens).trim();
       }
     }
   } else {
@@ -522,7 +530,9 @@ export function parseMarkdownTestCases(markdown: string): MarkdownParseResult {
 
     // Check if there are sub-headings with known section names
     const hasKnownSections = headings.some(
-      (h) => h.depth > topLevel && KNOWN_SECTION_NAMES.has(normalizeSectionName(h.text))
+      (h) =>
+        h.depth > topLevel &&
+        KNOWN_SECTION_NAMES.has(normalizeSectionName(h.text))
     );
 
     // If ALL top-level headings are known section names, treat as single case
@@ -544,7 +554,11 @@ export function parseMarkdownTestCases(markdown: string): MarkdownParseResult {
 
     // Headings exist but are all known section names (no case name heading)
     // e.g., ## Steps / ## Expected Results only
-    if (topHeadings.every((h) => KNOWN_SECTION_NAMES.has(normalizeSectionName(h.text)))) {
+    if (
+      topHeadings.every((h) =>
+        KNOWN_SECTION_NAMES.has(normalizeSectionName(h.text))
+      )
+    ) {
       return parseSingleCaseFormat(tokens);
     }
   }
@@ -599,7 +613,14 @@ export function convertMarkdownCasesToImportData(result: MarkdownParseResult): {
     // Copy any custom fields
     for (const key of Object.keys(mc)) {
       if (
-        !["name", "description", "steps", "preconditions", "tags", "folder"].includes(key)
+        ![
+          "name",
+          "description",
+          "steps",
+          "preconditions",
+          "tags",
+          "folder",
+        ].includes(key)
       ) {
         row[key] = mc[key];
       }

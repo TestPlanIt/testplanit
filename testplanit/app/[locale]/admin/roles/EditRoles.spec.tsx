@@ -55,10 +55,25 @@ const {
   stableLoadingState,
 } = vi.hoisted(() => {
   const allAreas = [
-    "Documentation", "Milestones", "TestCaseRepository", "TestCaseRestrictedFields",
-    "TestRuns", "ClosedTestRuns", "TestRunResults", "TestRunResultRestrictedFields",
-    "Sessions", "SessionsRestrictedFields", "ClosedSessions", "SessionResults",
-    "Tags", "SharedSteps", "Issues", "IssueIntegration", "Forecasting", "Reporting", "Settings",
+    "Documentation",
+    "Milestones",
+    "TestCaseRepository",
+    "TestCaseRestrictedFields",
+    "TestRuns",
+    "ClosedTestRuns",
+    "TestRunResults",
+    "TestRunResultRestrictedFields",
+    "Sessions",
+    "SessionsRestrictedFields",
+    "ClosedSessions",
+    "SessionResults",
+    "Tags",
+    "SharedSteps",
+    "Issues",
+    "IssueIntegration",
+    "Forecasting",
+    "Reporting",
+    "Settings",
   ];
   // Create stable permissions array - all false
   const stableExistingPermissions = allAreas.map((area) => ({
@@ -200,9 +215,7 @@ describe("EditRole", () => {
       expect(docRow).toBeTruthy();
       expect(docRow?.textContent).toContain("-");
 
-      const tagsRow = rows.find((row) =>
-        row.textContent?.includes("Tags")
-      );
+      const tagsRow = rows.find((row) => row.textContent?.includes("Tags"));
       expect(tagsRow).toBeTruthy();
       expect(tagsRow?.textContent).toContain("-");
     });
@@ -215,8 +228,10 @@ describe("EditRole", () => {
       const rows = screen.getAllByRole("row");
 
       // TestRuns row should have a Close switch (not "-")
-      const testRunsRow = rows.find((row) =>
-        row.textContent?.includes("TestRuns") && !row.textContent?.includes("ClosedTestRuns")
+      const testRunsRow = rows.find(
+        (row) =>
+          row.textContent?.includes("TestRuns") &&
+          !row.textContent?.includes("ClosedTestRuns")
       );
       expect(testRunsRow).toBeTruthy();
       // Should have a switch in the close column

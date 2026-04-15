@@ -159,7 +159,7 @@
 }
 
 .editorContent table :global(.column-resize-handle)::before {
-  content: '';
+  content: "";
   height: 100%;
   width: 1px;
   margin-left: 8px;
@@ -223,7 +223,7 @@
 
 .editorContent table :global(.grip-column):hover::before,
 .editorContent table :global(.grip-column.selected)::before {
-  content: '';
+  content: "";
   width: 10px;
 }
 
@@ -283,7 +283,7 @@
 
 .editorContent table :global(.grip-row):hover::before,
 .editorContent table :global(.grip-row.selected)::before {
-  content: '';
+  content: "";
   height: 10px;
 }
 

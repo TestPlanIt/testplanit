@@ -29,7 +29,14 @@ export interface ApiTokenAuthResult {
   /** Error message (if authentication failed) */
   error?: string;
   /** Error code for programmatic handling */
-  errorCode?: "NO_TOKEN" | "INVALID_FORMAT" | "INVALID_TOKEN" | "EXPIRED_TOKEN" | "INACTIVE_TOKEN" | "INACTIVE_USER" | "API_ACCESS_DISABLED";
+  errorCode?:
+    | "NO_TOKEN"
+    | "INVALID_FORMAT"
+    | "INVALID_TOKEN"
+    | "EXPIRED_TOKEN"
+    | "INACTIVE_TOKEN"
+    | "INACTIVE_USER"
+    | "API_ACCESS_DISABLED";
 }
 
 /**
@@ -178,7 +185,8 @@ export async function authenticateApiToken(
   });
 
   // Update last used timestamp (async, don't block the response)
-  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
 
@@ -228,7 +236,9 @@ export interface AuthenticatedUser {
  */
 export async function authenticateRequest(
   request: NextRequest,
-  session: { user?: { id?: string; access?: string | null; [key: string]: unknown } } | null
+  session: {
+    user?: { id?: string; access?: string | null; [key: string]: unknown };
+  } | null
 ): Promise<
   | { authenticated: true; user: AuthenticatedUser }
   | { authenticated: false; error: string; errorCode?: string; status: number }

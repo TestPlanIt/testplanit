@@ -31,11 +31,7 @@ function levenshteinDistance(a: string, b: string): number {
     curr[0] = i;
     for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(
-        prev[j]! + 1,
-        curr[j - 1]! + 1,
-        prev[j - 1]! + cost,
-      );
+      curr[j] = Math.min(prev[j]! + 1, curr[j - 1]! + 1, prev[j - 1]! + cost);
     }
     [prev, curr] = [curr, prev];
   }
@@ -111,7 +107,10 @@ export function jaroWinkler(s1: string, s2: string): number {
   }
 
   const jaro =
-    (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
+    (matches / len1 +
+      matches / len2 +
+      (matches - transpositions / 2) / matches) /
+    3;
 
   // Winkler bonus: add up to 4 common prefix characters
   let prefixLength = 0;
@@ -171,9 +170,9 @@ export function combineScores(signals: {
  * Returns null for scores below 0.70 (not surfaced to users).
  */
 export function scoreToConfidence(score: number): ConfidenceBucket | null {
-  if (score >= 0.90) return "HIGH";
-  if (score >= 0.80) return "MEDIUM";
-  if (score >= 0.70) return "LOW";
+  if (score >= 0.9) return "HIGH";
+  if (score >= 0.8) return "MEDIUM";
+  if (score >= 0.7) return "LOW";
   return null;
 }
 
@@ -190,7 +189,7 @@ export function scoreToConfidence(score: number): ConfidenceBucket | null {
 export function stepsEqual(
   a: { step: string; expectedResult: string },
   b: { step: string; expectedResult: string },
-  threshold = 0.85,
+  threshold = 0.85
 ): boolean {
   const stepSim = levenshteinRatio(a.step, b.step);
   const aHasER = a.expectedResult.trim().length > 0;
@@ -214,13 +213,13 @@ export function stepsEqual(
 export function lcs<T>(
   a: T[],
   b: T[],
-  eq: (x: T, y: T) => boolean,
+  eq: (x: T, y: T) => boolean
 ): Array<{ aIdx: number; bIdx: number }> {
   const m = a.length;
   const n = b.length;
   if (m === 0 || n === 0) return [];
   const dp: number[][] = Array.from({ length: m + 1 }, () =>
-    new Array(n + 1).fill(0),
+    new Array(n + 1).fill(0)
   );
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {

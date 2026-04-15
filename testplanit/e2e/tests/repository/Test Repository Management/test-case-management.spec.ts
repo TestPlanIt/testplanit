@@ -18,7 +18,9 @@ test.describe("Test Case Management", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    return await api.createProject(
+      `E2E Test Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
   }
 
   test("Create Test Case in Folder", async ({ api, page }) => {
@@ -151,7 +153,11 @@ test.describe("Test Case Management", () => {
     const folderName = `Edit TC Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
     const originalName = `Edit TC Original ${Date.now()}`;
-    const testCaseId = await api.createTestCase(projectId, folderId, originalName);
+    const testCaseId = await api.createTestCase(
+      projectId,
+      folderId,
+      originalName
+    );
 
     // Navigate directly to the case detail page
     await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
@@ -170,7 +176,7 @@ test.describe("Test Case Management", () => {
 
     // Find the case name textarea (rendered in edit mode)
     // The textarea is the first visible textarea in the card header area
-    const nameTextarea = page.locator('textarea').first();
+    const nameTextarea = page.locator("textarea").first();
     await expect(nameTextarea).toBeVisible({ timeout: 10000 });
 
     // Clear and type new name
@@ -188,12 +194,16 @@ test.describe("Test Case Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify the new name is visible on the page
-    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Reload and confirm the name persists
     await page.reload();
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("Delete Test Case via Row Action", async ({ api, page }) => {
@@ -203,7 +213,11 @@ test.describe("Test Case Management", () => {
     const folderName = `Delete TC Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
     const testCaseName = `Delete TC Case ${Date.now()}`;
-    const testCaseId = await api.createTestCase(projectId, folderId, testCaseName);
+    const testCaseId = await api.createTestCase(
+      projectId,
+      folderId,
+      testCaseName
+    );
 
     await repositoryPage.goto(projectId);
 
@@ -216,21 +230,29 @@ test.describe("Test Case Management", () => {
     await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
     // Open the actions dropdown menu (three-dot button) to access the delete option
-    const actionsButton = testCaseRow.locator(`[data-testid="actions-menu-${testCaseId}"]`);
+    const actionsButton = testCaseRow.locator(
+      `[data-testid="actions-menu-${testCaseId}"]`
+    );
     await expect(actionsButton).toBeVisible({ timeout: 5000 });
     await actionsButton.click();
 
     // Click the delete option from the dropdown menu
-    const deleteButton = page.locator('[role="menuitem"]').filter({ hasText: /Delete/i }).first();
+    const deleteButton = page
+      .locator('[role="menuitem"]')
+      .filter({ hasText: /Delete/i })
+      .first();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
 
     // Wait for the AlertDialog confirmation dialog
-    const alertDialog = page.getByRole('alertdialog');
+    const alertDialog = page.getByRole("alertdialog");
     await expect(alertDialog).toBeVisible({ timeout: 5000 });
 
     // Click the confirm delete button inside the dialog
-    const confirmDeleteButton = alertDialog.locator('button').filter({ hasText: /Delete|Confirm/i }).first();
+    const confirmDeleteButton = alertDialog
+      .locator("button")
+      .filter({ hasText: /Delete|Confirm/i })
+      .first();
     await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
     await confirmDeleteButton.click();
 
@@ -239,6 +261,8 @@ test.describe("Test Case Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify the test case row is no longer visible
-    await expect(page.locator(`[data-row-id="${testCaseId}"]`)).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`[data-row-id="${testCaseId}"]`)).not.toBeVisible(
+      { timeout: 10000 }
+    );
   });
 });

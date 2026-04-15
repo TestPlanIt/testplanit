@@ -8,7 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -17,7 +17,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
   useFindFirstProjects,
   useFindManyIntegration,
-  useFindManyProjectIntegration
+  useFindManyProjectIntegration,
 } from "~/lib/hooks";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
 

@@ -122,7 +122,10 @@ export async function POST(request: Request) {
         };
         return acc;
       },
-      {} as Record<number, { repositoryCases: number; sessions: number; testRuns: number }>
+      {} as Record<
+        number,
+        { repositoryCases: number; sessions: number; testRuns: number }
+      >
     );
 
     return NextResponse.json({ counts: countsMap });

@@ -98,7 +98,7 @@ export async function GET(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid query parameters", details: parsed.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
     if (!caseA || !caseB) {
       return NextResponse.json(
         { error: "One or both cases not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -121,7 +121,7 @@ export async function GET(request: Request) {
     console.error("Duplicate scan case-details error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -242,9 +242,9 @@ describe("SimpleUrlAdapter", () => {
         baseUrl: "https://example.com/{issueId}",
       });
 
-      await expect(adapterWithoutId.searchIssues({ limit: 10 })).rejects.toThrow(
-        "Integration ID not configured"
-      );
+      await expect(
+        adapterWithoutId.searchIssues({ limit: 10 })
+      ).rejects.toThrow("Integration ID not configured");
     });
   });
 

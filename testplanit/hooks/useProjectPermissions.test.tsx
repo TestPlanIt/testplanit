@@ -3,7 +3,9 @@ import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest"; // Import vitest functions
 import {
-  AllAreaPermissions, AreaPermissions, useProjectPermissions
+  AllAreaPermissions,
+  AreaPermissions,
+  useProjectPermissions,
 } from "./useProjectPermissions";
 // Use the enum definition from your schema
 enum ApplicationArea {
@@ -413,15 +415,16 @@ describe("useProjectPermissions", () => {
 
   it("should return default permissions if projectId is 0 (edge case — zero is falsy)", async () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useProjectPermissions(0, mockArea),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useProjectPermissions(0, mockArea), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     // 0 is falsy → isEnabled = false → returns default permissions without fetching
-    expect(result.current.permissions).toEqual(defaultFalseSingleAreaPermissions);
+    expect(result.current.permissions).toEqual(
+      defaultFalseSingleAreaPermissions
+    );
     expect(result.current.error).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -475,14 +478,22 @@ describe("useProjectPermissions", () => {
       1,
       "/api/get-user-permissions",
       expect.objectContaining({
-        body: JSON.stringify({ userId: mockUserId, projectId: 1, area: mockArea }),
+        body: JSON.stringify({
+          userId: mockUserId,
+          projectId: 1,
+          area: mockArea,
+        }),
       })
     );
     expect(mockFetch).toHaveBeenNthCalledWith(
       2,
       "/api/get-user-permissions",
       expect.objectContaining({
-        body: JSON.stringify({ userId: mockUserId, projectId: 2, area: mockArea }),
+        body: JSON.stringify({
+          userId: mockUserId,
+          projectId: 2,
+          area: mockArea,
+        }),
       })
     );
   });

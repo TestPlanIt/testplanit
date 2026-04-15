@@ -9,13 +9,16 @@ import { syncProjectSessionsToElasticsearch } from "~/services/sessionSearch";
 import { syncProjectSharedStepsToElasticsearch } from "~/services/sharedStepSearch";
 import { syncProjectTestRunsToElasticsearch } from "~/services/testRunSearch";
 import {
-  createAllEntityIndices, getEntityIndexName
+  createAllEntityIndices,
+  getEntityIndexName,
 } from "~/services/unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import {
-  disconnectAllTenantClients, getPrismaClientForJob,
+  disconnectAllTenantClients,
+  getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData, validateMultiTenantJobData
+  MultiTenantJobData,
+  validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
@@ -378,7 +381,10 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(ELASTICSEARCH_REINDEX_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || '2', 10),
+      concurrency: parseInt(
+        process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || "2",
+        10
+      ),
       lockDuration: 3600000,
       maxStalledCount: 3,
       stalledInterval: 300000,
