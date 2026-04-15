@@ -7,15 +7,35 @@ const tagLength = 16;
 const iterations = 100000;
 const keyLength = 32;
 
-// Get encryption key from environment variable or generate a default one for development
+const DEV_FALLBACK_KEY = "development-key-do-not-use-in-production-please!";
+
+// Get encryption key from environment variable. In production, the key is
+// mandatory and missing config is a hard error — running with a known default
+// would leave every encrypted field (integration credentials, OAuth tokens,
+// LLM API keys, 2FA secrets) effectively plaintext to anyone with the source.
+// In dev/test we keep the convenient fallback with a warning.
 export const getMasterKey = (): string => {
   const key = process.env.ENCRYPTION_KEY;
-  if (!key) {
-    // In development, use a default key (DO NOT use in production)
-    console.warn("ENCRYPTION_KEY not set, using default key for development");
-    return "development-key-do-not-use-in-production-please!";
+  if (key) return key;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ENCRYPTION_KEY is not set. Refusing to start — running with the " +
+        "built-in default key would expose every encrypted secret in the " +
+        "database. Configure ENCRYPTION_KEY as a long, random value before " +
+        "deploying to production."
+    );
   }
-  return key;
+  console.warn("ENCRYPTION_KEY not set, using default key for development");
+  return DEV_FALLBACK_KEY;
+};
+
+/**
+ * Startup probe — call during app boot to fail fast on misconfiguration
+ * rather than when the first encrypt/decrypt happens mid-request.
+ * Safe to call multiple times; returns the resolved key on success.
+ */
+export const assertEncryptionConfigured = (): string => {
+  return getMasterKey();
 };
 
 // Alias for backward compatibility

@@ -1,8 +1,27 @@
 import { createHash, randomBytes } from "crypto";
 import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
+import { EncryptionService, getMasterKey } from "~/utils/encryption";
 
 const APP_NAME = "TestPlanIt";
+
+// Version prefixes for encrypted 2FA secrets stored in the DB:
+//   v1: legacy XOR + repeating key (insecure — decrypt-only for migration)
+//   v2: AES-256-GCM via EncryptionService, using ENCRYPTION_KEY
+const LEGACY_PREFIX = "v1:";
+const CURRENT_PREFIX = "v2:";
+
+// The legacy XOR path used its own env var. Keep the resolution logic for
+// backward-compatible decryption of existing v1 records; new writes always
+// use the shared ENCRYPTION_KEY via getMasterKey().
+function getLegacyKey(): string {
+  const key =
+    process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
+  if (!key) {
+    throw new Error("Encryption key not configured");
+  }
+  return key;
+}
 
 // Configuration options for TOTP
 const TOTP_OPTIONS = {
@@ -88,50 +107,54 @@ export function verifyBackupCode(code: string, hashedCodes: string[]): number {
 }
 
 /**
- * Encrypt a secret for database storage
- * In production, use a proper encryption library like node-forge or crypto
+ * Encrypt a TOTP secret for database storage using AES-256-GCM.
+ * Writes `v2:` prefixed ciphertext. Legacy `v1:` (XOR) records remain
+ * decryptable via decryptSecret for backward compatibility.
  */
 export function encryptSecret(secret: string): string {
-  // For simplicity, we're using base64 encoding with a prefix
-  // In production, use proper AES encryption with a key from env
-  const key =
-    process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
-  if (!key) {
-    throw new Error("Encryption key not configured");
-  }
-
-  // Simple XOR encryption with the key (for demo purposes)
-  // In production, use crypto.createCipheriv with AES-256-GCM
-  const keyBuffer = Buffer.from(key);
-  const secretBuffer = Buffer.from(secret);
-  const encrypted = Buffer.alloc(secretBuffer.length);
-
-  for (let i = 0; i < secretBuffer.length; i++) {
-    encrypted[i] = secretBuffer[i] ^ keyBuffer[i % keyBuffer.length];
-  }
-
-  return `v1:${encrypted.toString("base64")}`;
+  const ciphertext = EncryptionService.encrypt(secret, getMasterKey());
+  return `${CURRENT_PREFIX}${ciphertext}`;
 }
 
 /**
- * Decrypt a secret from database storage
+ * Decrypt a TOTP secret from database storage. Transparently handles both
+ * the current AES-256-GCM format (`v2:` prefix) and the legacy XOR format
+ * (`v1:` prefix) so existing enrollments keep working during the migration
+ * window. Check `isLegacyEncryption(s)` after decrypt and re-persist via
+ * encryptSecret to upgrade a record in place.
  */
 export function decryptSecret(encryptedSecret: string): string {
-  const key =
-    process.env.TWO_FACTOR_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "";
-  if (!key) {
-    throw new Error("Encryption key not configured");
+  if (encryptedSecret.startsWith(CURRENT_PREFIX)) {
+    const payload = encryptedSecret.slice(CURRENT_PREFIX.length);
+    return EncryptionService.decrypt(payload, getMasterKey());
   }
 
-  // Remove version prefix
-  const data = encryptedSecret.replace(/^v1:/, "");
+  if (encryptedSecret.startsWith(LEGACY_PREFIX)) {
+    return decryptLegacyV1(encryptedSecret);
+  }
+
+  throw new Error("Unknown or missing encrypted-secret version prefix");
+}
+
+/**
+ * True if the stored secret is still in the legacy XOR format and should
+ * be re-encrypted with AES-256-GCM on the next convenient write.
+ */
+export function isLegacyEncryption(encryptedSecret: string): boolean {
+  return encryptedSecret.startsWith(LEGACY_PREFIX);
+}
+
+// Legacy XOR decryption path. Retained only so existing `v1:` records keep
+// working until they're re-encrypted as `v2:` on next read. Do not add new
+// callers — new writes go through encryptSecret (AES-256-GCM).
+function decryptLegacyV1(encryptedSecret: string): string {
+  const key = getLegacyKey();
+  const data = encryptedSecret.slice(LEGACY_PREFIX.length);
   const encryptedBuffer = Buffer.from(data, "base64");
   const keyBuffer = Buffer.from(key);
   const decrypted = Buffer.alloc(encryptedBuffer.length);
-
   for (let i = 0; i < encryptedBuffer.length; i++) {
     decrypted[i] = encryptedBuffer[i] ^ keyBuffer[i % keyBuffer.length];
   }
-
   return decrypted.toString();
 }

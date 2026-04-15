@@ -807,9 +807,33 @@ function authorize(prisma: PrismaClient) {
         }
 
         // Verify TOTP token - dynamic import to avoid circular deps
-        const { verifyTOTP, decryptSecret, verifyBackupCode } =
-          await import("~/lib/two-factor");
+        const {
+          verifyTOTP,
+          decryptSecret,
+          encryptSecret,
+          isLegacyEncryption,
+          verifyBackupCode,
+        } = await import("~/lib/two-factor");
         const secret = decryptSecret(user.twoFactorSecret);
+
+        // Opportunistically upgrade legacy (v1 / XOR) records to v2 / AES-256-GCM
+        // on the login path. Best-effort: a failure here must not block login.
+        if (isLegacyEncryption(user.twoFactorSecret)) {
+          try {
+            const upgraded = encryptSecret(secret);
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { twoFactorSecret: upgraded },
+            });
+          } catch (err) {
+            console.error(
+              "Failed to upgrade legacy 2FA secret for user",
+              user.id,
+              err
+            );
+          }
+        }
+
         let verified = await verifyTOTP(credentials.twoFactorToken, secret);
 
         // Try backup code if TOTP failed
