@@ -1,0 +1,21 @@
+{
+  "_comment": "Pass/fail criteria for capacity tests. Each test asserts against these to derive a PASS/FAIL verdict.",
+  "latency_p95_ms": {
+    "browse": 1000,
+    "crud": 2000,
+    "search": 1000,
+    "reporting": 5000,
+    "test_run": 2000,
+    "cicd": 3000,
+    "login": 2000
+  },
+  "error_rate_max": 0.01,
+  "container_cpu_percent_max": 80,
+  "container_mem_percent_max": 85,
+  "_notes": [
+    "latency_p95_ms: 95th percentile response time budget per scenario tag",
+    "error_rate_max: fraction (0.01 = 1%) of failed HTTP requests",
+    "container_cpu_percent_max: sustained average CPU over a 60s window",
+    "container_mem_percent_max: memory usage as percentage of limit"
+  ]
+}

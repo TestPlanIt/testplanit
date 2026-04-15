@@ -12,6 +12,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
+import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
@@ -307,49 +308,19 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           session.user.id = token.sub!;
           session.user.name = token.name as string | undefined;
 
-          // Fetch the user from the database to get the access level and preferences
-          const user = await db.user.findUnique({
-            where: { id: session.user.id },
-            select: {
-              name: true,
-              access: true,
-              image: true,
-              emailVerified: true,
-              authMethod: true,
-              userPreferences: true,
-              lastActiveAt: true,
-            },
-          });
-
+          const user = await getCachedSessionUser(session.user.id);
           if (user) {
             session.user.name = user.name || undefined;
             session.user.access = user.access || undefined;
             session.user.image = user.image || undefined;
-            session.user.emailVerified = user.emailVerified || undefined;
+            session.user.emailVerified = user.emailVerified
+              ? new Date(user.emailVerified)
+              : undefined;
             session.user.authMethod = user.authMethod || undefined;
+            session.user.preferences = user.preferences || undefined;
 
-            // Create default userPreferences if they don't exist
-            if (!user.userPreferences) {
-              const newPreferences = await db.userPreferences.create({
-                data: {
-                  userId: session.user.id,
-                },
-              });
-              session.user.preferences = newPreferences;
-            } else {
-              session.user.preferences = user.userPreferences;
-            }
-
-            // Update lastActiveAt only if it's been more than 5 minutes since the last update
-            const now = new Date();
-            const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-
-            if (!user.lastActiveAt || user.lastActiveAt < fiveMinutesAgo) {
-              await db.user.update({
-                where: { id: session.user.id },
-                data: { lastActiveAt: now },
-              });
-            }
+            // Throttled lastActiveAt update (fire-and-forget).
+            void touchLastActive(session.user.id, user);
           }
         }
         return session;
@@ -594,47 +565,18 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!;
         session.user.name = token.name as string | undefined;
 
-        // Fetch the user from the database to get the access level and preferences
-        const user = await db.user.findUnique({
-          where: { id: session.user.id },
-          select: {
-            access: true,
-            image: true,
-            emailVerified: true,
-            authMethod: true,
-            userPreferences: true,
-            lastActiveAt: true,
-          },
-        });
-
+        const user = await getCachedSessionUser(session.user.id);
         if (user) {
           session.user.access = user.access || undefined;
           session.user.image = user.image || undefined;
-          session.user.emailVerified = user.emailVerified || undefined;
+          session.user.emailVerified = user.emailVerified
+            ? new Date(user.emailVerified)
+            : undefined;
           session.user.authMethod = user.authMethod || undefined;
+          session.user.preferences = user.preferences || undefined;
 
-          // Create default userPreferences if they don't exist
-          if (!user.userPreferences) {
-            const newPreferences = await db.userPreferences.create({
-              data: {
-                userId: session.user.id,
-              },
-            });
-            session.user.preferences = newPreferences;
-          } else {
-            session.user.preferences = user.userPreferences;
-          }
-
-          // Update lastActiveAt only if it's been more than 5 minutes since the last update
-          const now = new Date();
-          const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-
-          if (!user.lastActiveAt || user.lastActiveAt < fiveMinutesAgo) {
-            await db.user.update({
-              where: { id: session.user.id },
-              data: { lastActiveAt: now },
-            });
-          }
+          // Throttled lastActiveAt update (fire-and-forget).
+          void touchLastActive(session.user.id, user);
         }
       }
       return session;

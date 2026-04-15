@@ -1,3 +1,9 @@
+## [0.21.13](https://github.com/TestPlanIt/testplanit/compare/v0.21.12...v0.21.13) (2026-04-15)
+
+### Enhancements
+
+* **api:** API token auth: report-endpoint fallback, Valkey cache with immediate invalidation, and capacity test suite ([#199](https://github.com/TestPlanIt/testplanit/issues/199)) ([cd82846](https://github.com/TestPlanIt/testplanit/commit/cd8284678334e8a392c4c01ca78a55a5c211bada))
+
 ## [0.21.12](https://github.com/TestPlanIt/testplanit/compare/v0.21.11...v0.21.12) (2026-04-15)
 
 ### Bug Fixes

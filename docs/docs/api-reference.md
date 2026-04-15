@@ -285,7 +285,48 @@ All API endpoints return consistent error responses:
 
 ## Rate Limiting
 
-API requests may be subject to rate limiting. When rate limited, you'll receive a 429 status code with a `Retry-After` header indicating when to retry.
+TestPlanIt enforces a **global hourly rate limit** on all authenticated API requests. The limit applies per instance (not per token or per user) and resets on the hour.
+
+### Tier Limits
+
+The `TIER` environment variable selects the hourly limit:
+
+| Tier | Hourly Limit | Typical Use |
+|------|--------------|-------------|
+| `essentials` | 1,000 requests/hour | Small teams, light CI/CD integration |
+| `team` | 5,000 requests/hour | Mid-size teams with moderate automation |
+| `professional` (default) | 10,000 requests/hour | Most production deployments |
+| `dedicated` | 25,000 requests/hour | Heavy CI/CD workloads, large organizations |
+
+When the limit is exceeded, requests return **HTTP 429** with a `Retry-After` header indicating seconds until the window resets.
+
+### Response Headers
+
+Every API response includes the following headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the current hour |
+| `X-RateLimit-Remaining` | Requests remaining in the current window |
+| `X-RateLimit-Reset` | Unix timestamp (seconds) when the window resets |
+
+### Implementation
+
+Rate limiting uses a Valkey-backed fixed-window counter aligned to hourly boundaries. If Valkey is unavailable, TestPlanIt falls back to in-memory counting (per-instance).
+
+### Disabling Rate Limiting (Load Testing Only)
+
+For isolated load-testing or development environments, you can disable rate limiting entirely by setting:
+
+```bash
+DISABLE_API_RATE_LIMIT=true
+```
+
+:::warning
+**Never enable `DISABLE_API_RATE_LIMIT` in production.** This bypasses a key protection against abuse and accidental resource exhaustion. It is intended only for isolated test environments where you're intentionally probing throughput limits.
+:::
+
+When set, all authenticated requests are allowed through regardless of request volume. The `X-RateLimit-*` headers still report the configured tier's limit, but the counter never increments and 429 responses are never returned.
 
 ## Further Resources
 

@@ -40,7 +40,7 @@ RUN if [ -f ".docker-version.json" ]; then \
     fi
 
 # Increase memory limit for build process
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV NODE_OPTIONS="--max-old-space-size=16384"
 # Generate ZenStack files with high memory allocation
 RUN NODE_OPTIONS="--max-old-space-size=8192" pnpm zenstack generate
 # Fix ZenStack symlinks
