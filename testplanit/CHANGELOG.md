@@ -1,3 +1,9 @@
+## [0.21.11](https://github.com/TestPlanIt/testplanit/compare/v0.21.10...v0.21.11) (2026-04-15)
+
+### Enhancements
+
+* Reports polish (consistent issue display, filters, column fixes) ([#194](https://github.com/TestPlanIt/testplanit/issues/194)) ([61705a0](https://github.com/TestPlanIt/testplanit/commit/61705a09f69d2b5e7a4e1b51b2a1abf1646f7f60))
+
 ## [0.21.10](https://github.com/TestPlanIt/testplanit/compare/v0.21.9...v0.21.10) (2026-04-14)
 
 ### Enhancements
