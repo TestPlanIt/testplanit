@@ -3159,7 +3159,10 @@ model SharedStepItem {
         sharedStepGroup.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                                  (role.name == 'Project Admin' ||
                                                   role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
-        sharedStepGroup.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+        sharedStepGroup.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        sharedStepGroup.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                  accessType == 'SPECIFIC_ROLE' &&
+                                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
     )
 
     @@allow('all', auth().access == 'ADMIN')
