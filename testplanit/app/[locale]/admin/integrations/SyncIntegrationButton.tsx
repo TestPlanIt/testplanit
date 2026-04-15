@@ -21,6 +21,11 @@ export function SyncIntegrationButton({ integration }: SyncIntegrationButtonProp
   const t = useTranslations("admin.integrations");
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // SIMPLE_URL integrations have no API to pull from, so sync is not supported.
+  if (integration.provider === "SIMPLE_URL") {
+    return null;
+  }
+
   const handleSync = async () => {
     setIsSyncing(true);
 

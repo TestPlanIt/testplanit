@@ -51,6 +51,17 @@ export async function POST(
       );
     }
 
+    // SIMPLE_URL integrations have no API to pull from — sync is not supported
+    if (issue.integration.provider === "SIMPLE_URL") {
+      return NextResponse.json(
+        {
+          error:
+            "Sync is not supported for Simple URL integrations",
+        },
+        { status: 400 }
+      );
+    }
+
     // Queue the sync job
     const jobId = await syncService.queueIssueRefresh(
       session.user.id,

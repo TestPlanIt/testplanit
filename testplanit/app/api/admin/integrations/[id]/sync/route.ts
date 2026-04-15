@@ -1,4 +1,5 @@
 import { syncService } from "@/lib/integrations/services/SyncService";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -24,6 +25,24 @@ export async function POST(
 
     if (isNaN(integrationId)) {
       return NextResponse.json({ error: "Invalid integration ID" }, { status: 400 });
+    }
+
+    // SIMPLE_URL integrations have no API to pull from — sync is not supported
+    const integration = await prisma.integration.findUnique({
+      where: { id: integrationId },
+      select: { provider: true },
+    });
+    if (!integration) {
+      return NextResponse.json(
+        { error: "Integration not found" },
+        { status: 404 }
+      );
+    }
+    if (integration.provider === "SIMPLE_URL") {
+      return NextResponse.json(
+        { error: "Sync is not supported for Simple URL integrations" },
+        { status: 400 }
+      );
     }
 
     // Queue the sync job for background processing
