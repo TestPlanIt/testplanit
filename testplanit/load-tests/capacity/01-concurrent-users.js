@@ -38,7 +38,7 @@ export const options = {
   },
 };
 
-export default function () {
+export default function concurrentUsers() {
   // 70% browse / 15% search / 10% CRUD / 5% small test run
   const r = Math.random();
   if (r < 0.7) browseSession();

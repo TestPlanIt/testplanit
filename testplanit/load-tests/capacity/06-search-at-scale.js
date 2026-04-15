@@ -49,7 +49,7 @@ export const options = {
   },
 };
 
-export default function () {
+export default function searchAtScale() {
   const q = QUERIES[Math.floor(Math.random() * QUERIES.length)];
 
   // Simple search (no filters)

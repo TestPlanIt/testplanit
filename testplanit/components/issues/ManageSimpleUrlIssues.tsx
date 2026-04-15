@@ -1,20 +1,35 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import {
   Dialog,
   DialogContent,
-  DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ExternalLink, Plus, X } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Asterisk, ExternalLink, Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import * as z from "zod/v4";
 import { useFindManyIssue, useUpsertIssue } from "~/lib/hooks";
+import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 
 interface ManageSimpleUrlIssuesProps {
   projectId: number;
@@ -38,10 +53,33 @@ export function ManageSimpleUrlIssues({
 }: ManageSimpleUrlIssuesProps) {
   const t = useTranslations();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [issueId, setIssueId] = useState("");
-  const [issueTitle, setIssueTitle] = useState("");
+  const [isLinkOpen, setIsLinkOpen] = useState(false);
+  const [selectedExisting, setSelectedExisting] = useState<{
+    id: number;
+    name: string;
+    title: string | null;
+  } | null>(null);
 
-  // Fetch existing issues
+  const addIssueSchema = z.object({
+    issueId: z.string().trim().min(1, t("common.errors.fieldRequired")),
+    issueTitle: z.string().trim().min(1, t("common.errors.fieldRequired")),
+  });
+  type AddIssueFormValues = z.infer<typeof addIssueSchema>;
+
+  const form = useForm<AddIssueFormValues>({
+    resolver: zodResolver(addIssueSchema),
+    defaultValues: { issueId: "", issueTitle: "" },
+    mode: "onBlur",
+  });
+
+  // Reset the form whenever the dialog closes
+  useEffect(() => {
+    if (!isAddOpen) {
+      form.reset({ issueId: "", issueTitle: "" });
+    }
+  }, [isAddOpen, form]);
+
+  // Fetch linked issues
   const { data: issues, refetch } = useFindManyIssue({
     where: {
       id: { in: linkedIssueIds },
@@ -51,14 +89,14 @@ export function ManageSimpleUrlIssues({
 
   const { mutateAsync: upsertIssue } = useUpsertIssue();
 
-  const handleAddIssue = async () => {
-    if (!issueId.trim()) {
-      toast.error(t("common.errors.fieldRequired"));
-      return;
-    }
+  const watchedIssueId =
+    useWatch({ control: form.control, name: "issueId" }) || "";
+
+  const onSubmit = async (values: AddIssueFormValues) => {
+    const issueId = values.issueId.trim();
+    const issueTitle = values.issueTitle.trim();
 
     try {
-      // Use upsert to handle cases where the issue already exists
       const newIssue = await upsertIssue({
         where: {
           externalId_integrationId: {
@@ -68,34 +106,26 @@ export function ManageSimpleUrlIssues({
         },
         create: {
           name: issueId,
-          title: issueTitle || issueId,
+          title: issueTitle,
           externalId: issueId,
-          externalUrl: config?.baseUrl
-            ? config.baseUrl.replace("{issueId}", issueId)
-            : undefined,
-          integrationId,
-          projectId,
-          createdById: "", // Will be set by the server
-        },
+          integration: { connect: { id: integrationId } },
+          project: { connect: { id: projectId } },
+          // SIMPLE_URL has no API to populate these — leave null instead of the
+          // schema default "medium"
+          status: null,
+          priority: null,
+          // createdBy is auto-injected by the /api/model handler
+        } as any,
         update: {
-          // Update fields that might have changed
-          title: issueTitle || issueId,
-          externalUrl: config?.baseUrl
-            ? config.baseUrl.replace("{issueId}", issueId)
-            : undefined,
+          title: issueTitle,
         },
       });
 
-      // Add to linked issues
       if (newIssue) {
         setLinkedIssueIds([...linkedIssueIds, newIssue.id]);
       }
 
-      // Reset form
-      setIssueId("");
-      setIssueTitle("");
       setIsAddOpen(false);
-
       toast.success(t("common.messages.created"));
       refetch();
     } catch {
@@ -103,106 +133,289 @@ export function ManageSimpleUrlIssues({
     }
   };
 
-  const handleRemoveIssue = async (issueId: number) => {
-    try {
-      setLinkedIssueIds(linkedIssueIds.filter((id) => id !== issueId));
-      toast.success(t("common.status.deleted"));
-    } catch {
-      toast.error(t("common.errors.error"));
-    }
+  const handleRemoveIssue = (removeId: number) => {
+    setLinkedIssueIds(linkedIssueIds.filter((id) => id !== removeId));
+    toast.success(t("common.status.deleted"));
   };
 
-  const getIssueUrl = (issue: any) => {
-    if (issue.externalUrl) return issue.externalUrl;
-    if (config?.baseUrl && issue.externalId) {
-      return config.baseUrl.replace("{issueId}", issue.externalId);
+  const handleLinkExisting = () => {
+    if (!selectedExisting) return;
+    if (linkedIssueIds.includes(selectedExisting.id)) {
+      toast.error(t("issues.alreadyLinked"));
+      return;
     }
-    return null;
+    setLinkedIssueIds([...linkedIssueIds, selectedExisting.id]);
+    setSelectedExisting(null);
+    setIsLinkOpen(false);
+    refetch();
   };
+
+  const getIssueUrl = (issue: any) =>
+    buildSimpleUrlLink(config?.baseUrl, issue.externalId);
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {issues?.map((issue) => {
           const url = getIssueUrl(issue);
           return (
-            <Badge key={issue.id} variant="secondary" className="pr-1">
-              <span className="mr-1">{issue.name}</span>
-              {url && (
-                <a
-                  title={url}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-1 hover:text-primary"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
+            <div
+              key={issue.id}
+              className="inline-flex items-center rounded-md bg-primary text-primary-foreground pl-0.5 pr-0.5 py-0 gap-0.5"
+            >
+              <IssuesDisplay
+                id={issue.id}
+                name={issue.name}
+                externalId={issue.externalId}
+                externalUrl={url}
+                title={issue.title}
+                status={issue.externalStatus}
+                size="small"
+                projectIds={[projectId]}
+                data={issue.data}
+                integrationProvider="SIMPLE_URL"
+                integrationId={issue.integrationId ?? undefined}
+                lastSyncedAt={issue.lastSyncedAt}
+                issueTypeName={issue.issueTypeName}
+                issueTypeIconUrl={issue.issueTypeIconUrl}
+              />
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
-                className="h-4 w-4 p-0 ml-1"
+                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive"
+                aria-label={t("common.actions.remove")}
                 onClick={() => handleRemoveIssue(issue.id)}
               >
                 <X className="h-3 w-3" />
               </Button>
-            </Badge>
+            </div>
           );
         })}
 
-        <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
-          <Plus className="h-4 w-4" />
-          {t("common.add")}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setIsLinkOpen(true)}
+        >
+          <Link2 className="h-4 w-4" />
+          {t("issues.linkIssue")}
         </Button>
       </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {t("common.add")} {t("common.fields.issues")}
-            </DialogTitle>
+            <DialogTitle>{t("issues.addIssue")}</DialogTitle>
             <DialogDescription className="sr-only">
-              {t("common.add")} {t("common.fields.issues")}
+              {t("issues.addIssue")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="issueId">{t("common.fields.id")}</Label>
-              <Input
-                id="issueId"
-                value={issueId}
-                onChange={(e) => setIssueId(e.target.value)}
-                placeholder="ISSUE-123"
+          <Form {...form}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit(onSubmit)(e);
+              }}
+              className="space-y-4"
+              autoComplete="off"
+            >
+              <FormField
+                control={form.control}
+                name="issueId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="inline-flex items-center gap-0.5">
+                      {t("common.fields.id")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="ISSUE-123" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div>
-              <Label htmlFor="issueTitle">{t("common.name")}</Label>
-              <Input
-                id="issueTitle"
-                value={issueTitle}
-                onChange={(e) => setIssueTitle(e.target.value)}
-                placeholder={t("common.name")}
+              <FormField
+                control={form.control}
+                name="issueTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="inline-flex items-center gap-0.5">
+                      {t("common.name")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t("common.name")} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {config?.baseUrl && (
-              <p className="text-sm text-muted-foreground">
-                {t("common.ui.issues.url")}
-                {config.baseUrl.replace("{issueId}", issueId || "ISSUE-123")}
-              </p>
-            )}
+              {config?.baseUrl &&
+                (() => {
+                  const previewUrl = config.baseUrl.replace(
+                    "{issueId}",
+                    watchedIssueId || "ISSUE-123"
+                  );
+                  return (
+                    <p className="text-sm text-muted-foreground break-all">
+                      {t("common.ui.issues.url")}
+                      <a
+                        href={previewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        {previewUrl}
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    </p>
+                  );
+                })()}
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddOpen(false)}
+                  disabled={form.formState.isSubmitting}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {t("common.add")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Link-existing dialog */}
+      <Dialog
+        open={isLinkOpen}
+        onOpenChange={(open) => {
+          setIsLinkOpen(open);
+          if (!open) setSelectedExisting(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <DialogTitle>{t("issues.searchIssues")}</DialogTitle>
+                <DialogDescription>
+                  {t("issues.searchIssuesDescription")}
+                </DialogDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsLinkOpen(false);
+                  setSelectedExisting(null);
+                  setIsAddOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {t("issues.createNewIssue")}
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label>{t("common.fields.issues")}</Label>
+            <AsyncCombobox<{ id: number; name: string; title: string | null }>
+              value={selectedExisting}
+              onValueChange={setSelectedExisting}
+              fetchOptions={async (query, page, pageSize) => {
+                // Search existing SIMPLE_URL issues for this integration,
+                // excluding ones already linked. Use the ZenStack REST API.
+                const whereClause: any = {
+                  integrationId,
+                  isDeleted: false,
+                };
+                if (linkedIssueIds.length > 0) {
+                  whereClause.id = { notIn: linkedIssueIds };
+                }
+                if (query) {
+                  whereClause.OR = [
+                    { name: { contains: query, mode: "insensitive" } },
+                    { title: { contains: query, mode: "insensitive" } },
+                    { externalId: { contains: query, mode: "insensitive" } },
+                  ];
+                }
+
+                try {
+                  const q = encodeURIComponent(
+                    JSON.stringify({
+                      where: whereClause,
+                      orderBy: { name: "asc" },
+                      take: pageSize,
+                      skip: page * pageSize,
+                      select: { id: true, name: true, title: true },
+                    })
+                  );
+                  const countQ = encodeURIComponent(
+                    JSON.stringify({ where: whereClause })
+                  );
+                  const [listRes, countRes] = await Promise.all([
+                    fetch(`/api/model/issue/findMany?q=${q}`),
+                    fetch(`/api/model/issue/count?q=${countQ}`),
+                  ]);
+                  const listJson = await listRes.json();
+                  const countJson = await countRes.json();
+                  return {
+                    results: listJson.data ?? listJson ?? [],
+                    total: countJson.data ?? countJson ?? 0,
+                  };
+                } catch {
+                  return { results: [], total: 0 };
+                }
+              }}
+              renderOption={(issue) => (
+                <span className="truncate">
+                  {issue.name}
+                  {issue.title && issue.title !== issue.name
+                    ? ` — ${issue.title}`
+                    : ""}
+                </span>
+              )}
+              getOptionValue={(issue) => issue.id}
+              placeholder={t("issues.searchPlaceholder")}
+              showTotal
+            />
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsLinkOpen(false);
+                setSelectedExisting(null);
+              }}
+            >
               {t("common.cancel")}
             </Button>
-            <Button onClick={handleAddIssue}>{t("common.add")}</Button>
+            <Button
+              type="button"
+              onClick={handleLinkExisting}
+              disabled={!selectedExisting}
+            >
+              {t("common.add")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

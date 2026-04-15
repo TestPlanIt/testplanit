@@ -27,7 +27,7 @@ export const options = {
   thresholds,
 };
 
-export default function () {
+export default function browseHierarchy() {
   // 1. List projects the user can access
   const projects = findMany(
     "projects",

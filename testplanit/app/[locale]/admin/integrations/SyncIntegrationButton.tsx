@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Integration } from "@prisma/client";
 import { RefreshCw } from "lucide-react";
@@ -17,13 +17,20 @@ interface SyncIntegrationButtonProps {
   integration: Integration;
 }
 
-export function SyncIntegrationButton({ integration }: SyncIntegrationButtonProps) {
+export function SyncIntegrationButton({
+  integration,
+}: SyncIntegrationButtonProps) {
   const t = useTranslations("admin.integrations");
   const [isSyncing, setIsSyncing] = useState(false);
 
   // SIMPLE_URL integrations have no API to pull from, so sync is not supported.
   if (integration.provider === "SIMPLE_URL") {
-    return null;
+    return (
+      <Button variant="ghost" disabled className="px-2 py-1 h-auto">
+        <RefreshCw className="h-4 w-4" />
+        <span className="sr-only">{t("syncIntegration")}</span>
+      </Button>
+    );
   }
 
   const handleSync = async () => {
@@ -32,9 +39,12 @@ export function SyncIntegrationButton({ integration }: SyncIntegrationButtonProp
     try {
       const toastId = toast.loading(t("syncInProgress"));
 
-      const response = await fetch(`/api/admin/integrations/${integration.id}/sync`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/admin/integrations/${integration.id}/sync`,
+        {
+          method: "POST",
+        }
+      );
 
       const data = await response.json();
 

@@ -36,6 +36,12 @@ Identifies tests with inconsistent pass/fail results. Helps improve test reliabi
 
 Analyzes test case execution frequency and recency. Identifies stale or abandoned tests to help maintain a clean and effective test repository.
 
+Filters:
+
+- **Include** — Both, Manual only, or Automated only
+- **Health Status** — All, Healthy, Always Passing, Always Failing, or Never Executed
+- **Staleness** — All, Stale, or Not Stale
+
 #### Issue Test Coverage
 
 Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azure DevOps). Track testing progress for issues and ensure critical items have adequate test coverage.

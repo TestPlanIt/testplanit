@@ -97,10 +97,7 @@ export async function tryFastPathCreate(params: {
     if (!modelAccessor) return null;
 
     const result = await modelAccessor.create({ data });
-    return NextResponse.json(
-      { data: result },
-      { status: 201 }
-    );
+    return NextResponse.json({ data: result }, { status: 201 });
   } catch (err: unknown) {
     // Mirror ZenStack's error shape so clients see the same behaviour.
     const message =
@@ -134,11 +131,7 @@ function extractProjectId(body: unknown): number | null {
 
   // Common shape: `{ project: { connect: { id: N } } }`
   const project = (data as { project?: unknown }).project;
-  if (
-    project &&
-    typeof project === "object" &&
-    "connect" in project
-  ) {
+  if (project && typeof project === "object" && "connect" in project) {
     const connect = (project as { connect?: unknown }).connect;
     if (connect && typeof connect === "object" && "id" in connect) {
       const id = (connect as { id?: unknown }).id;
@@ -165,10 +158,9 @@ function extractCreateData(body: unknown): Record<string, unknown> | null {
  * Returns `null` if the model isn't recognised so the caller can fall back
  * to ZenStack.
  */
-function getPrismaModel(
-  modelName: string
-): { create: (args: { data: Record<string, unknown> }) => Promise<unknown> } | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getPrismaModel(modelName: string): {
+  create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+} | null {
   const p = prisma as unknown as Record<string, any>;
   const model = p[modelName];
   if (

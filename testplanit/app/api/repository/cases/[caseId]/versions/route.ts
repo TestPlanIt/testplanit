@@ -50,7 +50,7 @@ const createVersionSchema = z.object({
           z.object({
             id: z.number().int(),
             name: z.string(),
-            externalId: z.string().optional(),
+            externalId: z.string().nullish(),
           })
         )
         .optional(),
@@ -77,10 +77,7 @@ export async function POST(
     const { caseId: caseIdParam } = await params;
     const caseId = parseInt(caseIdParam);
     if (isNaN(caseId)) {
-      return NextResponse.json(
-        { error: "Invalid case ID" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid case ID" }, { status: 400 });
     }
 
     const body = await request.json();
@@ -116,8 +113,7 @@ export async function POST(
     // Calculate version number
     // Use the currentVersion from the test case (which should already be updated by the caller)
     // or allow explicit version override for imports
-    const versionNumber =
-      validatedData.version ?? testCase.currentVersion;
+    const versionNumber = validatedData.version ?? testCase.currentVersion;
 
     // Determine creator (use override if provided, otherwise current session user)
     const creatorId = validatedData.creatorId ?? session.user.id;
@@ -139,10 +135,12 @@ export async function POST(
     if (overrides.steps !== undefined) {
       stepsJson = overrides.steps;
     } else if (testCase.steps && testCase.steps.length > 0) {
-      stepsJson = testCase.steps.map((step: { step: any; expectedResult: any }) => ({
-        step: step.step,
-        expectedResult: step.expectedResult,
-      }));
+      stepsJson = testCase.steps.map(
+        (step: { step: any; expectedResult: any }) => ({
+          step: step.step,
+          expectedResult: step.expectedResult,
+        })
+      );
     }
 
     // Convert tags to array of tag names
@@ -166,7 +164,10 @@ export async function POST(
       name: overrides.name ?? testCase.name,
       stateId: overrides.stateId ?? testCase.stateId,
       stateName: overrides.stateName ?? testCase.state.name,
-      estimate: overrides.estimate !== undefined ? overrides.estimate : testCase.estimate,
+      estimate:
+        overrides.estimate !== undefined
+          ? overrides.estimate
+          : testCase.estimate,
       forecastManual:
         overrides.forecastManual !== undefined
           ? overrides.forecastManual
@@ -224,7 +225,8 @@ export async function POST(
 
           if (refetchedCase) {
             // Update the version number with the refetched value
-            versionData.version = validatedData.version ?? refetchedCase.currentVersion;
+            versionData.version =
+              validatedData.version ?? refetchedCase.currentVersion;
           }
         } else {
           // Not a retryable error or max retries reached

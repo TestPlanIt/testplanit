@@ -48,7 +48,7 @@ export const options = {
   thresholds: {},
 };
 
-export default function () {
+export default function seed() {
   console.log(`\n=== TestPlanIt Load Test Data Seeding ===`);
   console.log(`Projects: ${SEED_PROJECTS}`);
   console.log(`Cases per project: ${SEED_CASES_PER_PROJECT}`);

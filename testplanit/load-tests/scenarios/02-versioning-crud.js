@@ -29,7 +29,7 @@ export const options = {
   thresholds,
 };
 
-export default function () {
+export default function versioningCrud() {
   // 1. Get a folder to put test cases in
   const folders = findMany(
     "repositoryFolders",

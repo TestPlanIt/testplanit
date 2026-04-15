@@ -4468,6 +4468,8 @@
     "unlink": "Unlink",
     "linkError": "Failed to link issue",
     "linkExternalIssue": "Link {provider} Issue",
+    "linkIssue": "Link Issue",
+    "addIssue": "Add Issue",
     "unlinkError": "Failed to unlink issue",
     "noIssuesFound": "No issues found",
     "startTypingToSearch": "Start typing to search for issues",

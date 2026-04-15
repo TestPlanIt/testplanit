@@ -4467,6 +4467,8 @@
     "unlink": "Dissocier",
     "linkError": "Échec de la liaison",
     "linkExternalIssue": "Lien {provider} Problème",
+    "linkIssue": "Problème de lien",
+    "addIssue": "Ajouter un problème",
     "unlinkError": "Échec de la dissociation du problème",
     "noIssuesFound": "Aucun problème détecté",
     "startTypingToSearch": "Commencez à taper pour rechercher des problèmes",

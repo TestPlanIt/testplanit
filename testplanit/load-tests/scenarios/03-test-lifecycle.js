@@ -35,7 +35,7 @@ export const options = {
   thresholds,
 };
 
-export default function () {
+export default function testLifecycle() {
   // 1. Get available test cases and statuses for this project
   const cases = findMany(
     "repositoryCases",

@@ -3,13 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIssueColors } from "@/hooks/useIssueColors";
 import DOMPurify from "dompurify";
@@ -225,7 +225,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           className={iconClassName}
         />
         <div className="min-w-0 flex-1 overflow-hidden">
-          {linkHref ? (
+          {linkHref && !/^https?:\/\//i.test(linkHref) ? (
             <Link
               href={linkHref}
               className="truncate block hover:text-inherit"
@@ -270,9 +270,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         }}
       >
         <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
-          <PopoverTrigger asChild>
-            {badgeContent}
-          </PopoverTrigger>
+          <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
           <PopoverContent
             className="w-96 p-0"
             align="start"
@@ -439,9 +437,23 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             triggerSyncIfNeeded();
           }}
         >
-          <TooltipTrigger asChild className="cursor-default">
-            {badgeContent}
-          </TooltipTrigger>
+          {linkHref && /^https?:\/\//i.test(linkHref) ? (
+            <TooltipTrigger asChild>
+              <a
+                href={linkHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center max-w-full no-underline"
+                title={displayText}
+              >
+                {badgeContent}
+              </a>
+            </TooltipTrigger>
+          ) : (
+            <TooltipTrigger asChild className="cursor-default">
+              {badgeContent}
+            </TooltipTrigger>
+          )}
           {linkHref && (
             <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}

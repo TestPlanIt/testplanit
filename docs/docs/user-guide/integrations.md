@@ -173,10 +173,15 @@ Personal Access Token: Generated from GitHub settings
 
 ```text
 Base URL: https://your-tracker.com/issues/{issueId}
-API Key: Optional, only if your system requires authentication
 ```
 
 The `{issueId}` placeholder will be replaced with the actual issue ID when creating links.
+
+**Note:** Simple URL integrations do not authenticate against an external API — they only build link-out URLs. As a result:
+
+- No API Key or authentication credentials are required
+- The **Test Connection** action is not available
+- **Sync** is not supported (issues are entered manually and do not pull data from the external system)
 
 ### Editing Integrations
 
@@ -299,6 +304,15 @@ When creating issues from TestPlanIt:
 4. Each result shows a **project-key badge** (e.g., PROJ, WEB) so you can see which project it came from
 5. Use the **filter chips** below the search bar to narrow results to a specific project
 6. Select and link the issue
+
+### Simple URL Integrations
+
+For projects using a Simple URL integration, the Add/Link flow is slightly different since there is no external API to search:
+
+1. Open the test case in edit mode and click **Link Issue**
+2. A Search Issues dialog opens — use the combobox to find an existing issue (previously added under this integration)
+3. If the issue has not been added yet, click **+ Create New Issue** to open the Add Issue dialog and enter the issue ID and name manually
+4. TestPlanIt constructs the external link at render time from the integration's current Base URL template (with `{issueId}` replaced). The URL is not stored on the issue, so updating the Base URL on the integration instantly updates every linked issue's link.
 
 ### Status Synchronization
 

@@ -92,7 +92,7 @@ export function setup() {
   };
 }
 
-export default function (ctx) {
+export default function concurrentRuns(ctx) {
   const teamRunStart = Date.now();
 
   // 1. Create test run
