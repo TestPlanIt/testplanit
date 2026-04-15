@@ -167,6 +167,8 @@ export async function handleTestCaseHealthPOST(
       startDate: _startDate,
       endDate: _endDate,
       automatedFilter, // "all" | "automated" | "manual"
+      healthStatusFilter, // "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
+      staleFilter, // "all" | "stale" | "notStale"
       dimensions = [],
     } = body;
 
@@ -397,8 +399,29 @@ export async function handleTestCaseHealthPOST(
       };
     });
 
+    // Apply derived-field filters (health status, staleness) after computation
+    const validHealthStatuses: HealthStatus[] = [
+      "healthy",
+      "never_executed",
+      "always_passing",
+      "always_failing",
+    ];
+    const filteredResults = healthResults.filter((r) => {
+      if (
+        healthStatusFilter &&
+        healthStatusFilter !== "all" &&
+        validHealthStatuses.includes(healthStatusFilter as HealthStatus) &&
+        r.healthStatus !== healthStatusFilter
+      ) {
+        return false;
+      }
+      if (staleFilter === "stale" && !r.isStale) return false;
+      if (staleFilter === "notStale" && r.isStale) return false;
+      return true;
+    });
+
     // Sort by health score (lowest first - show unhealthy tests at top)
-    healthResults.sort((a, b) => {
+    filteredResults.sort((a, b) => {
       // Primary sort: by health status priority
       const statusPriority: Record<HealthStatus, number> = {
         always_failing: 1,
@@ -420,8 +443,8 @@ export async function handleTestCaseHealthPOST(
     });
 
     return Response.json({
-      data: healthResults,
-      total: healthResults.length,
+      data: filteredResults,
+      total: filteredResults.length,
       staleDaysThreshold: staleThreshold,
       minExecutionsForRate: minExecutions,
       lookbackDays: lookback,
