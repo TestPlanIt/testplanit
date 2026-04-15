@@ -250,7 +250,7 @@
     "sonner": "^2.0.7",
     "stacktrace-parser": "^0.1.11",
     "stream-chain": "^3.6.1",
-    "stream-json": "^1.9.1",
+    "stream-json": "^2.1.0",
     "streamifier": "^0.1.1",
     "swagger-ui-react": "^5.32.2",
     "tailwind-merge": "^3.5.0",
