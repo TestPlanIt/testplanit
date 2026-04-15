@@ -1,3 +1,9 @@
+## [0.21.12](https://github.com/TestPlanIt/testplanit/compare/v0.21.11...v0.21.12) (2026-04-15)
+
+### Bug Fixes
+
+* Shared Steps improvements (group permissions + resizable panels) ([#195](https://github.com/TestPlanIt/testplanit/issues/195)) ([f9b9c61](https://github.com/TestPlanIt/testplanit/commit/f9b9c619d4ef92eb470baa2d96f655294ac85711)), closes [#193](https://github.com/TestPlanIt/testplanit/issues/193)
+
 ## [0.21.11](https://github.com/TestPlanIt/testplanit/compare/v0.21.10...v0.21.11) (2026-04-15)
 
 ### Enhancements
