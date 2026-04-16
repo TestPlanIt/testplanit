@@ -28,6 +28,7 @@ import {
   Search,
   Settings,
   Share2,
+  Shield,
   ShieldCheck,
   ShieldUser,
   Sparkles,
@@ -149,6 +150,12 @@ const menuOptions: MenuOption[] = [
     icon: ShieldUser,
     translationKey: "sso",
     path: "sso",
+    section: "peopleAndAccess",
+  },
+  {
+    icon: Shield,
+    translationKey: "security",
+    path: "security",
     section: "peopleAndAccess",
   },
   {
