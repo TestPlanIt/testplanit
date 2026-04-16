@@ -141,28 +141,318 @@ async function discoverFiles(): Promise<{
   };
 }
 
-// Per-surface enumeration — STUBS for Task 1. Task 2 fills these in.
+// ---------------------------------------------------------------------------
+// Per-surface enumeration
+// ---------------------------------------------------------------------------
 
+/**
+ * Parse `testplanit/lib/prisma.ts` and emit one row per
+ * `{model, operation}` pair declared inside the `$extends({ query: ... })`
+ * block.
+ *
+ * Model-block headers are at exactly 6 leading spaces (the single
+ * `query: { ... }` object nesting level). Operation method signatures are at
+ * exactly 8 leading spaces. The matching closing brace at 8 spaces
+ * terminates the method body.
+ */
 async function enumeratePrismaHooks(
-  _prismaFile: string
+  prismaFile: string
 ): Promise<InventoryItem[]> {
-  return [];
+  const absPath = path.join(REPO_ROOT, prismaFile);
+  const content = await fs.readFile(absPath, "utf8");
+  const lines = content.split("\n");
+
+  const items: InventoryItem[] = [];
+
+  const modelHeaderRegex = /^ {6}(\w+):\s*\{\s*$/;
+  const opHeaderRegex =
+    /^ {8}async (create|update|upsert|delete|createMany|updateMany|deleteMany)\s*\(/;
+  const methodEndRegex = /^ {8}\},?\s*$/;
+  const modelEndRegex = /^ {6}\},?\s*$/;
+
+  let i = 0;
+  while (i < lines.length) {
+    const modelMatch = lines[i].match(modelHeaderRegex);
+    if (!modelMatch) {
+      i += 1;
+      continue;
+    }
+
+    const modelName = modelMatch[1];
+    // Scan through this model's body until we hit a 6-space `}` or EOF.
+    let j = i + 1;
+    while (j < lines.length) {
+      if (modelEndRegex.test(lines[j])) {
+        break;
+      }
+
+      const opMatch = lines[j].match(opHeaderRegex);
+      if (!opMatch) {
+        j += 1;
+        continue;
+      }
+
+      const operation = opMatch[1];
+      const opStartLine = j;
+      // Find the matching end brace at exactly 8 spaces (same indent).
+      let k = j + 1;
+      while (k < lines.length) {
+        if (methodEndRegex.test(lines[k])) {
+          break;
+        }
+        k += 1;
+      }
+
+      // Method body is [opStartLine+1, k-1] inclusive; include header line
+      // too so signature/argument comments are considered part of the body.
+      const body = lines.slice(opStartLine, k + 1).join("\n");
+
+      const hasExtensionHook = AUDIT_HELPER_REGEX.test(body);
+      const hasRawWrite = RAW_WRITE_REGEX.test(body);
+      const hasIntentionalSkipMarker = INTENTIONAL_SKIP_REGEX.test(body);
+
+      let defaultStatus: CoverageStatus;
+      if (hasExtensionHook) {
+        defaultStatus = "audited (hook)";
+      } else if (hasIntentionalSkipMarker) {
+        defaultStatus = "intentionally-skipped";
+      } else {
+        defaultStatus = "missing";
+      }
+
+      items.push({
+        surface: "prisma-hook",
+        file: prismaFile,
+        symbol: `${modelName}.${operation}`,
+        evidence: {
+          hasExtensionHook,
+          hasExplicitAuditCall: false,
+          hasRawWrite,
+          hasIntentionalSkipMarker,
+        },
+        defaultStatus,
+        rationale: "",
+        lineHint: opStartLine + 1,
+      });
+
+      j = k + 1;
+    }
+
+    // Advance outer index past the model block.
+    i = j + 1;
+  }
+
+  return items;
 }
 
+/**
+ * Classify an API route or server-action file's evidence into a default
+ * coverage status. The hook-vs-explicit refinement is Plan 02's job; this
+ * helper applies the mechanical default.
+ */
+function classifyFileEvidence(
+  hasExplicitAuditCall: boolean,
+  hasRawWrite: boolean
+): CoverageStatus {
+  if (hasRawWrite && hasExplicitAuditCall) return "raw-write";
+  if (hasExplicitAuditCall) return "audited (explicit)";
+  return "missing";
+}
+
+/**
+ * Emit one row per `(file, mutation-verb)` pair under `app/api/**`. GET is
+ * included only when the file itself contains an audit-helper call (covers
+ * `app/api/auth/logout/route.ts`). The ZenStack gateway at
+ * `app/api/model/[...path]/route.ts` uses an `export { handler as GET, ... }`
+ * re-export block — the regex detects both `export (async )?(function|const)`
+ * and the brace-re-export form.
+ */
 async function enumerateApiRoutes(
-  _routes: string[]
+  routes: string[]
 ): Promise<InventoryItem[]> {
-  return [];
+  const items: InventoryItem[] = [];
+  const mutationVerbs = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+  const directExportRegex =
+    /^export (?:async )?(?:const|function) (GET|POST|PUT|PATCH|DELETE)\b/gm;
+  const reExportRegex =
+    /\bhandler as (GET|POST|PUT|PATCH|DELETE)\b|\b(\w+) as (GET|POST|PUT|PATCH|DELETE)\b/g;
+
+  for (const routeRepoPath of routes) {
+    const absPath = path.join(REPO_ROOT, routeRepoPath);
+    const content = await fs.readFile(absPath, "utf8");
+
+    const hasExplicitAuditCall = AUDIT_HELPER_REGEX.test(content);
+    const hasRawWrite = RAW_WRITE_REGEX.test(content);
+    const hasIntentionalSkipMarker = INTENTIONAL_SKIP_REGEX.test(content);
+
+    // Track verbs and their first-match line number.
+    const verbLine = new Map<string, number>();
+
+    let m: RegExpExecArray | null;
+    directExportRegex.lastIndex = 0;
+    while ((m = directExportRegex.exec(content)) !== null) {
+      const verb = m[1];
+      const line = content.slice(0, m.index).split("\n").length;
+      if (!verbLine.has(verb)) verbLine.set(verb, line);
+    }
+
+    reExportRegex.lastIndex = 0;
+    while ((m = reExportRegex.exec(content)) !== null) {
+      const verb = m[1] || m[3];
+      if (!verb) continue;
+      const line = content.slice(0, m.index).split("\n").length;
+      if (!verbLine.has(verb)) verbLine.set(verb, line);
+    }
+
+    for (const [verb, line] of verbLine.entries()) {
+      const include =
+        mutationVerbs.has(verb) || (verb === "GET" && hasExplicitAuditCall);
+      if (!include) continue;
+
+      items.push({
+        surface: "api-route",
+        file: routeRepoPath,
+        symbol: verb,
+        evidence: {
+          hasExtensionHook: false,
+          hasExplicitAuditCall,
+          hasRawWrite,
+          hasIntentionalSkipMarker,
+        },
+        defaultStatus: classifyFileEvidence(
+          hasExplicitAuditCall,
+          hasRawWrite
+        ),
+        rationale: "",
+        lineHint: line,
+      });
+    }
+  }
+
+  return items;
 }
 
+/**
+ * Emit one row per exported function in a server-action file (files that
+ * begin with the `"use server"` directive). Evidence is file-level per
+ * RESEARCH §1C — Plan 02 refines per-function when a file mixes audited and
+ * unaudited functions.
+ */
 async function enumerateServerActions(
-  _actions: string[]
+  actions: string[]
 ): Promise<InventoryItem[]> {
-  return [];
+  const items: InventoryItem[] = [];
+
+  const useServerRegex = /^\s*["']use server["']\s*;?\s*$/m;
+  const exportFnRegex = /^export (?:async )?function (\w+)\b/gm;
+
+  for (const actionRepoPath of actions) {
+    const absPath = path.join(REPO_ROOT, actionRepoPath);
+    const content = await fs.readFile(absPath, "utf8");
+
+    if (!useServerRegex.test(content)) continue;
+
+    const hasExplicitAuditCall = AUDIT_HELPER_REGEX.test(content);
+    const hasRawWrite = RAW_WRITE_REGEX.test(content);
+    const hasIntentionalSkipMarker = INTENTIONAL_SKIP_REGEX.test(content);
+
+    exportFnRegex.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = exportFnRegex.exec(content)) !== null) {
+      const fnName = m[1];
+      const line = content.slice(0, m.index).split("\n").length;
+
+      items.push({
+        surface: "server-action",
+        file: actionRepoPath,
+        symbol: fnName,
+        evidence: {
+          hasExtensionHook: false,
+          hasExplicitAuditCall,
+          hasRawWrite,
+          hasIntentionalSkipMarker,
+        },
+        defaultStatus: classifyFileEvidence(
+          hasExplicitAuditCall,
+          hasRawWrite
+        ),
+        rationale: "",
+        lineHint: line,
+      });
+    }
+  }
+
+  return items;
 }
 
-async function enumerateWorkers(_workers: string[]): Promise<InventoryItem[]> {
-  return [];
+/**
+ * Emit one row per worker file that looks like a BullMQ processor (has a
+ * `new Worker(` binding or a `processor` export/identifier, or an inline
+ * `async (job` lambda). `workers/auditLogWorker.ts` is hard-excluded because
+ * it's the audit consumer — not a surface that needs to emit audits.
+ */
+async function enumerateWorkers(
+  workers: string[]
+): Promise<InventoryItem[]> {
+  const items: InventoryItem[] = [];
+  const processorEvidenceRegex =
+    /\bnew Worker\s*\(|\bexport (?:const|function) processor\b|\bconst processor\s*=|async \(job\s*:/;
+  const hardExcludedFiles = new Set<string>([
+    "testplanit/workers/auditLogWorker.ts",
+  ]);
+
+  for (const workerRepoPath of workers) {
+    if (hardExcludedFiles.has(workerRepoPath)) continue;
+
+    const absPath = path.join(REPO_ROOT, workerRepoPath);
+    const content = await fs.readFile(absPath, "utf8");
+
+    if (!processorEvidenceRegex.test(content)) continue;
+
+    const hasExplicitAuditCall = AUDIT_HELPER_REGEX.test(content);
+    const hasRawWrite = RAW_WRITE_REGEX.test(content);
+    const hasIntentionalSkipMarker = INTENTIONAL_SKIP_REGEX.test(content);
+
+    items.push({
+      surface: "worker",
+      file: workerRepoPath,
+      symbol: "processor",
+      evidence: {
+        hasExtensionHook: false,
+        hasExplicitAuditCall,
+        hasRawWrite,
+        hasIntentionalSkipMarker,
+      },
+      defaultStatus: classifyFileEvidence(hasExplicitAuditCall, hasRawWrite),
+      rationale: "",
+      lineHint: 1,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Emit a one-line warning if either of the two known pre-Phase-62 fix
+ * targets has unstaged edits. The inventory must be generated against
+ * committed HEAD (RESEARCH §4); the warning signals to the operator to
+ * stash or commit before running.
+ */
+function warnIfBaselineDirty(): void {
+  try {
+    const out = execSync(
+      "git status --porcelain testplanit/lib/prisma.ts testplanit/app/api/repository/import-generated-test-cases/route.ts",
+      { cwd: REPO_ROOT, encoding: "utf8" }
+    );
+    if (out.trim().length > 0) {
+      console.warn(
+        "audit-coverage: WARNING — baseline files have unstaged changes; inventory reflects working tree, not committed HEAD. Stash or commit before generating the baseline."
+      );
+    }
+  } catch {
+    // `git status` failed (e.g. not a git repo) — skip the check silently.
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +500,7 @@ function computeTotals(items: InventoryItem[]): InventoryOutput["totals"] {
 }
 
 async function main(): Promise<void> {
+  warnIfBaselineDirty();
   const generatedAt = await getHeadTimestamp();
   const { routes, actions, workers, prismaFile } = await discoverFiles();
 
