@@ -325,14 +325,14 @@ function RoleList() {
       {editingRole && (
         <EditRole
           role={editingRole}
-          open={editingRole !== null}
+          open={true}
           onClose={() => setEditingRole(null)}
         />
       )}
       {deletingRole && (
         <DeleteRole
           role={deletingRole}
-          open={deletingRole !== null}
+          open={true}
           onClose={() => setDeletingRole(null)}
         />
       )}

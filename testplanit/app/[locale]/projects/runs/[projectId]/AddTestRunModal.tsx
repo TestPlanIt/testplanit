@@ -956,7 +956,7 @@ export default function AddTestRunModal({
     if (formInitializedRef.current) return;
     formInitializedRef.current = true;
 
-    if (open && duplicationPreset && defaultWorkflow) {
+    if (duplicationPreset && defaultWorkflow) {
       let parsedNote = emptyEditorContent;
       if (duplicationPreset.originalNote) {
         if (typeof duplicationPreset.originalNote === "string") {
@@ -1041,7 +1041,7 @@ export default function AddTestRunModal({
       });
       setSelectedTags([]);
       setLinkedIssueIds([]);
-    } else if (open && !duplicationPreset && defaultWorkflow) {
+    } else if (!duplicationPreset && defaultWorkflow) {
       const milestoneId =
         defaultMilestoneId !== undefined ? defaultMilestoneId : null;
       reset({

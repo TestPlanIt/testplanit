@@ -43,7 +43,12 @@ interface PromptFeatureSectionProps {
  * Uses useFormContext so it works inside any Form that has a `prompts.{feature}.*` shape.
  */
 export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
-  const { control, setValue, watch, formState: { errors } } = useFormContext();
+  const {
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext();
   const t = useTranslations("admin.prompts");
 
   const systemPromptRef = useRef<HTMLTextAreaElement | null>(null);

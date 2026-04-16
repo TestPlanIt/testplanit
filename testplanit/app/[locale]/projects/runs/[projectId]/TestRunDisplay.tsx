@@ -550,7 +550,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         </div>
         {selectedTestRun && (
           <CompleteTestRunDialog
-            open={selectedTestRun !== null}
+            open={true}
             onClose={() => {
               setIsDialogOpen(false);
               setSelectedTestRun(null);
@@ -883,7 +883,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
       {selectedTestRun && (
         <CompleteTestRunDialog
-          open={selectedTestRun !== null}
+          open={true}
           onClose={() => {
             setIsDialogOpen(false);
             setSelectedTestRun(null);

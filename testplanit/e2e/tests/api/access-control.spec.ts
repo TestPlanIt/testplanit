@@ -679,7 +679,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       {
         data: {
           data: {
-            testCaseId: caseId,
+            testCase: { connect: { id: caseId } },
             step: JSON.stringify({
               type: "doc",
               content: [

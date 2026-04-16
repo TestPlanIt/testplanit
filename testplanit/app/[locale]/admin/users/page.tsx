@@ -348,14 +348,14 @@ function UserList() {
       {editingUser && (
         <EditUser
           user={editingUser}
-          open={editingUser !== null}
+          open={true}
           onClose={() => setEditingUser(null)}
         />
       )}
       {deletingUser && (
         <DeleteUser
           user={deletingUser}
-          open={deletingUser !== null}
+          open={true}
           onClose={() => setDeletingUser(null)}
         />
       )}

@@ -263,14 +263,14 @@ export default function TemplateComponent() {
         {editingTemplate && (
           <EditTemplate
             template={editingTemplate as any}
-            open={editingTemplate !== null}
+            open={true}
             onClose={() => setEditingTemplate(null)}
           />
         )}
         {deletingTemplate && (
           <DeleteTemplate
             template={deletingTemplate}
-            open={deletingTemplate !== null}
+            open={true}
             onClose={() => setDeletingTemplate(null)}
           />
         )}

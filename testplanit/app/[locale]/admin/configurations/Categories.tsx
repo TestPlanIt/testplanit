@@ -557,7 +557,7 @@ function ConfigCategoriesList() {
       {variantToEdit && (
         <EditVariantModal
           variant={variantToEdit}
-          open={variantToEdit !== null}
+          open={true}
           onClose={() => setVariantToEdit(null)}
           onSave={handleVariantUpdate}
         />
@@ -566,7 +566,7 @@ function ConfigCategoriesList() {
       {variantToDelete && (
         <DeleteVariantModal
           variant={variantToDelete}
-          open={variantToDelete !== null}
+          open={true}
           onClose={() => setVariantToDelete(null)}
           onDelete={handleVariantDelete}
         />
@@ -574,14 +574,14 @@ function ConfigCategoriesList() {
       {editingCategory && (
         <EditCategory
           category={editingCategory}
-          open={editingCategory !== null}
+          open={true}
           onClose={() => setEditingCategory(null)}
         />
       )}
       {deletingCategory && (
         <DeleteConfigCategory
           category={deletingCategory}
-          open={deletingCategory !== null}
+          open={true}
           onClose={() => setDeletingCategory(null)}
         />
       )}

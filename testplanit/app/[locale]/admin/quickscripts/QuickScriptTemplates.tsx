@@ -459,14 +459,14 @@ export default function QuickScriptTemplates() {
         {editingTemplate && (
           <EditQuickScriptTemplate
             template={editingTemplate}
-            open={editingTemplate !== null}
+            open={true}
             onClose={() => setEditingTemplate(null)}
           />
         )}
         {deletingTemplate && (
           <DeleteQuickScriptTemplate
             template={deletingTemplate}
-            open={deletingTemplate !== null}
+            open={true}
             onClose={() => setDeletingTemplate(null)}
           />
         )}

@@ -180,11 +180,6 @@ export async function POST(request: NextRequest) {
 
         sendProgress(5, progressMessages.validating);
 
-        console.log(
-          `[TestResultsImport] Received ${files.length} file(s): ${files.map((f) => `${f.name} (${f.size} bytes)`).join(", ")}`
-        );
-        console.log(`[TestResultsImport] Format: ${format}`);
-
         // Per-file format detection map (file index -> format)
         const fileFormatMap = new Map<number, TestResultFormat>();
 

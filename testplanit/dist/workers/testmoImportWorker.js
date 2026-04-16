@@ -2698,20 +2698,6 @@ var importAutomationCases = async (prisma2, configuration, datasetRows, projectI
     }
     const group = repositoryCaseGroupMap.get(repoKey);
     group.testmoCaseIds.push(testmoCaseId);
-    if (group.testmoCaseIds.length === 2) {
-      console.log(
-        `[CASE_GROUPING] Multiple Testmo cases mapping to same repo case:`
-      );
-      console.log(`  Key: ${repoKey}`);
-      console.log(`  TestPlanIt projectId: ${projectId}`);
-      console.log(`  Name: ${name}`);
-      console.log(`  ClassName: ${className}`);
-      console.log(`  Testmo case IDs: ${group.testmoCaseIds.join(", ")}`);
-    } else if (group.testmoCaseIds.length > 2) {
-      console.log(
-        `[CASE_GROUPING] Adding case ${testmoCaseId} to group (now ${group.testmoCaseIds.length} cases): ${group.testmoCaseIds.join(", ")}`
-      );
-    }
   }
   const repositoryCaseGroups = Array.from(repositoryCaseGroupMap.values());
   if (repositoryCaseGroups.length === 0) {
@@ -9231,27 +9217,6 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
   if (processedSinceLastPersist > 0) {
     const message = formatInProgressStatus(context, "repositoryCases");
     await persistProgress("repositoryCases", message);
-  }
-  if (dropdownStats.size > 0) {
-    console.log("\n========== DROPDOWN/MULTI-SELECT FIELD SUMMARY ==========");
-    for (const [fieldName, stats] of dropdownStats) {
-      console.log(`
-Field: ${fieldName}`);
-      console.log(`  Total attempts: ${stats.totalAttempts}`);
-      console.log(`  Successful: ${stats.successResults}`);
-      console.log(`  Failed (null): ${stats.nullResults}`);
-      if (stats.sampleValues.size > 0) {
-        console.log(
-          `  Sample success values: ${Array.from(stats.sampleValues).join(", ")}`
-        );
-      }
-      if (stats.sampleNulls.length > 0) {
-        console.log(
-          `  Sample failed raw values: ${stats.sampleNulls.join(", ")}`
-        );
-      }
-    }
-    console.log("==========================================================\n");
   }
   logMessage(context, `Repository cases import completed`, {
     totalProcessed: summary.total,

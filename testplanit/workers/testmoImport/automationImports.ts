@@ -329,22 +329,6 @@ export const importAutomationCases = async (
 
     const group = repositoryCaseGroupMap.get(repoKey)!;
     group.testmoCaseIds.push(testmoCaseId);
-
-    // DEBUG: Log when multiple cases are grouped together
-    if (group.testmoCaseIds.length === 2) {
-      console.log(
-        `[CASE_GROUPING] Multiple Testmo cases mapping to same repo case:`
-      );
-      console.log(`  Key: ${repoKey}`);
-      console.log(`  TestPlanIt projectId: ${projectId}`);
-      console.log(`  Name: ${name}`);
-      console.log(`  ClassName: ${className}`);
-      console.log(`  Testmo case IDs: ${group.testmoCaseIds.join(", ")}`);
-    } else if (group.testmoCaseIds.length > 2) {
-      console.log(
-        `[CASE_GROUPING] Adding case ${testmoCaseId} to group (now ${group.testmoCaseIds.length} cases): ${group.testmoCaseIds.join(", ")}`
-      );
-    }
   }
 
   const repositoryCaseGroups = Array.from(repositoryCaseGroupMap.values());

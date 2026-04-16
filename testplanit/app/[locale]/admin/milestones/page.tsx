@@ -401,14 +401,14 @@ function MilestoneTypes() {
       {editingMilestoneType && (
         <EditMilestoneType
           milestoneType={editingMilestoneType}
-          open={editingMilestoneType !== null}
+          open={true}
           onClose={() => setEditingMilestoneType(null)}
         />
       )}
       {deletingMilestoneType && (
         <DeleteMilestoneType
           milestoneType={deletingMilestoneType}
-          open={deletingMilestoneType !== null}
+          open={true}
           onClose={() => setDeletingMilestoneType(null)}
         />
       )}

@@ -78,9 +78,7 @@ describe("DataTable Column Visibility Logic", () => {
     {
       id: "actions",
       header: "Actions",
-      cell: () => {
-        "Edit";
-      },
+      cell: () => "Edit",
       enableHiding: false, // Cannot be hidden
     },
   ];
@@ -107,9 +105,7 @@ describe("DataTable Column Visibility Logic", () => {
     {
       id: "actions",
       header: "Actions",
-      cell: () => {
-        "Edit";
-      },
+      cell: () => "Edit",
       enableHiding: false,
     },
   ];

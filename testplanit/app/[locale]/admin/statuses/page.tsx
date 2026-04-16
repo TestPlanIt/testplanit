@@ -215,14 +215,14 @@ function Status() {
       {editingStatus && (
         <EditStatus
           status={editingStatus}
-          open={editingStatus !== null}
+          open={true}
           onClose={() => setEditingStatus(null)}
         />
       )}
       {deletingStatus && (
         <DeleteStatus
           status={deletingStatus}
-          open={deletingStatus !== null}
+          open={true}
           onClose={() => setDeletingStatus(null)}
         />
       )}

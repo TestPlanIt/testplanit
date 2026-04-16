@@ -47,7 +47,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -316,108 +316,90 @@ export function AddSessionModal({
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
+  // Initialize form once per dialog open. Uses a ref guard to prevent
+  // re-runs when async data (templates, workflows) arrives after the user
+  // has already started filling the form.
+  const formInitRef = useRef(false);
   useEffect(() => {
-    if (defaultTemplate && defaultWorkflow && !duplicationPreset) {
-      reset({
-        name: "",
-        templateId: defaultTemplate.id,
-        configIds: [],
-        stateId: defaultWorkflow.id,
-        assignedToId: "",
-        estimate: "",
-        note: null,
-        mission: null,
-        milestoneId: defaultMilestoneId ?? null,
-        attachments: [],
-        issueIds: [],
-      });
-      setLinkedIssueIds([]);
-      setMissionContent(null);
-      setNoteContent({});
-      setSelectedTags([]);
-      setSelectedConfigs([]);
-      setSelectedFiles([]);
+    if (!open) {
+      formInitRef.current = false;
+      return;
     }
-  }, [
-    defaultTemplate,
-    defaultWorkflow,
-    reset,
-    defaultMilestoneId,
-    duplicationPreset,
-  ]);
+    if (formInitRef.current) return;
 
-  useEffect(() => {
-    if (open) {
-      const initialTemplateId =
-        duplicationPreset?.originalTemplateId ||
-        defaultTemplate?.id ||
-        (templates && templates[0]?.id) ||
-        0;
-      const initialWorkflowId =
-        duplicationPreset?.originalStateId ||
-        defaultWorkflow?.id ||
-        (workflows && workflows[0]?.id) ||
-        0;
+    const initialTemplateId =
+      duplicationPreset?.originalTemplateId ||
+      defaultTemplate?.id ||
+      (templates && templates[0]?.id) ||
+      0;
+    const initialWorkflowId =
+      duplicationPreset?.originalStateId ||
+      defaultWorkflow?.id ||
+      (workflows && workflows[0]?.id) ||
+      0;
 
-      reset({
-        name: duplicationPreset
-          ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
-          : "",
-        templateId: initialTemplateId,
-        configIds: duplicationPreset?.originalConfigId
-          ? [duplicationPreset.originalConfigId]
-          : [],
-        stateId: initialWorkflowId,
-        assignedToId: duplicationPreset?.originalAssignedToId || "",
-        estimate: "",
-        note: null,
-        mission: null,
-        milestoneId:
-          duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
-        attachments: [],
-        issueIds: duplicationPreset?.originalIssueIds || [],
-      });
-      setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
-      if (duplicationPreset?.originalNote) {
-        try {
-          const parsed =
-            typeof duplicationPreset.originalNote === "string"
-              ? JSON.parse(duplicationPreset.originalNote)
-              : duplicationPreset.originalNote;
-          setNoteContent(parsed);
-        } catch {
-          setNoteContent({});
-        }
-      } else {
+    // Only mark as initialized once we have real data to set
+    if (!initialTemplateId || !initialWorkflowId) return;
+    formInitRef.current = true;
+
+    reset({
+      name: duplicationPreset
+        ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
+        : "",
+      templateId: initialTemplateId,
+      configIds: duplicationPreset?.originalConfigId
+        ? [duplicationPreset.originalConfigId]
+        : [],
+      stateId: initialWorkflowId,
+      assignedToId: duplicationPreset?.originalAssignedToId || "",
+      estimate: "",
+      note: null,
+      mission: null,
+      milestoneId:
+        duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+      attachments: [],
+      issueIds: duplicationPreset?.originalIssueIds || [],
+    });
+    setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
+    if (duplicationPreset?.originalNote) {
+      try {
+        const parsed =
+          typeof duplicationPreset.originalNote === "string"
+            ? JSON.parse(duplicationPreset.originalNote)
+            : duplicationPreset.originalNote;
+        setNoteContent(parsed);
+      } catch {
         setNoteContent({});
       }
-      if (duplicationPreset?.originalMission) {
-        try {
-          const parsed =
-            typeof duplicationPreset.originalMission === "string"
-              ? JSON.parse(duplicationPreset.originalMission)
-              : duplicationPreset.originalMission;
-          setMissionContent(parsed);
-        } catch {
-          setMissionContent(null);
-        }
-      } else {
+    } else {
+      setNoteContent({});
+    }
+    if (duplicationPreset?.originalMission) {
+      try {
+        const parsed =
+          typeof duplicationPreset.originalMission === "string"
+            ? JSON.parse(duplicationPreset.originalMission)
+            : duplicationPreset.originalMission;
+        setMissionContent(parsed);
+      } catch {
         setMissionContent(null);
       }
-      setSelectedTags(duplicationPreset?.originalTagIds || []);
-      setSelectedConfigs(
-        duplicationPreset?.originalConfigId &&
-          duplicationPreset?.originalConfigName
-          ? [
-              {
-                id: duplicationPreset.originalConfigId,
-                name: duplicationPreset.originalConfigName,
-              },
-            ]
-          : []
-      );
-      setSelectedFiles([]);
+    } else {
+      setMissionContent(null);
     }
+    setSelectedTags(duplicationPreset?.originalTagIds || []);
+    setSelectedConfigs(
+      duplicationPreset?.originalConfigId &&
+        duplicationPreset?.originalConfigName
+        ? [
+            {
+              id: duplicationPreset.originalConfigId,
+              name: duplicationPreset.originalConfigName,
+            },
+          ]
+        : []
+    );
+    setSelectedFiles([]);
   }, [
     open,
     reset,
@@ -562,16 +544,18 @@ export function AddSessionModal({
             name: data.name,
             currentVersion: 1,
             configurationGroupId,
-            configuration: configId ? { connect: { id: configId } } : undefined,
-            milestone: data.milestoneId
-              ? { connect: { id: data.milestoneId } }
-              : undefined,
+            ...(configId
+              ? { configuration: { connect: { id: configId } } }
+              : {}),
+            ...(data.milestoneId
+              ? { milestone: { connect: { id: data.milestoneId } } }
+              : {}),
             state: {
               connect: { id: data.stateId },
             },
-            assignedTo: data.assignedToId
-              ? { connect: { id: data.assignedToId } }
-              : undefined,
+            ...(data.assignedToId
+              ? { assignedTo: { connect: { id: data.assignedToId } } }
+              : {}),
             estimate: estimateInSeconds,
             note: noteContent
               ? JSON.stringify(noteContent)
@@ -586,11 +570,13 @@ export function AddSessionModal({
             tags: {
               connect: selectedTags.map((tagId) => ({ id: tagId })),
             },
-            issues: linkedIssueIds?.length
+            ...(linkedIssueIds?.length
               ? {
-                  connect: linkedIssueIds.map((id) => ({ id })),
+                  issues: {
+                    connect: linkedIssueIds.map((id) => ({ id })),
+                  },
                 }
-              : undefined,
+              : {}),
           },
         });
 
@@ -1179,7 +1165,10 @@ export function AddSessionModal({
               <Button variant="outline" type="button" onClick={handleCancel}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !defaultTemplate || !defaultWorkflow}
+              >
                 {isSubmitting
                   ? t("common.actions.submitting")
                   : selectedConfigs.length > 1

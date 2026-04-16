@@ -134,7 +134,7 @@ export function calculateHealthScore(
   }
 
   // Deduct for low execution frequency
-  if (totalExecutions < 3 && daysSinceLastExecution !== null) {
+  if (totalExecutions < 3) {
     score -= 10;
   }
 

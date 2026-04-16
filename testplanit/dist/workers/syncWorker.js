@@ -4419,7 +4419,6 @@ var processor = async (job) => {
         if (!jobData.data) {
           throw new Error("Issue data is required for issue creation");
         }
-        console.log("Issue creation not yet implemented in worker");
         return { success: false, error: "Not implemented" };
       } catch (error) {
         console.error("Failed to create issue:", error);
@@ -4430,7 +4429,6 @@ var processor = async (job) => {
         if (!jobData.issueId || !jobData.data) {
           throw new Error("Issue ID and data are required for issue update");
         }
-        console.log("Issue update not yet implemented in worker");
         return { success: false, error: "Not implemented" };
       } catch (error) {
         console.error("Failed to update issue:", error);

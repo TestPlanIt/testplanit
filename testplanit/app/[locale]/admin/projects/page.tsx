@@ -596,7 +596,7 @@ function ProjectAdmin() {
       {deletingProject && (
         <DeleteProject
           project={deletingProject}
-          open={deletingProject !== null}
+          open={true}
           onClose={() => setDeletingProject(null)}
         />
       )}

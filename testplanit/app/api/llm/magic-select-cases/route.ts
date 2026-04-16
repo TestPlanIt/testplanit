@@ -271,17 +271,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // Log incoming request for debugging
-    console.log("=== Magic Select Request Body ===");
-    console.log(JSON.stringify(body, null, 2));
-    console.log("=================================");
-
     // Validate request
     const parseResult = MagicSelectRequestSchema.safeParse(body);
     if (!parseResult.success) {
-      console.log("=== Magic Select Validation Error ===");
-      console.log(JSON.stringify(parseResult.error.issues, null, 2));
-      console.log("=====================================");
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.issues },
         { status: 400 }
@@ -396,13 +388,8 @@ export async function POST(request: NextRequest) {
       searchKeywords &&
       repositoryTotalCount > SEARCH_CONFIG.searchPreFilterThreshold
     ) {
-      console.log("=== Magic Select Search Pre-filter ===");
-      console.log("Total cases in project:", repositoryTotalCount);
-      console.log("Search keywords:", searchKeywords);
-
       const esClient = getElasticsearchClient();
       if (!esClient) {
-        console.log("Elasticsearch client not available, skipping pre-filter");
       } else {
         try {
           const indexName = getRepositoryCaseIndexName();
@@ -551,8 +538,6 @@ export async function POST(request: NextRequest) {
           );
         }
       }
-
-      console.log("=== End Search Pre-filter ===\n");
     }
 
     // Calculate the effective count (after search filtering)

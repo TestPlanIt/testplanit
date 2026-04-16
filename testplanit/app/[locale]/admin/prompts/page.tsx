@@ -353,14 +353,14 @@ function PromptConfigList() {
       {editingConfig && (
         <EditPromptConfig
           config={editingConfig}
-          open={editingConfig !== null}
+          open={true}
           onClose={() => setEditingConfig(null)}
         />
       )}
       {deletingConfig && (
         <DeletePromptConfig
           config={deletingConfig}
-          open={deletingConfig !== null}
+          open={true}
           onClose={() => setDeletingConfig(null)}
         />
       )}

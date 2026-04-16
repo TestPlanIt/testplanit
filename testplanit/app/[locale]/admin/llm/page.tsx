@@ -469,14 +469,14 @@ function LlmIntegrationList() {
           currentSpend={
             usageByIntegrationIdRef.current.get(editingIntegration.id) ?? 0
           }
-          open={editingIntegration !== null}
+          open={true}
           onClose={() => setEditingIntegration(null)}
         />
       )}
       {deletingIntegration && (
         <DeleteLlmIntegration
           integration={deletingIntegration}
-          open={deletingIntegration !== null}
+          open={true}
           onClose={() => setDeletingIntegration(null)}
         />
       )}

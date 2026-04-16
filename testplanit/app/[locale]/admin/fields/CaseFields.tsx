@@ -173,14 +173,14 @@ export default function CaseFields() {
         {editingCaseField && (
           <EditCaseField
             casefield={editingCaseField}
-            open={editingCaseField !== null}
+            open={true}
             onClose={() => setEditingCaseField(null)}
           />
         )}
         {deletingCaseField && (
           <DeleteCaseField
             casefield={deletingCaseField}
-            open={deletingCaseField !== null}
+            open={true}
             onClose={() => setDeletingCaseField(null)}
           />
         )}

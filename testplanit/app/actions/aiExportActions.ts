@@ -212,11 +212,7 @@ export async function generateAiExportBatch(args: {
       ...(resolved.model ? { model: resolved.model } : {}),
     };
 
-    console.log(
-      `[generateAiExportBatch] Calling LLM for ${args.cases.length} cases...`
-    );
     const response = await llmManager.chat(resolved.integrationId, request);
-    console.log(`[generateAiExportBatch] LLM responded`);
 
     const fullCode = stripMarkdownFences(response.content);
 
@@ -391,9 +387,7 @@ export async function generateAiExport(args: {
       ...(resolved.model ? { model: resolved.model } : {}),
     };
 
-    console.log(`[generateAiExport] Calling LLM for case ${args.caseId}...`);
     const response = await llmManager.chat(resolved.integrationId, request);
-    console.log(`[generateAiExport] LLM responded for case ${args.caseId}`);
 
     // AI generates the complete file — just strip any markdown fences
     const fullCode = stripMarkdownFences(response.content);
