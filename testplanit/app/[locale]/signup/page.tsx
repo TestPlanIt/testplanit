@@ -132,7 +132,9 @@ const Signup: NextPage = () => {
     }
   }, [forceSsoEnabled]);
 
-  const FormSchema = z
+  const minLen = registrationSettings?.minPasswordLength ?? 8;
+
+  const FormSchema = useMemo(() => z
     .object({
       name: z.string().min(2, {
         message: t("common.fields.validation.nameRequired"),
@@ -140,10 +142,10 @@ const Signup: NextPage = () => {
       email: z
         .email()
         .min(1, { message: t("auth.signup.errors.emailRequired") }),
-      password: z.string().min(4, t("auth.signup.errors.passwordRequired")),
+      password: z.string().min(minLen, t("auth.signup.errors.passwordRequired")),
       confirmPassword: z
         .string()
-        .min(4, t("auth.signup.errors.confirmPasswordRequired")),
+        .min(minLen, t("auth.signup.errors.confirmPasswordRequired")),
     })
     .superRefine(({ confirmPassword, password }, ctx) => {
       if (confirmPassword !== password) {
@@ -154,7 +156,7 @@ const Signup: NextPage = () => {
           input: "",
         });
       }
-    });
+    }), [minLen, t]);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
