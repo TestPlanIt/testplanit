@@ -499,6 +499,46 @@ function computeTotals(items: InventoryItem[]): InventoryOutput["totals"] {
   return totals;
 }
 
+/**
+ * Pre-populate the rationale for the lastActiveAt skip precedent — the ONLY
+ * row the script populates. All other rationales are authored in the
+ * markdown (Plan 02 Task 2) and synced back into the JSON in a one-time
+ * pass (Plan 02 Task 3). This override runs BEFORE totals are computed so
+ * the counts block reflects the status change.
+ *
+ * The rationale copies the comment-block text from `testplanit/lib/prisma.ts`
+ * lines 688–701 verbatim — matching the precedent wording so future audits
+ * see the same phrasing on both sides of the trust boundary.
+ */
+function applyLastActiveAtSkipOverride(items: InventoryItem[]): void {
+  const row = items.find(
+    (i) => i.surface === "prisma-hook" && i.symbol === "user.update"
+  );
+  if (!row) return;
+  if (!row.evidence.hasIntentionalSkipMarker) return;
+  row.defaultStatus = "intentionally-skipped";
+  row.rationale =
+    "Skip audit for session keep-alive writes (throttled lastActiveAt pings from the session callback). Auditing these produces a log entry every 5 minutes per active user with no security value.";
+}
+
+/**
+ * Emit the counts-block text that the human-readable AUDIT-COVERAGE.md
+ * embeds verbatim. Uses the middle-dot character U+00B7 as the separator;
+ * the markdown Totals section pastes this line into a fenced code block.
+ * One line, trailing newline, no other content — see Plan 02 <interfaces>.
+ */
+async function writeCountsBlock(
+  totals: InventoryOutput["totals"]
+): Promise<string> {
+  const line = `Total: ${totals.total} · audited (hook): ${totals.audited_hook} · audited (explicit): ${totals.audited_explicit} · raw-write: ${totals.raw_write} · missing: ${totals.missing} · intentionally-skipped: ${totals.intentionally_skipped}`;
+  const outputPath = path.join(
+    REPO_ROOT,
+    ".planning/audit-coverage-counts.txt"
+  );
+  await fs.writeFile(outputPath, line + "\n", "utf8");
+  return outputPath;
+}
+
 async function main(): Promise<void> {
   warnIfBaselineDirty();
   const generatedAt = await getHeadTimestamp();
@@ -517,6 +557,11 @@ async function main(): Promise<void> {
     ...actionItems,
     ...workerItems,
   ]);
+
+  // Move the lastActiveAt row from `audited (hook)` to `intentionally-skipped`
+  // and populate its rationale BEFORE computing totals so the counts block
+  // reflects the final status distribution.
+  applyLastActiveAtSkipOverride(items);
 
   const totals = computeTotals(items);
 
@@ -546,10 +591,18 @@ async function main(): Promise<void> {
     "utf8"
   );
 
+  const countsPath = await writeCountsBlock(totals);
+
   console.log(
     `audit-coverage: wrote ${items.length} items to ${path.relative(
       REPO_ROOT,
       outputPath
+    )}`
+  );
+  console.log(
+    `audit-coverage: wrote counts-block to ${path.relative(
+      REPO_ROOT,
+      countsPath
     )}`
   );
 }
