@@ -553,7 +553,9 @@ async function indexIssue(issue, tenantId) {
   const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
   const projectInfo = getProjectFromIssue(issue);
   if (!projectInfo) {
-    console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
+    console.warn(
+      `Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`
+    );
     return;
   }
   const noteText = issue.note ? extractTextFromNode(issue.note) : "";
@@ -700,7 +702,9 @@ function loadTenantsFromFile(filePath) {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+      console.log(
+        `Loaded ${configs.size} tenant configurations from ${filePath}`
+      );
     }
   } catch (error) {
     console.error(`Failed to load tenant configs from ${filePath}:`, error);
@@ -733,7 +737,9 @@ function loadTenantConfigs() {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+      console.log(
+        `Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`
+      );
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -754,7 +760,9 @@ function loadTenantConfigs() {
     }
   }
   if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+    console.warn(
+      "No tenant configurations found. Multi-tenant mode will not work without configurations."
+    );
   }
   return tenantConfigs;
 }
@@ -784,9 +792,14 @@ function getTenantPrismaClient(tenantId) {
     if (cached.databaseUrl === config.databaseUrl) {
       return cached.client;
     } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      console.log(
+        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+      );
       cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+        console.error(
+          `Error disconnecting stale client for tenant ${tenantId}:`,
+          err
+        );
       });
       tenantClients.delete(tenantId);
     }
@@ -1186,13 +1199,17 @@ var saltLength = 32;
 var tagLength = 16;
 var iterations = 1e5;
 var keyLength = 32;
+var DEV_FALLBACK_KEY = "development-key-do-not-use-in-production-please!";
 var getMasterKey = () => {
   const key = process.env.ENCRYPTION_KEY;
-  if (!key) {
-    console.warn("ENCRYPTION_KEY not set, using default key for development");
-    return "development-key-do-not-use-in-production-please!";
+  if (key) return key;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ENCRYPTION_KEY is not set. Refusing to start \u2014 running with the built-in default key would expose every encrypted secret in the database. Configure ENCRYPTION_KEY as a long, random value before deploying to production."
+    );
   }
-  return key;
+  console.warn("ENCRYPTION_KEY not set, using default key for development");
+  return DEV_FALLBACK_KEY;
 };
 var deriveKey = (password, salt) => {
   return import_crypto.default.pbkdf2Sync(password, salt, iterations, keyLength, "sha256");
@@ -1394,7 +1411,9 @@ var BaseAdapter = class {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === "AbortError") {
-        throw new Error(`Request timeout after ${this.requestTimeout}ms: ${url}`);
+        throw new Error(
+          `Request timeout after ${this.requestTimeout}ms: ${url}`
+        );
       }
       throw error;
     }
@@ -2129,13 +2148,17 @@ var GitHubAdapter = class extends BaseAdapter {
     let owner = this.owner;
     let repo = this.repo;
     if (githubIssue.repository_url) {
-      const match = githubIssue.repository_url.match(/\/repos\/([^/]+)\/([^/]+)$/);
+      const match = githubIssue.repository_url.match(
+        /\/repos\/([^/]+)\/([^/]+)$/
+      );
       if (match) {
         owner = match[1];
         repo = match[2];
       }
     } else if (githubIssue.html_url) {
-      const match = githubIssue.html_url.match(/github\.com\/([^/]+)\/([^/]+)\/issues/);
+      const match = githubIssue.html_url.match(
+        /github\.com\/([^/]+)\/([^/]+)\/issues/
+      );
       if (match) {
         owner = match[1];
         repo = match[2];
@@ -3333,13 +3356,17 @@ var SimpleUrlAdapter = class extends BaseAdapter {
    * Create a new issue - not supported by Simple URL adapters
    */
   async createIssue(_data) {
-    throw new Error("Creating issues is not supported by Simple URL integration");
+    throw new Error(
+      "Creating issues is not supported by Simple URL integration"
+    );
   }
   /**
    * Update an existing issue - not supported by Simple URL adapters
    */
   async updateIssue(_issueId, _data) {
-    throw new Error("Updating issues is not supported by Simple URL integration");
+    throw new Error(
+      "Updating issues is not supported by Simple URL integration"
+    );
   }
   /**
    * Get a single issue by ID - creates a mock issue based on URL pattern
@@ -3551,7 +3578,8 @@ var IntegrationManager = class _IntegrationManager {
       }
       if (credentials.email) authData.email = credentials.email;
       if (credentials.apiToken) authData.apiToken = credentials.apiToken;
-      if (credentials.personalAccessToken) authData.apiKey = credentials.personalAccessToken;
+      if (credentials.personalAccessToken)
+        authData.apiKey = credentials.personalAccessToken;
       if (integration.settings && typeof integration.settings === "object") {
         const settings = integration.settings;
         if (settings.baseUrl) authData.baseUrl = settings.baseUrl;
@@ -3872,7 +3900,9 @@ var SyncService = class {
             });
             const issuesForProject = allProjectIssues.filter((issue) => {
               if (!issue.externalKey) return false;
-              if (issue.externalKey.startsWith(integrationProject.externalProjectKey + "-")) {
+              if (issue.externalKey.startsWith(
+                integrationProject.externalProjectKey + "-"
+              )) {
                 return true;
               }
               if (issue.externalKey === integrationProject.externalProjectId) {
@@ -3899,12 +3929,18 @@ var SyncService = class {
                   }
                   const issueIdentifier = localIssue.externalId || localIssue.externalKey || localIssue.name;
                   if (!issueIdentifier) {
-                    errors.push(`Issue ${localIssue.id} has no external identifier`);
+                    errors.push(
+                      `Issue ${localIssue.id} has no external identifier`
+                    );
                     continue;
                   }
                   const issueData = await adapter.syncIssue(issueIdentifier);
                   await issueCache.set(integrationId, issueData.id, issueData);
-                  await this.updateExistingIssue(prisma2, integrationId, issueData);
+                  await this.updateExistingIssue(
+                    prisma2,
+                    integrationId,
+                    issueData
+                  );
                   projectSynced++;
                 } catch (error) {
                   errors.push(
@@ -3926,7 +3962,9 @@ var SyncService = class {
               }
             });
           } catch (error) {
-            errors.push(`Project ${integrationProject.externalProjectKey}: ${error.message}`);
+            errors.push(
+              `Project ${integrationProject.externalProjectKey}: ${error.message}`
+            );
             try {
               await prisma2.integrationProject.update({
                 where: { id: integrationProject.id },
@@ -3936,7 +3974,9 @@ var SyncService = class {
                 }
               });
             } catch {
-              errors.push(`Failed to update error status for ${integrationProject.externalProjectKey}`);
+              errors.push(
+                `Failed to update error status for ${integrationProject.externalProjectKey}`
+              );
             }
           }
         }
@@ -3969,7 +4009,9 @@ var SyncService = class {
             const globalIndex = processedCount + i;
             try {
               if (job) {
-                const progress = Math.round((globalIndex + 1) / totalIssues * 100);
+                const progress = Math.round(
+                  (globalIndex + 1) / totalIssues * 100
+                );
                 await job.updateProgress({
                   current: globalIndex + 1,
                   total: totalIssues,
@@ -3979,7 +4021,9 @@ var SyncService = class {
               }
               const issueIdentifier = localIssue.externalId || localIssue.externalKey || localIssue.name;
               if (!issueIdentifier) {
-                errors.push(`Issue ${localIssue.id} has no external identifier`);
+                errors.push(
+                  `Issue ${localIssue.id} has no external identifier`
+                );
                 continue;
               }
               const issueData = await adapter.syncIssue(issueIdentifier);

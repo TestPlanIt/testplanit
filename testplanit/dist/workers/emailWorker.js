@@ -79,11 +79,11 @@ var import_es = require("date-fns/locale/es");
 var import_fr = require("date-fns/locale/fr");
 var localeMap = {
   "en-US": import_en_US.enUS,
-  "en_US": import_en_US.enUS,
+  en_US: import_en_US.enUS,
   "es-ES": import_es.es,
-  "es_ES": import_es.es,
+  es_ES: import_es.es,
   "fr-FR": import_fr.fr,
-  "fr_FR": import_fr.fr
+  fr_FR: import_fr.fr
 };
 function getServerDateFnsLocale(locale) {
   const normalizedLocale = locale.replace("_", "-");
@@ -99,9 +99,9 @@ function formatEmailDate(date, locale) {
 }
 function formatEmailDateTime(date, locale) {
   const atWordMap = {
-    "en": "at",
-    "es": "a las",
-    "fr": "\xE0"
+    en: "at",
+    es: "a las",
+    fr: "\xE0"
   };
   const langCode = locale.substring(0, 2);
   const atWord = atWordMap[langCode] || "at";
@@ -113,30 +113,39 @@ var import_meta = {};
 var currentDir = typeof __dirname !== "undefined" ? __dirname : import_path.default.dirname((0, import_url.fileURLToPath)(import_meta.url));
 var templateCache = /* @__PURE__ */ new Map();
 var compiledLayouts = /* @__PURE__ */ new Map();
-import_handlebars.default.registerHelper("formatDate", function(date) {
-  const locale = this.locale || "en-US";
-  return formatEmailDate(date, locale);
-});
-import_handlebars.default.registerHelper("formatDateTime", function(date) {
-  const locale = this.locale || "en-US";
-  return formatEmailDateTime(date, locale);
-});
+import_handlebars.default.registerHelper(
+  "formatDate",
+  function(date) {
+    const locale = this.locale || "en-US";
+    return formatEmailDate(date, locale);
+  }
+);
+import_handlebars.default.registerHelper(
+  "formatDateTime",
+  function(date) {
+    const locale = this.locale || "en-US";
+    return formatEmailDateTime(date, locale);
+  }
+);
 import_handlebars.default.registerHelper("eq", (a, b) => a === b);
 import_handlebars.default.registerHelper("ne", (a, b) => a !== b);
 import_handlebars.default.registerHelper("gt", (a, b) => a > b);
 import_handlebars.default.registerHelper("gte", (a, b) => a >= b);
 import_handlebars.default.registerHelper("lt", (a, b) => a < b);
 import_handlebars.default.registerHelper("lte", (a, b) => a <= b);
-import_handlebars.default.registerHelper("t", function(key, options) {
-  const translations = options?.data?.root?.translations || this.translations || {};
-  const value = translations[key] || key;
-  if (options && options.hash) {
-    return value.replace(/\{(\w+)\}/g, (match, param) => {
-      return options.hash[param] !== void 0 ? options.hash[param] : match;
-    });
+import_handlebars.default.registerHelper(
+  "t",
+  function(key, options) {
+    const translations = options?.data?.root?.translations || this.translations || {};
+    const value = translations[key] || key;
+    if (options && options.hash) {
+      return value.replace(/\{(\w+)\}/g, (match, param) => {
+        return options.hash[param] !== void 0 ? options.hash[param] : match;
+      });
+    }
+    return value;
   }
-  return value;
-});
+);
 async function loadTemplate(templatePath) {
   const cached = templateCache.get(templatePath);
   if (cached) {
@@ -152,7 +161,12 @@ async function loadLayout(layoutName) {
   if (cached) {
     return cached;
   }
-  const layoutPath = import_path.default.join(currentDir, "templates", "layouts", `${layoutName}.hbs`);
+  const layoutPath = import_path.default.join(
+    currentDir,
+    "templates",
+    "layouts",
+    `${layoutName}.hbs`
+  );
   const layoutContent = await import_promises.default.readFile(layoutPath, "utf-8");
   const compiled = import_handlebars.default.compile(layoutContent);
   compiledLayouts.set(layoutName, compiled);
@@ -171,12 +185,19 @@ async function registerPartials() {
       }
     }
   } catch (error) {
-    console.warn("No partials directory found or error loading partials:", error);
+    console.warn(
+      "No partials directory found or error loading partials:",
+      error
+    );
   }
 }
 async function renderEmailTemplate(templateName, data, options = {}) {
   const layoutName = options.layout || "main";
-  const templatePath = import_path.default.join(currentDir, "templates", `${templateName}.hbs`);
+  const templatePath = import_path.default.join(
+    currentDir,
+    "templates",
+    `${templateName}.hbs`
+  );
   const template = await loadTemplate(templatePath);
   const content = template(data);
   const layout = await loadLayout(layoutName);
@@ -286,7 +307,9 @@ function loadTenantsFromFile(filePath) {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+      console.log(
+        `Loaded ${configs.size} tenant configurations from ${filePath}`
+      );
     }
   } catch (error) {
     console.error(`Failed to load tenant configs from ${filePath}:`, error);
@@ -319,7 +342,9 @@ function loadTenantConfigs() {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+      console.log(
+        `Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`
+      );
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -340,7 +365,9 @@ function loadTenantConfigs() {
     }
   }
   if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+    console.warn(
+      "No tenant configurations found. Multi-tenant mode will not work without configurations."
+    );
   }
   return tenantConfigs;
 }
@@ -370,9 +397,14 @@ function getTenantPrismaClient(tenantId) {
     if (cached.databaseUrl === config.databaseUrl) {
       return cached.client;
     } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      console.log(
+        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+      );
       cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+        console.error(
+          `Error disconnecting stale client for tenant ${tenantId}:`,
+          err
+        );
       });
       tenantClients.delete(tenantId);
     }
@@ -503,13 +535,21 @@ async function loadTranslations(locale) {
     return translationCache.get(normalizedLocale);
   }
   try {
-    const translationPath = import_path2.default.join(currentDir2, "..", "messages", `${normalizedLocale}.json`);
+    const translationPath = import_path2.default.join(
+      currentDir2,
+      "..",
+      "messages",
+      `${normalizedLocale}.json`
+    );
     const translationContent = await import_promises2.default.readFile(translationPath, "utf-8");
     const translations = JSON.parse(translationContent);
     translationCache.set(normalizedLocale, translations);
     return translations;
   } catch (error) {
-    console.error(`Failed to load translations for locale ${normalizedLocale}:`, error);
+    console.error(
+      `Failed to load translations for locale ${normalizedLocale}:`,
+      error
+    );
     if (normalizedLocale !== "en-US") {
       return loadTranslations("en-US");
     }
@@ -568,7 +608,10 @@ function handlePluralization(text, values) {
       startIndex = pluralStart + 1;
       continue;
     }
-    const pluralContent = result.substring(pluralStart + pluralMatch[0].length, pluralEnd);
+    const pluralContent = result.substring(
+      pluralStart + pluralMatch[0].length,
+      pluralEnd
+    );
     const rulesMap = /* @__PURE__ */ new Map();
     const rulePattern = /(=\d+|zero|one|two|few|many|other)\s*\{([^}]*)\}/g;
     let ruleMatch;
@@ -749,7 +792,9 @@ function isTipTapContent(content) {
 // workers/emailWorker.ts
 var import_meta3 = {};
 var processor = async (job) => {
-  console.log(`Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   validateMultiTenantJobData(job.data);
   const prisma2 = getPrismaClientForJob(job.data);
   switch (job.name) {
@@ -848,11 +893,17 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
             userLocale,
             isOverdue ? "components.notifications.content.milestoneOverdueTitle" : "components.notifications.content.milestoneDueSoonTitle"
           );
-          const formattedDueDate = data.dueDate ? new Date(data.dueDate).toLocaleDateString(userLocale.replace("_", "-")) : "";
+          const formattedDueDate = data.dueDate ? new Date(data.dueDate).toLocaleDateString(
+            userLocale.replace("_", "-")
+          ) : "";
           translatedMessage = await getServerTranslation(
             userLocale,
             isOverdue ? "components.notifications.content.milestoneOverdue" : "components.notifications.content.milestoneDueSoon",
-            { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
+            {
+              milestoneName: data.milestoneName,
+              projectName: data.projectName,
+              dueDate: formattedDueDate
+            }
           );
         } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
           if (data.error) {
@@ -869,7 +920,11 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
             translatedMessage = await getServerTranslation(
               userLocale,
               "components.notifications.content.generateFromUrlCompleteMessage",
-              { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+              {
+                pages: data.pagesProcessed ?? 0,
+                url: data.url ?? "",
+                projectName: data.projectName ?? ""
+              }
             );
           }
         }
@@ -1003,11 +1058,17 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
                 userLocale,
                 isOverdue ? "components.notifications.content.milestoneOverdueTitle" : "components.notifications.content.milestoneDueSoonTitle"
               );
-              const formattedDueDate = data.dueDate ? new Date(data.dueDate).toLocaleDateString(userLocale.replace("_", "-")) : "";
+              const formattedDueDate = data.dueDate ? new Date(data.dueDate).toLocaleDateString(
+                userLocale.replace("_", "-")
+              ) : "";
               translatedMessage = await getServerTranslation(
                 userLocale,
                 isOverdue ? "components.notifications.content.milestoneOverdue" : "components.notifications.content.milestoneDueSoon",
-                { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
+                {
+                  milestoneName: data.milestoneName,
+                  projectName: data.projectName,
+                  dueDate: formattedDueDate
+                }
               );
             } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
               if (data.error) {
@@ -1023,7 +1084,11 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
                 translatedMessage = await getServerTranslation(
                   userLocale,
                   "components.notifications.content.generateFromUrlCompleteMessage",
-                  { pages: data.pagesProcessed ?? 0, url: data.url ?? "", projectName: data.projectName ?? "" }
+                  {
+                    pages: data.pagesProcessed ?? 0,
+                    url: data.url ?? "",
+                    projectName: data.projectName ?? ""
+                  }
                 );
               }
             }
@@ -1119,7 +1184,7 @@ var startWorker = async () => {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 };
-if (typeof import_meta3 !== "undefined" && import_meta3.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta3 === "undefined" || import_meta3.url === void 0)) {
+if (typeof import_meta3 !== "undefined" && import_meta3.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || typeof import_meta3 === "undefined" || import_meta3.url === void 0) {
   console.log("Email worker running...");
   startWorker().catch((err) => {
     console.error("Failed to start email worker:", err);
