@@ -1,3 +1,9 @@
+## [0.21.17](https://github.com/TestPlanIt/testplanit/compare/v0.21.16...v0.21.17) (2026-04-16)
+
+### Bug Fixes
+
+* resolve E2E failures, CodeQL warnings, and debug cleanup ([#216](https://github.com/TestPlanIt/testplanit/issues/216)) ([9d81d8d](https://github.com/TestPlanIt/testplanit/commit/9d81d8d5c5b9b1b23617b09397274ff104cd52f9))
+
 ## [0.21.16](https://github.com/TestPlanIt/testplanit/compare/v0.21.15...v0.21.16) (2026-04-16)
 
 ### Bug Fixes
