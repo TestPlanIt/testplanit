@@ -22,6 +22,7 @@ const mockFindFirst = vi.mocked(db.registrationSettings.findFirst);
 const mockIsPasswordInHistory = vi.mocked(isPasswordInHistory);
 
 /** Helper: build a settings object with sensible defaults (all rules disabled). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeSettings(overrides: Partial<{
   minPasswordLength: number;
   requireUppercase: boolean;
@@ -29,7 +30,7 @@ function makeSettings(overrides: Partial<{
   requireNumbers: boolean;
   requiredSpecialChars: string | null;
   passwordHistoryDepth: number;
-}> = {}) {
+}> = {}): any {
   return {
     minPasswordLength: 8,
     requireUppercase: false,
@@ -48,7 +49,7 @@ describe("validatePasswordPolicy", () => {
   });
 
   it("returns [] when password meets all policy rules", async () => {
-    mockFindFirst.mockResolvedValue(makeSettings());
+    mockFindFirst.mockResolvedValue(makeSettings() as any);
     const violations = await validatePasswordPolicy("user-1", "password123");
     expect(violations).toEqual([]);
   });

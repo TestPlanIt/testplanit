@@ -1,7 +1,9 @@
 import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
+import { updatePasswordHistory } from "~/lib/password-history";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
 import { auditPasswordChange } from "~/lib/services/auditLog";
+import { validatePasswordPolicy } from "~/lib/validate-password-policy";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
@@ -31,13 +33,6 @@ export async function POST(
     );
   }
 
-  if (newPassword.length < 4) {
-    return NextResponse.json(
-      { error: "New password must be at least 4 characters long" },
-      { status: 400 }
-    );
-  }
-
   try {
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -59,15 +54,35 @@ export async function POST(
       );
     }
 
+    // Validate against password policy (per D-01)
+    const violations = await validatePasswordPolicy(userId, newPassword);
+    if (violations.length > 0) {
+      return NextResponse.json(
+        { errors: violations.map((v) => v.message) },
+        { status: 400 }
+      );
+    }
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Fetch passwordHistoryDepth for history update
+    const settings = await db.registrationSettings.findFirst({
+      select: { passwordHistoryDepth: true },
+    });
 
     await db.user.update({
       where: { id: userId },
       data: {
         password: hashedNewPassword,
         passwordChangedAt: new Date(),
+        mustChangePassword: false,
       },
     });
+
+    // Store in password history (per D-03)
+    if (settings && settings.passwordHistoryDepth > 0) {
+      await updatePasswordHistory(userId, hashedNewPassword, settings.passwordHistoryDepth);
+    }
 
     // Invalidate cached session data so the session callback fetches fresh
     // passwordChangedAt from DB on next request.
