@@ -126,6 +126,7 @@ declare module "next-auth/jwt" {
     twoFactorRequired?: boolean;
     twoFactorVerified?: boolean;
     twoFactorSetupRequired?: boolean;
+    passwordChangedAt?: string | null; // ISO string — stored as string for JSON serialization safety
   }
 }
 
@@ -329,6 +330,34 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             // Throttled lastActiveAt update (fire-and-forget).
             void touchLastActive(session.user.id, user);
           }
+
+          // SECURITY-03: Check if password was changed after JWT was issued.
+          // This uses a direct DB query, NOT the Valkey cache, because the cache
+          // TTL (60s) would allow stale sessions to persist after password change.
+          // Only check for credential-based users (SECURITY-04).
+          if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
+            const freshUser = await db.user.findUnique({
+              where: { id: session.user.id },
+              select: { passwordChangedAt: true },
+            });
+
+            const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
+            const tokenPasswordChangedAt = token.passwordChangedAt
+              ? new Date(token.passwordChangedAt)
+              : null;
+
+            if (
+              dbPasswordChangedAt &&
+              tokenPasswordChangedAt &&
+              dbPasswordChangedAt > tokenPasswordChangedAt
+            ) {
+              // Password was changed after this JWT was issued — invalidate session.
+              // Return empty session to force re-authentication.
+              // @ts-expect-error — NextAuth session callback typing doesn't allow null,
+              // but returning an empty object effectively invalidates the session
+              return {};
+            }
+          }
         }
         return session;
       },
@@ -454,11 +483,12 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         if (account || trigger === "update" || !token.access) {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { access: true, isApi: true, twoFactorEnabled: true },
+            select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true },
           });
           if (user) {
             token.access = user.access;
             token.isApi = user.isApi;
+            token.passwordChangedAt = user.passwordChangedAt?.toISOString() ?? null;
           }
 
           // Check if 2FA verification is required for SSO logins
@@ -586,6 +616,34 @@ export const authOptions: NextAuthOptions = {
           // Throttled lastActiveAt update (fire-and-forget).
           void touchLastActive(session.user.id, user);
         }
+
+        // SECURITY-03: Check if password was changed after JWT was issued.
+        // This uses a direct DB query, NOT the Valkey cache, because the cache
+        // TTL (60s) would allow stale sessions to persist after password change.
+        // Only check for credential-based users (SECURITY-04).
+        if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
+          const freshUser = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { passwordChangedAt: true },
+          });
+
+          const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
+          const tokenPasswordChangedAt = token.passwordChangedAt
+            ? new Date(token.passwordChangedAt)
+            : null;
+
+          if (
+            dbPasswordChangedAt &&
+            tokenPasswordChangedAt &&
+            dbPasswordChangedAt > tokenPasswordChangedAt
+          ) {
+            // Password was changed after this JWT was issued — invalidate session.
+            // Return empty session to force re-authentication.
+            // @ts-expect-error — NextAuth session callback typing doesn't allow null,
+            // but returning an empty object effectively invalidates the session
+            return {};
+          }
+        }
       }
       return session;
     },
@@ -696,11 +754,12 @@ export const authOptions: NextAuthOptions = {
       if (account || trigger === "update" || !token.access) {
         const user = await db.user.findUnique({
           where: { id: token.sub },
-          select: { access: true, isApi: true, twoFactorEnabled: true },
+          select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true },
         });
         if (user) {
           token.access = user.access;
           token.isApi = user.isApi;
+          token.passwordChangedAt = user.passwordChangedAt?.toISOString() ?? null;
         }
 
         // Check if 2FA verification is required for SSO logins

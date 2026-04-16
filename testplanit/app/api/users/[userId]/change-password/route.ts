@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateSessionUserCache } from "~/lib/session-cache";
 import { auditPasswordChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -62,8 +63,15 @@ export async function POST(
 
     await db.user.update({
       where: { id: userId },
-      data: { password: hashedNewPassword },
+      data: {
+        password: hashedNewPassword,
+        passwordChangedAt: new Date(),
+      },
     });
+
+    // Invalidate cached session data so the session callback fetches fresh
+    // passwordChangedAt from DB on next request.
+    await invalidateSessionUserCache(userId);
 
     // Audit the password change
     auditPasswordChange(
