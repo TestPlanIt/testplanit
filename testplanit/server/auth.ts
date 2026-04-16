@@ -127,6 +127,8 @@ declare module "next-auth/jwt" {
     twoFactorVerified?: boolean;
     twoFactorSetupRequired?: boolean;
     passwordChangedAt?: string | null; // ISO string — stored as string for JSON serialization safety
+    mustChangePassword?: boolean;
+    mustChangePasswordReason?: "admin" | "expired";
   }
 }
 
@@ -358,6 +360,9 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
               return {};
             }
           }
+
+          // Expose mustChangePasswordReason from JWT in session for UI display
+          (session as any).mustChangePasswordReason = token.mustChangePasswordReason;
         }
         return session;
       },
@@ -478,17 +483,46 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           return token;
         }
 
+        // Handle session update to clear mustChangePassword after force-change flow
+        if (trigger === "update" && session?.mustChangePasswordCleared) {
+          token.mustChangePassword = false;
+          token.mustChangePasswordReason = undefined;
+          return token;
+        }
+
         // Fetch and store user access level and isApi flag in JWT for middleware access control
         // Fetch on sign in, explicit update, or if access is missing (for existing tokens)
         if (account || trigger === "update" || !token.access) {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true },
+            select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true, mustChangePassword: true },
           });
           if (user) {
             token.access = user.access;
             token.isApi = user.isApi;
             token.passwordChangedAt = user.passwordChangedAt?.toISOString() ?? null;
+            token.mustChangePassword = user.mustChangePassword ?? false;
+          }
+
+          // Determine mustChangePasswordReason when flag is set
+          if (user?.mustChangePassword) {
+            token.mustChangePasswordReason = "admin"; // default
+            if (user.passwordChangedAt) {
+              const regSettings = await db.registrationSettings.findFirst({
+                select: { passwordExpirationDays: true },
+              });
+              if (regSettings && regSettings.passwordExpirationDays > 0) {
+                const expiresAt = new Date(
+                  user.passwordChangedAt.getTime() +
+                    regSettings.passwordExpirationDays * 24 * 60 * 60 * 1000
+                );
+                if (new Date() > expiresAt) {
+                  token.mustChangePasswordReason = "expired";
+                }
+              }
+            }
+          } else {
+            token.mustChangePasswordReason = undefined;
           }
 
           // Check if 2FA verification is required for SSO logins
@@ -644,6 +678,9 @@ export const authOptions: NextAuthOptions = {
             return {};
           }
         }
+
+        // Expose mustChangePasswordReason from JWT in session for UI display
+        (session as any).mustChangePasswordReason = token.mustChangePasswordReason;
       }
       return session;
     },
@@ -749,17 +786,46 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      // Handle session update to clear mustChangePassword after force-change flow
+      if (trigger === "update" && session?.mustChangePasswordCleared) {
+        token.mustChangePassword = false;
+        token.mustChangePasswordReason = undefined;
+        return token;
+      }
+
       // Fetch and store user access level and isApi flag in JWT for middleware access control
       // Fetch on sign in, explicit update, or if access is missing (for existing tokens)
       if (account || trigger === "update" || !token.access) {
         const user = await db.user.findUnique({
           where: { id: token.sub },
-          select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true },
+          select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true, mustChangePassword: true },
         });
         if (user) {
           token.access = user.access;
           token.isApi = user.isApi;
           token.passwordChangedAt = user.passwordChangedAt?.toISOString() ?? null;
+          token.mustChangePassword = user.mustChangePassword ?? false;
+        }
+
+        // Determine mustChangePasswordReason when flag is set
+        if (user?.mustChangePassword) {
+          token.mustChangePasswordReason = "admin"; // default
+          if (user.passwordChangedAt) {
+            const regSettings = await db.registrationSettings.findFirst({
+              select: { passwordExpirationDays: true },
+            });
+            if (regSettings && regSettings.passwordExpirationDays > 0) {
+              const expiresAt = new Date(
+                user.passwordChangedAt.getTime() +
+                  regSettings.passwordExpirationDays * 24 * 60 * 60 * 1000
+              );
+              if (new Date() > expiresAt) {
+                token.mustChangePasswordReason = "expired";
+              }
+            }
+          }
+        } else {
+          token.mustChangePasswordReason = undefined;
         }
 
         // Check if 2FA verification is required for SSO logins

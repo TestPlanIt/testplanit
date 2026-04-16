@@ -321,6 +321,36 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       redirectUrl.searchParams.set("sso", "true");
       return NextResponse.redirect(redirectUrl);
     }
+
+    // Check if password change is required (per D-04 — mirrors 2FA pattern)
+    if (token.mustChangePassword) {
+      // Don't redirect if already on the force-change page or its API
+      const isForceChangePath =
+        pathWithoutLocale === "/auth/force-change-password" ||
+        pathWithoutLocale.startsWith("/auth/force-change-password/");
+      const isForceChangeApi =
+        pathname.includes("/api/users/") &&
+        pathname.includes("/force-change-password");
+      // Allow the password-policy API (used by the force-change page to display requirements)
+      const isPasswordPolicyApi =
+        pathname.includes("/api/users/") &&
+        pathname.includes("/password-policy");
+      // Allow signout and all auth API routes
+      const isSignOutApi = pathname.includes("/api/auth/");
+
+      if (
+        !isForceChangePath &&
+        !isForceChangeApi &&
+        !isPasswordPolicyApi &&
+        !isSignOutApi
+      ) {
+        const pathSegments = pathname.split("/").filter(Boolean);
+        const locale = pathSegments[0] || defaultLocale;
+        const redirectUrl = new URL(request.url);
+        redirectUrl.pathname = `/${locale}/auth/force-change-password`;
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
   }
 
   // Check if this is an admin route

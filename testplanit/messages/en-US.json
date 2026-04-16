@@ -943,6 +943,24 @@
       "useAuthenticator": "Use authenticator code instead",
       "useBackupCode": "Use a backup code instead",
       "signOut": "Sign out and use a different account"
+    },
+    "forceChangePassword": {
+      "title": "Change Your Password",
+      "adminDescription": "Your administrator requires you to change your password.",
+      "expiredDescription": "Your password has expired. Please set a new password to continue.",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm New Password",
+      "submitButton": "Change Password",
+      "signOut": "Sign out instead",
+      "passwordsMustMatch": "Passwords do not match.",
+      "passwordRequired": "Password is required.",
+      "genericError": "An error occurred. Please try again.",
+      "policyTitle": "Password Requirements:",
+      "policyMinLength": "At least {count} characters",
+      "policyUppercase": "At least one uppercase letter",
+      "policyLowercase": "At least one lowercase letter",
+      "policyNumbers": "At least one number",
+      "policySpecialChars": "At least one special character ({chars})"
     }
   },
   "account": {
