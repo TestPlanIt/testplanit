@@ -421,9 +421,9 @@ var init_BitbucketRepoAdapter = __esm({
         this.repoSlug = settings?.repoSlug ?? "";
       }
       get authHeaders() {
-        const encoded = Buffer.from(
-          `${this.email}:${this.apiToken}`
-        ).toString("base64");
+        const encoded = Buffer.from(`${this.email}:${this.apiToken}`).toString(
+          "base64"
+        );
         return { Authorization: `Basic ${encoded}` };
       }
       async getDefaultBranch() {
@@ -742,7 +742,12 @@ var init_GitRepoAdapter = __esm({
               // prevent redirect-based SSRF bypass
             });
             if (response.status >= 300 && response.status < 400) {
-              return this.followSafeRedirect(response, options, controller.signal, "json");
+              return this.followSafeRedirect(
+                response,
+                options,
+                controller.signal,
+                "json"
+              );
             }
             this.trackRateLimitHeaders(response);
             const remaining = response.headers.get("X-RateLimit-Remaining");
@@ -802,7 +807,12 @@ var init_GitRepoAdapter = __esm({
               redirect: "manual"
             });
             if (response.status >= 300 && response.status < 400) {
-              return this.followSafeRedirect(response, options, controller.signal, "text");
+              return this.followSafeRedirect(
+                response,
+                options,
+                controller.signal,
+                "text"
+              );
             }
             this.trackRateLimitHeaders(response);
             const remaining = response.headers.get("X-RateLimit-Remaining");
@@ -855,13 +865,9 @@ var init_GitRepoAdapter = __esm({
       async followSafeRedirect(response, options, signal, mode) {
         const location = response.headers.get("Location");
         if (!location) {
-          throw new Error(
-            `Redirect (${response.status}) with no Location header`
-          );
+          throw new Error(`Redirect (${response.status}) with no Location header`);
         }
-        const redirectUrl = this.sanitizeUrl(
-          new URL(location, response.url).href
-        );
+        const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
         await assertSsrfSafeResolved(redirectUrl);
         const redirectResponse = await fetch(redirectUrl, {
           ...options,
@@ -958,7 +964,9 @@ function loadTenantsFromFile(filePath) {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+      console.log(
+        `Loaded ${configs.size} tenant configurations from ${filePath}`
+      );
     }
   } catch (error) {
     console.error(`Failed to load tenant configs from ${filePath}:`, error);
@@ -991,7 +999,9 @@ function loadTenantConfigs() {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+      console.log(
+        `Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`
+      );
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -1012,7 +1022,9 @@ function loadTenantConfigs() {
     }
   }
   if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+    console.warn(
+      "No tenant configurations found. Multi-tenant mode will not work without configurations."
+    );
   }
   return tenantConfigs;
 }
@@ -1046,9 +1058,14 @@ function getTenantPrismaClient(tenantId) {
     if (cached.databaseUrl === config.databaseUrl) {
       return cached.client;
     } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      console.log(
+        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+      );
       cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+        console.error(
+          `Error disconnecting stale client for tenant ${tenantId}:`,
+          err
+        );
       });
       tenantClients.delete(tenantId);
     }
@@ -1395,7 +1412,9 @@ var JOB_CREATE_NOTIFICATION = "create-notification";
 var JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
 var JOB_SEND_DAILY_DIGEST = "send-daily-digest";
 var processor = async (job) => {
-  console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   validateMultiTenantJobData(job.data);
   const prisma2 = getPrismaClientForJob(job.data);
   switch (job.name) {
@@ -1567,7 +1586,7 @@ var startWorker = async () => {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 };
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || typeof import_meta === "undefined" || import_meta.url === void 0) {
   console.log("Notification worker running...");
   startWorker().catch((err) => {
     console.error("Failed to start notification worker:", err);
@@ -1583,7 +1602,9 @@ var NotificationService = class {
   static async createNotification(params) {
     const notificationQueue = getNotificationQueue();
     if (!notificationQueue) {
-      console.warn("Notification queue not available, notification not created");
+      console.warn(
+        "Notification queue not available, notification not created"
+      );
       return;
     }
     try {
@@ -1591,11 +1612,17 @@ var NotificationService = class {
         ...params,
         tenantId: params.tenantId ?? getCurrentTenantId()
       };
-      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
-        removeOnComplete: true,
-        removeOnFail: false
-      });
-      console.log(`Queued notification job ${job.id} for user ${params.userId}`);
+      const job = await notificationQueue.add(
+        JOB_CREATE_NOTIFICATION,
+        jobData,
+        {
+          removeOnComplete: true,
+          removeOnFail: false
+        }
+      );
+      console.log(
+        `Queued notification job ${job.id} for user ${params.userId}`
+      );
       return job.id;
     } catch (error) {
       console.error("Failed to queue notification:", error);
@@ -1699,7 +1726,9 @@ var NotificationService = class {
         })
       );
       await Promise.all(notificationPromises);
-      console.log(`Created user registration notifications for ${systemAdmins.length} system administrators`);
+      console.log(
+        `Created user registration notifications for ${systemAdmins.length} system administrators`
+      );
     } catch (error) {
       console.error("Failed to create user registration notifications:", error);
     }
@@ -1776,14 +1805,17 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
       ...caseAndLinks.linksTo.map((l) => l.caseAId)
     ];
     const uniqueCaseIds = Array.from(new Set(linkedIds));
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] Group case IDs:", uniqueCaseIds);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] Group case IDs:", uniqueCaseIds);
     const allCases = await prisma2.repositoryCases.findMany({
       where: { id: { in: uniqueCaseIds } },
       select: { id: true, source: true }
     });
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] allCases:", allCases);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] allCases:", allCases);
     const manualCaseIds = allCases.filter((c) => c.source === "MANUAL").map((c) => c.id);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualCaseIds:", manualCaseIds);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] manualCaseIds:", manualCaseIds);
     let manualResults = [];
     if (manualCaseIds.length) {
       const testRunCases = await prisma2.testRunCases.findMany({
@@ -1800,11 +1832,14 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
         select: { elapsed: true }
       }) : [];
     }
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualResults:", manualResults);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] manualResults:", manualResults);
     const manualDurations = manualResults.map((r) => r.elapsed).filter((v) => v != null);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualDurations:", manualDurations);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] manualDurations:", manualDurations);
     const junitCaseIds = allCases.filter((c) => isAutomatedCaseSource(c.source)).map((c) => c.id);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitCaseIds:", junitCaseIds);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] junitCaseIds:", junitCaseIds);
     const junitResults = junitCaseIds.length ? await prisma2.jUnitTestResult.findMany({
       where: {
         repositoryCaseId: { in: junitCaseIds },
@@ -1812,16 +1847,19 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
       },
       select: { time: true }
     }) : [];
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitResults:", junitResults);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] junitResults:", junitResults);
     const junitDurations = junitResults.map((r) => r.time).filter((v) => v != null);
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitDurations:", junitDurations);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] junitDurations:", junitDurations);
     const avgManual = manualDurations.length > 0 ? Math.round(
       manualDurations.reduce((a, b) => a + b, 0) / manualDurations.length
     ) : null;
     const avgJunit = junitDurations.length > 0 ? parseFloat(
       (junitDurations.reduce((a, b) => a + b, 0) / junitDurations.length).toFixed(3)
     ) : null;
-    if (process.env.DEBUG_FORECAST) console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
+    if (process.env.DEBUG_FORECAST)
+      console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
     const currentForecasts = await prisma2.repositoryCases.findMany({
       where: { id: { in: uniqueCaseIds } },
       select: { id: true, forecastManual: true, forecastAutomated: true }
@@ -1875,7 +1913,8 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
 }
 async function updateTestRunForecast(testRunId, options = {}) {
   const prisma2 = options.prismaClient || prisma;
-  if (process.env.DEBUG_FORECAST) console.log(`Updating forecast for TestRun ID: ${testRunId}`);
+  if (process.env.DEBUG_FORECAST)
+    console.log(`Updating forecast for TestRun ID: ${testRunId}`);
   try {
     let testRunCasesWithDetails = await prisma2.testRunCases.findMany({
       where: { testRunId },
@@ -1900,10 +1939,10 @@ async function updateTestRunForecast(testRunId, options = {}) {
         if (processedCaseIds.has(repositoryCaseId)) {
           continue;
         }
-        const result = await updateRepositoryCaseForecast(
-          repositoryCaseId,
-          { skipTestRunUpdate: true, prismaClient: prisma2 }
-        );
+        const result = await updateRepositoryCaseForecast(repositoryCaseId, {
+          skipTestRunUpdate: true,
+          prismaClient: prisma2
+        });
         if (result.updatedCaseIds.length > 0) {
           refreshedAnyCase = true;
           for (const refreshedId of result.updatedCaseIds) {
@@ -1997,7 +2036,8 @@ async function updateTestRunForecast(testRunId, options = {}) {
 }
 async function getUniqueCaseGroupIds(options = {}) {
   const prisma2 = options.prismaClient || prisma;
-  if (process.env.DEBUG_FORECAST) console.log("Fetching unique case group representatives...");
+  if (process.env.DEBUG_FORECAST)
+    console.log("Fetching unique case group representatives...");
   try {
     const BATCH_SIZE = 1e3;
     const processedCaseIds = /* @__PURE__ */ new Set();
@@ -2012,7 +2052,10 @@ async function getUniqueCaseGroupIds(options = {}) {
       }
     });
     const totalCases = allCaseIds.length;
-    if (process.env.DEBUG_FORECAST) console.log(`Processing ${totalCases} active cases in batches of ${BATCH_SIZE}...`);
+    if (process.env.DEBUG_FORECAST)
+      console.log(
+        `Processing ${totalCases} active cases in batches of ${BATCH_SIZE}...`
+      );
     for (let i = 0; i < allCaseIds.length; i += BATCH_SIZE) {
       const batchIds = allCaseIds.slice(i, i + BATCH_SIZE).map((c) => c.id);
       const casesWithLinks = await prisma2.repositoryCases.findMany({
@@ -2046,7 +2089,9 @@ async function getUniqueCaseGroupIds(options = {}) {
         }
       }
       if (process.env.DEBUG_FORECAST) {
-        console.log(`Processed batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(totalCases / BATCH_SIZE)}: ${uniqueRepresentatives.length} unique groups so far`);
+        console.log(
+          `Processed batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(totalCases / BATCH_SIZE)}: ${uniqueRepresentatives.length} unique groups so far`
+        );
       }
     }
     if (process.env.DEBUG_FORECAST) {
@@ -2841,7 +2886,9 @@ var processor3 = async (job) => {
     let skippedCount = 0;
     switch (job.name) {
       case JOB_REFRESH_EXPIRED_CACHES: {
-        console.log(`Job ${job.id}: Checking for expired code repository caches.`);
+        console.log(
+          `Job ${job.id}: Checking for expired code repository caches.`
+        );
         const configs = await prisma2.projectCodeRepositoryConfig.findMany({
           where: { cacheEnabled: true },
           select: { id: true, projectId: true, cacheTtlDays: true }
@@ -2967,7 +3014,9 @@ async function scheduleJobs() {
     const multiTenant = isMultiTenantMode();
     const tenantIds = multiTenant ? getAllTenantIds() : [void 0];
     if (multiTenant) {
-      console.log(`Multi-tenant mode enabled. Scheduling jobs for ${tenantIds.length} tenants.`);
+      console.log(
+        `Multi-tenant mode enabled. Scheduling jobs for ${tenantIds.length} tenants.`
+      );
     }
     for (const tenantId of tenantIds) {
       const updateAllCasesId = tenantId ? `${JOB_UPDATE_ALL_CASES}-${tenantId}` : JOB_UPDATE_ALL_CASES;

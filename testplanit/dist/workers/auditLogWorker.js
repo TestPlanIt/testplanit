@@ -87,7 +87,9 @@ function loadTenantsFromFile(filePath) {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+      console.log(
+        `Loaded ${configs.size} tenant configurations from ${filePath}`
+      );
     }
   } catch (error) {
     console.error(`Failed to load tenant configs from ${filePath}:`, error);
@@ -120,7 +122,9 @@ function loadTenantConfigs() {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+      console.log(
+        `Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`
+      );
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -141,7 +145,9 @@ function loadTenantConfigs() {
     }
   }
   if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+    console.warn(
+      "No tenant configurations found. Multi-tenant mode will not work without configurations."
+    );
   }
   return tenantConfigs;
 }
@@ -171,9 +177,14 @@ function getTenantPrismaClient(tenantId) {
     if (cached.databaseUrl === config.databaseUrl) {
       return cached.client;
     } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      console.log(
+        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+      );
       cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+        console.error(
+          `Error disconnecting stale client for tenant ${tenantId}:`,
+          err
+        );
       });
       tenantClients.delete(tenantId);
     }
@@ -402,7 +413,7 @@ var startWorker = async () => {
     process.exit(0);
   });
 };
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta?.url === void 0)) {
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || typeof import_meta === "undefined" || import_meta?.url === void 0) {
   console.log("[AuditLogWorker] Running as standalone process...");
   startWorker().catch((err) => {
     console.error("[AuditLogWorker] Failed to start:", err);

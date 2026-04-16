@@ -101,7 +101,9 @@ function loadTenantsFromFile(filePath) {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+      console.log(
+        `Loaded ${configs.size} tenant configurations from ${filePath}`
+      );
     }
   } catch (error) {
     console.error(`Failed to load tenant configs from ${filePath}:`, error);
@@ -134,7 +136,9 @@ function loadTenantConfigs() {
           baseUrl: config.baseUrl
         });
       }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+      console.log(
+        `Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`
+      );
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -155,7 +159,9 @@ function loadTenantConfigs() {
     }
   }
   if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+    console.warn(
+      "No tenant configurations found. Multi-tenant mode will not work without configurations."
+    );
   }
   return tenantConfigs;
 }
@@ -185,9 +191,14 @@ function getTenantPrismaClient(tenantId) {
     if (cached.databaseUrl === config.databaseUrl) {
       return cached.client;
     } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      console.log(
+        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+      );
       cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+        console.error(
+          `Error disconnecting stale client for tenant ${tenantId}:`,
+          err
+        );
       });
       tenantClients.delete(tenantId);
     }
@@ -447,10 +458,12 @@ async function createTestCaseVersionInTransaction(tx, caseId, options) {
   if (overrides.steps !== void 0) {
     stepsJson = overrides.steps;
   } else if (testCase.steps && testCase.steps.length > 0) {
-    stepsJson = testCase.steps.map((step) => ({
-      step: step.step,
-      expectedResult: step.expectedResult
-    }));
+    stepsJson = testCase.steps.map(
+      (step) => ({
+        step: step.step,
+        expectedResult: step.expectedResult
+      })
+    );
   }
   const tagsArray = overrides.tags ?? testCase.tags.map((tag) => tag.name);
   const issuesArray = overrides.issues ?? testCase.issues;
@@ -516,7 +529,9 @@ async function createTestCaseVersionInTransaction(tx, caseId, options) {
     }
   }
   if (!newVersion) {
-    throw new Error(`Failed to create version for case ${caseId} after retries`);
+    throw new Error(
+      `Failed to create version for case ${caseId} after retries`
+    );
   }
   return newVersion;
 }
@@ -985,9 +1000,14 @@ var normalizeTemplateFieldConfig = (value) => {
   const actionValue = typeof record.action === "string" ? record.action : base.action;
   const action = actionValue === "map" ? "map" : "create";
   const targetSource = record.targetType ?? record.target_type ?? record.fieldTarget ?? record.field_target ?? record.scope ?? record.assignment ?? record.fieldCategory ?? record.field_category;
-  const targetType = normalizeTemplateFieldTarget(targetSource, base.targetType);
+  const targetType = normalizeTemplateFieldTarget(
+    targetSource,
+    base.targetType
+  );
   const mappedTo = toNumber(record.mappedTo);
-  const typeId = toNumber(record.typeId ?? record.type_id ?? record.fieldTypeId);
+  const typeId = toNumber(
+    record.typeId ?? record.type_id ?? record.fieldTypeId
+  );
   const typeName = typeof record.typeName === "string" ? record.typeName : typeof record.type_name === "string" ? record.type_name : typeof record.fieldType === "string" ? record.fieldType : typeof record.field_type === "string" ? record.field_type : base.typeName;
   const dropdownOptions = normalizeOptionConfigList(
     record.dropdownOptions ?? record.dropdown_options ?? record.options ?? record.choices
@@ -1001,8 +1021,12 @@ var normalizeTemplateFieldConfig = (value) => {
     typeId: typeId ?? null,
     typeName: typeName ?? null,
     hint: typeof record.hint === "string" ? record.hint : typeof record.description === "string" ? record.description : base.hint,
-    isRequired: toBoolean(record.isRequired ?? record.is_required ?? base.isRequired),
-    isRestricted: toBoolean(record.isRestricted ?? record.is_restricted ?? base.isRestricted),
+    isRequired: toBoolean(
+      record.isRequired ?? record.is_required ?? base.isRequired
+    ),
+    isRestricted: toBoolean(
+      record.isRestricted ?? record.is_restricted ?? base.isRestricted
+    ),
     defaultValue: typeof record.defaultValue === "string" ? record.defaultValue : typeof record.default_value === "string" ? record.default_value : base.defaultValue,
     isChecked: typeof record.isChecked === "boolean" ? record.isChecked : base.isChecked,
     minValue: toNumber(record.minValue ?? record.min_value) ?? base.minValue,
@@ -1060,7 +1084,9 @@ var normalizeRolePermissions = (value) => {
     });
     return result;
   }
-  for (const [area, entry] of Object.entries(value)) {
+  for (const [area, entry] of Object.entries(
+    value
+  )) {
     if (entry && typeof entry === "object") {
       assignPermission(area, entry);
     }
@@ -1785,7 +1811,12 @@ function createProgressTracker(totalBytes, onProgress) {
         console.log(
           `[ProgressTracker] Progress: ${percentage}% (${bytesRead}/${totalBytes} bytes)${etaMessage}`
         );
-        const result = onProgress(bytesRead, totalBytes, percentage, etaSeconds);
+        const result = onProgress(
+          bytesRead,
+          totalBytes,
+          percentage,
+          etaSeconds
+        );
         if (result instanceof Promise) {
           result.then(() => callback(null, chunk)).catch(callback);
         } else {
@@ -2211,7 +2242,7 @@ var TestmoExportAnalyzer = class {
   }
   /**
    * Stage a row to the database batch
-  */
+   */
   async stageRow(datasetName, rowIndex, rowData) {
     if (ATTACHMENT_DATASET_PATTERN.test(datasetName)) {
       return;
@@ -3420,7 +3451,10 @@ var importAutomationRunTests = async (prisma2, _configuration, datasetRows, proj
             }
           });
           testRunCaseIdMap.set(testmoRunTestId, testRunCase.id);
-          const resultType = determineJUnitResultType(resolvedStatus, statusName);
+          const resultType = determineJUnitResultType(
+            resolvedStatus,
+            statusName
+          );
           const executedAt = testRunTimestampMap.get(testmoRunId) || /* @__PURE__ */ new Date();
           if (summary.created < 10) {
             console.log(
@@ -4796,7 +4830,9 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
   };
   const integrationIdMap = /* @__PURE__ */ new Map();
   let processedSinceLastPersist = 0;
-  for (const [key, config] of Object.entries(configuration.issueTargets ?? {})) {
+  for (const [key, config] of Object.entries(
+    configuration.issueTargets ?? {}
+  )) {
     const sourceId = Number(key);
     if (!Number.isFinite(sourceId) || !config) {
       continue;
@@ -4952,7 +4988,11 @@ var importIssues = async (tx, datasetRows, integrationIdMap, projectIdMap, creat
         }
       }
       const integrationInfo = integrationCache.get(integrationId);
-      const externalUrl = integrationInfo ? constructExternalUrl(integrationInfo.provider, integrationInfo.baseUrl, displayId) : null;
+      const externalUrl = integrationInfo ? constructExternalUrl(
+        integrationInfo.provider,
+        integrationInfo.baseUrl,
+        displayId
+      ) : null;
       const issue = await tx.issue.create({
         data: {
           name: displayId,
@@ -6442,7 +6482,9 @@ var s3Client = new import_client_s3.S3Client({
   // Retry transient network errors
 });
 var FINAL_STATUSES = /* @__PURE__ */ new Set(["COMPLETED", "FAILED", "CANCELED"]);
-var _VALID_APPLICATION_AREAS = new Set(Object.values(import_client6.ApplicationArea));
+var _VALID_APPLICATION_AREAS = new Set(
+  Object.values(import_client6.ApplicationArea)
+);
 var _VALID_WORKFLOW_TYPES = new Set(Object.values(import_client6.WorkflowType));
 var _VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client6.WorkflowScope));
 var SYSTEM_NAME_REGEX2 = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -8758,10 +8800,7 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
             caseIdMap.set(caseSourceId, existing.id);
             const existingKey = toStringValue2(record.key);
             if (existingKey) {
-              caseKeyMap.set(
-                `${projectSourceId}:${existingKey}`,
-                existing.id
-              );
+              caseKeyMap.set(`${projectSourceId}:${existingKey}`, existing.id);
             }
             summary.total += 1;
             summary.mapped += 1;
@@ -10823,12 +10862,10 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       );
     }
     if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filtered = (datasetRowsByName.get("repository_folders") ?? []).filter(
-        (row) => {
-          const repoId = toNumberValue(row.repo_id);
-          return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
-        }
-      );
+      const filtered = (datasetRowsByName.get("repository_folders") ?? []).filter((row) => {
+        const repoId = toNumberValue(row.repo_id);
+        return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
+      });
       datasetRowsByName.set("repository_folders", filtered);
     }
     const folderImport = await importRepositoryFolders(
@@ -10944,7 +10981,9 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       formatSummaryStatus(repositoryCaseTagsSummary)
     );
     releaseDatasetRows(datasetRowsByName, "repository_case_tags");
-    const snapshotCaseKeys = await loadDatasetFromStaging("_snapshot_case_keys");
+    const snapshotCaseKeys = await loadDatasetFromStaging(
+      "_snapshot_case_keys"
+    );
     if (snapshotCaseKeys.length > 0) {
       let resolvedCount = 0;
       let alreadyMappedCount = 0;
@@ -11377,12 +11416,7 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     logMessage(context, "Processing issue targets");
     await persistProgress("issueTargets", "Processing issue targets");
     const issueTargetsImport = await withTransaction(
-      (tx) => importIssueTargets(
-        tx,
-        normalizedConfiguration,
-        context,
-        persistProgress
-      )
+      (tx) => importIssueTargets(tx, normalizedConfiguration, context, persistProgress)
     );
     recordEntitySummary(context, issueTargetsImport.summary);
     await persistProgress(
@@ -11392,10 +11426,7 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     logMessage(context, "Processing issues");
     await persistProgress("issues", "Processing issues");
     if (datasetRowsByName.get("issues")?.length === 0) {
-      datasetRowsByName.set(
-        "issues",
-        await loadDatasetFromStaging("issues")
-      );
+      datasetRowsByName.set("issues", await loadDatasetFromStaging("issues"));
     }
     const issuesImport = await withTransaction(
       (tx) => importIssues(
@@ -12049,7 +12080,7 @@ async function startWorker() {
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
 }
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url2.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url2.pathToFileURL)(process.argv[1]).href || typeof import_meta === "undefined" || import_meta.url === void 0) {
   startWorker().catch((err) => {
     console.error("Failed to start Testmo import worker:", err);
     process.exit(1);
