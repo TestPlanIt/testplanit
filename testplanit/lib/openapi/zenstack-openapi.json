@@ -755,7 +755,10 @@
           "SHARE_LINK_ACCESSED",
           "SHARE_LINK_REVOKED",
           "ACCOUNT_LOCKED",
-          "ACCOUNT_UNLOCKED"
+          "ACCOUNT_UNLOCKED",
+          "PASSWORD_POLICY_CHANGED",
+          "FORCE_PASSWORD_CHANGE",
+          "PASSWORD_REVOKED"
         ]
       },
       "AppConfigScalarFieldEnum": {
