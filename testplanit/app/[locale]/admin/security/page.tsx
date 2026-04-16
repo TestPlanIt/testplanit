@@ -166,9 +166,12 @@ export default function SecurityAdminPage() {
                 min={8}
                 max={128}
                 value={minPasswordLength}
-                onChange={(e) =>
-                  setMinPasswordLength(Number(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val)) {
+                    setMinPasswordLength(Math.max(8, Math.min(128, val)));
+                  }
+                }}
                 className="max-w-xs"
               />
               <p className="text-sm text-muted-foreground">
@@ -237,9 +240,12 @@ export default function SecurityAdminPage() {
                 min={0}
                 max={24}
                 value={passwordHistoryDepth}
-                onChange={(e) =>
-                  setPasswordHistoryDepth(Number(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val)) {
+                    setPasswordHistoryDepth(Math.max(0, Math.min(24, val)));
+                  }
+                }}
                 className="max-w-xs"
               />
               <p className="text-sm text-muted-foreground">
@@ -257,9 +263,12 @@ export default function SecurityAdminPage() {
                 type="number"
                 min={0}
                 value={passwordExpirationDays}
-                onChange={(e) =>
-                  setPasswordExpirationDays(Number(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val)) {
+                    setPasswordExpirationDays(Math.max(0, Math.min(9999, val)));
+                  }
+                }}
                 className="max-w-xs"
               />
               <p className="text-sm text-muted-foreground">
@@ -289,7 +298,12 @@ export default function SecurityAdminPage() {
                 type="number"
                 min={1}
                 value={lockoutThreshold}
-                onChange={(e) => setLockoutThreshold(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val)) {
+                    setLockoutThreshold(Math.max(1, Math.min(999, val)));
+                  }
+                }}
                 className="max-w-xs"
               />
               <p className="text-sm text-muted-foreground">
@@ -307,9 +321,12 @@ export default function SecurityAdminPage() {
                 type="number"
                 min={1}
                 value={lockoutDurationMinutes}
-                onChange={(e) =>
-                  setLockoutDurationMinutes(Number(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val)) {
+                    setLockoutDurationMinutes(Math.max(1, Math.min(9999, val)));
+                  }
+                }}
                 className="max-w-xs"
               />
               <p className="text-sm text-muted-foreground">
