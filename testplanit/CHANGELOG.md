@@ -1,3 +1,9 @@
+## [0.21.18](https://github.com/TestPlanIt/testplanit/compare/v0.21.17...v0.21.18) (2026-04-16)
+
+### Enhancements
+
+* **audit log:** skip audit for session keep-alive writes ([06abc28](https://github.com/TestPlanIt/testplanit/commit/06abc288639c1df7786e8469913fccc3d6f4e1f8))
+
 ## [0.21.17](https://github.com/TestPlanIt/testplanit/compare/v0.21.16...v0.21.17) (2026-04-16)
 
 ### Bug Fixes
