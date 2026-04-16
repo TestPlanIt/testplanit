@@ -63,7 +63,8 @@ export function ChangePasswordModal({
       return;
     }
 
-    if (newPassword.length < 4) {
+    const minLen = policy?.minPasswordLength ?? 8;
+    if (newPassword.length < minLen) {
       setError(t("validation.newPasswordTooShort"));
       return;
     }
