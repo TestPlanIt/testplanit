@@ -311,110 +311,95 @@ export function AddSessionModal({
     handleSubmit,
     control,
     reset,
-    setValue,
     formState: { errors },
   } = form;
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
-  // Set data-dependent defaults when async data loads, without wiping user input.
-  // Only runs once per dialog open via the ref guard.
-  const defaultsSetRef = useRef(false);
+  // Initialize form once per dialog open. Uses a ref guard to prevent
+  // re-runs when async data (templates, workflows) arrives after the user
+  // has already started filling the form.
+  const formInitRef = useRef(false);
   useEffect(() => {
     if (!open) {
-      defaultsSetRef.current = false;
+      formInitRef.current = false;
       return;
     }
-    if (defaultsSetRef.current) return;
-    if (defaultTemplate && defaultWorkflow && !duplicationPreset) {
-      defaultsSetRef.current = true;
-      setValue("templateId", defaultTemplate.id);
-      setValue("stateId", defaultWorkflow.id);
-      if (defaultMilestoneId) {
-        setValue("milestoneId", defaultMilestoneId);
-      }
-    }
-  }, [
-    open,
-    defaultTemplate,
-    defaultWorkflow,
-    setValue,
-    defaultMilestoneId,
-    duplicationPreset,
-  ]);
+    if (formInitRef.current) return;
 
-  useEffect(() => {
-    if (open) {
-      const initialTemplateId =
-        duplicationPreset?.originalTemplateId ||
-        defaultTemplate?.id ||
-        (templates && templates[0]?.id) ||
-        0;
-      const initialWorkflowId =
-        duplicationPreset?.originalStateId ||
-        defaultWorkflow?.id ||
-        (workflows && workflows[0]?.id) ||
-        0;
+    const initialTemplateId =
+      duplicationPreset?.originalTemplateId ||
+      defaultTemplate?.id ||
+      (templates && templates[0]?.id) ||
+      0;
+    const initialWorkflowId =
+      duplicationPreset?.originalStateId ||
+      defaultWorkflow?.id ||
+      (workflows && workflows[0]?.id) ||
+      0;
 
-      reset({
-        name: duplicationPreset
-          ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
-          : "",
-        templateId: initialTemplateId,
-        configIds: duplicationPreset?.originalConfigId
-          ? [duplicationPreset.originalConfigId]
-          : [],
-        stateId: initialWorkflowId,
-        assignedToId: duplicationPreset?.originalAssignedToId || "",
-        estimate: "",
-        note: null,
-        mission: null,
-        milestoneId:
-          duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
-        attachments: [],
-        issueIds: duplicationPreset?.originalIssueIds || [],
-      });
-      setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
-      if (duplicationPreset?.originalNote) {
-        try {
-          const parsed =
-            typeof duplicationPreset.originalNote === "string"
-              ? JSON.parse(duplicationPreset.originalNote)
-              : duplicationPreset.originalNote;
-          setNoteContent(parsed);
-        } catch {
-          setNoteContent({});
-        }
-      } else {
+    // Only mark as initialized once we have real data to set
+    if (!initialTemplateId || !initialWorkflowId) return;
+    formInitRef.current = true;
+
+    reset({
+      name: duplicationPreset
+        ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
+        : "",
+      templateId: initialTemplateId,
+      configIds: duplicationPreset?.originalConfigId
+        ? [duplicationPreset.originalConfigId]
+        : [],
+      stateId: initialWorkflowId,
+      assignedToId: duplicationPreset?.originalAssignedToId || "",
+      estimate: "",
+      note: null,
+      mission: null,
+      milestoneId:
+        duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+      attachments: [],
+      issueIds: duplicationPreset?.originalIssueIds || [],
+    });
+    setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
+    if (duplicationPreset?.originalNote) {
+      try {
+        const parsed =
+          typeof duplicationPreset.originalNote === "string"
+            ? JSON.parse(duplicationPreset.originalNote)
+            : duplicationPreset.originalNote;
+        setNoteContent(parsed);
+      } catch {
         setNoteContent({});
       }
-      if (duplicationPreset?.originalMission) {
-        try {
-          const parsed =
-            typeof duplicationPreset.originalMission === "string"
-              ? JSON.parse(duplicationPreset.originalMission)
-              : duplicationPreset.originalMission;
-          setMissionContent(parsed);
-        } catch {
-          setMissionContent(null);
-        }
-      } else {
+    } else {
+      setNoteContent({});
+    }
+    if (duplicationPreset?.originalMission) {
+      try {
+        const parsed =
+          typeof duplicationPreset.originalMission === "string"
+            ? JSON.parse(duplicationPreset.originalMission)
+            : duplicationPreset.originalMission;
+        setMissionContent(parsed);
+      } catch {
         setMissionContent(null);
       }
-      setSelectedTags(duplicationPreset?.originalTagIds || []);
-      setSelectedConfigs(
-        duplicationPreset?.originalConfigId &&
-          duplicationPreset?.originalConfigName
-          ? [
-              {
-                id: duplicationPreset.originalConfigId,
-                name: duplicationPreset.originalConfigName,
-              },
-            ]
-          : []
-      );
-      setSelectedFiles([]);
+    } else {
+      setMissionContent(null);
     }
+    setSelectedTags(duplicationPreset?.originalTagIds || []);
+    setSelectedConfigs(
+      duplicationPreset?.originalConfigId &&
+        duplicationPreset?.originalConfigName
+        ? [
+            {
+              id: duplicationPreset.originalConfigId,
+              name: duplicationPreset.originalConfigName,
+            },
+          ]
+        : []
+    );
+    setSelectedFiles([]);
   }, [
     open,
     reset,

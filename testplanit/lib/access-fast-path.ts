@@ -38,6 +38,7 @@ const FAST_CREATE_MODELS = new Set([
   "sessions",
   "milestones",
   "comments",
+  "steps",
 ]);
 
 interface ParsedPath {
@@ -62,7 +63,13 @@ export async function tryFastPathCreate(params: {
   if (!FAST_CREATE_MODELS.has(parsedPath.model)) return null;
 
   // Extract projectId from the request body.
-  const projectId = extractProjectId(requestBody);
+  // For most models, projectId is directly on the body. For models like
+  // `steps` that link to a project indirectly (via testCase), we resolve
+  // the project from the parent relation.
+  let projectId = extractProjectId(requestBody);
+  if (projectId == null && parsedPath.model === "steps") {
+    projectId = await resolveProjectFromTestCase(requestBody);
+  }
   if (projectId == null) return null;
 
   const manifest = await getAccessManifest(userId);
@@ -123,6 +130,44 @@ export { invalidateAccessManifest } from "./access-manifest";
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Resolve projectId indirectly for Steps via testCase → repositoryCases.projectId.
+ */
+async function resolveProjectFromTestCase(
+  body: unknown
+): Promise<number | null> {
+  if (!body || typeof body !== "object") return null;
+  const data = (body as { data?: unknown }).data;
+  if (!data || typeof data !== "object") return null;
+
+  // Scalar FK: { testCaseId: N }
+  let testCaseId: number | null = null;
+  const scalarId = (data as { testCaseId?: unknown }).testCaseId;
+  if (typeof scalarId === "number") {
+    testCaseId = scalarId;
+  }
+
+  // Relation connect: { testCase: { connect: { id: N } } }
+  if (!testCaseId) {
+    const tc = (data as { testCase?: unknown }).testCase;
+    if (tc && typeof tc === "object" && "connect" in tc) {
+      const connect = (tc as { connect?: unknown }).connect;
+      if (connect && typeof connect === "object" && "id" in connect) {
+        const id = (connect as { id?: unknown }).id;
+        if (typeof id === "number") testCaseId = id;
+      }
+    }
+  }
+
+  if (!testCaseId) return null;
+
+  const testCase = await prisma.repositoryCases.findUnique({
+    where: { id: testCaseId },
+    select: { projectId: true },
+  });
+  return testCase?.projectId ?? null;
+}
 
 function extractProjectId(body: unknown): number | null {
   if (!body || typeof body !== "object") return null;
