@@ -685,6 +685,16 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
         async update({ args, query }: any) {
+          // Skip audit for session keep-alive writes (throttled lastActiveAt
+          // pings from the session callback). Auditing these produces a log
+          // entry every 5 minutes per active user with no security value.
+          const dataKeys = args.data ? Object.keys(args.data) : [];
+          const isLastActiveOnly =
+            dataKeys.length === 1 && dataKeys[0] === "lastActiveAt";
+          if (isLastActiveOnly) {
+            return query(args);
+          }
+
           // Fetch old state for audit diff, especially for role changes
           const oldEntity = args.where
             ? await baseClient.user.findUnique({ where: args.where })
