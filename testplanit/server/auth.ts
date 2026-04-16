@@ -1,5 +1,12 @@
 import type { PrismaClient, UserPreferences } from "@prisma/client";
 import { compare } from "bcrypt";
+
+// Pre-computed bcrypt hash of a random string (cost=10).
+// Used for timing-safe comparison when user does not exist (SECURITY-02).
+// This is NOT a secret — it only ensures response time is identical
+// for real vs non-existent user login attempts.
+const TIMING_DUMMY_HASH =
+  "$2b$10$Wy0KFTenXNhZR3MCdXuZFeetEARjKRutTNO7YL6Sk8t38PEq2aNXC";
 import jwt from "jsonwebtoken";
 import {
   getServerSession,
@@ -894,11 +901,17 @@ function authorize(prisma: PrismaClient) {
         password: true,
         isActive: true,
         twoFactorEnabled: true,
+        authMethod: true,
+        failedLoginAttempts: true,
+        lockedUntil: true,
+        passwordChangedAt: true,
       },
     });
 
     if (!maybeUser?.password) {
-      // Audit failed login - user not found (don't reveal this to user)
+      // SECURITY-02: Run dummy bcrypt compare to prevent timing-based account enumeration.
+      // This ensures the response time is indistinguishable from a real-user attempt.
+      await compare(credentials.password, TIMING_DUMMY_HASH);
       auditAuthEvent("LOGIN_FAILED", null, credentials.email, {
         reason: "user_not_found",
       }).catch(console.error);
@@ -912,14 +925,95 @@ function authorize(prisma: PrismaClient) {
       }).catch(console.error);
       return null;
     }
+
+    // SECURITY-01 + SECURITY-04: Check account lockout (only for credential-based users)
+    const isCredentialUser =
+      maybeUser.authMethod === "INTERNAL" || maybeUser.authMethod === "BOTH";
+
+    if (isCredentialUser && maybeUser.lockedUntil) {
+      const now = new Date();
+      if (maybeUser.lockedUntil > now) {
+        // Account is still locked — return generic null (don't reveal lock status)
+        auditAuthEvent("LOGIN_FAILED", maybeUser.id, credentials.email, {
+          reason: "account_locked",
+          lockedUntil: maybeUser.lockedUntil.toISOString(),
+        }).catch(console.error);
+        return null;
+      }
+      // Lock has expired — will be cleared on successful login below
+    }
+
     // verify the input password with stored hash
     const isValid = await compare(credentials.password, maybeUser.password);
     if (!isValid) {
-      // Audit failed login - wrong password
+      if (isCredentialUser) {
+        // SECURITY-01: Atomically increment failed login counter
+        const settings = await prisma.registrationSettings.findFirst({
+          select: { lockoutThreshold: true, lockoutDurationMinutes: true },
+        });
+        const threshold = settings?.lockoutThreshold ?? 5;
+        const durationMinutes = settings?.lockoutDurationMinutes ?? 15;
+        const newCount = maybeUser.failedLoginAttempts + 1;
+        const shouldLock = newCount >= threshold;
+        const newLockedUntil = shouldLock
+          ? new Date(Date.now() + durationMinutes * 60 * 1000)
+          : null;
+
+        await prisma.user.update({
+          where: { id: maybeUser.id },
+          data: {
+            failedLoginAttempts: { increment: 1 },
+            ...(newLockedUntil ? { lockedUntil: newLockedUntil } : {}),
+          },
+        });
+
+        if (shouldLock) {
+          auditAuthEvent("ACCOUNT_LOCKED", maybeUser.id, credentials.email, {
+            failedAttempts: newCount,
+            lockedUntil: newLockedUntil!.toISOString(),
+          }).catch(console.error);
+        }
+      }
+
       auditAuthEvent("LOGIN_FAILED", maybeUser.id, credentials.email, {
         reason: "invalid_password",
       }).catch(console.error);
       return null;
+    }
+
+    // SECURITY-01: Reset lockout state on successful login
+    if (isCredentialUser && (maybeUser.failedLoginAttempts > 0 || maybeUser.lockedUntil)) {
+      const wasLocked = maybeUser.lockedUntil && maybeUser.lockedUntil > new Date();
+      await prisma.user.update({
+        where: { id: maybeUser.id },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
+      if (wasLocked) {
+        auditAuthEvent("ACCOUNT_UNLOCKED", maybeUser.id, credentials.email, {
+          reason: "successful_login",
+        }).catch(console.error);
+      }
+    }
+
+    // POLICY-04: Check password expiration
+    if (isCredentialUser && maybeUser.passwordChangedAt) {
+      const registrationSettingsForExpiry = await prisma.registrationSettings.findFirst({
+        select: { passwordExpirationDays: true },
+      });
+      const expirationDays = registrationSettingsForExpiry?.passwordExpirationDays ?? 0;
+      if (expirationDays > 0) {
+        const expiresAt = new Date(
+          maybeUser.passwordChangedAt.getTime() + expirationDays * 24 * 60 * 60 * 1000
+        );
+        if (new Date() > expiresAt) {
+          // Password has expired — set mustChangePassword flag
+          // Phase 67 will implement the force-change-password redirect flow
+          await prisma.user.update({
+            where: { id: maybeUser.id },
+            data: { mustChangePassword: true },
+          });
+        }
+      }
     }
 
     // Check system 2FA settings
