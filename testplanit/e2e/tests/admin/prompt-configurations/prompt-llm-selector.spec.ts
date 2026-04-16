@@ -19,6 +19,8 @@ const features = [
   "export_code_generation",
   "auto_tag",
   "duplicate_detection",
+  "generate_from_url",
+  "generate_from_url_app",
 ];
 
 /**
