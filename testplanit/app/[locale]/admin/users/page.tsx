@@ -22,9 +22,18 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CirclePlus } from "lucide-react";
+import { toast } from "sonner";
 import { AddUser } from "./AddUser";
 import { DeleteUser } from "./DeleteUser";
 import { EditUser } from "./EditUser";
@@ -41,6 +50,7 @@ export default function UserListPage() {
 
 function UserList() {
   const t = useTranslations("admin.users");
+  const tAdmin = useTranslations("admin.users");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
@@ -70,6 +80,10 @@ function UserList() {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<ExtendedUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<ExtendedUser | null>(null);
+  const [forcingUser, setForcingUser] = useState<ExtendedUser | null>(null);
+  const [revokingUser, setRevokingUser] = useState<ExtendedUser | null>(null);
+  const [isForceLoading, setIsForceLoading] = useState(false);
+  const [isRevokeLoading, setIsRevokeLoading] = useState(false);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -100,6 +114,48 @@ function UserList() {
     },
     [queryClient]
   );
+
+  const handleForceChangePassword = useCallback(async () => {
+    if (!forcingUser) return;
+    setIsForceLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/users/${forcingUser.id}/force-change-password`,
+        { method: "POST" }
+      );
+      if (response.ok) {
+        toast.success(tAdmin("forcePasswordChangeSuccess", { name: forcingUser.name }));
+        setForcingUser(null);
+      } else {
+        toast.error(tAdmin("forcePasswordChangeFailed"));
+      }
+    } catch {
+      toast.error(tAdmin("forcePasswordChangeFailed"));
+    } finally {
+      setIsForceLoading(false);
+    }
+  }, [forcingUser, tAdmin]);
+
+  const handleRevokePassword = useCallback(async () => {
+    if (!revokingUser) return;
+    setIsRevokeLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/users/${revokingUser.id}/revoke-password`,
+        { method: "POST" }
+      );
+      if (response.ok) {
+        toast.success(tAdmin("revokePasswordSuccess", { name: revokingUser.name }));
+        setRevokingUser(null);
+      } else {
+        toast.error(tAdmin("revokePasswordFailed"));
+      }
+    } catch {
+      toast.error(tAdmin("revokePasswordFailed"));
+    } finally {
+      setIsRevokeLoading(false);
+    }
+  }, [revokingUser, tAdmin]);
 
   const { data: totalFilteredUsers } = useFindManyUser(
     {
@@ -216,10 +272,13 @@ function UserList() {
         userPreferences,
         handleToggle,
         tCommon,
+        tAdmin,
         setEditingUser,
-        setDeletingUser
+        setDeletingUser,
+        setForcingUser,
+        setRevokingUser,
       ),
-    [userPreferences, handleToggle, tCommon]
+    [userPreferences, handleToggle, tCommon, tAdmin]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -359,6 +418,60 @@ function UserList() {
           onClose={() => setDeletingUser(null)}
         />
       )}
+      <Dialog
+        open={!!forcingUser}
+        onOpenChange={(open) => !open && setForcingUser(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{tAdmin("forcePasswordChangeDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {tAdmin("forcePasswordChangeDialogDescription", {
+                name: forcingUser?.name ?? "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setForcingUser(null)}>
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleForceChangePassword}
+              disabled={isForceLoading}
+            >
+              {tAdmin("confirmAction")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!revokingUser}
+        onOpenChange={(open) => !open && setRevokingUser(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{tAdmin("revokePasswordDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {tAdmin("revokePasswordDialogDescription", {
+                name: revokingUser?.name ?? "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevokingUser(null)}>
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRevokePassword}
+              disabled={isRevokeLoading}
+            >
+              {tAdmin("confirmAction")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
