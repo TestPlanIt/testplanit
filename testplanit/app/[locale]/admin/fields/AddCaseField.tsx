@@ -875,7 +875,7 @@ export function AddCaseFieldModal({
                       </SelectTrigger>
                       <SelectContent>
                         {typesLoading ? (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="__loading" disabled>
                             <Ellipsis />
                           </SelectItem>
                         ) : (

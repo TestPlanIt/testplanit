@@ -869,7 +869,7 @@ export function AddResultFieldModal({
                       </SelectTrigger>
                       <SelectContent>
                         {typesLoading ? (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="__loading" disabled>
                             <Ellipsis />
                           </SelectItem>
                         ) : (
