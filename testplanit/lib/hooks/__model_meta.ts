@@ -7517,10 +7517,10 @@ const metadata: ModelMeta = {
                     name: "requireNumbers",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
-                }, requireSpecialChars: {
-                    name: "requireSpecialChars",
-                    type: "Boolean",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requiredSpecialChars: {
+                    name: "requiredSpecialChars",
+                    type: "String",
+                    isOptional: true,
                 }, passwordHistoryDepth: {
                     name: "passwordHistoryDepth",
                     type: "Int",

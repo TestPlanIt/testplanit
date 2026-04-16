@@ -2060,7 +2060,7 @@ model RegistrationSettings {
   requireUppercase         Boolean  @default(false)
   requireLowercase         Boolean  @default(false)
   requireNumbers           Boolean  @default(false)
-  requireSpecialChars      Boolean  @default(false)
+  requiredSpecialChars     String?
   passwordHistoryDepth     Int      @default(0)
   passwordExpirationDays   Int      @default(0)
   lockoutThreshold         Int      @default(5)

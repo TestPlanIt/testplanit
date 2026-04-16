@@ -2112,7 +2112,7 @@
           "requireUppercase",
           "requireLowercase",
           "requireNumbers",
-          "requireSpecialChars",
+          "requiredSpecialChars",
           "passwordHistoryDepth",
           "passwordExpirationDays",
           "lockoutThreshold",
@@ -10358,8 +10358,15 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
-            "type": "boolean"
+          "requiredSpecialChars": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "passwordHistoryDepth": {
             "type": "integer"
@@ -10394,7 +10401,6 @@
           "requireUppercase",
           "requireLowercase",
           "requireNumbers",
-          "requireSpecialChars",
           "passwordHistoryDepth",
           "passwordExpirationDays",
           "lockoutThreshold",
@@ -59672,13 +59678,16 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/BoolFilter"
+                "$ref": "#/components/schemas/StringNullableFilter"
               },
               {
-                "type": "boolean"
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -59782,8 +59791,15 @@
           "requireNumbers": {
             "$ref": "#/components/schemas/SortOrder"
           },
-          "requireSpecialChars": {
-            "$ref": "#/components/schemas/SortOrder"
+          "requiredSpecialChars": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
           },
           "passwordHistoryDepth": {
             "$ref": "#/components/schemas/SortOrder"
@@ -59943,13 +59959,16 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/BoolFilter"
+                "$ref": "#/components/schemas/StringNullableFilter"
               },
               {
-                "type": "boolean"
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -60162,13 +60181,16 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
               },
               {
-                "type": "boolean"
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -92510,8 +92532,15 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
-            "type": "boolean"
+          "requiredSpecialChars": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "passwordHistoryDepth": {
             "type": "integer"
@@ -92648,13 +92677,16 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
-                "type": "boolean"
+                "type": "string"
               },
               {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -92758,8 +92790,15 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
-            "type": "boolean"
+          "requiredSpecialChars": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "passwordHistoryDepth": {
             "type": "integer"
@@ -92896,13 +92935,16 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
-                "type": "boolean"
+                "type": "string"
               },
               {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -516133,7 +516175,7 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "type": "boolean"
           },
           "passwordHistoryDepth": {
@@ -528556,7 +528598,7 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "type": "boolean"
           },
           "passwordHistoryDepth": {
@@ -528658,7 +528700,7 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "type": "boolean"
           },
           "passwordHistoryDepth": {
@@ -528717,7 +528759,7 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "type": "boolean"
           },
           "passwordHistoryDepth": {
@@ -545254,8 +545296,15 @@
           "requireNumbers": {
             "type": "boolean"
           },
-          "requireSpecialChars": {
-            "type": "boolean"
+          "requiredSpecialChars": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "passwordHistoryDepth": {
             "type": "integer"
@@ -545340,7 +545389,6 @@
           "requireUppercase",
           "requireLowercase",
           "requireNumbers",
-          "requireSpecialChars",
           "passwordHistoryDepth",
           "passwordExpirationDays",
           "lockoutThreshold",
@@ -575822,7 +575870,7 @@
           "requireNumbers": {
             "type": "integer"
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "type": "integer"
           },
           "passwordHistoryDepth": {
@@ -575859,7 +575907,7 @@
           "requireUppercase",
           "requireLowercase",
           "requireNumbers",
-          "requireSpecialChars",
+          "requiredSpecialChars",
           "passwordHistoryDepth",
           "passwordExpirationDays",
           "lockoutThreshold",
@@ -576092,13 +576140,13 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "type": "boolean"
+                "type": "string"
               }
             ]
           },
@@ -576279,13 +576327,13 @@
               }
             ]
           },
-          "requireSpecialChars": {
+          "requiredSpecialChars": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "type": "boolean"
+                "type": "string"
               }
             ]
           },
