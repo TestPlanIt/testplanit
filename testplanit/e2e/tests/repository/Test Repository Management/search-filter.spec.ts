@@ -550,11 +550,13 @@ test.describe("Search & Filter", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-
-    // Select the folder
-    await repositoryPage.selectFolder(folderId);
+    await page.goto(
+      `/en-US/projects/repository/${projectId}?node=${folderId}&pageSize=10`
+    );
     await page.waitForLoadState("networkidle");
+    await expect(page.locator("text=/of 15 items/")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify pagination is initially visible (15 items > 10 per page)
     const paginationNav = page.locator('nav[aria-label="pagination"]');
@@ -592,11 +594,13 @@ test.describe("Search & Filter", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-
-    // Select the folder
-    await repositoryPage.selectFolder(folderId);
+    await page.goto(
+      `/en-US/projects/repository/${projectId}?node=${folderId}&pageSize=10`
+    );
     await page.waitForLoadState("networkidle");
+    await expect(page.locator("text=/of 25 items/")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Navigate to page 2
     const paginationNav = page.locator('nav[aria-label="pagination"]');

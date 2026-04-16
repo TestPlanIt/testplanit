@@ -1,5 +1,4 @@
 import { expect, test } from "../../../fixtures";
-import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
 /**
  * Pagination Tests
@@ -7,12 +6,6 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * Test cases for pagination functionality in the repository.
  */
 test.describe("Pagination", () => {
-  let repositoryPage: RepositoryPage;
-
-  test.beforeEach(async ({ page }) => {
-    repositoryPage = new RepositoryPage(page);
-  });
-
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
@@ -20,6 +13,27 @@ test.describe("Pagination", () => {
     return await api.createProject(
       `E2E Pagination ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
+  }
+
+  /**
+   * Navigate directly to a folder with explicit pageSize=10 via URL params.
+   * This avoids flaky folder-tree click interactions and ensures pagination
+   * is active regardless of user preference state.
+   */
+  async function gotoFolder(
+    page: import("@playwright/test").Page,
+    projectId: number,
+    folderId: number,
+    pageSize = 10
+  ): Promise<void> {
+    await page.goto(
+      `/en-US/projects/repository/${projectId}?node=${folderId}&pageSize=${pageSize}`
+    );
+    await page.waitForLoadState("networkidle");
+    // Wait for cases table to render
+    await expect(page.locator("text=/of \\d+ items/")).toBeVisible({
+      timeout: 10000,
+    });
   }
 
   test("Navigate to Next Page", async ({ api, page }) => {
@@ -38,9 +52,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Look for pagination navigation - it renders as nav with aria-label="pagination"
     const paginationNav = page.locator('nav[aria-label="pagination"]');
@@ -78,9 +90,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     const paginationNav = page.locator('nav[aria-label="pagination"]');
     await expect(paginationNav).toBeVisible({ timeout: 5000 });
@@ -122,9 +132,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     const paginationNav = page.locator('nav[aria-label="pagination"]');
     await expect(paginationNav).toBeVisible({ timeout: 5000 });
@@ -156,9 +164,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Find the page size button - it shows current page size like "10 items/Page Size"
     const pageSizeButton = page.locator('button:has-text("items")').first();
@@ -201,9 +207,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Verify we're viewing the correct folder with 25 items
     await expect(page.locator("text=/of 25 items/")).toBeVisible({
@@ -255,9 +259,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     const paginationNav = page.locator('nav[aria-label="pagination"]');
     await expect(paginationNav).toBeVisible({ timeout: 5000 });
@@ -293,9 +295,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     const paginationNav = page.locator('nav[aria-label="pagination"]');
     await expect(paginationNav).toBeVisible({ timeout: 5000 });
@@ -335,9 +335,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Verify pagination info shows correct total
     const paginationInfo = page.locator("text=/Showing 1-10 of 23/");
@@ -358,9 +356,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Change page size to 25
     const pageSizeButton = page.locator('button:has-text("items")').first();
@@ -405,9 +401,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     const paginationNav = page.locator('nav[aria-label="pagination"]');
     await expect(paginationNav).toBeVisible({ timeout: 5000 });
@@ -476,9 +470,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Verify we're on the correct folder
     await expect(page.locator("text=/of 50 items/")).toBeVisible({
@@ -519,9 +511,7 @@ test.describe("Pagination", () => {
       );
     }
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await gotoFolder(page, projectId, folderId);
 
     // Verify we're on the correct folder
     await expect(page.locator("text=/of 30 items/")).toBeVisible({

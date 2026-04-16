@@ -167,8 +167,7 @@ const processor = async (job: Job) => {
           throw new Error("Issue data is required for issue creation");
         }
 
-        // TODO: Implement issue creation via adapter
-        console.log("Issue creation not yet implemented in worker");
+        // Issue creation via adapter is not yet implemented
         return { success: false, error: "Not implemented" };
       } catch (error) {
         console.error("Failed to create issue:", error);
@@ -181,8 +180,7 @@ const processor = async (job: Job) => {
           throw new Error("Issue ID and data are required for issue update");
         }
 
-        // TODO: Implement issue update via adapter
-        console.log("Issue update not yet implemented in worker");
+        // Issue update via adapter is not yet implemented
         return { success: false, error: "Not implemented" };
       } catch (error) {
         console.error("Failed to update issue:", error);

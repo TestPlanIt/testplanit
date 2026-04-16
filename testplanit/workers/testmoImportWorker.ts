@@ -4018,28 +4018,6 @@ const importRepositoryCases = async (
     await persistProgress("repositoryCases", message);
   }
 
-  // Log dropdown/multi-select field processing summary
-  if (dropdownStats.size > 0) {
-    console.log("\n========== DROPDOWN/MULTI-SELECT FIELD SUMMARY ==========");
-    for (const [fieldName, stats] of dropdownStats) {
-      console.log(`\nField: ${fieldName}`);
-      console.log(`  Total attempts: ${stats.totalAttempts}`);
-      console.log(`  Successful: ${stats.successResults}`);
-      console.log(`  Failed (null): ${stats.nullResults}`);
-      if (stats.sampleValues.size > 0) {
-        console.log(
-          `  Sample success values: ${Array.from(stats.sampleValues).join(", ")}`
-        );
-      }
-      if (stats.sampleNulls.length > 0) {
-        console.log(
-          `  Sample failed raw values: ${stats.sampleNulls.join(", ")}`
-        );
-      }
-    }
-    console.log("==========================================================\n");
-  }
-
   logMessage(context, `Repository cases import completed`, {
     totalProcessed: summary.total,
     created: summary.created,
