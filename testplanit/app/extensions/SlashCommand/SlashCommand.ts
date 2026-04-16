@@ -218,8 +218,6 @@ export const SlashCommand = Extension.create<
 
               const { view } = props.editor;
 
-              const editorNode = view.dom as HTMLElement;
-
               const getReferenceClientRect = () => {
                 if (!props.clientRect) {
                   return (props.editor.storage as any)[extensionName].rect;

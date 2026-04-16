@@ -483,7 +483,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
       {result}
       {addSessionFor !== null && (
         <AddSessionModal
-          open={addSessionFor !== null}
+          open={true}
           onClose={() => setAddSessionFor(null)}
           defaultMilestoneId={
             typeof addSessionFor === "number" ? addSessionFor : undefined

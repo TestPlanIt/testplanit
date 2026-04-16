@@ -253,14 +253,14 @@ function Configurations(): React.ReactElement | null {
         {editingConfiguration && (
           <EditConfiguration
             configuration={editingConfiguration}
-            open={editingConfiguration !== null}
+            open={true}
             onClose={() => setEditingConfiguration(null)}
           />
         )}
         {deletingConfiguration && (
           <DeleteConfiguration
             configuration={deletingConfiguration}
-            open={deletingConfiguration !== null}
+            open={true}
             onClose={() => setDeletingConfiguration(null)}
           />
         )}

@@ -298,14 +298,14 @@ function GroupList() {
         {editingGroup && (
           <EditGroup
             group={editingGroup}
-            open={editingGroup !== null}
+            open={true}
             onClose={() => setEditingGroup(null)}
           />
         )}
         {deletingGroup && (
           <DeleteGroup
             group={deletingGroup}
-            open={deletingGroup !== null}
+            open={true}
             onClose={() => setDeletingGroup(null)}
           />
         )}

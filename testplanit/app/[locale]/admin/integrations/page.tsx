@@ -40,7 +40,7 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { useRouter } from "~/lib/navigation";
-import { ExtendedIntegration, getColumns } from "./columns";
+import { type ExtendedIntegration, getColumns } from "./columns";
 
 type PageSizeOption = number | "All";
 

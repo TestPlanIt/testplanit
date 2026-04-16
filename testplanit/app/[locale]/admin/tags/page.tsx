@@ -383,14 +383,14 @@ function TagList() {
       {editingTag && (
         <EditTag
           tag={editingTag}
-          open={editingTag !== null}
+          open={true}
           onClose={() => setEditingTag(null)}
         />
       )}
       {deletingTag && (
         <DeleteTag
           tag={deletingTag}
-          open={deletingTag !== null}
+          open={true}
           onClose={() => setDeletingTag(null)}
         />
       )}

@@ -433,14 +433,14 @@ function IssueList() {
       {editingIssue && (
         <EditIssue
           issue={editingIssue}
-          open={editingIssue !== null}
+          open={true}
           onClose={() => setEditingIssue(null)}
         />
       )}
       {deletingIssue && (
         <DeleteIssue
           issue={deletingIssue}
-          open={deletingIssue !== null}
+          open={true}
           onClose={() => setDeletingIssue(null)}
         />
       )}

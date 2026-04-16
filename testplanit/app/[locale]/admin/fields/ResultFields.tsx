@@ -173,14 +173,14 @@ export default function ResultFields() {
         {editingResultField && (
           <EditResultField
             resultfield={editingResultField}
-            open={editingResultField !== null}
+            open={true}
             onClose={() => setEditingResultField(null)}
           />
         )}
         {deletingResultField && (
           <DeleteResultField
             resultfield={deletingResultField}
-            open={deletingResultField !== null}
+            open={true}
             onClose={() => setDeletingResultField(null)}
           />
         )}

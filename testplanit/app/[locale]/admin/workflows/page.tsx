@@ -380,14 +380,14 @@ function WorkflowComponent() {
         <EditWorkflows
           workflows={editingWorkflow}
           allWorkflows={data || []}
-          open={editingWorkflow !== null}
+          open={true}
           onClose={() => setEditingWorkflow(null)}
         />
       )}
       {deletingWorkflow && (
         <DeleteWorkflows
           workflows={deletingWorkflow}
-          open={deletingWorkflow !== null}
+          open={true}
           onClose={() => setDeletingWorkflow(null)}
         />
       )}
