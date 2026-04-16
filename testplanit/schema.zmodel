@@ -135,6 +135,13 @@ model User {
     twoFactorSecret         String?                 @omit // Encrypted TOTP secret
     twoFactorBackupCodes    String?                 @omit // JSON array of hashed backup codes
 
+    // Account lockout and password management (Phase 66)
+    failedLoginAttempts     Int                     @default(0)
+    lockedUntil             DateTime?               @db.Timestamptz(6)
+    passwordChangedAt       DateTime?               @db.Timestamptz(6)
+    mustChangePassword      Boolean                 @default(false)
+    passwordHistory         PasswordHistory[]
+
     @@index([isActive, isDeleted])
     @@index([access])
     @@deny('delete, update, read', !auth())
@@ -142,6 +149,23 @@ model User {
     @@allow('create, delete', (auth().access == 'ADMIN'))
     @@allow('update', (auth().access == 'ADMIN' || auth() == this))
     @@allow('read', auth().access != null)
+}
+
+// Password history for preventing password reuse (Phase 66)
+model PasswordHistory {
+    id        String   @id @default(cuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    hash      String   @omit
+    createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+    @@index([userId, createdAt])
+
+    // Admin can read history (for support); system writes via direct db client
+    @@deny('all', !auth())
+    @@allow('read', auth().access == 'ADMIN')
+    // No allow for create/update/delete via ZenStack REST API
+    // System creates/prunes via direct db client in change-password route
 }
 
 model UserPreferences {
@@ -3728,6 +3752,16 @@ model RegistrationSettings {
     force2FAAllLogins        Boolean  @default(false) // Force 2FA for all logins including SSO
     // Email verification settings
     requireEmailVerification Boolean  @default(true)  // Require email verification for email/password sign-ups
+    // Password policy (Phase 66)
+    minPasswordLength        Int      @default(12)
+    requireUppercase         Boolean  @default(false)
+    requireLowercase         Boolean  @default(false)
+    requireNumbers           Boolean  @default(false)
+    requireSpecialChars      Boolean  @default(false)
+    passwordHistoryDepth     Int      @default(0)
+    passwordExpirationDays   Int      @default(0)
+    lockoutThreshold         Int      @default(5)
+    lockoutDurationMinutes   Int      @default(15)
     createdAt                DateTime @default(now())
     updatedAt                DateTime @updatedAt
 
@@ -4033,6 +4067,8 @@ enum AuditAction {
     SHARE_LINK_CREATED
     SHARE_LINK_ACCESSED
     SHARE_LINK_REVOKED
+    ACCOUNT_LOCKED
+    ACCOUNT_UNLOCKED
 }
 
 model AuditLog {
