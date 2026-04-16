@@ -4102,7 +4102,10 @@
         "editor_assistant": "Assistant de rédaction",
         "llm_test": "Test de connexion LLM",
         "export_code_generation": "Génération du code d'exportation",
-        "auto_tag": "Suggestions de balises IA"
+        "auto_tag": "Suggestions de balises IA",
+        "duplicate_detection": "Détection des doublons",
+        "generate_from_url": "Générer des cas de test à partir d'une URL (exigences)",
+        "generate_from_url_app": "Générer des cas de test à partir d'une URL (tests d'application)"
       }
     },
     "elasticsearch": {

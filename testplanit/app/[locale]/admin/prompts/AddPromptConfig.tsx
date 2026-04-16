@@ -22,18 +22,14 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import {
-  useCreatePromptConfig,
-  useFindManyPromptConfig,
-  useUpdatePromptConfig,
-} from "~/lib/hooks/prompt-config";
-import { useCreatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
+import { createPromptConfig } from "~/app/actions/promptConfigActions";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
 import { FALLBACK_PROMPTS } from "~/lib/llm/services/fallback-prompts";
 import { PromptFeatureSection } from "./PromptFeatureSection";
@@ -95,14 +91,7 @@ export function AddPromptConfig({
   const tAdd = useTranslations("admin.prompts.add");
   const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
-
-  const { mutateAsync: createPromptConfig } = useCreatePromptConfig();
-  const { mutateAsync: createPromptConfigPrompt } =
-    useCreatePromptConfigPrompt();
-  const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
-  const { data: existingDefaults } = useFindManyPromptConfig({
-    where: { isDefault: true, isDeleted: false },
-  });
+  const queryClient = useQueryClient();
 
   const formSchema = createFormSchema(t);
 
@@ -121,60 +110,34 @@ export function AddPromptConfig({
     setLoading(true);
 
     try {
-      // If setting as default, unset existing defaults first
-      if (values.isDefault && existingDefaults && existingDefaults.length > 0) {
-        await Promise.all(
-          existingDefaults.map((config) =>
-            updatePromptConfig({
-              where: { id: config.id },
-              data: { isDefault: false },
-            })
-          )
-        );
-      }
-
-      // Create the PromptConfig
-      const config = await createPromptConfig({
-        data: {
-          name: values.name,
-          description: values.description || null,
-          isDefault: values.isDefault,
-          isActive: values.isActive,
-        },
-      });
-
-      if (config) {
-        // Create PromptConfigPrompt for each feature
-        for (const feature of featureKeys) {
-          const promptData = values.prompts[feature] as {
+      const result = await createPromptConfig({
+        name: values.name,
+        description: values.description || null,
+        isDefault: values.isDefault,
+        isActive: values.isActive,
+        prompts: values.prompts as Record<
+          string,
+          {
             systemPrompt: string;
             userPrompt: string;
             temperature: number;
             maxOutputTokens: number;
             llmIntegrationId?: number | null;
             modelOverride?: string | null;
-          };
-          await createPromptConfigPrompt({
-            data: {
-              promptConfigId: config.id,
-              feature,
-              systemPrompt: promptData.systemPrompt,
-              userPrompt: promptData.userPrompt || "",
-              temperature: promptData.temperature,
-              maxOutputTokens: promptData.maxOutputTokens,
-              ...(promptData.llmIntegrationId
-                ? { llmIntegrationId: promptData.llmIntegrationId }
-                : {}),
-              ...(promptData.modelOverride
-                ? { modelOverride: promptData.modelOverride }
-                : {}),
-            },
-          });
-        }
+          }
+        >,
+      });
 
-        toast.success(tCommon("fields.success"));
-        onSuccess();
+      if (result.status === "error") {
+        toast.error(tCommon("errors.error"), {
+          description: result.message,
+        });
+        return;
       }
+
+      await queryClient.invalidateQueries({ queryKey: ["PromptConfig"] });
+      toast.success(tCommon("fields.success"));
+      onSuccess();
     } catch (error: any) {
       const message =
         error?.info?.message || error?.message || "Unknown error occurred";

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
@@ -42,7 +43,7 @@ interface PromptFeatureSectionProps {
  * Uses useFormContext so it works inside any Form that has a `prompts.{feature}.*` shape.
  */
 export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
-  const { control, setValue, watch } = useFormContext();
+  const { control, setValue, watch, formState: { errors } } = useFormContext();
   const t = useTranslations("admin.prompts");
 
   const systemPromptRef = useRef<HTMLTextAreaElement | null>(null);
@@ -53,6 +54,9 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
     include: { llmProviderConfig: true },
     orderBy: { name: "asc" },
   });
+
+  const featureErrors = (errors as any)?.prompts?.[feature];
+  const hasErrors = !!featureErrors && Object.keys(featureErrors).length > 0;
 
   const variables = PROMPT_FEATURE_VARIABLES[feature];
   const systemPromptValue: string =
@@ -77,6 +81,9 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
     <AccordionItem value={feature}>
       <AccordionTrigger className="text-sm">
         <span className="flex items-center gap-2">
+          {hasErrors && (
+            <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+          )}
           {t(`featureLabels.${feature}` as any) || LLM_FEATURE_LABELS[feature]}
           <span className="text-xs font-normal text-muted-foreground">
             {"("}

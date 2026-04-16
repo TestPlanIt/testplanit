@@ -1,3 +1,9 @@
+## [0.21.16](https://github.com/TestPlanIt/testplanit/compare/v0.21.15...v0.21.16) (2026-04-16)
+
+### Bug Fixes
+
+* use server actions for prompt config forms to bypass 1MB request limit ([#214](https://github.com/TestPlanIt/testplanit/issues/214)) ([b89d069](https://github.com/TestPlanIt/testplanit/commit/b89d0697c9349103a12176151c4fa574fae46b20))
+
 ## [0.21.15](https://github.com/TestPlanIt/testplanit/compare/v0.21.14...v0.21.15) (2026-04-15)
 
 ### Enhancements

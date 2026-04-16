@@ -22,20 +22,14 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import {
-  useFindManyPromptConfig,
-  useUpdatePromptConfig,
-} from "~/lib/hooks/prompt-config";
-import {
-  useCreatePromptConfigPrompt,
-  useUpdatePromptConfigPrompt,
-} from "~/lib/hooks/prompt-config-prompt";
+import { updatePromptConfig } from "~/app/actions/promptConfigActions";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
 import type { ExtendedPromptConfig } from "./columns";
 import { PromptFeatureSection } from "./PromptFeatureSection";
@@ -82,15 +76,7 @@ export function EditPromptConfig({
   const tEdit = useTranslations("admin.prompts.edit");
   const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
-
-  const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
-  const { mutateAsync: updatePromptConfigPrompt } =
-    useUpdatePromptConfigPrompt();
-  const { mutateAsync: createPromptConfigPrompt } =
-    useCreatePromptConfigPrompt();
-  const { data: existingDefaults } = useFindManyPromptConfig({
-    where: { isDefault: true, isDeleted: false },
-  });
+  const queryClient = useQueryClient();
 
   const formSchema = createFormSchema();
 
@@ -128,85 +114,35 @@ export function EditPromptConfig({
     setLoading(true);
 
     try {
-      // If setting as default, unset existing defaults first
-      if (values.isDefault && existingDefaults && existingDefaults.length > 0) {
-        await Promise.all(
-          existingDefaults
-            .filter((c) => c.id !== config.id)
-            .map((c) =>
-              updatePromptConfig({
-                where: { id: c.id },
-                data: { isDefault: false },
-              })
-            )
-        );
-      }
-
-      // Update the PromptConfig
-      await updatePromptConfig({
-        where: { id: config.id },
-        data: {
-          name: values.name,
-          description: values.description || null,
-          isDefault: values.isDefault,
-          isActive: values.isActive,
-        },
+      const result = await updatePromptConfig({
+        id: config.id,
+        name: values.name,
+        description: values.description || null,
+        isDefault: values.isDefault,
+        isActive: values.isActive,
+        prompts: values.prompts as Record<
+          string,
+          {
+            id?: string;
+            systemPrompt: string;
+            userPrompt: string;
+            temperature: number;
+            maxOutputTokens: number;
+            llmIntegrationId?: number | null;
+            modelOverride?: string | null;
+          }
+        >,
       });
 
-      // Update each PromptConfigPrompt
-      for (const feature of featureKeys) {
-        const promptData = values.prompts[feature] as {
-          id?: string;
-          systemPrompt: string;
-          userPrompt: string;
-          temperature: number;
-          maxOutputTokens: number;
-          llmIntegrationId?: number | null;
-          modelOverride?: string | null;
-        };
-        if (promptData.id) {
-          await updatePromptConfigPrompt({
-            where: { id: promptData.id },
-            data: {
-              systemPrompt: promptData.systemPrompt,
-              userPrompt: promptData.userPrompt || "",
-              temperature: promptData.temperature,
-              maxOutputTokens: promptData.maxOutputTokens,
-              ...(promptData.llmIntegrationId
-                ? {
-                    llmIntegration: {
-                      connect: { id: promptData.llmIntegrationId },
-                    },
-                  }
-                : { llmIntegration: { disconnect: true } }),
-              modelOverride: promptData.modelOverride || null,
-            },
-          });
-        } else {
-          // Create a new PromptConfigPrompt for features that don't have one yet
-          await createPromptConfigPrompt({
-            data: {
-              promptConfig: { connect: { id: config.id } },
-              feature,
-              systemPrompt: promptData.systemPrompt,
-              userPrompt: promptData.userPrompt || "",
-              temperature: promptData.temperature,
-              maxOutputTokens: promptData.maxOutputTokens,
-              ...(promptData.llmIntegrationId
-                ? {
-                    llmIntegration: {
-                      connect: { id: promptData.llmIntegrationId },
-                    },
-                  }
-                : {}),
-              modelOverride: promptData.modelOverride || null,
-            },
-          });
-        }
+      if (result.status === "error") {
+        toast.error(tCommon("errors.error"), {
+          description: result.message,
+        });
+        return;
       }
 
+      await queryClient.invalidateQueries({ queryKey: ["PromptConfig"] });
       toast.success(tCommon("fields.success"));
-
       onClose();
     } catch (error: any) {
       console.error("Error updating prompt config:", error);
