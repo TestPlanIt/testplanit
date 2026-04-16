@@ -224,9 +224,9 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
             creator: {
               connect: { id: session.user.id },
             },
-            parent: data.parentId
-              ? { connect: { id: Number(data.parentId) } }
-              : undefined,
+            ...(data.parentId
+              ? { parent: { connect: { id: Number(data.parentId) } } }
+              : {}),
             milestoneType: {
               connect: { id: data.milestoneTypeId },
             },

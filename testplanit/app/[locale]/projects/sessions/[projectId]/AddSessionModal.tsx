@@ -47,7 +47,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -311,37 +311,34 @@ export function AddSessionModal({
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = form;
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
+  // Set data-dependent defaults when async data loads, without wiping user input.
+  // Only runs once per dialog open via the ref guard.
+  const defaultsSetRef = useRef(false);
   useEffect(() => {
+    if (!open) {
+      defaultsSetRef.current = false;
+      return;
+    }
+    if (defaultsSetRef.current) return;
     if (defaultTemplate && defaultWorkflow && !duplicationPreset) {
-      reset({
-        name: "",
-        templateId: defaultTemplate.id,
-        configIds: [],
-        stateId: defaultWorkflow.id,
-        assignedToId: "",
-        estimate: "",
-        note: null,
-        mission: null,
-        milestoneId: defaultMilestoneId ?? null,
-        attachments: [],
-        issueIds: [],
-      });
-      setLinkedIssueIds([]);
-      setMissionContent(null);
-      setNoteContent({});
-      setSelectedTags([]);
-      setSelectedConfigs([]);
-      setSelectedFiles([]);
+      defaultsSetRef.current = true;
+      setValue("templateId", defaultTemplate.id);
+      setValue("stateId", defaultWorkflow.id);
+      if (defaultMilestoneId) {
+        setValue("milestoneId", defaultMilestoneId);
+      }
     }
   }, [
+    open,
     defaultTemplate,
     defaultWorkflow,
-    reset,
+    setValue,
     defaultMilestoneId,
     duplicationPreset,
   ]);
@@ -562,16 +559,18 @@ export function AddSessionModal({
             name: data.name,
             currentVersion: 1,
             configurationGroupId,
-            configuration: configId ? { connect: { id: configId } } : undefined,
-            milestone: data.milestoneId
-              ? { connect: { id: data.milestoneId } }
-              : undefined,
+            ...(configId
+              ? { configuration: { connect: { id: configId } } }
+              : {}),
+            ...(data.milestoneId
+              ? { milestone: { connect: { id: data.milestoneId } } }
+              : {}),
             state: {
               connect: { id: data.stateId },
             },
-            assignedTo: data.assignedToId
-              ? { connect: { id: data.assignedToId } }
-              : undefined,
+            ...(data.assignedToId
+              ? { assignedTo: { connect: { id: data.assignedToId } } }
+              : {}),
             estimate: estimateInSeconds,
             note: noteContent
               ? JSON.stringify(noteContent)
@@ -586,11 +585,13 @@ export function AddSessionModal({
             tags: {
               connect: selectedTags.map((tagId) => ({ id: tagId })),
             },
-            issues: linkedIssueIds?.length
+            ...(linkedIssueIds?.length
               ? {
-                  connect: linkedIssueIds.map((id) => ({ id })),
+                  issues: {
+                    connect: linkedIssueIds.map((id) => ({ id })),
+                  },
                 }
-              : undefined,
+              : {}),
           },
         });
 

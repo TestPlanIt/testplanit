@@ -346,6 +346,10 @@ async function handler(
     // responses to status codes that won't be intercepted while preserving the
     // JSON error body for proper client-side error handling.
     let responseStatus = response.status;
+    // DEBUG: Log error responses for create/upsert operations
+    if (!response.ok && parsedPath && ["create", "upsert"].includes(parsedPath.operation)) {
+      console.error(`[MODEL API ERROR] ${parsedPath.model}/${parsedPath.operation} => ${response.status}:`, responseBody.substring(0, 3000));
+    }
     if (!response.ok && responseBody) {
       try {
         const parsed = JSON.parse(responseBody);
