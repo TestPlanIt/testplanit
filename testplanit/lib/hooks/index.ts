@@ -8,6 +8,7 @@ export * from './app-config';
 export * from './account';
 export * from './verification-token';
 export * from './user';
+export * from './password-history';
 export * from './user-preferences';
 export * from './api-token';
 export * from './groups';

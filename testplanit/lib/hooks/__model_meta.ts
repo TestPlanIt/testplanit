@@ -442,6 +442,28 @@ const metadata: ModelMeta = {
                     name: "twoFactorBackupCodes",
                     type: "String",
                     isOptional: true,
+                }, failedLoginAttempts: {
+                    name: "failedLoginAttempts",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, lockedUntil: {
+                    name: "lockedUntil",
+                    type: "DateTime",
+                    isOptional: true,
+                }, passwordChangedAt: {
+                    name: "passwordChangedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, mustChangePassword: {
+                    name: "mustChangePassword",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, passwordHistory: {
+                    name: "passwordHistory",
+                    type: "PasswordHistory",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'user',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -450,6 +472,41 @@ const metadata: ModelMeta = {
                 }, email: {
                     name: "email",
                     fields: ["email"]
+                },
+            },
+        },
+        passwordHistory: {
+            name: 'PasswordHistory', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, userId: {
+                    name: "userId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'user',
+                }, user: {
+                    name: "user",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'passwordHistory',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "userId" },
+                }, hash: {
+                    name: "hash",
+                    type: "String",
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
                 },
             },
         },
@@ -7444,6 +7501,42 @@ const metadata: ModelMeta = {
                     name: "requireEmailVerification",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, minPasswordLength: {
+                    name: "minPasswordLength",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 12 }] }],
+                }, requireUppercase: {
+                    name: "requireUppercase",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requireLowercase: {
+                    name: "requireLowercase",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requireNumbers: {
+                    name: "requireNumbers",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requireSpecialChars: {
+                    name: "requireSpecialChars",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, passwordHistoryDepth: {
+                    name: "passwordHistoryDepth",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, passwordExpirationDays: {
+                    name: "passwordExpirationDays",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, lockoutThreshold: {
+                    name: "lockoutThreshold",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 5 }] }],
+                }, lockoutDurationMinutes: {
+                    name: "lockoutDurationMinutes",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 15 }] }],
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",
@@ -8098,7 +8191,7 @@ const metadata: ModelMeta = {
 
     },
     deleteCascade: {
-        user: ['Account', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
+        user: ['Account', 'PasswordHistory', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
         projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
