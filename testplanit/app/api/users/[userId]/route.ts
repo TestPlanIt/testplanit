@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
+import { invalidateSessionUserCache } from "~/lib/session-cache";
 
 /**
  * Dedicated user update API endpoint that bypasses ZenStack access control.
@@ -184,6 +185,9 @@ export async function PATCH(
         include: { userPreferences: true },
       });
     });
+
+    // Invalidate session cache so header/menu reflect changes immediately
+    await invalidateSessionUserCache(userId);
 
     return NextResponse.json({ data: updatedUser }, { status: 200 });
   } catch (error: any) {

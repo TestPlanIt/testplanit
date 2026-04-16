@@ -1179,7 +1179,10 @@ export function AddSessionModal({
               <Button variant="outline" type="button" onClick={handleCancel}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !defaultTemplate || !defaultWorkflow}
+              >
                 {isSubmitting
                   ? t("common.actions.submitting")
                   : selectedConfigs.length > 1

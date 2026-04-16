@@ -365,8 +365,12 @@ test.describe("Test Run Configuration Combobox", () => {
     ).toBeVisible({ timeout: 5000 });
 
     // Verify pagination footer is visible with Previous/Next buttons
-    const prevButton = page.getByRole("button", { name: "Previous" });
-    const nextButton = page.getByRole("button", { name: "Next" });
+    // Scope to the combobox popover to avoid matching the dialog's wizard "Next" button
+    const comboboxPopover = page.locator("[cmdk-list]").first().locator("..");
+    const prevButton = comboboxPopover.getByRole("button", {
+      name: "Previous",
+    });
+    const nextButton = comboboxPopover.getByRole("button", { name: "Next" });
     await expect(prevButton).toBeVisible();
     await expect(nextButton).toBeVisible();
 

@@ -256,8 +256,7 @@ CASE B:
 Analyze whether these two test cases are duplicates of each other.`,
       temperature: 0.1,
       maxOutputTokens: 512,
-      variables:
-        PROMPT_FEATURE_VARIABLES[LLM_FEATURES.DUPLICATE_DETECTION],
+      variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.DUPLICATE_DETECTION],
     },
     {
       feature: LLM_FEATURES.GENERATE_FROM_URL,

@@ -147,15 +147,17 @@ export function AddFolder({
           onFolderCreated(newFolder.id, effectiveParentId);
         }
       } catch (err: any) {
-        // Check for Prisma unique constraint errors in different possible locations
-        // ZenStack may wrap the error differently depending on the context
-        const isPrismaError =
-          err.info?.prisma ||
+        // Detect unique constraint violations across Prisma and ZenStack error formats
+        const errorMsg = err.info?.message || err.message || "";
+        const isUniqueViolation =
           err.code === "P2002" ||
-          err.message?.includes("Unique constraint");
-        const errorCode = err.info?.code || err.code;
+          err.info?.code === "P2002" ||
+          err.info?.prisma ||
+          errorMsg.includes("Unique constraint") ||
+          errorMsg.includes("unique constraint") ||
+          errorMsg.includes("duplicate key");
 
-        if (isPrismaError && errorCode === "P2002") {
+        if (isUniqueViolation) {
           form.setError("name", {
             type: "custom",
             message: t("common.errors.nameExists"),

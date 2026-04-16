@@ -590,7 +590,10 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
               >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !defaultMilestoneTypeId}
+              >
                 {isSubmitting
                   ? t("common.actions.saving")
                   : t("common.actions.save")}

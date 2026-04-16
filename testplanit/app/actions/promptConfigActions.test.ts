@@ -278,9 +278,7 @@ describe("promptConfigActions", () => {
           isActive: true,
         },
       });
-      expect(mockUpsert).toHaveBeenCalledTimes(
-        Object.keys(mockPrompts).length
-      );
+      expect(mockUpsert).toHaveBeenCalledTimes(Object.keys(mockPrompts).length);
     });
 
     it("should unset other defaults when updating to default, excluding self", async () => {

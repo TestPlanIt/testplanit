@@ -1519,7 +1519,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || isLoadingSharedStepGroups}
+                disabled={
+                  isSubmitting || isLoadingSharedStepGroups || !isTemplateReady
+                }
                 data-testid="case-submit-button"
               >
                 {isSubmitting
