@@ -4103,7 +4103,10 @@
         "editor_assistant": "Editor Writing Assistant",
         "llm_test": "LLM Connection Test",
         "export_code_generation": "Export Code Generation",
-        "auto_tag": "AI Tag Suggestions"
+        "auto_tag": "AI Tag Suggestions",
+        "duplicate_detection": "Duplicate Detection",
+        "generate_from_url": "Generate Test Cases from URL (Requirements)",
+        "generate_from_url_app": "Generate Test Cases from URL (Application Testing)"
       }
     },
     "elasticsearch": {
