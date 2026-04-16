@@ -43,10 +43,8 @@ export function PasswordStrengthIndicator({
     let cancelled = false;
     (async () => {
       const { zxcvbn, zxcvbnOptions } = await import("@zxcvbn-ts/core");
-      const { dictionary, adjacencyGraphs } = await import(
-        "@zxcvbn-ts/language-en"
-      );
-      zxcvbnOptions.setOptions({ dictionary, graphs: adjacencyGraphs });
+      const { dictionary } = await import("@zxcvbn-ts/language-en");
+      zxcvbnOptions.setOptions({ dictionary });
       if (!cancelled) {
         zxcvbnRef.current = zxcvbn;
         // Re-evaluate current password if already typed

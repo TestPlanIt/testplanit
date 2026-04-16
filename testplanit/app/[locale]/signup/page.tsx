@@ -18,6 +18,7 @@ import { useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useMemo } from "react";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { LinkIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -163,6 +165,19 @@ const Signup: NextPage = () => {
       confirmPassword: "",
     },
   });
+
+  const passwordValue = form.watch("password");
+
+  const policy = useMemo(() => {
+    if (!registrationSettings) return null;
+    return {
+      minPasswordLength: registrationSettings.minPasswordLength ?? 12,
+      requireUppercase: registrationSettings.requireUppercase ?? false,
+      requireLowercase: registrationSettings.requireLowercase ?? false,
+      requireNumbers: registrationSettings.requireNumbers ?? false,
+      requiredSpecialChars: registrationSettings.requiredSpecialChars ?? null,
+    };
+  }, [registrationSettings]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     // Check email domain restriction
@@ -349,6 +364,10 @@ const Signup: NextPage = () => {
                       <FormControl>
                         <Input {...field} type="password" tabIndex={3} />
                       </FormControl>
+                      <PasswordStrengthIndicator
+                        password={passwordValue || ""}
+                        policy={policy}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

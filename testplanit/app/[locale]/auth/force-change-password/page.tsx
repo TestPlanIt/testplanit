@@ -10,21 +10,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import {
+  PasswordStrengthIndicator,
+  type PasswordPolicy,
+} from "@/components/PasswordStrengthIndicator";
+import { KeyRound, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
-
-interface PasswordPolicy {
-  minPasswordLength: number;
-  requireUppercase: boolean;
-  requireLowercase: boolean;
-  requireNumbers: boolean;
-  requiredSpecialChars: string | null;
-}
 
 export default function ForceChangePasswordPage() {
   const router = useRouter();
@@ -130,49 +126,6 @@ export default function ForceChangePasswordPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Policy requirements display (per D-05, CONTEXT specifics) */}
-          {policy && (
-            <div className="p-3 mb-4 bg-muted rounded-md">
-              <p className="text-sm font-medium mb-2">
-                {t("auth.forceChangePassword.policyTitle")}
-              </p>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  {t("auth.forceChangePassword.policyMinLength", {
-                    count: policy.minPasswordLength,
-                  })}
-                </li>
-                {policy.requireUppercase && (
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    {t("auth.forceChangePassword.policyUppercase")}
-                  </li>
-                )}
-                {policy.requireLowercase && (
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    {t("auth.forceChangePassword.policyLowercase")}
-                  </li>
-                )}
-                {policy.requireNumbers && (
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    {t("auth.forceChangePassword.policyNumbers")}
-                  </li>
-                )}
-                {policy.requiredSpecialChars && (
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    {t("auth.forceChangePassword.policySpecialChars", {
-                      chars: policy.requiredSpecialChars,
-                    })}
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-
           {errors.length > 0 && (
             <div className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md">
               {errors.map((err, i) => (
@@ -196,6 +149,7 @@ export default function ForceChangePasswordPage() {
                 autoFocus
                 autoComplete="new-password"
               />
+              <PasswordStrengthIndicator password={newPassword} policy={policy} />
             </div>
 
             <div className="space-y-2">
