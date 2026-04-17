@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,6 +86,14 @@ export async function POST(request: NextRequest) {
       `;
 
       const encodedResponse = Buffer.from(logoutResponse).toString("base64");
+
+      // Audit SAML logout completion (IdP-initiated Single Logout).
+      // User identity is not resolved from the SAML assertion here because
+      // this handler currently returns a stub response without parsing
+      // the NameID. The `provider: "saml"` metadata is the meaningful
+      // audit signal; identity would be added when assertion parsing is
+      // wired up. See Phase 62 D-04.
+      auditAuthEvent("LOGOUT", null, "", { provider: "saml", viaIdpCallback: true }).catch(console.error);
 
       return new Response(
         `

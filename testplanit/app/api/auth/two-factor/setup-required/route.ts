@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
   encryptSecret,
   generateQRCodeDataURL,
@@ -73,6 +74,13 @@ export async function POST(request: NextRequest) {
       where: { id: tokenData.userId },
       data: { twoFactorSecret: encryptedSecret },
     });
+
+    // Audit the forced 2FA setup initiation. The TOTP secret is NOT
+    // logged — only that the setup flow started for this user.
+    auditAuthEvent("TWO_FACTOR_SETUP_REQUIRED", tokenData.userId, tokenData.email ?? user.email ?? "", {
+      adminForced: true,
+      triggeredByAdminId: "unknown",
+    }).catch(console.error);
 
     return NextResponse.json({
       secret,

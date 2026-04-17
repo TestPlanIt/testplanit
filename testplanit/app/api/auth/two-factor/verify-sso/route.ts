@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "~/lib/auth-security";
 import { prisma } from "~/lib/prisma";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
 
@@ -93,6 +94,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Audit successful 2FA verification during SSO flow. The verification
+    // code itself is NOT logged — only the verification method (totp or
+    // recovery-code).
+    auditAuthEvent("TWO_FACTOR_VERIFIED", session.user.id, session.user.email ?? "", {
+      provider: "sso",
+      method: usedBackupCode ? "recovery-code" : "totp",
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,
