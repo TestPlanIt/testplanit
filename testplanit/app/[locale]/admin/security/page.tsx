@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
@@ -26,10 +25,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCountUser,
-  useFindFirstRegistrationSettings,
-} from "~/lib/hooks";
+import { useCountUser, useFindFirstRegistrationSettings } from "~/lib/hooks";
 
 export default function SecurityAdminPage() {
   const { data: session } = useSession();
@@ -150,7 +146,9 @@ export default function SecurityAdminPage() {
           {/* Section 1: Password Policy */}
           <div className="space-y-4">
             <div>
-              <CardTitle className="text-lg">{t("passwordPolicyTitle")}</CardTitle>
+              <CardTitle className="text-lg">
+                {t("passwordPolicyTitle")}
+              </CardTitle>
               <CardDescription className="mt-1">
                 {t("passwordPolicyDescription")}
               </CardDescription>
@@ -162,7 +160,9 @@ export default function SecurityAdminPage() {
                 <Label htmlFor="minPasswordLength">
                   {t("minPasswordLengthLabel")}
                 </Label>
-                <span className="text-sm font-medium tabular-nums">{minPasswordLength}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {minPasswordLength}
+                </span>
               </div>
               <Slider
                 id="minPasswordLength"
@@ -233,7 +233,9 @@ export default function SecurityAdminPage() {
                 <Label htmlFor="passwordHistoryDepth">
                   {t("passwordHistoryDepthLabel")}
                 </Label>
-                <span className="text-sm font-medium tabular-nums">{passwordHistoryDepth}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {passwordHistoryDepth}
+                </span>
               </div>
               <Slider
                 id="passwordHistoryDepth"
@@ -254,7 +256,9 @@ export default function SecurityAdminPage() {
                 <Label htmlFor="passwordExpirationDays">
                   {t("passwordExpirationDaysLabel")}
                 </Label>
-                <span className="text-sm font-medium tabular-nums">{passwordExpirationDays}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {passwordExpirationDays}
+                </span>
               </div>
               <Slider
                 id="passwordExpirationDays"
@@ -275,7 +279,9 @@ export default function SecurityAdminPage() {
           {/* Section 2: Lockout Policy */}
           <div className="space-y-4">
             <div>
-              <CardTitle className="text-lg">{t("lockoutPolicyTitle")}</CardTitle>
+              <CardTitle className="text-lg">
+                {t("lockoutPolicyTitle")}
+              </CardTitle>
               <CardDescription className="mt-1">
                 {t("lockoutPolicyDescription")}
               </CardDescription>
@@ -287,7 +293,9 @@ export default function SecurityAdminPage() {
                 <Label htmlFor="lockoutThreshold">
                   {t("lockoutThresholdLabel")}
                 </Label>
-                <span className="text-sm font-medium tabular-nums">{lockoutThreshold}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {lockoutThreshold}
+                </span>
               </div>
               <Slider
                 id="lockoutThreshold"
@@ -308,7 +316,9 @@ export default function SecurityAdminPage() {
                 <Label htmlFor="lockoutDurationMinutes">
                   {t("lockoutDurationMinutesLabel")}
                 </Label>
-                <span className="text-sm font-medium tabular-nums">{lockoutDurationMinutes}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {lockoutDurationMinutes}
+                </span>
               </div>
               <Slider
                 id="lockoutDurationMinutes"
