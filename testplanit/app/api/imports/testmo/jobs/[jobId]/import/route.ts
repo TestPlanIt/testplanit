@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
@@ -107,6 +108,26 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: updateData,
+    });
+
+    // Audit Testmo import START (pairs with IMPORT_COMPLETED emitted by
+    // testmoImportWorker at line 7079). Firing at enqueue time guarantees
+    // forensic evidence remains even if the worker crashes or the job is
+    // cancelled before the completion event lands.
+    captureAuditEvent({
+      action: "IMPORT_STARTED",
+      entityType: "TestmoImportJob",
+      entityId: jobId,
+      entityName: `Testmo Import`,
+      userId: session.user.id,
+      userEmail: session.user.email ?? undefined,
+      metadata: {
+        queueJobId: queuedJob.id,
+        originalFileName: job.originalFileName,
+        triggeredAt: new Date().toISOString(),
+      },
+    }).catch((error) => {
+      console.error("Failed to audit Testmo import start:", error);
     });
 
     const payload = serializeImportJob(updatedJob);
