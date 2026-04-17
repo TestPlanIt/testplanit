@@ -103,10 +103,17 @@ async function getHeadTimestamp(): Promise<string> {
     const raw = execSync("git log -1 --format=%cI HEAD", {
       cwd: TESTPLANIT_DIR,
       encoding: "utf8",
-    });
-    return raw.trim() || "UNKNOWN";
-  } catch {
-    return "UNKNOWN";
+    }).trim();
+    if (!raw) {
+      throw new Error("git log returned empty output");
+    }
+    return raw;
+  } catch (err) {
+    throw new Error(
+      `audit-coverage: failed to resolve HEAD commit timestamp: ${
+        (err as Error).message
+      }`
+    );
   }
 }
 
