@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Shield } from "lucide-react";
@@ -157,22 +158,19 @@ export default function SecurityAdminPage() {
 
             {/* Min Password Length */}
             <div className="space-y-2">
-              <Label htmlFor="minPasswordLength">
-                {t("minPasswordLengthLabel")}
-              </Label>
-              <Input
+              <div className="flex items-center justify-between">
+                <Label htmlFor="minPasswordLength">
+                  {t("minPasswordLengthLabel")}
+                </Label>
+                <span className="text-sm font-medium tabular-nums">{minPasswordLength}</span>
+              </div>
+              <Slider
                 id="minPasswordLength"
-                type="number"
                 min={8}
                 max={128}
-                value={minPasswordLength}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) {
-                    setMinPasswordLength(Math.max(8, Math.min(128, val)));
-                  }
-                }}
-                className="max-w-xs"
+                step={1}
+                value={[minPasswordLength]}
+                onValueChange={([v]) => setMinPasswordLength(v)}
               />
               <p className="text-sm text-muted-foreground">
                 {t("minPasswordLengthDescription")}
@@ -231,22 +229,19 @@ export default function SecurityAdminPage() {
 
             {/* Password History Depth */}
             <div className="space-y-2">
-              <Label htmlFor="passwordHistoryDepth">
-                {t("passwordHistoryDepthLabel")}
-              </Label>
-              <Input
+              <div className="flex items-center justify-between">
+                <Label htmlFor="passwordHistoryDepth">
+                  {t("passwordHistoryDepthLabel")}
+                </Label>
+                <span className="text-sm font-medium tabular-nums">{passwordHistoryDepth}</span>
+              </div>
+              <Slider
                 id="passwordHistoryDepth"
-                type="number"
                 min={0}
                 max={24}
-                value={passwordHistoryDepth}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) {
-                    setPasswordHistoryDepth(Math.max(0, Math.min(24, val)));
-                  }
-                }}
-                className="max-w-xs"
+                step={1}
+                value={[passwordHistoryDepth]}
+                onValueChange={([v]) => setPasswordHistoryDepth(v)}
               />
               <p className="text-sm text-muted-foreground">
                 {t("passwordHistoryDepthDescription")}
@@ -255,21 +250,19 @@ export default function SecurityAdminPage() {
 
             {/* Password Expiration Days */}
             <div className="space-y-2">
-              <Label htmlFor="passwordExpirationDays">
-                {t("passwordExpirationDaysLabel")}
-              </Label>
-              <Input
+              <div className="flex items-center justify-between">
+                <Label htmlFor="passwordExpirationDays">
+                  {t("passwordExpirationDaysLabel")}
+                </Label>
+                <span className="text-sm font-medium tabular-nums">{passwordExpirationDays}</span>
+              </div>
+              <Slider
                 id="passwordExpirationDays"
-                type="number"
                 min={0}
-                value={passwordExpirationDays}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) {
-                    setPasswordExpirationDays(Math.max(0, Math.min(9999, val)));
-                  }
-                }}
-                className="max-w-xs"
+                max={365}
+                step={1}
+                value={[passwordExpirationDays]}
+                onValueChange={([v]) => setPasswordExpirationDays(v)}
               />
               <p className="text-sm text-muted-foreground">
                 {t("passwordExpirationDaysDescription")}
@@ -290,21 +283,19 @@ export default function SecurityAdminPage() {
 
             {/* Lockout Threshold */}
             <div className="space-y-2">
-              <Label htmlFor="lockoutThreshold">
-                {t("lockoutThresholdLabel")}
-              </Label>
-              <Input
+              <div className="flex items-center justify-between">
+                <Label htmlFor="lockoutThreshold">
+                  {t("lockoutThresholdLabel")}
+                </Label>
+                <span className="text-sm font-medium tabular-nums">{lockoutThreshold}</span>
+              </div>
+              <Slider
                 id="lockoutThreshold"
-                type="number"
                 min={1}
-                value={lockoutThreshold}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) {
-                    setLockoutThreshold(Math.max(1, Math.min(999, val)));
-                  }
-                }}
-                className="max-w-xs"
+                max={20}
+                step={1}
+                value={[lockoutThreshold]}
+                onValueChange={([v]) => setLockoutThreshold(v)}
               />
               <p className="text-sm text-muted-foreground">
                 {t("lockoutThresholdDescription")}
@@ -313,21 +304,19 @@ export default function SecurityAdminPage() {
 
             {/* Lockout Duration Minutes */}
             <div className="space-y-2">
-              <Label htmlFor="lockoutDurationMinutes">
-                {t("lockoutDurationMinutesLabel")}
-              </Label>
-              <Input
+              <div className="flex items-center justify-between">
+                <Label htmlFor="lockoutDurationMinutes">
+                  {t("lockoutDurationMinutesLabel")}
+                </Label>
+                <span className="text-sm font-medium tabular-nums">{lockoutDurationMinutes}</span>
+              </div>
+              <Slider
                 id="lockoutDurationMinutes"
-                type="number"
                 min={1}
-                value={lockoutDurationMinutes}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) {
-                    setLockoutDurationMinutes(Math.max(1, Math.min(9999, val)));
-                  }
-                }}
-                className="max-w-xs"
+                max={60}
+                step={1}
+                value={[lockoutDurationMinutes]}
+                onValueChange={([v]) => setLockoutDurationMinutes(v)}
               />
               <p className="text-sm text-muted-foreground">
                 {t("lockoutDurationMinutesDescription")}
