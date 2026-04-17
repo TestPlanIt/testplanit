@@ -1216,11 +1216,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async updateMany({ args, query }: any) {
           // Capture tokens affected by the bulk update so we can invalidate
-          // their cached entries after the write completes.
+          // their cached entries after the write completes. We also widen the
+          // selection to non-sensitive forensic fields (id, tokenPrefix,
+          // userId, name) so the bulk-update audit retains enough context to
+          // reconstruct which tokens were touched. The raw `token` secret is
+          // used only to key the in-memory cache and is never passed to audit.
           const affected = args.where
             ? await baseClient.apiToken.findMany({
                 where: args.where,
-                select: { token: true },
+                select: {
+                  token: true,
+                  id: true,
+                  tokenPrefix: true,
+                  userId: true,
+                  name: true,
+                },
               })
             : [];
           const result = await query(args);
@@ -1236,13 +1246,31 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
           }
+          if (result?.count > 0) {
+            auditBulkUpdate("ApiToken", result.count, args.where).catch(
+              (error: any) => {
+                console.error(`Failed to audit API token bulk update:`, error);
+              }
+            );
+          }
           return result;
         },
         async deleteMany({ args, query }: any) {
+          // Pre-query MUST run BEFORE the delete — post-delete these rows are
+          // unrecoverable. Widened selection captures non-sensitive forensic
+          // fields (id, tokenPrefix, userId, name) for the audit record; the
+          // raw `token` value remains for cache eviction only and is never
+          // logged.
           const affected = args.where
             ? await baseClient.apiToken.findMany({
                 where: args.where,
-                select: { token: true },
+                select: {
+                  token: true,
+                  id: true,
+                  tokenPrefix: true,
+                  userId: true,
+                  name: true,
+                },
               })
             : [];
           const result = await query(args);
@@ -1257,6 +1285,13 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
+          }
+          if (result?.count > 0) {
+            auditBulkDelete("ApiToken", result.count, args.where).catch(
+              (error: any) => {
+                console.error(`Failed to audit API token bulk delete:`, error);
+              }
+            );
           }
           return result;
         },
