@@ -61,6 +61,24 @@ type InventoryItem = {
   lineHint?: number;
 };
 
+type HookParityEntry = {
+  model: string;
+  hasCreate: boolean;
+  hasUpdate: boolean;
+  hasDelete: boolean;
+  missingOperations: string[]; // e.g. ["update"] for attachment
+  isExempt: boolean; // true if `Audit parity exempt` comment found inside the model block
+  exemptRationale: string | null; // extracted from the comment, or null
+};
+
+type HookParityReport = {
+  totalModels: number;
+  fullParity: number;
+  exempt: number;
+  undocumentedAsymmetries: HookParityEntry[];
+  entries: HookParityEntry[];
+};
+
 type InventoryOutput = {
   generatedAt: string; // ISO timestamp from HEAD commit
   generatedAgainst: "HEAD" | "working-tree";
@@ -73,6 +91,7 @@ type InventoryOutput = {
     intentionally_skipped: number;
   };
   items: InventoryItem[];
+  hookParity: HookParityReport;
 };
 
 // ---------------------------------------------------------------------------
@@ -250,6 +269,110 @@ async function enumeratePrismaHooks(
   }
 
   return items;
+}
+
+/**
+ * Group hook inventory items by model and report 3-op (create/update/delete)
+ * parity. Intentional asymmetries are detected via the `Audit parity exempt`
+ * comment inside (or immediately above) the model block. Returns a structured
+ * report; the main function uses this to decide the exit code.
+ *
+ * Parity scope: only `create`/`update`/`delete` are counted. Bulk ops
+ * (`createMany`/`updateMany`/`deleteMany`) and `upsert` are out of scope per
+ * Phase 62 — the 3-op triad is the parity baseline.
+ */
+async function checkHookParity(
+  hookItems: InventoryItem[],
+  prismaFile: string
+): Promise<HookParityReport> {
+  const absPath = path.join(REPO_ROOT, prismaFile);
+  const content = await fs.readFile(absPath, "utf8");
+  const lines = content.split("\n");
+
+  // Build per-model op sets from the already-enumerated hook items.
+  const byModel = new Map<string, Set<string>>();
+  for (const item of hookItems) {
+    const [model, op] = item.symbol.split(".");
+    if (!model || !op) continue;
+    if (!byModel.has(model)) byModel.set(model, new Set());
+    byModel.get(model)!.add(op);
+  }
+
+  // Use the same 6-space-indent model-header regex as enumeratePrismaHooks
+  // so the two functions agree on what a "model block" is.
+  const modelHeaderRegex = /^ {6}(\w+):\s*\{\s*$/;
+  const modelEndRegex = /^ {6}\},?\s*$/;
+  const exemptByModel = new Map<string, string | null>(); // rationale or null
+
+  let i = 0;
+  while (i < lines.length) {
+    const m = lines[i].match(modelHeaderRegex);
+    if (!m) {
+      i += 1;
+      continue;
+    }
+    const model = m[1];
+    // Search up to 10 lines ABOVE the model header for a leading comment block
+    // (covers the "comment-above-model-opener" placement pattern).
+    const leadStart = Math.max(0, i - 10);
+    const lead = lines.slice(leadStart, i).join("\n");
+    // Search inside the block body up to the matching 6-space `}`.
+    let j = i + 1;
+    while (j < lines.length && !modelEndRegex.test(lines[j])) j += 1;
+    const body = lines.slice(i, j + 1).join("\n");
+    const searchText = lead + "\n" + body;
+    if (/Audit parity exempt/.test(searchText)) {
+      // Extract the rationale line for forensic reporting.
+      const matchLine = searchText
+        .split("\n")
+        .find((l) => /Audit parity exempt/.test(l));
+      exemptByModel.set(
+        model,
+        matchLine?.trim().replace(/^\/\/\s*/, "") ?? ""
+      );
+    } else {
+      exemptByModel.set(model, null);
+    }
+    i = j + 1;
+  }
+
+  const entries: HookParityEntry[] = [];
+  for (const [model, ops] of byModel.entries()) {
+    const hasCreate = ops.has("create");
+    const hasUpdate = ops.has("update");
+    const hasDelete = ops.has("delete");
+    const missingOperations: string[] = [];
+    if (!hasCreate) missingOperations.push("create");
+    if (!hasUpdate) missingOperations.push("update");
+    if (!hasDelete) missingOperations.push("delete");
+    const exemptRationale = exemptByModel.get(model) ?? null;
+    const isExempt = exemptRationale !== null;
+    entries.push({
+      model,
+      hasCreate,
+      hasUpdate,
+      hasDelete,
+      missingOperations,
+      isExempt,
+      exemptRationale,
+    });
+  }
+
+  entries.sort((a, b) => a.model.localeCompare(b.model));
+
+  const undocumentedAsymmetries = entries.filter(
+    (e) => e.missingOperations.length > 0 && !e.isExempt
+  );
+
+  return {
+    totalModels: entries.length,
+    fullParity: entries.filter((e) => e.missingOperations.length === 0).length,
+    exempt: entries.filter(
+      (e) => e.isExempt && e.missingOperations.length > 0
+    ).length,
+    undocumentedAsymmetries,
+    entries,
+  };
 }
 
 /**
@@ -573,6 +696,11 @@ async function main(): Promise<void> {
     ...workerItems,
   ]);
 
+  // Compute the hook-parity report from the raw hookItems (before the
+  // lastActiveAt override downgrades user.update to intentionally-skipped;
+  // parity counts the hook's existence, not its verdict).
+  const hookParity = await checkHookParity(hookItems, prismaFile);
+
   // Move the lastActiveAt row from `audited (hook)` to `intentionally-skipped`
   // and populate its rationale BEFORE computing totals so the counts block
   // reflects the final status distribution.
@@ -597,6 +725,7 @@ async function main(): Promise<void> {
     generatedAgainst: "HEAD",
     totals,
     items,
+    hookParity,
   };
 
   const outputPath = path.join(REPO_ROOT, ".planning/audit-coverage.json");
@@ -620,6 +749,21 @@ async function main(): Promise<void> {
       countsPath
     )}`
   );
+  console.log(
+    `audit-coverage: hook parity — ${hookParity.fullParity}/${hookParity.totalModels} models at full CRUD parity, ${hookParity.exempt} documented exemptions, ${hookParity.undocumentedAsymmetries.length} undocumented`
+  );
+
+  if (hookParity.undocumentedAsymmetries.length > 0) {
+    console.error(
+      "audit-coverage: FAIL — undocumented hook parity asymmetries detected:"
+    );
+    for (const a of hookParity.undocumentedAsymmetries) {
+      console.error(
+        `  - ${a.model}: missing ${a.missingOperations.join(", ")} (no \`Audit parity exempt\` comment found in model block)`
+      );
+    }
+    process.exit(2); // Distinct non-zero for parity failure (vs. code 1 for crash)
+  }
 }
 
 main().catch((err) => {

@@ -306,6 +306,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // Audit parity exempt (informational): sessions has full CRUD hook parity
+      // but the lifecycle events that matter (login/logout/invalidation) are
+      // audited at the NextAuth event-callback layer above the DB hook — see
+      // app/api/auth/logout/route.ts for the LOGOUT pair. The hooks here still
+      // fire for completeness but are not the primary audit signal.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       sessions: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -759,6 +765,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // Audit parity exempt: userProjectPermission.update is not hooked because
+      // permissions are grant/revoke only (no intermediate UPDATE path).
+      // The create/delete hooks call auditPermissionGrant/Revoke respectively.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       userProjectPermission: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -792,6 +802,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // Audit parity exempt: groupProjectPermission.update is not hooked because
+      // group permissions are grant/revoke only (no intermediate UPDATE path).
+      // The create/delete hooks call auditPermissionGrant/Revoke respectively.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       groupProjectPermission: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -892,6 +906,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // Audit parity exempt: allowedEmailDomain.update is not hooked because
+      // domain entries are immutable (allowed or not — no intermediate state).
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       allowedEmailDomain: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -1107,6 +1124,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // Audit parity exempt: attachment.update is not hooked because attachments
+      // are immutable once uploaded (no in-place mutation path). Matches the
+      // lastActiveAt precedent at lib/prisma.ts:693-701.
       attachment: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -1323,6 +1343,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // =============================================================================
       // API Tokens - Security audit logging
       // =============================================================================
+      // Audit parity exempt: apiToken.create is not hooked because API token
+      // creation is audited explicitly at app/api/api-tokens/route.ts via
+      // captureAuditEvent("API_KEY_CREATED", ...) — the explicit route call
+      // masks the token secret value in a way the generic auditCreate cannot.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       apiToken: {
         async delete({ args, query }: any) {
           // Fetch entity before deletion for audit (including user info)
