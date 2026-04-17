@@ -2,6 +2,7 @@ import { syncService } from "@/lib/integrations/services/SyncService";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
 
 export async function POST(
@@ -61,6 +62,19 @@ export async function POST(
         { status: 500 }
       );
     }
+
+    // Audit the admin-triggered integration sync.
+    auditSystemConfigChange(
+      `integration.sync.${integrationId}`,
+      null,
+      {
+        integrationId,
+        jobId,
+        triggeredBy: session.user.id ?? "unknown",
+      }
+    ).catch((error) => {
+      console.error("Failed to audit integration sync trigger:", error);
+    });
 
     return NextResponse.json({
       success: true,

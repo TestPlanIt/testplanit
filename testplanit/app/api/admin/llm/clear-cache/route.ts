@@ -5,6 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: NextRequest) {
+  // Audit: intentionally-skipped (Phase 62 / D-03).
+  // This endpoint clears the LLM available-models cache — a cache-hygiene
+  // operation with no business-object state mutation. Admin-only. Matches
+  // the lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701:
+  // high-volume admin/system hygiene writes are not audit-relevant.
+  // Re-evaluate if compliance requires a cache-invalidation audit trail.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.access !== "ADMIN") {
