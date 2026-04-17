@@ -362,7 +362,16 @@ export async function auditPermissionRevoke(
  * Capture an authentication event (login, logout, failed login).
  */
 export async function auditAuthEvent(
-  action: "LOGIN" | "LOGOUT" | "LOGIN_FAILED",
+  action:
+    | "LOGIN"
+    | "LOGOUT"
+    | "LOGIN_FAILED"
+    | "MAGIC_LINK_REQUESTED"
+    | "TWO_FACTOR_ENABLED"
+    | "TWO_FACTOR_SETUP_REQUIRED"
+    | "TWO_FACTOR_CODES_REGENERATED"
+    | "TWO_FACTOR_VERIFIED"
+    | "SHARE_LINK_PASSWORD_VERIFY",
   userId: string | null,
   userEmail: string,
   metadata?: Record<string, unknown>
