@@ -93,7 +93,10 @@ export async function PATCH(request: NextRequest) {
     // Fetch current settings for audit diff (per D-13)
     // Include id for the update where clause
     const currentSettings = await db.registrationSettings.findFirst({
-      select: { id: true, ...Object.fromEntries(POLICY_FIELDS.map((f) => [f, true])) },
+      select: {
+        id: true,
+        ...Object.fromEntries(POLICY_FIELDS.map((f) => [f, true])),
+      },
     });
 
     if (!currentSettings) {

@@ -69,7 +69,9 @@ function makeRequest(userId: string, body: Record<string, unknown> = {}) {
 }
 
 function makeUserSession(userId = "user-1") {
-  return { user: { id: userId, access: "USER", email: "user@test.com" } } as any;
+  return {
+    user: { id: userId, access: "USER", email: "user@test.com" },
+  } as any;
 }
 
 describe("POST /api/users/[userId]/change-password", () => {
@@ -88,7 +90,10 @@ describe("POST /api/users/[userId]/change-password", () => {
     } as any);
     mockValidatePasswordPolicy.mockResolvedValue([
       { rule: "minLength", message: "Password must be at least 12 characters" },
-      { rule: "uppercase", message: "Password must contain at least one uppercase letter" },
+      {
+        rule: "uppercase",
+        message: "Password must contain at least one uppercase letter",
+      },
     ]);
 
     const res = await POST(makeRequest("user-1"), {
@@ -99,7 +104,10 @@ describe("POST /api/users/[userId]/change-password", () => {
     const body = await res.json();
     expect(body.errors).toBeDefined();
     expect(body.errors).toContain("Password must be at least 12 characters");
-    expect(mockValidatePasswordPolicy).toHaveBeenCalledWith("user-1", "NewPassword2!");
+    expect(mockValidatePasswordPolicy).toHaveBeenCalledWith(
+      "user-1",
+      "NewPassword2!"
+    );
   });
 
   it("calls updatePasswordHistory after successful password change when depth > 0", async () => {

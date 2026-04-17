@@ -23,14 +23,16 @@ const mockIsPasswordInHistory = vi.mocked(isPasswordInHistory);
 
 /** Helper: build a settings object with sensible defaults (all rules disabled). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeSettings(overrides: Partial<{
-  minPasswordLength: number;
-  requireUppercase: boolean;
-  requireLowercase: boolean;
-  requireNumbers: boolean;
-  requiredSpecialChars: string | null;
-  passwordHistoryDepth: number;
-}> = {}): any {
+function makeSettings(
+  overrides: Partial<{
+    minPasswordLength: number;
+    requireUppercase: boolean;
+    requireLowercase: boolean;
+    requireNumbers: boolean;
+    requiredSpecialChars: string | null;
+    passwordHistoryDepth: number;
+  }> = {}
+): any {
   return {
     minPasswordLength: 8,
     requireUppercase: false,
@@ -65,7 +67,9 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "short");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("minLength");
-    expect(violations[0].message).toBe("Password must be at least 12 characters");
+    expect(violations[0].message).toBe(
+      "Password must be at least 12 characters"
+    );
   });
 
   it("returns an uppercase violation when requireUppercase is true and password has no uppercase", async () => {
@@ -118,21 +122,21 @@ describe("validatePasswordPolicy", () => {
   });
 
   it("returns a history violation when password is in history (mock isPasswordInHistory returns true)", async () => {
-    mockFindFirst.mockResolvedValue(
-      makeSettings({ passwordHistoryDepth: 5 })
-    );
+    mockFindFirst.mockResolvedValue(makeSettings({ passwordHistoryDepth: 5 }));
     mockIsPasswordInHistory.mockResolvedValue(true);
     const violations = await validatePasswordPolicy("user-1", "OldPassword1");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("history");
     expect(violations[0].message).toContain("last 5 passwords");
-    expect(mockIsPasswordInHistory).toHaveBeenCalledWith("user-1", "OldPassword1", 5);
+    expect(mockIsPasswordInHistory).toHaveBeenCalledWith(
+      "user-1",
+      "OldPassword1",
+      5
+    );
   });
 
   it("skips history check when passwordHistoryDepth is 0", async () => {
-    mockFindFirst.mockResolvedValue(
-      makeSettings({ passwordHistoryDepth: 0 })
-    );
+    mockFindFirst.mockResolvedValue(makeSettings({ passwordHistoryDepth: 0 }));
     const violations = await validatePasswordPolicy("user-1", "AnyPassword1");
     expect(violations).toEqual([]);
     expect(mockIsPasswordInHistory).not.toHaveBeenCalled();

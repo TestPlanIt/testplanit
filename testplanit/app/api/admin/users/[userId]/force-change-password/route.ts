@@ -28,7 +28,10 @@ export async function POST(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  if (targetUser.authMethod !== "INTERNAL" && targetUser.authMethod !== "BOTH") {
+  if (
+    targetUser.authMethod !== "INTERNAL" &&
+    targetUser.authMethod !== "BOTH"
+  ) {
     return NextResponse.json(
       { error: "User does not have a password-based login" },
       { status: 400 }

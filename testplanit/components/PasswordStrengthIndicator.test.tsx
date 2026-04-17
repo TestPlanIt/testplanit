@@ -57,9 +57,7 @@ describe("PasswordStrengthIndicator", () => {
       requiredSpecialChars: "!@#",
     };
 
-    render(
-      <PasswordStrengthIndicator password="hello123!" policy={policy} />
-    );
+    render(<PasswordStrengthIndicator password="hello123!" policy={policy} />);
 
     // min length met (9 chars >= 8)
     const minLengthItem = screen.getByText(/8 characters/i);

@@ -149,7 +149,10 @@ export function ChangePasswordModal({
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                 />
-                <PasswordStrengthIndicator password={newPassword} policy={policy} />
+                <PasswordStrengthIndicator
+                  password={newPassword}
+                  policy={policy}
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4 text-right">

@@ -21,7 +21,13 @@ export async function POST(
   // Verify user exists
   const targetUser = await db.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, isDeleted: true, authMethod: true, password: true },
+    select: {
+      id: true,
+      email: true,
+      isDeleted: true,
+      authMethod: true,
+      password: true,
+    },
   });
 
   if (!targetUser || targetUser.isDeleted) {

@@ -202,9 +202,7 @@ test.describe("User Table Password Actions", () => {
     await expect(menu).toBeVisible({ timeout: 5000 });
 
     // Edit should be visible
-    await expect(
-      menu.getByRole("menuitem", { name: /edit/i })
-    ).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: /edit/i })).toBeVisible();
 
     // Password actions should NOT be visible
     await expect(

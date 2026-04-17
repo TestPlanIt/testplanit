@@ -148,7 +148,10 @@ export default function ForceChangePasswordPage() {
                 autoFocus
                 autoComplete="new-password"
               />
-              <PasswordStrengthIndicator password={newPassword} policy={policy} />
+              <PasswordStrengthIndicator
+                password={newPassword}
+                policy={policy}
+              />
             </div>
 
             <div className="space-y-2">

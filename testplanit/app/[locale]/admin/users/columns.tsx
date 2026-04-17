@@ -51,7 +51,7 @@ export const getColumns = (
   onEditUser?: (user: ExtendedUser) => void,
   onDeleteUser?: (user: ExtendedUser) => void,
   onForceChangePassword?: (user: ExtendedUser) => void,
-  onRevokePassword?: (user: ExtendedUser) => void,
+  onRevokePassword?: (user: ExtendedUser) => void
 ): ColumnDef<ExtendedUser>[] => [
   {
     id: "name",
@@ -246,20 +246,21 @@ export const getColumns = (
             <DropdownMenuItem onClick={() => onEditUser?.(row.original)}>
               {tCommon("actions.edit")}
             </DropdownMenuItem>
-            {row.original.authMethod !== "SSO" && row.original.id !== userPreferences.user.id && (
-              <>
-                <DropdownMenuItem
-                  onClick={() => onForceChangePassword?.(row.original)}
-                >
-                  {tAdmin("forcePasswordChange")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onRevokePassword?.(row.original)}
-                >
-                  {tAdmin("revokePassword")}
-                </DropdownMenuItem>
-              </>
-            )}
+            {row.original.authMethod !== "SSO" &&
+              row.original.id !== userPreferences.user.id && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => onForceChangePassword?.(row.original)}
+                  >
+                    {tAdmin("forcePasswordChange")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onRevokePassword?.(row.original)}
+                  >
+                    {tAdmin("revokePassword")}
+                  </DropdownMenuItem>
+                </>
+              )}
             <DropdownMenuSeparator />
             {row.original.id !== userPreferences.user.id ? (
               <DropdownMenuItem

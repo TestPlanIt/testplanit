@@ -160,7 +160,9 @@ export function PasswordStrengthIndicator({
                 <XCircle className="h-4 w-4 text-red-500 shrink-0" />
               )}
               <span
-                className={req.met ? "text-muted-foreground" : "text-foreground"}
+                className={
+                  req.met ? "text-muted-foreground" : "text-foreground"
+                }
               >
                 {req.label}
               </span>

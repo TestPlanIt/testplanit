@@ -363,7 +363,8 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           }
 
           // Expose mustChangePasswordReason from JWT in session for UI display
-          (session as any).mustChangePasswordReason = token.mustChangePasswordReason;
+          (session as any).mustChangePasswordReason =
+            token.mustChangePasswordReason;
         }
         return session;
       },
@@ -496,12 +497,19 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         if (account || trigger === "update" || !token.access) {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true, mustChangePassword: true },
+            select: {
+              access: true,
+              isApi: true,
+              twoFactorEnabled: true,
+              passwordChangedAt: true,
+              mustChangePassword: true,
+            },
           });
           if (user) {
             token.access = user.access;
             token.isApi = user.isApi;
-            token.passwordChangedAt = user.passwordChangedAt?.toISOString() ?? null;
+            token.passwordChangedAt =
+              user.passwordChangedAt?.toISOString() ?? null;
             token.mustChangePassword = user.mustChangePassword ?? false;
           }
 
@@ -681,7 +689,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Expose mustChangePasswordReason from JWT in session for UI display
-        (session as any).mustChangePasswordReason = token.mustChangePasswordReason;
+        (session as any).mustChangePasswordReason =
+          token.mustChangePasswordReason;
       }
       return session;
     },
@@ -799,12 +808,19 @@ export const authOptions: NextAuthOptions = {
       if (account || trigger === "update" || !token.access) {
         const user = await db.user.findUnique({
           where: { id: token.sub },
-          select: { access: true, isApi: true, twoFactorEnabled: true, passwordChangedAt: true, mustChangePassword: true },
+          select: {
+            access: true,
+            isApi: true,
+            twoFactorEnabled: true,
+            passwordChangedAt: true,
+            mustChangePassword: true,
+          },
         });
         if (user) {
           token.access = user.access;
           token.isApi = user.isApi;
-          token.passwordChangedAt = user.passwordChangedAt?.toISOString() ?? null;
+          token.passwordChangedAt =
+            user.passwordChangedAt?.toISOString() ?? null;
           token.mustChangePassword = user.mustChangePassword ?? false;
         }
 
@@ -1108,8 +1124,12 @@ function authorize(prisma: PrismaClient) {
     }
 
     // SECURITY-01: Reset lockout state on successful login
-    if (isCredentialUser && (maybeUser.failedLoginAttempts > 0 || maybeUser.lockedUntil)) {
-      const wasLocked = maybeUser.lockedUntil && maybeUser.lockedUntil > new Date();
+    if (
+      isCredentialUser &&
+      (maybeUser.failedLoginAttempts > 0 || maybeUser.lockedUntil)
+    ) {
+      const wasLocked =
+        maybeUser.lockedUntil && maybeUser.lockedUntil > new Date();
       await prisma.user.update({
         where: { id: maybeUser.id },
         data: { failedLoginAttempts: 0, lockedUntil: null },
@@ -1123,13 +1143,16 @@ function authorize(prisma: PrismaClient) {
 
     // POLICY-04: Check password expiration
     if (isCredentialUser && maybeUser.passwordChangedAt) {
-      const registrationSettingsForExpiry = await prisma.registrationSettings.findFirst({
-        select: { passwordExpirationDays: true },
-      });
-      const expirationDays = registrationSettingsForExpiry?.passwordExpirationDays ?? 0;
+      const registrationSettingsForExpiry =
+        await prisma.registrationSettings.findFirst({
+          select: { passwordExpirationDays: true },
+        });
+      const expirationDays =
+        registrationSettingsForExpiry?.passwordExpirationDays ?? 0;
       if (expirationDays > 0) {
         const expiresAt = new Date(
-          maybeUser.passwordChangedAt.getTime() + expirationDays * 24 * 60 * 60 * 1000
+          maybeUser.passwordChangedAt.getTime() +
+            expirationDays * 24 * 60 * 60 * 1000
         );
         if (new Date() > expiresAt) {
           // Password has expired — set mustChangePassword flag

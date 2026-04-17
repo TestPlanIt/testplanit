@@ -124,7 +124,9 @@ function UserList() {
         { method: "POST" }
       );
       if (response.ok) {
-        toast.success(tAdmin("forcePasswordChangeSuccess", { name: forcingUser.name }));
+        toast.success(
+          tAdmin("forcePasswordChangeSuccess", { name: forcingUser.name })
+        );
         setForcingUser(null);
       } else {
         toast.error(tAdmin("forcePasswordChangeFailed"));
@@ -145,7 +147,9 @@ function UserList() {
         { method: "POST" }
       );
       if (response.ok) {
-        toast.success(tAdmin("revokePasswordSuccess", { name: revokingUser.name }));
+        toast.success(
+          tAdmin("revokePasswordSuccess", { name: revokingUser.name })
+        );
         setRevokingUser(null);
       } else {
         toast.error(tAdmin("revokePasswordFailed"));
@@ -276,7 +280,7 @@ function UserList() {
         setEditingUser,
         setDeletingUser,
         setForcingUser,
-        setRevokingUser,
+        setRevokingUser
       ),
     [userPreferences, handleToggle, tCommon, tAdmin]
   );
@@ -424,7 +428,9 @@ function UserList() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{tAdmin("forcePasswordChangeDialogTitle")}</DialogTitle>
+            <DialogTitle>
+              {tAdmin("forcePasswordChangeDialogTitle")}
+            </DialogTitle>
             <DialogDescription>
               {tAdmin("forcePasswordChangeDialogDescription", {
                 name: forcingUser?.name ?? "",

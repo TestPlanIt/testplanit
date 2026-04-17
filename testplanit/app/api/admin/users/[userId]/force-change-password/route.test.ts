@@ -35,7 +35,9 @@ const mockCaptureAuditEvent = vi.mocked(captureAuditEvent);
 const mockInvalidateSessionUserCache = vi.mocked(invalidateSessionUserCache);
 
 function makeAdminSession() {
-  return { user: { id: "admin-1", access: "ADMIN", email: "admin@test.com" } } as any;
+  return {
+    user: { id: "admin-1", access: "ADMIN", email: "admin@test.com" },
+  } as any;
 }
 
 function makeRequest(userId = "user-1") {

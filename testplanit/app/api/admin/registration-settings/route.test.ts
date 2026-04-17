@@ -30,18 +30,17 @@ const mockCaptureAuditEvent = vi.mocked(captureAuditEvent);
 const mockCalculateDiff = vi.mocked(calculateDiff);
 
 function makeAdminSession() {
-  return { user: { id: "admin-1", access: "ADMIN", email: "admin@test.com" } } as any;
+  return {
+    user: { id: "admin-1", access: "ADMIN", email: "admin@test.com" },
+  } as any;
 }
 
 function makeRequest(body: Record<string, unknown>) {
-  return new NextRequest(
-    "http://localhost/api/admin/registration-settings",
-    {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }
-  );
+  return new NextRequest("http://localhost/api/admin/registration-settings", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 function makeCurrentSettings(overrides: Record<string, unknown> = {}) {
@@ -117,7 +116,9 @@ describe("PATCH /api/admin/registration-settings", () => {
   it("calls calculateDiff and fires PASSWORD_POLICY_CHANGED when values change", async () => {
     mockGetServerAuthSession.mockResolvedValue(makeAdminSession());
     const currentSettings = makeCurrentSettings({ minPasswordLength: 12 });
-    mockDb.registrationSettings.findFirst.mockResolvedValue(currentSettings as any);
+    mockDb.registrationSettings.findFirst.mockResolvedValue(
+      currentSettings as any
+    );
     mockDb.registrationSettings.update.mockResolvedValue({
       ...currentSettings,
       minPasswordLength: 16,
@@ -143,8 +144,12 @@ describe("PATCH /api/admin/registration-settings", () => {
   it("does NOT fire audit event when calculateDiff returns undefined (no changes)", async () => {
     mockGetServerAuthSession.mockResolvedValue(makeAdminSession());
     const currentSettings = makeCurrentSettings({ minPasswordLength: 16 });
-    mockDb.registrationSettings.findFirst.mockResolvedValue(currentSettings as any);
-    mockDb.registrationSettings.update.mockResolvedValue(currentSettings as any);
+    mockDb.registrationSettings.findFirst.mockResolvedValue(
+      currentSettings as any
+    );
+    mockDb.registrationSettings.update.mockResolvedValue(
+      currentSettings as any
+    );
     mockCalculateDiff.mockReturnValue(undefined);
 
     const res = await PATCH(makeRequest({ minPasswordLength: 16 }));

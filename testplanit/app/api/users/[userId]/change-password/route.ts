@@ -81,7 +81,11 @@ export async function POST(
 
     // Store in password history (per D-03)
     if (settings && settings.passwordHistoryDepth > 0) {
-      await updatePasswordHistory(userId, hashedNewPassword, settings.passwordHistoryDepth);
+      await updatePasswordHistory(
+        userId,
+        hashedNewPassword,
+        settings.passwordHistoryDepth
+      );
     }
 
     // Invalidate cached session data so the session callback fetches fresh

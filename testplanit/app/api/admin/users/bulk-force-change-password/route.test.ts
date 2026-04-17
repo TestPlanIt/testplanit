@@ -28,7 +28,9 @@ const mockDb = vi.mocked(db, true);
 const mockCaptureAuditEvent = vi.mocked(captureAuditEvent);
 
 function makeAdminSession() {
-  return { user: { id: "admin-1", access: "ADMIN", email: "admin@test.com" } } as any;
+  return {
+    user: { id: "admin-1", access: "ADMIN", email: "admin@test.com" },
+  } as any;
 }
 
 function makeRequest() {
