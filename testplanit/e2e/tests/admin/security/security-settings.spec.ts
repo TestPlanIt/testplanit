@@ -24,8 +24,10 @@ test.describe("Admin Security Settings", () => {
       timeout: 10000,
     });
 
-    // Verify password policy section
-    await expect(page.getByText("Password Policy")).toBeVisible();
+    // Verify password policy section (exact match to avoid matching description)
+    await expect(
+      page.getByText("Password Policy", { exact: true })
+    ).toBeVisible();
 
     // Verify all 5 sliders are present (by their labels)
     await expect(page.getByText("Minimum Password Length")).toBeVisible();
@@ -33,7 +35,9 @@ test.describe("Admin Security Settings", () => {
     await expect(page.getByText("Password Expiration")).toBeVisible();
 
     // Verify lockout policy section
-    await expect(page.getByText("Lockout Policy")).toBeVisible();
+    await expect(
+      page.getByText("Lockout Policy", { exact: true })
+    ).toBeVisible();
     await expect(page.getByText("Lockout Threshold")).toBeVisible();
     await expect(page.getByText("Lockout Duration")).toBeVisible();
 
@@ -50,20 +54,17 @@ test.describe("Admin Security Settings", () => {
     await page.goto("/en-US/admin/security");
     await page.waitForLoadState("networkidle");
 
-    // Find the min password length slider and its displayed value
+    // Find the min password length slider
     const minLengthSlider = page.locator("#minPasswordLength");
     await expect(minLengthSlider).toBeVisible({ timeout: 10000 });
 
-    // Read the initial value displayed next to the label
-    const minLengthSection = page
-      .locator("div")
-      .filter({ hasText: /Minimum Password Length/ })
-      .first();
-    const initialValue = await minLengthSection
+    // Read the initial value — scope to the label row to get only this slider's value
+    const minLengthLabel = page.getByText("Minimum Password Length");
+    const minLengthRow = minLengthLabel.locator("..");
+    const initialValue = await minLengthRow
       .locator("span.tabular-nums")
       .textContent();
 
-    // Click the slider track to change the value
     // Sliders respond to keyboard: focus and press ArrowRight to increment
     await minLengthSlider.locator('[role="slider"]').focus();
     await page.keyboard.press("ArrowRight");
@@ -71,7 +72,7 @@ test.describe("Admin Security Settings", () => {
     await page.keyboard.press("ArrowRight");
 
     // Value should have changed
-    const newValue = await minLengthSection
+    const newValue = await minLengthRow
       .locator("span.tabular-nums")
       .textContent();
     expect(Number(newValue)).toBeGreaterThan(Number(initialValue));
@@ -80,7 +81,9 @@ test.describe("Admin Security Settings", () => {
     await page.getByRole("button", { name: "Save" }).click();
 
     // Wait for success toast
-    await expect(page.locator('[data-sonner-toast][data-type="success"]')).toBeVisible({
+    await expect(
+      page.locator('[data-sonner-toast][data-type="success"]')
+    ).toBeVisible({
       timeout: 10000,
     });
 
@@ -88,10 +91,9 @@ test.describe("Admin Security Settings", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    const persistedValue = await page
-      .locator("div")
-      .filter({ hasText: /Minimum Password Length/ })
-      .first()
+    const reloadedLabel = page.getByText("Minimum Password Length");
+    const reloadedRow = reloadedLabel.locator("..");
+    const persistedValue = await reloadedRow
       .locator("span.tabular-nums")
       .textContent();
 
@@ -107,7 +109,9 @@ test.describe("Admin Security Settings", () => {
       await page.keyboard.press("ArrowLeft");
     }
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.locator('[data-sonner-toast][data-type="success"]')).toBeVisible({
+    await expect(
+      page.locator('[data-sonner-toast][data-type="success"]')
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -117,9 +121,7 @@ test.describe("Admin Security Settings", () => {
     await page.waitForLoadState("networkidle");
 
     // Click the Force All Users button
-    await page
-      .getByRole("button", { name: /Force All Users/i })
-      .click();
+    await page.getByRole("button", { name: /Force All Users/i }).click();
 
     // Verify dialog opens
     const dialog = page.locator('[role="dialog"]');
@@ -127,7 +129,6 @@ test.describe("Admin Security Settings", () => {
 
     // Dialog should show a count of affected users
     const dialogText = await dialog.textContent();
-    // The dialog description includes a count like "This will affect X user(s)"
     expect(dialogText).toMatch(/\d+/);
 
     // Close without confirming
@@ -158,7 +159,11 @@ test.describe("User Table Password Actions", () => {
     await expect(userRow).toBeVisible({ timeout: 10000 });
 
     // Click the three-dot menu button
-    await userRow.locator("button").filter({ has: page.locator("svg") }).last().click();
+    await userRow
+      .locator("button")
+      .filter({ has: page.locator("svg") })
+      .last()
+      .click();
 
     // Verify password actions are visible
     const menu = page.locator('[role="menu"]');
@@ -180,11 +185,10 @@ test.describe("User Table Password Actions", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    // The admin user is "Admin" — find their row
-    // The seeded admin email is admin@testplanit.com
+    // The seeded admin email is admin@example.com
     const adminRow = page
       .locator("tr")
-      .filter({ hasText: "admin@testplanit.com" });
+      .filter({ hasText: "admin@example.com" });
     await expect(adminRow).toBeVisible({ timeout: 10000 });
 
     // Click three-dot menu
