@@ -1131,6 +1131,196 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
       },
       // =============================================================================
+      // Phase 62: Integrations, Prompt Configurations, Test Run Cases
+      // =============================================================================
+      integration: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            auditCreate("Integration", result).catch((error: any) => {
+              console.error(`Failed to audit integration create:`, error);
+            });
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.integration.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            auditUpdate("Integration", oldEntity, result).catch((error: any) => {
+              console.error(`Failed to audit integration update:`, error);
+            });
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.integration.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            auditDelete("Integration", oldEntity).catch((error: any) => {
+              console.error(`Failed to audit integration delete:`, error);
+            });
+          }
+          return result;
+        },
+      },
+      projectIntegration: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            auditCreate("ProjectIntegration", result, result.projectId).catch(
+              (error: any) => {
+                console.error(`Failed to audit project integration create:`, error);
+              }
+            );
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.projectIntegration.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            auditUpdate("ProjectIntegration", oldEntity, result, result.projectId).catch(
+              (error: any) => {
+                console.error(`Failed to audit project integration update:`, error);
+              }
+            );
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.projectIntegration.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            auditDelete("ProjectIntegration", oldEntity, oldEntity.projectId).catch(
+              (error: any) => {
+                console.error(`Failed to audit project integration delete:`, error);
+              }
+            );
+          }
+          return result;
+        },
+      },
+      promptConfig: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            auditCreate("PromptConfig", result).catch((error: any) => {
+              console.error(`Failed to audit prompt config create:`, error);
+            });
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfig.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            auditUpdate("PromptConfig", oldEntity, result).catch(
+              (error: any) => {
+                console.error(`Failed to audit prompt config update:`, error);
+              }
+            );
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfig.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            auditDelete("PromptConfig", oldEntity).catch((error: any) => {
+              console.error(`Failed to audit prompt config delete:`, error);
+            });
+          }
+          return result;
+        },
+      },
+      promptConfigPrompt: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            auditCreate("PromptConfigPrompt", result).catch((error: any) => {
+              console.error(`Failed to audit prompt config prompt create:`, error);
+            });
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfigPrompt.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            auditUpdate("PromptConfigPrompt", oldEntity, result).catch(
+              (error: any) => {
+                console.error(`Failed to audit prompt config prompt update:`, error);
+              }
+            );
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfigPrompt.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            auditDelete("PromptConfigPrompt", oldEntity).catch((error: any) => {
+              console.error(`Failed to audit prompt config prompt delete:`, error);
+            });
+          }
+          return result;
+        },
+      },
+      testRunCases: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            auditCreate("TestRunCases", result).catch((error: any) => {
+              console.error(`Failed to audit test run case create:`, error);
+            });
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.testRunCases.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            auditUpdate("TestRunCases", oldEntity, result).catch(
+              (error: any) => {
+                console.error(`Failed to audit test run case update:`, error);
+              }
+            );
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.testRunCases.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            auditDelete("TestRunCases", oldEntity).catch((error: any) => {
+              console.error(`Failed to audit test run case delete:`, error);
+            });
+          }
+          return result;
+        },
+      },
+      // =============================================================================
       // API Tokens - Security audit logging
       // =============================================================================
       apiToken: {

@@ -79,6 +79,7 @@ const SENSITIVE_FIELDS = new Set([
   "private_key",
   "token",
   "emailVerifToken",
+  "credentials",
 ]);
 
 /**
