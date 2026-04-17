@@ -12,6 +12,7 @@ import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
+  type Session,
 } from "next-auth";
 import AppleProvider from "next-auth/providers/apple";
 import AzureADProvider from "next-auth/providers/azure-ad";
@@ -355,9 +356,9 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             ) {
               // Password was changed after this JWT was issued — invalidate session.
               // Return empty session to force re-authentication.
-              // @ts-expect-error — NextAuth session callback typing doesn't allow null,
-              // but returning an empty object effectively invalidates the session
-              return {};
+              // Cast required: NextAuth types don't allow empty session, but
+              // returning {} effectively invalidates the session client-side.
+              return {} as Session;
             }
           }
 
@@ -673,9 +674,9 @@ export const authOptions: NextAuthOptions = {
           ) {
             // Password was changed after this JWT was issued — invalidate session.
             // Return empty session to force re-authentication.
-            // @ts-expect-error — NextAuth session callback typing doesn't allow null,
-            // but returning an empty object effectively invalidates the session
-            return {};
+            // Cast required: NextAuth types don't allow empty session, but
+            // returning {} effectively invalidates the session client-side.
+            return {} as Session;
           }
         }
 
