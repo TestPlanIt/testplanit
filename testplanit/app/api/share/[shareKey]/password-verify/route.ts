@@ -6,6 +6,11 @@ import {
   clearPasswordAttempts,
   recordPasswordAttempt,
 } from "~/lib/rate-limit";
+import { auditAuthEvent } from "~/lib/services/auditLog";
+
+// NOTE: This is the only Phase 62 auth callsite that audits failures
+// (D-05). Failed password attempts are the brute-force detection
+// signal; DO NOT "optimize" the failure audit out.
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +117,15 @@ export async function POST(
       // Get updated rate limit info
       const updatedRateLimit = checkPasswordAttemptLimit(rateLimitId);
 
+      // Audit failed share-link password attempt (brute-force signal per
+      // D-05). The attempted password value is NOT logged — only the
+      // mismatch signal.
+      auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
+        shareKey,
+        success: false,
+        reason: "password-mismatch",
+      }).catch(console.error);
+
       return NextResponse.json(
         {
           error: "Invalid password",
@@ -123,6 +137,12 @@ export async function POST(
 
     // Password is valid, clear rate limit
     clearPasswordAttempts(rateLimitId);
+
+    // Audit successful share-link password verification.
+    auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
+      shareKey,
+      success: true,
+    }).catch(console.error);
 
     // Return success (client will store this in sessionStorage)
     return NextResponse.json({

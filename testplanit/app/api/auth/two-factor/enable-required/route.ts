@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
   decryptSecret,
   generateBackupCodes,
@@ -102,6 +103,13 @@ export async function POST(request: NextRequest) {
         twoFactorBackupCodes: JSON.stringify(hashedCodes),
       },
     });
+
+    // Audit 2FA enablement via the forced-setup flow. The backup-code
+    // content is NOT logged — only that the state change happened.
+    auditAuthEvent("TWO_FACTOR_ENABLED", tokenData.userId, tokenData.email ?? "", {
+      adminForced: true,
+      triggeredByAdminId: "unknown",
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,
