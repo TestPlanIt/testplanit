@@ -4,6 +4,7 @@ import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
 // Helper to check admin authentication (session or API token)
@@ -286,14 +287,54 @@ export async function POST(
     switch (action) {
       case "retry":
         await job.retry();
+        // Audit the admin job-retry operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.job.${jobId}.retry`,
+          null,
+          {
+            queueName,
+            jobId,
+            action: "retry",
+            triggeredBy: auth.userId ?? "unknown",
+          }
+        ).catch((error) => {
+          console.error("Failed to audit job operator action:", error);
+        });
         return NextResponse.json({ success: true, message: "Job retried" });
 
       case "promote":
         await job.promote();
+        // Audit the admin job-promote operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.job.${jobId}.promote`,
+          null,
+          {
+            queueName,
+            jobId,
+            action: "promote",
+            triggeredBy: auth.userId ?? "unknown",
+          }
+        ).catch((error) => {
+          console.error("Failed to audit job operator action:", error);
+        });
         return NextResponse.json({ success: true, message: "Job promoted" });
 
       case "remove": {
         const result = await removeJob(queue, job, force);
+        // Audit the admin job-remove operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.job.${jobId}.remove`,
+          null,
+          {
+            queueName,
+            jobId,
+            action: "remove",
+            triggeredBy: auth.userId ?? "unknown",
+            force,
+          }
+        ).catch((error) => {
+          console.error("Failed to audit job operator action:", error);
+        });
         // Handle partial success (repeatable job schedule removed but instance locked)
         if (typeof result === "object" && result.partialSuccess) {
           return NextResponse.json({
@@ -349,6 +390,21 @@ export async function DELETE(
     const force = searchParams.get("force") === "true";
 
     const result = await removeJob(queue, job, force);
+
+    // Audit the admin job-delete operator action.
+    auditSystemConfigChange(
+      `queue.${queueName}.job.${jobId}.delete`,
+      null,
+      {
+        queueName,
+        jobId,
+        action: "delete",
+        triggeredBy: auth.userId ?? "unknown",
+        force,
+      }
+    ).catch((error) => {
+      console.error("Failed to audit job delete:", error);
+    });
 
     // Handle partial success (repeatable job schedule removed but instance locked)
     if (typeof result === "object" && result.partialSuccess) {

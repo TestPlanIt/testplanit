@@ -3,6 +3,7 @@ import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
 // Helper to check admin authentication (session or API token)
@@ -181,10 +182,26 @@ export async function POST(
     switch (action) {
       case "pause":
         await queue.pause();
+        // Audit the admin queue operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.pause`,
+          null,
+          { queueName, action: "pause", triggeredBy: auth.userId ?? "unknown" }
+        ).catch((error) => {
+          console.error("Failed to audit queue operator action:", error);
+        });
         return NextResponse.json({ success: true, message: "Queue paused" });
 
       case "resume":
         await queue.resume();
+        // Audit the admin queue operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.resume`,
+          null,
+          { queueName, action: "resume", triggeredBy: auth.userId ?? "unknown" }
+        ).catch((error) => {
+          console.error("Failed to audit queue operator action:", error);
+        });
         return NextResponse.json({ success: true, message: "Queue resumed" });
 
       case "clean":
@@ -205,6 +222,23 @@ export async function POST(
           "failed"
         );
 
+        // Audit the admin queue clean operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.clean`,
+          null,
+          {
+            queueName,
+            action: "clean",
+            triggeredBy: auth.userId ?? "unknown",
+            cleaned: {
+              completed: completedCleaned.length,
+              failed: failedCleaned.length,
+            },
+          }
+        ).catch((error) => {
+          console.error("Failed to audit queue clean action:", error);
+        });
+
         return NextResponse.json({
           success: true,
           message: "Queue cleaned",
@@ -218,6 +252,14 @@ export async function POST(
       case "drain":
         // Remove all waiting jobs
         await queue.drain();
+        // Audit the admin queue drain operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.drain`,
+          null,
+          { queueName, action: "drain", triggeredBy: auth.userId ?? "unknown" }
+        ).catch((error) => {
+          console.error("Failed to audit queue drain:", error);
+        });
         return NextResponse.json({
           success: true,
           message: "Queue drained (all waiting jobs removed)",
@@ -226,6 +268,18 @@ export async function POST(
       case "obliterate":
         // DANGEROUS: Completely wipe the queue
         await queue.obliterate({ force: true });
+        // Audit the admin queue obliterate operator action.
+        auditSystemConfigChange(
+          `queue.${queueName}.obliterate`,
+          null,
+          {
+            queueName,
+            action: "obliterate",
+            triggeredBy: auth.userId ?? "unknown",
+          }
+        ).catch((error) => {
+          console.error("Failed to audit queue obliterate:", error);
+        });
         return NextResponse.json({
           success: true,
           message: "Queue obliterated (all data removed)",
@@ -276,6 +330,21 @@ export async function DELETE(
     }
 
     const result = await removeJob(queue, job, force);
+
+    // Audit the admin job-delete operator action (queue-scoped DELETE).
+    auditSystemConfigChange(
+      `queue.${queueName}.job.${jobId}.delete`,
+      null,
+      {
+        queueName,
+        jobId,
+        action: "delete",
+        triggeredBy: auth.userId ?? "unknown",
+        force,
+      }
+    ).catch((error) => {
+      console.error("Failed to audit queue job delete:", error);
+    });
 
     // Handle partial success (repeatable job schedule removed but instance locked)
     if (typeof result === "object" && result.partialSuccess) {
