@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authOptions } from "~/server/auth";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   dismissPair,
   linkCases,
@@ -55,6 +56,26 @@ export async function POST(request: Request) {
           data.victimId,
           session.user.id
         );
+        // Audit the duplicate-scan resolution DECISION (D-12). The per-case
+        // repositoryCases writes are already audited via the extension hook;
+        // this row captures the high-level resolution intent so reviewers can
+        // reconstruct why the underlying rows changed.
+        captureAuditEvent({
+          action: "DUPLICATE_RESOLVED",
+          entityType: "DuplicateScanResult",
+          entityId: `${data.survivorId}:${data.victimId}`,
+          projectId: data.projectId,
+          userId: session.user.id,
+          userEmail: session.user.email ?? undefined,
+          metadata: {
+            resolution: "merge",
+            survivorId: data.survivorId,
+            victimId: data.victimId,
+            targetCaseIds: [data.survivorId, data.victimId],
+          },
+        }).catch((error) => {
+          console.error("Failed to audit duplicate-scan resolution:", error);
+        });
         return NextResponse.json({ action: "merge", ...result });
       }
       case "link": {
@@ -64,6 +85,23 @@ export async function POST(request: Request) {
           session.user.id,
           data.projectId
         );
+        // Audit the duplicate-scan resolution DECISION (D-12). See merge branch.
+        captureAuditEvent({
+          action: "DUPLICATE_RESOLVED",
+          entityType: "DuplicateScanResult",
+          entityId: `${data.caseAId}:${data.caseBId}`,
+          projectId: data.projectId,
+          userId: session.user.id,
+          userEmail: session.user.email ?? undefined,
+          metadata: {
+            resolution: "link",
+            caseAId: data.caseAId,
+            caseBId: data.caseBId,
+            targetCaseIds: [data.caseAId, data.caseBId],
+          },
+        }).catch((error) => {
+          console.error("Failed to audit duplicate-scan resolution:", error);
+        });
         return NextResponse.json({ action: "link", ...result });
       }
       case "dismiss": {
@@ -72,6 +110,25 @@ export async function POST(request: Request) {
           data.caseBId,
           data.projectId
         );
+        // Audit the duplicate-scan resolution DECISION (D-12). "dismiss" is
+        // the ignore-this-pair path -- no downstream case writes happen, so
+        // this audit row is the only forensic trail for the decision.
+        captureAuditEvent({
+          action: "DUPLICATE_RESOLVED",
+          entityType: "DuplicateScanResult",
+          entityId: `${data.caseAId}:${data.caseBId}`,
+          projectId: data.projectId,
+          userId: session.user.id,
+          userEmail: session.user.email ?? undefined,
+          metadata: {
+            resolution: "dismiss",
+            caseAId: data.caseAId,
+            caseBId: data.caseBId,
+            targetCaseIds: [data.caseAId, data.caseBId],
+          },
+        }).catch((error) => {
+          console.error("Failed to audit duplicate-scan resolution:", error);
+        });
         return NextResponse.json({ action: "dismiss", ...result });
       }
     }
