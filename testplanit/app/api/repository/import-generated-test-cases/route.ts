@@ -560,15 +560,22 @@ export async function POST(request: NextRequest) {
 
     // Audit the bulk import
     if (importedCases.length > 0) {
-      auditBulkCreate("RepositoryCases", importedCases.length, projectId, {
-        source: "AI Generated Test Cases",
-        templateId,
-        folderId,
-        sourceType: sourceInfo?.type,
-        sourceKey: sourceInfo?.issueKey || sourceInfo?.documentTitle,
-      }).catch((error) =>
-        console.error("[AuditLog] Failed to audit AI test case import:", error)
-      );
+      try {
+        await auditBulkCreate(
+          "RepositoryCases",
+          importedCases.length,
+          projectId,
+          {
+            source: "AI Generated Test Cases",
+            templateId,
+            folderId,
+            sourceType: sourceInfo?.type,
+            sourceKey: sourceInfo?.issueKey || sourceInfo?.documentTitle,
+          }
+        );
+      } catch (error) {
+        console.error("[AuditLog] Failed to audit AI test case import:", error);
+      }
     }
 
     return NextResponse.json({
