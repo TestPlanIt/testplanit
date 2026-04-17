@@ -52,6 +52,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
+            auditCreate("RepositoryCases", result, result.projectId).catch(
+              (error: any) => {
+                console.error(`Failed to audit repository case create:`, error);
+              }
+            );
           }
           return result;
         },
