@@ -25,7 +25,7 @@ import { captureAuditEvent, calculateDiff } from "~/lib/services/auditLog";
 import { PATCH } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
-const mockDb = vi.mocked(db);
+const mockDb = vi.mocked(db, true);
 const mockCaptureAuditEvent = vi.mocked(captureAuditEvent);
 const mockCalculateDiff = vi.mocked(calculateDiff);
 

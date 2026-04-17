@@ -49,7 +49,7 @@ import { updatePasswordHistory } from "~/lib/password-history";
 import { POST } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
-const mockDb = vi.mocked(db);
+const mockDb = vi.mocked(db, true);
 const mockValidatePasswordPolicy = vi.mocked(validatePasswordPolicy);
 const mockUpdatePasswordHistory = vi.mocked(updatePasswordHistory);
 

@@ -24,7 +24,7 @@ import { captureAuditEvent } from "~/lib/services/auditLog";
 import { POST } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
-const mockDb = vi.mocked(db);
+const mockDb = vi.mocked(db, true);
 const mockCaptureAuditEvent = vi.mocked(captureAuditEvent);
 
 function makeAdminSession() {

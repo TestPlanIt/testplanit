@@ -30,7 +30,7 @@ import { invalidateSessionUserCache } from "~/lib/session-cache";
 import { POST } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
-const mockDb = vi.mocked(db);
+const mockDb = vi.mocked(db, true);
 const mockCaptureAuditEvent = vi.mocked(captureAuditEvent);
 const mockInvalidateSessionUserCache = vi.mocked(invalidateSessionUserCache);
 
