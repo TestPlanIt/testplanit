@@ -249,13 +249,21 @@ async function enumeratePrismaHooks(
  * Classify an API route or server-action file's evidence into a default
  * coverage status. The hook-vs-explicit refinement is Plan 02's job; this
  * helper applies the mechanical default.
+ *
+ * `hasRawWrite` is an INDEPENDENT audit-emission signal: a file that directly
+ * calls `prisma.auditLog.create(...)` or `$executeRaw` is itself emitting
+ * audits, just not via the sanctioned helper. The `raw-write` status exists
+ * precisely to flag "emits audits, but not via the sanctioned helper" cases,
+ * so it fires whenever `hasRawWrite` is true — regardless of whether the file
+ * ALSO calls an audit helper.
  */
 function classifyFileEvidence(
   hasExplicitAuditCall: boolean,
   hasRawWrite: boolean
 ): CoverageStatus {
-  if (hasRawWrite && hasExplicitAuditCall) return "raw-write";
+  if (hasExplicitAuditCall && hasRawWrite) return "raw-write";
   if (hasExplicitAuditCall) return "audited (explicit)";
+  if (hasRawWrite) return "raw-write";
   return "missing";
 }
 
