@@ -19,11 +19,9 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 
 export default function ForceChangePasswordPage() {
-  const router = useRouter();
   const { data: session, update: updateSession } = useSession();
   const t = useTranslations();
 
@@ -82,17 +80,18 @@ export default function ForceChangePasswordPage() {
         } else {
           setErrors([data.error || t("auth.forceChangePassword.genericError")]);
         }
+        setIsLoading(false);
         return;
       }
 
       // Clear the mustChangePassword flag in JWT (per D-07)
       await updateSession({ mustChangePasswordCleared: true });
 
-      // Redirect to app home — no forced re-login
-      router.push("/");
+      // Hard redirect — window.location.href forces full page load,
+      // ensuring middleware re-reads the updated JWT
+      window.location.href = "/";
     } catch {
       setErrors([t("auth.forceChangePassword.genericError")]);
-    } finally {
       setIsLoading(false);
     }
   }

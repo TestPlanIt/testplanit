@@ -246,7 +246,7 @@ export const getColumns = (
             <DropdownMenuItem onClick={() => onEditUser?.(row.original)}>
               {tCommon("actions.edit")}
             </DropdownMenuItem>
-            {row.original.authMethod !== "SSO" && (
+            {row.original.authMethod !== "SSO" && row.original.id !== userPreferences.user.id && (
               <>
                 <DropdownMenuItem
                   onClick={() => onForceChangePassword?.(row.original)}
