@@ -13,6 +13,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
     "format:check": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
+    "precommit": "pnpm lint && pnpm format:check",
     "check:modal-pattern": "bash scripts/check-modal-pattern.sh",
     "start": "next start",
     "test": "vitest --config vitest.config.mts",
