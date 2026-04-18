@@ -11,11 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  PasswordStrengthIndicator,
+  type PasswordPolicy,
+} from "@/components/PasswordStrengthIndicator";
 import { Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface ChangePasswordModalProps {
@@ -36,6 +40,19 @@ export function ChangePasswordModal({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    fetch(`/api/users/${session.user.id}/password-policy`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.policy) setPolicy(data.policy);
+      })
+      .catch(() => {
+        // Non-fatal — modal still works without policy display
+      });
+  }, [session?.user?.id]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -46,7 +63,8 @@ export function ChangePasswordModal({
       return;
     }
 
-    if (newPassword.length < 4) {
+    const minLen = policy?.minPasswordLength ?? 8;
+    if (newPassword.length < minLen) {
       setError(t("validation.newPasswordTooShort"));
       return;
     }
@@ -123,14 +141,19 @@ export function ChangePasswordModal({
                   <Asterisk className="w-3 h-3 text-destructive shrink-0" />
                 </sup>
               </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                className="col-span-3"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-              />
+              <div className="col-span-3">
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+                <PasswordStrengthIndicator
+                  password={newPassword}
+                  policy={policy}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4 text-right">
               <Label htmlFor="confirmPassword" className="flex justify-end">

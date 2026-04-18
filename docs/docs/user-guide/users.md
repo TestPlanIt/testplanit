@@ -28,7 +28,7 @@ The main view displays a table of all registered users (excluding those marked a
   - **API Access**: (Hidden by default) A switch indicating if the user can access the API.
   - **Created At**: Date the user account was created.
   - **Created By**: (Hidden by default) The user who created this account (or "Self-Registration").
-  - **Actions**: Buttons to **Edit** or **Delete** the user. (Cannot delete your own account).
+  - **Actions**: A three-dot menu with **Edit**, **Force Password Change**, **Revoke Password**, and **Delete** options. Password actions are only shown for internal/both auth method users and are hidden for your own account. Delete is also hidden for your own account.
 
 ## Adding a New User
 
@@ -49,7 +49,7 @@ The main view displays a table of all registered users (excluding those marked a
 ## Editing an Existing User
 
 1. Locate the user you wish to modify in the table.
-2. Click the **Edit** (pencil) icon in the **Actions** column for that user.
+2. Click the three-dot menu in the **Actions** column and select **Edit**.
 3. A modal dialog will appear. You can modify:
     - Name
     - Email
@@ -71,6 +71,6 @@ You cannot delete your own user account.
 :::
 
 1. Locate the user you wish to delete in the table.
-2. Click the **Delete** (trash can) icon in the **Actions** column.
+2. Click the three-dot menu in the **Actions** column and select **Delete**.
 3. A confirmation dialog will appear, warning that the action cannot be undone.
 4. Click **Confirm Delete**.

@@ -182,6 +182,18 @@ const messages = {
       overtime: "{time} overtime",
     },
   },
+  passwordStrength: {
+    veryWeak: "Very Weak",
+    weak: "Weak",
+    fair: "Fair",
+    good: "Good",
+    strong: "Strong",
+    minLength: "At least {count} characters",
+    uppercase: "At least one uppercase letter",
+    lowercase: "At least one lowercase letter",
+    numbers: "At least one number",
+    specialChars: "Special character from: {chars}",
+  },
 };
 
 vi.mock("next-intl", () => {

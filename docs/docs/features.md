@@ -120,6 +120,10 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### Security & Compliance
 
+- **Password policy** - Configure minimum length, character requirements, history depth, and expiration
+- **Account lockout** - Protect against brute-force attacks with configurable threshold and duration
+- **Password enforcement** - Force password changes (individual or bulk) and revoke passwords
+- **Password strength indicator** - Real-time zxcvbn-powered feedback on signup and password change forms
 - **Audit logs** - Track all changes for compliance and security review
 - **Two-factor authentication** - Add an extra layer of security for user accounts
 - **Data encryption** - Secure data at rest and in transit

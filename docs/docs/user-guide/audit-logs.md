@@ -67,6 +67,16 @@ Only users with administrative privileges can access the audit log viewer.
 | `API_KEY_REVOKED` | An API token was revoked by an administrator |
 | `API_KEY_REGENERATED` | An API token was regenerated |
 
+### Security Administration
+
+| Action | Description |
+|--------|-------------|
+| `PASSWORD_POLICY_CHANGED` | Password policy or lockout settings were modified |
+| `FORCE_PASSWORD_CHANGE` | User(s) required to change password on next login (individual or bulk) |
+| `PASSWORD_REVOKED` | A user's password was removed by an administrator |
+| `ACCOUNT_LOCKED` | Account locked after exceeding failed login threshold |
+| `ACCOUNT_UNLOCKED` | Account unlocked after lockout duration expired |
+
 ### System Configuration
 
 | Action | Description |

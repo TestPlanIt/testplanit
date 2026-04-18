@@ -1,6 +1,6 @@
-import { waitFor } from "@testing-library/react";
+import { cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 
 // Mock document.elementFromPoint which is used by input-otp library but not implemented in jsdom
@@ -85,6 +85,12 @@ describe("TwoFactorVerifyPage", () => {
       json: () => Promise.resolve({}),
     });
     global.fetch = mockFetch as any;
+  });
+
+  afterEach(() => {
+    // input-otp sets internal timers that fire after the jsdom environment
+    // tears down, causing "window is not defined" errors in parallel runs.
+    cleanup();
   });
 
   it("renders OTP input slots for 6-digit code entry", () => {

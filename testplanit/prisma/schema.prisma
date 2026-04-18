@@ -283,6 +283,11 @@ enum AuditAction {
   SHARE_LINK_CREATED
   SHARE_LINK_ACCESSED
   SHARE_LINK_REVOKED
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  PASSWORD_POLICY_CHANGED
+  FORCE_PASSWORD_CHANGE
+  PASSWORD_REVOKED
 }
 
 model AppConfig {
@@ -379,9 +384,24 @@ model User {
   twoFactorEnabled        Boolean                 @default(false)
   twoFactorSecret         String?
   twoFactorBackupCodes    String?
+  failedLoginAttempts     Int                     @default(0)
+  lockedUntil             DateTime?               @db.Timestamptz(6)
+  passwordChangedAt       DateTime?               @db.Timestamptz(6)
+  mustChangePassword      Boolean                 @default(false)
+  passwordHistory         PasswordHistory[]
 
   @@index([isActive, isDeleted])
   @@index([access])
+}
+
+model PasswordHistory {
+  id        String   @id() @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hash      String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
 }
 
 model UserPreferences {
@@ -2039,6 +2059,15 @@ model RegistrationSettings {
   force2FANonSSO           Boolean  @default(false)
   force2FAAllLogins        Boolean  @default(false)
   requireEmailVerification Boolean  @default(true)
+  minPasswordLength        Int      @default(12)
+  requireUppercase         Boolean  @default(false)
+  requireLowercase         Boolean  @default(false)
+  requireNumbers           Boolean  @default(false)
+  requiredSpecialChars     String?
+  passwordHistoryDepth     Int      @default(0)
+  passwordExpirationDays   Int      @default(0)
+  lockoutThreshold         Int      @default(5)
+  lockoutDurationMinutes   Int      @default(15)
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt()
 }
