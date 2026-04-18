@@ -1,3 +1,9 @@
+## [0.22.0](https://github.com/TestPlanIt/testplanit/compare/v0.21.18...v0.22.0) (2026-04-18)
+
+### Features
+
+* **security:** Password Policy & Security Hardening ([#218](https://github.com/TestPlanIt/testplanit/issues/218)) ([ebbb3bf](https://github.com/TestPlanIt/testplanit/commit/ebbb3bf1ccd3b2f1b53333804690c589fb1da695))
+
 ## [0.21.18](https://github.com/TestPlanIt/testplanit/compare/v0.21.17...v0.21.18) (2026-04-16)
 
 ### Enhancements
