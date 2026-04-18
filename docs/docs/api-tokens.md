@@ -306,6 +306,9 @@ All API token operations are recorded in the [audit log](/docs/user-guide/audit-
 | `API_KEY_CREATED` | Logged when a user creates a new API token |
 | `API_KEY_DELETED` | Logged when a user deletes their own token |
 | `API_KEY_REVOKED` | Logged when an administrator revokes a token |
+| `API_KEY_REGENERATED` | Logged when a token is regenerated |
+| `BULK_UPDATE` | Logged when tokens are updated in bulk (e.g., administrative revocation sweeps); forensic metadata includes id, tokenPrefix, user, and name for each affected token |
+| `BULK_DELETE` | Logged when tokens are deleted in bulk; forensic fields are captured before the delete runs so revoked tokens remain investigable |
 
 Each audit entry includes:
 

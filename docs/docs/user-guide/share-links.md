@@ -337,7 +337,11 @@ Triggered when `notifyOnView` is enabled and link is accessed.
 - **Expiration**: Enforced on every access
 - **Revocation**: Checked on every access
 - **Data Filtering**: Emails and internal IDs removed for public shares
-- **Audit Logging**: Every access recorded with IP and timestamp
+- **Audit Logging**: Every access recorded with IP and timestamp via the following [audit log](/docs/user-guide/audit-logs) actions:
+  - `SHARE_LINK_CREATED` — a share link was generated
+  - `SHARE_LINK_ACCESSED` — a share link was opened
+  - `SHARE_LINK_PASSWORD_VERIFY` — a password attempt was made on a protected link; audited on **both** success and failure so repeated failures are visible as a brute-force signal
+  - `SHARE_LINK_REVOKED` — a share link was revoked
 
 ### Auth Bypass
 

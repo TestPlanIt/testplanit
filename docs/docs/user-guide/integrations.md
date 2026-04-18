@@ -423,17 +423,17 @@ Regular health checks verify:
 
 ### Audit Logging
 
-All integration actions are logged:
+Integration and project-integration records are tracked in the [audit log](/docs/user-guide/audit-logs) via the standard CRUD actions:
 
-```typescript
-{
-  action: "ISSUE_CREATED",
-  integration: "jira-prod",
-  user: "user@company.com",
-  issueKey: "PROJ-123",
-  timestamp: "2024-01-15T10:30:00Z"
-}
-```
+| Action | Description |
+|--------|-------------|
+| `CREATE` | A new integration or project-integration mapping was created |
+| `UPDATE` | An integration was reconfigured (settings, credentials, endpoint changes) |
+| `DELETE` | An integration or project-integration mapping was removed |
+
+Admin-triggered operations on integrations (e.g., sync jobs from the admin integrations panel) emit `SYSTEM_CONFIG_CHANGED` events with the target integration and action captured in the metadata.
+
+Stored credentials, OAuth tokens, and API keys are redacted from audit payloads — the audit system masks known sensitive fields (`credentials`, `token`, `apiKey`, etc.) before the row is written.
 
 ### Rate Limiting
 

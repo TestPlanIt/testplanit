@@ -36,8 +36,14 @@ Only users with administrative privileges can access the audit log viewer.
 | `LOGIN` | User successfully logged in |
 | `LOGOUT` | User logged out |
 | `LOGIN_FAILED` | Failed login attempt |
+| `SESSION_INVALIDATED` | An active session was invalidated |
 | `PASSWORD_CHANGED` | User changed their password |
 | `PASSWORD_RESET` | Password was reset |
+| `MAGIC_LINK_REQUESTED` | Magic link sign-in requested for a user |
+| `TWO_FACTOR_SETUP_REQUIRED` | Administrator enforced 2FA setup for a user |
+| `TWO_FACTOR_ENABLED` | User completed 2FA enrollment |
+| `TWO_FACTOR_VERIFIED` | User passed a 2FA challenge (SSO flow) |
+| `TWO_FACTOR_CODES_REGENERATED` | User regenerated their 2FA backup codes |
 
 ### Data Operations
 
@@ -71,8 +77,24 @@ Only users with administrative privileges can access the audit log viewer.
 
 | Action | Description |
 |--------|-------------|
-| `SYSTEM_CONFIG_CHANGED` | Application configuration was modified |
+| `SYSTEM_CONFIG_CHANGED` | Application configuration was modified (includes queue operator actions, integration sync, LLM cache operations) |
 | `SSO_CONFIG_CHANGED` | SSO provider settings were updated |
+
+### Share Links
+
+| Action | Description |
+|--------|-------------|
+| `SHARE_LINK_CREATED` | A share link was generated |
+| `SHARE_LINK_ACCESSED` | A share link was opened |
+| `SHARE_LINK_PASSWORD_VERIFY` | A password-protected share link was unlocked (success) or rejected (failure, for brute-force detection) |
+| `SHARE_LINK_REVOKED` | A share link was revoked |
+
+### Imports & Data Quality
+
+| Action | Description |
+|--------|-------------|
+| `IMPORT_STARTED` | A data import run (e.g., Testmo) was kicked off; pairs with the worker's `BULK_CREATE` event when the import completes |
+| `DUPLICATE_RESOLVED` | A duplicate-case scan result was resolved (merged, linked, or dismissed) |
 
 ### Data Export
 
@@ -84,11 +106,12 @@ Only users with administrative privileges can access the audit log viewer.
 
 The following entity types are tracked in the audit log:
 
-- **Test Management**: Test Cases, Test Runs, Test Results, Sessions, Shared Steps
+- **Test Management**: Test Cases, Test Runs, Test Run Cases, Test Results, Sessions, Shared Steps
 - **Project Management**: Projects, Milestones, Issues, Tags
 - **User Management**: Users, Groups, Permissions
 - **Security**: API Tokens
 - **Configuration**: SSO Providers, Email Domains, App Config
+- **Integrations**: Integrations, Project Integrations, Prompt Configurations
 - **Content**: Comments, Attachments
 
 ## Filtering Audit Logs
