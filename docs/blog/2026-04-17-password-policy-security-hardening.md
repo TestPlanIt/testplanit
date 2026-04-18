@@ -60,4 +60,4 @@ All policy checks are enforced server-side, not just in the UI. The password val
 
 ## Try It Out
 
-Upgrade to v0.22.0 and navigate to **Admin → Security** to configure your password policy. See the [Security Settings documentation](https://docs.testplanit.com/docs/user-guide/security-settings) for a full walkthrough of every setting.
+Upgrade to v0.22.0 and navigate to **Admin → Security** to configure your password policy. See the [Security Settings documentation](/docs/user-guide/security-settings) for a full walkthrough of every setting.
