@@ -42,3 +42,8 @@ test-management:
   label: Test Management
   description: Posts about test case management strategies and approaches
   permalink: /test-management
+
+security:
+  label: Security
+  description: Posts about security features, authentication, and access control
+  permalink: /security
