@@ -58,7 +58,7 @@ export function PasswordStrengthIndicator({
     return () => {
       cancelled = true;
     };
-  }, []); // Load once on mount
+  }, [password]); // Load once on mount
 
   // Re-evaluate score when password changes
   useEffect(() => {
