@@ -1169,9 +1169,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            auditUpdate("Integration", oldEntity, result).catch((error: any) => {
-              console.error(`Failed to audit integration update:`, error);
-            });
+            auditUpdate("Integration", oldEntity, result).catch(
+              (error: any) => {
+                console.error(`Failed to audit integration update:`, error);
+              }
+            );
           }
           return result;
         },
@@ -1194,7 +1196,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           if (result?.id) {
             auditCreate("ProjectIntegration", result, result.projectId).catch(
               (error: any) => {
-                console.error(`Failed to audit project integration create:`, error);
+                console.error(
+                  `Failed to audit project integration create:`,
+                  error
+                );
               }
             );
           }
@@ -1202,29 +1207,44 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async update({ args, query }: any) {
           const oldEntity = args.where
-            ? await baseClient.projectIntegration.findUnique({ where: args.where })
+            ? await baseClient.projectIntegration.findUnique({
+                where: args.where,
+              })
             : null;
           const result = await query(args);
           if (result?.id) {
-            auditUpdate("ProjectIntegration", oldEntity, result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit project integration update:`, error);
-              }
-            );
+            auditUpdate(
+              "ProjectIntegration",
+              oldEntity,
+              result,
+              result.projectId
+            ).catch((error: any) => {
+              console.error(
+                `Failed to audit project integration update:`,
+                error
+              );
+            });
           }
           return result;
         },
         async delete({ args, query }: any) {
           const oldEntity = args.where
-            ? await baseClient.projectIntegration.findUnique({ where: args.where })
+            ? await baseClient.projectIntegration.findUnique({
+                where: args.where,
+              })
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("ProjectIntegration", oldEntity, oldEntity.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit project integration delete:`, error);
-              }
-            );
+            auditDelete(
+              "ProjectIntegration",
+              oldEntity,
+              oldEntity.projectId
+            ).catch((error: any) => {
+              console.error(
+                `Failed to audit project integration delete:`,
+                error
+              );
+            });
           }
           return result;
         },
@@ -1271,20 +1291,28 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           if (result?.id) {
             auditCreate("PromptConfigPrompt", result).catch((error: any) => {
-              console.error(`Failed to audit prompt config prompt create:`, error);
+              console.error(
+                `Failed to audit prompt config prompt create:`,
+                error
+              );
             });
           }
           return result;
         },
         async update({ args, query }: any) {
           const oldEntity = args.where
-            ? await baseClient.promptConfigPrompt.findUnique({ where: args.where })
+            ? await baseClient.promptConfigPrompt.findUnique({
+                where: args.where,
+              })
             : null;
           const result = await query(args);
           if (result?.id) {
             auditUpdate("PromptConfigPrompt", oldEntity, result).catch(
               (error: any) => {
-                console.error(`Failed to audit prompt config prompt update:`, error);
+                console.error(
+                  `Failed to audit prompt config prompt update:`,
+                  error
+                );
               }
             );
           }
@@ -1292,12 +1320,17 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async delete({ args, query }: any) {
           const oldEntity = args.where
-            ? await baseClient.promptConfigPrompt.findUnique({ where: args.where })
+            ? await baseClient.promptConfigPrompt.findUnique({
+                where: args.where,
+              })
             : null;
           const result = await query(args);
           if (oldEntity) {
             auditDelete("PromptConfigPrompt", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit prompt config prompt delete:`, error);
+              console.error(
+                `Failed to audit prompt config prompt delete:`,
+                error
+              );
             });
           }
           return result;

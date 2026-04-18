@@ -353,11 +353,12 @@ test.describe("User Update Operations", () => {
         const userRow = page.locator("tr").filter({ hasText: testEmail });
         await expect(userRow).toBeVisible();
 
-        // Find the actions cell and click the first button (edit button with pen icon)
+        // Open three-dot dropdown menu and click Edit
         const actionsCell = userRow.locator("td").last();
-        const editButton = actionsCell.locator("button").first();
-        await expect(editButton).toBeVisible();
-        await editButton.click();
+        await actionsCell.locator("button").first().click();
+        const menu = page.locator('[role="menu"]');
+        await expect(menu).toBeVisible({ timeout: 5000 });
+        await menu.getByRole("menuitem", { name: /edit/i }).click();
 
         // Wait for modal to open
         const dialog = page.locator('[role="dialog"]');
@@ -419,11 +420,12 @@ test.describe("User Update Operations", () => {
         const userRow = page.locator("tr").filter({ hasText: testEmail });
         await expect(userRow).toBeVisible();
 
-        // Find the actions cell and click the second button (delete button with trash icon)
+        // Open three-dot dropdown menu and click Delete
         const actionsCell = userRow.locator("td").last();
-        const deleteButton = actionsCell.locator("button").nth(1);
-        await expect(deleteButton).toBeVisible();
-        await deleteButton.click();
+        await actionsCell.locator("button").first().click();
+        const menu = page.locator('[role="menu"]');
+        await expect(menu).toBeVisible({ timeout: 5000 });
+        await menu.getByRole("menuitem", { name: /delete/i }).click();
 
         // Wait for confirmation dialog
         const alertDialog = page.locator('[role="alertdialog"]');

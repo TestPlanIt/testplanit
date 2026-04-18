@@ -252,6 +252,33 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       </ul>
     `,
   },
+  "0.22.0": {
+    title: "New Feature: Password Policy & Security Hardening",
+    message: `
+      <p>A new <strong>Security</strong> page in the Admin panel gives you full control over password policy, account lockout, and password enforcement actions.</p>
+      <h4>Password Policy</h4>
+      <ul>
+        <li>Set minimum password length, require uppercase, lowercase, numbers, or specific special characters</li>
+        <li>Configure password history depth to prevent reuse of recent passwords</li>
+        <li>Set password expiration — users are prompted to change their password after a configurable number of days</li>
+      </ul>
+      <h4>Account Lockout</h4>
+      <ul>
+        <li>Configure failed login attempt threshold and lockout duration</li>
+      </ul>
+      <h4>Enforcement Actions</h4>
+      <ul>
+        <li><strong>Force Password Change</strong> — require individual users or all internal users to set a new password on next login</li>
+        <li><strong>Revoke Password</strong> — remove a user's password entirely, requiring them to use SSO or Magic Link</li>
+      </ul>
+      <h4>Password Strength Indicator</h4>
+      <ul>
+        <li>Real-time strength bar and policy checklist on signup, change password, and forced change forms</li>
+        <li>Powered by <strong>zxcvbn</strong> for intelligent strength estimation beyond simple rule checks</li>
+      </ul>
+      <p>Administrators can access the new page at <strong>Admin → Security</strong>.</p>
+    `,
+  },
 };
 
 /**

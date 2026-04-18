@@ -183,11 +183,11 @@ export async function POST(
       case "pause":
         await queue.pause();
         // Audit the admin queue operator action.
-        auditSystemConfigChange(
-          `queue.${queueName}.pause`,
-          null,
-          { queueName, action: "pause", triggeredBy: auth.userId ?? "unknown" }
-        ).catch((error) => {
+        auditSystemConfigChange(`queue.${queueName}.pause`, null, {
+          queueName,
+          action: "pause",
+          triggeredBy: auth.userId ?? "unknown",
+        }).catch((error) => {
           console.error("Failed to audit queue operator action:", error);
         });
         return NextResponse.json({ success: true, message: "Queue paused" });
@@ -195,11 +195,11 @@ export async function POST(
       case "resume":
         await queue.resume();
         // Audit the admin queue operator action.
-        auditSystemConfigChange(
-          `queue.${queueName}.resume`,
-          null,
-          { queueName, action: "resume", triggeredBy: auth.userId ?? "unknown" }
-        ).catch((error) => {
+        auditSystemConfigChange(`queue.${queueName}.resume`, null, {
+          queueName,
+          action: "resume",
+          triggeredBy: auth.userId ?? "unknown",
+        }).catch((error) => {
           console.error("Failed to audit queue operator action:", error);
         });
         return NextResponse.json({ success: true, message: "Queue resumed" });
@@ -223,19 +223,15 @@ export async function POST(
         );
 
         // Audit the admin queue clean operator action.
-        auditSystemConfigChange(
-          `queue.${queueName}.clean`,
-          null,
-          {
-            queueName,
-            action: "clean",
-            triggeredBy: auth.userId ?? "unknown",
-            cleaned: {
-              completed: completedCleaned.length,
-              failed: failedCleaned.length,
-            },
-          }
-        ).catch((error) => {
+        auditSystemConfigChange(`queue.${queueName}.clean`, null, {
+          queueName,
+          action: "clean",
+          triggeredBy: auth.userId ?? "unknown",
+          cleaned: {
+            completed: completedCleaned.length,
+            failed: failedCleaned.length,
+          },
+        }).catch((error) => {
           console.error("Failed to audit queue clean action:", error);
         });
 
@@ -253,11 +249,11 @@ export async function POST(
         // Remove all waiting jobs
         await queue.drain();
         // Audit the admin queue drain operator action.
-        auditSystemConfigChange(
-          `queue.${queueName}.drain`,
-          null,
-          { queueName, action: "drain", triggeredBy: auth.userId ?? "unknown" }
-        ).catch((error) => {
+        auditSystemConfigChange(`queue.${queueName}.drain`, null, {
+          queueName,
+          action: "drain",
+          triggeredBy: auth.userId ?? "unknown",
+        }).catch((error) => {
           console.error("Failed to audit queue drain:", error);
         });
         return NextResponse.json({
@@ -269,15 +265,11 @@ export async function POST(
         // DANGEROUS: Completely wipe the queue
         await queue.obliterate({ force: true });
         // Audit the admin queue obliterate operator action.
-        auditSystemConfigChange(
-          `queue.${queueName}.obliterate`,
-          null,
-          {
-            queueName,
-            action: "obliterate",
-            triggeredBy: auth.userId ?? "unknown",
-          }
-        ).catch((error) => {
+        auditSystemConfigChange(`queue.${queueName}.obliterate`, null, {
+          queueName,
+          action: "obliterate",
+          triggeredBy: auth.userId ?? "unknown",
+        }).catch((error) => {
           console.error("Failed to audit queue obliterate:", error);
         });
         return NextResponse.json({
@@ -332,17 +324,13 @@ export async function DELETE(
     const result = await removeJob(queue, job, force);
 
     // Audit the admin job-delete operator action (queue-scoped DELETE).
-    auditSystemConfigChange(
-      `queue.${queueName}.job.${jobId}.delete`,
-      null,
-      {
-        queueName,
-        jobId,
-        action: "delete",
-        triggeredBy: auth.userId ?? "unknown",
-        force,
-      }
-    ).catch((error) => {
+    auditSystemConfigChange(`queue.${queueName}.job.${jobId}.delete`, null, {
+      queueName,
+      jobId,
+      action: "delete",
+      triggeredBy: auth.userId ?? "unknown",
+      force,
+    }).catch((error) => {
       console.error("Failed to audit queue job delete:", error);
     });
 

@@ -372,7 +372,9 @@ export async function auditAuthEvent(
     | "TWO_FACTOR_SETUP_REQUIRED"
     | "TWO_FACTOR_CODES_REGENERATED"
     | "TWO_FACTOR_VERIFIED"
-    | "SHARE_LINK_PASSWORD_VERIFY",
+    | "SHARE_LINK_PASSWORD_VERIFY"
+    | "ACCOUNT_LOCKED"
+    | "ACCOUNT_UNLOCKED",
   userId: string | null,
   userEmail: string,
   metadata?: Record<string, unknown>

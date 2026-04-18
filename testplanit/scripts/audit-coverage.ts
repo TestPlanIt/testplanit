@@ -326,10 +326,7 @@ async function checkHookParity(
       const matchLine = searchText
         .split("\n")
         .find((l) => /Audit parity exempt/.test(l));
-      exemptByModel.set(
-        model,
-        matchLine?.trim().replace(/^\/\/\s*/, "") ?? ""
-      );
+      exemptByModel.set(model, matchLine?.trim().replace(/^\/\/\s*/, "") ?? "");
     } else {
       exemptByModel.set(model, null);
     }
@@ -367,9 +364,8 @@ async function checkHookParity(
   return {
     totalModels: entries.length,
     fullParity: entries.filter((e) => e.missingOperations.length === 0).length,
-    exempt: entries.filter(
-      (e) => e.isExempt && e.missingOperations.length > 0
-    ).length,
+    exempt: entries.filter((e) => e.isExempt && e.missingOperations.length > 0)
+      .length,
     undocumentedAsymmetries,
     entries,
   };
@@ -405,9 +401,7 @@ function classifyFileEvidence(
  * re-export block — the regex detects both `export (async )?(function|const)`
  * and the brace-re-export form.
  */
-async function enumerateApiRoutes(
-  routes: string[]
-): Promise<InventoryItem[]> {
+async function enumerateApiRoutes(routes: string[]): Promise<InventoryItem[]> {
   const items: InventoryItem[] = [];
   const mutationVerbs = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -458,10 +452,7 @@ async function enumerateApiRoutes(
           hasRawWrite,
           hasIntentionalSkipMarker,
         },
-        defaultStatus: classifyFileEvidence(
-          hasExplicitAuditCall,
-          hasRawWrite
-        ),
+        defaultStatus: classifyFileEvidence(hasExplicitAuditCall, hasRawWrite),
         rationale: "",
         lineHint: line,
       });
@@ -511,10 +502,7 @@ async function enumerateServerActions(
           hasRawWrite,
           hasIntentionalSkipMarker,
         },
-        defaultStatus: classifyFileEvidence(
-          hasExplicitAuditCall,
-          hasRawWrite
-        ),
+        defaultStatus: classifyFileEvidence(hasExplicitAuditCall, hasRawWrite),
         rationale: "",
         lineHint: line,
       });
@@ -530,9 +518,7 @@ async function enumerateServerActions(
  * `async (job` lambda). `workers/auditLogWorker.ts` is hard-excluded because
  * it's the audit consumer — not a surface that needs to emit audits.
  */
-async function enumerateWorkers(
-  workers: string[]
-): Promise<InventoryItem[]> {
+async function enumerateWorkers(workers: string[]): Promise<InventoryItem[]> {
   const items: InventoryItem[] = [];
   const processorEvidenceRegex =
     /\bnew Worker\s*\(|\bexport (?:const|function) processor\b|\bconst processor\s*=|async \(job\s*:/;

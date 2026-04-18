@@ -288,16 +288,12 @@ export async function POST(
       case "retry":
         await job.retry();
         // Audit the admin job-retry operator action.
-        auditSystemConfigChange(
-          `queue.${queueName}.job.${jobId}.retry`,
-          null,
-          {
-            queueName,
-            jobId,
-            action: "retry",
-            triggeredBy: auth.userId ?? "unknown",
-          }
-        ).catch((error) => {
+        auditSystemConfigChange(`queue.${queueName}.job.${jobId}.retry`, null, {
+          queueName,
+          jobId,
+          action: "retry",
+          triggeredBy: auth.userId ?? "unknown",
+        }).catch((error) => {
           console.error("Failed to audit job operator action:", error);
         });
         return NextResponse.json({ success: true, message: "Job retried" });
@@ -392,17 +388,13 @@ export async function DELETE(
     const result = await removeJob(queue, job, force);
 
     // Audit the admin job-delete operator action.
-    auditSystemConfigChange(
-      `queue.${queueName}.job.${jobId}.delete`,
-      null,
-      {
-        queueName,
-        jobId,
-        action: "delete",
-        triggeredBy: auth.userId ?? "unknown",
-        force,
-      }
-    ).catch((error) => {
+    auditSystemConfigChange(`queue.${queueName}.job.${jobId}.delete`, null, {
+      queueName,
+      jobId,
+      action: "delete",
+      triggeredBy: auth.userId ?? "unknown",
+      force,
+    }).catch((error) => {
       console.error("Failed to audit job delete:", error);
     });
 

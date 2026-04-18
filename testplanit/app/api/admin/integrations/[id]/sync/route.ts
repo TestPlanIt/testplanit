@@ -64,15 +64,11 @@ export async function POST(
     }
 
     // Audit the admin-triggered integration sync.
-    auditSystemConfigChange(
-      `integration.sync.${integrationId}`,
-      null,
-      {
-        integrationId,
-        jobId,
-        triggeredBy: session.user.id ?? "unknown",
-      }
-    ).catch((error) => {
+    auditSystemConfigChange(`integration.sync.${integrationId}`, null, {
+      integrationId,
+      jobId,
+      triggeredBy: session.user.id ?? "unknown",
+    }).catch((error) => {
       console.error("Failed to audit integration sync trigger:", error);
     });
 

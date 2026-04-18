@@ -6,10 +6,17 @@ import { RoleNameCell } from "@/components/tables/RoleNameCell";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { User } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
 export interface ExtendedUser extends User {
@@ -40,8 +47,11 @@ export const getColumns = (
   userPreferences: any,
   handleToggle: (id: string, key: keyof ExtendedUser, value: boolean) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
+  tAdmin: ReturnType<typeof useTranslations<"admin.users">>,
   onEditUser?: (user: ExtendedUser) => void,
-  onDeleteUser?: (user: ExtendedUser) => void
+  onDeleteUser?: (user: ExtendedUser) => void,
+  onForceChangePassword?: (user: ExtendedUser) => void,
+  onRevokePassword?: (user: ExtendedUser) => void
 ): ColumnDef<ExtendedUser>[] => [
   {
     id: "name",
@@ -222,34 +232,46 @@ export const getColumns = (
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,
-    size: 80,
+    size: 60,
     meta: { isPinned: "right" },
     cell: ({ row }) => (
-      <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <Button
-          variant="ghost"
-          className="px-2 py-1 h-auto"
-          onClick={() => onEditUser?.(row.original)}
-        >
-          <SquarePen className="h-5 w-5" />
-        </Button>
-        {row.original.id !== userPreferences.user.id ? (
-          <Button
-            variant="destructive"
-            className="px-2 py-1 h-auto"
-            onClick={() => onDeleteUser?.(row.original)}
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
-            disabled
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
-        )}
+      <div className="flex justify-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="px-2 py-1 h-auto">
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEditUser?.(row.original)}>
+              {tCommon("actions.edit")}
+            </DropdownMenuItem>
+            {row.original.authMethod !== "SSO" &&
+              row.original.id !== userPreferences.user.id && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => onForceChangePassword?.(row.original)}
+                  >
+                    {tAdmin("forcePasswordChange")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onRevokePassword?.(row.original)}
+                  >
+                    {tAdmin("revokePassword")}
+                  </DropdownMenuItem>
+                </>
+              )}
+            <DropdownMenuSeparator />
+            {row.original.id !== userPreferences.user.id ? (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDeleteUser?.(row.original)}
+              >
+                {tCommon("actions.delete")}
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     ),
   },
