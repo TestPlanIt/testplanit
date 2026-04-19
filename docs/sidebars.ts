@@ -109,6 +109,7 @@ const sidebars: SidebarsConfig = {
             'user-guide/sso', // Authentication configuration and management
             'user-guide/security-settings', // Password policy, lockout, and enforcement
             'user-guide/audit-logs', // Audit logs for compliance and security
+            'user-guide/audit-log-reliability', // Audit log retry/backoff policy and ops reference
             // Add other admin pages here as they are created
           ],
         },
