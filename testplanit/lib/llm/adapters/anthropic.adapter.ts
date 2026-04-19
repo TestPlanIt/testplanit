@@ -62,6 +62,12 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   private baseUrl: string;
   private anthropicVersion = "2023-06-01";
 
+  /**
+   * Models discovered at runtime to not support the temperature parameter.
+   * Populated on first failed request — avoids redundant retries.
+   */
+  private static modelsWithoutTemperature = new Set<string>();
+
   constructor(config: LlmAdapterConfig) {
     super(config);
     this.apiKey = config.apiKey || "";
@@ -83,48 +89,37 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       request.messages
     );
 
+    const model = request.model || this.getDefaultModel();
     const anthropicRequest: AnthropicRequest = {
-      model: request.model || this.getDefaultModel(),
+      model,
       messages: userMessages,
       max_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
-      temperature: request.temperature ?? this.config.config.defaultTemperature,
       stream: false,
     };
+
+    if (!AnthropicAdapter.modelsWithoutTemperature.has(model)) {
+      anthropicRequest.temperature =
+        request.temperature ?? this.config.config.defaultTemperature;
+    }
 
     if (systemMessage) {
       anthropicRequest.system = systemMessage;
     }
 
+    const timeout = request.timeout ?? this.getTimeout();
+
     try {
-      // Use request timeout if provided, otherwise fall back to config timeout
-      const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetchLongRunning(
-        `${this.baseUrl}/messages`,
-        {
-          method: "POST",
-          headers: this.getAnthropicHeaders(),
-          body: JSON.stringify(anthropicRequest),
-          signal: AbortSignal.timeout(timeout),
-        }
-      );
-
-      if (!response.ok) {
-        await this.handleErrorResponse(response);
-      }
-
-      const data = (await response.json()) as AnthropicResponse;
-
-      return {
-        content: data.content[0].text,
-        model: data.model,
-        promptTokens: data.usage.input_tokens,
-        completionTokens: data.usage.output_tokens,
-        totalTokens: data.usage.input_tokens + data.usage.output_tokens,
-        finishReason: this.mapStopReason(data.stop_reason),
-      };
-    } catch (error) {
+      return await this.executeChat(anthropicRequest, timeout);
+    } catch (error: any) {
       if (error instanceof Error && error.name === "AbortError") {
         throw this.createError("Request timeout", "TIMEOUT", 408, true);
+      }
+      // Retry without temperature if the model doesn't support it, and
+      // remember this model for future requests
+      if (this.isTemperatureDeprecatedError(error)) {
+        AnthropicAdapter.modelsWithoutTemperature.add(model);
+        delete anthropicRequest.temperature;
+        return await this.executeChat(anthropicRequest, timeout);
       }
       throw error;
     }
@@ -139,13 +134,18 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       request.messages
     );
 
+    const model = request.model || this.getDefaultModel();
     const anthropicRequest: AnthropicRequest = {
-      model: request.model || this.getDefaultModel(),
+      model,
       messages: userMessages,
       max_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
-      temperature: request.temperature ?? this.config.config.defaultTemperature,
       stream: true,
     };
+
+    if (!AnthropicAdapter.modelsWithoutTemperature.has(model)) {
+      anthropicRequest.temperature =
+        request.temperature ?? this.config.config.defaultTemperature;
+    }
 
     if (systemMessage) {
       anthropicRequest.system = systemMessage;
@@ -155,18 +155,20 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     // Use safeFetchLongRunning to bypass undici's 5-min body timeout.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetchLongRunning(
-      `${this.baseUrl}/messages`,
-      {
-        method: "POST",
-        headers: this.getAnthropicHeaders(),
-        body: JSON.stringify(anthropicRequest),
-        signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
-      }
-    );
+    let response: Response;
 
-    if (!response.ok) {
-      await this.handleErrorResponse(response);
+    try {
+      response = await this.fetchAnthropicMessage(anthropicRequest, timeout);
+    } catch (error: any) {
+      // Retry without temperature if the model doesn't support it, and
+      // remember this model for future requests
+      if (this.isTemperatureDeprecatedError(error)) {
+        AnthropicAdapter.modelsWithoutTemperature.add(model);
+        delete anthropicRequest.temperature;
+        response = await this.fetchAnthropicMessage(anthropicRequest, timeout);
+      } else {
+        throw error;
+      }
     }
 
     const reader = response.body?.getReader();
@@ -307,6 +309,79 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     return headers;
   }
 
+  /**
+   * Execute a non-streaming chat request and return the parsed response.
+   */
+  private async executeChat(
+    anthropicRequest: AnthropicRequest,
+    timeout: number
+  ): Promise<LlmResponse> {
+    const response = await this.safeFetchLongRunning(
+      `${this.baseUrl}/messages`,
+      {
+        method: "POST",
+        headers: this.getAnthropicHeaders(),
+        body: JSON.stringify(anthropicRequest),
+        signal: AbortSignal.timeout(timeout),
+      }
+    );
+
+    if (!response.ok) {
+      await this.handleErrorResponse(response);
+    }
+
+    const data = (await response.json()) as AnthropicResponse;
+
+    return {
+      content: data.content[0].text,
+      model: data.model,
+      promptTokens: data.usage.input_tokens,
+      completionTokens: data.usage.output_tokens,
+      totalTokens: data.usage.input_tokens + data.usage.output_tokens,
+      finishReason: this.mapStopReason(data.stop_reason),
+    };
+  }
+
+  /**
+   * Fetch from the Anthropic messages endpoint, throwing on non-OK responses.
+   * Used by chatStream to separate the fetch from the stream reading.
+   */
+  private async fetchAnthropicMessage(
+    anthropicRequest: AnthropicRequest,
+    timeout: number
+  ): Promise<Response> {
+    const response = await this.safeFetchLongRunning(
+      `${this.baseUrl}/messages`,
+      {
+        method: "POST",
+        headers: this.getAnthropicHeaders(),
+        body: JSON.stringify(anthropicRequest),
+        signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
+      }
+    );
+
+    if (!response.ok) {
+      await this.handleErrorResponse(response);
+    }
+
+    return response;
+  }
+
+  /**
+   * Check if an error is specifically about temperature being deprecated.
+   * Newer Anthropic models (e.g. Opus 4.7 with adaptive thinking) no longer
+   * accept the temperature parameter. Rather than maintaining a hardcoded
+   * model list, we detect the error and retry without temperature.
+   */
+  private isTemperatureDeprecatedError(error: any): boolean {
+    const message = error?.message || error?.error?.message || "";
+    return (
+      typeof message === "string" &&
+      message.includes("temperature") &&
+      message.includes("deprecated")
+    );
+  }
+
   private extractMessages(messages: LlmRequest["messages"]): {
     systemMessage: string | null;
     userMessages: AnthropicMessage[];
@@ -382,6 +457,14 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   private mapModelInfo(modelId: string): LlmModelInfo {
     // Costs are per 1K tokens (divide $/1M by 1000)
     const modelConfigs: Record<string, Partial<LlmModelInfo>> = {
+      "claude-opus-4-7": {
+        name: "Claude Opus 4.7",
+        contextWindow: 1000000,
+        maxOutputTokens: 128000,
+        inputCostPer1k: 0.005,
+        outputCostPer1k: 0.025,
+        capabilities: ["text", "code", "vision"],
+      },
       "claude-opus-4-6": {
         name: "Claude Opus 4.6",
         contextWindow: 1000000,
@@ -456,6 +539,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
 
   private getDefaultModels(): LlmModelInfo[] {
     return [
+      "claude-opus-4-7",
       "claude-opus-4-6",
       "claude-sonnet-4-6",
       "claude-haiku-4-5-20251001",

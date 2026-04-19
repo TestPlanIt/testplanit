@@ -363,4 +363,138 @@ describe("AnthropicAdapter", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe("temperature deprecation handling", () => {
+    it("should retry without temperature when model returns deprecation error", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      // First call fails with temperature deprecation
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: {
+            message: "`temperature` is deprecated for this model.",
+          },
+        }),
+      });
+
+      // Retry without temperature succeeds
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "msg_456",
+          content: [{ type: "text", text: "Hello from Opus 4.7" }],
+          model: "claude-opus-4-7",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 10, output_tokens: 15 },
+        }),
+      });
+
+      const request: LlmRequest = {
+        messages: [{ role: "user", content: "Hello" }],
+        model: "claude-opus-4-7",
+        userId: "user-123",
+        feature: "test",
+      };
+
+      const response = await adapter.chat(request);
+
+      expect(response.content).toBe("Hello from Opus 4.7");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // First call includes temperature
+      const firstBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(firstBody.temperature).toBeDefined();
+
+      // Retry call does NOT include temperature
+      const retryBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(retryBody.temperature).toBeUndefined();
+    });
+
+    it("should skip temperature on subsequent requests after learning a model doesn't support it", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      // First request: fails then retries
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: {
+            message: "`temperature` is deprecated for this model.",
+          },
+        }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          content: [{ type: "text", text: "First response" }],
+          model: "claude-opus-4-7",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 10, output_tokens: 10 },
+        }),
+      });
+
+      const request: LlmRequest = {
+        messages: [{ role: "user", content: "Hello" }],
+        model: "claude-opus-4-7",
+        userId: "user-123",
+        feature: "test",
+      };
+
+      await adapter.chat(request);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // Second request: should skip temperature entirely (no retry needed)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          content: [{ type: "text", text: "Second response" }],
+          model: "claude-opus-4-7",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 10, output_tokens: 10 },
+        }),
+      });
+
+      const response2 = await adapter.chat(request);
+
+      expect(response2.content).toBe("Second response");
+      expect(mockFetch).toHaveBeenCalledTimes(3); // Only 1 additional call, no retry
+
+      // The third call should NOT include temperature
+      const thirdBody = JSON.parse(mockFetch.mock.calls[2][1].body);
+      expect(thirdBody.temperature).toBeUndefined();
+    });
+
+    it("should not retry for non-temperature errors", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: { message: "Invalid model specified" },
+        }),
+      });
+
+      const request: LlmRequest = {
+        messages: [{ role: "user", content: "Hello" }],
+        userId: "user-123",
+        feature: "test",
+      };
+
+      await expect(adapter.chat(request)).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+      });
+
+      // Should NOT retry
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
 });
