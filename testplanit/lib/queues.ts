@@ -282,8 +282,15 @@ export function getElasticsearchReindexQueue(): Queue | null {
 }
 
 /**
- * Get the audit log queue instance (lazy initialization)
- * Used for async audit log processing to avoid blocking mutations
+ * Get the audit log queue instance (lazy initialization).
+ *
+ * Used for async audit log processing to avoid blocking mutations.
+ *
+ * Retry/backoff policy, failure behavior, and the cross-link to
+ * `notificationQueue` are documented in
+ * `docs/docs/user-guide/audit-log-reliability.md` (rendered at
+ * `/docs/user-guide/audit-log-reliability` on the docs site). Keep
+ * that page in sync when you change `defaultJobOptions` below.
  */
 export function getAuditLogQueue(): Queue | null {
   if (_auditLogQueue) return _auditLogQueue;
