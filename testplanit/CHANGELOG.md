@@ -1,3 +1,9 @@
+## [0.22.3](https://github.com/TestPlanIt/testplanit/compare/v0.22.2...v0.22.3) (2026-04-19)
+
+### Enhancements
+
+* dialog polish, share link password policy, and review field fixes ([#228](https://github.com/TestPlanIt/testplanit/issues/228)) ([2844afd](https://github.com/TestPlanIt/testplanit/commit/2844afddcf603eac07e69daf8105430b304d6e01))
+
 ## [0.22.2](https://github.com/TestPlanIt/testplanit/compare/v0.22.1...v0.22.2) (2026-04-19)
 
 ### Bug Fixes
