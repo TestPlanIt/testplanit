@@ -417,9 +417,10 @@ async function captureAuditEvent(event) {
     tenantId: event.tenantId ?? getCurrentTenantId()
   };
   try {
+    const safeEntityId = String(event.entityId).replace(/:/g, "_");
     await queue.add("audit-event", jobData, {
       // Use entity ID for deduplication within short window
-      jobId: `${event.action}-${event.entityType}-${event.entityId}-${Date.now()}`
+      jobId: `${event.action}-${event.entityType}-${safeEntityId}-${Date.now()}`
     });
   } catch (error) {
     console.error("[AuditLog] Failed to queue audit event:", error);
