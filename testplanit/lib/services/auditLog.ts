@@ -89,6 +89,44 @@ const SENSITIVE_FIELDS = new Set([
 ]);
 
 /**
+ * Redact sensitive field values embedded in free-form strings (e.g., error
+ * messages, serialized job payloads echoed by BullMQ/Prisma). Pattern-matches
+ * `"fieldName":"value"` (JSON form) and `fieldName=value` (query-string/kv form)
+ * and replaces the value with `[REDACTED]`.
+ *
+ * Defense-in-depth against the Phase 62 CR-01 class of bug: if an upstream
+ * library serializes a job payload containing 2FA secrets, passwords, or
+ * tokens into an error message, running the message through this helper
+ * before logging prevents those values from hitting the log aggregator.
+ *
+ * @param s The string that may contain sensitive values
+ * @param fields Set of field names to redact (pass SENSITIVE_FIELDS)
+ * @returns The input string with sensitive values replaced by [REDACTED]
+ */
+export function redactSensitiveInString(
+  s: string,
+  fields: Set<string>
+): string {
+  if (!s || fields.size === 0) return s;
+  let result = s;
+  for (const fieldName of fields) {
+    // Escape regex-special characters in the field name defensively.
+    const escaped = fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Matches either JSON form ("field":"value") or kv form (field=value).
+    // Group 1 captures the JSON prefix ("field":); group 2 captures kv prefix (field=).
+    const pattern = new RegExp(
+      `("${escaped}"\\s*:\\s*)"[^"]*"|(\\b${escaped}\\s*=\\s*)\\S+`,
+      "g"
+    );
+    result = result.replace(pattern, (_match, jsonPrefix, kvPrefix) => {
+      if (jsonPrefix) return `${jsonPrefix}"[REDACTED]"`;
+      return `${kvPrefix}[REDACTED]`;
+    });
+  }
+  return result;
+}
+
+/**
  * Mask sensitive field values for audit logging.
  */
 function maskSensitiveValue(fieldName: string, value: unknown): unknown {
