@@ -1343,7 +1343,6 @@ export function CreateProjectWizard({
                 })}
               </div>
             </ScrollArea>
-
           </div>
         );
 

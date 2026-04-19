@@ -26,7 +26,10 @@ import { format } from "date-fns";
 import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useUpdateShareLink, useFindFirstRegistrationSettings } from "~/lib/hooks";
+import {
+  useUpdateShareLink,
+  useFindFirstRegistrationSettings,
+} from "~/lib/hooks";
 import { cn } from "~/utils";
 import {
   PasswordStrengthIndicator,
@@ -119,9 +122,7 @@ export function EditShareLinkDialog({
           (!policy?.requireLowercase || /[a-z]/.test(password)) &&
           (!policy?.requireNumbers || /\d/.test(password)) &&
           (!policy?.requiredSpecialChars ||
-            [...policy.requiredSpecialChars].some((c) =>
-              password.includes(c)
-            ));
+            [...policy.requiredSpecialChars].some((c) => password.includes(c)));
         if (!meetsPolicy) {
           setPasswordError(tCommon("errors.passwordDoesNotMeetPolicy"));
           return;

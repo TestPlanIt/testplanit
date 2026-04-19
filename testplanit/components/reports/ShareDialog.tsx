@@ -33,7 +33,10 @@ import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { useCreateShareLink, useFindFirstRegistrationSettings } from "~/lib/hooks";
+import {
+  useCreateShareLink,
+  useFindFirstRegistrationSettings,
+} from "~/lib/hooks";
 import { cn } from "~/utils";
 import {
   PasswordStrengthIndicator,
@@ -118,13 +121,9 @@ export function ShareDialog({
           (!policy?.requireLowercase || /[a-z]/.test(password)) &&
           (!policy?.requireNumbers || /\d/.test(password)) &&
           (!policy?.requiredSpecialChars ||
-            [...policy.requiredSpecialChars].some((c) =>
-              password.includes(c)
-            ));
+            [...policy.requiredSpecialChars].some((c) => password.includes(c)));
         if (!meetsPolicy) {
-          setPasswordError(
-            tCommon("errors.passwordDoesNotMeetPolicy")
-          );
+          setPasswordError(tCommon("errors.passwordDoesNotMeetPolicy"));
           return;
         }
       }
@@ -246,7 +245,10 @@ export function ShareDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="create" className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto">
+          <TabsContent
+            value="create"
+            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto"
+          >
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>

@@ -824,47 +824,53 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         .filter((field: any) => {
           // In read-only mode, skip fields with no value
           if (!isEdit) {
-            const val = field.caseField.type.type === "Steps"
-              ? getTestCaseSteps(testCase, selectedTemplateFields)
-              : testCase.fieldValues[field.caseField.displayName];
-            return val != null && val !== "" && !(Array.isArray(val) && val.length === 0);
+            const val =
+              field.caseField.type.type === "Steps"
+                ? getTestCaseSteps(testCase, selectedTemplateFields)
+                : testCase.fieldValues[field.caseField.displayName];
+            return (
+              val != null &&
+              val !== "" &&
+              !(Array.isArray(val) && val.length === 0)
+            );
           }
           return true;
         })
         .map((field: any) => {
-        const displayName = field.caseField.displayName;
-        const fieldId = field.caseField.id.toString();
-        const fieldType = field.caseField.type.type;
+          const displayName = field.caseField.displayName;
+          const fieldId = field.caseField.id.toString();
+          const fieldType = field.caseField.type.type;
 
-        const commonProps = {
-          fieldType,
-          caseId: `generated-${testCase.id}`,
-          template,
-          fieldId: field.caseField.id,
-          session,
-          projectId,
-          previousFieldValue: undefined,
-          fieldValue: testCase.fieldValues[displayName],
-          stepsForDisplay: fieldType === "Steps" ? stepsForDisplay : undefined,
-          explicitFieldNameForSteps:
-            fieldType === "Steps" ? fieldId : undefined,
-        } as const;
+          const commonProps = {
+            fieldType,
+            caseId: `generated-${testCase.id}`,
+            template,
+            fieldId: field.caseField.id,
+            session,
+            projectId,
+            previousFieldValue: undefined,
+            fieldValue: testCase.fieldValues[displayName],
+            stepsForDisplay:
+              fieldType === "Steps" ? stepsForDisplay : undefined,
+            explicitFieldNameForSteps:
+              fieldType === "Steps" ? fieldId : undefined,
+          } as const;
 
-        return (
-          <div key={`field-${field.caseField.id}`} className="space-y-2">
-            <div className="font-medium text-sm text-primary border-b border-muted-foreground/50 pb-1">
-              {displayName}
+          return (
+            <div key={`field-${field.caseField.id}`} className="space-y-2">
+              <div className="font-medium text-sm text-primary border-b border-muted-foreground/50 pb-1">
+                {displayName}
+              </div>
+              <FieldValueRenderer
+                {...commonProps}
+                isEditMode={isEdit}
+                isSubmitting={false}
+                control={control}
+                errors={errors}
+              />
             </div>
-            <FieldValueRenderer
-              {...commonProps}
-              isEditMode={isEdit}
-              isSubmitting={false}
-              control={control}
-              errors={errors}
-            />
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   );
 
