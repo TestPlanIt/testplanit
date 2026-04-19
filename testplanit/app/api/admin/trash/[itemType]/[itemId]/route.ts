@@ -235,7 +235,7 @@ export async function PATCH(
     });
 
     // Audit the restore operation
-    captureAuditEvent({
+    await captureAuditEvent({
       action: "UPDATE",
       entityType: modelMapEntry.modelName,
       entityId: String(idForQuery),
@@ -246,9 +246,7 @@ export async function PATCH(
       metadata: {
         operation: "restore_from_trash",
       },
-    }).catch((error) =>
-      console.error("[AuditLog] Failed to audit trash restore:", error)
-    );
+    });
 
     return NextResponse.json(restoredItem);
   } catch (error: any) {
@@ -379,7 +377,7 @@ export async function DELETE(
     await modelMapEntry.model.delete({ where: { id: idForQuery as any } }); // Use modelMapEntry.model
 
     // Audit the permanent delete (purge) operation
-    captureAuditEvent({
+    await captureAuditEvent({
       action: "DELETE",
       entityType: modelMapEntry.modelName,
       entityId: String(idForQuery),
@@ -391,9 +389,7 @@ export async function DELETE(
         operation: "permanent_delete",
         purgedFromTrash: true,
       },
-    }).catch((error) =>
-      console.error("[AuditLog] Failed to audit trash purge:", error)
-    );
+    });
 
     // If itemType is Attachments, delete from S3
     if (modelMapEntry.modelName === "Attachments" && (itemToPurge as any).url) {

@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit log the token creation
-    captureAuditEvent({
+    await captureAuditEvent({
       action: "API_KEY_CREATED",
       entityType: "ApiToken",
       entityId: apiToken.id,
@@ -81,9 +81,7 @@ export async function POST(request: NextRequest) {
         tokenPrefix: prefix,
         expiresAt: apiToken.expiresAt?.toISOString() || null,
       },
-    }).catch((error) =>
-      console.error("[AuditLog] Failed to audit API token creation:", error)
-    );
+    });
 
     // Return the token with the plaintext (only time it's ever shown)
     return NextResponse.json({

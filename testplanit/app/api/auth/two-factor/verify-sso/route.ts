@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     // Audit successful 2FA verification during SSO flow. The verification
     // code itself is NOT logged — only the verification method (totp or
     // recovery-code).
-    auditAuthEvent(
+    await auditAuthEvent(
       "TWO_FACTOR_VERIFIED",
       session.user.id,
       session.user.email ?? "",
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         provider: "sso",
         method: usedBackupCode ? "recovery-code" : "totp",
       }
-    ).catch(console.error);
+    );
 
     return NextResponse.json({
       success: true,

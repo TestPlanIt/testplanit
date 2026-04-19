@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         // repositoryCases writes are already audited via the extension hook;
         // this row captures the high-level resolution intent so reviewers can
         // reconstruct why the underlying rows changed.
-        captureAuditEvent({
+        await captureAuditEvent({
           action: "DUPLICATE_RESOLVED",
           entityType: "DuplicateScanResult",
           entityId: `${data.survivorId}:${data.victimId}`,
@@ -73,8 +73,6 @@ export async function POST(request: Request) {
             victimId: data.victimId,
             targetCaseIds: [data.survivorId, data.victimId],
           },
-        }).catch((error) => {
-          console.error("Failed to audit duplicate-scan resolution:", error);
         });
         return NextResponse.json({ action: "merge", ...result });
       }
@@ -86,7 +84,7 @@ export async function POST(request: Request) {
           data.projectId
         );
         // Audit the duplicate-scan resolution DECISION (D-12). See merge branch.
-        captureAuditEvent({
+        await captureAuditEvent({
           action: "DUPLICATE_RESOLVED",
           entityType: "DuplicateScanResult",
           entityId: `${data.caseAId}:${data.caseBId}`,
@@ -99,8 +97,6 @@ export async function POST(request: Request) {
             caseBId: data.caseBId,
             targetCaseIds: [data.caseAId, data.caseBId],
           },
-        }).catch((error) => {
-          console.error("Failed to audit duplicate-scan resolution:", error);
         });
         return NextResponse.json({ action: "link", ...result });
       }
@@ -113,7 +109,7 @@ export async function POST(request: Request) {
         // Audit the duplicate-scan resolution DECISION (D-12). "dismiss" is
         // the ignore-this-pair path -- no downstream case writes happen, so
         // this audit row is the only forensic trail for the decision.
-        captureAuditEvent({
+        await captureAuditEvent({
           action: "DUPLICATE_RESOLVED",
           entityType: "DuplicateScanResult",
           entityId: `${data.caseAId}:${data.caseBId}`,
@@ -126,8 +122,6 @@ export async function POST(request: Request) {
             caseBId: data.caseBId,
             targetCaseIds: [data.caseAId, data.caseBId],
           },
-        }).catch((error) => {
-          console.error("Failed to audit duplicate-scan resolution:", error);
         });
         return NextResponse.json({ action: "dismiss", ...result });
       }

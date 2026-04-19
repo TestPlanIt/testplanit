@@ -113,12 +113,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit the config change
-    auditSystemConfigChange(
+    await auditSystemConfigChange(
       "elasticsearch_replicas",
       oldValue,
       numberOfReplicas
-    ).catch((error) =>
-      console.error("[AuditLog] Failed to audit ES settings change:", error)
     );
 
     return NextResponse.json({ success: true, numberOfReplicas });

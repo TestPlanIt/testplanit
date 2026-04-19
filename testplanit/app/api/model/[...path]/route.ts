@@ -722,10 +722,10 @@ async function handler(
               },
             };
 
-            // Capture audit event asynchronously (don't block response)
-            captureAuditEvent(event).catch((error) => {
-              console.error("[AuditLog] Failed to capture audit event:", error);
-            });
+            // Capture audit event — helper is guaranteed not to throw (Phase 63).
+            // Awaiting ensures the event is enqueued before the response ships,
+            // which Next.js would otherwise drop via floating-promise handling.
+            await captureAuditEvent(event);
           }
         } catch (e) {
           // Don't let audit logging errors affect the response

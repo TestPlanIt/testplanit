@@ -47,14 +47,14 @@ export async function POST(
   await invalidateSessionUserCache(userId);
 
   // Audit event (per D-14, ENFORCE-06)
-  captureAuditEvent({
+  await captureAuditEvent({
     action: "FORCE_PASSWORD_CHANGE",
     entityType: "User",
     entityId: userId,
     entityName: targetUser.email ?? undefined,
     userId: session.user.id,
     metadata: { triggeredBy: session.user.id, scope: "individual" },
-  }).catch(console.error);
+  });
 
   return NextResponse.json({ success: true });
 }

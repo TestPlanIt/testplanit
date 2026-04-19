@@ -398,13 +398,11 @@ export async function POST(
 
     // Audit the bulk update
     if (result.casesUpdated > 0) {
-      auditBulkUpdate(
+      await auditBulkUpdate(
         "RepositoryCases",
         result.casesUpdated,
         { caseIds: validatedData.caseIds },
         projectId
-      ).catch((error) =>
-        console.error("[AuditLog] Failed to audit bulk edit:", error)
       );
     }
 

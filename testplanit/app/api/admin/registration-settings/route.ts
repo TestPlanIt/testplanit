@@ -123,13 +123,13 @@ export async function PATCH(request: NextRequest) {
     // Calculate diff and fire audit event only if something actually changed (per D-13)
     const diff = calculateDiff(oldSnapshot, newSnapshot);
     if (diff) {
-      captureAuditEvent({
+      await captureAuditEvent({
         action: "PASSWORD_POLICY_CHANGED",
         entityType: "RegistrationSettings",
         entityId: (currentSettings as Record<string, unknown>).id as string,
         userId: session.user.id,
         metadata: { diff },
-      }).catch(console.error);
+      });
     }
 
     return NextResponse.json({ success: true, settings: updated });

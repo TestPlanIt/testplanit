@@ -137,10 +137,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit successful logout
-    auditAuthEvent("LOGOUT", session.user.id, session.user.email || "", {
+    await auditAuthEvent("LOGOUT", session.user.id, session.user.email || "", {
       authMethod: user.authMethod,
       hasSsoAccounts: ssoAccounts.length > 0,
-    }).catch(console.error);
+    });
 
     // If we have SSO logout URLs, include them in the response
     if (logoutUrls.length > 0) {

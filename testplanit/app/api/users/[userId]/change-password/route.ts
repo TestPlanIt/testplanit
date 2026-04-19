@@ -93,12 +93,10 @@ export async function POST(
     await invalidateSessionUserCache(userId);
 
     // Audit the password change
-    auditPasswordChange(
+    await auditPasswordChange(
       userId,
       user.email || session.user.email || "",
       false
-    ).catch((error) =>
-      console.error("[AuditLog] Failed to audit password change:", error)
     );
 
     return NextResponse.json(

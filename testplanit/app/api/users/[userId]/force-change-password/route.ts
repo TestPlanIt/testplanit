@@ -87,7 +87,7 @@ export async function POST(
       where: { id: userId },
       select: { email: true },
     });
-    captureAuditEvent({
+    await captureAuditEvent({
       action: "FORCE_PASSWORD_CHANGE",
       entityType: "User",
       entityId: userId,
@@ -95,9 +95,7 @@ export async function POST(
       userId,
       userEmail: user?.email || session.user.email || "",
       metadata: { forced: true },
-    }).catch((error) =>
-      console.error("[AuditLog] Failed to audit forced password change:", error)
-    );
+    });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

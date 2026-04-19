@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest) {
   });
 
   // Single bulk audit event with count (per D-14, ENFORCE-06)
-  captureAuditEvent({
+  await captureAuditEvent({
     action: "FORCE_PASSWORD_CHANGE",
     entityType: "User",
     entityId: "bulk",
@@ -36,7 +36,7 @@ export async function POST(_request: NextRequest) {
       scope: "bulk",
       count: result.count,
     },
-  }).catch(console.error);
+  });
 
   return NextResponse.json({ success: true, count: result.count });
 }

@@ -120,11 +120,11 @@ export async function POST(
       // Audit failed share-link password attempt (brute-force signal per
       // D-05). The attempted password value is NOT logged — only the
       // mismatch signal.
-      auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
+      await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
         shareKey,
         success: false,
         reason: "password-mismatch",
-      }).catch(console.error);
+      });
 
       return NextResponse.json(
         {
@@ -139,10 +139,10 @@ export async function POST(
     clearPasswordAttempts(rateLimitId);
 
     // Audit successful share-link password verification.
-    auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
+    await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
       shareKey,
       success: true,
-    }).catch(console.error);
+    });
 
     // Return success (client will store this in sessionStorage)
     return NextResponse.json({

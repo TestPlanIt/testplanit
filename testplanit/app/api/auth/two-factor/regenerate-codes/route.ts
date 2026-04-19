@@ -74,14 +74,14 @@ export async function POST(request: NextRequest) {
 
     // Audit backup-code regeneration. The regenerated codes themselves
     // are NOT logged — only the count.
-    auditAuthEvent(
+    await auditAuthEvent(
       "TWO_FACTOR_CODES_REGENERATED",
       session.user.id,
       session.user.email ?? "",
       {
         count: plainCodes.length,
       }
-    ).catch(console.error);
+    );
 
     return NextResponse.json({
       success: true,

@@ -81,14 +81,14 @@ export async function POST(
   await invalidateSessionUserCache(userId);
 
   // Audit event (per D-15, ENFORCE-06)
-  captureAuditEvent({
+  await captureAuditEvent({
     action: "PASSWORD_REVOKED",
     entityType: "User",
     entityId: userId,
     entityName: targetUser.email ?? undefined,
     userId: session.user.id,
     metadata: { revokedBy: session.user.id },
-  }).catch(console.error);
+  });
 
   return NextResponse.json({ success: true });
 }

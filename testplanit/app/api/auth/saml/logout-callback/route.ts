@@ -93,10 +93,10 @@ export async function POST(request: NextRequest) {
       // the NameID. The `provider: "saml"` metadata is the meaningful
       // audit signal; identity would be added when assertion parsing is
       // wired up. See Phase 62 D-04.
-      auditAuthEvent("LOGOUT", null, "", {
+      await auditAuthEvent("LOGOUT", null, "", {
         provider: "saml",
         viaIdpCallback: true,
-      }).catch(console.error);
+      });
 
       return new Response(
         `

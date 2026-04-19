@@ -869,16 +869,16 @@ export async function POST(request: NextRequest) {
 
         // Audit the bulk import
         if (importedCount > 0) {
-          auditBulkCreate("RepositoryCases", importedCount, body.projectId, {
-            source:
-              body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
-            templateId: body.templateId,
-            importLocation: body.importLocation,
-          }).catch((error) =>
-            console.error(
-              "[AuditLog] Failed to audit repository import:",
-              error
-            )
+          await auditBulkCreate(
+            "RepositoryCases",
+            importedCount,
+            body.projectId,
+            {
+              source:
+                body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
+              templateId: body.templateId,
+              importLocation: body.importLocation,
+            }
           );
         }
 
