@@ -3697,9 +3697,12 @@ export function GenerateTestCasesWizard({
                           )}
 
                           {hasActiveIntegrations && (
-                            <TabsContent value="issue" className="mt-4">
+                            <TabsContent
+                              value="issue"
+                              className="mt-4 flex-1 flex flex-col min-h-0"
+                            >
                               {selectedIssue ? (
-                                <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                                <div className="border rounded-lg p-4 flex-1 min-h-0 overflow-y-auto">
                                   <div className="flex items-start justify-between mb-3">
                                     <div className="space-y-3 flex-1">
                                       {/* Header with issue key and external link */}
@@ -3787,7 +3790,7 @@ export function GenerateTestCasesWizard({
                                       onClick={() => setSelectedIssue(null)}
                                       className="ml-4"
                                     >
-                                      {tCommon("actions.change")}
+                                      {tCommon("cancel")}
                                     </Button>
                                   </div>
                                 </div>
@@ -5029,9 +5032,6 @@ function WizardProgress({
 
 // Component to handle expandable issue descriptions
 function IssueDescriptionText({ description }: { description: string }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const tCommon = useTranslations("common");
-
   const isHtml = description.includes("<") && description.includes(">");
 
   const renderDescription = (value: string, treatAsHtml: boolean) => {
@@ -5048,25 +5048,5 @@ function IssueDescriptionText({ description }: { description: string }) {
     );
   };
 
-  if (description.length <= 200) {
-    return renderDescription(description, isHtml);
-  }
-
-  const truncatedText = `${description.substring(0, 200)}...`;
-  const displayValue = isExpanded ? description : truncatedText;
-
-  return (
-    <div>
-      {renderDescription(displayValue, isHtml)}
-      <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="text-primary hover:text-primary/80 transition-colors ml-1 underline text-sm mt-2"
-      >
-        {isExpanded
-          ? tCommon("ui.clickToCollapse")
-          : tCommon("ui.clickToExpand")}
-      </button>
-    </div>
-  );
+  return renderDescription(description, isHtml);
 }

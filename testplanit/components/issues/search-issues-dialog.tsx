@@ -43,6 +43,7 @@ interface ExternalIssue {
     email: string;
   };
   _projectKey?: string; // Project key for multi-project badge (D-06)
+  _projectName?: string; // Full project name for display
 }
 
 type InternalIssue = {
@@ -317,6 +318,7 @@ export function SearchIssuesDialog({
               externalStatus: issue.status,
               isExternal: true,
               _projectKey: ip.externalProjectKey, // Per D-06: badge source
+              _projectName: ip.externalProjectName,
             })
           );
           return {
@@ -504,10 +506,11 @@ export function SearchIssuesDialog({
                       variant={
                         selectedProjectFilter === ip.id ? "default" : "outline"
                       }
-                      className="cursor-pointer"
+                      className="cursor-pointer max-w-40 truncate"
                       onClick={() => setSelectedProjectFilter(ip.id)}
+                      title={ip.externalProjectName || ip.externalProjectKey}
                     >
-                      {ip.externalProjectKey}
+                      {ip.externalProjectName || ip.externalProjectKey}
                     </Badge>
                   ))}
                 </div>
@@ -636,24 +639,34 @@ export function SearchIssuesDialog({
                                       ? issue.title
                                       : issue.name}
                                   </span>
-                                  {isAlreadyLinked && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs shrink-0"
-                                    >
-                                      {t("issues.alreadyLinked")}
-                                    </Badge>
-                                  )}
-                                  {/* Project-key badge for multi-project results (D-06) */}
-                                  {issue.isExternal &&
-                                    (issue as ExternalIssue)._projectKey && (
+                                  <span className="ml-auto flex items-center gap-2 shrink-0">
+                                    {isAlreadyLinked && (
                                       <Badge
-                                        variant="outline"
-                                        className="text-xs shrink-0"
+                                        variant="secondary"
+                                        className="text-xs"
                                       >
-                                        {(issue as ExternalIssue)._projectKey}
+                                        {t("issues.alreadyLinked")}
                                       </Badge>
                                     )}
+                                    {/* Project badge for multi-project results (D-06) */}
+                                    {issue.isExternal &&
+                                      (issue as ExternalIssue)._projectKey && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs max-w-24 inline-block overflow-hidden text-ellipsis whitespace-nowrap"
+                                          title={
+                                            (issue as ExternalIssue)
+                                              ._projectName ||
+                                            (issue as ExternalIssue)._projectKey
+                                          }
+                                        >
+                                          {(issue as ExternalIssue)
+                                            ._projectName ||
+                                            (issue as ExternalIssue)
+                                              ._projectKey}
+                                        </Badge>
+                                      )}
+                                  </span>
                                 </h4>
                               </div>
                               {issue.description && (
@@ -687,6 +700,8 @@ export function SearchIssuesDialog({
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  className="h-8 w-8 shrink-0 text-muted-foreground hover:opacity-50 cursor-pointer"
+                                  title={t("common.ui.issues.openInJira")}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     window.open(
