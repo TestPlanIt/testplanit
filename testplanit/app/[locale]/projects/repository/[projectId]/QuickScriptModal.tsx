@@ -573,6 +573,9 @@ export function QuickScriptModal({
           status: FileGenStatus,
           error?: string
         ) => {
+          // Don't update progress after cancel — prevents re-setting
+          // parallelProgress that the cancel handler already cleared
+          if (cancelledRef.current) return;
           const idx = fileProgressList.findIndex((f) => f.caseId === caseId);
           if (idx !== -1) {
             fileProgressList[idx] = {
