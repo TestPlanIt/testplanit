@@ -76,6 +76,7 @@ import {
   Bot,
   Check,
   ExternalLink,
+  Flame,
   Folder,
   GripVertical,
   LinkIcon,
@@ -1281,6 +1282,7 @@ export const getColumns = (
     comments: string;
     configuration: string;
     lastTestResult: string;
+    newBadge: string;
   },
   isRunMode: boolean = false,
   isSelectionMode: boolean = false,
@@ -1664,33 +1666,53 @@ export const getColumns = (
       size: 400,
       minSize: 100,
       maxSize: 1200,
-      cell: ({ row, column }) => (
-        <NameCell
-          name={row.original.name}
-          id={row.original.id}
-          projectId={row.original.projectId}
-          isRunMode={isRunMode}
-          isSelectionMode={isSelectionMode}
-          columnSize={column.getSize()}
-          onTestCaseClick={onTestCaseClick}
-          folder={
-            row.original.folder
-              ? {
-                  id: row.original.folder.id,
-                  name: row.original.folder.name,
-                  path: row.original.folder.name,
+      cell: ({ row, column }) => {
+        const isNew =
+          row.original.createdAt &&
+          Date.now() - new Date(row.original.createdAt).getTime() <
+            5 * 60 * 1000;
+        return (
+          <div className="flex items-center min-w-0">
+            {isNew && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Flame className="h-4 w-4 mr-1 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                  </TooltipTrigger>
+                  <TooltipContent>{columnTranslations.newBadge}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <div className="min-w-0 flex-1">
+              <NameCell
+                name={row.original.name}
+                id={row.original.id}
+                projectId={row.original.projectId}
+                isRunMode={isRunMode}
+                isSelectionMode={isSelectionMode}
+                columnSize={column.getSize()}
+                onTestCaseClick={onTestCaseClick}
+                folder={
+                  row.original.folder
+                    ? {
+                        id: row.original.folder.id,
+                        name: row.original.folder.name,
+                        path: row.original.folder.name,
+                      }
+                    : undefined
                 }
-              : undefined
-          }
-          viewType={viewType}
-          automated={row.original.automated}
-          canAddEditResults={canAddEditResults}
-          source={row.original.source}
-          isSoftDeletedInRun={isRunMode && row.original.isDeleted}
-          showDescendants={showDescendants}
-          folderPathMap={folderPathMap}
-        />
-      ),
+                viewType={viewType}
+                automated={row.original.automated}
+                canAddEditResults={canAddEditResults}
+                source={row.original.source}
+                isSoftDeletedInRun={isRunMode && row.original.isDeleted}
+                showDescendants={showDescendants}
+                folderPathMap={folderPathMap}
+              />
+            </div>
+          </div>
+        );
+      },
     },
     ...(isRunMode
       ? [
