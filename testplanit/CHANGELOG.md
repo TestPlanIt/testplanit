@@ -1,3 +1,9 @@
+## [0.22.1](https://github.com/TestPlanIt/testplanit/compare/v0.22.0...v0.22.1) (2026-04-19)
+
+### Bug Fixes
+
+* Bug fix batch for v0.22.1 ([#225](https://github.com/TestPlanIt/testplanit/issues/225)) ([ff68bb8](https://github.com/TestPlanIt/testplanit/commit/ff68bb83e08855c98d6da877988ce00d4246431b)), closes [#220](https://github.com/TestPlanIt/testplanit/issues/220) [#219](https://github.com/TestPlanIt/testplanit/issues/219) [#221](https://github.com/TestPlanIt/testplanit/issues/221) [#223](https://github.com/TestPlanIt/testplanit/issues/223)
+
 ## [0.22.0](https://github.com/TestPlanIt/testplanit/compare/v0.21.18...v0.22.0) (2026-04-18)
 
 ### Features
