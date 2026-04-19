@@ -1588,7 +1588,7 @@ export const getColumns = (
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+              <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>{field.displayName}</DialogTitle>
                   <DialogDescription className="sr-only">

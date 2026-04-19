@@ -3353,7 +3353,7 @@ export function GenerateTestCasesWizard({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5" />

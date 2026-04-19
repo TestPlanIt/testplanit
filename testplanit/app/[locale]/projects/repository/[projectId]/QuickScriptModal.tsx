@@ -743,7 +743,7 @@ export function QuickScriptModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          showPreview ? "sm:max-w-225 max-h-[95vh]" : "sm:max-w-125",
+          showPreview ? "sm:max-w-225 h-[95vh]" : "sm:max-w-125",
           "transition-all overflow-hidden"
         )}
         data-testid="quickscript-dialog"
