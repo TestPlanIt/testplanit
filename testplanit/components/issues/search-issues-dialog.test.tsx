@@ -446,13 +446,15 @@ describe("SearchIssuesDialog", () => {
       expect(badges.length).toBeGreaterThanOrEqual(2);
     });
 
-    it("renders project-key chips for each IntegrationProject (ABT and LIV)", () => {
+    it("renders project name chips for each IntegrationProject", () => {
       render(<SearchIssuesDialog {...defaultProps} />);
 
       const badges = screen.queryAllByTestId("badge");
       const badgeTexts = badges.map((b) => b.textContent);
-      expect(badgeTexts.some((t) => t?.includes("ABT"))).toBe(true);
-      expect(badgeTexts.some((t) => t?.includes("LIV"))).toBe(true);
+      expect(badgeTexts.some((t) => t?.includes("Allego Bug Tracking"))).toBe(
+        true
+      );
+      expect(badgeTexts.some((t) => t?.includes("LiveApps"))).toBe(true);
     });
 
     it("does NOT render filter chips when only 1 IntegrationProject exists", () => {
@@ -567,9 +569,11 @@ describe("SearchIssuesDialog", () => {
       await waitFor(() => {
         const badges = screen.queryAllByTestId("badge");
         const badgeTexts = badges.map((b) => b.textContent);
-        // Project-key badges should appear for ABT and LIV results
-        expect(badgeTexts.some((t) => t === "ABT")).toBe(true);
-        expect(badgeTexts.some((t) => t === "LIV")).toBe(true);
+        // Project name badges should appear for results
+        expect(badgeTexts.some((t) => t?.includes("Allego Bug Tracking"))).toBe(
+          true
+        );
+        expect(badgeTexts.some((t) => t?.includes("LiveApps"))).toBe(true);
       });
     });
 
