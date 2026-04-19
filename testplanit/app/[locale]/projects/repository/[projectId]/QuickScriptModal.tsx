@@ -773,7 +773,7 @@ export function QuickScriptModal({
             streamingCode={streamingCode}
             parallelProgress={parallelProgress}
             fileStreamingSnippets={fileStreamingSnippets}
-            onRetry={handleRetry}
+            onRetry={aiEnabled ? handleRetry : undefined}
             onCancel={handleCancelGeneration}
             onCancelFile={handleCancelFile}
             onDownload={handlePreviewDownload}

@@ -244,7 +244,13 @@ describe("ExportPreviewPane", () => {
       error: "AI generation failed: token limit exceeded",
     });
 
-    render(<ExportPreviewPane {...defaultProps} results={[result]} />);
+    render(
+      <ExportPreviewPane
+        {...defaultProps}
+        results={[result]}
+        onRetry={vi.fn()}
+      />
+    );
 
     // Error appears in the tooltip content rendered via our mock
     expect(
