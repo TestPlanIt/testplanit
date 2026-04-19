@@ -156,14 +156,18 @@ describe("upgrade-notifications", () => {
   });
 
   describe("notification messages as plain text", () => {
-    const stripHtml = (html: string) =>
-      html
-        .replace(/<[^>]*>/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+    const stripHtml = (html: string) => {
+      let result = html;
+      let prev;
+      do {
+        prev = result;
+        result = result.replace(/<[^>]*>/g, "");
+      } while (result !== prev);
+      return result.replace(/\s+/g, " ").trim();
+    };
 
     it("should produce non-empty plain text when HTML is stripped from messages", () => {
-      for (const [version, notification] of Object.entries(
+      for (const [_version, notification] of Object.entries(
         upgradeNotifications
       )) {
         const plainText = stripHtml(notification.message);

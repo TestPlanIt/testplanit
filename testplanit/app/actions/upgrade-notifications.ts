@@ -91,11 +91,16 @@ export async function checkUpgradeNotifications(): Promise<{
         : `What's New in TestPlanIt`;
 
     // Strip HTML tags for the plain text message field
-    const stripHtml = (html: string) =>
-      html
-        .replace(/<[^>]*>/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+    // Loop until no tags remain to handle nested/malformed tags (CodeQL CWE-20)
+    const stripHtml = (html: string) => {
+      let result = html;
+      let prev;
+      do {
+        prev = result;
+        result = result.replace(/<[^>]*>/g, "");
+      } while (result !== prev);
+      return result.replace(/\s+/g, " ").trim();
+    };
 
     let message: string;
     if (pendingNotifications.length === 1) {
