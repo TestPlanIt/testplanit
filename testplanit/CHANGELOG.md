@@ -1,3 +1,9 @@
+## [0.22.2](https://github.com/TestPlanIt/testplanit/compare/v0.22.1...v0.22.2) (2026-04-19)
+
+### Bug Fixes
+
+* **#217:** highlight recently added test cases ([#226](https://github.com/TestPlanIt/testplanit/issues/226)) ([62c11a3](https://github.com/TestPlanIt/testplanit/commit/62c11a3b6d4cc55c3c03a89858800ffba8a9a17b)), closes [#217](https://github.com/TestPlanIt/testplanit/issues/217) [#217](https://github.com/TestPlanIt/testplanit/issues/217)
+
 ## [0.22.1](https://github.com/TestPlanIt/testplanit/compare/v0.22.0...v0.22.1) (2026-04-19)
 
 ### Bug Fixes
