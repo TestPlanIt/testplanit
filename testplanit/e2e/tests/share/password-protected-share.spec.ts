@@ -376,21 +376,23 @@ test.describe("Password-Protected Share Flow", () => {
     const passwordModeRadio = page.getByTestId("share-mode-password");
     await passwordModeRadio.click();
 
-    // Enter mismatched passwords
+    // Enter mismatched passwords (strong enough to pass policy)
     const passwordInput = page.getByTestId("share-password-input");
-    await passwordInput.fill("Password123");
+    await passwordInput.fill("StrongPassword123!");
 
     const confirmPasswordInput = page.getByTestId(
       "share-confirm-password-input"
     );
-    await confirmPasswordInput.fill("DifferentPassword456");
+    await confirmPasswordInput.fill("DifferentPassword456!");
 
     // Try to create the share
     const createButton = page.getByTestId("share-create-button");
     await createButton.click();
 
-    // Should see validation error
-    const errorMessage = page.locator("text=/passwords do not match/i");
+    // Should see validation error (password mismatch or policy error)
+    const errorMessage = page.locator(
+      "text=/passwords do not match|password.*do not match/i"
+    );
     await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
 
     // Share should NOT be created

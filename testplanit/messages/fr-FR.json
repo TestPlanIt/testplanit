@@ -498,8 +498,9 @@
       "somethingWentWrong": "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
       "emailRequired": "Saisissez votre adresse e-mail.",
       "emailInvalid": "Ceci n'est pas une adresse e-mail valide.",
-      "passwordRequired": "Le mot de passe doit comporter au moins 4 caractères.",
+      "passwordRequired": "Un mot de passe est requis.",
       "confirmPasswordRequired": "Confirmez votre mot de passe.",
+      "passwordDoesNotMeetPolicy": "Le mot de passe ne répond pas aux exigences de sécurité.",
       "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
       "nameRequired": "Veuillez saisir votre nom complet",
       "duplicate": "Veuillez choisir un nom unique.",
@@ -891,8 +892,8 @@
       "signIn": "Connectez-vous à votre compte existant.",
       "errors": {
         "emailRequired": "L'adresse électronique est requise.",
-        "passwordRequired": "Le mot de passe doit comporter au moins 4 caractères.",
-        "confirmPasswordRequired": "Confirmez que le mot de passe doit comporter au moins 4 caractères.",
+        "passwordRequired": "Le mot de passe ne répond pas aux exigences de sécurité",
+        "confirmPasswordRequired": "Confirmer le mot de passe est requis",
         "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
         "domainRestricted": "L'inscription est réservée aux domaines de messagerie approuvés. Veuillez contacter votre administrateur si vous pensez qu'il s'agit d'une erreur."
       }
@@ -1606,7 +1607,7 @@
         "confirmPasswordLabel": "Confirmer le nouveau mot de passe",
         "validation": {
           "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas.",
-          "newPasswordTooShort": "Le nouveau mot de passe doit comporter au moins 4 caractères."
+          "newPasswordTooShort": "Le nouveau mot de passe ne répond pas aux exigences de sécurité."
         },
         "success": {
           "passwordChanged": "Mot de passe modifié avec succès."

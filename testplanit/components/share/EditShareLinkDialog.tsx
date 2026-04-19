@@ -26,8 +26,12 @@ import { format } from "date-fns";
 import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useUpdateShareLink } from "~/lib/hooks";
+import { useUpdateShareLink, useFindFirstRegistrationSettings } from "~/lib/hooks";
 import { cn } from "~/utils";
+import {
+  PasswordStrengthIndicator,
+  type PasswordPolicy,
+} from "@/components/PasswordStrengthIndicator";
 
 interface EditShareLinkDialogProps {
   open: boolean;
@@ -44,6 +48,16 @@ export function EditShareLinkDialog({
 }: EditShareLinkDialogProps) {
   const t = useTranslations("reports.shareDialog");
   const tCommon = useTranslations("common");
+  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+  const policy: PasswordPolicy | null = registrationSettings
+    ? {
+        minPasswordLength: registrationSettings.minPasswordLength ?? 8,
+        requireUppercase: registrationSettings.requireUppercase ?? false,
+        requireLowercase: registrationSettings.requireLowercase ?? false,
+        requireNumbers: registrationSettings.requireNumbers ?? false,
+        requiredSpecialChars: registrationSettings.requiredSpecialChars ?? null,
+      }
+    : null;
 
   // Form state
   const [mode, setMode] = useState<ShareLinkMode>(shareLink.mode);
@@ -94,13 +108,26 @@ export function EditShareLinkDialog({
         mode === "PASSWORD_PROTECTED" &&
         (modeChanged || !shareLink.passwordHash)
       ) {
-        if (!password || password.length < 4) {
-          setPasswordError("Password must be at least 4 characters long.");
+        if (!password) {
+          setPasswordError(tCommon("errors.passwordRequired"));
           return;
         }
-
+        const minLen = policy?.minPasswordLength ?? 8;
+        const meetsPolicy =
+          password.length >= minLen &&
+          (!policy?.requireUppercase || /[A-Z]/.test(password)) &&
+          (!policy?.requireLowercase || /[a-z]/.test(password)) &&
+          (!policy?.requireNumbers || /\d/.test(password)) &&
+          (!policy?.requiredSpecialChars ||
+            [...policy.requiredSpecialChars].some((c) =>
+              password.includes(c)
+            ));
+        if (!meetsPolicy) {
+          setPasswordError(tCommon("errors.passwordDoesNotMeetPolicy"));
+          return;
+        }
         if (password !== confirmPassword) {
-          setPasswordError("Passwords do not match.");
+          setPasswordError(tCommon("errors.passwordsDoNotMatch"));
           return;
         }
       }
@@ -293,6 +320,10 @@ export function EditShareLinkDialog({
                   }
                   required={modeChanged || !shareLink.passwordHash}
                   className={passwordError ? "border-destructive" : ""}
+                />
+                <PasswordStrengthIndicator
+                  password={password}
+                  policy={policy}
                 />
                 {passwordError && (
                   <p className="text-sm text-destructive">{passwordError}</p>

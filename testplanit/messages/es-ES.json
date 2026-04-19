@@ -498,8 +498,9 @@
       "somethingWentWrong": "Se ha producido un error inesperado. Inténtalo de nuevo más tarde.",
       "emailRequired": "Introduzca su dirección de correo electrónico.",
       "emailInvalid": "Esta no es una dirección de correo electrónico válida.",
-      "passwordRequired": "La contraseña debe tener al menos 4 caracteres.",
+      "passwordRequired": "Se requiere contraseña.",
       "confirmPasswordRequired": "Confirme su contraseña.",
+      "passwordDoesNotMeetPolicy": "La contraseña no cumple con los requisitos de seguridad.",
       "passwordsDoNotMatch": "Las contraseñas no coinciden",
       "nameRequired": "Por favor, introduzca su nombre completo",
       "duplicate": "Por favor, elija un nombre único.",
@@ -891,8 +892,8 @@
       "signIn": "Inicia sesión en tu cuenta existente.",
       "errors": {
         "emailRequired": "Se requiere correo electrónico",
-        "passwordRequired": "La contraseña debe tener al menos 4 caracteres",
-        "confirmPasswordRequired": "Confirmar contraseña debe tener al menos 4 caracteres",
+        "passwordRequired": "La contraseña no cumple con los requisitos de seguridad.",
+        "confirmPasswordRequired": "Se requiere confirmar la contraseña.",
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
         "domainRestricted": "El registro está restringido a dominios de correo electrónico aprobados. Si cree que se trata de un error, póngase en contacto con su administrador."
       }
@@ -1606,7 +1607,7 @@
         "confirmPasswordLabel": "Confirmar nueva contraseña",
         "validation": {
           "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden.",
-          "newPasswordTooShort": "La nueva contraseña debe tener al menos 4 caracteres."
+          "newPasswordTooShort": "La nueva contraseña no cumple con los requisitos de seguridad."
         },
         "success": {
           "passwordChanged": "Contraseña cambiada con éxito."

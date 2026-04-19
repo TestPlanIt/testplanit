@@ -123,9 +123,9 @@ test.describe("User Signup", () => {
 
     await page.getByRole("button", { name: /sign up/i }).click();
 
-    // Should show password length error - look for the actual message (using first() since both fields show the error)
+    // Should show password policy error
     await expect(
-      page.getByText(/password must be at least \d+ characters/i).first()
+      page.getByText(/password.*does not meet|security requirements/i).first()
     ).toBeVisible({ timeout: 5000 });
   });
 

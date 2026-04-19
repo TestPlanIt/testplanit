@@ -820,7 +820,18 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
 
   const renderFieldList = (isEdit: boolean) => (
     <div className="mt-3 border-t pt-3 space-y-4">
-      {selectedTemplateFields.map((field: any) => {
+      {selectedTemplateFields
+        .filter((field: any) => {
+          // In read-only mode, skip fields with no value
+          if (!isEdit) {
+            const val = field.caseField.type.type === "Steps"
+              ? getTestCaseSteps(testCase, selectedTemplateFields)
+              : testCase.fieldValues[field.caseField.displayName];
+            return val != null && val !== "" && !(Array.isArray(val) && val.length === 0);
+          }
+          return true;
+        })
+        .map((field: any) => {
         const displayName = field.caseField.displayName;
         const fieldId = field.caseField.id.toString();
         const fieldType = field.caseField.type.type;
