@@ -125,8 +125,9 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
   const isAuthRoute = pathname.startsWith("/api/auth/");
 
-  // Auth and health routes should pass through without any middleware processing
-  if (isAuthRoute || pathname === "/api/health") {
+  // Auth, health, and share routes should pass through without any middleware processing
+  const isShareRoute = pathname.startsWith("/api/share/");
+  if (isAuthRoute || isShareRoute || pathname === "/api/health") {
     return NextResponse.next();
   }
 
@@ -199,7 +200,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     }
 
     // Check if this is an external API request
-    if (isExternalApiRequest(request)) {
+    // Share API routes and internal shared-report fetches are exempt
+    const isShareBypass =
+      pathname.startsWith("/api/share/") ||
+      request.headers.get("x-shared-report-bypass") === "true";
+    if (!isShareBypass && isExternalApiRequest(request)) {
       // For external API requests, user must have isApi enabled
       if (!token.isApi) {
         return NextResponse.json(

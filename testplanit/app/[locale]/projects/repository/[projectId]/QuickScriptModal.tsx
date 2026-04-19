@@ -573,6 +573,9 @@ export function QuickScriptModal({
           status: FileGenStatus,
           error?: string
         ) => {
+          // Don't update progress after cancel — prevents re-setting
+          // parallelProgress that the cancel handler already cleared
+          if (cancelledRef.current) return;
           const idx = fileProgressList.findIndex((f) => f.caseId === caseId);
           if (idx !== -1) {
             fileProgressList[idx] = {
@@ -743,8 +746,8 @@ export function QuickScriptModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          showPreview ? "sm:max-w-225 max-h-[95vh]" : "sm:max-w-125",
-          "transition-all overflow-hidden"
+          showPreview ? "sm:max-w-225 h-[95vh]" : "sm:max-w-125",
+          "transition-all overflow-hidden flex flex-col"
         )}
         data-testid="quickscript-dialog"
       >
@@ -773,7 +776,7 @@ export function QuickScriptModal({
             streamingCode={streamingCode}
             parallelProgress={parallelProgress}
             fileStreamingSnippets={fileStreamingSnippets}
-            onRetry={handleRetry}
+            onRetry={aiEnabled ? handleRetry : undefined}
             onCancel={handleCancelGeneration}
             onCancelFile={handleCancelFile}
             onDownload={handlePreviewDownload}

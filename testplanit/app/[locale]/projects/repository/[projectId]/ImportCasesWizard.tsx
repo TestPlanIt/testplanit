@@ -1688,7 +1688,7 @@ export function ImportCasesWizard({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-3xl h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>
           <DialogDescription>
