@@ -80,6 +80,12 @@ const SENSITIVE_FIELDS = new Set([
   "token",
   "emailVerifToken",
   "credentials",
+  // 2FA secrets — encrypted TOTP and hashed backup codes must never surface
+  // in audit payloads. user.update goes through the unenhanced baseClient
+  // where @omit does not apply, so the allowlist is the only defense.
+  // (REVIEW CR-01, Phase 62.)
+  "twoFactorSecret",
+  "twoFactorBackupCodes",
 ]);
 
 /**
@@ -228,9 +234,14 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
   };
 
   try {
+    // BullMQ rejects `:` in custom job IDs. Entity IDs may legitimately
+    // contain `:` as a pair separator (e.g., DUPLICATE_RESOLVED uses
+    // `${caseAId}:${caseBId}`), so sanitize here rather than force every
+    // caller to pre-mangle their entity IDs.
+    const safeEntityId = String(event.entityId).replace(/:/g, "_");
     await queue.add("audit-event", jobData, {
       // Use entity ID for deduplication within short window
-      jobId: `${event.action}-${event.entityType}-${event.entityId}-${Date.now()}`,
+      jobId: `${event.action}-${event.entityType}-${safeEntityId}-${Date.now()}`,
     });
   } catch (error) {
     // Don't throw - audit logging should never block the main operation
