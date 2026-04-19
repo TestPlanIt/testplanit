@@ -1303,7 +1303,18 @@ export function GenerateTestCasesWizard({
   }, [open, sourceType, fetchRecentUrlJobs]);
 
   const [isImporting, setIsImporting] = useState(false);
+  const [showImportLoader, setShowImportLoader] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+
+  // Delay showing the import loader to avoid flashing for fast imports
+  useEffect(() => {
+    if (isImporting) {
+      const timer = setTimeout(() => setShowImportLoader(true), 800);
+      return () => clearTimeout(timer);
+    }
+    setShowImportLoader(false);
+  }, [isImporting]);
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [hasActiveIntegrations, setHasActiveIntegrations] = useState(false);
   const [hasActiveLlm, setHasActiveLlm] = useState(false);
@@ -3454,7 +3465,7 @@ export function GenerateTestCasesWizard({
               </div>
             ) : (
               <div className="space-y-6 pb-4">
-                {isImporting && (
+                {showImportLoader && (
                   <LoadingSpinnerAlert
                     message={t("generateTestCases.importing", {
                       count: selectedTestCases.size - importProgress,
