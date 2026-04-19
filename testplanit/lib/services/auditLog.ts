@@ -282,8 +282,25 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
       jobId: `${event.action}-${event.entityType}-${safeEntityId}-${Date.now()}`,
     });
   } catch (error) {
-    // Don't throw - audit logging should never block the main operation
-    console.error("[AuditLog] Failed to queue audit event:", error);
+    // Don't throw - audit logging should never block the main operation.
+    // Emit a structured payload so ops can diagnose enqueue failures
+    // without leaking sensitive values that BullMQ/Prisma errors may echo
+    // from serialized job payloads (defense-in-depth against CR-01 regressions).
+    const err = error instanceof Error ? error : new Error(String(error));
+    const rawMessage = err.message ?? "";
+    const redactedMessage = redactSensitiveInString(
+      rawMessage,
+      SENSITIVE_FIELDS
+    );
+    console.error("[AuditLog] Failed to queue audit event:", {
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      userId: event.userId ?? context?.userId ?? null,
+      requestId: context?.requestId ?? null,
+      errorName: err.name,
+      errorMessage: redactedMessage,
+    });
   }
 }
 
