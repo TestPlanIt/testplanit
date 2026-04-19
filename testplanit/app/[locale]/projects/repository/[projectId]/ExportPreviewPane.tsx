@@ -128,7 +128,7 @@ export function ExportPreviewPane({
     const totalCount = parallelProgress.length;
 
     return (
-      <div className="space-y-4 overflow-hidden w-full">
+      <div className="space-y-4 w-full min-h-0 flex flex-col">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {t("generatingParallelProgress", {
@@ -143,7 +143,7 @@ export function ExportPreviewPane({
           )}
         </div>
 
-        <div className="space-y-1.5 overflow-y-auto overflow-x-hidden">
+        <div className="space-y-1.5 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           {parallelProgress.map((file) => {
             const snippet = fileStreamingSnippets?.[file.caseId];
             return (
