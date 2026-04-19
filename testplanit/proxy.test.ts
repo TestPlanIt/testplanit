@@ -300,4 +300,76 @@ describe("External API Access Control", () => {
       expect(response.status).toBe(403);
     });
   });
+
+  describe("Share route exemption", () => {
+    it("should not apply API access control to /api/share routes (unauthenticated)", async () => {
+      mockGetToken.mockResolvedValue(null);
+
+      const request = createMockRequest("/api/share/abc123/report", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it("should not apply API access control to /api/share routes (authenticated non-API user)", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      const request = createMockRequest("/api/share/abc123/report", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it("should not apply API access control to /api/share metadata routes", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      const request = createMockRequest("/api/share/abc123", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it("should bypass external API check for requests with x-shared-report-bypass header", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      // Internal server-to-server fetch from share report route
+      // forwards user cookies but has no browser headers
+      const request = createMockRequest("/api/reports/automation-trends", {
+        "x-shared-report-bypass": "true",
+      });
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it("should still block non-share API routes without the bypass header", async () => {
+      mockGetToken.mockResolvedValue({
+        sub: "user-123",
+        access: "USER",
+        isApi: false,
+      });
+
+      const request = createMockRequest("/api/reports/automation-trends", {});
+
+      const response = await middlewareWithPreferences(request);
+
+      expect(response.status).toBe(403);
+    });
+  });
 });
