@@ -930,16 +930,11 @@ export async function POST(request: NextRequest) {
         // Audit the import
         const importedCount = caseOrder - 1;
         if (importedCount > 0) {
-          auditBulkCreate("JUnitTestResult", importedCount, projectId, {
+          await auditBulkCreate("JUnitTestResult", importedCount, projectId, {
             source: `${primaryFormat.toUpperCase()} Import`,
             testRunId,
             fileCount: files.length,
-          }).catch((error) =>
-            console.error(
-              "[AuditLog] Failed to audit test results import:",
-              error
-            )
-          );
+          });
         }
 
         // Advisory duplicate warnings — never blocks import

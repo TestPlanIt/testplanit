@@ -114,7 +114,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // testmoImportWorker at line 7079). Firing at enqueue time guarantees
     // forensic evidence remains even if the worker crashes or the job is
     // cancelled before the completion event lands.
-    captureAuditEvent({
+    await captureAuditEvent({
       action: "IMPORT_STARTED",
       entityType: "TestmoImportJob",
       entityId: jobId,
@@ -126,8 +126,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
         originalFileName: job.originalFileName,
         triggeredAt: new Date().toISOString(),
       },
-    }).catch((error) => {
-      console.error("Failed to audit Testmo import start:", error);
     });
 
     const payload = serializeImportJob(updatedJob);
