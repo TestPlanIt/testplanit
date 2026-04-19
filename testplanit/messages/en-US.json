@@ -498,8 +498,9 @@
       "somethingWentWrong": "An unexpected error occurred. Please try again later.",
       "emailRequired": "Enter your email address.",
       "emailInvalid": "This is not a valid email address.",
-      "passwordRequired": "Password must be at least 4 characters long.",
+      "passwordRequired": "Password is required.",
       "confirmPasswordRequired": "Confirm your password.",
+      "passwordDoesNotMeetPolicy": "Password does not meet the security requirements.",
       "passwordsDoNotMatch": "The passwords do not match",
       "nameRequired": "Please enter your full name",
       "duplicate": "Please choose a unique name.",
@@ -892,8 +893,8 @@
       "signIn": "Sign into your existing account.",
       "errors": {
         "emailRequired": "Email is required",
-        "passwordRequired": "Password must be at least 4 characters",
-        "confirmPasswordRequired": "Confirm password must be at least 4 characters",
+        "passwordRequired": "Password does not meet the security requirements",
+        "confirmPasswordRequired": "Confirm password is required",
         "passwordsDoNotMatch": "Passwords do not match",
         "domainRestricted": "Registration is restricted to approved email domains. Please contact your administrator if you believe this is an error."
       }
@@ -1608,7 +1609,7 @@
         "confirmPasswordLabel": "Confirm New Password",
         "validation": {
           "passwordsDoNotMatch": "New passwords do not match.",
-          "newPasswordTooShort": "New password must be at least 4 characters long."
+          "newPasswordTooShort": "New password does not meet the security requirements."
         },
         "success": {
           "passwordChanged": "Password changed successfully."

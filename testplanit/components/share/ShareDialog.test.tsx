@@ -27,6 +27,15 @@ vi.mock("~/lib/hooks", () => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
   }),
+  useFindFirstRegistrationSettings: () => ({
+    data: {
+      minPasswordLength: 8,
+      requireUppercase: false,
+      requireLowercase: false,
+      requireNumbers: false,
+      requiredSpecialChars: null,
+    },
+  }),
 }));
 
 // Mock server actions

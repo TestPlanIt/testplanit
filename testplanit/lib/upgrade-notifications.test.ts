@@ -154,4 +154,48 @@ describe("upgrade-notifications", () => {
       });
     });
   });
+
+  describe("notification messages as plain text", () => {
+    const stripHtml = (html: string) => {
+      let result = html;
+      let prev;
+      do {
+        prev = result;
+        result = result.replace(/<[^>]*>/g, "");
+      } while (result !== prev);
+      return result.replace(/\s+/g, " ").trim();
+    };
+
+    it("should produce non-empty plain text when HTML is stripped from messages", () => {
+      for (const [_version, notification] of Object.entries(
+        upgradeNotifications
+      )) {
+        const plainText = stripHtml(notification.message);
+        expect(plainText.length).toBeGreaterThan(0);
+        // Should not contain any HTML tags
+        expect(plainText).not.toMatch(/<[^>]*>/);
+      }
+    });
+
+    it("should not contain raw HTML entities after stripping", () => {
+      for (const [_version, notification] of Object.entries(
+        upgradeNotifications
+      )) {
+        const plainText = stripHtml(notification.message);
+        expect(plainText).not.toContain("<strong>");
+        expect(plainText).not.toContain("<p>");
+        expect(plainText).not.toContain("<ul>");
+        expect(plainText).not.toContain("<li>");
+      }
+    });
+
+    it("should preserve meaningful content after stripping HTML", () => {
+      // Test with a known notification that has HTML
+      const notification = upgradeNotifications["0.5.0"]; // Audit Logs has HTML
+      if (notification) {
+        const plainText = stripHtml(notification.message);
+        expect(plainText).toContain("audit");
+      }
+    });
+  });
 });

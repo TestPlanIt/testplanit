@@ -767,7 +767,7 @@ export function EditProjectModal({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px] h-[90vh] flex flex-col overflow-hidden">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
             <DialogHeader>
