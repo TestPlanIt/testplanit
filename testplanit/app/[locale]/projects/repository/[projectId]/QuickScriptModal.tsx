@@ -744,7 +744,7 @@ export function QuickScriptModal({
       <DialogContent
         className={cn(
           showPreview ? "sm:max-w-225 h-[95vh]" : "sm:max-w-125",
-          "transition-all overflow-hidden"
+          "transition-all overflow-hidden flex flex-col"
         )}
         data-testid="quickscript-dialog"
       >

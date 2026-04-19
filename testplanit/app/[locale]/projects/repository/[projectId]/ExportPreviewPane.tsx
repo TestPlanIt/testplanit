@@ -237,7 +237,7 @@ export function ExportPreviewPane({
   }
 
   return (
-    <div className="space-y-4 min-w-0">
+    <div className="space-y-4 min-w-0 min-h-0 overflow-y-auto">
       {/* Code display */}
       {results.length === 0 && hasStreamingContent ? (
         // Streaming first result — show full-width live code view
