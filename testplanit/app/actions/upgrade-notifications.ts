@@ -90,15 +90,22 @@ export async function checkUpgradeNotifications(): Promise<{
         ? pendingNotifications[0].notification.title
         : `What's New in TestPlanIt`;
 
+    // Strip HTML tags for the plain text message field
+    const stripHtml = (html: string) =>
+      html
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
     let message: string;
     if (pendingNotifications.length === 1) {
-      message = pendingNotifications[0].notification.message;
+      message = stripHtml(pendingNotifications[0].notification.message);
     } else {
       // Combine multiple notifications into a single message
       message = pendingNotifications
         .map(
           ({ version, notification }) =>
-            `**${notification.title}** (v${version})\n${notification.message}`
+            `**${notification.title}** (v${version})\n${stripHtml(notification.message)}`
         )
         .join("\n\n");
     }
