@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
@@ -13,7 +14,7 @@ import { authOptions } from "~/server/auth";
  * POST /api/auth/two-factor/regenerate-codes
  * Regenerate backup codes (requires current 2FA token)
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -94,4 +95,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

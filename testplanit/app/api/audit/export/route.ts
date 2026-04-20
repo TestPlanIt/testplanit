@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  extractAuditContextFromRequest,
-  runWithAuditContext,
-} from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditDataExport } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -12,7 +9,7 @@ import { getServerAuthSession } from "~/server/auth";
  * Log a data export event for audit tracking.
  * Called by client-side export functions after successful export.
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerAuthSession();
     if (!session?.user) {
@@ -29,19 +26,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Set up audit context
-    const auditContext = extractAuditContextFromRequest(request);
-    auditContext.userId = session.user.id;
-    auditContext.userEmail = session.user.email || undefined;
-    auditContext.userName = session.user.name || undefined;
-
-    await runWithAuditContext(auditContext, async () => {
-      await auditDataExport(exportType, entityType, {
-        recordCount,
-        filters,
-        projectId,
-        exportedBy: session.user.email,
-      });
+    // Phase 64 Plan 02: NextAuth session callback (Plan 01 Task 3) already
+    // enriched ALS with userId/userEmail/userName; withAuditContext seeded
+    // ipAddress/userAgent/requestId. No manual auditContext construction
+    // needed here — the audit helper reads ALS directly.
+    await auditDataExport(exportType, entityType, {
+      recordCount,
+      filters,
+      projectId,
+      exportedBy: session.user.email,
     });
 
     return NextResponse.json({ success: true });
@@ -52,4 +45,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

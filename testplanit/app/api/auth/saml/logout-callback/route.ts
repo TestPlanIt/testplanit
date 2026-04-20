@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 
-export async function GET(request: NextRequest) {
+export const GET = withAuditContext(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const samlResponse = searchParams.get("SAMLResponse");
@@ -47,9 +48,9 @@ export async function GET(request: NextRequest) {
       new URL("/signin?error=logout-callback-failed", request.url)
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   // Handle SAML logout requests initiated by the IdP (Single Logout)
   try {
     const body = await request.text();
@@ -125,4 +126,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

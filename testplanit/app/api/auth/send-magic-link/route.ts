@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 
@@ -13,7 +14,7 @@ import { auditAuthEvent } from "~/lib/services/auditLog";
  * - email: The email address to send the magic link to
  * - callbackUrl: Optional callback URL (defaults to home page)
  */
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const { email, callbackUrl = "/" } = body;
@@ -134,4 +135,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

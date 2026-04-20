@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { updatePasswordHistory } from "~/lib/password-history";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
 import { auditPasswordChange } from "~/lib/services/auditLog";
@@ -7,10 +8,10 @@ import { validatePasswordPolicy } from "~/lib/validate-password-policy";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
-export async function POST(
+export const POST = withAuditContext(async (
   request: NextRequest,
   context: { params: Promise<{ userId: string }> }
-) {
+) => {
   const routeParams = await context.params;
   const userId = routeParams.userId;
 
@@ -110,4 +111,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

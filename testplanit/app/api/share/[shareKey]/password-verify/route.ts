@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
   checkPasswordAttemptLimit,
@@ -19,10 +20,10 @@ export const dynamic = "force-dynamic";
  * Verify password for password-protected share link
  * Rate limited to prevent brute force attacks
  */
-export async function POST(
+export const POST = withAuditContext(async (
   req: NextRequest,
   { params }: { params: Promise<{ shareKey: string }> }
-) {
+) => {
   try {
     const { shareKey } = await params;
     const body = await req.json();
@@ -157,4 +158,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
@@ -14,7 +15,7 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
  * POST /api/auth/two-factor/enable-required
  * Verify the TOTP token and enable 2FA during forced setup flow
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { token, setupToken } = body;
@@ -127,4 +128,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
