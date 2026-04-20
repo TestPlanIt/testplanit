@@ -22,6 +22,25 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+// Phase 64 Plan 03: addToTestRun is wrapped in withActionAuditContext,
+// which calls `await headers()` from next/headers. Unit tests run outside
+// a Next.js request scope, so the real `headers()` throws. Hermetic mock
+// per the Plan 01 pattern (vi.hoisted + vi.mock).
+const headersMocks = vi.hoisted(() => ({
+  current: new Map<string, string>([
+    ["user-agent", "vitest-agent/1.0"],
+    ["x-forwarded-for", "10.0.0.1"],
+  ]),
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => {
+    return {
+      get: (key: string) => headersMocks.current.get(key.toLowerCase()) ?? null,
+    };
+  }),
+}));
+
 import { addToTestRun, getMaxOrderInTestRun } from "./test-run";
 
 describe("test-run actions", () => {

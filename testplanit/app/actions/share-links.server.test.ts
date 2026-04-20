@@ -1,4 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Phase 64 Plan 03: auditShareLinkCreation and revokeShareLink are
+// wrapped in withActionAuditContext, which calls `await headers()` from
+// next/headers. Unit tests run outside a Next.js request scope, so the
+// real `headers()` throws. Hermetic mock per the Plan 01 pattern
+// (vi.hoisted + vi.mock). prepareShareLinkData remains unwrapped, so it
+// does not exercise the next/headers path — but mocking is harmless.
+const headersMocks = vi.hoisted(() => ({
+  current: new Map<string, string>([
+    ["user-agent", "vitest-agent/1.0"],
+    ["x-forwarded-for", "10.0.0.1"],
+  ]),
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => {
+    return {
+      get: (key: string) => headersMocks.current.get(key.toLowerCase()) ?? null,
+    };
+  }),
+}));
+
 import {
   auditShareLinkCreation,
   prepareShareLinkData,
