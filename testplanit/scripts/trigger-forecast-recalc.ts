@@ -1,3 +1,4 @@
+import { enqueueWithAuditContext } from "../lib/auditContextWrappers";
 import { getAllTenantIds, isMultiTenantMode } from "../lib/multiTenantPrisma";
 import { getForecastQueue } from "../lib/queues";
 import { JOB_UPDATE_ALL_CASES } from "../workers/forecastWorker";
@@ -15,7 +16,12 @@ async function triggerForecastRecalculation() {
     const tenantIds = isMultiTenantMode() ? getAllTenantIds() : [undefined];
     console.log("Queueing forecast recalculation job...");
     for (const tenantId of tenantIds) {
-      const job = await forecastQueue.add(JOB_UPDATE_ALL_CASES, { tenantId });
+      const job = await enqueueWithAuditContext(
+        forecastQueue,
+        JOB_UPDATE_ALL_CASES,
+        { tenantId },
+        { systemReason: "scheduled:forecast-recalc" }
+      );
       console.log(
         `✓ Successfully queued forecast recalculation job: ${job.id}${tenantId ? ` for tenant ${tenantId}` : ""}`
       );

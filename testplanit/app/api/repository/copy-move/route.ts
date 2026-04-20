@@ -1,14 +1,23 @@
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  enqueueWithAuditContext,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { submitSchema } from "./schemas";
 
-export async function POST(request: Request) {
+// Phase 64 Plan 04 Rule 3: wrapped with withAuditContext so
+// enqueueWithAuditContext below has an ALS frame. copyMoveWorker emits
+// audit events at L778 / L796; this wrapper propagates the user's
+// actorContext onto the job so the worker's ALS re-population attributes
+// those audits to the originating user.
+export const POST = withAuditContext(async (request: NextRequest) => {
   // 1. Auth
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -227,7 +236,7 @@ export async function POST(request: Request) {
       folderTree: body.folderTree,
     };
 
-    const job = await queue.add("copy-move", jobData);
+    const job = await enqueueWithAuditContext(queue, "copy-move", jobData);
 
     // 13. Return jobId
     return NextResponse.json({ jobId: job.id });
@@ -238,4 +247,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

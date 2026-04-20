@@ -123,22 +123,20 @@ export type ActorContextJobData<T> = T & {
  *
  * Per Phase 64 D-08 / D-14 / W5.
  */
-export function enqueueWithAuditContext<T extends Record<string, unknown>>(
+export function enqueueWithAuditContext<T extends object>(
   queue: Queue,
   name: string,
   data: T,
   opts?: JobsOptions,
 ): Promise<Job<ActorContextJobData<T>>>;
-export function enqueueWithAuditContext<T extends Record<string, unknown>>(
+export function enqueueWithAuditContext<T extends object>(
   queue: Queue,
   name: string,
   data: T,
   systemOpts: EnqueueSystemOptions,
   opts?: JobsOptions,
 ): Promise<Job<ActorContextJobData<T>>>;
-export async function enqueueWithAuditContext<
-  T extends Record<string, unknown>,
->(
+export async function enqueueWithAuditContext<T extends object>(
   queue: Queue,
   name: string,
   data: T,

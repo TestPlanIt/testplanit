@@ -24,6 +24,7 @@ import {
   validateMultiTenantJobData,
   type MultiTenantJobData,
 } from "../lib/multiTenantPrisma";
+import { enqueueWithAuditContext } from "../lib/auditContextWrappers";
 import {
   getElasticsearchReindexQueue,
   TESTMO_IMPORT_QUEUE_NAME,
@@ -7106,7 +7107,13 @@ async function processImportMode(
           userId: importJob.createdById,
           tenantId,
         };
-        await elasticsearchReindexQueue.add(
+        // Phase 64 D-11 / Plan 04 Pattern G: worker-to-worker fan-out.
+        // Task 3 wraps this processor in runWithAuditContext(
+        // job.data.actorContext, ...), so ALS is populated at enqueue-time
+        // here and the upstream user's (or upstream systemReason) rides
+        // along automatically. No systemReason passed — inherit from upstream.
+        await enqueueWithAuditContext(
+          elasticsearchReindexQueue,
           `reindex-after-import-${jobId}`,
           reindexJobData
         );

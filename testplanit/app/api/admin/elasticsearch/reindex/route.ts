@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import {
+  enqueueWithAuditContext,
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { ReindexJobData } from "~/workers/elasticsearchReindexWorker";
@@ -27,6 +32,12 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
+    // Phase 64 B1 / Plan 02 pattern: enrich ALS with Bearer-token identity.
+    // authenticateApiToken returns only userId (no email/name), so pass
+    // userId alone; email/name are filled elsewhere (e.g. session path).
+    if (apiAuth.userId) {
+      enrichFromApiAuth({ userId: apiAuth.userId });
+    }
   }
 
   if (!userId) {
@@ -55,7 +66,10 @@ async function checkAdminAuth(
   return { userId };
 }
 
-export async function POST(request: NextRequest) {
+// Phase 64 Plan 04 Rule 3: wrapped with withAuditContext so
+// enqueueWithAuditContext below has an ALS frame (user context propagates
+// to the elasticsearchReindexWorker via job.data.actorContext per D-11).
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -94,7 +108,11 @@ export async function POST(request: NextRequest) {
       tenantId: getCurrentTenantId(),
     };
 
-    const job = await elasticsearchReindexQueue.add("reindex", jobData);
+    const job = await enqueueWithAuditContext(
+      elasticsearchReindexQueue,
+      "reindex",
+      jobData
+    );
 
     return NextResponse.json({
       success: true,
@@ -108,10 +126,10 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // GET endpoint to check Elasticsearch status
-export async function GET(request: NextRequest) {
+export const GET = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -182,4 +200,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

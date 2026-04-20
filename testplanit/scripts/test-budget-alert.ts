@@ -13,6 +13,7 @@
  */
 
 import { Queue } from "bullmq";
+import { enqueueWithAuditContext } from "../lib/auditContextWrappers";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
 
@@ -35,9 +36,12 @@ async function main() {
     connection: valkeyConnection as any,
   });
 
-  const job = await queue.add(BUDGET_ALERT_JOB_CHECK, {
-    llmIntegrationId: integrationId,
-  });
+  const job = await enqueueWithAuditContext(
+    queue,
+    BUDGET_ALERT_JOB_CHECK,
+    { llmIntegrationId: integrationId },
+    { systemReason: "scheduled:budget-alert-check" }
+  );
 
   console.log(
     `Enqueued budget check job ${job.id} for integration ${integrationId}`

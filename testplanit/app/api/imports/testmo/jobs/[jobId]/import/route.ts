@@ -1,7 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { withAuditContext } from "~/lib/auditContextWrappers";
+import {
+  enqueueWithAuditContext,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -73,7 +76,8 @@ export const POST = withAuditContext(async (request: NextRequest, context: Route
 
     const testmoImportQueue = getQueue();
 
-    const queuedJob = await testmoImportQueue.add(
+    const queuedJob = await enqueueWithAuditContext(
+      testmoImportQueue,
       JOB_PROCESS_TESTMO_IMPORT,
       {
         jobId,

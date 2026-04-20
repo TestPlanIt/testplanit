@@ -1,3 +1,4 @@
+import { enqueueWithAuditContext } from "../lib/auditContextWrappers";
 import { getAllTenantIds, isMultiTenantMode } from "../lib/multiTenantPrisma";
 import { getForecastQueue } from "../lib/queues";
 import { JOB_MILESTONE_DUE_NOTIFICATIONS } from "../workers/forecastWorker";
@@ -15,9 +16,12 @@ async function triggerMilestoneNotifications() {
     const tenantIds = isMultiTenantMode() ? getAllTenantIds() : [undefined];
     console.log("Queueing milestone due notifications job...");
     for (const tenantId of tenantIds) {
-      const job = await forecastQueue.add(JOB_MILESTONE_DUE_NOTIFICATIONS, {
-        tenantId,
-      });
+      const job = await enqueueWithAuditContext(
+        forecastQueue,
+        JOB_MILESTONE_DUE_NOTIFICATIONS,
+        { tenantId },
+        { systemReason: "scheduled:milestone-due-notifications" }
+      );
       console.log(
         `✓ Successfully queued milestone notifications job: ${job.id}${tenantId ? ` for tenant ${tenantId}` : ""}`
       );
