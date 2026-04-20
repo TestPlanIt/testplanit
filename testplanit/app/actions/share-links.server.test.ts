@@ -570,21 +570,11 @@ describe("share-links server actions", () => {
         },
       );
 
-      // Reset + re-issue the session mock (mockReset above nukes it).
-      vi.mocked(getServerSession).mockImplementation(async () => {
-        updateAuditContext({
-          userId: "user-ctx02",
-          userEmail: "ctx02@example.com",
-          userName: "CTX02 User",
-        });
-        return {
-          user: {
-            id: "user-ctx02",
-            email: "ctx02@example.com",
-            name: "CTX02 User",
-          },
-        } as any;
-      });
+      // WR-05: Previously this block re-issued the getServerSession mock
+      // with the rationale "mockReset above nukes it" — but the mockReset
+      // on L558 is against prisma.auditLog.create, not getServerSession.
+      // The beforeEach at L511-529 remains the single source of session
+      // mocking for this describe block.
 
       await auditShareLinkCreation(mockShareLink);
 
