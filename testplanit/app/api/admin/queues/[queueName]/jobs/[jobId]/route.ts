@@ -4,6 +4,10 @@ import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -27,6 +31,12 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
+    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
+    // requests — explicitly enrich ALS with resolved identity so downstream
+    // audit emissions carry complete user context.
+    if (apiAuth.userId) {
+      enrichFromApiAuth({ userId: apiAuth.userId });
+    }
   }
 
   if (!userId) {
@@ -199,10 +209,10 @@ async function removeJob(
 }
 
 // GET: Get detailed information about a specific job
-export async function GET(
+export const GET = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ queueName: string; jobId: string }> }
-) {
+) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -253,13 +263,13 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 // POST: Perform actions on a specific job (retry, promote)
-export async function POST(
+export const POST = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ queueName: string; jobId: string }> }
-) {
+) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -350,13 +360,13 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE: Remove a specific job
-export async function DELETE(
+export const DELETE = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ queueName: string; jobId: string }> }
-) {
+) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -415,4 +425,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

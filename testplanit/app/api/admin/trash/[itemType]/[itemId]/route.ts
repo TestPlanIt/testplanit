@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -26,6 +30,12 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
+    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
+    // requests — explicitly enrich ALS with resolved identity so downstream
+    // audit emissions carry complete user context.
+    if (apiAuth.userId) {
+      enrichFromApiAuth({ userId: apiAuth.userId });
+    }
   }
 
   if (!userId) {
@@ -150,10 +160,10 @@ const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
 };
 
 // PATCH handler for restoring an item (setting isDeleted = false)
-export async function PATCH(
+export const PATCH = withAuditContext(async (
   request: NextRequest,
   context: { params: Promise<{ itemType: string; itemId: string }> }
-) {
+) => {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -266,13 +276,13 @@ export async function PATCH(
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE handler for purging an item (hard delete)
-export async function DELETE(
+export const DELETE = withAuditContext(async (
   request: NextRequest,
   context: { params: Promise<{ itemType: string; itemId: string }> }
-) {
+) => {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -455,4 +465,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

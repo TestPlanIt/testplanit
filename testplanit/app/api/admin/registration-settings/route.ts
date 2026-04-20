@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { calculateDiff, captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -16,7 +17,7 @@ const POLICY_FIELDS = [
   "lockoutDurationMinutes",
 ] as const;
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withAuditContext(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -140,4 +141,4 @@ export async function PATCH(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

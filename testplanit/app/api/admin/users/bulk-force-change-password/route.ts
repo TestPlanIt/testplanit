@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
-export async function POST(_request: NextRequest) {
+export const POST = withAuditContext(async (_request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,4 +40,4 @@ export async function POST(_request: NextRequest) {
   });
 
   return NextResponse.json({ success: true, count: result.count });
-}
+});
