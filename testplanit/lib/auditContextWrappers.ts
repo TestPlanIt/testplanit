@@ -154,14 +154,20 @@ export async function enqueueWithAuditContext<T extends object>(
     : (optsOrSystem as JobsOptions | undefined);
 
   const alsContext = getAuditContext();
+  // WR-01: empty strings are "present but empty", which is just as
+  // invalid as absent. Compare explicitly against null/undefined AND ""
+  // so a future refactor that defaults a field to "" does not silently
+  // flip a user-attributed event into the system branch.
+  const isPresent = (value: unknown): boolean =>
+    typeof value === "string" && value.length > 0;
   const hasAlsIdentity = Boolean(
     alsContext &&
-      (alsContext.userId ||
-        alsContext.userEmail ||
-        alsContext.userName ||
-        alsContext.ipAddress ||
-        alsContext.userAgent ||
-        alsContext.requestId),
+      (isPresent(alsContext.userId) ||
+        isPresent(alsContext.userEmail) ||
+        isPresent(alsContext.userName) ||
+        isPresent(alsContext.ipAddress) ||
+        isPresent(alsContext.userAgent) ||
+        isPresent(alsContext.requestId)),
   );
 
   let payload: ActorContextJobData<T>;

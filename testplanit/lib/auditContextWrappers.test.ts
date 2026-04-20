@@ -202,6 +202,62 @@ describe("enqueueWithAuditContext", () => {
     expect(queue.add).not.toHaveBeenCalled();
   });
 
+  it("throws when ALS contains only empty-string fields and no systemReason (WR-01 hardening)", async () => {
+    const queue = makeQueueMock();
+    const emptyCtx: AuditContext = {
+      userId: "",
+      userEmail: "",
+      userName: "",
+      ipAddress: "",
+      userAgent: "",
+      requestId: "",
+    };
+
+    await expect(
+      runWithAuditContext(emptyCtx, async () => {
+        await enqueueWithAuditContext(
+          queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
+          "job-empty-strings",
+          { foo: "bar" },
+        );
+      }),
+    ).rejects.toThrow(/no audit context present/);
+
+    expect(queue.add).not.toHaveBeenCalled();
+  });
+
+  it("does NOT misattribute when ALS has a populated userId but empty ipAddress (WR-01 future-refactor guard)", async () => {
+    const queue = makeQueueMock();
+    const ctx: AuditContext = {
+      userId: "u-real",
+      userEmail: "real@example.com",
+      userName: "Real User",
+      ipAddress: "", // future-refactor scenario: extractIpAddress defaulted to ""
+      userAgent: "UA/real",
+      requestId: "req_real_1",
+    };
+
+    await runWithAuditContext(ctx, async () => {
+      await enqueueWithAuditContext(
+        queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
+        "job-mixed",
+        { foo: "bar" },
+      );
+    });
+
+    expect(queue.add).toHaveBeenCalledTimes(1);
+    const [, payload] = queue.add.mock.calls[0];
+    // The user is real, so user-attribution wins (the empty ipAddress is
+    // faithfully carried through — we do NOT rewrite it, we just do not
+    // let it alone flip the branch). The job payload reflects the
+    // actual ALS state; consumers / expectAuditRowComplete catch the
+    // incomplete ipAddress downstream via WR-03.
+    expect((payload as Record<string, unknown>).actorContext).toMatchObject({
+      userId: "u-real",
+      ipAddress: "",
+    });
+  });
+
   it("stamps __system__ with systemReason embedded in actorContext when ALS is empty", async () => {
     const queue = makeQueueMock();
 
