@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expectAuditRowComplete } from "../testing/auditAssertions";
 import {
   auditAuthEvent,
   auditBulkCreate,
@@ -19,6 +20,67 @@ import {
   extractEntityName,
   type AuditEvent,
 } from "./auditLog";
+
+/**
+ * D-18 standing-discipline helper for this file. Builds a synthetic
+ * audit row from the jobData (event + context) that BullMQ receives,
+ * then runs expectAuditRowComplete on it. Every happy-path test that
+ * exercises captureAuditEvent or its callers invokes this helper on
+ * the last queued jobData, matching the SC#4 enforcement pattern
+ * (Plan 05 Task 3 / W3 closure).
+ */
+function expectLastQueuedRowComplete(
+  mockQueueAdd: ReturnType<typeof vi.fn>,
+  opts?: { allowSystem?: boolean },
+): void {
+  const calls = mockQueueAdd.mock.calls;
+  expect(calls.length).toBeGreaterThan(0);
+  const jobData = calls[calls.length - 1][1] as {
+    event: AuditEvent;
+    context: Record<string, unknown> | null;
+  };
+  const ev = jobData.event;
+  const ctx = jobData.context ?? {};
+  expectAuditRowComplete(
+    {
+      userId:
+        (ev.userId as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userId as string | null | undefined) ??
+        null,
+      userEmail:
+        (ev.userEmail as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userEmail as
+          | string
+          | null
+          | undefined) ??
+        null,
+      userName:
+        (ev.userName as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userName as
+          | string
+          | null
+          | undefined) ??
+        null,
+      ipAddress:
+        ((ctx as Record<string, unknown>).ipAddress as
+          | string
+          | null
+          | undefined) ?? null,
+      userAgent:
+        ((ctx as Record<string, unknown>).userAgent as
+          | string
+          | null
+          | undefined) ?? null,
+      requestId:
+        ((ctx as Record<string, unknown>).requestId as
+          | string
+          | null
+          | undefined) ?? null,
+      metadata: ev.metadata ?? null,
+    },
+    opts,
+  );
+}
 
 // Mock the queue (IN-07 fold-in: hoisted so the factory closure captures the
 // mock before any helper code runs — prevents leaking to real Valkey/DB).
@@ -46,6 +108,10 @@ const auditContextMocks = vi.hoisted(() => ({
 
 vi.mock("../auditContext", () => ({
   getAuditContext: vi.fn(() => auditContextMocks.currentContext),
+  // Re-export the sentinel so the D-18 enforcement helper (which
+  // imports SYSTEM_ACTOR_ID from ~/lib/auditContext) works inside this
+  // file's fully-mocked module graph.
+  SYSTEM_ACTOR_ID: "__system__",
 }));
 
 // Mock multi-tenant
@@ -249,6 +315,8 @@ describe("AuditLog Service", () => {
           jobId: expect.stringMatching(/^CREATE-RepositoryCases-123-\d+$/),
         })
       );
+      // D-18: assert complete actor context on the queued row (SC#4).
+      expectLastQueuedRowComplete(mocks.mockQueue.add);
     });
 
     it("should log warning when queue is not available", async () => {
@@ -580,6 +648,8 @@ describe("AuditLog Service", () => {
         }),
         expect.any(Object)
       );
+      // D-18 standing enforcement
+      expectLastQueuedRowComplete(mocks.mockQueue.add);
     });
   });
 

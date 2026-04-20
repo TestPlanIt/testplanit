@@ -1,6 +1,43 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expectAuditRowComplete } from "../lib/testing/auditAssertions";
 import type { AuditLogJobData } from "../lib/services/auditLog";
+
+/**
+ * D-18 standing enforcement helper. Reconstructs an AuditRowLike from
+ * the latest prisma.auditLog.create call and asserts the six actor
+ * fields via expectAuditRowComplete. The worker flattens
+ * ipAddress/userAgent/requestId into metadata; this helper lifts them
+ * back to the row's top level for the completeness assertion.
+ */
+function expectLastCreatedAuditRowComplete(
+  createMock: ReturnType<typeof vi.fn>,
+  opts?: { allowSystem?: boolean },
+): void {
+  const calls = createMock.mock.calls;
+  expect(calls.length).toBeGreaterThan(0);
+  const args = calls[calls.length - 1][0] as {
+    data: {
+      userId: string | null;
+      userEmail: string | null;
+      userName: string | null;
+      metadata: Record<string, unknown> | null | undefined;
+    };
+  };
+  const md = (args.data.metadata ?? {}) as Record<string, unknown>;
+  expectAuditRowComplete(
+    {
+      userId: args.data.userId,
+      userEmail: args.data.userEmail,
+      userName: args.data.userName,
+      ipAddress: (md.ipAddress as string | null | undefined) ?? null,
+      userAgent: (md.userAgent as string | null | undefined) ?? null,
+      requestId: (md.requestId as string | null | undefined) ?? null,
+      metadata: md,
+    },
+    opts,
+  );
+}
 
 // Create mock prisma instance
 const mockPrisma = {
@@ -90,6 +127,8 @@ describe("AuditLogWorker", () => {
           projectId: 1,
         },
       });
+      // D-18 standing enforcement (SC#4): six actor fields on persisted row.
+      expectLastCreatedAuditRowComplete(mockPrisma.auditLog.create);
     });
 
     it("should create an audit log entry for an UPDATE action with changes", async () => {
