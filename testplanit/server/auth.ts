@@ -20,6 +20,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
+import { updateAuditContext } from "~/lib/auditContext";
 import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
@@ -362,6 +363,21 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
+          // Phase 64 D-03: enrich audit-context ALS frame with resolved
+          // identity so every downstream audit emission in this request
+          // picks up userId/userEmail/userName without per-route
+          // boilerplate. No-op when the request is not wrapped in
+          // withAuditContext / withActionAuditContext (Bearer-token routes
+          // handle enrichment themselves — see Plan 02 via
+          // enrichFromApiAuth). Placed AFTER the SECURITY-03
+          // invalidation short-circuit so we never enrich a session that
+          // will be thrown away.
+          updateAuditContext({
+            userId: session.user.id,
+            userEmail: session.user.email ?? undefined,
+            userName: session.user.name ?? undefined,
+          });
+
           // Expose mustChangePasswordReason from JWT in session for UI display
           (session as any).mustChangePasswordReason =
             token.mustChangePasswordReason;
@@ -687,6 +703,21 @@ export const authOptions: NextAuthOptions = {
             return {} as Session;
           }
         }
+
+        // Phase 64 D-03: enrich audit-context ALS frame with resolved
+        // identity so every downstream audit emission in this request
+        // picks up userId/userEmail/userName without per-route
+        // boilerplate. No-op when the request is not wrapped in
+        // withAuditContext / withActionAuditContext (Bearer-token routes
+        // handle enrichment themselves — see Plan 02 via
+        // enrichFromApiAuth). Placed AFTER the SECURITY-03
+        // invalidation short-circuit so we never enrich a session that
+        // will be thrown away.
+        updateAuditContext({
+          userId: session.user.id,
+          userEmail: session.user.email ?? undefined,
+          userName: session.user.name ?? undefined,
+        });
 
         // Expose mustChangePasswordReason from JWT in session for UI display
         (session as any).mustChangePasswordReason =
