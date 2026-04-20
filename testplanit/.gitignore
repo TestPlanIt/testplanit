@@ -63,3 +63,7 @@ e2e/test-results/
 
 # DB backups
 backups/
+
+# Phase 64 — audit-route migration inventories (local-only, regenerated on demand)
+app/api/.audit-route-inventory.txt
+app/api/.bearer-token-audit-inventory.txt
