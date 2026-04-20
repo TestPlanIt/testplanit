@@ -469,11 +469,15 @@ describe("POST /api/share/[shareKey]", () => {
       userName: createArgs.data.userName,
       ipAddress: (md.ipAddress as string | null | undefined) ?? null,
       userAgent: (md.userAgent as string | null | undefined) ?? null,
-      // Legacy share-access route is not yet withAuditContext-wrapped,
-      // so it has no requestId. Synthesize one for the assertion —
-      // this test's SCOPE is D-18 identity completeness on the
-      // authenticated path. A future plan that wraps this route will
-      // let us remove the synthesis.
+      // TODO(CTX-FOLLOWUP-WR04): The share/[shareKey]/route.ts POST handler
+      // is not yet withAuditContext-wrapped (Phase 64 CR-01 covered sync
+      // routes; share-access routes are deferred). Until that route is
+      // wrapped, this test synthesizes a requestId to satisfy
+      // expectAuditRowComplete's requestId non-null guard. When a future
+      // phase wraps share/[shareKey]/route.ts, remove the synthesis and
+      // read requestId from the real ALS-populated metadata. This test's
+      // current SCOPE is D-18 identity completeness on the authenticated
+      // path only.
       requestId: "req-synthesized-for-legacy-route",
       metadata: md,
     });
