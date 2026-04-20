@@ -262,8 +262,32 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
 
   const context = getAuditContext() || null;
 
+  // Phase 64 W5 Option A: merge systemReason from ALS into event.metadata.
+  // When a job was enqueued with `{ systemReason: "scheduled:..." }`, the
+  // enqueue helper embeds it in actorContext. Worker bodies re-establish
+  // the ALS frame via `runWithAuditContext(job.data.actorContext, ...)`,
+  // so it flows here as context.systemReason. Merging into event.metadata
+  // ensures the persisted AuditLog row surfaces the reason for downstream
+  // filtering/reporting (and makes D-17 `expectAuditRowComplete(row,
+  // { allowSystem: true })` pass). Caller-explicit event.metadata.systemReason
+  // wins over ALS to preserve intent when both are present.
+  const existingMetadata = event.metadata;
+  const alsSystemReason = context?.systemReason;
+  const mergedMetadata: Record<string, unknown> | undefined = alsSystemReason
+    ? {
+        ...(existingMetadata ?? {}),
+        systemReason:
+          (existingMetadata?.systemReason as string | undefined) ??
+          alsSystemReason,
+      }
+    : existingMetadata;
+  const eventWithMergedMetadata: AuditEvent =
+    mergedMetadata === existingMetadata
+      ? event
+      : { ...event, metadata: mergedMetadata };
+
   const jobData: AuditLogJobData = {
-    event,
+    event: eventWithMergedMetadata,
     context,
     queuedAt: new Date().toISOString(),
     // Include tenantId for multi-tenant support

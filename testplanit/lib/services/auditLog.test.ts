@@ -385,6 +385,80 @@ describe("AuditLog Service", () => {
         requestId: "req-default",
       };
     });
+
+    it("captureAuditEvent merges context.systemReason into event.metadata when present", async () => {
+      // Override ALS mock to include systemReason (Phase 64 W5 Option A).
+      auditContextMocks.currentContext = {
+        userId: "__system__",
+        userEmail: "",
+        userName: "",
+        ipAddress: "",
+        userAgent: "",
+        requestId: "req-scheduled-1",
+        systemReason: "scheduled:test-rollup",
+      } as unknown as typeof auditContextMocks.currentContext;
+
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c1",
+        // event.metadata omitted on purpose
+      });
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({
+        systemReason: "scheduled:test-rollup",
+      });
+
+      // Restore default context
+      auditContextMocks.currentContext = {
+        userId: "context-user-123",
+        userEmail: "context@example.com",
+        userName: "Context User",
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
+        requestId: "req-default",
+      };
+    });
+
+    it("captureAuditEvent preserves caller-explicit metadata.systemReason over ALS", async () => {
+      // Caller-explicit event.metadata.systemReason must win (Phase 64 W5).
+      auditContextMocks.currentContext = {
+        userId: "__system__",
+        userEmail: "",
+        userName: "",
+        ipAddress: "",
+        userAgent: "",
+        requestId: "req-scheduled-2",
+        systemReason: "scheduled:als-value",
+      } as unknown as typeof auditContextMocks.currentContext;
+
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-2" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c1",
+        metadata: { systemReason: "explicit:event-value" },
+      });
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata.systemReason).toBe("explicit:event-value");
+
+      // Restore default context
+      auditContextMocks.currentContext = {
+        userId: "context-user-123",
+        userEmail: "context@example.com",
+        userName: "Context User",
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
+        requestId: "req-default",
+      };
+    });
   });
 
   describe("captureAuditEvent tenantId handling", () => {
