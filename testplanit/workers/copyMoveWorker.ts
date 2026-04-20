@@ -1,5 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
+import { runWithAuditContext } from "../lib/auditContext";
+import type { ActorContextJobData } from "../lib/auditContextWrappers";
 import {
   disconnectAllTenantClients,
   getPrismaClientForJob,
@@ -16,7 +18,7 @@ import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSyn
 
 // ─── Job data / result types ────────────────────────────────────────────────
 
-export interface CopyMoveJobData extends MultiTenantJobData {
+interface CopyMoveJobDataCore extends MultiTenantJobData {
   operation: "copy" | "move";
   caseIds: number[];
   sourceProjectId: number;
@@ -30,6 +32,10 @@ export interface CopyMoveJobData extends MultiTenantJobData {
   targetDefaultWorkflowStateId: number;
   folderTree?: FolderTreeNode[];
 }
+
+// Phase 64 D-10: payload now carries actorContext so the worker ALS frame
+// can be re-established in the processor body.
+export type CopyMoveJobData = ActorContextJobData<CopyMoveJobDataCore>;
 
 export interface CopyMoveJobResult {
   copiedCount: number;
@@ -268,9 +274,14 @@ async function fetchTemplateFields(
 
 // ─── Processor ──────────────────────────────────────────────────────────────
 
+// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// downstream captureAuditEvent calls at L778 / L796 pick up the originating
+// user's context. systemReason (if upstream was system-stamped) rides along
+// via W5 Option A — no per-worker systemReason handling.
 const processor = async (
   job: Job<CopyMoveJobData>
-): Promise<CopyMoveJobResult> => {
+): Promise<CopyMoveJobResult> =>
+  runWithAuditContext(job.data.actorContext ?? {}, async () => {
   console.log(
     `Processing copy-move job ${job.id}: ${job.data.operation} ${job.data.caseIds.length} cases` +
       ` from project ${job.data.sourceProjectId} to ${job.data.targetProjectId}` +
@@ -840,7 +851,7 @@ const processor = async (
   }
 
   return result;
-};
+  });
 
 // ─── Worker setup ────────────────────────────────────────────────────────────
 

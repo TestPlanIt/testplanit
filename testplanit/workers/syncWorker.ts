@@ -1,5 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
+import { runWithAuditContext } from "../lib/auditContext";
+import type { ActorContextJobData } from "../lib/auditContextWrappers";
 import {
   SyncJobData,
   syncService,
@@ -15,10 +17,17 @@ import { SYNC_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import valkeyConnection from "../lib/valkey";
 
-// Extend SyncJobData with multi-tenant support
-interface MultiTenantSyncJobData extends SyncJobData, MultiTenantJobData {}
+// Extend SyncJobData with multi-tenant + actor-context support (Phase 64 D-10)
+interface MultiTenantSyncJobData
+  extends ActorContextJobData<SyncJobData>,
+    MultiTenantJobData {}
 
-const processor = async (job: Job) => {
+// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// downstream captureAuditEvent calls in this processor pick up the
+// originating user's context (or the systemReason for scheduled jobs, via
+// W5 Option A — no per-worker systemReason handling needed).
+const processor = async (job: Job<MultiTenantSyncJobData>) =>
+  runWithAuditContext(job.data.actorContext ?? {}, async () => {
   console.log(
     `Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
   );
@@ -190,7 +199,7 @@ const processor = async (job: Job) => {
     default:
       throw new Error(`Unknown job type: ${job.name}`);
   }
-};
+  });
 
 let worker: Worker | null = null;
 

@@ -1,5 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
+import { runWithAuditContext } from "../lib/auditContext";
+import type { ActorContextJobData } from "../lib/auditContextWrappers";
 import {
   disconnectAllTenantClients,
   getPrismaClientForJob,
@@ -26,13 +28,28 @@ interface _UpdateAllCasesJobData extends MultiTenantJobData {
   // No additional fields required for this job type
 }
 
+// Phase 64 D-10: every forecast job carries an actorContext injected by
+// enqueueWithAuditContext so the worker can re-establish the ALS frame.
+// Kept as an interface extension (rather than a strict generic) so the
+// existing discriminated cast to UpdateSingleCaseJobData inside the switch
+// continues to type-check. All job variants share the MultiTenantJobData
+// base (tenantId) plus the actorContext field.
+interface ForecastJobDataBase extends MultiTenantJobData {
+  actorContext?: ActorContextJobData<unknown>["actorContext"];
+}
+
 // Define job names for clarity and export them for the scheduler
 export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
 export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 
-const processor = async (job: Job) => {
+// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// downstream captureAuditEvent calls in this processor pick up the
+// originating user's context (or the systemReason for scheduled jobs, via
+// W5 Option A — no per-worker systemReason handling needed).
+const processor = async (job: Job<ForecastJobDataBase>) =>
+  runWithAuditContext(job.data.actorContext ?? {}, async () => {
   console.log(
     `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
   );
@@ -420,7 +437,7 @@ const processor = async (job: Job) => {
   }
 
   return { status: "completed", successCount, failCount }; // Return summary
-};
+  });
 
 async function startWorker() {
   // Log multi-tenant mode status

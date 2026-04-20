@@ -24,7 +24,11 @@ import {
   validateMultiTenantJobData,
   type MultiTenantJobData,
 } from "../lib/multiTenantPrisma";
-import { enqueueWithAuditContext } from "../lib/auditContextWrappers";
+import { runWithAuditContext } from "../lib/auditContext";
+import {
+  enqueueWithAuditContext,
+  type ActorContextJobData,
+} from "../lib/auditContextWrappers";
 import {
   getElasticsearchReindexQueue,
   TESTMO_IMPORT_QUEUE_NAME,
@@ -7179,9 +7183,22 @@ async function processImportMode(
 
 type TestmoQueueMode = "analyze" | "import";
 
-async function processor(
-  job: Job<{ jobId: string; mode?: TestmoQueueMode } & MultiTenantJobData>
-) {
+type TestmoImportJobData = ActorContextJobData<
+  { jobId: string; mode?: TestmoQueueMode } & MultiTenantJobData
+>;
+
+// Phase 64 D-10: public processor re-establishes the ALS frame from
+// job.data.actorContext so downstream captureAuditEvent calls (L7079
+// IMPORT_COMPLETED / BULK_CREATE) and the elasticsearch fan-out at L7109
+// pick up the originating user's context. systemReason rides along via
+// W5 Option A — no per-worker handling.
+async function processor(job: Job<TestmoImportJobData>) {
+  return runWithAuditContext(job.data.actorContext ?? {}, () =>
+    processorInner(job)
+  );
+}
+
+async function processorInner(job: Job<TestmoImportJobData>) {
   const { jobId, mode = "analyze" } = job.data;
 
   if (!jobId) {
