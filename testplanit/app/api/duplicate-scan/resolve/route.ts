@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authOptions } from "~/server/auth";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   dismissPair,
@@ -30,7 +32,7 @@ const resolveSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export async function POST(request: Request) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -133,4 +135,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -25,7 +26,7 @@ function getQueue() {
   return queue;
 }
 
-export async function POST(request: NextRequest, context: RouteContext) {
+export const POST = withAuditContext(async (request: NextRequest, context: RouteContext) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -138,4 +139,4 @@ export async function POST(request: NextRequest, context: RouteContext) {
       { status: 500 }
     );
   }
-}
+});

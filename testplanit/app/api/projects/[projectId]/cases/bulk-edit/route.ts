@@ -2,6 +2,7 @@ import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -65,10 +66,10 @@ const bulkEditSchema = z.object({
 
 type BulkEditRequest = z.infer<typeof bulkEditSchema>;
 
-export async function POST(
+export const POST = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -424,7 +425,7 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
 
 // Helper function to apply search/replace to TipTap JSON content
 function applySearchReplace(

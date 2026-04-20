@@ -2,11 +2,13 @@ import type { AuditAction } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
-import { extractIpAddress, setAuditContext } from "~/lib/auditContext";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
@@ -136,15 +138,19 @@ async function getPrisma() {
     userName = currentApiAuth.name;
   }
 
-  // Set audit context for this request
-  const headersList = await headers();
-  setAuditContext({
-    userId: userId,
-    userEmail: userEmail,
-    userName: userName,
-    ipAddress: extractIpAddress(headersList as unknown as Headers),
-    userAgent: headersList.get("user-agent") || undefined,
-  });
+  // Phase 64 D-01/B1: withAuditContext (below) already established an ALS
+  // frame with ipAddress/userAgent/requestId from the request headers.
+  // For Bearer-authed requests the NextAuth session callback does NOT fire,
+  // so enrich identity here explicitly. For session-authed requests the
+  // callback already ran — enrichFromApiAuth is idempotent on the same ALS
+  // frame.
+  if (userId) {
+    enrichFromApiAuth({
+      userId: userId,
+      userEmail: userEmail,
+      userName: userName,
+    });
+  }
 
   let user;
   if (userId) {
@@ -234,8 +240,9 @@ function injectUserFields(
   return newBody;
 }
 
-// Wrapper to add cache-control headers, API token auth, and audit logging
-async function handler(
+// Inner handler. Exports below wrap this with `withAuditContext` per HTTP
+// verb so each export carries its own ALS frame for audit correlation (D-01).
+async function innerHandler(
   req: NextRequest,
   context: { params: Promise<{ path: string[] }> }
 ) {
@@ -738,10 +745,11 @@ async function handler(
   });
 }
 
-export {
-  handler as DELETE,
-  handler as GET,
-  handler as PATCH,
-  handler as POST,
-  handler as PUT,
-};
+// Per Phase 64 D-01: every exported HTTP verb is wrapped with withAuditContext
+// so each handler invocation establishes its own ALS frame before any code path
+// (including the Bearer-token branch inside innerHandler) can emit audit events.
+export const GET = withAuditContext(innerHandler);
+export const POST = withAuditContext(innerHandler);
+export const PUT = withAuditContext(innerHandler);
+export const PATCH = withAuditContext(innerHandler);
+export const DELETE = withAuditContext(innerHandler);
