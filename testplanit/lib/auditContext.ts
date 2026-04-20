@@ -18,7 +18,27 @@ export interface AuditContext {
   userEmail?: string;
   /** Authenticated user name (set after auth) */
   userName?: string;
+  /**
+   * Reason string stamped when a job/event has no originating human actor
+   * (scheduled jobs, worker-to-worker fan-outs, infrastructure tasks).
+   * Phase 64 D-14 / W5 Option A: propagated via the ALS frame so downstream
+   * captureAuditEvent merges it into event.metadata automatically.
+   */
+  systemReason?: string;
 }
+
+/**
+ * Sentinel userId for audit events that have no originating human actor
+ * (scheduled jobs, worker-to-worker fan-outs, infrastructure tasks).
+ *
+ * Per Phase 64 D-12 / D-13: no schema migration is introduced — this
+ * string literal lives in the existing userId column. Queries that
+ * exclude system-initiated events use `WHERE "userId" <> '__system__'`.
+ */
+export const SYSTEM_ACTOR_ID = "__system__" as const;
+
+/** Type-level alias for code that must branch on system-vs-human actors. */
+export type SystemActor = typeof SYSTEM_ACTOR_ID;
 
 /**
  * AsyncLocalStorage instance for audit context.
