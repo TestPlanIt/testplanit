@@ -170,7 +170,8 @@ describe("Admin Elasticsearch Reindex Route", () => {
           entityType: "repositoryCases",
           projectId: 42,
           userId: "admin-user-1",
-        })
+        }),
+        undefined
       );
     });
 
@@ -187,7 +188,8 @@ describe("Admin Elasticsearch Reindex Route", () => {
 
       expect(mockQueue.add).toHaveBeenCalledWith(
         "reindex",
-        expect.objectContaining({ entityType: "all" })
+        expect.objectContaining({ entityType: "all" }),
+        undefined
       );
     });
   });

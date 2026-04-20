@@ -47,6 +47,7 @@ describe("API Token Creation Endpoint", () => {
   const createRequest = (body: any): NextRequest => {
     return {
       json: async () => body,
+      headers: new Headers(),
     } as NextRequest;
   };
 

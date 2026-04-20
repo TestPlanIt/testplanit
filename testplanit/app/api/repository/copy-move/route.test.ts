@@ -373,7 +373,8 @@ describe("POST /api/repository/copy-move", () => {
     );
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
-      expect.objectContaining({ targetRepositoryId: 200 })
+      expect.objectContaining({ targetRepositoryId: 200 }),
+      undefined
     );
   });
 
@@ -385,7 +386,8 @@ describe("POST /api/repository/copy-move", () => {
     expect(res.status).toBe(200);
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
-      expect.objectContaining({ targetDefaultWorkflowStateId: 100 })
+      expect.objectContaining({ targetDefaultWorkflowStateId: 100 }),
+      undefined
     );
   });
 
@@ -397,7 +399,8 @@ describe("POST /api/repository/copy-move", () => {
     expect(res.status).toBe(200);
     expect(mockQueueAdd).toHaveBeenCalledWith(
       "copy-move",
-      expect.objectContaining({ targetTemplateId: 10 })
+      expect.objectContaining({ targetTemplateId: 10 }),
+      undefined
     );
   });
 
@@ -422,7 +425,8 @@ describe("POST /api/repository/copy-move", () => {
         targetRepositoryId: 200,
         targetDefaultWorkflowStateId: 100,
         targetTemplateId: 10,
-      })
+      }),
+      undefined
     );
   });
 
