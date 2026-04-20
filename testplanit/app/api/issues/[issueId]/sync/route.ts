@@ -2,12 +2,13 @@ import { syncService } from "@/lib/integrations/services/SyncService";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
 
-export async function POST(
+export const POST = withAuditContext(async (
   req: NextRequest,
   { params }: { params: Promise<{ issueId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -121,4 +122,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
