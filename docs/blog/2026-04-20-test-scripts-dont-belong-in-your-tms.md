@@ -6,6 +6,11 @@ authors: [bdermanouelian]
 tags: [best-practices, thought-leadership]
 ---
 
+<figure>
+  <img src="/img/blog/manage-cases-separate-from-scripts.png" alt="Manage test cases separately from test scripts" />
+  <figcaption>Keep test cases in your TMS and test scripts in your source repository.</figcaption>
+</figure>
+
 If you've evaluated a test management tool lately, you've seen this pitch: "Generate automated tests inside the tool." "Codeless automation — no scripting required." "AI-powered test creation."
 
 And honestly? The pitch lands. One system, one login, one place to look. For a small team on a greenfield project, it even works for a while.
