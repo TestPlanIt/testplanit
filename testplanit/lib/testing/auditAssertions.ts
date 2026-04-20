@@ -46,11 +46,22 @@ export function expectAuditRowComplete(
     expect(row.metadata).toMatchObject({ systemReason: expect.any(String) });
     return;
   }
+  // WR-03: reject undefined as well as null. D-17 intent is "complete
+  // actor context"; a missing (undefined) field is just as incomplete as
+  // an explicit null. Pre-hardening, a test forgetting to populate a
+  // field on the synthetic row shape would pass silently because
+  // expect(undefined).not.toBeNull() is truthy.
+  expect(row.userId).toBeDefined();
   expect(row.userId).not.toBeNull();
   expect(row.userId).not.toBe(SYSTEM_ACTOR_ID);
+  expect(row.userEmail).toBeDefined();
   expect(row.userEmail).not.toBeNull();
+  expect(row.userName).toBeDefined();
   expect(row.userName).not.toBeNull();
+  expect(row.ipAddress).toBeDefined();
   expect(row.ipAddress).not.toBeNull();
+  expect(row.userAgent).toBeDefined();
   expect(row.userAgent).not.toBeNull();
+  expect(row.requestId).toBeDefined();
   expect(row.requestId).not.toBeNull();
 }

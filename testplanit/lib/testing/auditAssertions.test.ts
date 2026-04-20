@@ -112,3 +112,35 @@ describe("expectAuditRowComplete", () => {
     ).toThrow();
   });
 });
+
+describe("expectAuditRowComplete — WR-03 undefined rejection", () => {
+  it("throws when userId is undefined", () => {
+    const row = makeAuditRow({ userId: undefined });
+    expect(() => expectAuditRowComplete(row)).toThrow();
+  });
+
+  it("throws when userEmail is undefined", () => {
+    const row = makeAuditRow({ userEmail: undefined });
+    expect(() => expectAuditRowComplete(row)).toThrow();
+  });
+
+  it("throws when userName is undefined", () => {
+    const row = makeAuditRow({ userName: undefined });
+    expect(() => expectAuditRowComplete(row)).toThrow();
+  });
+
+  it("throws when ipAddress is undefined", () => {
+    const row = makeAuditRow({ ipAddress: undefined });
+    expect(() => expectAuditRowComplete(row)).toThrow();
+  });
+
+  it("throws when userAgent is undefined", () => {
+    const row = makeAuditRow({ userAgent: undefined });
+    expect(() => expectAuditRowComplete(row)).toThrow();
+  });
+
+  it("throws when requestId is undefined", () => {
+    const row = makeAuditRow({ requestId: undefined });
+    expect(() => expectAuditRowComplete(row)).toThrow();
+  });
+});
