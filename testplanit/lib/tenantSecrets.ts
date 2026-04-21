@@ -142,33 +142,42 @@ export async function getTenantEncryptionKey(tenantId: string): Promise<string> 
     process.env.TENANT_SECRETS_CACHE_TTL_MS || String(DEFAULT_TTL_MS),
     10
   );
-  const cached = keyCache.get(tenantId);
+  // Key on namespace+tenantId so a runtime change to TENANT_SECRETS_NAMESPACE
+  // (rare, but happens in tests) never serves a stale value from the old
+  // namespace. Namespace is stable in a deployed pod, so in practice this is
+  // equivalent to keying on tenantId alone.
+  const namespace = await resolveNamespace();
+  const cacheKey = `${namespace}:${tenantId}`;
+
+  const cached = keyCache.get(cacheKey);
   if (cached && Date.now() - cached.fetchedAt < ttl) {
     return cached.value;
   }
 
   // Dedupe concurrent cache misses for the same tenant — N jobs arriving
   // together after pod start / TTL expiry should trigger one API call, not N.
-  const existing = inFlight.get(tenantId);
+  const existing = inFlight.get(cacheKey);
   if (existing) return existing;
 
   const promise = fetchEncryptionKey(tenantId)
     .then((value) => {
-      keyCache.set(tenantId, { value, fetchedAt: Date.now() });
+      keyCache.set(cacheKey, { value, fetchedAt: Date.now() });
       return value;
     })
     .finally(() => {
-      inFlight.delete(tenantId);
+      inFlight.delete(cacheKey);
     });
-  inFlight.set(tenantId, promise);
+  inFlight.set(cacheKey, promise);
   return promise;
 }
 
-// Exported for tests.
+// Exported for tests only. _resetForTests no-ops in production so an
+// accidental import from runtime code can't flush the cache.
 export const __internals = {
   extractEncryptionKey,
   resolveSecretName,
   _resetForTests: () => {
+    if (process.env.NODE_ENV === "production") return;
     keyCache.clear();
     inFlight.clear();
   },

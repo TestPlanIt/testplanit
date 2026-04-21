@@ -1,6 +1,12 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { isMultiTenantMode } from "./multiTenantPrisma";
 import { getTenantEncryptionKey } from "./tenantSecrets";
+
+// Duplicated from lib/multiTenantPrisma.ts (source of truth) so this module
+// stays free of the Prisma transitive dep. The check is a one-line env read
+// and only used for a warning log here.
+function isMultiTenantMode(): boolean {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
 
 // Per-job tenant context for the shared multi-tenant worker. The app pods
 // always run with ENCRYPTION_KEY in their own env, but a shared worker

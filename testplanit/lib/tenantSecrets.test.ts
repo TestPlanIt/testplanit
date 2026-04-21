@@ -13,21 +13,26 @@ const fsFiles: Record<string, string | Buffer> = {
     "fake-ca-bytes"
   ),
 };
-vi.mock("fs", () => ({
-  promises: {
+// Vitest's ESM resolution for `import { promises as fs } from "fs"` requires
+// the mock to expose a default export too, so we return both shapes.
+vi.mock("fs", () => {
+  const promises = {
     readFile: vi.fn(async (p: string) => {
       if (!(p in fsFiles)) throw new Error(`unexpected readFile: ${p}`);
       return fsFiles[p];
     }),
-  },
-}));
+  };
+  return { default: { promises }, promises };
+});
 
 import { __internals, getTenantEncryptionKey } from "./tenantSecrets";
 
 const { extractEncryptionKey, resolveSecretName, _resetForTests } = __internals;
 
 // Simulates https.request: invokes the callback with a mock response whose
-// body is the stringified JSON we want to return.
+// body is the stringified JSON we want to return. Response events are
+// emitted synchronously inside req.end() so dedupe assertions don't depend
+// on microtask/nextTick ordering.
 function queueKubeResponse(body: unknown, statusCode = 200) {
   httpsRequestMock.mockImplementationOnce((_opts: any, cb: any) => {
     const res = new EventEmitter() as any;
@@ -35,10 +40,8 @@ function queueKubeResponse(body: unknown, statusCode = 200) {
     const req = new EventEmitter() as any;
     req.end = () => {
       cb(res);
-      process.nextTick(() => {
-        res.emit("data", Buffer.from(JSON.stringify(body)));
-        res.emit("end");
-      });
+      res.emit("data", Buffer.from(JSON.stringify(body)));
+      res.emit("end");
     };
     return req;
   });

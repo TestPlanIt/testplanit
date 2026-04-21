@@ -9,13 +9,9 @@ vi.mock("./tenantSecrets", () => ({
   getTenantEncryptionKey: vi.fn(async (tenantId: string) => `key-for-${tenantId}`),
 }));
 
-const isMultiTenantModeMock = vi.fn(() => false);
-vi.mock("./multiTenantPrisma", () => ({
-  isMultiTenantMode: () => isMultiTenantModeMock(),
-}));
-
 afterEach(() => {
   vi.clearAllMocks();
+  delete process.env.MULTI_TENANT_MODE;
 });
 
 describe("runWithTenantContext", () => {
@@ -77,7 +73,7 @@ describe("withTenantContext", () => {
   });
 
   it("warns when a job has no tenantId in multi-tenant mode", async () => {
-    isMultiTenantModeMock.mockReturnValueOnce(true);
+    process.env.MULTI_TENANT_MODE = "true";
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const wrapped = withTenantContext(async () => "ok");
@@ -90,7 +86,7 @@ describe("withTenantContext", () => {
   });
 
   it("does not warn when a job has no tenantId in single-tenant mode", async () => {
-    isMultiTenantModeMock.mockReturnValueOnce(false);
+    delete process.env.MULTI_TENANT_MODE;
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const wrapped = withTenantContext(async () => "ok");

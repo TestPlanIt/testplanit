@@ -24,13 +24,20 @@
 #   3. kubectl -n testplanit rollout restart deployment/multitenant-workers
 #
 # TENANT LIFECYCLE: Kubernetes RBAC resourceNames does not support wildcards,
-# so every tenant must appear in the list below. The list is kept in sync by
-# provision-customer-k8s.sh / deprovision-customer.sh in the private-ops
-# repo, which patch this Role via `kubectl patch role ... --type=json`. The
-# list below reflects the tenants present when this file was introduced;
-# provisioning operations append/remove entries directly against the live
-# Role in the cluster, not this file. Drift is expected — if you need an
-# authoritative snapshot, read from the cluster.
+# so every tenant must appear in the list below. The list below reflects the
+# tenants present when this file was introduced and WILL drift over time —
+# provisioning operations are expected to append/remove entries on the live
+# Role in the cluster, not this file. For an authoritative snapshot, read
+# from the cluster.
+#
+# DEPENDENCY: new-tenant provisioning onto the multitenant-workers pool
+# requires the provisioning scripts in the private-ops repo to `kubectl patch`
+# this Role when they create a tenant's tpi-<tenant>-env Secret, and to
+# remove the entry on deprovision. Without that step, a newly provisioned
+# tenant's first job will 403 when the worker tries to read its Secret.
+# That behavior is being added in a companion PR
+# (fix/tenant-aware-worker-encryption-key in private-ops); do not onboard
+# new tenants against this pool until it has merged and shipped.
 
 apiVersion: v1
 kind: ServiceAccount
