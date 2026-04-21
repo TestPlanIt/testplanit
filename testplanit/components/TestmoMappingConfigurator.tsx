@@ -448,26 +448,22 @@ function ensureConfigurationConfig(
 
 const WORKFLOW_TYPE_VALUES = ["NOT_STARTED", "IN_PROGRESS", "DONE"] as const;
 
-const WORKFLOW_TYPE_TRANSLATION_KEYS: Record<string, string> = {
-  NOT_STARTED: "workflowTypeOptions.notStarted",
-  IN_PROGRESS: "workflowTypeOptions.inProgress",
-  DONE: "workflowTypeOptions.done",
-};
-
 function translateWorkflowType(
   type: string | null | undefined,
-  t: Translator
+  tWorkflowTypes: Translator
 ): string {
   if (!type) {
     return "";
   }
 
   const normalized = type.toUpperCase();
-  const translationKey = WORKFLOW_TYPE_TRANSLATION_KEYS[normalized];
-
-  if (translationKey) {
+  if (
+    normalized === "NOT_STARTED" ||
+    normalized === "IN_PROGRESS" ||
+    normalized === "DONE"
+  ) {
     try {
-      return t(translationKey);
+      return tWorkflowTypes(normalized);
     } catch {
       return type;
     }
@@ -1395,6 +1391,8 @@ function WorkflowMappingSection({
   description,
   totalCount,
 }: WorkflowSectionProps) {
+  const tCommon = useTranslations("common");
+  const tWorkflowTypes = useTranslations("enums.WorkflowType") as Translator;
   const groupedWorkflowOptions = useMemo(
     () => groupWorkflowOptions(workflowOptions, t),
     [workflowOptions, t]
@@ -1404,9 +1402,9 @@ function WorkflowMappingSection({
     () =>
       WORKFLOW_TYPE_VALUES.map((value) => ({
         value,
-        label: translateWorkflowType(value, t),
+        label: translateWorkflowType(value, tWorkflowTypes),
       })),
-    [t]
+    [tWorkflowTypes]
   );
 
   if (suggestions.length === 0) {
@@ -1416,7 +1414,9 @@ function WorkflowMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("workflowsHeading")}</h4>
+        <h4 className="text-base font-semibold">
+          {tCommon("labels.workflows")}
+        </h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -1446,7 +1446,10 @@ function WorkflowMappingSection({
                 <TableCell>
                   {workflow.suggestedWorkflowType ? (
                     <Badge variant="secondary">
-                      {translateWorkflowType(workflow.suggestedWorkflowType, t)}
+                      {translateWorkflowType(
+                        workflow.suggestedWorkflowType,
+                        tWorkflowTypes
+                      )}
                     </Badge>
                   ) : (
                     <span className="text-xs text-muted-foreground">
@@ -1798,7 +1801,7 @@ function UserMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("usersHeading")}</h4>
+        <h4 className="text-base font-semibold">{tCommon("fields.users")}</h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -1898,7 +1901,7 @@ function UserMappingSection({
                         <Badge variant="outline">{user.roleName}</Badge>
                       )}
                       {user.isApi && (
-                        <Badge variant="outline">{t("userApiBadge")}</Badge>
+                        <Badge variant="outline">{tCommon("fields.API")}</Badge>
                       )}
                     </div>
                   </div>
@@ -2035,7 +2038,7 @@ function UserMappingSection({
                                 email: event.target.value,
                               }))
                             }
-                            placeholder={t("userEmailPlaceholder")}
+                            placeholder={tCommon("placeholders.email")}
                             className={
                               requiresEmail
                                 ? "border-destructive focus-visible:ring-destructive"
@@ -2097,7 +2100,7 @@ function UserMappingSection({
                                 }
                               >
                                 <SelectValue
-                                  placeholder={t("userRolePlaceholder")}
+                                  placeholder={t("roleSelectPlaceholder")}
                                 />
                               </SelectTrigger>
                               <SelectContent>
@@ -2281,6 +2284,7 @@ function ConfigurationMappingSection({
   description,
   totalCount,
 }: ConfigurationSectionProps) {
+  const tCommon = useTranslations("common");
   const configurationOptions = useMemo(
     () =>
       existingConfigurations.map((entry) => ({
@@ -2317,7 +2321,7 @@ function ConfigurationMappingSection({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-base font-semibold">
-          {t("configurationsHeading")}
+          {tCommon("fields.configurations")}
         </h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
@@ -2334,7 +2338,7 @@ function ConfigurationMappingSection({
         <TableHeader>
           <TableRow>
             <TableHead>{t("columnSource")}</TableHead>
-            <TableHead>{t("columnVariants")}</TableHead>
+            <TableHead>{tCommon("fields.variants")}</TableHead>
             <TableHead>{t("columnAction")}</TableHead>
             <TableHead>{t("columnTarget")}</TableHead>
           </TableRow>
@@ -2415,7 +2419,9 @@ function ConfigurationMappingSection({
                       >
                         <SelectTrigger>
                           <SelectValue
-                            placeholder={t("configurationSelectPlaceholder")}
+                            placeholder={tCommon(
+                              "placeholders.selectConfiguration"
+                            )}
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -2767,6 +2773,7 @@ function TemplateMappingSection({
   description,
   totalCount,
 }: TemplateSectionProps) {
+  const tCommon = useTranslations("common");
   const templateFieldMap = useMemo(() => {
     const map = new Map<number, TestmoTemplateFieldSuggestion>();
     templateFieldSuggestions.forEach((field) => {
@@ -2845,7 +2852,9 @@ function TemplateMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("templatesHeading")}</h4>
+        <h4 className="text-base font-semibold">
+          {tCommon("fields.templates")}
+        </h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -2860,10 +2869,10 @@ function TemplateMappingSection({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t("templateColumnTemplate")}</TableHead>
+            <TableHead>{tCommon("fields.template")}</TableHead>
             <TableHead>{t("templateColumnFields")}</TableHead>
-            <TableHead>{t("templateColumnAction")}</TableHead>
-            <TableHead>{t("templateColumnTarget")}</TableHead>
+            <TableHead>{t("columnAction")}</TableHead>
+            <TableHead>{t("columnTarget")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -3337,7 +3346,7 @@ function TemplateMappingSection({
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue
-                            placeholder={t("templateSelectPlaceholder")}
+                            placeholder={tCommon("placeholders.selectTemplate")}
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -3561,7 +3570,9 @@ function StatusMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("statusesHeading")}</h4>
+        <h4 className="text-base font-semibold">
+          {tCommon("labels.statuses")}
+        </h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -3640,16 +3651,24 @@ function StatusMappingSection({
                       </Badge>
                     )}
                     {status.isSuccess && (
-                      <Badge variant="secondary">{t("flagSuccess")}</Badge>
+                      <Badge variant="secondary">
+                        {tCommon("fields.success")}
+                      </Badge>
                     )}
                     {status.isFailure && (
-                      <Badge variant="destructive">{t("flagFailure")}</Badge>
+                      <Badge variant="destructive">
+                        {tCommon("fields.failure")}
+                      </Badge>
                     )}
                     {status.isCompleted && (
-                      <Badge variant="secondary">{t("flagCompleted")}</Badge>
+                      <Badge variant="secondary">
+                        {tCommon("fields.completed")}
+                      </Badge>
                     )}
                     {status.isUntested && (
-                      <Badge variant="outline">{t("flagUntested")}</Badge>
+                      <Badge variant="outline">
+                        {tCommon("labels.untested")}
+                      </Badge>
                     )}
                   </div>
                 </TableCell>
@@ -3955,6 +3974,7 @@ function IssueTargetMappingSection({
   description,
   totalCount,
 }: IssueTargetSectionProps) {
+  const tMenu = useTranslations("admin.menu");
   if (suggestions.length === 0) {
     return null;
   }
@@ -3962,7 +3982,7 @@ function IssueTargetMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("issueTargetsHeading")}</h4>
+        <h4 className="text-base font-semibold">{tMenu("integrations")}</h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -4118,6 +4138,7 @@ function GroupMappingSection({
   description,
   totalCount,
 }: GroupSectionProps) {
+  const tCommon = useTranslations("common");
   if (suggestions.length === 0) {
     return null;
   }
@@ -4125,7 +4146,7 @@ function GroupMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("groupsHeading")}</h4>
+        <h4 className="text-base font-semibold">{tCommon("fields.groups")}</h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -5066,7 +5087,7 @@ function TemplateFieldMappingSection({
 
             if (field.fieldType) {
               detailRows.push({
-                label: t("templateFieldTypeBadgeLabel"),
+                label: tCommon("fields.type"),
                 value: <span>{field.fieldType}</span>,
               });
             }
@@ -5075,9 +5096,7 @@ function TemplateFieldMappingSection({
               detailRows.push({
                 label: t("templateFieldRequiredLabel"),
                 value: (
-                  <Badge variant="outline">
-                    {t("templateFieldRequiredBadge")}
-                  </Badge>
+                  <Badge variant="outline">{tCommon("fields.required")}</Badge>
                 ),
               });
             }
@@ -5087,7 +5106,7 @@ function TemplateFieldMappingSection({
                 label: t("templateFieldRestrictedLabel"),
                 value: (
                   <Badge variant="outline">
-                    {t("templateFieldRestrictedBadge")}
+                    {tCommon("fields.restricted")}
                   </Badge>
                 ),
               });
@@ -5620,7 +5639,8 @@ function RoleMappingSection({
   description?: string;
   totalCount?: number;
 }) {
-  const _tCommon = useTranslations("common");
+  const tCommon = useTranslations("common");
+  const tRolesEdit = useTranslations("admin.roles.edit");
   const applicationAreas = useMemo(
     () => Object.values(ApplicationArea) as string[],
     []
@@ -5668,15 +5688,15 @@ function RoleMappingSection({
             parts.push(t("rolePermissionAddEdit"));
           }
           if (showDelete && permission.canDelete) {
-            parts.push(t("rolePermissionDelete"));
+            parts.push(tCommon("actions.delete"));
           }
           if (showClose && permission.canClose) {
-            parts.push(t("rolePermissionClose"));
+            parts.push(tCommon("actions.close"));
           }
           return (
             <Badge key={area} variant="outline" className="whitespace-nowrap">
               {`${formatApplicationAreaLabel(area)}: ${
-                parts.length > 0 ? parts.join(", ") : t("rolePermissionNone")
+                parts.length > 0 ? parts.join(", ") : tCommon("access.none")
               }`}
             </Badge>
           );
@@ -5688,7 +5708,7 @@ function RoleMappingSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-base font-semibold">{t("rolesHeading")}</h4>
+        <h4 className="text-base font-semibold">{tCommon("labels.roles")}</h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (
             <Badge variant="outline">
@@ -5727,7 +5747,9 @@ function RoleMappingSection({
                 <TableCell>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     {role.isDefault && (
-                      <Badge variant="secondary">{t("roleDefaultLabel")}</Badge>
+                      <Badge variant="secondary">
+                        {tCommon("fields.default")}
+                      </Badge>
                     )}
                     {renderPermissionSummary(role.permissions)}
                   </div>
@@ -5794,7 +5816,7 @@ function RoleMappingSection({
                                 <span>
                                   {option.label}
                                   {option.isDefault &&
-                                    ` (${t("roleDefaultLabel")})`}
+                                    ` (${tCommon("fields.default")})`}
                                 </span>
                               </div>
                             </SelectItem>
@@ -5825,7 +5847,7 @@ function RoleMappingSection({
                       </div>
                       <div className="space-y-2">
                         <p className="text-xs font-medium text-muted-foreground">
-                          {t("rolePermissionsHeading")}
+                          {tRolesEdit("permissionsTitle")}
                         </p>
                         <div className="overflow-x-auto">
                           <div className="min-w-[420px]">
@@ -5835,10 +5857,10 @@ function RoleMappingSection({
                                 {t("rolePermissionAddEdit")}
                               </span>
                               <span className="text-center">
-                                {t("rolePermissionDelete")}
+                                {tCommon("actions.delete")}
                               </span>
                               <span className="text-center">
-                                {t("rolePermissionClose")}
+                                {tCommon("actions.close")}
                               </span>
                             </div>
                             <div className="space-y-2 pt-2">
@@ -5927,7 +5949,7 @@ function RoleMappingSection({
                                           }
                                           aria-label={`${formatApplicationAreaLabel(
                                             area
-                                          )} ${t("rolePermissionDelete")}`}
+                                          )} ${tCommon("actions.delete")}`}
                                         />
                                       ) : (
                                         <span className="text-muted-foreground">
@@ -5963,7 +5985,7 @@ function RoleMappingSection({
                                           }
                                           aria-label={`${formatApplicationAreaLabel(
                                             area
-                                          )} ${t("rolePermissionClose")}`}
+                                          )} ${tCommon("actions.close")}`}
                                         />
                                       ) : (
                                         <span className="text-muted-foreground">
@@ -6009,7 +6031,7 @@ function MilestoneTypeMappingSection({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-base font-semibold">
-          {t("milestoneTypesHeading")}
+          {tCommon("fields.milestoneTypes")}
         </h4>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {typeof totalCount === "number" && (

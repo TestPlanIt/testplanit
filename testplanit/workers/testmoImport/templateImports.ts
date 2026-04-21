@@ -71,13 +71,16 @@ export async function importTemplates(
     }
 
     const existing = await tx.templates.findFirst({
-      where: {
-        templateName: name,
-        isDeleted: false,
-      },
+      where: { templateName: name },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.templates.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.templateName;
@@ -117,10 +120,16 @@ export async function importTemplates(
     summary.total += 1;
 
     const existing = await tx.templates.findFirst({
-      where: { templateName, isDeleted: false },
+      where: { templateName },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.templates.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       templateMap.set(templateName, existing.id);
       summary.mapped += 1;
       continue;
@@ -366,7 +375,7 @@ export async function importTemplateFields(
     }
 
     const existing = await tx.templates.findFirst({
-      where: { templateName: trimmed, isDeleted: false },
+      where: { templateName: trimmed },
     });
 
     if (existing) {
@@ -396,37 +405,34 @@ export async function importTemplateFields(
     if (appliedAssignments.has(assignmentKey)) {
       return;
     }
-    try {
-      if (targetType === "case") {
-        await tx.templateCaseAssignment.create({
-          data: {
-            caseFieldId: fieldId,
-            templateId,
-            order: order ?? 0,
-          },
-        });
-      } else {
-        await tx.templateResultAssignment.create({
-          data: {
-            resultFieldId: fieldId,
-            templateId,
-            order: order ?? 0,
-          },
-        });
-      }
-      appliedAssignments.add(assignmentKey);
-      details.assignmentsCreated += 1;
-    } catch (error) {
-      if (
-        !(
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === "P2002"
-        )
-      ) {
-        throw error;
-      }
-      appliedAssignments.add(assignmentKey);
+
+    if (targetType === "case") {
+      await tx.templateCaseAssignment.upsert({
+        where: {
+          caseFieldId_templateId: { caseFieldId: fieldId, templateId },
+        },
+        create: {
+          caseFieldId: fieldId,
+          templateId,
+          order: order ?? 0,
+        },
+        update: {},
+      });
+    } else {
+      await tx.templateResultAssignment.upsert({
+        where: {
+          resultFieldId_templateId: { resultFieldId: fieldId, templateId },
+        },
+        create: {
+          resultFieldId: fieldId,
+          templateId,
+          order: order ?? 0,
+        },
+        update: {},
+      });
     }
+    appliedAssignments.add(assignmentKey);
+    details.assignmentsCreated += 1;
   };
 
   for (const [key, config] of Object.entries(
@@ -521,10 +527,7 @@ export async function importTemplateFields(
 
     if (targetType === "case") {
       const existing = await tx.caseFields.findFirst({
-        where: {
-          systemName,
-          isDeleted: false,
-        },
+        where: { systemName },
       });
 
       if (existing) {
@@ -537,10 +540,7 @@ export async function importTemplateFields(
       }
     } else {
       const existing = await tx.resultFields.findFirst({
-        where: {
-          systemName,
-          isDeleted: false,
-        },
+        where: { systemName },
       });
 
       if (existing) {

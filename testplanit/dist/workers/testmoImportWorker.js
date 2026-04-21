@@ -54,7 +54,7 @@ var init_prismaBase = __esm({
 
 // workers/testmoImportWorker.ts
 var import_client_s3 = require("@aws-sdk/client-s3");
-var import_client6 = require("@prisma/client");
+var import_client5 = require("@prisma/client");
 var import_core2 = require("@tiptap/core");
 var import_model2 = require("@tiptap/pm/model");
 var import_starter_kit2 = __toESM(require("@tiptap/starter-kit"));
@@ -2838,29 +2838,10 @@ var importAutomationCases = async (prisma2, configuration, datasetRows, projectI
               projectId,
               name,
               className: normalizedClassName,
-              source: "JUNIT",
-              isDeleted: false
+              source: "JUNIT"
             }
           });
-          if (!repositoryCase && normalizedClassName) {
-            repositoryCase = await tx.repositoryCases.findFirst({
-              where: {
-                projectId,
-                name,
-                source: "JUNIT",
-                isDeleted: false
-              }
-            });
-          }
           if (repositoryCase) {
-            if (normalizedClassName && repositoryCase.className !== normalizedClassName) {
-              repositoryCase = await tx.repositoryCases.update({
-                where: { id: repositoryCase.id },
-                data: {
-                  className: normalizedClassName
-                }
-              });
-            }
             repositoryCase = await tx.repositoryCases.update({
               where: { id: repositoryCase.id },
               data: {
@@ -4266,12 +4247,15 @@ async function importGroups(tx, configuration) {
       );
     }
     const existing = await tx.groups.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
+      where: { name }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.groups.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -4328,12 +4312,15 @@ async function importTags(tx, configuration) {
       throw new Error(`Tag ${tagId} requires a name before it can be created.`);
     }
     const existing = await tx.tags.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
+      where: { name }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.tags.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -4390,12 +4377,15 @@ async function importRoles(tx, configuration) {
       );
     }
     const existing = await tx.roles.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
+      where: { name }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.roles.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -4477,12 +4467,15 @@ async function importMilestoneTypes(tx, configuration) {
       );
     }
     const existing = await tx.milestoneTypes.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
+      where: { name }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.milestoneTypes.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -4856,12 +4849,15 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
     }
     const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client4.IntegrationProvider.SIMPLE_URL;
     const existing = await tx.integration.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
+      where: { name }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.integration.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       integrationIdMap.set(sourceId, existing.id);
       config.action = "map";
       config.mappedTo = existing.id;
@@ -5795,7 +5791,6 @@ async function importSessionTags(tx, configuration, datasetRows, sessionIdMap) {
 }
 
 // workers/testmoImport/templateImports.ts
-var import_client5 = require("@prisma/client");
 var SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
 var generateSystemName = (value) => {
   const normalized = value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/^[^a-z]+/, "");
@@ -5842,12 +5837,15 @@ async function importTemplates(tx, configuration) {
       );
     }
     const existing = await tx.templates.findFirst({
-      where: {
-        templateName: name,
-        isDeleted: false
-      }
+      where: { templateName: name }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.templates.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.templateName;
@@ -5881,9 +5879,15 @@ async function importTemplates(tx, configuration) {
     processedNames.add(templateName);
     summary.total += 1;
     const existing = await tx.templates.findFirst({
-      where: { templateName, isDeleted: false }
+      where: { templateName }
     });
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.templates.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        });
+      }
       templateMap.set(templateName, existing.id);
       summary.mapped += 1;
       continue;
@@ -6055,7 +6059,7 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
       return templateId;
     }
     const existing = await tx.templates.findFirst({
-      where: { templateName: trimmed, isDeleted: false }
+      where: { templateName: trimmed }
     });
     if (existing) {
       templateMap.set(existing.templateName, existing.id);
@@ -6076,32 +6080,33 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
     if (appliedAssignments.has(assignmentKey)) {
       return;
     }
-    try {
-      if (targetType === "case") {
-        await tx.templateCaseAssignment.create({
-          data: {
-            caseFieldId: fieldId,
-            templateId,
-            order: order ?? 0
-          }
-        });
-      } else {
-        await tx.templateResultAssignment.create({
-          data: {
-            resultFieldId: fieldId,
-            templateId,
-            order: order ?? 0
-          }
-        });
-      }
-      appliedAssignments.add(assignmentKey);
-      details.assignmentsCreated += 1;
-    } catch (error) {
-      if (!(error instanceof import_client5.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
-        throw error;
-      }
-      appliedAssignments.add(assignmentKey);
+    if (targetType === "case") {
+      await tx.templateCaseAssignment.upsert({
+        where: {
+          caseFieldId_templateId: { caseFieldId: fieldId, templateId }
+        },
+        create: {
+          caseFieldId: fieldId,
+          templateId,
+          order: order ?? 0
+        },
+        update: {}
+      });
+    } else {
+      await tx.templateResultAssignment.upsert({
+        where: {
+          resultFieldId_templateId: { resultFieldId: fieldId, templateId }
+        },
+        create: {
+          resultFieldId: fieldId,
+          templateId,
+          order: order ?? 0
+        },
+        update: {}
+      });
     }
+    appliedAssignments.add(assignmentKey);
+    details.assignmentsCreated += 1;
   };
   for (const [key, config] of Object.entries(
     configuration.templateFields ?? {}
@@ -6177,10 +6182,7 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
     await ensureFieldTypeExists(typeId);
     if (targetType === "case") {
       const existing = await tx.caseFields.findFirst({
-        where: {
-          systemName,
-          isDeleted: false
-        }
+        where: { systemName }
       });
       if (existing) {
         config.action = "map";
@@ -6192,10 +6194,7 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
       }
     } else {
       const existing = await tx.resultFields.findFirst({
-        where: {
-          systemName,
-          isDeleted: false
-        }
+        where: { systemName }
       });
       if (existing) {
         config.action = "map";
@@ -6469,10 +6468,10 @@ var s3Client = new import_client_s3.S3Client({
 });
 var FINAL_STATUSES = /* @__PURE__ */ new Set(["COMPLETED", "FAILED", "CANCELED"]);
 var _VALID_APPLICATION_AREAS = new Set(
-  Object.values(import_client6.ApplicationArea)
+  Object.values(import_client5.ApplicationArea)
 );
-var _VALID_WORKFLOW_TYPES = new Set(Object.values(import_client6.WorkflowType));
-var _VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client6.WorkflowScope));
+var _VALID_WORKFLOW_TYPES = new Set(Object.values(import_client5.WorkflowType));
+var _VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client5.WorkflowScope));
 var SYSTEM_NAME_REGEX2 = /^[A-Za-z][A-Za-z0-9_]*$/;
 var DEFAULT_STATUS_COLOR_HEX = "#B1B2B3";
 var MAX_INT_32 = 2147483647;
@@ -7229,12 +7228,12 @@ async function importUsers(tx, configuration, importJob) {
     created: 0,
     mapped: 0
   };
-  const validAccessValues = new Set(Object.values(import_client6.Access));
+  const validAccessValues = new Set(Object.values(import_client5.Access));
   const resolveAccess = (value) => {
     if (value && validAccessValues.has(value)) {
       return value;
     }
-    return import_client6.Access.USER;
+    return import_client5.Access.USER;
   };
   const ensureRoleExists = async (roleId) => {
     const role = await tx.roles.findUnique({ where: { id: roleId } });
@@ -7364,7 +7363,7 @@ var importProjects = async (tx, datasetRows, importJob, userIdMap, statusIdMap, 
     where: {
       isDefault: true,
       isDeleted: false,
-      scope: import_client6.WorkflowScope.CASES
+      scope: import_client5.WorkflowScope.CASES
     },
     select: { id: true }
   });
@@ -7493,15 +7492,19 @@ var importProjects = async (tx, datasetRows, importJob, userIdMap, statusIdMap, 
         orderBy: { id: "asc" }
       });
       if (fallbackTemplate?.id) {
-        try {
-          await tx.templateProjectAssignment.create({
-            data: {
-              projectId,
-              templateId: fallbackTemplate.id
+        await tx.templateProjectAssignment.upsert({
+          where: {
+            templateId_projectId: {
+              templateId: fallbackTemplate.id,
+              projectId
             }
-          });
-        } catch {
-        }
+          },
+          create: {
+            projectId,
+            templateId: fallbackTemplate.id
+          },
+          update: {}
+        });
         resolvedDefaultTemplateId = fallbackTemplate.id;
       }
     }
@@ -7683,7 +7686,7 @@ var importSessions = async (tx, datasetRows, projectIdMap, milestoneIdMap, confi
   });
   const defaultWorkflowState = await tx.workflows.findFirst({
     where: {
-      scope: import_client6.WorkflowScope.SESSIONS,
+      scope: import_client5.WorkflowScope.SESSIONS,
       isDeleted: false
     },
     select: { id: true }
@@ -8609,7 +8612,7 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
     select: { id: true }
   });
   const defaultCaseWorkflow = await prisma2.workflows.findFirst({
-    where: { scope: import_client6.WorkflowScope.CASES, isDefault: true },
+    where: { scope: import_client5.WorkflowScope.CASES, isDefault: true },
     select: { id: true }
   });
   const fallbackCreator = importJob.createdById;
@@ -8775,14 +8778,22 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
             continue;
           }
           const resolvedFolderId = folderId;
+          const className = toStringValue2(record.key);
           const existing = await tx.repositoryCases.findFirst({
             where: {
               projectId,
               name: caseName,
-              isDeleted: false
+              className: className ?? null,
+              source: "MANUAL"
             }
           });
           if (existing) {
+            if (existing.isDeleted) {
+              await tx.repositoryCases.update({
+                where: { id: existing.id },
+                data: { isDeleted: false }
+              });
+            }
             caseIdMap.set(caseSourceId, existing.id);
             const existingKey = toStringValue2(record.key);
             if (existingKey) {
@@ -8817,7 +8828,7 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
                 templateId = resolvedTemplateIdsByName.get(templateName) ?? null;
                 if (!templateId) {
                   const existingTemplate = await tx.templates.findFirst({
-                    where: { templateName, isDeleted: false }
+                    where: { templateName }
                   });
                   if (existingTemplate) {
                     templateId = existingTemplate.id;
@@ -8866,7 +8877,6 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
           );
           const createdAt = toDateValue(record.created_at) ?? /* @__PURE__ */ new Date();
           const order = toNumberValue(record.display_order) ?? 0;
-          const className = toStringValue2(record.key);
           const estimateValue = toNumberValue(record.estimate);
           const { value: normalizedEstimate, adjustment: estimateAdjustment } = normalizeEstimate(estimateValue);
           if (estimateAdjustment === "nanoseconds" || estimateAdjustment === "microseconds" || estimateAdjustment === "milliseconds") {
@@ -9181,7 +9191,7 @@ var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositor
               data: caseFieldValuesForVersion.map((fieldValue) => ({
                 versionId: caseVersion.id,
                 field: fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? import_client6.Prisma.JsonNull
+                value: fieldValue.value ?? import_client5.Prisma.JsonNull
               }))
             });
           }
@@ -10168,12 +10178,15 @@ async function importStatuses(tx, configuration) {
       );
     }
     const existingByName = await tx.status.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
+      where: { name }
     });
     if (existingByName) {
+      if (existingByName.isDeleted) {
+        await tx.status.update({
+          where: { id: existingByName.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existingByName.id;
       config.name = existingByName.name;
@@ -10182,12 +10195,15 @@ async function importStatuses(tx, configuration) {
       continue;
     }
     const existingStatus = await tx.status.findFirst({
-      where: {
-        systemName,
-        isDeleted: false
-      }
+      where: { systemName }
     });
     if (existingStatus) {
+      if (existingStatus.isDeleted) {
+        await tx.status.update({
+          where: { id: existingStatus.id },
+          data: { isDeleted: false }
+        });
+      }
       config.action = "map";
       config.mappedTo = existingStatus.id;
       config.systemName = existingStatus.systemName;
@@ -10206,39 +10222,18 @@ async function importStatuses(tx, configuration) {
       scopeIds = availableScopeIds;
     }
     const aliases = (config.aliases ?? "").trim();
-    let created;
-    try {
-      created = await tx.status.create({
-        data: {
-          name,
-          systemName,
-          aliases: aliases || null,
-          colorId,
-          isEnabled: config.isEnabled ?? true,
-          isSuccess: config.isSuccess ?? false,
-          isFailure: config.isFailure ?? false,
-          isCompleted: config.isCompleted ?? false
-        }
-      });
-    } catch (error) {
-      if (error instanceof import_client6.Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        const duplicate = await tx.status.findFirst({
-          where: {
-            OR: [{ name }, { systemName }],
-            isDeleted: false
-          }
-        });
-        if (duplicate) {
-          config.action = "map";
-          config.mappedTo = duplicate.id;
-          config.name = duplicate.name;
-          config.systemName = duplicate.systemName;
-          summary.mapped += 1;
-          continue;
-        }
+    const created = await tx.status.create({
+      data: {
+        name,
+        systemName,
+        aliases: aliases || null,
+        colorId,
+        isEnabled: config.isEnabled ?? true,
+        isSuccess: config.isSuccess ?? false,
+        isFailure: config.isFailure ?? false,
+        isCompleted: config.isCompleted ?? false
       }
-      throw error;
-    }
+    });
     if (scopeIds.length > 0) {
       await tx.statusScopeAssignment.createMany({
         data: scopeIds.map((scopeId) => ({
@@ -10333,7 +10328,7 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
           datasetName
         }
       });
-      const batchSize = datasetName === "automation_run_test_fields" ? 50 : 100;
+      const batchSize = datasetName === "automation_run_test_fields" ? 1e3 : 5e3;
       const allRows = [];
       for (let offset = 0; offset < totalCount; offset += batchSize) {
         try {
@@ -10449,6 +10444,21 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       );
     }
   };
+  const phaseDurations = [];
+  const timedPhase = async (phaseName, fn, itemCount) => {
+    const phaseStart = Date.now();
+    console.log(`[IMPORT TIMING] \u25B6 ${phaseName} started`);
+    const result = await fn();
+    const durationMs = Date.now() - phaseStart;
+    const items = itemCount ? itemCount(result) : 0;
+    const durationSec = (durationMs / 1e3).toFixed(1);
+    const rate = items > 0 ? (items / (durationMs / 1e3)).toFixed(1) : "n/a";
+    console.log(
+      `[IMPORT TIMING] \u2713 ${phaseName} completed in ${durationSec}s (${items} items, ${rate} items/sec)`
+    );
+    phaseDurations.push({ phase: phaseName, durationMs, items });
+    return result;
+  };
   const importStart = /* @__PURE__ */ new Date();
   await prisma2.testmoImportJob.update({
     where: { id: jobId },
@@ -10477,36 +10487,46 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     };
     logMessage(context, "Processing workflow mappings");
     await persistProgress("workflows", "Processing workflow mappings");
-    const workflowSummary = await withTransaction(
-      (tx) => importWorkflows(tx, normalizedConfiguration)
+    const workflowSummary = await timedPhase(
+      "workflows",
+      () => withTransaction((tx) => importWorkflows(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, workflowSummary);
     await persistProgress("workflows", formatSummaryStatus(workflowSummary));
     logMessage(context, "Processing status mappings");
     await persistProgress("statuses", "Processing status mappings");
-    const statusSummary = await withTransaction(
-      (tx) => importStatuses(tx, normalizedConfiguration)
+    const statusSummary = await timedPhase(
+      "statuses",
+      () => withTransaction((tx) => importStatuses(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, statusSummary);
     await persistProgress("statuses", formatSummaryStatus(statusSummary));
     logMessage(context, "Processing group mappings");
     await persistProgress("groups", "Processing group mappings");
-    const groupSummary = await withTransaction(
-      (tx) => importGroups(tx, normalizedConfiguration)
+    const groupSummary = await timedPhase(
+      "groups",
+      () => withTransaction((tx) => importGroups(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, groupSummary);
     await persistProgress("groups", formatSummaryStatus(groupSummary));
     logMessage(context, "Processing tag mappings");
     await persistProgress("tags", "Processing tag mappings");
-    const tagSummary = await withTransaction(
-      (tx) => importTags(tx, normalizedConfiguration)
+    const tagSummary = await timedPhase(
+      "tags",
+      () => withTransaction((tx) => importTags(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, tagSummary);
     await persistProgress("tags", formatSummaryStatus(tagSummary));
     logMessage(context, "Processing role mappings");
     await persistProgress("roles", "Processing role mappings");
-    const roleSummary = await withTransaction(
-      (tx) => importRoles(tx, normalizedConfiguration)
+    const roleSummary = await timedPhase(
+      "roles",
+      () => withTransaction((tx) => importRoles(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, roleSummary);
     await persistProgress("roles", formatSummaryStatus(roleSummary));
@@ -10515,8 +10535,12 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "milestoneTypes",
       "Processing milestone type mappings"
     );
-    const milestoneSummary = await withTransaction(
-      (tx) => importMilestoneTypes(tx, normalizedConfiguration)
+    const milestoneSummary = await timedPhase(
+      "milestoneTypes",
+      () => withTransaction(
+        (tx) => importMilestoneTypes(tx, normalizedConfiguration)
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, milestoneSummary);
     await persistProgress(
@@ -10528,8 +10552,12 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "configurations",
       "Processing configuration mappings"
     );
-    const configurationSummary = await withTransaction(
-      (tx) => importConfigurations(tx, normalizedConfiguration)
+    const configurationSummary = await timedPhase(
+      "configurations",
+      () => withTransaction(
+        (tx) => importConfigurations(tx, normalizedConfiguration)
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, configurationSummary);
     await persistProgress(
@@ -10538,8 +10566,12 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     );
     logMessage(context, "Processing template mappings");
     await persistProgress("templates", "Processing template mappings");
-    const { summary: templateSummary, templateMap } = await withTransaction(
-      (tx) => importTemplates(tx, normalizedConfiguration)
+    const { summary: templateSummary, templateMap } = await timedPhase(
+      "templates",
+      () => withTransaction(
+        (tx) => importTemplates(tx, normalizedConfiguration)
+      ),
+      (r) => r.summary.total
     );
     recordEntitySummary(context, templateSummary);
     await persistProgress("templates", formatSummaryStatus(templateSummary));
@@ -10548,13 +10580,17 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "templateFields",
       "Processing template field mappings"
     );
-    const templateFieldSummary = await withTransaction(
-      (tx) => importTemplateFields(
-        tx,
-        normalizedConfiguration,
-        templateMap,
-        datasetRowsByName
-      )
+    const templateFieldSummary = await timedPhase(
+      "templateFields",
+      () => withTransaction(
+        (tx) => importTemplateFields(
+          tx,
+          normalizedConfiguration,
+          templateMap,
+          datasetRowsByName
+        )
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, templateFieldSummary);
     await persistProgress(
@@ -10569,15 +10605,23 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     const resultFieldMap = updatedFieldMaps.resultFields;
     logMessage(context, "Processing user mappings");
     await persistProgress("users", "Processing user mappings");
-    const userSummary = await withTransaction(
-      (tx) => importUsers(tx, normalizedConfiguration, importJob)
+    const userSummary = await timedPhase(
+      "users",
+      () => withTransaction(
+        (tx) => importUsers(tx, normalizedConfiguration, importJob)
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, userSummary);
     await persistProgress("users", formatSummaryStatus(userSummary));
     logMessage(context, "Processing user group assignments");
     await persistProgress("userGroups", "Processing user group assignments");
-    const userGroupsSummary = await withTransaction(
-      (tx) => importUserGroups(tx, normalizedConfiguration, datasetRowsByName)
+    const userGroupsSummary = await timedPhase(
+      "userGroups",
+      () => withTransaction(
+        (tx) => importUserGroups(tx, normalizedConfiguration, datasetRowsByName)
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, userGroupsSummary);
     await persistProgress("userGroups", formatSummaryStatus(userGroupsSummary));
@@ -10599,26 +10643,32 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     const userIdMap = buildStringIdMap(normalizedConfiguration.users ?? {});
     logMessage(context, "Processing project imports");
     await persistProgress("projects", "Processing project imports");
-    if (datasetRowsByName.get("projects")?.length === 0) {
-      datasetRowsByName.set(
-        "projects",
-        await loadDatasetFromStaging("projects")
-      );
-    }
-    const projectImport = await withTransaction(
-      (tx) => importProjects(
-        tx,
-        datasetRowsByName,
-        importJob,
-        userIdMap,
-        statusIdMap,
-        workflowIdMap,
-        milestoneTypeIdMap,
-        templateIdMap,
-        templateMap,
-        context,
-        persistProgress
-      )
+    const projectImport = await timedPhase(
+      "projects",
+      async () => {
+        if (datasetRowsByName.get("projects")?.length === 0) {
+          datasetRowsByName.set(
+            "projects",
+            await loadDatasetFromStaging("projects")
+          );
+        }
+        return withTransaction(
+          (tx) => importProjects(
+            tx,
+            datasetRowsByName,
+            importJob,
+            userIdMap,
+            statusIdMap,
+            workflowIdMap,
+            milestoneTypeIdMap,
+            templateIdMap,
+            templateMap,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, projectImport.summary);
     await persistProgress(
@@ -10628,20 +10678,26 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "projects");
     logMessage(context, "Processing project links");
     await persistProgress("projectLinks", "Processing project links");
-    if (datasetRowsByName.get("project_links")?.length === 0) {
-      datasetRowsByName.set(
-        "project_links",
-        await loadDatasetFromStaging("project_links")
-      );
-    }
-    const projectLinksImport = await withTransaction(
-      (tx) => importProjectLinks(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        context
-      )
+    const projectLinksImport = await timedPhase(
+      "projectLinks",
+      async () => {
+        if (datasetRowsByName.get("project_links")?.length === 0) {
+          datasetRowsByName.set(
+            "project_links",
+            await loadDatasetFromStaging("project_links")
+          );
+        }
+        return withTransaction(
+          (tx) => importProjectLinks(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            context
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, projectLinksImport);
     await persistProgress(
@@ -10651,23 +10707,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "project_links");
     logMessage(context, "Processing milestone imports");
     await persistProgress("milestones", "Processing milestone imports");
-    if (datasetRowsByName.get("milestones")?.length === 0) {
-      datasetRowsByName.set(
-        "milestones",
-        await loadDatasetFromStaging("milestones")
-      );
-    }
-    const milestoneImport = await withTransaction(
-      (tx) => importMilestones(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        milestoneTypeIdMap,
-        userIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+    const milestoneImport = await timedPhase(
+      "milestones",
+      async () => {
+        if (datasetRowsByName.get("milestones")?.length === 0) {
+          datasetRowsByName.set(
+            "milestones",
+            await loadDatasetFromStaging("milestones")
+          );
+        }
+        return withTransaction(
+          (tx) => importMilestones(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            milestoneTypeIdMap,
+            userIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, milestoneImport.summary);
     await persistProgress(
@@ -10677,20 +10739,26 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "milestones");
     logMessage(context, "Processing milestone links");
     await persistProgress("milestoneLinks", "Processing milestone links");
-    if (datasetRowsByName.get("milestone_links")?.length === 0) {
-      datasetRowsByName.set(
-        "milestone_links",
-        await loadDatasetFromStaging("milestone_links")
-      );
-    }
-    const milestoneLinksImport = await withTransaction(
-      (tx) => importMilestoneLinks(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        milestoneImport.milestoneIdMap,
-        context
-      )
+    const milestoneLinksImport = await timedPhase(
+      "milestoneLinks",
+      async () => {
+        if (datasetRowsByName.get("milestone_links")?.length === 0) {
+          datasetRowsByName.set(
+            "milestone_links",
+            await loadDatasetFromStaging("milestone_links")
+          );
+        }
+        return withTransaction(
+          (tx) => importMilestoneLinks(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            milestoneImport.milestoneIdMap,
+            context
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, milestoneLinksImport);
     await persistProgress(
@@ -10700,26 +10768,32 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "milestone_links");
     logMessage(context, "Processing session imports");
     await persistProgress("sessions", "Processing session imports");
-    if (datasetRowsByName.get("sessions")?.length === 0) {
-      datasetRowsByName.set(
-        "sessions",
-        await loadDatasetFromStaging("sessions")
-      );
-    }
-    const sessionImport = await withTransaction(
-      (tx) => importSessions(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        milestoneImport.milestoneIdMap,
-        configurationIdMap,
-        workflowIdMap,
-        userIdMap,
-        templateIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+    const sessionImport = await timedPhase(
+      "sessions",
+      async () => {
+        if (datasetRowsByName.get("sessions")?.length === 0) {
+          datasetRowsByName.set(
+            "sessions",
+            await loadDatasetFromStaging("sessions")
+          );
+        }
+        return withTransaction(
+          (tx) => importSessions(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            milestoneImport.milestoneIdMap,
+            configurationIdMap,
+            workflowIdMap,
+            userIdMap,
+            templateIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, sessionImport.summary);
     await persistProgress(
@@ -10732,23 +10806,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "sessionResults",
       "Processing session results imports"
     );
-    if (datasetRowsByName.get("session_results")?.length === 0) {
-      datasetRowsByName.set(
-        "session_results",
-        await loadDatasetFromStaging("session_results")
-      );
-    }
-    const sessionResultsImport = await withTransaction(
-      (tx) => importSessionResults(
-        tx,
-        datasetRowsByName,
-        sessionImport.sessionIdMap,
-        statusIdMap,
-        userIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+    const sessionResultsImport = await timedPhase(
+      "sessionResults",
+      async () => {
+        if (datasetRowsByName.get("session_results")?.length === 0) {
+          datasetRowsByName.set(
+            "session_results",
+            await loadDatasetFromStaging("session_results")
+          );
+        }
+        return withTransaction(
+          (tx) => importSessionResults(
+            tx,
+            datasetRowsByName,
+            sessionImport.sessionIdMap,
+            statusIdMap,
+            userIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, sessionResultsImport.summary);
     await persistProgress(
@@ -10758,19 +10838,25 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "session_results");
     logMessage(context, "Processing session tag assignments");
     await persistProgress("sessionTags", "Processing session tag assignments");
-    if (datasetRowsByName.get("session_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "session_tags",
-        await loadDatasetFromStaging("session_tags")
-      );
-    }
-    const sessionTagsSummary = await withTransaction(
-      (tx) => importSessionTags(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        sessionImport.sessionIdMap
-      )
+    const sessionTagsSummary = await timedPhase(
+      "sessionTags",
+      async () => {
+        if (datasetRowsByName.get("session_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "session_tags",
+            await loadDatasetFromStaging("session_tags")
+          );
+        }
+        return withTransaction(
+          (tx) => importSessionTags(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            sessionImport.sessionIdMap
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, sessionTagsSummary);
     await persistProgress(
@@ -10797,20 +10883,26 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     }
     logMessage(context, "Processing repository imports");
     await persistProgress("repositories", "Processing repository imports");
-    if (datasetRowsByName.get("repositories")?.length === 0) {
-      datasetRowsByName.set(
-        "repositories",
-        await loadDatasetFromStaging("repositories")
-      );
-    }
-    const repositoryImport = await withTransaction(
-      (tx) => importRepositories(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        context,
-        persistProgress
-      )
+    const repositoryImport = await timedPhase(
+      "repositories",
+      async () => {
+        if (datasetRowsByName.get("repositories")?.length === 0) {
+          datasetRowsByName.set(
+            "repositories",
+            await loadDatasetFromStaging("repositories")
+          );
+        }
+        return withTransaction(
+          (tx) => importRepositories(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, repositoryImport.summary);
     await persistProgress(
@@ -10820,29 +10912,35 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "repositories");
     logMessage(context, "Processing repository folders");
     await persistProgress("repositoryFolders", "Processing repository folders");
-    if (datasetRowsByName.get("repository_folders")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_folders",
-        await loadDatasetFromStaging("repository_folders")
-      );
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filtered = (datasetRowsByName.get("repository_folders") ?? []).filter((row) => {
-        const repoId = toNumberValue(row.repo_id);
-        return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
-      });
-      datasetRowsByName.set("repository_folders", filtered);
-    }
-    const folderImport = await importRepositoryFolders(
-      prisma2,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      repositoryImport.repositoryIdMap,
-      repositoryImport.canonicalRepoIdByProject,
-      importJob,
-      userIdMap,
-      context,
-      persistProgress
+    const folderImport = await timedPhase(
+      "repositoryFolders",
+      async () => {
+        if (datasetRowsByName.get("repository_folders")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_folders",
+            await loadDatasetFromStaging("repository_folders")
+          );
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filtered = (datasetRowsByName.get("repository_folders") ?? []).filter((row) => {
+            const repoId = toNumberValue(row.repo_id);
+            return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
+          });
+          datasetRowsByName.set("repository_folders", filtered);
+        }
+        return importRepositoryFolders(
+          prisma2,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          repositoryImport.repositoryIdMap,
+          repositoryImport.canonicalRepoIdByProject,
+          importJob,
+          userIdMap,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, folderImport.summary);
     await persistProgress(
@@ -10852,63 +10950,69 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "repository_folders");
     logMessage(context, "Processing repository cases");
     await persistProgress("repositoryCases", "Processing repository cases");
-    if (datasetRowsByName.get("repository_cases")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_cases",
-        await loadDatasetFromStaging("repository_cases")
-      );
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filteredCases = datasetRowsByName.get("repository_cases")?.filter((row) => {
-        const repoId = toNumberValue(row.repo_id);
-        return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
-      }) ?? [];
-      datasetRowsByName.set("repository_cases", filteredCases);
-    }
-    if (datasetRowsByName.get("repository_case_steps")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_case_steps",
-        await loadDatasetFromStaging("repository_case_steps")
-      );
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filteredSteps = datasetRowsByName.get("repository_case_steps")?.filter((row) => {
-        const repoId = toNumberValue(row.repo_id);
-        return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
-      }) ?? [];
-      datasetRowsByName.set("repository_case_steps", filteredSteps);
-    }
-    if (!datasetRowsByName.has("repository_case_values") || datasetRowsByName.get("repository_case_values")?.length === 0) {
-      const caseValuesData = await loadDatasetFromStaging(
-        "repository_case_values"
-      );
-      datasetRowsByName.set("repository_case_values", caseValuesData);
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filteredCaseValues = datasetRowsByName.get("repository_case_values")?.filter((row) => {
-        const repoId = toNumberValue(row.repo_id);
-        return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
-      }) ?? [];
-      datasetRowsByName.set("repository_case_values", filteredCaseValues);
-    }
-    const caseImport = await importRepositoryCases(
-      prisma2,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      repositoryImport.repositoryIdMap,
-      repositoryImport.canonicalRepoIdByProject,
-      folderImport.folderIdMap,
-      folderImport.repositoryRootFolderMap,
-      templateIdMap,
-      templateMap,
-      workflowIdMap,
-      userIdMap,
-      caseFieldMap,
-      testmoFieldValueMap,
-      normalizedConfiguration,
-      importJob,
-      context,
-      persistProgress
+    const caseImport = await timedPhase(
+      "repositoryCases",
+      async () => {
+        if (datasetRowsByName.get("repository_cases")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_cases",
+            await loadDatasetFromStaging("repository_cases")
+          );
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filteredCases = datasetRowsByName.get("repository_cases")?.filter((row) => {
+            const repoId = toNumberValue(row.repo_id);
+            return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
+          }) ?? [];
+          datasetRowsByName.set("repository_cases", filteredCases);
+        }
+        if (datasetRowsByName.get("repository_case_steps")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_case_steps",
+            await loadDatasetFromStaging("repository_case_steps")
+          );
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filteredSteps = datasetRowsByName.get("repository_case_steps")?.filter((row) => {
+            const repoId = toNumberValue(row.repo_id);
+            return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
+          }) ?? [];
+          datasetRowsByName.set("repository_case_steps", filteredSteps);
+        }
+        if (!datasetRowsByName.has("repository_case_values") || datasetRowsByName.get("repository_case_values")?.length === 0) {
+          const caseValuesData = await loadDatasetFromStaging(
+            "repository_case_values"
+          );
+          datasetRowsByName.set("repository_case_values", caseValuesData);
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filteredCaseValues = datasetRowsByName.get("repository_case_values")?.filter((row) => {
+            const repoId = toNumberValue(row.repo_id);
+            return repoId === null ? true : repositoryImport.masterRepositoryIds.has(repoId);
+          }) ?? [];
+          datasetRowsByName.set("repository_case_values", filteredCaseValues);
+        }
+        return importRepositoryCases(
+          prisma2,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          repositoryImport.repositoryIdMap,
+          repositoryImport.canonicalRepoIdByProject,
+          folderImport.folderIdMap,
+          folderImport.repositoryRootFolderMap,
+          templateIdMap,
+          templateMap,
+          workflowIdMap,
+          userIdMap,
+          caseFieldMap,
+          testmoFieldValueMap,
+          normalizedConfiguration,
+          importJob,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, caseImport.summary);
     await persistProgress(
@@ -10926,19 +11030,25 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "repositoryCaseTags",
       "Processing repository case tag assignments"
     );
-    if (datasetRowsByName.get("repository_case_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_case_tags",
-        await loadDatasetFromStaging("repository_case_tags")
-      );
-    }
-    const repositoryCaseTagsSummary = await withTransaction(
-      (tx) => importRepositoryCaseTags(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        caseImport.caseIdMap
-      )
+    const repositoryCaseTagsSummary = await timedPhase(
+      "repositoryCaseTags",
+      async () => {
+        if (datasetRowsByName.get("repository_case_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_case_tags",
+            await loadDatasetFromStaging("repository_case_tags")
+          );
+        }
+        return withTransaction(
+          (tx) => importRepositoryCaseTags(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            caseImport.caseIdMap
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, repositoryCaseTagsSummary);
     await persistProgress(
@@ -10984,28 +11094,34 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationCases",
       "Processing automation case imports"
     );
-    if (datasetRowsByName.get("automation_cases")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_cases",
-        await loadDatasetFromStaging("automation_cases")
-      );
-    }
-    const automationCaseImport = await importAutomationCases(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      repositoryImport.repositoryIdMap,
-      folderImport.folderIdMap,
-      templateIdMap,
-      projectImport.defaultTemplateIdByProject,
-      workflowIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_CASE_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationCaseImport = await timedPhase(
+      "automationCases",
+      async () => {
+        if (datasetRowsByName.get("automation_cases")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_cases",
+            await loadDatasetFromStaging("automation_cases")
+          );
+        }
+        return importAutomationCases(
+          prisma2,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          repositoryImport.repositoryIdMap,
+          folderImport.folderIdMap,
+          templateIdMap,
+          projectImport.defaultTemplateIdByProject,
+          workflowIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_CASE_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, automationCaseImport.summary);
     await persistProgress(
@@ -11019,28 +11135,34 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationRuns",
       "Processing automation run imports"
     );
-    if (datasetRowsByName.get("automation_runs")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_runs",
-        await loadDatasetFromStaging("automation_runs")
-      );
-    }
-    const automationRunImport = await importAutomationRuns(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      configurationIdMap,
-      milestoneImport.milestoneIdMap,
-      workflowIdMap,
-      userIdMap,
-      importJob.createdById,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationRunImport = await timedPhase(
+      "automationRuns",
+      async () => {
+        if (datasetRowsByName.get("automation_runs")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_runs",
+            await loadDatasetFromStaging("automation_runs")
+          );
+        }
+        return importAutomationRuns(
+          prisma2,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          configurationIdMap,
+          milestoneImport.milestoneIdMap,
+          workflowIdMap,
+          userIdMap,
+          importJob.createdById,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, automationRunImport.summary);
     await persistProgress(
@@ -11053,32 +11175,38 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationRunTests",
       "Processing automation run test imports"
     );
-    if (datasetRowsByName.get("automation_run_tests")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_tests",
-        await loadDatasetFromStaging("automation_run_tests")
-      );
-    }
-    const automationRunTestImport = await importAutomationRunTests(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      automationRunImport.testSuiteIdMap,
-      automationRunImport.testRunTimestampMap,
-      automationRunImport.testRunProjectIdMap,
-      automationRunImport.testRunTestmoProjectIdMap,
-      automationCaseProjectMap,
-      statusIdMap,
-      userIdMap,
-      importJob.createdById,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_TEST_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationRunTestImport = await timedPhase(
+      "automationRunTests",
+      async () => {
+        if (datasetRowsByName.get("automation_run_tests")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_tests",
+            await loadDatasetFromStaging("automation_run_tests")
+          );
+        }
+        return importAutomationRunTests(
+          prisma2,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          automationRunImport.testSuiteIdMap,
+          automationRunImport.testRunTimestampMap,
+          automationRunImport.testRunProjectIdMap,
+          automationRunImport.testRunTestmoProjectIdMap,
+          automationCaseProjectMap,
+          statusIdMap,
+          userIdMap,
+          importJob.createdById,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_TEST_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (r) => r.summary.total
     );
     const automationRunTestSummary = automationRunTestImport.summary;
     const automationRunTestCaseMap = automationRunTestImport.testRunCaseIdMap;
@@ -11094,24 +11222,30 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationRunFields",
       "Processing automation run fields"
     );
-    if (datasetRowsByName.get("automation_run_fields")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_fields",
-        await loadDatasetFromStaging("automation_run_fields")
-      );
-    }
-    const automationRunFieldsImport = await importAutomationRunFields(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_FIELD_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationRunFieldsImport = await timedPhase(
+      "automationRunFields",
+      async () => {
+        if (datasetRowsByName.get("automation_run_fields")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_fields",
+            await loadDatasetFromStaging("automation_run_fields")
+          );
+        }
+        return importAutomationRunFields(
+          prisma2,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_FIELD_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunFieldsImport);
     await persistProgress(
@@ -11124,26 +11258,32 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationRunLinks",
       "Processing automation run links"
     );
-    if (datasetRowsByName.get("automation_run_links")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_links",
-        await loadDatasetFromStaging("automation_run_links")
-      );
-    }
-    const automationRunLinksImport = await importAutomationRunLinks(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      userIdMap,
-      importJob.createdById,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_LINK_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationRunLinksImport = await timedPhase(
+      "automationRunLinks",
+      async () => {
+        if (datasetRowsByName.get("automation_run_links")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_links",
+            await loadDatasetFromStaging("automation_run_links")
+          );
+        }
+        return importAutomationRunLinks(
+          prisma2,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          userIdMap,
+          importJob.createdById,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_LINK_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunLinksImport);
     await persistProgress(
@@ -11156,20 +11296,24 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationRunTestFields",
       "Processing automation run test fields"
     );
-    const automationRunTestFieldsImport = await importAutomationRunTestFields(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      automationRunTestCaseMap,
-      automationRunJunitResultMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_TEST_FIELD_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationRunTestFieldsImport = await timedPhase(
+      "automationRunTestFields",
+      () => importAutomationRunTestFields(
+        prisma2,
+        normalizedConfiguration,
+        datasetRowsByName,
+        projectImport.projectIdMap,
+        automationRunImport.testRunIdMap,
+        automationRunTestCaseMap,
+        automationRunJunitResultMap,
+        context,
+        persistProgress,
+        {
+          chunkSize: AUTOMATION_RUN_TEST_FIELD_CHUNK_SIZE,
+          transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+        }
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunTestFieldsImport);
     await persistProgress(
@@ -11182,23 +11326,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "automationRunTags",
       "Processing automation run tags"
     );
-    if (datasetRowsByName.get("automation_run_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_tags",
-        await loadDatasetFromStaging("automation_run_tags")
-      );
-    }
-    const automationRunTagsImport = await importAutomationRunTags(
-      prisma2,
-      normalizedConfiguration,
-      datasetRowsByName,
-      automationRunImport.testRunIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_TAG_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
-      }
+    const automationRunTagsImport = await timedPhase(
+      "automationRunTags",
+      async () => {
+        if (datasetRowsByName.get("automation_run_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_tags",
+            await loadDatasetFromStaging("automation_run_tags")
+          );
+        }
+        return importAutomationRunTags(
+          prisma2,
+          normalizedConfiguration,
+          datasetRowsByName,
+          automationRunImport.testRunIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_TAG_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunTagsImport);
     await persistProgress(
@@ -11208,25 +11358,31 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "automation_run_tags");
     logMessage(context, "Processing session values imports");
     await persistProgress("sessionValues", "Processing session values imports");
-    if (datasetRowsByName.get("session_values")?.length === 0) {
-      datasetRowsByName.set(
-        "session_values",
-        await loadDatasetFromStaging("session_values")
-      );
-    }
-    const sessionValuesImport = await withTransaction(
-      (tx) => importSessionValues(
-        tx,
-        datasetRowsByName,
-        sessionImport.sessionIdMap,
-        testmoFieldValueMap,
-        normalizedConfiguration,
-        caseImport.caseFieldMap,
-        caseImport.caseFieldMetadataById,
-        importJob,
-        context,
-        persistProgress
-      )
+    const sessionValuesImport = await timedPhase(
+      "sessionValues",
+      async () => {
+        if (datasetRowsByName.get("session_values")?.length === 0) {
+          datasetRowsByName.set(
+            "session_values",
+            await loadDatasetFromStaging("session_values")
+          );
+        }
+        return withTransaction(
+          (tx) => importSessionValues(
+            tx,
+            datasetRowsByName,
+            sessionImport.sessionIdMap,
+            testmoFieldValueMap,
+            normalizedConfiguration,
+            caseImport.caseFieldMap,
+            caseImport.caseFieldMetadataById,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, sessionValuesImport.summary);
     await persistProgress(
@@ -11236,23 +11392,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "session_values");
     logMessage(context, "Processing test run imports");
     await persistProgress("testRuns", "Processing test run imports");
-    if (datasetRowsByName.get("runs")?.length === 0) {
-      datasetRowsByName.set("runs", await loadDatasetFromStaging("runs"));
-    }
-    const testRunImport = await withTransaction(
-      (tx) => importTestRuns(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        repositoryImport.canonicalRepoIdByProject,
-        configurationIdMap,
-        milestoneImport.milestoneIdMap,
-        workflowIdMap,
-        userIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+    const testRunImport = await timedPhase(
+      "testRuns",
+      async () => {
+        if (datasetRowsByName.get("runs")?.length === 0) {
+          datasetRowsByName.set("runs", await loadDatasetFromStaging("runs"));
+        }
+        return withTransaction(
+          (tx) => importTestRuns(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            repositoryImport.canonicalRepoIdByProject,
+            configurationIdMap,
+            milestoneImport.milestoneIdMap,
+            workflowIdMap,
+            userIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, testRunImport.summary);
     await persistProgress(
@@ -11262,42 +11424,54 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "runs");
     logMessage(context, "Processing run links");
     await persistProgress("runLinks", "Processing run links");
-    if (datasetRowsByName.get("run_links")?.length === 0) {
-      datasetRowsByName.set(
-        "run_links",
-        await loadDatasetFromStaging("run_links")
-      );
-    }
-    const runLinksImport = await withTransaction(
-      (tx) => importRunLinks(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        testRunImport.testRunIdMap,
-        context
-      )
+    const runLinksImport = await timedPhase(
+      "runLinks",
+      async () => {
+        if (datasetRowsByName.get("run_links")?.length === 0) {
+          datasetRowsByName.set(
+            "run_links",
+            await loadDatasetFromStaging("run_links")
+          );
+        }
+        return withTransaction(
+          (tx) => importRunLinks(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            testRunImport.testRunIdMap,
+            context
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runLinksImport);
     await persistProgress("runLinks", formatSummaryStatus(runLinksImport));
     releaseDatasetRows(datasetRowsByName, "run_links");
     logMessage(context, "Processing test run case imports");
     await persistProgress("testRunCases", "Processing test run case imports");
-    if (datasetRowsByName.get("run_tests")?.length === 0) {
-      datasetRowsByName.set(
-        "run_tests",
-        await loadDatasetFromStaging("run_tests")
-      );
-    }
-    const testRunCaseImport = await importTestRunCases(
-      prisma2,
-      datasetRowsByName,
-      testRunImport.testRunIdMap,
-      caseImport.caseIdMap,
-      caseImport.caseMetaMap,
-      userIdMap,
-      statusIdMap,
-      context,
-      persistProgress
+    const testRunCaseImport = await timedPhase(
+      "testRunCases",
+      async () => {
+        if (datasetRowsByName.get("run_tests")?.length === 0) {
+          datasetRowsByName.set(
+            "run_tests",
+            await loadDatasetFromStaging("run_tests")
+          );
+        }
+        return importTestRunCases(
+          prisma2,
+          datasetRowsByName,
+          testRunImport.testRunIdMap,
+          caseImport.caseIdMap,
+          caseImport.caseMetaMap,
+          userIdMap,
+          statusIdMap,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, testRunCaseImport.summary);
     await persistProgress(
@@ -11307,19 +11481,25 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     releaseDatasetRows(datasetRowsByName, "run_tests");
     logMessage(context, "Processing run tag assignments");
     await persistProgress("runTags", "Processing run tag assignments");
-    if (datasetRowsByName.get("run_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "run_tags",
-        await loadDatasetFromStaging("run_tags")
-      );
-    }
-    const runTagsSummary = await withTransaction(
-      (tx) => importRunTags(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        testRunImport.testRunIdMap
-      )
+    const runTagsSummary = await timedPhase(
+      "runTags",
+      async () => {
+        if (datasetRowsByName.get("run_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "run_tags",
+            await loadDatasetFromStaging("run_tags")
+          );
+        }
+        return withTransaction(
+          (tx) => importRunTags(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            testRunImport.testRunIdMap
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runTagsSummary);
     await persistProgress("runTags", formatSummaryStatus(runTagsSummary));
@@ -11329,27 +11509,33 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "testRunResults",
       "Processing test run result imports"
     );
-    if (datasetRowsByName.get("run_results")?.length === 0) {
-      datasetRowsByName.set(
-        "run_results",
-        await loadDatasetFromStaging("run_results")
-      );
-    }
     const mergedTestRunCaseIdMap = new Map(testRunCaseImport.testRunCaseIdMap);
     for (const [testmoId, testRunCaseId] of automationRunTestCaseMap) {
       mergedTestRunCaseIdMap.set(testmoId, testRunCaseId);
     }
-    const testRunResultImport = await importTestRunResults(
-      prisma2,
-      datasetRowsByName,
-      testRunImport.testRunIdMap,
-      mergedTestRunCaseIdMap,
-      statusIdMap,
-      userIdMap,
-      resultFieldMap,
-      importJob,
-      context,
-      persistProgress
+    const testRunResultImport = await timedPhase(
+      "testRunResults",
+      async () => {
+        if (datasetRowsByName.get("run_results")?.length === 0) {
+          datasetRowsByName.set(
+            "run_results",
+            await loadDatasetFromStaging("run_results")
+          );
+        }
+        return importTestRunResults(
+          prisma2,
+          datasetRowsByName,
+          testRunImport.testRunIdMap,
+          mergedTestRunCaseIdMap,
+          statusIdMap,
+          userIdMap,
+          resultFieldMap,
+          importJob,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, testRunResultImport.summary);
     await persistProgress(
@@ -11362,16 +11548,20 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "testRunStepResults",
       "Processing test run step results"
     );
-    const stepResultsSummary = await importTestRunStepResults(
-      prisma2,
-      datasetRowsByName,
-      testRunResultImport.testRunResultIdMap,
-      mergedTestRunCaseIdMap,
-      statusIdMap,
-      caseImport.caseIdMap,
-      importJob,
-      context,
-      persistProgress
+    const stepResultsSummary = await timedPhase(
+      "testRunStepResults",
+      () => importTestRunStepResults(
+        prisma2,
+        datasetRowsByName,
+        testRunResultImport.testRunResultIdMap,
+        mergedTestRunCaseIdMap,
+        statusIdMap,
+        caseImport.caseIdMap,
+        importJob,
+        context,
+        persistProgress
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, stepResultsSummary);
     await persistProgress(
@@ -11380,8 +11570,17 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     );
     logMessage(context, "Processing issue targets");
     await persistProgress("issueTargets", "Processing issue targets");
-    const issueTargetsImport = await withTransaction(
-      (tx) => importIssueTargets(tx, normalizedConfiguration, context, persistProgress)
+    const issueTargetsImport = await timedPhase(
+      "issueTargets",
+      () => withTransaction(
+        (tx) => importIssueTargets(
+          tx,
+          normalizedConfiguration,
+          context,
+          persistProgress
+        )
+      ),
+      (r) => r.summary.total
     );
     recordEntitySummary(context, issueTargetsImport.summary);
     await persistProgress(
@@ -11390,19 +11589,28 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     );
     logMessage(context, "Processing issues");
     await persistProgress("issues", "Processing issues");
-    if (datasetRowsByName.get("issues")?.length === 0) {
-      datasetRowsByName.set("issues", await loadDatasetFromStaging("issues"));
-    }
-    const issuesImport = await withTransaction(
-      (tx) => importIssues(
-        tx,
-        datasetRowsByName,
-        issueTargetsImport.integrationIdMap,
-        projectImport.projectIdMap,
-        importJob.createdById,
-        context,
-        persistProgress
-      )
+    const issuesImport = await timedPhase(
+      "issues",
+      async () => {
+        if (datasetRowsByName.get("issues")?.length === 0) {
+          datasetRowsByName.set(
+            "issues",
+            await loadDatasetFromStaging("issues")
+          );
+        }
+        return withTransaction(
+          (tx) => importIssues(
+            tx,
+            datasetRowsByName,
+            issueTargetsImport.integrationIdMap,
+            projectImport.projectIdMap,
+            importJob.createdById,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, issuesImport.summary);
     await persistProgress("issues", formatSummaryStatus(issuesImport.summary));
@@ -11411,15 +11619,19 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "projectIntegrations",
       "Creating project-integration connections"
     );
-    const projectIntegrationsSummary = await withTransaction(
-      (tx) => createProjectIntegrations(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        issueTargetsImport.integrationIdMap,
-        context,
-        persistProgress
-      )
+    const projectIntegrationsSummary = await timedPhase(
+      "projectIntegrations",
+      () => withTransaction(
+        (tx) => createProjectIntegrations(
+          tx,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          issueTargetsImport.integrationIdMap,
+          context,
+          persistProgress
+        )
+      ),
+      (s) => s.total
     );
     recordEntitySummary(context, projectIntegrationsSummary);
     await persistProgress(
@@ -11435,21 +11647,27 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "milestoneIssues",
       "Skipped (schema does not support milestone-issue relationships)"
     );
-    if (datasetRowsByName.get("milestone_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "milestone_issues",
-        await loadDatasetFromStaging("milestone_issues")
-      );
-    }
-    const milestoneIssuesSummary = await withTransaction(
-      (tx) => importMilestoneIssues(
-        tx,
-        datasetRowsByName,
-        milestoneImport.milestoneIdMap,
-        issuesImport.issueIdMap,
-        context,
-        persistProgress
-      )
+    const milestoneIssuesSummary = await timedPhase(
+      "milestoneIssues",
+      async () => {
+        if (datasetRowsByName.get("milestone_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "milestone_issues",
+            await loadDatasetFromStaging("milestone_issues")
+          );
+        }
+        return withTransaction(
+          (tx) => importMilestoneIssues(
+            tx,
+            datasetRowsByName,
+            milestoneImport.milestoneIdMap,
+            issuesImport.issueIdMap,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, milestoneIssuesSummary);
     await persistProgress(
@@ -11462,23 +11680,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "repositoryCaseIssues",
       "Processing repository case issue relationships"
     );
-    if (datasetRowsByName.get("repository_case_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_case_issues",
-        await loadDatasetFromStaging("repository_case_issues")
-      );
-    }
-    const repositoryCaseIssuesSummary = await importRepositoryCaseIssues(
-      prisma2,
-      datasetRowsByName,
-      caseImport.caseIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
-      }
+    const repositoryCaseIssuesSummary = await timedPhase(
+      "repositoryCaseIssues",
+      async () => {
+        if (datasetRowsByName.get("repository_case_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_case_issues",
+            await loadDatasetFromStaging("repository_case_issues")
+          );
+        }
+        return importRepositoryCaseIssues(
+          prisma2,
+          datasetRowsByName,
+          caseImport.caseIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, repositoryCaseIssuesSummary);
     await persistProgress(
@@ -11491,23 +11715,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "runIssues",
       "Processing test run issue relationships"
     );
-    if (datasetRowsByName.get("run_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "run_issues",
-        await loadDatasetFromStaging("run_issues")
-      );
-    }
-    const runIssuesSummary = await importRunIssues(
-      prisma2,
-      datasetRowsByName,
-      testRunImport.testRunIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
-      }
+    const runIssuesSummary = await timedPhase(
+      "runIssues",
+      async () => {
+        if (datasetRowsByName.get("run_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "run_issues",
+            await loadDatasetFromStaging("run_issues")
+          );
+        }
+        return importRunIssues(
+          prisma2,
+          datasetRowsByName,
+          testRunImport.testRunIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runIssuesSummary);
     await persistProgress("runIssues", formatSummaryStatus(runIssuesSummary));
@@ -11517,23 +11747,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "runResultIssues",
       "Processing test run result issue relationships"
     );
-    if (datasetRowsByName.get("run_result_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "run_result_issues",
-        await loadDatasetFromStaging("run_result_issues")
-      );
-    }
-    const runResultIssuesSummary = await importRunResultIssues(
-      prisma2,
-      datasetRowsByName,
-      testRunResultImport.testRunResultIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
-      }
+    const runResultIssuesSummary = await timedPhase(
+      "runResultIssues",
+      async () => {
+        if (datasetRowsByName.get("run_result_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "run_result_issues",
+            await loadDatasetFromStaging("run_result_issues")
+          );
+        }
+        return importRunResultIssues(
+          prisma2,
+          datasetRowsByName,
+          testRunResultImport.testRunResultIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runResultIssuesSummary);
     await persistProgress(
@@ -11546,23 +11782,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "sessionIssues",
       "Processing session issue relationships"
     );
-    if (datasetRowsByName.get("session_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "session_issues",
-        await loadDatasetFromStaging("session_issues")
-      );
-    }
-    const sessionIssuesSummary = await importSessionIssues(
-      prisma2,
-      datasetRowsByName,
-      sessionImport.sessionIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
-      }
+    const sessionIssuesSummary = await timedPhase(
+      "sessionIssues",
+      async () => {
+        if (datasetRowsByName.get("session_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "session_issues",
+            await loadDatasetFromStaging("session_issues")
+          );
+        }
+        return importSessionIssues(
+          prisma2,
+          datasetRowsByName,
+          sessionImport.sessionIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, sessionIssuesSummary);
     await persistProgress(
@@ -11575,23 +11817,29 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       "sessionResultIssues",
       "Processing session result issue relationships"
     );
-    if (datasetRowsByName.get("session_result_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "session_result_issues",
-        await loadDatasetFromStaging("session_result_issues")
-      );
-    }
-    const sessionResultIssuesSummary = await importSessionResultIssues(
-      prisma2,
-      datasetRowsByName,
-      sessionResultsImport.sessionResultIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
-      }
+    const sessionResultIssuesSummary = await timedPhase(
+      "sessionResultIssues",
+      async () => {
+        if (datasetRowsByName.get("session_result_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "session_result_issues",
+            await loadDatasetFromStaging("session_result_issues")
+          );
+        }
+        return importSessionResultIssues(
+          prisma2,
+          datasetRowsByName,
+          sessionResultsImport.sessionResultIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, sessionResultIssuesSummary);
     await persistProgress(
@@ -11599,6 +11847,20 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
       formatSummaryStatus(sessionResultIssuesSummary)
     );
     releaseDatasetRows(datasetRowsByName, "session_result_issues");
+    console.log("\n[IMPORT TIMING] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+    console.log("[IMPORT TIMING] Phase Duration Summary:");
+    for (const { phase, durationMs, items } of phaseDurations) {
+      const sec = (durationMs / 1e3).toFixed(1);
+      const rate = items > 0 ? ` (${(items / (durationMs / 1e3)).toFixed(1)} items/sec)` : "";
+      console.log(
+        `[IMPORT TIMING]   ${phase.padEnd(25)} ${sec.padStart(8)}s  ${String(items).padStart(8)} items${rate}`
+      );
+    }
+    const totalMs = phaseDurations.reduce((sum, p) => sum + p.durationMs, 0);
+    console.log(
+      `[IMPORT TIMING] ${"TOTAL".padEnd(25)} ${(totalMs / 1e3).toFixed(1).padStart(8)}s`
+    );
+    console.log("[IMPORT TIMING] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n");
     logMessage(context, "Finalizing import configuration");
     await persistProgress(null, "Finalizing import configuration");
     const serializedConfiguration = serializeMappingConfiguration(
@@ -11884,11 +12146,11 @@ async function processor(job) {
     }
     processedDatasets += 1;
     processedRows += BigInt(dataset.rowCount);
-    const schemaValue = dataset.schema !== void 0 && dataset.schema !== null ? JSON.parse(JSON.stringify(dataset.schema)) : import_client6.Prisma.JsonNull;
+    const schemaValue = dataset.schema !== void 0 && dataset.schema !== null ? JSON.parse(JSON.stringify(dataset.schema)) : import_client5.Prisma.JsonNull;
     const sampleRowsValue = dataset.sampleRows.length > 0 ? JSON.parse(
       JSON.stringify(dataset.sampleRows)
-    ) : import_client6.Prisma.JsonNull;
-    const allRowsValue = dataset.allRows && dataset.allRows.length > 0 ? JSON.parse(JSON.stringify(dataset.allRows)) : import_client6.Prisma.JsonNull;
+    ) : import_client5.Prisma.JsonNull;
+    const allRowsValue = dataset.allRows && dataset.allRows.length > 0 ? JSON.parse(JSON.stringify(dataset.allRows)) : import_client5.Prisma.JsonNull;
     await prisma2.testmoImportDataset.create({
       data: {
         jobId,
@@ -11956,8 +12218,8 @@ async function processor(job) {
         processedRows,
         durationMs: summary.meta.durationMs,
         analysisGeneratedAt: /* @__PURE__ */ new Date(),
-        configuration: import_client6.Prisma.JsonNull,
-        options: import_client6.Prisma.JsonNull,
+        configuration: import_client5.Prisma.JsonNull,
+        options: import_client5.Prisma.JsonNull,
         analysis: analysisPayload,
         processedCount: 0,
         errorCount: 0,
@@ -11966,8 +12228,8 @@ async function processor(job) {
         currentEntity: null,
         estimatedTimeRemaining: null,
         processingRate: null,
-        activityLog: import_client6.Prisma.JsonNull,
-        entityProgress: import_client6.Prisma.JsonNull
+        activityLog: import_client5.Prisma.JsonNull,
+        entityProgress: import_client5.Prisma.JsonNull
       }
     });
     if (processedDatasets === 0 && summary.meta.totalDatasets === 0) {

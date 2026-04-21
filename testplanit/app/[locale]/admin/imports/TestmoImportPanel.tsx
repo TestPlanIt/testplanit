@@ -1041,6 +1041,7 @@ export function TestmoImportPanel() {
     setImportStarting(false);
     setAnalysisReloadToken(0);
     setMappingConfig(createEmptyMappingConfiguration());
+    setProcessingState("idle");
     setActiveStep(WizardStep.Upload);
     setSelectedExistingJobId("");
     setUploadProgress({ state: "idle", percent: 0 });
@@ -3254,7 +3255,6 @@ export function TestmoImportPanel() {
                       type="button"
                       variant="ghost"
                       onClick={resetSelections}
-                      disabled={isProcessing}
                     >
                       {t("testmo.reset")}
                     </Button>
