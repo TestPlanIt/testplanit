@@ -38,6 +38,22 @@
 # That behavior is being added in a companion PR
 # (fix/tenant-aware-worker-encryption-key in private-ops); do not onboard
 # new tenants against this pool until it has merged and shipped.
+#
+# DISASTER RECOVERY: the resourceNames list below is a point-in-time
+# snapshot and will drift as tenants are added after this file was last
+# edited. If you re-apply this file during DR, tenants provisioned in the
+# interim will lose RBAC and 403 on their next job. Rebuild the list from
+# live cluster state after apply:
+#
+#   kubectl -n testplanit get secrets -o name \
+#     | grep '^secret/tpi-.*-env$' | sed 's|secret/||' \
+#     | xargs -I{} kubectl -n testplanit patch role \
+#       multitenant-workers-tenant-secrets --type=json \
+#       -p '[{"op":"add","path":"/rules/0/resourceNames/-","value":"{}"}]' \
+#       2>/dev/null || true
+#
+# (Duplicate adds are tolerated with `|| true`; a cleaner idempotent version
+# is in provision-customer-k8s.sh in private-ops.)
 
 apiVersion: v1
 kind: ServiceAccount
