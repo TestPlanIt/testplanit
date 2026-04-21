@@ -9,6 +9,7 @@ import {
 } from "../lib/multiTenantPrisma";
 import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import type { AuditLogJobData } from "../lib/services/auditLog";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 /**
@@ -116,7 +117,7 @@ const startWorker = async () => {
   }
 
   if (valkeyConnection) {
-    worker = new Worker(AUDIT_LOG_QUEUE_NAME, processor, {
+    worker = new Worker(AUDIT_LOG_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
       concurrency: parseInt(process.env.AUDIT_LOG_CONCURRENCY || "10", 10), // Higher concurrency since audit logs are independent
     });

@@ -30,6 +30,7 @@ import {
 } from "../lib/queues";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import {
   normalizeMappingConfiguration,
@@ -7557,10 +7558,14 @@ async function startWorker() {
     process.exit(1);
   }
 
-  const worker = new Worker(TESTMO_IMPORT_QUEUE_NAME, processor, {
-    connection: valkeyConnection as any,
-    concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
-  });
+  const worker = new Worker(
+    TESTMO_IMPORT_QUEUE_NAME,
+    withTenantContext(processor),
+    {
+      connection: valkeyConnection as any,
+      concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
+    }
+  );
 
   worker.on("completed", (job) => {
     console.log(

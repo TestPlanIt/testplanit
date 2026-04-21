@@ -1193,6 +1193,158 @@ init_prismaBase();
 
 // utils/encryption.ts
 var import_crypto = __toESM(require("crypto"));
+
+// lib/tenantContext.ts
+var import_async_hooks = require("async_hooks");
+
+// lib/tenantSecrets.ts
+var import_fs = require("fs");
+var https = __toESM(require("https"));
+var SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount";
+var NAMESPACE_PATH = `${SA_DIR}/namespace`;
+var TOKEN_PATH = `${SA_DIR}/token`;
+var CA_PATH = `${SA_DIR}/ca.crt`;
+var DEFAULT_TTL_MS = 10 * 60 * 1e3;
+var keyCache = /* @__PURE__ */ new Map();
+var inFlight = /* @__PURE__ */ new Map();
+async function resolveNamespace() {
+  const explicit = process.env.TENANT_SECRETS_NAMESPACE;
+  if (explicit) return explicit;
+  return (await import_fs.promises.readFile(NAMESPACE_PATH, "utf8")).trim();
+}
+function resolveSecretName(tenantId) {
+  const template = process.env.TENANT_SECRET_NAME_TEMPLATE || "tpi-{tenant}-env";
+  return template.replace("{tenant}", tenantId);
+}
+async function kubeGet(path) {
+  const [token, ca] = await Promise.all([
+    import_fs.promises.readFile(TOKEN_PATH, "utf8").then((s) => s.trim()),
+    import_fs.promises.readFile(CA_PATH)
+  ]);
+  const host = process.env.KUBERNETES_SERVICE_HOST || "kubernetes.default.svc";
+  const port = process.env.KUBERNETES_SERVICE_PORT || "443";
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        host,
+        port,
+        path,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        },
+        ca
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const body = Buffer.concat(chunks).toString("utf8");
+          if (!res.statusCode || res.statusCode >= 400) {
+            reject(
+              new Error(
+                `Kubernetes API ${res.statusCode} for ${path}: ${body.slice(0, 200)}`
+              )
+            );
+            return;
+          }
+          try {
+            resolve(JSON.parse(body));
+          } catch (e) {
+            reject(new Error(`Invalid JSON from Kubernetes API: ${e}`));
+          }
+        });
+      }
+    );
+    req.on("error", reject);
+    req.end();
+  });
+}
+function extractEncryptionKey(envFileContent) {
+  for (const rawLine of envFileContent.split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const m = line.match(/^ENCRYPTION_KEY\s*=\s*(.*)$/);
+    if (!m) continue;
+    let value = m[1].trim();
+    if (value.startsWith('"') && value.endsWith('"') || value.startsWith("'") && value.endsWith("'")) {
+      value = value.slice(1, -1);
+    }
+    if (value) return value;
+  }
+  return null;
+}
+async function fetchEncryptionKey(tenantId) {
+  const namespace = await resolveNamespace();
+  const secretName = resolveSecretName(tenantId);
+  const path = `/api/v1/namespaces/${encodeURIComponent(namespace)}/secrets/${encodeURIComponent(secretName)}`;
+  const secret = await kubeGet(path);
+  const data = secret?.data || {};
+  const envB64 = data.env;
+  if (envB64) {
+    const env2 = Buffer.from(envB64, "base64").toString("utf8");
+    const key = extractEncryptionKey(env2);
+    if (key) return key;
+  }
+  const directB64 = data.ENCRYPTION_KEY;
+  if (directB64) {
+    const v = Buffer.from(directB64, "base64").toString("utf8").trim();
+    if (v) return v;
+  }
+  throw new Error(
+    `Secret ${secretName} in namespace ${namespace} has no ENCRYPTION_KEY`
+  );
+}
+async function getTenantEncryptionKey(tenantId) {
+  const ttl = parseInt(
+    process.env.TENANT_SECRETS_CACHE_TTL_MS || String(DEFAULT_TTL_MS),
+    10
+  );
+  const namespace = await resolveNamespace();
+  const cacheKey = `${namespace}:${tenantId}`;
+  const cached = keyCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < ttl) {
+    return cached.value;
+  }
+  const existing = inFlight.get(cacheKey);
+  if (existing) return existing;
+  const promise = fetchEncryptionKey(tenantId).then((value) => {
+    keyCache.set(cacheKey, { value, fetchedAt: Date.now() });
+    return value;
+  }).finally(() => {
+    inFlight.delete(cacheKey);
+  });
+  inFlight.set(cacheKey, promise);
+  return promise;
+}
+
+// lib/tenantContext.ts
+function isMultiTenantMode2() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var storage = new import_async_hooks.AsyncLocalStorage();
+function getTenantContext() {
+  return storage.getStore();
+}
+async function runWithTenantContext(tenantId, fn) {
+  if (!tenantId) return fn();
+  const encryptionKey = await getTenantEncryptionKey(tenantId);
+  return storage.run({ tenantId, encryptionKey }, fn);
+}
+function withTenantContext(processor2) {
+  return (job) => {
+    const tenantId = job.data?.tenantId;
+    if (!tenantId && isMultiTenantMode2()) {
+      console.warn(
+        "[tenantContext] job arrived without tenantId in multi-tenant mode \u2014 encryption will fall back to process.env.ENCRYPTION_KEY or throw"
+      );
+    }
+    return runWithTenantContext(tenantId, () => processor2(job));
+  };
+}
+
+// utils/encryption.ts
 var algorithm = "aes-256-gcm";
 var ivLength = 16;
 var saltLength = 32;
@@ -1201,11 +1353,13 @@ var iterations = 1e5;
 var keyLength = 32;
 var DEV_FALLBACK_KEY = "development-key-do-not-use-in-production-please!";
 var getMasterKey = () => {
-  const key = process.env.ENCRYPTION_KEY;
-  if (key) return key;
+  const envKey = process.env.ENCRYPTION_KEY;
+  if (envKey) return envKey;
+  const ctx = getTenantContext();
+  if (ctx?.encryptionKey) return ctx.encryptionKey;
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "ENCRYPTION_KEY is not set. Refusing to start \u2014 running with the built-in default key would expose every encrypted secret in the database. Configure ENCRYPTION_KEY as a long, random value before deploying to production."
+      "ENCRYPTION_KEY is not available \u2014 neither process.env.ENCRYPTION_KEY nor tenant context provided a key. App pods must set ENCRYPTION_KEY in their env; shared workers must run each job inside runWithTenantContext(tenantId, ...) so the tenant's key can be resolved from its Kubernetes Secret. Refusing to fall back to the built-in default key, which would expose every encrypted secret in the database."
     );
   }
   console.warn("ENCRYPTION_KEY not set, using default key for development");
@@ -4246,8 +4400,8 @@ var SyncService = class {
 var syncService = new SyncService();
 
 // lib/auditContext.ts
-var import_async_hooks = require("async_hooks");
-var auditContextStorage = new import_async_hooks.AsyncLocalStorage();
+var import_async_hooks2 = require("async_hooks");
+var auditContextStorage = new import_async_hooks2.AsyncLocalStorage();
 function getAuditContext() {
   const stored = auditContextStorage.getStore();
   if (stored) {
@@ -4446,7 +4600,7 @@ var startWorker = async () => {
     console.log("Sync worker starting in SINGLE-TENANT mode");
   }
   if (valkey_default) {
-    worker = new import_bullmq2.Worker(SYNC_QUEUE_NAME, processor, {
+    worker = new import_bullmq2.Worker(SYNC_QUEUE_NAME, withTenantContext(processor), {
       connection: valkey_default,
       concurrency: parseInt(process.env.SYNC_CONCURRENCY || "2", 10),
       lockDuration: 216e5,

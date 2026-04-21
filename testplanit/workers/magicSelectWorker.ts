@@ -17,6 +17,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { MAGIC_SELECT_QUEUE_NAME } from "../lib/queueNames";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import {
   getElasticsearchClient,
@@ -1092,7 +1093,7 @@ export function startMagicSelectWorker() {
 
   worker = new Worker<MagicSelectJobData, MagicSelectJobResult>(
     MAGIC_SELECT_QUEUE_NAME,
-    processor,
+    withTenantContext(processor),
     { connection: valkeyConnection as any, concurrency: 1 }
   );
 
