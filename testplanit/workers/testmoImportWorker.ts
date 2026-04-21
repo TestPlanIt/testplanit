@@ -7558,10 +7558,14 @@ async function startWorker() {
     process.exit(1);
   }
 
-  const worker = new Worker(TESTMO_IMPORT_QUEUE_NAME, withTenantContext(processor), {
-    connection: valkeyConnection as any,
-    concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
-  });
+  const worker = new Worker(
+    TESTMO_IMPORT_QUEUE_NAME,
+    withTenantContext(processor),
+    {
+      connection: valkeyConnection as any,
+      concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
+    }
+  );
 
   worker.on("completed", (job) => {
     console.log(

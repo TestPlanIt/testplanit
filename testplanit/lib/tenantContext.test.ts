@@ -6,7 +6,9 @@ import {
 } from "./tenantContext";
 
 vi.mock("./tenantSecrets", () => ({
-  getTenantEncryptionKey: vi.fn(async (tenantId: string) => `key-for-${tenantId}`),
+  getTenantEncryptionKey: vi.fn(
+    async (tenantId: string) => `key-for-${tenantId}`
+  ),
 }));
 
 afterEach(() => {
@@ -79,9 +81,7 @@ describe("withTenantContext", () => {
     const wrapped = withTenantContext(async () => "ok");
     await wrapped({ data: {} });
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("tenantContext")
-    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("tenantContext"));
     warn.mockRestore();
   });
 

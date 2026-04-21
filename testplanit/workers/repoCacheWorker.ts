@@ -123,10 +123,14 @@ async function startWorker() {
   }
 
   if (valkeyConnection) {
-    const worker = new Worker(REPO_CACHE_QUEUE_NAME, withTenantContext(processor), {
-      connection: valkeyConnection as any,
-      concurrency: 1, // Serial processing — avoid hammering git APIs
-    });
+    const worker = new Worker(
+      REPO_CACHE_QUEUE_NAME,
+      withTenantContext(processor),
+      {
+        connection: valkeyConnection as any,
+        concurrency: 1, // Serial processing — avoid hammering git APIs
+      }
+    );
 
     worker.on("completed", (job, result) => {
       console.info(

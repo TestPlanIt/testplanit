@@ -36,7 +36,8 @@ async function resolveNamespace(): Promise<string> {
 }
 
 function resolveSecretName(tenantId: string): string {
-  const template = process.env.TENANT_SECRET_NAME_TEMPLATE || "tpi-{tenant}-env";
+  const template =
+    process.env.TENANT_SECRET_NAME_TEMPLATE || "tpi-{tenant}-env";
   return template.replace("{tenant}", tenantId);
 }
 
@@ -137,7 +138,9 @@ async function fetchEncryptionKey(tenantId: string): Promise<string> {
   );
 }
 
-export async function getTenantEncryptionKey(tenantId: string): Promise<string> {
+export async function getTenantEncryptionKey(
+  tenantId: string
+): Promise<string> {
   const ttl = parseInt(
     process.env.TENANT_SECRETS_CACHE_TTL_MS || String(DEFAULT_TTL_MS),
     10

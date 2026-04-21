@@ -39,9 +39,10 @@ export async function runWithTenantContext<T>(
 // multi-tenant mode we log a warning — validateMultiTenantJobData inside
 // each processor is the authoritative check, but failing loudly here helps
 // surface misconfigured enqueuers earlier in the stack trace.
-export function withTenantContext<J extends { data?: { tenantId?: string } }, R>(
-  processor: (job: J) => Promise<R>
-): (job: J) => Promise<R> {
+export function withTenantContext<
+  J extends { data?: { tenantId?: string } },
+  R,
+>(processor: (job: J) => Promise<R>): (job: J) => Promise<R> {
   return (job: J) => {
     const tenantId = job.data?.tenantId;
     if (!tenantId && isMultiTenantMode()) {

@@ -433,14 +433,18 @@ async function startWorker() {
 
   // Initialize the worker only if Valkey connection exists
   if (valkeyConnection) {
-    const worker = new Worker(FORECAST_QUEUE_NAME, withTenantContext(processor), {
-      connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.FORECAST_CONCURRENCY || "5", 10),
-      limiter: {
-        max: 100,
-        duration: 1000,
-      },
-    });
+    const worker = new Worker(
+      FORECAST_QUEUE_NAME,
+      withTenantContext(processor),
+      {
+        connection: valkeyConnection as any,
+        concurrency: parseInt(process.env.FORECAST_CONCURRENCY || "5", 10),
+        limiter: {
+          max: 100,
+          duration: 1000,
+        },
+      }
+    );
 
     worker.on("completed", (job, result) => {
       console.info(

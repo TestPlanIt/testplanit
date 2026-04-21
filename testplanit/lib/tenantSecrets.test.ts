@@ -9,9 +9,8 @@ vi.mock("https", () => ({
 const fsFiles: Record<string, string | Buffer> = {
   "/var/run/secrets/kubernetes.io/serviceaccount/namespace": "testplanit",
   "/var/run/secrets/kubernetes.io/serviceaccount/token": "sa-token-value",
-  "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt": Buffer.from(
-    "fake-ca-bytes"
-  ),
+  "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt":
+    Buffer.from("fake-ca-bytes"),
 };
 // Vitest's ESM resolution for `import { promises as fs } from "fs"` requires
 // the mock to expose a default export too, so we return both shapes.
@@ -127,7 +126,9 @@ describe("getTenantEncryptionKey (HTTP + cache)", () => {
     expect(key).toBe("secret-for-allego");
     const opts = lastRequestOptions();
     expect(opts.method).toBe("GET");
-    expect(opts.path).toBe("/api/v1/namespaces/testplanit/secrets/tpi-allego-env");
+    expect(opts.path).toBe(
+      "/api/v1/namespaces/testplanit/secrets/tpi-allego-env"
+    );
     expect(opts.headers.Authorization).toBe("Bearer sa-token-value");
     // CA is projected into the request, not the global agent.
     expect(opts.ca).toBeInstanceOf(Buffer);
@@ -175,7 +176,9 @@ describe("getTenantEncryptionKey (HTTP + cache)", () => {
   });
 
   it("throws when the Secret has no ENCRYPTION_KEY", async () => {
-    queueKubeResponse({ data: { env: Buffer.from("FOO=bar").toString("base64") } });
+    queueKubeResponse({
+      data: { env: Buffer.from("FOO=bar").toString("base64") },
+    });
 
     await expect(getTenantEncryptionKey("allego")).rejects.toThrow(
       /has no ENCRYPTION_KEY/
