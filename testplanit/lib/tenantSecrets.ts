@@ -1,10 +1,18 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as https from "https";
 
 // Looks up per-tenant secret values from the Kubernetes API at runtime.
 // Used by the shared multi-tenant worker deployment, which cannot have every
 // tenant's ENCRYPTION_KEY in its own process environment. Authenticates using
 // the pod's in-cluster ServiceAccount token.
+//
+// Operational note: the Kubernetes API is on the critical path for every job
+// served by a shared worker. A cold cache (pod start or after TTL) plus a
+// Kubernetes API outage will fail jobs. Mitigations in place:
+//   - In-memory TTL cache (default 10 minutes, env-tunable).
+//   - Request deduplication: concurrent fetches for the same tenant share a
+//     single in-flight Promise.
+// If the cluster control plane is healthy, fetches are ~single-digit ms.
 
 const SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount";
 const NAMESPACE_PATH = `${SA_DIR}/namespace`;
@@ -19,16 +27,12 @@ interface CacheEntry {
 }
 
 const keyCache = new Map<string, CacheEntry>();
+const inFlight = new Map<string, Promise<string>>();
 
-export interface TenantSecretsClient {
-  getEncryptionKey(tenantId: string): Promise<string>;
-  invalidate(tenantId?: string): void;
-}
-
-function resolveNamespace(): string {
+async function resolveNamespace(): Promise<string> {
   const explicit = process.env.TENANT_SECRETS_NAMESPACE;
   if (explicit) return explicit;
-  return fs.readFileSync(NAMESPACE_PATH, "utf8").trim();
+  return (await fs.readFile(NAMESPACE_PATH, "utf8")).trim();
 }
 
 function resolveSecretName(tenantId: string): string {
@@ -37,8 +41,12 @@ function resolveSecretName(tenantId: string): string {
 }
 
 async function kubeGet(path: string): Promise<any> {
-  const token = fs.readFileSync(TOKEN_PATH, "utf8").trim();
-  const ca = fs.readFileSync(CA_PATH);
+  // Read token and CA on every request so projected-SA-token rotation (done
+  // by kubelet every hour or so) is picked up without needing a restart.
+  const [token, ca] = await Promise.all([
+    fs.readFile(TOKEN_PATH, "utf8").then((s) => s.trim()),
+    fs.readFile(CA_PATH),
+  ]);
   const host = process.env.KUBERNETES_SERVICE_HOST || "kubernetes.default.svc";
   const port = process.env.KUBERNETES_SERVICE_PORT || "443";
 
@@ -103,7 +111,7 @@ function extractEncryptionKey(envFileContent: string): string | null {
 }
 
 async function fetchEncryptionKey(tenantId: string): Promise<string> {
-  const namespace = resolveNamespace();
+  const namespace = await resolveNamespace();
   const secretName = resolveSecretName(tenantId);
   const path = `/api/v1/namespaces/${encodeURIComponent(namespace)}/secrets/${encodeURIComponent(secretName)}`;
   const secret = await kubeGet(path);
@@ -138,18 +146,30 @@ export async function getTenantEncryptionKey(tenantId: string): Promise<string> 
   if (cached && Date.now() - cached.fetchedAt < ttl) {
     return cached.value;
   }
-  const value = await fetchEncryptionKey(tenantId);
-  keyCache.set(tenantId, { value, fetchedAt: Date.now() });
-  return value;
-}
 
-export function invalidateTenantEncryptionKey(tenantId?: string): void {
-  if (tenantId) keyCache.delete(tenantId);
-  else keyCache.clear();
+  // Dedupe concurrent cache misses for the same tenant — N jobs arriving
+  // together after pod start / TTL expiry should trigger one API call, not N.
+  const existing = inFlight.get(tenantId);
+  if (existing) return existing;
+
+  const promise = fetchEncryptionKey(tenantId)
+    .then((value) => {
+      keyCache.set(tenantId, { value, fetchedAt: Date.now() });
+      return value;
+    })
+    .finally(() => {
+      inFlight.delete(tenantId);
+    });
+  inFlight.set(tenantId, promise);
+  return promise;
 }
 
 // Exported for tests.
 export const __internals = {
   extractEncryptionKey,
   resolveSecretName,
+  _resetForTests: () => {
+    keyCache.clear();
+    inFlight.clear();
+  },
 };

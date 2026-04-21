@@ -7,16 +7,30 @@
 # API (see lib/tenantSecrets.ts). This manifest grants it the minimum
 # permission to do that.
 #
-# After applying this file, patch the Deployment to use the new
-# ServiceAccount:
+# Kubernetes API is on the critical path for every job: a cold cache plus
+# an API outage will fail jobs. Mitigated by a 10-min in-memory cache and
+# in-flight request deduplication (see lib/tenantSecrets.ts). Control
+# plane health should already be an SLO.
 #
-#   kubectl -n testplanit patch deployment multitenant-workers \
-#     --type=strategic -p \
-#     '{"spec":{"template":{"spec":{"serviceAccountName":"multitenant-workers"}}}}'
+# RELEASE STEPS (one-time, before the image rollout):
 #
-# Then restart the pods:
+#   1. kubectl -n testplanit apply -f k8s/multitenant-workers-rbac.yaml
 #
-#   kubectl -n testplanit rollout restart deployment/multitenant-workers
+#   2. Patch the Deployment to use the new ServiceAccount:
+#      kubectl -n testplanit patch deployment multitenant-workers \
+#        --type=strategic -p \
+#        '{"spec":{"template":{"spec":{"serviceAccountName":"multitenant-workers"}}}}'
+#
+#   3. kubectl -n testplanit rollout restart deployment/multitenant-workers
+#
+# TENANT LIFECYCLE: Kubernetes RBAC resourceNames does not support wildcards,
+# so every tenant must appear in the list below. The list is kept in sync by
+# provision-customer-k8s.sh / deprovision-customer.sh in the private-ops
+# repo, which patch this Role via `kubectl patch role ... --type=json`. The
+# list below reflects the tenants present when this file was introduced;
+# provisioning operations append/remove entries directly against the live
+# Role in the cluster, not this file. Drift is expected — if you need an
+# authoritative snapshot, read from the cluster.
 
 apiVersion: v1
 kind: ServiceAccount

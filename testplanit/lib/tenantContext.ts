@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
+import { isMultiTenantMode } from "./multiTenantPrisma";
 import { getTenantEncryptionKey } from "./tenantSecrets";
 
 // Per-job tenant context for the shared multi-tenant worker. The app pods
@@ -28,10 +29,21 @@ export async function runWithTenantContext<T>(
 }
 
 // Wraps a BullMQ processor so each job runs inside its tenant's context.
-// Jobs with no tenantId (single-tenant mode) pass through unchanged.
+// Jobs with no tenantId (single-tenant mode) pass through unchanged. In
+// multi-tenant mode we log a warning — validateMultiTenantJobData inside
+// each processor is the authoritative check, but failing loudly here helps
+// surface misconfigured enqueuers earlier in the stack trace.
 export function withTenantContext<J extends { data?: { tenantId?: string } }, R>(
   processor: (job: J) => Promise<R>
 ): (job: J) => Promise<R> {
-  return (job: J) =>
-    runWithTenantContext(job.data?.tenantId, () => processor(job));
+  return (job: J) => {
+    const tenantId = job.data?.tenantId;
+    if (!tenantId && isMultiTenantMode()) {
+      console.warn(
+        "[tenantContext] job arrived without tenantId in multi-tenant mode " +
+          "— encryption will fall back to process.env.ENCRYPTION_KEY or throw"
+      );
+    }
+    return runWithTenantContext(tenantId, () => processor(job));
+  };
 }
