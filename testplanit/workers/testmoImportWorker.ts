@@ -348,6 +348,7 @@ interface ImportContext {
     string,
     { total: number; created: number; mapped: number }
   >;
+  entityRates: Record<string, number>;
   processedCount: number;
   startTime: number;
   lastProgressUpdate: number;
@@ -362,6 +363,7 @@ type EntitySummaryResult = Omit<ActivitySummaryEntry, "type" | "timestamp">;
 const createInitialContext = (jobId: string): ImportContext => ({
   activityLog: [],
   entityProgress: {},
+  entityRates: {},
   processedCount: 0,
   startTime: Date.now(),
   lastProgressUpdate: Date.now(),
@@ -541,6 +543,56 @@ const formatInProgressStatus = (
   return `${processed.toLocaleString()} / ${entry.total.toLocaleString()} processed`;
 };
 
+// Default rates (items/sec) based on observed import performance.
+// Used for phases that haven't started yet to estimate remaining time.
+const DEFAULT_ENTITY_RATES: Record<string, number> = {
+  workflows: 150,
+  statuses: 200,
+  groups: 100,
+  tags: 900,
+  roles: 60,
+  milestoneTypes: 80,
+  configurations: 200,
+  templates: 60,
+  templateFields: 150,
+  users: 600,
+  userGroups: 1600,
+  projects: 40,
+  projectLinks: 10,
+  milestones: 400,
+  milestoneLinks: 10,
+  sessions: 130,
+  sessionResults: 660,
+  sessionTags: 280,
+  repositories: 60,
+  repositoryFolders: 100,
+  repositoryCases: 50,
+  repositoryCaseTags: 2800,
+  automationCases: 150,
+  automationRuns: 470,
+  automationRunTests: 475,
+  automationRunFields: 1300,
+  automationRunLinks: 1100,
+  automationRunTestFields: 900,
+  automationRunTags: 220,
+  sessionValues: 500,
+  testRuns: 730,
+  runLinks: 500,
+  testRunCases: 30,
+  runTags: 570,
+  testRunResults: 650,
+  testRunStepResults: 40,
+  issueTargets: 10,
+  issues: 10,
+  projectIntegrations: 100,
+  milestoneIssues: 400,
+  repositoryCaseIssues: 370,
+  runIssues: 320,
+  runResultIssues: 310,
+  sessionIssues: 120,
+  sessionResultIssues: 80,
+};
+
 const calculateProgressMetrics = (
   context: ImportContext,
   totalCount: number
@@ -551,9 +603,6 @@ const calculateProgressMetrics = (
 
   // Don't calculate estimates until we have at least 2 seconds of data and some progress
   if (elapsedSeconds < 2 || context.processedCount === 0 || totalCount === 0) {
-    console.log(
-      `[calculateProgressMetrics] Skipping - elapsed: ${elapsedSeconds.toFixed(1)}s, processed: ${context.processedCount}, total: ${totalCount}`
-    );
     return { estimatedTimeRemaining: null, processingRate: null };
   }
 
@@ -563,11 +612,39 @@ const calculateProgressMetrics = (
     elapsedSeconds
   );
 
-  // Calculate remaining items
-  const remainingCount = totalCount - context.processedCount;
+  // Calculate per-entity weighted ETA using observed and default rates
+  let weightedRemainingSeconds = 0;
+  let hasEntityData = false;
 
-  // Calculate estimated seconds remaining
-  const estimatedSecondsRemaining = remainingCount / itemsPerSecond;
+  for (const [entity, progress] of Object.entries(context.entityProgress)) {
+    const remaining = Math.max(
+      0,
+      progress.total - progress.created - progress.mapped
+    );
+    if (remaining <= 0) continue;
+
+    // Use the observed rate for the current entity if available,
+    // otherwise fall back to default rates
+    let entityRate: number;
+    if (
+      context.entityRates &&
+      context.entityRates[entity] &&
+      context.entityRates[entity] > 0
+    ) {
+      entityRate = context.entityRates[entity];
+    } else {
+      entityRate = DEFAULT_ENTITY_RATES[entity] ?? 100;
+    }
+
+    weightedRemainingSeconds += remaining / entityRate;
+    hasEntityData = true;
+  }
+
+  // If we don't have entity-level data, fall back to overall rate
+  if (!hasEntityData) {
+    const remainingCount = totalCount - context.processedCount;
+    weightedRemainingSeconds = remainingCount / itemsPerSecond;
+  }
 
   // Format processing rate
   const processingRate =
@@ -577,12 +654,8 @@ const calculateProgressMetrics = (
 
   // Format estimated time remaining (in seconds)
   const estimatedTimeRemaining = Math.ceil(
-    estimatedSecondsRemaining
+    weightedRemainingSeconds
   ).toString();
-
-  console.log(
-    `[calculateProgressMetrics] Calculated - processed: ${context.processedCount}/${totalCount}, elapsed: ${elapsedSeconds.toFixed(1)}s, rate: ${processingRate}, ETA: ${estimatedTimeRemaining}s`
-  );
 
   return { estimatedTimeRemaining, processingRate };
 };
@@ -5689,11 +5762,17 @@ async function processImportMode(
     const durationMs = Date.now() - phaseStart;
     const items = itemCount ? itemCount(result) : 0;
     const durationSec = (durationMs / 1000).toFixed(1);
-    const rate = items > 0 ? (items / (durationMs / 1000)).toFixed(1) : "n/a";
+    const rateNum =
+      items > 0 && durationMs > 0 ? items / (durationMs / 1000) : 0;
+    const rate = rateNum > 0 ? rateNum.toFixed(1) : "n/a";
     console.log(
       `[IMPORT TIMING] ✓ ${phaseName} completed in ${durationSec}s (${items} items, ${rate} items/sec)`
     );
     phaseDurations.push({ phase: phaseName, durationMs, items });
+    // Record observed rate for ETA calculations
+    if (rateNum > 0) {
+      context.entityRates[phaseName] = rateNum;
+    }
     return result;
   };
 
