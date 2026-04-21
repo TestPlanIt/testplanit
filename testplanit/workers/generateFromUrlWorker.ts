@@ -6,6 +6,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { GENERATE_FROM_URL_QUEUE_NAME } from "../lib/queueNames";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { ssrfSafeFetch, SsrfError } from "../lib/utils/ssrf";
 import { extractContent } from "../lib/utils/contentExtractor";
@@ -312,7 +313,7 @@ export function startGenerateFromUrlWorker() {
 
   worker = new Worker<GenerateFromUrlJobData, GenerateFromUrlJobResult>(
     GENERATE_FROM_URL_QUEUE_NAME,
-    processor,
+    withTenantContext(processor),
     {
       connection: valkeyConnection as any,
       concurrency: 1,

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { runWithTenantContext } from "@/lib/tenantContext";
 import {
   assertEncryptionConfigured,
   decrypt,
@@ -7,6 +8,13 @@ import {
   getMasterKey,
   isEncrypted,
 } from "./encryption";
+
+vi.mock("@/lib/tenantSecrets", () => ({
+  getTenantEncryptionKey: vi.fn(async (tenantId: string) => {
+    if (tenantId === "missing") throw new Error("not found");
+    return `key-for-${tenantId}`;
+  }),
+}));
 
 // Mock environment variables
 const originalEnv = process.env;
@@ -52,6 +60,22 @@ describe("getMasterKey", () => {
     vi.stubEnv("NODE_ENV", "production");
 
     expect(getMasterKey()).toBe("prod-key-abc");
+  });
+
+  it("should read the tenant's key from context when env is unset (shared-worker path)", async () => {
+    delete process.env.ENCRYPTION_KEY;
+    vi.stubEnv("NODE_ENV", "production");
+
+    const key = await runWithTenantContext("acme", async () => getMasterKey());
+    expect(key).toBe("key-for-acme");
+  });
+
+  it("prefers process.env over tenant context (app-pod path wins)", async () => {
+    process.env.ENCRYPTION_KEY = "env-wins";
+    vi.stubEnv("NODE_ENV", "production");
+
+    const key = await runWithTenantContext("acme", async () => getMasterKey());
+    expect(key).toBe("env-wins");
   });
 });
 

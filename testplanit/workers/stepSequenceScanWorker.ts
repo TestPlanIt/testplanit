@@ -10,6 +10,7 @@ import {
 import { STEP_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { StepSequenceScanService } from "../lib/services/stepSequenceScanService";
 import { resolveSharedSteps } from "../lib/utils/resolveSharedSteps";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 // ─── Job data / result types ────────────────────────────────────────────────
@@ -185,11 +186,11 @@ export function startStepSequenceScanWorker() {
 
   worker = new Worker<StepScanJobData, StepScanJobResult>(
     STEP_SCAN_QUEUE_NAME,
-    async (job) => {
+    withTenantContext(async (job) => {
       const prisma = getPrismaClientForJob(job.data);
       const redis = await worker!.client;
       return processStepScan(job, prisma, redis);
-    },
+    }),
     {
       connection: valkeyConnection as any,
       concurrency: 1, // LOCKED: prevent ZenStack v3 deadlocks (40P01)

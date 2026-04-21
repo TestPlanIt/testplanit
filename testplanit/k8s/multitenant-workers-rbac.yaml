@@ -1,0 +1,83 @@
+# RBAC for the multitenant-workers Deployment.
+#
+# The shared worker process serves jobs from many tenants but lives in a
+# single pod with one environment. Per-tenant ENCRYPTION_KEY values are
+# stored in the existing tpi-<tenant>-env Secrets used by the app pods.
+# The worker reads the caller's tenant key at job time via the Kubernetes
+# API (see lib/tenantSecrets.ts). This manifest grants it the minimum
+# permission to do that.
+#
+# After applying this file, patch the Deployment to use the new
+# ServiceAccount:
+#
+#   kubectl -n testplanit patch deployment multitenant-workers \
+#     --type=strategic -p \
+#     '{"spec":{"template":{"spec":{"serviceAccountName":"multitenant-workers"}}}}'
+#
+# Then restart the pods:
+#
+#   kubectl -n testplanit rollout restart deployment/multitenant-workers
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: multitenant-workers
+  namespace: testplanit
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: multitenant-workers-tenant-secrets
+  namespace: testplanit
+rules:
+  # Read-only on per-tenant env secrets. Name-scoped via resourceNames to
+  # avoid granting "read every Secret in the namespace" — the worker only
+  # needs the tpi-*-env secrets that hold tenant ENCRYPTION_KEY values.
+  # resourceNames does not support wildcards, so the provisioning script
+  # appends each new tenant to this list; see provision-customer-k8s.sh.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      - tpi-afiy-env
+      - tpi-allego-env
+      - tpi-ashwini-env
+      - tpi-ayush-env
+      - tpi-bhargavqa-env
+      - tpi-cint-env
+      - tpi-comartoin-env
+      - tpi-demo-env
+      - tpi-falex-env
+      - tpi-horisentechnology-env
+      - tpi-hotel-env
+      - tpi-jgekko99-env
+      - tpi-mruga-env
+      - tpi-newproject-env
+      - tpi-nooo-env
+      - tpi-playwrightproject-env
+      - tpi-prasanth-env
+      - tpi-production-env
+      - tpi-qatest-env
+      - tpi-rohit-env
+      - tpi-rpsft-env
+      - tpi-rubenmariorossi-env
+      - tpi-single-env
+      - tpi-somaaliya-env
+      - tpi-tarsji-env
+      - tpi-testproject-env
+      - tpi-toyota-env
+      - tpi-ubg-env
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: multitenant-workers-tenant-secrets
+  namespace: testplanit
+subjects:
+  - kind: ServiceAccount
+    name: multitenant-workers
+    namespace: testplanit
+roleRef:
+  kind: Role
+  name: multitenant-workers-tenant-secrets
+  apiGroup: rbac.authorization.k8s.io
