@@ -21,6 +21,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 export interface ReindexJobData extends MultiTenantJobData {
@@ -379,16 +380,20 @@ const startWorker = async () => {
   }
 
   if (valkeyConnection) {
-    worker = new Worker(ELASTICSEARCH_REINDEX_QUEUE_NAME, processor, {
-      connection: valkeyConnection as any,
-      concurrency: parseInt(
-        process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || "2",
-        10
-      ),
-      lockDuration: 3600000,
-      maxStalledCount: 3,
-      stalledInterval: 300000,
-    });
+    worker = new Worker(
+      ELASTICSEARCH_REINDEX_QUEUE_NAME,
+      withTenantContext(processor),
+      {
+        connection: valkeyConnection as any,
+        concurrency: parseInt(
+          process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || "2",
+          10
+        ),
+        lockDuration: 3600000,
+        maxStalledCount: 3,
+        stalledInterval: 300000,
+      }
+    );
 
     worker.on("completed", (job) => {
       console.log(

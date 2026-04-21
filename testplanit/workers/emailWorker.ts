@@ -18,6 +18,7 @@ import {
   getServerTranslation,
   getServerTranslations,
 } from "../lib/server-translations";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
 
@@ -499,7 +500,7 @@ const startWorker = async () => {
   }
 
   if (valkeyConnection) {
-    worker = new Worker(EMAIL_QUEUE_NAME, processor, {
+    worker = new Worker(EMAIL_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
       concurrency: parseInt(process.env.EMAIL_CONCURRENCY || "3", 10),
     });

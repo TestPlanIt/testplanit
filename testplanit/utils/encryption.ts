@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { getTenantContext } from "@/lib/tenantContext";
 
 const algorithm = "aes-256-gcm";
 const ivLength = 16;
@@ -9,20 +10,32 @@ const keyLength = 32;
 
 const DEV_FALLBACK_KEY = "development-key-do-not-use-in-production-please!";
 
-// Get encryption key from environment variable. In production, the key is
-// mandatory and missing config is a hard error — running with a known default
-// would leave every encrypted field (integration credentials, OAuth tokens,
-// LLM API keys, 2FA secrets) effectively plaintext to anyone with the source.
-// In dev/test we keep the convenient fallback with a warning.
+// Resolve the master key used to derive per-value AES-256-GCM keys. Three
+// sources are tried in order:
+//   1. process.env.ENCRYPTION_KEY — app pods mount a per-tenant env secret
+//      containing the tenant's key, so this path covers all app-side callers.
+//   2. Tenant context — the shared multi-tenant worker serves many tenants
+//      from one process and establishes context per job (see tenantContext).
+//   3. Dev fallback — only in non-production, with a warning. In production
+//      we refuse rather than silently encrypting with a known default, which
+//      would leave integration credentials, OAuth tokens, LLM API keys, and
+//      2FA secrets effectively plaintext to anyone with the source.
 export const getMasterKey = (): string => {
-  const key = process.env.ENCRYPTION_KEY;
-  if (key) return key;
+  const envKey = process.env.ENCRYPTION_KEY;
+  if (envKey) return envKey;
+
+  const ctx = getTenantContext();
+  if (ctx?.encryptionKey) return ctx.encryptionKey;
+
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "ENCRYPTION_KEY is not set. Refusing to start — running with the " +
-        "built-in default key would expose every encrypted secret in the " +
-        "database. Configure ENCRYPTION_KEY as a long, random value before " +
-        "deploying to production."
+      "ENCRYPTION_KEY is not available — neither process.env.ENCRYPTION_KEY " +
+        "nor tenant context provided a key. App pods must set ENCRYPTION_KEY " +
+        "in their env; shared workers must run each job inside " +
+        "runWithTenantContext(tenantId, ...) so the tenant's key can be " +
+        "resolved from its Kubernetes Secret. Refusing to fall back to the " +
+        "built-in default key, which would expose every encrypted secret in " +
+        "the database."
     );
   }
   console.warn("ENCRYPTION_KEY not set, using default key for development");
@@ -30,12 +43,25 @@ export const getMasterKey = (): string => {
 };
 
 /**
- * Startup probe — call during app boot to fail fast on misconfiguration
- * rather than when the first encrypt/decrypt happens mid-request.
- * Safe to call multiple times; returns the resolved key on success.
+ * Startup probe for **app pods** — call during Next.js boot to fail fast
+ * on missing ENCRYPTION_KEY rather than when the first encrypt/decrypt
+ * happens mid-request.
+ *
+ * Not appropriate for shared worker pods: those serve many tenants from
+ * one process and each tenant has its own key, so there is no single key
+ * to check at startup. Workers resolve keys per-job via tenant context.
  */
 export const assertEncryptionConfigured = (): string => {
-  return getMasterKey();
+  const envKey = process.env.ENCRYPTION_KEY;
+  if (envKey) return envKey;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ENCRYPTION_KEY is not set in the pod environment. This probe is for " +
+        "per-tenant app pods; see tenantContext for the shared-worker path."
+    );
+  }
+  console.warn("ENCRYPTION_KEY not set, using default key for development");
+  return DEV_FALLBACK_KEY;
 };
 
 // Alias for backward compatibility

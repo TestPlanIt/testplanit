@@ -9,6 +9,7 @@ import {
 } from "../lib/multiTenantPrisma";
 import { REPO_CACHE_QUEUE_NAME } from "../lib/queueNames";
 import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 export const JOB_REFRESH_EXPIRED_CACHES = "refresh-expired-repo-caches";
@@ -122,10 +123,14 @@ async function startWorker() {
   }
 
   if (valkeyConnection) {
-    const worker = new Worker(REPO_CACHE_QUEUE_NAME, processor, {
-      connection: valkeyConnection as any,
-      concurrency: 1, // Serial processing — avoid hammering git APIs
-    });
+    const worker = new Worker(
+      REPO_CACHE_QUEUE_NAME,
+      withTenantContext(processor),
+      {
+        connection: valkeyConnection as any,
+        concurrency: 1, // Serial processing — avoid hammering git APIs
+      }
+    );
 
     worker.on("completed", (job, result) => {
       console.info(

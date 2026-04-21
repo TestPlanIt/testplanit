@@ -13,6 +13,7 @@ import {
 } from "../lib/multiTenantPrisma";
 import { SYNC_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 // Extend SyncJobData with multi-tenant support
@@ -204,7 +205,7 @@ const startWorker = async () => {
   }
 
   if (valkeyConnection) {
-    worker = new Worker(SYNC_QUEUE_NAME, processor, {
+    worker = new Worker(SYNC_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
       concurrency: parseInt(process.env.SYNC_CONCURRENCY || "2", 10),
       lockDuration: 21600000,
