@@ -1,3 +1,9 @@
+## [0.22.4](https://github.com/TestPlanIt/testplanit/compare/v0.22.3...v0.22.4) (2026-04-21)
+
+### Bug Fixes
+
+* **tenants:** Fix/tenant aware worker encryption key ([#229](https://github.com/TestPlanIt/testplanit/issues/229)) ([a835f5a](https://github.com/TestPlanIt/testplanit/commit/a835f5afa6517855caa5fac6b5f3f11602351f55))
+
 ## [0.22.3](https://github.com/TestPlanIt/testplanit/compare/v0.22.2...v0.22.3) (2026-04-19)
 
 ### Enhancements
