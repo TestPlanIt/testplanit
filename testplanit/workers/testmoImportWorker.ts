@@ -543,45 +543,45 @@ const formatInProgressStatus = (
   return `${processed.toLocaleString()} / ${entry.total.toLocaleString()} processed`;
 };
 
-// Default rates (items/sec) based on observed import performance.
+// Default rates (items/sec) based on observed import performance (v2, with batch size fix).
 // Used for phases that haven't started yet to estimate remaining time.
 const DEFAULT_ENTITY_RATES: Record<string, number> = {
-  workflows: 150,
-  statuses: 200,
-  groups: 100,
-  tags: 900,
-  roles: 60,
-  milestoneTypes: 80,
-  configurations: 200,
-  templates: 60,
-  templateFields: 150,
-  users: 600,
-  userGroups: 1600,
-  projects: 40,
-  projectLinks: 10,
-  milestones: 400,
+  workflows: 1000,
+  statuses: 1000,
+  groups: 1300,
+  tags: 2200,
+  roles: 700,
+  milestoneTypes: 1000,
+  configurations: 170,
+  templates: 350,
+  templateFields: 135,
+  users: 19,
+  userGroups: 875,
+  projects: 63,
+  projectLinks: 59,
+  milestones: 577,
   milestoneLinks: 10,
   sessions: 130,
   sessionResults: 660,
-  sessionTags: 280,
-  repositories: 60,
-  repositoryFolders: 100,
-  repositoryCases: 50,
-  repositoryCaseTags: 2800,
-  automationCases: 150,
-  automationRuns: 470,
-  automationRunTests: 475,
-  automationRunFields: 1300,
-  automationRunLinks: 1100,
-  automationRunTestFields: 900,
-  automationRunTags: 220,
+  sessionTags: 470,
+  repositories: 180,
+  repositoryFolders: 105,
+  repositoryCases: 54,
+  repositoryCaseTags: 3100,
+  automationCases: 154,
+  automationRuns: 459,
+  automationRunTests: 498,
+  automationRunFields: 1448,
+  automationRunLinks: 1045,
+  automationRunTestFields: 1073,
+  automationRunTags: 271,
   sessionValues: 500,
-  testRuns: 730,
+  testRuns: 1019,
   runLinks: 500,
-  testRunCases: 30,
-  runTags: 570,
-  testRunResults: 650,
-  testRunStepResults: 40,
+  testRunCases: 725,
+  runTags: 381,
+  testRunResults: 478,
+  testRunStepResults: 42,
   issueTargets: 10,
   issues: 10,
   projectIntegrations: 100,
@@ -653,9 +653,7 @@ const calculateProgressMetrics = (
       : `${(itemsPerSecond * 60).toFixed(1)} items/min`;
 
   // Format estimated time remaining (in seconds)
-  const estimatedTimeRemaining = Math.ceil(
-    weightedRemainingSeconds
-  ).toString();
+  const estimatedTimeRemaining = Math.ceil(weightedRemainingSeconds).toString();
 
   return { estimatedTimeRemaining, processingRate };
 };

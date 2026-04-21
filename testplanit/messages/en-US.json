@@ -166,7 +166,8 @@
       },
       "confirmRestoreTitle": "Confirm Restore",
       "confirmPurgeTitle": "Confirm Purge",
-      "remove": "Remove"
+      "remove": "Remove",
+      "reconfigure": "Reconfigure and retry"
     },
     "permissions": {
       "addEdit": "Add/Edit"

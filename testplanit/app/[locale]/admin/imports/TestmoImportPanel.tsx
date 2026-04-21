@@ -1248,8 +1248,11 @@ export function TestmoImportPanel() {
 
     if (currentJob.status === "FAILED") {
       setProcessingState("idle");
-      setErrorKey("analysis-failed");
-      setAnalysis(null);
+      // Only clear analysis if the failure was during analysis, not import
+      if (!currentJob.lastImportStartedAt) {
+        setErrorKey("analysis-failed");
+        setAnalysis(null);
+      }
       return;
     }
   }, [currentJob]);
@@ -2018,6 +2021,43 @@ export function TestmoImportPanel() {
     }
   }, [currentJob, isJobActive]);
 
+  const handleRetry = useCallback(async () => {
+    if (
+      !currentJob ||
+      (currentJob.status !== "FAILED" && currentJob.status !== "CANCELED")
+    ) {
+      return;
+    }
+
+    setCancelLoading(true);
+    try {
+      const response = await fetch(
+        `/api/imports/testmo/jobs/${currentJob.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "retry" }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("retry-failed");
+      }
+
+      const { job } = (await response.json()) as {
+        job: TestmoImportJobPayload;
+      };
+      setCurrentJob(job);
+      setPollingError(null);
+      setActiveStep(WizardStep.Configure);
+    } catch (error) {
+      console.error("Failed to retry import", error);
+      setPollingError("retry-failed");
+    } finally {
+      setCancelLoading(false);
+    }
+  }, [currentJob]);
+
   useEffect(() => {
     if (!analysis) {
       datasetDetailCache.current.clear();
@@ -2219,6 +2259,20 @@ export function TestmoImportPanel() {
           <AlertDescription>{currentJob.error}</AlertDescription>
         </Alert>
       )}
+      {(currentJob.status === "FAILED" || currentJob.status === "CANCELED") &&
+        currentJob.lastImportStartedAt && (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRetry}
+              disabled={cancelLoading}
+            >
+              {tCommon("actions.reconfigure")}
+            </Button>
+          </div>
+        )}
     </div>
   ) : null;
 
