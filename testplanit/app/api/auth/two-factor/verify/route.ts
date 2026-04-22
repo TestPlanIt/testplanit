@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { checkRateLimit } from "~/lib/auth-security";
 import { prisma } from "~/lib/prisma";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
@@ -11,7 +12,7 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
  * Verify 2FA token during sign-in flow
  * This endpoint is called after initial credentials verification
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { token, backupCode, pendingAuthToken } = body;
@@ -136,4 +137,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

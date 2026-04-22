@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
   encryptSecret,
@@ -12,7 +13,7 @@ import { authOptions } from "~/server/auth";
  * GET /api/auth/two-factor/setup
  * Generate a new TOTP secret and QR code for 2FA setup
  */
-export async function GET(_request: NextRequest) {
+export const GET = withAuditContext(async (_request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -58,4 +59,4 @@ export async function GET(_request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
