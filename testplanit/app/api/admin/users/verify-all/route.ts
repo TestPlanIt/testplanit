@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -12,7 +13,7 @@ import { authOptions } from "~/server/auth";
  *
  * Security: Only accessible to ADMIN users
  */
-export async function POST() {
+export const POST = withAuditContext(async (_request: NextRequest) => {
   try {
     // Check authentication and authorization
     const session = await getServerSession(authOptions);
@@ -55,4 +56,4 @@ export async function POST() {
       { status: 500 }
     );
   }
-}
+});

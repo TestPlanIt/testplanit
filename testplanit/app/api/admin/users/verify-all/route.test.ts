@@ -17,10 +17,14 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
+import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
 
 import { POST } from "./route";
+
+const createMockRequest = (): NextRequest =>
+  ({ headers: new Headers() }) as unknown as NextRequest;
 
 describe("Admin Users Verify-All Route", () => {
   beforeEach(() => {
@@ -31,7 +35,7 @@ describe("Admin Users Verify-All Route", () => {
     it("returns 401 when unauthenticated (no session)", async () => {
       (getServerSession as any).mockResolvedValue(null);
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -41,7 +45,7 @@ describe("Admin Users Verify-All Route", () => {
     it("returns 401 when session has no user id", async () => {
       (getServerSession as any).mockResolvedValue({ user: {} });
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -53,7 +57,7 @@ describe("Admin Users Verify-All Route", () => {
         user: { id: "user-1", access: "USER" },
       });
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -65,7 +69,7 @@ describe("Admin Users Verify-All Route", () => {
         user: { id: "user-1", access: "PROJECTADMIN" },
       });
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -80,7 +84,7 @@ describe("Admin Users Verify-All Route", () => {
       });
       (prisma.user.updateMany as any).mockResolvedValue({ count: 5 });
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -95,7 +99,7 @@ describe("Admin Users Verify-All Route", () => {
       });
       (prisma.user.updateMany as any).mockResolvedValue({ count: 3 });
 
-      await POST();
+      await POST(createMockRequest());
 
       expect(prisma.user.updateMany).toHaveBeenCalledWith({
         where: {
@@ -115,7 +119,7 @@ describe("Admin Users Verify-All Route", () => {
       });
       (prisma.user.updateMany as any).mockResolvedValue({ count: 0 });
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -129,7 +133,7 @@ describe("Admin Users Verify-All Route", () => {
       });
       (prisma.user.updateMany as any).mockRejectedValue(new Error("DB error"));
 
-      const response = await POST();
+      const response = await POST(createMockRequest());
       const data = await response.json();
 
       expect(response.status).toBe(500);
