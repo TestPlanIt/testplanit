@@ -20,142 +20,144 @@ export const dynamic = "force-dynamic";
  * Verify password for password-protected share link
  * Rate limited to prevent brute force attacks
  */
-export const POST = withAuditContext(async (
-  req: NextRequest,
-  { params }: { params: Promise<{ shareKey: string }> }
-) => {
-  try {
-    const { shareKey } = await params;
-    const body = await req.json();
-    const { password } = body;
+export const POST = withAuditContext(
+  async (
+    req: NextRequest,
+    { params }: { params: Promise<{ shareKey: string }> }
+  ) => {
+    try {
+      const { shareKey } = await params;
+      const body = await req.json();
+      const { password } = body;
 
-    if (!password) {
-      return NextResponse.json(
-        { error: "Password is required" },
-        { status: 400 }
-      );
-    }
+      if (!password) {
+        return NextResponse.json(
+          { error: "Password is required" },
+          { status: 400 }
+        );
+      }
 
-    // Get IP address for rate limiting
-    const ipAddress =
-      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
+      // Get IP address for rate limiting
+      const ipAddress =
+        req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+        req.headers.get("x-real-ip") ||
+        "unknown";
 
-    // Create rate limit identifier (shareKey + IP)
-    const rateLimitId = `${shareKey}:${ipAddress}`;
+      // Create rate limit identifier (shareKey + IP)
+      const rateLimitId = `${shareKey}:${ipAddress}`;
 
-    // Check rate limit
-    const rateLimit = checkPasswordAttemptLimit(rateLimitId);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          error: "Too many failed attempts. Please try again later.",
-          rateLimited: true,
-          resetAt: rateLimit.resetAt,
+      // Check rate limit
+      const rateLimit = checkPasswordAttemptLimit(rateLimitId);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          {
+            error: "Too many failed attempts. Please try again later.",
+            rateLimited: true,
+            resetAt: rateLimit.resetAt,
+          },
+          { status: 429 }
+        );
+      }
+
+      // Fetch share link
+      const shareLink = await prisma.shareLink.findUnique({
+        where: { shareKey },
+        select: {
+          id: true,
+          passwordHash: true,
+          mode: true,
+          isRevoked: true,
+          expiresAt: true,
         },
-        { status: 429 }
-      );
-    }
+      });
 
-    // Fetch share link
-    const shareLink = await prisma.shareLink.findUnique({
-      where: { shareKey },
-      select: {
-        id: true,
-        passwordHash: true,
-        mode: true,
-        isRevoked: true,
-        expiresAt: true,
-      },
-    });
+      if (!shareLink) {
+        return NextResponse.json(
+          { error: "Share link not found" },
+          { status: 404 }
+        );
+      }
 
-    if (!shareLink) {
+      // Check if revoked
+      if (shareLink.isRevoked) {
+        return NextResponse.json(
+          { error: "This share link has been revoked" },
+          { status: 403 }
+        );
+      }
+
+      // Check if expired
+      if (shareLink.expiresAt && new Date(shareLink.expiresAt) < new Date()) {
+        return NextResponse.json(
+          { error: "This share link has expired" },
+          { status: 403 }
+        );
+      }
+
+      // Verify mode is PASSWORD_PROTECTED
+      if (shareLink.mode !== "PASSWORD_PROTECTED") {
+        return NextResponse.json(
+          { error: "This share link does not require a password" },
+          { status: 400 }
+        );
+      }
+
+      if (!shareLink.passwordHash) {
+        return NextResponse.json(
+          { error: "Password protection not configured for this link" },
+          { status: 500 }
+        );
+      }
+
+      // Verify password
+      const isValid = await bcrypt.compare(password, shareLink.passwordHash);
+
+      if (!isValid) {
+        // Record failed attempt
+        recordPasswordAttempt(rateLimitId);
+
+        // Get updated rate limit info
+        const updatedRateLimit = checkPasswordAttemptLimit(rateLimitId);
+
+        // Audit failed share-link password attempt (brute-force signal per
+        // D-05). The attempted password value is NOT logged — only the
+        // mismatch signal.
+        await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
+          shareKey,
+          success: false,
+          reason: "password-mismatch",
+        });
+
+        return NextResponse.json(
+          {
+            error: "Invalid password",
+            remainingAttempts: updatedRateLimit.remainingAttempts,
+          },
+          { status: 401 }
+        );
+      }
+
+      // Password is valid, clear rate limit
+      clearPasswordAttempts(rateLimitId);
+
+      // Audit successful share-link password verification.
+      await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
+        shareKey,
+        success: true,
+      });
+
+      // Return success (client will store this in sessionStorage)
+      return NextResponse.json({
+        success: true,
+        token: shareKey, // Use shareKey as simple token
+        expiresIn: 3600, // 1 hour in seconds
+      });
+    } catch (error) {
+      console.error("Error verifying password:", error);
       return NextResponse.json(
-        { error: "Share link not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if revoked
-    if (shareLink.isRevoked) {
-      return NextResponse.json(
-        { error: "This share link has been revoked" },
-        { status: 403 }
-      );
-    }
-
-    // Check if expired
-    if (shareLink.expiresAt && new Date(shareLink.expiresAt) < new Date()) {
-      return NextResponse.json(
-        { error: "This share link has expired" },
-        { status: 403 }
-      );
-    }
-
-    // Verify mode is PASSWORD_PROTECTED
-    if (shareLink.mode !== "PASSWORD_PROTECTED") {
-      return NextResponse.json(
-        { error: "This share link does not require a password" },
-        { status: 400 }
-      );
-    }
-
-    if (!shareLink.passwordHash) {
-      return NextResponse.json(
-        { error: "Password protection not configured for this link" },
+        { error: "Failed to verify password" },
         { status: 500 }
       );
     }
-
-    // Verify password
-    const isValid = await bcrypt.compare(password, shareLink.passwordHash);
-
-    if (!isValid) {
-      // Record failed attempt
-      recordPasswordAttempt(rateLimitId);
-
-      // Get updated rate limit info
-      const updatedRateLimit = checkPasswordAttemptLimit(rateLimitId);
-
-      // Audit failed share-link password attempt (brute-force signal per
-      // D-05). The attempted password value is NOT logged — only the
-      // mismatch signal.
-      await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
-        shareKey,
-        success: false,
-        reason: "password-mismatch",
-      });
-
-      return NextResponse.json(
-        {
-          error: "Invalid password",
-          remainingAttempts: updatedRateLimit.remainingAttempts,
-        },
-        { status: 401 }
-      );
-    }
-
-    // Password is valid, clear rate limit
-    clearPasswordAttempts(rateLimitId);
-
-    // Audit successful share-link password verification.
-    await auditAuthEvent("SHARE_LINK_PASSWORD_VERIFY", null, "", {
-      shareKey,
-      success: true,
-    });
-
-    // Return success (client will store this in sessionStorage)
-    return NextResponse.json({
-      success: true,
-      token: shareKey, // Use shareKey as simple token
-      expiresIn: 3600, // 1 hour in seconds
-    });
-  } catch (error) {
-    console.error("Error verifying password:", error);
-    return NextResponse.json(
-      { error: "Failed to verify password" },
-      { status: 500 }
-    );
   }
-});
+);

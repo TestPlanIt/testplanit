@@ -30,7 +30,7 @@ export function withAuditContext<
     const ctx: AuditContext = extractAuditContextFromHeaders(req.headers);
     return runWithAuditContext(ctx, () =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handler(req, ...(rest as any)),
+      handler(req, ...(rest as any))
     );
   }) as H;
   return wrapped;
@@ -47,14 +47,14 @@ export function withAuditContext<
  * Per Phase 64 D-05.
  */
 export function withActionAuditContext<TArgs extends unknown[], TReturn>(
-  fn: (...args: TArgs) => Promise<TReturn>,
+  fn: (...args: TArgs) => Promise<TReturn>
 ): (...args: TArgs) => Promise<TReturn> {
   return async (...args: TArgs): Promise<TReturn> => {
     const headersList = await nextHeaders();
     // next/headers returns ReadonlyHeaders which is structurally compatible
     // with Headers for the extractor's purposes.
     const ctx: AuditContext = extractAuditContextFromHeaders(
-      headersList as unknown as Headers,
+      headersList as unknown as Headers
     );
     return runWithAuditContext(ctx, () => fn(...args));
   };
@@ -127,21 +127,21 @@ export function enqueueWithAuditContext<T extends object>(
   queue: Queue,
   name: string,
   data: T,
-  opts?: JobsOptions,
+  opts?: JobsOptions
 ): Promise<Job<ActorContextJobData<T>>>;
 export function enqueueWithAuditContext<T extends object>(
   queue: Queue,
   name: string,
   data: T,
   systemOpts: EnqueueSystemOptions,
-  opts?: JobsOptions,
+  opts?: JobsOptions
 ): Promise<Job<ActorContextJobData<T>>>;
 export async function enqueueWithAuditContext<T extends object>(
   queue: Queue,
   name: string,
   data: T,
   optsOrSystem?: JobsOptions | EnqueueSystemOptions,
-  maybeOpts?: JobsOptions,
+  maybeOpts?: JobsOptions
 ): Promise<Job<ActorContextJobData<T>>> {
   const isSystemOpts =
     typeof optsOrSystem === "object" &&
@@ -162,12 +162,12 @@ export async function enqueueWithAuditContext<T extends object>(
     typeof value === "string" && value.length > 0;
   const hasAlsIdentity = Boolean(
     alsContext &&
-      (isPresent(alsContext.userId) ||
-        isPresent(alsContext.userEmail) ||
-        isPresent(alsContext.userName) ||
-        isPresent(alsContext.ipAddress) ||
-        isPresent(alsContext.userAgent) ||
-        isPresent(alsContext.requestId)),
+    (isPresent(alsContext.userId) ||
+      isPresent(alsContext.userEmail) ||
+      isPresent(alsContext.userName) ||
+      isPresent(alsContext.ipAddress) ||
+      isPresent(alsContext.userAgent) ||
+      isPresent(alsContext.requestId))
   );
 
   let payload: ActorContextJobData<T>;
@@ -186,7 +186,7 @@ export async function enqueueWithAuditContext<T extends object>(
     };
   } else {
     throw new Error(
-      "enqueueWithAuditContext: no audit context present; pass { systemReason } to stamp __system__",
+      "enqueueWithAuditContext: no audit context present; pass { systemReason } to stamp __system__"
     );
   }
 
@@ -194,6 +194,6 @@ export async function enqueueWithAuditContext<T extends object>(
     name,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload as any,
-    jobOpts,
+    jobOpts
   ) as Promise<Job<ActorContextJobData<T>>>;
 }

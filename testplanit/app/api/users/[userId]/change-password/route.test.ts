@@ -188,9 +188,8 @@ describe("POST /api/users/[userId]/change-password", () => {
   });
 
   it("emits audit row with complete actor context (D-18)", async () => {
-    const { updateAuditContext, getAuditContext } = await import(
-      "~/lib/auditContext"
-    );
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
     mockGetServerAuthSession.mockImplementation(async () => {
       updateAuditContext({
         userId: "user-1",
@@ -214,7 +213,7 @@ describe("POST /api/users/[userId]/change-password", () => {
       async (
         userId: string,
         email: string,
-        _isReset?: boolean,
+        _isReset?: boolean
       ): Promise<void> => {
         const ctx = getAuditContext();
         capturedRow = {
@@ -226,7 +225,7 @@ describe("POST /api/users/[userId]/change-password", () => {
           requestId: ctx?.requestId ?? null,
           metadata: null,
         };
-      },
+      }
     );
 
     const res = await POST(makeRequest("user-1"), {

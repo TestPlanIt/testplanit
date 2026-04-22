@@ -61,17 +61,16 @@ vi.mock("~/server/auth", () => ({
 // captured row reflects the data flowing through Plan 01 Task 2's
 // withAuditContext frame.
 vi.mock("~/lib/services/auditLog", async () => {
-  const actual =
-    await vi.importActual<typeof import("~/lib/services/auditLog")>(
-      "~/lib/services/auditLog",
-    );
+  const actual = await vi.importActual<
+    typeof import("~/lib/services/auditLog")
+  >("~/lib/services/auditLog");
   return {
     ...actual,
     auditDataExport: vi.fn(
       async (
         exportType: string,
         entityType: string,
-        filters?: Record<string, unknown>,
+        filters?: Record<string, unknown>
       ) => {
         const { getAuditContext } = await import("~/lib/auditContext");
         const ctx = getAuditContext();
@@ -87,7 +86,7 @@ vi.mock("~/lib/services/auditLog", async () => {
           entityType,
           entityId: exportType,
         };
-      },
+      }
     ),
   };
 });

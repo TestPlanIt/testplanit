@@ -529,9 +529,8 @@ describe("share-links server actions", () => {
     });
 
     it("emitted audit row has all 6 actor fields populated", async () => {
-      const { expectAuditRowComplete } = await import(
-        "~/lib/testing/auditAssertions"
-      );
+      const { expectAuditRowComplete } =
+        await import("~/lib/testing/auditAssertions");
 
       await auditShareLinkCreation(mockShareLink);
 

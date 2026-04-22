@@ -151,9 +151,8 @@ describe("POST /api/admin/users/[userId]/force-change-password", () => {
   });
 
   it("fires FORCE_PASSWORD_CHANGE audit event with scope 'individual'", async () => {
-    const { updateAuditContext, getAuditContext } = await import(
-      "~/lib/auditContext"
-    );
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
     mockGetServerAuthSession.mockImplementation(async () => {
       updateAuditContext({
         userId: "admin-1",

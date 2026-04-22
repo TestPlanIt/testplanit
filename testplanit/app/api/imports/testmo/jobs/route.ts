@@ -87,11 +87,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       },
     });
 
-    await enqueueWithAuditContext(testmoImportQueue, JOB_PROCESS_TESTMO_IMPORT, {
-      jobId: jobRecord.id,
-      mode: "analyze",
-      tenantId: getCurrentTenantId(),
-    });
+    await enqueueWithAuditContext(
+      testmoImportQueue,
+      JOB_PROCESS_TESTMO_IMPORT,
+      {
+        jobId: jobRecord.id,
+        mode: "analyze",
+        tenantId: getCurrentTenantId(),
+      }
+    );
 
     const payload = serializeImportJob(jobRecord);
 

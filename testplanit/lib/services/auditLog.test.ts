@@ -31,7 +31,7 @@ import {
  */
 function expectLastQueuedRowComplete(
   mockQueueAdd: ReturnType<typeof vi.fn>,
-  opts?: { allowSystem?: boolean },
+  opts?: { allowSystem?: boolean }
 ): void {
   const calls = mockQueueAdd.mock.calls;
   expect(calls.length).toBeGreaterThan(0);
@@ -45,7 +45,10 @@ function expectLastQueuedRowComplete(
     {
       userId:
         (ev.userId as string | null | undefined) ??
-        ((ctx as Record<string, unknown>).userId as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userId as
+          | string
+          | null
+          | undefined) ??
         null,
       userEmail:
         (ev.userEmail as string | null | undefined) ??
@@ -78,7 +81,7 @@ function expectLastQueuedRowComplete(
           | undefined) ?? null,
       metadata: ev.metadata ?? null,
     },
-    opts,
+    opts
   );
 }
 

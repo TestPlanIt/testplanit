@@ -209,220 +209,229 @@ async function removeJob(
 }
 
 // GET: Get detailed information about a specific job
-export const GET = withAuditContext(async (
-  request: NextRequest,
-  { params }: { params: Promise<{ queueName: string; jobId: string }> }
-) => {
-  try {
-    const auth = await checkAdminAuth(request);
-    if (auth.error) return auth.error;
+export const GET = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ queueName: string; jobId: string }> }
+  ) => {
+    try {
+      const auth = await checkAdminAuth(request);
+      if (auth.error) return auth.error;
 
-    const { queueName, jobId } = await params;
-    const queue = getQueueByName(queueName);
+      const { queueName, jobId } = await params;
+      const queue = getQueueByName(queueName);
 
-    if (!queue) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
+      if (!queue) {
+        return NextResponse.json({ error: "Queue not found" }, { status: 404 });
+      }
+
+      const job = await queue.getJob(jobId);
+
+      if (!job) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      // Check tenant access in multi-tenant mode
+      if (!jobBelongsToCurrentTenant(job)) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      const state = await job.getState();
+      const logs = await queue.getJobLogs(jobId);
+
+      return NextResponse.json({
+        job: {
+          id: job.id,
+          name: job.name,
+          data: job.data,
+          opts: job.opts,
+          progress: job.progress,
+          returnvalue: job.returnvalue,
+          stacktrace: job.stacktrace,
+          timestamp: job.timestamp,
+          attemptsMade: job.attemptsMade,
+          failedReason: job.failedReason,
+          finishedOn: job.finishedOn,
+          processedOn: job.processedOn,
+          state,
+          logs,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error fetching job details:", error);
+      return NextResponse.json(
+        { error: error.message || "Internal server error" },
+        { status: 500 }
+      );
     }
-
-    const job = await queue.getJob(jobId);
-
-    if (!job) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    // Check tenant access in multi-tenant mode
-    if (!jobBelongsToCurrentTenant(job)) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    const state = await job.getState();
-    const logs = await queue.getJobLogs(jobId);
-
-    return NextResponse.json({
-      job: {
-        id: job.id,
-        name: job.name,
-        data: job.data,
-        opts: job.opts,
-        progress: job.progress,
-        returnvalue: job.returnvalue,
-        stacktrace: job.stacktrace,
-        timestamp: job.timestamp,
-        attemptsMade: job.attemptsMade,
-        failedReason: job.failedReason,
-        finishedOn: job.finishedOn,
-        processedOn: job.processedOn,
-        state,
-        logs,
-      },
-    });
-  } catch (error: any) {
-    console.error("Error fetching job details:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
   }
-});
+);
 
 // POST: Perform actions on a specific job (retry, promote)
-export const POST = withAuditContext(async (
-  request: NextRequest,
-  { params }: { params: Promise<{ queueName: string; jobId: string }> }
-) => {
-  try {
-    const auth = await checkAdminAuth(request);
-    if (auth.error) return auth.error;
+export const POST = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ queueName: string; jobId: string }> }
+  ) => {
+    try {
+      const auth = await checkAdminAuth(request);
+      if (auth.error) return auth.error;
 
-    const { queueName, jobId } = await params;
-    const queue = getQueueByName(queueName);
+      const { queueName, jobId } = await params;
+      const queue = getQueueByName(queueName);
 
-    if (!queue) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
-    }
-
-    const job = await queue.getJob(jobId);
-
-    if (!job) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    // Check tenant access in multi-tenant mode
-    if (!jobBelongsToCurrentTenant(job)) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    const { action, force = false } = await request.json();
-
-    switch (action) {
-      case "retry":
-        await job.retry();
-        // Audit the admin job-retry operator action.
-        await auditSystemConfigChange(
-          `queue.${queueName}.job.${jobId}.retry`,
-          null,
-          {
-            queueName,
-            jobId,
-            action: "retry",
-            triggeredBy: auth.userId ?? "unknown",
-          }
-        );
-        return NextResponse.json({ success: true, message: "Job retried" });
-
-      case "promote":
-        await job.promote();
-        // Audit the admin job-promote operator action.
-        await auditSystemConfigChange(
-          `queue.${queueName}.job.${jobId}.promote`,
-          null,
-          {
-            queueName,
-            jobId,
-            action: "promote",
-            triggeredBy: auth.userId ?? "unknown",
-          }
-        );
-        return NextResponse.json({ success: true, message: "Job promoted" });
-
-      case "remove": {
-        const result = await removeJob(queue, job, force);
-        // Audit the admin job-remove operator action.
-        await auditSystemConfigChange(
-          `queue.${queueName}.job.${jobId}.remove`,
-          null,
-          {
-            queueName,
-            jobId,
-            action: "remove",
-            triggeredBy: auth.userId ?? "unknown",
-            force,
-          }
-        );
-        // Handle partial success (repeatable job schedule removed but instance locked)
-        if (typeof result === "object" && result.partialSuccess) {
-          return NextResponse.json({
-            success: true,
-            partialSuccess: true,
-            message: result.message,
-          });
-        }
-        return NextResponse.json({ success: true, message: "Job removed" });
+      if (!queue) {
+        return NextResponse.json({ error: "Queue not found" }, { status: 404 });
       }
 
-      default:
-        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+      const job = await queue.getJob(jobId);
+
+      if (!job) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      // Check tenant access in multi-tenant mode
+      if (!jobBelongsToCurrentTenant(job)) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      const { action, force = false } = await request.json();
+
+      switch (action) {
+        case "retry":
+          await job.retry();
+          // Audit the admin job-retry operator action.
+          await auditSystemConfigChange(
+            `queue.${queueName}.job.${jobId}.retry`,
+            null,
+            {
+              queueName,
+              jobId,
+              action: "retry",
+              triggeredBy: auth.userId ?? "unknown",
+            }
+          );
+          return NextResponse.json({ success: true, message: "Job retried" });
+
+        case "promote":
+          await job.promote();
+          // Audit the admin job-promote operator action.
+          await auditSystemConfigChange(
+            `queue.${queueName}.job.${jobId}.promote`,
+            null,
+            {
+              queueName,
+              jobId,
+              action: "promote",
+              triggeredBy: auth.userId ?? "unknown",
+            }
+          );
+          return NextResponse.json({ success: true, message: "Job promoted" });
+
+        case "remove": {
+          const result = await removeJob(queue, job, force);
+          // Audit the admin job-remove operator action.
+          await auditSystemConfigChange(
+            `queue.${queueName}.job.${jobId}.remove`,
+            null,
+            {
+              queueName,
+              jobId,
+              action: "remove",
+              triggeredBy: auth.userId ?? "unknown",
+              force,
+            }
+          );
+          // Handle partial success (repeatable job schedule removed but instance locked)
+          if (typeof result === "object" && result.partialSuccess) {
+            return NextResponse.json({
+              success: true,
+              partialSuccess: true,
+              message: result.message,
+            });
+          }
+          return NextResponse.json({ success: true, message: "Job removed" });
+        }
+
+        default:
+          return NextResponse.json(
+            { error: "Invalid action" },
+            { status: 400 }
+          );
+      }
+    } catch (error: any) {
+      console.error("Error performing job action:", error);
+      return NextResponse.json(
+        { error: error.message || "Internal server error" },
+        { status: 500 }
+      );
     }
-  } catch (error: any) {
-    console.error("Error performing job action:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
   }
-});
+);
 
 // DELETE: Remove a specific job
-export const DELETE = withAuditContext(async (
-  request: NextRequest,
-  { params }: { params: Promise<{ queueName: string; jobId: string }> }
-) => {
-  try {
-    const auth = await checkAdminAuth(request);
-    if (auth.error) return auth.error;
+export const DELETE = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ queueName: string; jobId: string }> }
+  ) => {
+    try {
+      const auth = await checkAdminAuth(request);
+      if (auth.error) return auth.error;
 
-    const { queueName, jobId } = await params;
-    const queue = getQueueByName(queueName);
+      const { queueName, jobId } = await params;
+      const queue = getQueueByName(queueName);
 
-    if (!queue) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
-    }
-
-    const job = await queue.getJob(jobId);
-
-    if (!job) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    // Check tenant access in multi-tenant mode
-    if (!jobBelongsToCurrentTenant(job)) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    // Check for force parameter in query string
-    const { searchParams } = new URL(request.url);
-    const force = searchParams.get("force") === "true";
-
-    const result = await removeJob(queue, job, force);
-
-    // Audit the admin job-delete operator action.
-    await auditSystemConfigChange(
-      `queue.${queueName}.job.${jobId}.delete`,
-      null,
-      {
-        queueName,
-        jobId,
-        action: "delete",
-        triggeredBy: auth.userId ?? "unknown",
-        force,
+      if (!queue) {
+        return NextResponse.json({ error: "Queue not found" }, { status: 404 });
       }
-    );
 
-    // Handle partial success (repeatable job schedule removed but instance locked)
-    if (typeof result === "object" && result.partialSuccess) {
-      return NextResponse.json({
-        success: true,
-        partialSuccess: true,
-        message: result.message,
-      });
+      const job = await queue.getJob(jobId);
+
+      if (!job) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      // Check tenant access in multi-tenant mode
+      if (!jobBelongsToCurrentTenant(job)) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      // Check for force parameter in query string
+      const { searchParams } = new URL(request.url);
+      const force = searchParams.get("force") === "true";
+
+      const result = await removeJob(queue, job, force);
+
+      // Audit the admin job-delete operator action.
+      await auditSystemConfigChange(
+        `queue.${queueName}.job.${jobId}.delete`,
+        null,
+        {
+          queueName,
+          jobId,
+          action: "delete",
+          triggeredBy: auth.userId ?? "unknown",
+          force,
+        }
+      );
+
+      // Handle partial success (repeatable job schedule removed but instance locked)
+      if (typeof result === "object" && result.partialSuccess) {
+        return NextResponse.json({
+          success: true,
+          partialSuccess: true,
+          message: result.message,
+        });
+      }
+
+      return NextResponse.json({ success: true, message: "Job removed" });
+    } catch (error: any) {
+      console.error("Error removing job:", error);
+      return NextResponse.json(
+        { error: error.message || "Internal server error" },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({ success: true, message: "Job removed" });
-  } catch (error: any) {
-    console.error("Error removing job:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
   }
-});
+);

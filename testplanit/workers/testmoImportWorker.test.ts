@@ -286,24 +286,19 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
   // captureAuditEvent emission inside the wrapped body.
   async function runWorkerProcessor<T extends { actorContext?: any }>(
     job: { data: T },
-    emitAudit: () => Promise<void>,
+    emitAudit: () => Promise<void>
   ) {
     const { runWithAuditContext } = await import("../lib/auditContext");
-    return runWithAuditContext(job.data.actorContext ?? {}, () =>
-      emitAudit(),
-    );
+    return runWithAuditContext(job.data.actorContext ?? {}, () => emitAudit());
   }
 
   it("user path: audit row carries upstream user's actorContext", async () => {
-    const { runWithAuditContext, updateAuditContext } = await import(
-      "../lib/auditContext"
-    );
-    const { enqueueWithAuditContext } = await import(
-      "../lib/auditContextWrappers"
-    );
-    const { expectAuditRowComplete } = await import(
-      "../lib/testing/auditAssertions"
-    );
+    const { runWithAuditContext, updateAuditContext } =
+      await import("../lib/auditContext");
+    const { enqueueWithAuditContext } =
+      await import("../lib/auditContextWrappers");
+    const { expectAuditRowComplete } =
+      await import("../lib/testing/auditAssertions");
 
     // In-memory queue stub — records enqueued jobs.
     const enqueued: Array<{ name: string; data: any }> = [];
@@ -367,7 +362,7 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
           entityType: "TestmoImportJob",
           entityId: "tpi-job-1",
         };
-      },
+      }
     );
 
     expect(capturedRow).not.toBeNull();
@@ -377,12 +372,10 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
 
   it("system path: audit row carries __system__ userId and systemReason when enqueued with no upstream context", async () => {
     const { SYSTEM_ACTOR_ID } = await import("../lib/auditContext");
-    const { enqueueWithAuditContext } = await import(
-      "../lib/auditContextWrappers"
-    );
-    const { expectAuditRowComplete } = await import(
-      "../lib/testing/auditAssertions"
-    );
+    const { enqueueWithAuditContext } =
+      await import("../lib/auditContextWrappers");
+    const { expectAuditRowComplete } =
+      await import("../lib/testing/auditAssertions");
 
     const enqueued: Array<{ name: string; data: any }> = [];
     const fakeQueue = {
@@ -399,15 +392,13 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
       fakeQueue,
       "import",
       { jobId: "tpi-sys-1", mode: "import" as const, tenantId: undefined },
-      { systemReason: "scheduled:test-fixture" },
+      { systemReason: "scheduled:test-fixture" }
     );
 
     // Pre-flight sanity: Plan 01 Task 2 embeds systemReason in
     // actorContext (W5 Option A).
     expect(job.data.actorContext.userId).toBe(SYSTEM_ACTOR_ID);
-    expect(job.data.actorContext.systemReason).toBe(
-      "scheduled:test-fixture",
-    );
+    expect(job.data.actorContext.systemReason).toBe("scheduled:test-fixture");
 
     // Worker processor: Plan 04 Task 3 wraps body in
     // runWithAuditContext(job.data.actorContext, …). Plan 01 Task 2b's
@@ -436,7 +427,7 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
           entityType: "TestmoImportJob",
           entityId: "tpi-sys-1",
         };
-      },
+      }
     );
 
     expect(capturedRow).not.toBeNull();

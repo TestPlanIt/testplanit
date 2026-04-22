@@ -44,7 +44,7 @@ function makeQueueMock(): QueueMock {
  */
 function fakeRequest(entries: Record<string, string>): NextRequest {
   const map = new Map(
-    Object.entries(entries).map(([k, v]) => [k.toLowerCase(), v]),
+    Object.entries(entries).map(([k, v]) => [k.toLowerCase(), v])
   );
   return {
     headers: {
@@ -86,7 +86,7 @@ describe("withAuditContext", () => {
         JSON.stringify({
           hasReqId: Boolean(ctx?.requestId),
           hasUa: Boolean(ctx?.userAgent),
-        }),
+        })
       );
     });
 
@@ -165,7 +165,7 @@ describe("enqueueWithAuditContext", () => {
       await enqueueWithAuditContext(
         queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
         "job-alpha",
-        { foo: "bar" },
+        { foo: "bar" }
       );
     });
 
@@ -195,8 +195,8 @@ describe("enqueueWithAuditContext", () => {
       enqueueWithAuditContext(
         queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
         "job-beta",
-        { foo: "bar" },
-      ),
+        { foo: "bar" }
+      )
     ).rejects.toThrow(/no audit context present/);
 
     expect(queue.add).not.toHaveBeenCalled();
@@ -218,9 +218,9 @@ describe("enqueueWithAuditContext", () => {
         await enqueueWithAuditContext(
           queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
           "job-empty-strings",
-          { foo: "bar" },
+          { foo: "bar" }
         );
-      }),
+      })
     ).rejects.toThrow(/no audit context present/);
 
     expect(queue.add).not.toHaveBeenCalled();
@@ -241,7 +241,7 @@ describe("enqueueWithAuditContext", () => {
       await enqueueWithAuditContext(
         queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
         "job-mixed",
-        { foo: "bar" },
+        { foo: "bar" }
       );
     });
 
@@ -265,7 +265,7 @@ describe("enqueueWithAuditContext", () => {
       queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
       "job-gamma",
       { foo: "bar" },
-      { systemReason: "scheduled:test-rollup" },
+      { systemReason: "scheduled:test-rollup" }
     );
 
     expect(queue.add).toHaveBeenCalledTimes(1);
@@ -287,7 +287,7 @@ describe("enqueueWithAuditContext", () => {
       queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
       "job-delta",
       { foo: "bar" },
-      { systemReason: "scheduled:mirror-test" },
+      { systemReason: "scheduled:mirror-test" }
     );
 
     const payload = queue.add.mock.calls[0][1] as Record<string, unknown>;
@@ -308,7 +308,7 @@ describe("enqueueWithAuditContext", () => {
         queue as unknown as Parameters<typeof enqueueWithAuditContext>[0],
         "job-epsilon",
         { foo: "bar" },
-        { systemReason: "scheduled:should-be-ignored" },
+        { systemReason: "scheduled:should-be-ignored" }
       );
     });
 
@@ -316,7 +316,7 @@ describe("enqueueWithAuditContext", () => {
     expect((payload.actorContext as AuditContext).userId).toBe("u-user-wins");
     // No __system__ anywhere in actorContext
     expect((payload.actorContext as AuditContext).userId).not.toBe(
-      SYSTEM_ACTOR_ID,
+      SYSTEM_ACTOR_ID
     );
     // No systemReason leaks in on the user-attributed branch
     expect(payload.systemReason).toBeUndefined();
@@ -344,7 +344,7 @@ describe("enrichFromApiAuth", () => {
           userName: "Bearer User",
         });
         observed = getAuditContext();
-      },
+      }
     );
 
     expect(observed).toMatchObject({
@@ -365,7 +365,7 @@ describe("enrichFromApiAuth", () => {
         userId: "u-orphan",
         userEmail: "orphan@example.com",
         userName: "Orphan",
-      }),
+      })
     ).not.toThrow();
     // getAuditContext may return the globalFallbackContext singleton if
     // some other test set it; the invariant we care about here is that

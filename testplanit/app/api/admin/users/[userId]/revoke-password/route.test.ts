@@ -235,9 +235,8 @@ describe("POST /api/admin/users/[userId]/revoke-password", () => {
   });
 
   it("fires PASSWORD_REVOKED audit event with revokedBy metadata", async () => {
-    const { updateAuditContext, getAuditContext } = await import(
-      "~/lib/auditContext"
-    );
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
     mockGetServerAuthSession.mockImplementation(async () => {
       updateAuditContext({
         userId: "admin-1",

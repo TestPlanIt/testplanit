@@ -74,7 +74,7 @@ vi.mock("@/lib/integrations/services/SyncService", async () => {
       ...actual.syncService,
       // Keep REAL queueIssueRefresh — this is the whole point of the test.
       queueIssueRefresh: actual.syncService.queueIssueRefresh.bind(
-        actual.syncService,
+        actual.syncService
       ),
       // Stub OTHER methods called by the route.
       performIssueRefresh: mockPerformIssueRefresh,

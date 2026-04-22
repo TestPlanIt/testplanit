@@ -12,7 +12,7 @@ import type { AuditLogJobData } from "../lib/services/auditLog";
  */
 function expectLastCreatedAuditRowComplete(
   createMock: ReturnType<typeof vi.fn>,
-  opts?: { allowSystem?: boolean },
+  opts?: { allowSystem?: boolean }
 ): void {
   const calls = createMock.mock.calls;
   expect(calls.length).toBeGreaterThan(0);
@@ -35,7 +35,7 @@ function expectLastCreatedAuditRowComplete(
       requestId: (md.requestId as string | null | undefined) ?? null,
       metadata: md,
     },
-    opts,
+    opts
   );
 }
 

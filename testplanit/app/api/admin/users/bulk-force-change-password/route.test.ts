@@ -92,9 +92,8 @@ describe("POST /api/admin/users/bulk-force-change-password", () => {
   });
 
   it("fires FORCE_PASSWORD_CHANGE audit event with scope 'bulk' and count", async () => {
-    const { updateAuditContext, getAuditContext } = await import(
-      "~/lib/auditContext"
-    );
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
     mockGetServerAuthSession.mockImplementation(async () => {
       updateAuditContext({
         userId: "admin-1",

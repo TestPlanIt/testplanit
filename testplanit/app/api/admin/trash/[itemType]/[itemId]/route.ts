@@ -160,27 +160,156 @@ const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
 };
 
 // PATCH handler for restoring an item (setting isDeleted = false)
-export const PATCH = withAuditContext(async (
-  request: NextRequest,
-  context: { params: Promise<{ itemType: string; itemId: string }> }
-) => {
-  const auth = await checkAdminAuth(request);
-  if (auth.error) return auth.error;
+export const PATCH = withAuditContext(
+  async (
+    request: NextRequest,
+    context: { params: Promise<{ itemType: string; itemId: string }> }
+  ) => {
+    const auth = await checkAdminAuth(request);
+    if (auth.error) return auth.error;
 
-  const params = await context.params;
-  const { itemType, itemId } = params;
-  const modelMapEntry = itemTypeToModelMap[itemType];
+    const params = await context.params;
+    const { itemType, itemId } = params;
+    const modelMapEntry = itemTypeToModelMap[itemType];
 
-  if (!modelMapEntry) {
-    return NextResponse.json({ error: "Invalid item type" }, { status: 404 });
+    if (!modelMapEntry) {
+      return NextResponse.json({ error: "Invalid item type" }, { status: 404 });
+    }
+
+    if (!itemId) {
+      return NextResponse.json(
+        { error: "Item ID is required" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      let idForQuery: string | number = itemId;
+      const intIdModels = [
+        "Roles",
+        "Groups",
+        "Projects",
+        "Milestones",
+        "MilestoneTypes",
+        "Icon",
+        "CaseFields",
+        "ResultFields",
+        "FieldOptions",
+        "Templates",
+        "Status",
+        "Workflows",
+        "ConfigCategories",
+        "ConfigVariants",
+        "Configurations",
+        "Tags",
+        "Repositories",
+        "RepositoryFolders",
+        "RepositoryCases",
+        "RepositoryCaseVersions",
+        "Attachments",
+        "Steps",
+        "Sessions",
+        "SessionResults",
+        "SessionVersions",
+        "TestRuns",
+        "TestRunCases",
+        "TestRunResults",
+        "TestRunStepResults",
+        "Issues",
+        "JUnitTestSuite",
+        "JUnitTestResult",
+        "JUnitProperty",
+        "JUnitAttachment",
+        "JUnitTestStep",
+        "RepositoryCaseLink",
+        "CodeRepository",
+        "LlmIntegration",
+        "Integration",
+        "PromptConfig",
+        "CaseExportTemplate",
+        "SharedStepGroup",
+      ];
+
+      if (intIdModels.includes(modelMapEntry.modelName)) {
+        const parsedId = parseInt(itemId, 10);
+        if (isNaN(parsedId)) {
+          return NextResponse.json(
+            {
+              error: `Invalid Item ID format for ${modelMapEntry.modelName}. Expected integer.`,
+            },
+            { status: 400 }
+          );
+        }
+        idForQuery = parsedId;
+      }
+
+      const restoredItem = await modelMapEntry.model.update({
+        where: { id: idForQuery as any }, // Cast as any for now
+        data: { isDeleted: false },
+      });
+
+      // Audit the restore operation
+      await captureAuditEvent({
+        action: "UPDATE",
+        entityType: modelMapEntry.modelName,
+        entityId: String(idForQuery),
+        entityName:
+          (restoredItem as any).name ||
+          (restoredItem as any).title ||
+          (restoredItem as any).email,
+        metadata: {
+          operation: "restore_from_trash",
+        },
+      });
+
+      return NextResponse.json(restoredItem);
+    } catch (error: any) {
+      console.error(`Failed to restore ${itemType} with ID ${itemId}:`, error);
+      if (error.code === "P2025") {
+        return NextResponse.json(
+          {
+            error: `${modelMapEntry.modelName} with ID ${itemId} not found or already not deleted.`,
+          },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        {
+          error: `Failed to restore ${modelMapEntry.modelName}: ${error.message}`,
+        },
+        { status: 500 }
+      );
+    }
   }
+);
 
-  if (!itemId) {
-    return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
-  }
+// DELETE handler for purging an item (hard delete)
+export const DELETE = withAuditContext(
+  async (
+    request: NextRequest,
+    context: { params: Promise<{ itemType: string; itemId: string }> }
+  ) => {
+    const auth = await checkAdminAuth(request);
+    if (auth.error) return auth.error;
 
-  try {
+    const params = await context.params;
+    const { itemType, itemId } = params;
+    const modelMapEntry = itemTypeToModelMap[itemType]; // Use modelMapEntry
+
+    if (!modelMapEntry) {
+      // Check modelMapEntry
+      return NextResponse.json({ error: "Invalid item type" }, { status: 404 });
+    }
+
+    if (!itemId) {
+      return NextResponse.json(
+        { error: "Item ID is required" },
+        { status: 400 }
+      );
+    }
+
     let idForQuery: string | number = itemId;
+
     const intIdModels = [
       "Roles",
       "Groups",
@@ -227,242 +356,128 @@ export const PATCH = withAuditContext(async (
     ];
 
     if (intIdModels.includes(modelMapEntry.modelName)) {
-      const parsedId = parseInt(itemId, 10);
-      if (isNaN(parsedId)) {
+      // Use modelMapEntry.modelName
+      idForQuery = parseInt(itemId, 10);
+      if (isNaN(idForQuery)) {
         return NextResponse.json(
           {
-            error: `Invalid Item ID format for ${modelMapEntry.modelName}. Expected integer.`,
+            error: `Invalid ID format for ${modelMapEntry.modelName}. Expected integer.`,
           },
           { status: 400 }
         );
       }
-      idForQuery = parsedId;
     }
 
-    const restoredItem = await modelMapEntry.model.update({
-      where: { id: idForQuery as any }, // Cast as any for now
-      data: { isDeleted: false },
-    });
+    try {
+      const itemToPurge = await modelMapEntry.model.findUnique({
+        // Use modelMapEntry.model
+        where: { id: idForQuery as any },
+      });
 
-    // Audit the restore operation
-    await captureAuditEvent({
-      action: "UPDATE",
-      entityType: modelMapEntry.modelName,
-      entityId: String(idForQuery),
-      entityName:
-        (restoredItem as any).name ||
-        (restoredItem as any).title ||
-        (restoredItem as any).email,
-      metadata: {
-        operation: "restore_from_trash",
-      },
-    });
-
-    return NextResponse.json(restoredItem);
-  } catch (error: any) {
-    console.error(`Failed to restore ${itemType} with ID ${itemId}:`, error);
-    if (error.code === "P2025") {
-      return NextResponse.json(
-        {
-          error: `${modelMapEntry.modelName} with ID ${itemId} not found or already not deleted.`,
-        },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: `Failed to restore ${modelMapEntry.modelName}: ${error.message}`,
-      },
-      { status: 500 }
-    );
-  }
-});
-
-// DELETE handler for purging an item (hard delete)
-export const DELETE = withAuditContext(async (
-  request: NextRequest,
-  context: { params: Promise<{ itemType: string; itemId: string }> }
-) => {
-  const auth = await checkAdminAuth(request);
-  if (auth.error) return auth.error;
-
-  const params = await context.params;
-  const { itemType, itemId } = params;
-  const modelMapEntry = itemTypeToModelMap[itemType]; // Use modelMapEntry
-
-  if (!modelMapEntry) {
-    // Check modelMapEntry
-    return NextResponse.json({ error: "Invalid item type" }, { status: 404 });
-  }
-
-  if (!itemId) {
-    return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
-  }
-
-  let idForQuery: string | number = itemId;
-
-  const intIdModels = [
-    "Roles",
-    "Groups",
-    "Projects",
-    "Milestones",
-    "MilestoneTypes",
-    "Icon",
-    "CaseFields",
-    "ResultFields",
-    "FieldOptions",
-    "Templates",
-    "Status",
-    "Workflows",
-    "ConfigCategories",
-    "ConfigVariants",
-    "Configurations",
-    "Tags",
-    "Repositories",
-    "RepositoryFolders",
-    "RepositoryCases",
-    "RepositoryCaseVersions",
-    "Attachments",
-    "Steps",
-    "Sessions",
-    "SessionResults",
-    "SessionVersions",
-    "TestRuns",
-    "TestRunCases",
-    "TestRunResults",
-    "TestRunStepResults",
-    "Issues",
-    "JUnitTestSuite",
-    "JUnitTestResult",
-    "JUnitProperty",
-    "JUnitAttachment",
-    "JUnitTestStep",
-    "RepositoryCaseLink",
-    "CodeRepository",
-    "LlmIntegration",
-    "Integration",
-    "PromptConfig",
-    "CaseExportTemplate",
-    "SharedStepGroup",
-  ];
-
-  if (intIdModels.includes(modelMapEntry.modelName)) {
-    // Use modelMapEntry.modelName
-    idForQuery = parseInt(itemId, 10);
-    if (isNaN(idForQuery)) {
-      return NextResponse.json(
-        {
-          error: `Invalid ID format for ${modelMapEntry.modelName}. Expected integer.`,
-        },
-        { status: 400 }
-      );
-    }
-  }
-
-  try {
-    const itemToPurge = await modelMapEntry.model.findUnique({
-      // Use modelMapEntry.model
-      where: { id: idForQuery as any },
-    });
-
-    if (!itemToPurge) {
-      return NextResponse.json(
-        { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
-        { status: 404 }
-      );
-    }
-
-    if (
-      typeof (itemToPurge as any).isDeleted === "boolean" &&
-      !(itemToPurge as any).isDeleted
-    ) {
-      return NextResponse.json(
-        {
-          error: `${modelMapEntry.modelName} with ID ${itemId} is not marked as deleted. Purge operation aborted.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    await modelMapEntry.model.delete({ where: { id: idForQuery as any } }); // Use modelMapEntry.model
-
-    // Audit the permanent delete (purge) operation
-    await captureAuditEvent({
-      action: "DELETE",
-      entityType: modelMapEntry.modelName,
-      entityId: String(idForQuery),
-      entityName:
-        (itemToPurge as any).name ||
-        (itemToPurge as any).title ||
-        (itemToPurge as any).email,
-      metadata: {
-        operation: "permanent_delete",
-        purgedFromTrash: true,
-      },
-    });
-
-    // If itemType is Attachments, delete from S3
-    if (modelMapEntry.modelName === "Attachments" && (itemToPurge as any).url) {
-      const attachmentUrl = (itemToPurge as any).url;
-      try {
-        const urlObject = new URL(attachmentUrl);
-        // Assuming the S3 key is the pathname part of the URL, removing leading '/'
-        const s3Key = urlObject.pathname.startsWith("/")
-          ? urlObject.pathname.substring(1)
-          : urlObject.pathname;
-        const bucketName = process.env.AWS_BUCKET_NAME!;
-
-        if (!bucketName) {
-          console.error(
-            "[S3 Delete] AWS_BUCKET_NAME environment variable is not set. Cannot delete from S3."
-          );
-          // Decide on behavior: fail the request or just log? For now, log and continue.
-        } else if (s3Key) {
-          await deleteS3Object(bucketName, s3Key);
-        } else {
-          console.warn(
-            `[S3 Delete] Could not determine S3 key from URL: ${attachmentUrl}`
-          );
-        }
-      } catch (s3Error) {
-        console.error(
-          `[PURGE /api/admin/trash/${itemType}/${itemId}] Failed to delete attachment from S3. URL: ${attachmentUrl}. Error:`,
-          s3Error
+      if (!itemToPurge) {
+        return NextResponse.json(
+          { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
+          { status: 404 }
         );
-        // Optional: Decide if this failure should make the whole purge fail.
-        // For now, we'll return a success for DB purge but log the S3 error.
-        // You might want to return a different status or error message.
       }
-    }
 
-    return NextResponse.json(
-      {
-        message: `${modelMapEntry.modelName} with ID ${itemId} purged successfully.`,
-      }, // Use modelMapEntry.modelName
-      { status: 200 }
-    );
-  } catch (error: any) {
-    console.error(
-      `Failed to purge ${modelMapEntry.modelName} with ID ${itemId}:`,
-      error
-    ); // Use modelMapEntry.modelName
-    if (error.code === "P2025") {
-      return NextResponse.json(
-        { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
-        { status: 404 }
-      );
-    }
-    if (error.code === "P2003" || error.code === "P2014") {
+      if (
+        typeof (itemToPurge as any).isDeleted === "boolean" &&
+        !(itemToPurge as any).isDeleted
+      ) {
+        return NextResponse.json(
+          {
+            error: `${modelMapEntry.modelName} with ID ${itemId} is not marked as deleted. Purge operation aborted.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      await modelMapEntry.model.delete({ where: { id: idForQuery as any } }); // Use modelMapEntry.model
+
+      // Audit the permanent delete (purge) operation
+      await captureAuditEvent({
+        action: "DELETE",
+        entityType: modelMapEntry.modelName,
+        entityId: String(idForQuery),
+        entityName:
+          (itemToPurge as any).name ||
+          (itemToPurge as any).title ||
+          (itemToPurge as any).email,
+        metadata: {
+          operation: "permanent_delete",
+          purgedFromTrash: true,
+        },
+      });
+
+      // If itemType is Attachments, delete from S3
+      if (
+        modelMapEntry.modelName === "Attachments" &&
+        (itemToPurge as any).url
+      ) {
+        const attachmentUrl = (itemToPurge as any).url;
+        try {
+          const urlObject = new URL(attachmentUrl);
+          // Assuming the S3 key is the pathname part of the URL, removing leading '/'
+          const s3Key = urlObject.pathname.startsWith("/")
+            ? urlObject.pathname.substring(1)
+            : urlObject.pathname;
+          const bucketName = process.env.AWS_BUCKET_NAME!;
+
+          if (!bucketName) {
+            console.error(
+              "[S3 Delete] AWS_BUCKET_NAME environment variable is not set. Cannot delete from S3."
+            );
+            // Decide on behavior: fail the request or just log? For now, log and continue.
+          } else if (s3Key) {
+            await deleteS3Object(bucketName, s3Key);
+          } else {
+            console.warn(
+              `[S3 Delete] Could not determine S3 key from URL: ${attachmentUrl}`
+            );
+          }
+        } catch (s3Error) {
+          console.error(
+            `[PURGE /api/admin/trash/${itemType}/${itemId}] Failed to delete attachment from S3. URL: ${attachmentUrl}. Error:`,
+            s3Error
+          );
+          // Optional: Decide if this failure should make the whole purge fail.
+          // For now, we'll return a success for DB purge but log the S3 error.
+          // You might want to return a different status or error message.
+        }
+      }
+
       return NextResponse.json(
         {
-          error: `Failed to purge ${modelMapEntry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,
-        },
-        { status: 409 }
+          message: `${modelMapEntry.modelName} with ID ${itemId} purged successfully.`,
+        }, // Use modelMapEntry.modelName
+        { status: 200 }
+      );
+    } catch (error: any) {
+      console.error(
+        `Failed to purge ${modelMapEntry.modelName} with ID ${itemId}:`,
+        error
+      ); // Use modelMapEntry.modelName
+      if (error.code === "P2025") {
+        return NextResponse.json(
+          { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
+          { status: 404 }
+        );
+      }
+      if (error.code === "P2003" || error.code === "P2014") {
+        return NextResponse.json(
+          {
+            error: `Failed to purge ${modelMapEntry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,
+          },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        {
+          error: `Failed to purge ${modelMapEntry.modelName}: ${error.message}`,
+        }, // Use modelMapEntry.modelName
+        { status: 500 }
       );
     }
-    return NextResponse.json(
-      { error: `Failed to purge ${modelMapEntry.modelName}: ${error.message}` }, // Use modelMapEntry.modelName
-      { status: 500 }
-    );
   }
-});
+);

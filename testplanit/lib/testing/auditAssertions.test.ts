@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
-import {
-  expectAuditRowComplete,
-  type AuditRowLike,
-} from "./auditAssertions";
+import { expectAuditRowComplete, type AuditRowLike } from "./auditAssertions";
 
 /**
  * Build a plausible audit-row fixture with all actor-context fields
@@ -78,7 +75,7 @@ describe("expectAuditRowComplete", () => {
       metadata: { systemReason: "scheduled:daily-rollup" },
     });
     expect(() =>
-      expectAuditRowComplete(row, { allowSystem: true }),
+      expectAuditRowComplete(row, { allowSystem: true })
     ).not.toThrow();
   });
 
@@ -87,16 +84,14 @@ describe("expectAuditRowComplete", () => {
       userId: SYSTEM_ACTOR_ID,
       metadata: null,
     });
-    expect(() =>
-      expectAuditRowComplete(row, { allowSystem: true }),
-    ).toThrow();
+    expect(() => expectAuditRowComplete(row, { allowSystem: true })).toThrow();
 
     const rowWithEmptyMetadata = makeAuditRow({
       userId: SYSTEM_ACTOR_ID,
       metadata: {},
     });
     expect(() =>
-      expectAuditRowComplete(rowWithEmptyMetadata, { allowSystem: true }),
+      expectAuditRowComplete(rowWithEmptyMetadata, { allowSystem: true })
     ).toThrow();
   });
 
@@ -107,9 +102,7 @@ describe("expectAuditRowComplete", () => {
       userId: "user-abc",
       ipAddress: null, // should cause the human-branch assertion to fail
     });
-    expect(() =>
-      expectAuditRowComplete(row, { allowSystem: true }),
-    ).toThrow();
+    expect(() => expectAuditRowComplete(row, { allowSystem: true })).toThrow();
   });
 });
 

@@ -40,7 +40,7 @@ export interface AuditRowLike {
  */
 export function expectAuditRowComplete(
   row: AuditRowLike,
-  opts?: { allowSystem?: boolean },
+  opts?: { allowSystem?: boolean }
 ): void {
   if (opts?.allowSystem && row.userId === SYSTEM_ACTOR_ID) {
     expect(row.metadata).toMatchObject({ systemReason: expect.any(String) });
