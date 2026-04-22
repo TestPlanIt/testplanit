@@ -118,6 +118,17 @@ vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({
   })),
 }));
 
+vi.mock("~/hooks/useRepositoryCasesByDescendants", () => ({
+  useFindManyRepositoryCasesByDescendants: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    error: null,
+    totalCount: 0,
+    refetch: vi.fn(),
+  })),
+}));
+
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: vi.fn(() => ({
     permissions: { canAddEdit: true, canDelete: true },
@@ -275,6 +286,7 @@ vi.mock("./columns", () => ({
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import * as NextAuth from "next-auth/react";
+import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePagination } from "~/lib/contexts/PaginationContext";
@@ -329,6 +341,15 @@ function setupMocks({
   (useFindManyRepositoryCasesFiltered as any).mockReturnValue({
     data,
     isLoading,
+    error: null,
+    totalCount: data.length,
+    refetch: vi.fn(),
+  });
+
+  (useFindManyRepositoryCasesByDescendants as any).mockReturnValue({
+    data,
+    isLoading,
+    isFetching: false,
     error: null,
     totalCount: data.length,
     refetch: vi.fn(),

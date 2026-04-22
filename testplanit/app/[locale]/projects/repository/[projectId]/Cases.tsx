@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import {
   PostFetchFilter,
   useFindManyRepositoryCasesFiltered,
@@ -72,6 +73,236 @@ import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
 
 type PageSizeOption = number | "All";
+
+// Shared select shape for repository case list queries. Used by both the
+// ZenStack useFindManyRepositoryCases hook (default GET path) and the
+// by-folder-descendants POST endpoint (used when "Show all descendants" is
+// active on a deeply nested folder) so both return identical row shapes.
+const REPOSITORY_CASE_LIST_SELECT = {
+  id: true,
+  projectId: true,
+  project: true,
+  creator: true,
+  folder: true,
+  repositoryId: true,
+  folderId: true,
+  templateId: true,
+  name: true,
+  stateId: true,
+  estimate: true,
+  forecastManual: true,
+  forecastAutomated: true,
+  order: true,
+  createdAt: true,
+  creatorId: true,
+  automated: true,
+  isArchived: true,
+  isDeleted: true,
+  currentVersion: true,
+  source: true,
+  state: {
+    select: {
+      id: true,
+      name: true,
+      icon: {
+        select: {
+          name: true,
+        },
+      },
+      color: {
+        select: {
+          value: true,
+        },
+      },
+    },
+  },
+  template: {
+    select: {
+      id: true,
+      templateName: true,
+      caseFields: {
+        select: {
+          caseField: {
+            select: {
+              id: true,
+              defaultValue: true,
+              displayName: true,
+              type: {
+                select: {
+                  type: true,
+                },
+              },
+              fieldOptions: {
+                select: {
+                  fieldOption: {
+                    select: {
+                      id: true,
+                      icon: true,
+                      iconColor: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  caseFieldValues: {
+    select: {
+      id: true,
+      value: true,
+      fieldId: true,
+      field: {
+        select: {
+          id: true,
+          displayName: true,
+          type: {
+            select: {
+              type: true,
+            },
+          },
+        },
+      },
+    },
+    where: { field: { isEnabled: true, isDeleted: false } },
+  },
+  attachments: {
+    orderBy: { createdAt: "desc" },
+    where: { isDeleted: false },
+  },
+  steps: {
+    where: {
+      isDeleted: false,
+      OR: [
+        { sharedStepGroupId: null },
+        { sharedStepGroup: { isDeleted: false } },
+      ],
+    },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      order: true,
+      step: true,
+      expectedResult: true,
+      sharedStepGroupId: true,
+      sharedStepGroup: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  },
+  tags: {
+    where: {
+      isDeleted: false,
+    },
+  },
+  issues: {
+    where: {
+      isDeleted: false,
+    },
+    include: {
+      integration: true,
+    },
+  },
+  testRuns: {
+    select: {
+      id: true,
+      testRun: {
+        select: {
+          id: true,
+          name: true,
+          projectId: true,
+          isDeleted: true,
+          isCompleted: true,
+        },
+      },
+      results: {
+        select: {
+          id: true,
+          executedAt: true,
+          status: {
+            select: {
+              id: true,
+              name: true,
+              color: {
+                select: {
+                  value: true,
+                },
+              },
+            },
+          },
+        },
+        where: {
+          isDeleted: false,
+        },
+        orderBy: {
+          executedAt: "desc",
+        },
+        take: 1,
+      },
+    },
+  },
+  linksFrom: {
+    select: {
+      caseBId: true,
+      type: true,
+      isDeleted: true,
+    },
+  },
+  linksTo: {
+    select: {
+      caseAId: true,
+      type: true,
+      isDeleted: true,
+    },
+  },
+  junitResults: {
+    select: {
+      id: true,
+      executedAt: true,
+      status: {
+        select: {
+          id: true,
+          name: true,
+          color: {
+            select: {
+              value: true,
+            },
+          },
+        },
+      },
+      testSuite: {
+        select: {
+          id: true,
+          testRun: {
+            select: {
+              id: true,
+              name: true,
+              isDeleted: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      executedAt: "desc",
+    },
+    take: 1,
+  },
+  _count: {
+    select: {
+      comments: {
+        where: {
+          isDeleted: false,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.RepositoryCasesSelect;
 
 interface CasesProps {
   folderId: number | null;
@@ -1284,6 +1515,34 @@ export default function Cases({
       descendantFolderIds,
     ]);
 
+  // When `showDescendants` is on with a selected folder, the descendant folder
+  // IDs are fetched via a POST endpoint that resolves them server-side (recursive
+  // CTE). This avoids serializing a very large `folderId: { in: [...] }` array
+  // into the URL of the ZenStack GET request, which triggers HTTP 414 on deep
+  // folder trees.
+  const isDescendantsMode =
+    showDescendants &&
+    folderId !== null &&
+    folderId !== undefined &&
+    viewType === "folders" &&
+    !isRunMode &&
+    (descendantFolderIds?.length ?? 0) > 0;
+
+  // The descendants POST body omits the folder filter — the server injects it
+  // after resolving the subtree.
+  const repositoryCaseWhereClauseWithoutFolderFilter: Prisma.RepositoryCasesWhereInput =
+    useMemo(() => {
+      if (!isDescendantsMode) return repositoryCaseWhereClause;
+      const andList = Array.isArray(repositoryCaseWhereClause.AND)
+        ? (repositoryCaseWhereClause.AND as Prisma.RepositoryCasesWhereInput[])
+        : repositoryCaseWhereClause.AND
+          ? [repositoryCaseWhereClause.AND as Prisma.RepositoryCasesWhereInput]
+          : [];
+      return {
+        AND: andList.filter((cond) => !("folderId" in (cond ?? {}))),
+      };
+    }, [isDescendantsMode, repositoryCaseWhereClause]);
+
   // Build post-fetch filters for text/link/steps operators
   const postFetchFilters: PostFetchFilter[] = useMemo(() => {
     const filters: PostFetchFilter[] = [];
@@ -1743,12 +2002,15 @@ export default function Cases({
           // Disable when ES search is active (data comes from POST fetch instead)
           searchResultIds
             ? false
-            : // Skip query if we know the selected folder has 0 cases
-              viewType === "folders" && selectedFolderCaseCount === 0
+            : // Disable in descendants mode (count comes from the POST endpoint)
+              isDescendantsMode
               ? false
-              : !isRunMode && // Don't run this in run mode
-                ((!!session?.user && deferredSearchString.length === 0) ||
-                  deferredSearchString.length > 0)
+              : // Skip query if we know the selected folder has 0 cases
+                viewType === "folders" && selectedFolderCaseCount === 0
+                ? false
+                : !isRunMode && // Don't run this in run mode
+                  ((!!session?.user && deferredSearchString.length === 0) ||
+                    deferredSearchString.length > 0)
         ),
         refetchOnWindowFocus: false,
         // Keep previous data to prevent count from dropping to 0 during refetch
@@ -1783,7 +2045,7 @@ export default function Cases({
   );
 
   // Query to fetch all case IDs when Shift+click Select All is used
-  const { data: allCaseIdsData } = useFindManyRepositoryCasesFiltered(
+  const { data: allCaseIdsDataZenStack } = useFindManyRepositoryCasesFiltered(
     {
       where: repositoryCaseWhereClause,
       select: {
@@ -1793,10 +2055,27 @@ export default function Cases({
     },
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
-      enabled: fetchAllIdsForSelection && !isRunMode, // Don't run in run mode
+      enabled: fetchAllIdsForSelection && !isRunMode && !isDescendantsMode,
       refetchOnWindowFocus: false,
     }
   );
+
+  // Parallel select-all-IDs fetch for descendants mode (POST to avoid 414)
+  const { data: allCaseIdsDataDescendants } =
+    useFindManyRepositoryCasesByDescendants(
+      {
+        projectId,
+        folderId: folderId ?? 0,
+        where: repositoryCaseWhereClauseWithoutFolderFilter,
+        select: { id: true, isDeleted: true },
+        enabled: fetchAllIdsForSelection && !isRunMode && isDescendantsMode,
+      },
+      postFetchFilters.length > 0 ? postFetchFilters : undefined
+    );
+
+  const allCaseIdsData = isDescendantsMode
+    ? allCaseIdsDataDescendants
+    : allCaseIdsDataZenStack;
 
   const isTotalLoading = false;
 
@@ -1840,231 +2119,7 @@ export default function Cases({
     {
       orderBy: orderBy,
       where: repositoryCaseWhereClause,
-      select: {
-        id: true,
-        projectId: true,
-        project: true,
-        creator: true,
-        folder: true,
-        repositoryId: true,
-        folderId: true,
-        templateId: true,
-        name: true,
-        stateId: true,
-        estimate: true,
-        forecastManual: true,
-        forecastAutomated: true,
-        order: true,
-        createdAt: true,
-        creatorId: true,
-        automated: true,
-        isArchived: true,
-        isDeleted: true,
-        currentVersion: true,
-        source: true,
-        state: {
-          select: {
-            id: true,
-            name: true,
-            icon: {
-              select: {
-                name: true,
-              },
-            },
-            color: {
-              select: {
-                value: true,
-              },
-            },
-          },
-        },
-        template: {
-          select: {
-            id: true,
-            templateName: true,
-            caseFields: {
-              select: {
-                caseField: {
-                  select: {
-                    id: true,
-                    defaultValue: true,
-                    displayName: true,
-                    type: {
-                      select: {
-                        type: true,
-                      },
-                    },
-                    fieldOptions: {
-                      select: {
-                        fieldOption: {
-                          select: {
-                            id: true,
-                            icon: true,
-                            iconColor: true,
-                            name: true,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        caseFieldValues: {
-          select: {
-            id: true,
-            value: true,
-            fieldId: true,
-            field: {
-              select: {
-                id: true,
-                displayName: true,
-                type: {
-                  select: {
-                    type: true,
-                  },
-                },
-              },
-            },
-          },
-          where: { field: { isEnabled: true, isDeleted: false } },
-        },
-        attachments: {
-          orderBy: { createdAt: "desc" },
-          where: { isDeleted: false },
-        },
-        steps: {
-          where: {
-            isDeleted: false,
-            OR: [
-              { sharedStepGroupId: null },
-              { sharedStepGroup: { isDeleted: false } },
-            ],
-          },
-          orderBy: { order: "asc" },
-          select: {
-            id: true,
-            order: true,
-            step: true,
-            expectedResult: true,
-            sharedStepGroupId: true,
-            sharedStepGroup: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        tags: {
-          where: {
-            isDeleted: false,
-          },
-        },
-        issues: {
-          where: {
-            isDeleted: false,
-          },
-          include: {
-            integration: true,
-          },
-        },
-        testRuns: {
-          select: {
-            id: true,
-            testRun: {
-              select: {
-                id: true,
-                name: true,
-                projectId: true,
-                isDeleted: true,
-                isCompleted: true,
-              },
-            },
-            results: {
-              select: {
-                id: true,
-                executedAt: true,
-                status: {
-                  select: {
-                    id: true,
-                    name: true,
-                    color: {
-                      select: {
-                        value: true,
-                      },
-                    },
-                  },
-                },
-              },
-              where: {
-                isDeleted: false,
-              },
-              orderBy: {
-                executedAt: "desc",
-              },
-              take: 1,
-            },
-          },
-        },
-        linksFrom: {
-          select: {
-            caseBId: true,
-            type: true,
-            isDeleted: true,
-          },
-        },
-        linksTo: {
-          select: {
-            caseAId: true,
-            type: true,
-            isDeleted: true,
-          },
-        },
-        junitResults: {
-          select: {
-            id: true,
-            executedAt: true,
-            status: {
-              select: {
-                id: true,
-                name: true,
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-            testSuite: {
-              select: {
-                id: true,
-                testRun: {
-                  select: {
-                    id: true,
-                    name: true,
-                    isDeleted: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: {
-            executedAt: "desc",
-          },
-          take: 1,
-        },
-        _count: {
-          select: {
-            comments: {
-              where: {
-                isDeleted: false,
-              },
-            },
-          },
-        },
-      },
+      select: REPOSITORY_CASE_LIST_SELECT,
       // When post-fetch filtering is active, fetch all data (no pagination)
       // Otherwise apply server-side pagination for repository mode
       skip:
@@ -2084,12 +2139,15 @@ export default function Cases({
         // Disable when ES search is active (data comes from POST fetch instead)
         searchResultIds
           ? false
-          : // Skip query if we know the selected folder has 0 cases
-            viewType === "folders" && selectedFolderCaseCount === 0
+          : // Disable in descendants mode (data comes from POST endpoint)
+            isDescendantsMode
             ? false
-            : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
-              ((!!session?.user && deferredSearchString.length === 0) ||
-                deferredSearchString.length > 0)
+            : // Skip query if we know the selected folder has 0 cases
+              viewType === "folders" && selectedFolderCaseCount === 0
+              ? false
+              : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
+                ((!!session?.user && deferredSearchString.length === 0) ||
+                  deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
     },
@@ -2291,11 +2349,54 @@ export default function Cases({
   };
 
   const {
-    data,
-    isLoading,
-    totalCount: filteredTotalCount,
-    refetch: refetchData,
+    data: zenStackData,
+    isLoading: zenStackIsLoading,
+    totalCount: zenStackFilteredTotalCount,
+    refetch: zenStackRefetchData,
   } = result;
+
+  // Descendants POST path: same shape as `result`, used when the folder subtree
+  // is too large to serialize into the ZenStack GET query string.
+  const descendantsResult = useFindManyRepositoryCasesByDescendants(
+    {
+      projectId,
+      folderId: folderId ?? 0,
+      where: repositoryCaseWhereClauseWithoutFolderFilter,
+      orderBy,
+      select: REPOSITORY_CASE_LIST_SELECT,
+      skip:
+        postFetchFilters.length > 0
+          ? undefined
+          : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+      take:
+        postFetchFilters.length > 0
+          ? undefined
+          : pageSize === "All"
+            ? undefined
+            : pageSize,
+      enabled: Boolean(
+        isDescendantsMode && !!session?.user && isValidProjectId
+      ),
+    },
+    postFetchFilters.length > 0 ? postFetchFilters : undefined,
+    postFetchFilters.length > 0
+      ? {
+          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+          take: pageSize === "All" ? undefined : pageSize,
+        }
+      : undefined
+  );
+
+  const data = isDescendantsMode ? descendantsResult.data : zenStackData;
+  const isLoading = isDescendantsMode
+    ? descendantsResult.isLoading
+    : zenStackIsLoading;
+  const filteredTotalCount = isDescendantsMode
+    ? descendantsResult.totalCount
+    : zenStackFilteredTotalCount;
+  const refetchData = isDescendantsMode
+    ? descendantsResult.refetch
+    : zenStackRefetchData;
 
   // --- ES search POST-based data fetching ---
   // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
@@ -2364,6 +2465,11 @@ export default function Cases({
       // In run mode, use the test run cases count
       return testRunCasesCountData || 0;
     }
+    // In descendants mode, the count comes from the descendants POST endpoint
+    // (the separate count hook is disabled to avoid a duplicate 414).
+    if (isDescendantsMode) {
+      return filteredTotalCount ?? 0;
+    }
     // In repository mode, use post-fetch filtered count if available, otherwise use database count
     if (postFetchFilters.length > 0 && filteredTotalCount !== undefined) {
       return filteredTotalCount;
@@ -2378,6 +2484,7 @@ export default function Cases({
     viewType,
     selectedFolderCaseCount,
     searchResultIds,
+    isDescendantsMode,
   ]);
 
   // Update total items in pagination context
