@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -13,6 +14,9 @@ export type GetMaxOrderResponse =
  * Gets the maximum order value for cases in a specific test run.
  * @param testRunId - ID of the test run
  * @returns The maximum order value, or 0 if no cases exist or have an order.
+ *
+ * NOT wrapped in withActionAuditContext — read-only aggregate, emits
+ * no audit events. Per Phase 64 D-06.
  */
 export async function getMaxOrderInTestRun(
   testRunId: number
@@ -40,33 +44,43 @@ export async function getMaxOrderInTestRun(
  * @param repositoryCaseId - ID of the repository case to add
  * @param order - The order for the new test case
  * @returns The created test run case
+ *
+ * Wrapped in withActionAuditContext (Phase 64 D-05): the
+ * prisma.testRunCases.create call below triggers the TestRunCases
+ * extension hook at lib/prisma.ts:1060 which emits auditCreate(
+ * "TestRunCases", result). Without the wrapper that audit row would
+ * have null ipAddress/userAgent/requestId; with the wrapper plus the
+ * NextAuth session callback enrichment (Plan 01 Task 3) triggered by
+ * getServerAuthSession below, the row carries complete actor context
+ * (CTX-02).
  */
-export async function addToTestRun(
-  testRunId: number,
-  repositoryCaseId: number,
-  order: number // Added order parameter
-) {
-  const session = await getServerAuthSession();
-  if (!session?.user?.id) {
-    return { success: false, error: "User not authenticated" };
+export const addToTestRun = withActionAuditContext(
+  async (testRunId: number, repositoryCaseId: number, order: number) => {
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return { success: false, error: "User not authenticated" } as const;
+    }
+
+    try {
+      // Create the new test run case with the provided order
+      const result = await prisma.testRunCases.create({
+        data: {
+          testRunId,
+          repositoryCaseId,
+          order, // Use the provided order
+        },
+      });
+
+      // Revalidate related paths to ensure UI is updated
+      revalidatePath(`/projects/runs/${testRunId}`);
+
+      return { success: true, data: result } as const;
+    } catch (error) {
+      console.error("Error adding test case to test run:", error);
+      return {
+        success: false,
+        error: "Failed to add test case to test run",
+      } as const;
+    }
   }
-
-  try {
-    // Create the new test run case with the provided order
-    const result = await prisma.testRunCases.create({
-      data: {
-        testRunId,
-        repositoryCaseId,
-        order, // Use the provided order
-      },
-    });
-
-    // Revalidate related paths to ensure UI is updated
-    revalidatePath(`/projects/runs/${testRunId}`);
-
-    return { success: true, data: result };
-  } catch (error) {
-    console.error("Error adding test case to test run:", error);
-    return { success: false, error: "Failed to add test case to test run" };
-  }
-}
+);

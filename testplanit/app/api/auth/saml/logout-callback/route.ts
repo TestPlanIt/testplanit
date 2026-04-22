@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 
-export async function GET(request: NextRequest) {
+export const GET = withAuditContext(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const samlResponse = searchParams.get("SAMLResponse");
@@ -46,9 +48,9 @@ export async function GET(request: NextRequest) {
       new URL("/signin?error=logout-callback-failed", request.url)
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   // Handle SAML logout requests initiated by the IdP (Single Logout)
   try {
     const body = await request.text();
@@ -86,6 +88,17 @@ export async function POST(request: NextRequest) {
 
       const encodedResponse = Buffer.from(logoutResponse).toString("base64");
 
+      // Audit SAML logout completion (IdP-initiated Single Logout).
+      // User identity is not resolved from the SAML assertion here because
+      // this handler currently returns a stub response without parsing
+      // the NameID. The `provider: "saml"` metadata is the meaningful
+      // audit signal; identity would be added when assertion parsing is
+      // wired up. See Phase 62 D-04.
+      await auditAuthEvent("LOGOUT", null, "", {
+        provider: "saml",
+        viaIdpCallback: true,
+      });
+
       return new Response(
         `
         <html>
@@ -113,4 +126,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

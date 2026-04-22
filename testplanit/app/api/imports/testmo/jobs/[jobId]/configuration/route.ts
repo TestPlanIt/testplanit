@@ -20,6 +20,13 @@ interface RouteContext {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
+  // Audit: intentionally-skipped (Phase 62 / D-11).
+  // This endpoint is a Testmo-import preparation step (job configuration).
+  // The consequential event is the import START -> COMPLETE pair audited at:
+  //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
+  //   - testmoImportWorker.ts:7079 (IMPORT_COMPLETED / BULK_CREATE)
+  // Preparation state changes are not audit-relevant; matches the
+  // lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701.
   try {
     const session = await getServerSession(authOptions);
 

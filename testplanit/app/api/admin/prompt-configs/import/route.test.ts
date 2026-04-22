@@ -29,6 +29,7 @@ import { POST } from "./route";
 const createMockRequest = (body: any): NextRequest => {
   return {
     json: async () => body,
+    headers: new Headers(),
   } as unknown as NextRequest;
 };
 

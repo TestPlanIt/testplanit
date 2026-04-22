@@ -21,6 +21,7 @@ vi.mock("~/lib/services/auditLog", () => ({
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
 import { POST } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
@@ -36,7 +37,13 @@ function makeAdminSession() {
 function makeRequest() {
   return new NextRequest(
     "http://localhost/api/admin/users/bulk-force-change-password",
-    { method: "POST" }
+    {
+      method: "POST",
+      headers: {
+        "x-forwarded-for": "10.0.0.1",
+        "user-agent": "vitest-agent/1.0",
+      },
+    }
   );
 }
 
@@ -85,8 +92,31 @@ describe("POST /api/admin/users/bulk-force-change-password", () => {
   });
 
   it("fires FORCE_PASSWORD_CHANGE audit event with scope 'bulk' and count", async () => {
-    mockGetServerAuthSession.mockResolvedValue(makeAdminSession());
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
+    mockGetServerAuthSession.mockImplementation(async () => {
+      updateAuditContext({
+        userId: "admin-1",
+        userEmail: "admin@test.com",
+        userName: "Admin",
+      });
+      return makeAdminSession();
+    });
     mockDb.user.updateMany.mockResolvedValue({ count: 7 });
+
+    let capturedRow: Record<string, unknown> | null = null;
+    mockCaptureAuditEvent.mockImplementation(async (event) => {
+      const ctx = getAuditContext();
+      capturedRow = {
+        userId: event.userId ?? ctx?.userId ?? null,
+        userEmail: event.userEmail ?? ctx?.userEmail ?? null,
+        userName: event.userName ?? ctx?.userName ?? null,
+        ipAddress: ctx?.ipAddress ?? null,
+        userAgent: ctx?.userAgent ?? null,
+        requestId: ctx?.requestId ?? null,
+        metadata: event.metadata ?? null,
+      };
+    });
 
     await POST(makeRequest());
 
@@ -101,6 +131,9 @@ describe("POST /api/admin/users/bulk-force-change-password", () => {
         })
       );
     });
+    // D-18 standing enforcement (SC#4).
+    expect(capturedRow).not.toBeNull();
+    expectAuditRowComplete(capturedRow!);
   });
 
   it("returns count in response", async () => {

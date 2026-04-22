@@ -8,6 +8,7 @@ import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
@@ -151,7 +152,7 @@ interface ImportError {
   error: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -869,16 +870,16 @@ export async function POST(request: NextRequest) {
 
         // Audit the bulk import
         if (importedCount > 0) {
-          auditBulkCreate("RepositoryCases", importedCount, body.projectId, {
-            source:
-              body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
-            templateId: body.templateId,
-            importLocation: body.importLocation,
-          }).catch((error) =>
-            console.error(
-              "[AuditLog] Failed to audit repository import:",
-              error
-            )
+          await auditBulkCreate(
+            "RepositoryCases",
+            importedCount,
+            body.projectId,
+            {
+              source:
+                body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
+              templateId: body.templateId,
+              importLocation: body.importLocation,
+            }
           );
         }
 
@@ -957,7 +958,7 @@ export async function POST(request: NextRequest) {
       Connection: "keep-alive",
     },
   });
-}
+});
 
 function validateFieldValue(
   value: any,

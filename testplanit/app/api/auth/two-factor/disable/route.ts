@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
@@ -8,7 +9,7 @@ import { authOptions } from "~/server/auth";
  * POST /api/auth/two-factor/disable
  * Disable 2FA for the user (requires current 2FA token or backup code)
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -101,4 +102,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

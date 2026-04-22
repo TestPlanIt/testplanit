@@ -1,4 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Phase 64 Plan 03: auditShareLinkCreation and revokeShareLink are
+// wrapped in withActionAuditContext, which calls `await headers()` from
+// next/headers. Unit tests run outside a Next.js request scope, so the
+// real `headers()` throws. Hermetic mock per the Plan 01 pattern
+// (vi.hoisted + vi.mock). prepareShareLinkData remains unwrapped, so it
+// does not exercise the next/headers path — but mocking is harmless.
+const headersMocks = vi.hoisted(() => ({
+  current: new Map<string, string>([
+    ["user-agent", "vitest-agent/1.0"],
+    ["x-forwarded-for", "10.0.0.1"],
+  ]),
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => {
+    return {
+      get: (key: string) => headersMocks.current.get(key.toLowerCase()) ?? null,
+    };
+  }),
+}));
+
 import {
   auditShareLinkCreation,
   prepareShareLinkData,
@@ -459,6 +481,101 @@ describe("share-links server actions", () => {
 
       expect(result).toEqual({ success: true });
       expect(prisma.projects.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  // Phase 64 Plan 05 Task 2 Test 2 — CTX-02 representative test.
+  //
+  // Proves that the wrapped auditShareLinkCreation server action emits
+  // an audit row whose actor context is fully populated when called
+  // inside a request scope (simulated here by the vi.hoisted
+  // next/headers mock + a session-callback-style updateAuditContext).
+  //
+  // ipAddress/userAgent/requestId come from withActionAuditContext
+  // (Plan 01 Task 2 — await headers()). userId/userEmail/userName come
+  // from the mocked getServerSession calling updateAuditContext the
+  // same way the real NextAuth session callback does (Plan 01 Task 3).
+  describe("auditShareLinkCreation — CTX-02", () => {
+    const mockShareLink = {
+      id: "share-ctx02",
+      shareKey: "ctx02-share-key",
+      entityType: "REPORT",
+      mode: "PUBLIC",
+      title: "CTX-02 Share",
+      projectId: 1,
+      expiresAt: null,
+      notifyOnView: false,
+      passwordHash: null,
+    };
+
+    beforeEach(async () => {
+      const { updateAuditContext } = await import("~/lib/auditContext");
+      vi.mocked(getServerSession).mockImplementation(async () => {
+        // Mirror the real NextAuth session callback (Plan 01 Task 3):
+        // enrich ALS with user identity fields after auth resolves.
+        updateAuditContext({
+          userId: "user-ctx02",
+          userEmail: "ctx02@example.com",
+          userName: "CTX02 User",
+        });
+        return {
+          user: {
+            id: "user-ctx02",
+            email: "ctx02@example.com",
+            name: "CTX02 User",
+          },
+        } as any;
+      });
+    });
+
+    it("emitted audit row has all 6 actor fields populated", async () => {
+      const { expectAuditRowComplete } =
+        await import("~/lib/testing/auditAssertions");
+
+      await auditShareLinkCreation(mockShareLink);
+
+      // The spy on prisma.auditLog.create captured the `data` object —
+      // userId/userEmail/userName come from the session (not ALS), but
+      // the wrapped action's ALS frame populated the context fields.
+      // Because prisma.auditLog.create's `data` does NOT include
+      // ipAddress/userAgent/requestId (those flow through
+      // captureAuditEvent/worker metadata in the normal path, but here
+      // it's a direct create), synthesize the row by joining the
+      // capture with a live read of ALS — the exact pattern the Plan
+      // 05 Task 2 shared-mock blueprint uses.
+      const { getAuditContext } = await import("~/lib/auditContext");
+
+      // Re-run inside a wrapped scope: the session mock repopulates ALS
+      // identity fields. We need to read ALS DURING the action, so
+      // capture it from the spy's data and read the headers from the
+      // current (still active) call stack won't work — the action has
+      // already returned. Instead, make the spy itself read ALS when
+      // invoked. We rewire the spy on this test to capture the
+      // context synchronously.
+      const createSpy = vi.mocked(prisma.auditLog.create);
+      createSpy.mockReset();
+      let capturedRow: Record<string, unknown> | null = null;
+      createSpy.mockImplementation((async (args: any) => {
+        const ctx = getAuditContext();
+        capturedRow = {
+          ...args.data,
+          ipAddress: ctx?.ipAddress ?? null,
+          userAgent: ctx?.userAgent ?? null,
+          requestId: ctx?.requestId ?? null,
+        };
+        return {};
+      }) as typeof prisma.auditLog.create);
+
+      // WR-05: Previously this block re-issued the getServerSession mock
+      // with the rationale "mockReset above nukes it" — but the mockReset
+      // on L558 is against prisma.auditLog.create, not getServerSession.
+      // The beforeEach at L511-529 remains the single source of session
+      // mocking for this describe block.
+
+      await auditShareLinkCreation(mockShareLink);
+
+      expect(capturedRow).not.toBeNull();
+      expectAuditRowComplete(capturedRow!);
     });
   });
 });

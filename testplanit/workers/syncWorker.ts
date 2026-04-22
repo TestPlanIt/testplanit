@@ -1,5 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
+import { runWithAuditContext } from "../lib/auditContext";
+import type { ActorContextJobData } from "../lib/auditContextWrappers";
 import {
   SyncJobData,
   syncService,
@@ -16,182 +18,194 @@ import { captureAuditEvent } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
-// Extend SyncJobData with multi-tenant support
-interface MultiTenantSyncJobData extends SyncJobData, MultiTenantJobData {}
+// Extend SyncJobData with multi-tenant + actor-context support (Phase 64 D-10)
+interface MultiTenantSyncJobData
+  extends ActorContextJobData<SyncJobData>, MultiTenantJobData {}
 
-const processor = async (job: Job) => {
-  console.log(
-    `Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
-  );
+// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// downstream captureAuditEvent calls in this processor pick up the
+// originating user's context (or the systemReason for scheduled jobs, via
+// W5 Option A — no per-worker systemReason handling needed).
+const processor = async (job: Job<MultiTenantSyncJobData>) =>
+  runWithAuditContext(job.data.actorContext ?? {}, async () => {
+    console.log(
+      `Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+    );
 
-  // Validate multi-tenant job data if in multi-tenant mode
-  validateMultiTenantJobData(job.data);
+    // Validate multi-tenant job data if in multi-tenant mode
+    validateMultiTenantJobData(job.data);
 
-  // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
-  const serviceOptions = { prismaClient: prisma };
+    // Get the appropriate Prisma client (tenant-specific or default)
+    const prisma = getPrismaClientForJob(job.data);
+    const serviceOptions = { prismaClient: prisma };
 
-  const jobData = job.data as MultiTenantSyncJobData;
+    const jobData = job.data as MultiTenantSyncJobData;
 
-  switch (job.name) {
-    case "sync-issues":
-      try {
-        const result = await syncService.performSync(
-          jobData.userId,
-          jobData.integrationId,
-          jobData.projectId,
-          jobData.data,
-          job, // Pass job for progress reporting
-          serviceOptions
-        );
-
-        // Audit logging — record sync operation
-        captureAuditEvent({
-          action: "BULK_UPDATE",
-          entityType: "Issue",
-          entityId: `sync-${jobData.integrationId}-${Date.now()}`,
-          entityName: `Issue Sync`,
-          userId: jobData.userId,
-          projectId: jobData.projectId ? Number(jobData.projectId) : undefined,
-          tenantId: jobData.tenantId,
-          metadata: {
-            source: "sync-worker",
-            integrationId: jobData.integrationId,
-            syncedCount: result.synced,
-            errorCount: result.errors.length,
-            jobId: job.id,
-          },
-        }).catch(() => {});
-
-        if (result.errors.length > 0) {
-          console.warn(
-            `Sync completed with ${result.errors.length} errors:`,
-            result.errors
+    switch (job.name) {
+      case "sync-issues":
+        try {
+          const result = await syncService.performSync(
+            jobData.userId,
+            jobData.integrationId,
+            jobData.projectId,
+            jobData.data,
+            job, // Pass job for progress reporting
+            serviceOptions
           );
+
+          // Audit logging — record sync operation
+          captureAuditEvent({
+            action: "BULK_UPDATE",
+            entityType: "Issue",
+            entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+            entityName: `Issue Sync`,
+            userId: jobData.userId,
+            projectId: jobData.projectId
+              ? Number(jobData.projectId)
+              : undefined,
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker",
+              integrationId: jobData.integrationId,
+              syncedCount: result.synced,
+              errorCount: result.errors.length,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          if (result.errors.length > 0) {
+            console.warn(
+              `Sync completed with ${result.errors.length} errors:`,
+              result.errors
+            );
+          }
+
+          console.log(`Synced ${result.synced} issues successfully`);
+          return result;
+        } catch (error) {
+          console.error("Failed to sync issues:", error);
+          throw error;
         }
 
-        console.log(`Synced ${result.synced} issues successfully`);
-        return result;
-      } catch (error) {
-        console.error("Failed to sync issues:", error);
-        throw error;
-      }
+      case "sync-project-issues":
+        try {
+          if (!jobData.projectId) {
+            throw new Error("Project ID is required for project sync");
+          }
 
-    case "sync-project-issues":
-      try {
-        if (!jobData.projectId) {
-          throw new Error("Project ID is required for project sync");
-        }
-
-        const result = await syncService.performSync(
-          jobData.userId,
-          jobData.integrationId,
-          jobData.projectId,
-          jobData.data,
-          job, // Pass job for progress reporting
-          serviceOptions
-        );
-
-        // Audit logging — record project sync operation
-        captureAuditEvent({
-          action: "BULK_UPDATE",
-          entityType: "Issue",
-          entityId: `sync-${jobData.integrationId}-${Date.now()}`,
-          entityName: `Issue Sync`,
-          userId: jobData.userId,
-          projectId: jobData.projectId ? Number(jobData.projectId) : undefined,
-          tenantId: jobData.tenantId,
-          metadata: {
-            source: "sync-worker:project",
-            integrationId: jobData.integrationId,
-            syncedCount: result.synced,
-            errorCount: result.errors.length,
-            jobId: job.id,
-          },
-        }).catch(() => {});
-
-        if (result.errors.length > 0) {
-          console.warn(
-            `Project sync completed with ${result.errors.length} errors:`,
-            result.errors
+          const result = await syncService.performSync(
+            jobData.userId,
+            jobData.integrationId,
+            jobData.projectId,
+            jobData.data,
+            job, // Pass job for progress reporting
+            serviceOptions
           );
+
+          // Audit logging — record project sync operation
+          captureAuditEvent({
+            action: "BULK_UPDATE",
+            entityType: "Issue",
+            entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+            entityName: `Issue Sync`,
+            userId: jobData.userId,
+            projectId: jobData.projectId
+              ? Number(jobData.projectId)
+              : undefined,
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker:project",
+              integrationId: jobData.integrationId,
+              syncedCount: result.synced,
+              errorCount: result.errors.length,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          if (result.errors.length > 0) {
+            console.warn(
+              `Project sync completed with ${result.errors.length} errors:`,
+              result.errors
+            );
+          }
+
+          console.log(
+            `Synced ${result.synced} issues from project successfully`
+          );
+          return result;
+        } catch (error) {
+          console.error("Failed to sync project issues:", error);
+          throw error;
         }
 
-        console.log(`Synced ${result.synced} issues from project successfully`);
-        return result;
-      } catch (error) {
-        console.error("Failed to sync project issues:", error);
-        throw error;
-      }
+      case "refresh-issue":
+        try {
+          if (!jobData.issueId) {
+            throw new Error("Issue ID is required for issue refresh");
+          }
 
-    case "refresh-issue":
-      try {
-        if (!jobData.issueId) {
-          throw new Error("Issue ID is required for issue refresh");
+          const result = await syncService.performIssueRefresh(
+            jobData.userId,
+            jobData.integrationId,
+            jobData.issueId,
+            serviceOptions
+          );
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to refresh issue");
+          }
+
+          // Audit logging — record single issue refresh
+          captureAuditEvent({
+            action: "UPDATE",
+            entityType: "Issue",
+            entityId: String(jobData.issueId),
+            userId: jobData.userId,
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker:refresh",
+              integrationId: jobData.integrationId,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          console.log(`Refreshed issue ${jobData.issueId} successfully`);
+          return result;
+        } catch (error) {
+          console.error(`Failed to refresh issue ${jobData.issueId}:`, error);
+          throw error;
         }
 
-        const result = await syncService.performIssueRefresh(
-          jobData.userId,
-          jobData.integrationId,
-          jobData.issueId,
-          serviceOptions
-        );
+      case "create-issue":
+        try {
+          if (!jobData.data) {
+            throw new Error("Issue data is required for issue creation");
+          }
 
-        if (!result.success) {
-          throw new Error(result.error || "Failed to refresh issue");
+          // Issue creation via adapter is not yet implemented
+          return { success: false, error: "Not implemented" };
+        } catch (error) {
+          console.error("Failed to create issue:", error);
+          throw error;
         }
 
-        // Audit logging — record single issue refresh
-        captureAuditEvent({
-          action: "UPDATE",
-          entityType: "Issue",
-          entityId: String(jobData.issueId),
-          userId: jobData.userId,
-          tenantId: jobData.tenantId,
-          metadata: {
-            source: "sync-worker:refresh",
-            integrationId: jobData.integrationId,
-            jobId: job.id,
-          },
-        }).catch(() => {});
+      case "update-issue":
+        try {
+          if (!jobData.issueId || !jobData.data) {
+            throw new Error("Issue ID and data are required for issue update");
+          }
 
-        console.log(`Refreshed issue ${jobData.issueId} successfully`);
-        return result;
-      } catch (error) {
-        console.error(`Failed to refresh issue ${jobData.issueId}:`, error);
-        throw error;
-      }
-
-    case "create-issue":
-      try {
-        if (!jobData.data) {
-          throw new Error("Issue data is required for issue creation");
+          // Issue update via adapter is not yet implemented
+          return { success: false, error: "Not implemented" };
+        } catch (error) {
+          console.error("Failed to update issue:", error);
+          throw error;
         }
 
-        // Issue creation via adapter is not yet implemented
-        return { success: false, error: "Not implemented" };
-      } catch (error) {
-        console.error("Failed to create issue:", error);
-        throw error;
-      }
-
-    case "update-issue":
-      try {
-        if (!jobData.issueId || !jobData.data) {
-          throw new Error("Issue ID and data are required for issue update");
-        }
-
-        // Issue update via adapter is not yet implemented
-        return { success: false, error: "Not implemented" };
-      } catch (error) {
-        console.error("Failed to update issue:", error);
-        throw error;
-      }
-
-    default:
-      throw new Error(`Unknown job type: ${job.name}`);
-  }
-};
+      default:
+        throw new Error(`Unknown job type: ${job.name}`);
+    }
+  });
 
 let worker: Worker | null = null;
 

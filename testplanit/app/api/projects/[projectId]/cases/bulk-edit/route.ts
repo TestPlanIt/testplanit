@@ -2,6 +2,7 @@ import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -65,193 +66,204 @@ const bulkEditSchema = z.object({
 
 type BulkEditRequest = z.infer<typeof bulkEditSchema>;
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ projectId: string }> }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    const { projectId: projectIdParam } = await params;
-    const projectId = parseInt(projectIdParam);
-    if (isNaN(projectId)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 }
-      );
-    }
+      const { projectId: projectIdParam } = await params;
+      const projectId = parseInt(projectIdParam);
+      if (isNaN(projectId)) {
+        return NextResponse.json(
+          { error: "Invalid project ID" },
+          { status: 400 }
+        );
+      }
 
-    // Verify user has access to the project
-    const isAdmin = session.user.access === "ADMIN";
-    const isProjectAdmin = session.user.access === "PROJECTADMIN";
+      // Verify user has access to the project
+      const isAdmin = session.user.access === "ADMIN";
+      const isProjectAdmin = session.user.access === "PROJECTADMIN";
 
-    // Build the where clause for project access
-    // This needs to account for all access paths: userPermissions, groupPermissions,
-    // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)
-    const projectAccessWhere = isAdmin
-      ? { id: projectId, isDeleted: false }
-      : {
-          id: projectId,
-          isDeleted: false,
-          OR: [
-            // Direct user permissions
-            {
-              userPermissions: {
-                some: {
-                  userId: session.user.id,
-                  accessType: { not: ProjectAccessType.NO_ACCESS },
+      // Build the where clause for project access
+      // This needs to account for all access paths: userPermissions, groupPermissions,
+      // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)
+      const projectAccessWhere = isAdmin
+        ? { id: projectId, isDeleted: false }
+        : {
+            id: projectId,
+            isDeleted: false,
+            OR: [
+              // Direct user permissions
+              {
+                userPermissions: {
+                  some: {
+                    userId: session.user.id,
+                    accessType: { not: ProjectAccessType.NO_ACCESS },
+                  },
                 },
               },
-            },
-            // Group permissions
-            {
-              groupPermissions: {
-                some: {
-                  group: {
-                    assignedUsers: {
-                      some: {
-                        userId: session.user.id,
+              // Group permissions
+              {
+                groupPermissions: {
+                  some: {
+                    group: {
+                      assignedUsers: {
+                        some: {
+                          userId: session.user.id,
+                        },
                       },
                     },
+                    accessType: { not: ProjectAccessType.NO_ACCESS },
                   },
-                  accessType: { not: ProjectAccessType.NO_ACCESS },
                 },
               },
-            },
-            // Project default GLOBAL_ROLE (any authenticated user with a role)
-            {
-              defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
-            },
-            // Direct assignment to project with PROJECTADMIN access
-            ...(isProjectAdmin
-              ? [
-                  {
-                    assignedUsers: {
-                      some: {
-                        userId: session.user.id,
+              // Project default GLOBAL_ROLE (any authenticated user with a role)
+              {
+                defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
+              },
+              // Direct assignment to project with PROJECTADMIN access
+              ...(isProjectAdmin
+                ? [
+                    {
+                      assignedUsers: {
+                        some: {
+                          userId: session.user.id,
+                        },
                       },
                     },
-                  },
-                ]
-              : []),
-          ],
-        };
-
-    const project = await prisma.projects.findFirst({
-      where: projectAccessWhere,
-    });
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      );
-    }
-
-    // Parse and validate request body
-    const body = await request.json();
-    const validatedData: BulkEditRequest = bulkEditSchema.parse(body);
-
-    // Verify all cases belong to this project
-    const cases = await prisma.repositoryCases.findMany({
-      where: {
-        id: { in: validatedData.caseIds },
-        projectId,
-        isDeleted: false,
-      },
-      include: {
-        steps: {
-          where: { isDeleted: false },
-          orderBy: { order: "asc" },
-        },
-        tags: true,
-        issues: true,
-        caseFieldValues: true,
-        project: true,
-        folder: true,
-        template: true,
-        state: true,
-        creator: true,
-      },
-    });
-
-    if (cases.length !== validatedData.caseIds.length) {
-      return NextResponse.json(
-        {
-          error: "Some cases not found or do not belong to this project",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Perform bulk update in a transaction with extended timeout (60 seconds)
-    const result = await prisma.$transaction(
-      async (tx) => {
-        const updateResults = {
-          casesUpdated: 0,
-          versionsCreated: 0,
-          customFieldsUpdated: 0,
-          stepsUpdated: 0,
-        };
-
-        // Process each case for updates
-        for (const caseItem of cases) {
-          const caseId = caseItem.id;
-
-          // Build update data for standard fields
-          const updateData: any = {
-            currentVersion: { increment: 1 },
+                  ]
+                : []),
+            ],
           };
 
-          if (validatedData.updates.name !== undefined) {
-            updateData.name = validatedData.updates.name;
-          }
-          if (validatedData.updates.state !== undefined) {
-            updateData.stateId = validatedData.updates.state;
-          }
-          if (validatedData.updates.automated !== undefined) {
-            updateData.automated = validatedData.updates.automated;
-          }
-          if (validatedData.updates.estimate !== undefined) {
-            updateData.estimate = validatedData.updates.estimate;
-          }
-          if (validatedData.updates.tags) {
-            updateData.tags = validatedData.updates.tags;
-          }
-          if (validatedData.updates.issues) {
-            updateData.issues = validatedData.updates.issues;
-          }
+      const project = await prisma.projects.findFirst({
+        where: projectAccessWhere,
+      });
 
-          // Update the case
-          await tx.repositoryCases.update({
-            where: { id: caseId },
-            data: updateData,
-          });
-          updateResults.casesUpdated++;
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found or access denied" },
+          { status: 404 }
+        );
+      }
 
-          // Handle custom field updates
-          if (validatedData.customFieldUpdates) {
-            for (const fieldUpdate of validatedData.customFieldUpdates) {
-              const existingFieldValue = caseItem.caseFieldValues.find(
-                (cfv) => cfv.fieldId === fieldUpdate.fieldId
-              );
+      // Parse and validate request body
+      const body = await request.json();
+      const validatedData: BulkEditRequest = bulkEditSchema.parse(body);
 
-              if (fieldUpdate.operation === "delete" && existingFieldValue) {
-                await tx.caseFieldValues.delete({
-                  where: { id: existingFieldValue.id },
-                });
-                updateResults.customFieldsUpdated++;
-              } else if (fieldUpdate.operation === "update") {
-                // Upsert: update if exists, create if doesn't
-                if (existingFieldValue) {
-                  await tx.caseFieldValues.update({
+      // Verify all cases belong to this project
+      const cases = await prisma.repositoryCases.findMany({
+        where: {
+          id: { in: validatedData.caseIds },
+          projectId,
+          isDeleted: false,
+        },
+        include: {
+          steps: {
+            where: { isDeleted: false },
+            orderBy: { order: "asc" },
+          },
+          tags: true,
+          issues: true,
+          caseFieldValues: true,
+          project: true,
+          folder: true,
+          template: true,
+          state: true,
+          creator: true,
+        },
+      });
+
+      if (cases.length !== validatedData.caseIds.length) {
+        return NextResponse.json(
+          {
+            error: "Some cases not found or do not belong to this project",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Perform bulk update in a transaction with extended timeout (60 seconds)
+      const result = await prisma.$transaction(
+        async (tx) => {
+          const updateResults = {
+            casesUpdated: 0,
+            versionsCreated: 0,
+            customFieldsUpdated: 0,
+            stepsUpdated: 0,
+          };
+
+          // Process each case for updates
+          for (const caseItem of cases) {
+            const caseId = caseItem.id;
+
+            // Build update data for standard fields
+            const updateData: any = {
+              currentVersion: { increment: 1 },
+            };
+
+            if (validatedData.updates.name !== undefined) {
+              updateData.name = validatedData.updates.name;
+            }
+            if (validatedData.updates.state !== undefined) {
+              updateData.stateId = validatedData.updates.state;
+            }
+            if (validatedData.updates.automated !== undefined) {
+              updateData.automated = validatedData.updates.automated;
+            }
+            if (validatedData.updates.estimate !== undefined) {
+              updateData.estimate = validatedData.updates.estimate;
+            }
+            if (validatedData.updates.tags) {
+              updateData.tags = validatedData.updates.tags;
+            }
+            if (validatedData.updates.issues) {
+              updateData.issues = validatedData.updates.issues;
+            }
+
+            // Update the case
+            await tx.repositoryCases.update({
+              where: { id: caseId },
+              data: updateData,
+            });
+            updateResults.casesUpdated++;
+
+            // Handle custom field updates
+            if (validatedData.customFieldUpdates) {
+              for (const fieldUpdate of validatedData.customFieldUpdates) {
+                const existingFieldValue = caseItem.caseFieldValues.find(
+                  (cfv) => cfv.fieldId === fieldUpdate.fieldId
+                );
+
+                if (fieldUpdate.operation === "delete" && existingFieldValue) {
+                  await tx.caseFieldValues.delete({
                     where: { id: existingFieldValue.id },
-                    data: { value: fieldUpdate.value },
                   });
-                } else {
+                  updateResults.customFieldsUpdated++;
+                } else if (fieldUpdate.operation === "update") {
+                  // Upsert: update if exists, create if doesn't
+                  if (existingFieldValue) {
+                    await tx.caseFieldValues.update({
+                      where: { id: existingFieldValue.id },
+                      data: { value: fieldUpdate.value },
+                    });
+                  } else {
+                    await tx.caseFieldValues.create({
+                      data: {
+                        testCaseId: caseId,
+                        fieldId: fieldUpdate.fieldId,
+                        value: fieldUpdate.value,
+                      },
+                    });
+                  }
+                  updateResults.customFieldsUpdated++;
+                } else if (fieldUpdate.operation === "create") {
                   await tx.caseFieldValues.create({
                     data: {
                       testCaseId: caseId,
@@ -259,174 +271,163 @@ export async function POST(
                       value: fieldUpdate.value,
                     },
                   });
+                  updateResults.customFieldsUpdated++;
                 }
-                updateResults.customFieldsUpdated++;
-              } else if (fieldUpdate.operation === "create") {
-                await tx.caseFieldValues.create({
-                  data: {
-                    testCaseId: caseId,
-                    fieldId: fieldUpdate.fieldId,
-                    value: fieldUpdate.value,
-                  },
-                });
-                updateResults.customFieldsUpdated++;
               }
             }
-          }
 
-          // Handle steps updates
-          if (validatedData.stepsUpdates) {
-            if (validatedData.stepsUpdates.operation === "replace") {
-              // Delete existing steps
-              await tx.steps.deleteMany({
-                where: { testCaseId: caseId },
-              });
+            // Handle steps updates
+            if (validatedData.stepsUpdates) {
+              if (validatedData.stepsUpdates.operation === "replace") {
+                // Delete existing steps
+                await tx.steps.deleteMany({
+                  where: { testCaseId: caseId },
+                });
 
-              // Create new steps
-              if (validatedData.stepsUpdates.newSteps) {
-                for (const stepData of validatedData.stepsUpdates.newSteps) {
-                  await tx.steps.create({
+                // Create new steps
+                if (validatedData.stepsUpdates.newSteps) {
+                  for (const stepData of validatedData.stepsUpdates.newSteps) {
+                    await tx.steps.create({
+                      data: {
+                        testCaseId: caseId,
+                        step: JSON.stringify(stepData.step),
+                        expectedResult: JSON.stringify(stepData.expectedResult),
+                        order: stepData.order,
+                      },
+                    });
+                  }
+                  updateResults.stepsUpdated++;
+                }
+              } else if (
+                validatedData.stepsUpdates.operation === "search-replace"
+              ) {
+                // For search-replace, we need to update each step individually
+                const searchPattern =
+                  validatedData.stepsUpdates.searchPattern || "";
+                const replacePattern =
+                  validatedData.stepsUpdates.replacePattern || "";
+                const useRegex =
+                  validatedData.stepsUpdates.searchOptions?.useRegex || false;
+                const caseSensitive =
+                  validatedData.stepsUpdates.searchOptions?.caseSensitive ||
+                  false;
+
+                for (const step of caseItem.steps) {
+                  let updatedStep = step.step;
+                  let updatedExpectedResult = step.expectedResult;
+
+                  // Apply search/replace transformation
+                  if (step.step && typeof step.step === "string") {
+                    updatedStep = applySearchReplace(
+                      step.step,
+                      searchPattern,
+                      replacePattern,
+                      useRegex,
+                      caseSensitive
+                    );
+                  }
+                  if (
+                    step.expectedResult &&
+                    typeof step.expectedResult === "string"
+                  ) {
+                    updatedExpectedResult = applySearchReplace(
+                      step.expectedResult,
+                      searchPattern,
+                      replacePattern,
+                      useRegex,
+                      caseSensitive
+                    );
+                  }
+
+                  await tx.steps.update({
+                    where: { id: step.id },
                     data: {
-                      testCaseId: caseId,
-                      step: JSON.stringify(stepData.step),
-                      expectedResult: JSON.stringify(stepData.expectedResult),
-                      order: stepData.order,
+                      step: updatedStep as any,
+                      expectedResult: updatedExpectedResult as any,
                     },
                   });
                 }
                 updateResults.stepsUpdated++;
               }
-            } else if (
-              validatedData.stepsUpdates.operation === "search-replace"
-            ) {
-              // For search-replace, we need to update each step individually
-              const searchPattern =
-                validatedData.stepsUpdates.searchPattern || "";
-              const replacePattern =
-                validatedData.stepsUpdates.replacePattern || "";
-              const useRegex =
-                validatedData.stepsUpdates.searchOptions?.useRegex || false;
-              const caseSensitive =
-                validatedData.stepsUpdates.searchOptions?.caseSensitive ||
-                false;
+            }
 
-              for (const step of caseItem.steps) {
-                let updatedStep = step.step;
-                let updatedExpectedResult = step.expectedResult;
+            // Create version snapshot if requested
+            // Note: The test case was already updated with currentVersion incremented above
+            if (validatedData.createVersions) {
+              const tagNames = caseItem.tags.map((t) => t.name);
+              const issuesData = caseItem.issues.map((i) => ({
+                id: i.id,
+                name: i.name,
+                ...(i.externalId && { externalId: i.externalId }),
+              }));
+              const stepsData = caseItem.steps.map((s) => ({
+                step: s.step,
+                expectedResult: s.expectedResult,
+              }));
 
-                // Apply search/replace transformation
-                if (step.step && typeof step.step === "string") {
-                  updatedStep = applySearchReplace(
-                    step.step,
-                    searchPattern,
-                    replacePattern,
-                    useRegex,
-                    caseSensitive
-                  );
-                }
-                if (
-                  step.expectedResult &&
-                  typeof step.expectedResult === "string"
-                ) {
-                  updatedExpectedResult = applySearchReplace(
-                    step.expectedResult,
-                    searchPattern,
-                    replacePattern,
-                    useRegex,
-                    caseSensitive
-                  );
-                }
-
-                await tx.steps.update({
-                  where: { id: step.id },
-                  data: {
-                    step: updatedStep as any,
-                    expectedResult: updatedExpectedResult as any,
-                  },
-                });
-              }
-              updateResults.stepsUpdated++;
+              await createTestCaseVersionInTransaction(tx, caseId, {
+                // Preserve original creator metadata
+                creatorId: caseItem.creatorId,
+                creatorName: caseItem.creator?.name || "",
+                createdAt: caseItem.createdAt,
+                overrides: {
+                  // Apply any changes from the bulk edit
+                  name: updateData.name ?? caseItem.name,
+                  stateId: updateData.stateId ?? caseItem.stateId,
+                  stateName:
+                    updateData.stateId !== undefined
+                      ? caseItem.state?.name || ""
+                      : undefined,
+                  automated: updateData.automated ?? caseItem.automated,
+                  estimate: updateData.estimate ?? caseItem.estimate,
+                  steps: stepsData,
+                  tags: tagNames,
+                  issues: issuesData,
+                  isArchived: caseItem.isArchived,
+                  order: caseItem.order,
+                },
+              });
+              updateResults.versionsCreated++;
             }
           }
 
-          // Create version snapshot if requested
-          // Note: The test case was already updated with currentVersion incremented above
-          if (validatedData.createVersions) {
-            const tagNames = caseItem.tags.map((t) => t.name);
-            const issuesData = caseItem.issues.map((i) => ({
-              id: i.id,
-              name: i.name,
-              ...(i.externalId && { externalId: i.externalId }),
-            }));
-            const stepsData = caseItem.steps.map((s) => ({
-              step: s.step,
-              expectedResult: s.expectedResult,
-            }));
-
-            await createTestCaseVersionInTransaction(tx, caseId, {
-              // Preserve original creator metadata
-              creatorId: caseItem.creatorId,
-              creatorName: caseItem.creator?.name || "",
-              createdAt: caseItem.createdAt,
-              overrides: {
-                // Apply any changes from the bulk edit
-                name: updateData.name ?? caseItem.name,
-                stateId: updateData.stateId ?? caseItem.stateId,
-                stateName:
-                  updateData.stateId !== undefined
-                    ? caseItem.state?.name || ""
-                    : undefined,
-                automated: updateData.automated ?? caseItem.automated,
-                estimate: updateData.estimate ?? caseItem.estimate,
-                steps: stepsData,
-                tags: tagNames,
-                issues: issuesData,
-                isArchived: caseItem.isArchived,
-                order: caseItem.order,
-              },
-            });
-            updateResults.versionsCreated++;
-          }
+          return updateResults;
+        },
+        {
+          timeout: 60000, // 60 seconds timeout for large bulk operations
         }
+      );
 
-        return updateResults;
-      },
-      {
-        timeout: 60000, // 60 seconds timeout for large bulk operations
+      // Audit the bulk update
+      if (result.casesUpdated > 0) {
+        await auditBulkUpdate(
+          "RepositoryCases",
+          result.casesUpdated,
+          { caseIds: validatedData.caseIds },
+          projectId
+        );
       }
-    );
 
-    // Audit the bulk update
-    if (result.casesUpdated > 0) {
-      auditBulkUpdate(
-        "RepositoryCases",
-        result.casesUpdated,
-        { caseIds: validatedData.caseIds },
-        projectId
-      ).catch((error) =>
-        console.error("[AuditLog] Failed to audit bulk edit:", error)
-      );
-    }
+      return NextResponse.json({
+        success: true,
+        result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Invalid request data", details: error.issues },
+          { status: 400 }
+        );
+      }
 
-    return NextResponse.json({
-      success: true,
-      result,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+      console.error("Error performing bulk edit:", error);
       return NextResponse.json(
-        { error: "Invalid request data", details: error.issues },
-        { status: 400 }
+        { error: "Failed to perform bulk edit" },
+        { status: 500 }
       );
     }
-
-    console.error("Error performing bulk edit:", error);
-    return NextResponse.json(
-      { error: "Failed to perform bulk edit" },
-      { status: 500 }
-    );
   }
-}
+);
 
 // Helper function to apply search/replace to TipTap JSON content
 function applySearchReplace(

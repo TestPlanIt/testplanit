@@ -52,6 +52,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
+            await auditCreate("RepositoryCases", result, result.projectId);
           }
           return result;
         },
@@ -70,14 +71,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate(
+            await auditUpdate(
               "RepositoryCases",
               oldEntity,
               result,
               result.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit repository case update:`, error);
-            });
+            );
           }
           return result;
         },
@@ -97,26 +96,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             });
             // Audit log - determine if create or update
             if (oldEntity) {
-              auditUpdate(
+              await auditUpdate(
                 "RepositoryCases",
                 oldEntity,
                 result,
                 result.projectId
-              ).catch((error: any) => {
-                console.error(
-                  `Failed to audit repository case upsert (update):`,
-                  error
-                );
-              });
-            } else {
-              auditCreate("RepositoryCases", result, result.projectId).catch(
-                (error: any) => {
-                  console.error(
-                    `Failed to audit repository case upsert (create):`,
-                    error
-                  );
-                }
               );
+            } else {
+              await auditCreate("RepositoryCases", result, result.projectId);
             }
           }
           return result;
@@ -137,13 +124,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             });
           }
           if (oldEntity) {
-            auditDelete(
+            await auditDelete(
               "RepositoryCases",
               oldEntity,
               oldEntity.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit repository case delete:`, error);
-            });
+            );
           }
           return result;
         },
@@ -158,14 +143,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               typeof rawProjectId === "number" && rawProjectId > 0
                 ? rawProjectId
                 : undefined;
-            auditBulkCreate("RepositoryCases", result.count, projectId).catch(
-              (error: any) => {
-                console.error(
-                  `Failed to audit repository case bulk create:`,
-                  error
-                );
-              }
-            );
+            await auditBulkCreate("RepositoryCases", result.count, projectId);
           }
           return result;
         },
@@ -173,14 +151,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           // Audit bulk update
           if (result?.count > 0) {
-            auditBulkUpdate("RepositoryCases", result.count, args.where).catch(
-              (error: any) => {
-                console.error(
-                  `Failed to audit repository case bulk update:`,
-                  error
-                );
-              }
-            );
+            await auditBulkUpdate("RepositoryCases", result.count, args.where);
           }
           return result;
         },
@@ -188,14 +159,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           // Audit bulk delete
           if (result?.count > 0) {
-            auditBulkDelete("RepositoryCases", result.count, args.where).catch(
-              (error: any) => {
-                console.error(
-                  `Failed to audit repository case bulk delete:`,
-                  error
-                );
-              }
-            );
+            await auditBulkDelete("RepositoryCases", result.count, args.where);
           }
           return result;
         },
@@ -211,11 +175,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditCreate("TestRuns", result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run create:`, error);
-              }
-            );
+            await auditCreate("TestRuns", result, result.projectId);
           }
           return result;
         },
@@ -243,11 +203,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate("TestRuns", oldEntity, result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run update:`, error);
-              }
-            );
+            await auditUpdate("TestRuns", oldEntity, result, result.projectId);
           }
           return result;
         },
@@ -258,11 +214,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("TestRuns", oldEntity, oldEntity.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run delete:`, error);
-              }
-            );
+            await auditDelete("TestRuns", oldEntity, oldEntity.projectId);
           }
           return result;
         },
@@ -270,37 +222,31 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           if (result?.count > 0) {
             const projectId = args.data?.[0]?.projectId;
-            auditBulkCreate("TestRuns", result.count, projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run bulk create:`, error);
-              }
-            );
+            await auditBulkCreate("TestRuns", result.count, projectId);
           }
           return result;
         },
         async updateMany({ args, query }: any) {
           const result = await query(args);
           if (result?.count > 0) {
-            auditBulkUpdate("TestRuns", result.count, args.where).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run bulk update:`, error);
-              }
-            );
+            await auditBulkUpdate("TestRuns", result.count, args.where);
           }
           return result;
         },
         async deleteMany({ args, query }: any) {
           const result = await query(args);
           if (result?.count > 0) {
-            auditBulkDelete("TestRuns", result.count, args.where).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run bulk delete:`, error);
-              }
-            );
+            await auditBulkDelete("TestRuns", result.count, args.where);
           }
           return result;
         },
       },
+      // Audit parity exempt (informational): sessions has full CRUD hook parity
+      // but the lifecycle events that matter (login/logout/invalidation) are
+      // audited at the NextAuth event-callback layer above the DB hook — see
+      // app/api/auth/logout/route.ts for the LOGOUT pair. The hooks here still
+      // fire for completeness but are not the primary audit signal.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       sessions: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -312,11 +258,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditCreate("Sessions", result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit session create:`, error);
-              }
-            );
+            await auditCreate("Sessions", result, result.projectId);
           }
           return result;
         },
@@ -334,11 +276,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate("Sessions", oldEntity, result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit session update:`, error);
-              }
-            );
+            await auditUpdate("Sessions", oldEntity, result, result.projectId);
           }
           return result;
         },
@@ -357,26 +295,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             });
             // Audit log - determine if create or update
             if (oldEntity) {
-              auditUpdate(
+              await auditUpdate(
                 "Sessions",
                 oldEntity,
                 result,
                 result.projectId
-              ).catch((error: any) => {
-                console.error(
-                  `Failed to audit session upsert (update):`,
-                  error
-                );
-              });
-            } else {
-              auditCreate("Sessions", result, result.projectId).catch(
-                (error: any) => {
-                  console.error(
-                    `Failed to audit session upsert (create):`,
-                    error
-                  );
-                }
               );
+            } else {
+              await auditCreate("Sessions", result, result.projectId);
             }
           }
           return result;
@@ -396,11 +322,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             });
           }
           if (oldEntity) {
-            auditDelete("Sessions", oldEntity, oldEntity.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit session delete:`, error);
-              }
-            );
+            await auditDelete("Sessions", oldEntity, oldEntity.projectId);
           }
           return result;
         },
@@ -408,33 +330,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           if (result?.count > 0) {
             const projectId = args.data?.[0]?.projectId;
-            auditBulkCreate("Sessions", result.count, projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit session bulk create:`, error);
-              }
-            );
+            await auditBulkCreate("Sessions", result.count, projectId);
           }
           return result;
         },
         async updateMany({ args, query }: any) {
           const result = await query(args);
           if (result?.count > 0) {
-            auditBulkUpdate("Sessions", result.count, args.where).catch(
-              (error: any) => {
-                console.error(`Failed to audit session bulk update:`, error);
-              }
-            );
+            await auditBulkUpdate("Sessions", result.count, args.where);
           }
           return result;
         },
         async deleteMany({ args, query }: any) {
           const result = await query(args);
           if (result?.count > 0) {
-            auditBulkDelete("Sessions", result.count, args.where).catch(
-              (error: any) => {
-                console.error(`Failed to audit session bulk delete:`, error);
-              }
-            );
+            await auditBulkDelete("Sessions", result.count, args.where);
           }
           return result;
         },
@@ -450,14 +360,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditCreate("SharedStepGroup", result, result.projectId).catch(
-              (error: any) => {
-                console.error(
-                  `Failed to audit shared step group create:`,
-                  error
-                );
-              }
-            );
+            await auditCreate("SharedStepGroup", result, result.projectId);
           }
           return result;
         },
@@ -475,14 +378,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate(
+            await auditUpdate(
               "SharedStepGroup",
               oldEntity,
               result,
               result.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit shared step group update:`, error);
-            });
+            );
           }
           return result;
         },
@@ -492,13 +393,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete(
+            await auditDelete(
               "SharedStepGroup",
               oldEntity,
               oldEntity.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit shared step group delete:`, error);
-            });
+            );
           }
           return result;
         },
@@ -514,11 +413,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditCreate("Issue", result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit issue create:`, error);
-              }
-            );
+            await auditCreate("Issue", result, result.projectId);
           }
           return result;
         },
@@ -536,11 +431,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate("Issue", oldEntity, result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit issue update:`, error);
-              }
-            );
+            await auditUpdate("Issue", oldEntity, result, result.projectId);
           }
           return result;
         },
@@ -550,13 +441,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete(
+            await auditDelete(
               "Issue",
               oldEntity,
               oldEntity.projectId ?? undefined
-            ).catch((error: any) => {
-              console.error(`Failed to audit issue delete:`, error);
-            });
+            );
           }
           return result;
         },
@@ -572,11 +461,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditCreate("Milestones", result, result.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit milestone create:`, error);
-              }
-            );
+            await auditCreate("Milestones", result, result.projectId);
           }
           return result;
         },
@@ -594,14 +479,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate(
+            await auditUpdate(
               "Milestones",
               oldEntity,
               result,
               result.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit milestone update:`, error);
-            });
+            );
           }
           return result;
         },
@@ -611,11 +494,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("Milestones", oldEntity, oldEntity.projectId).catch(
-              (error: any) => {
-                console.error(`Failed to audit milestone delete:`, error);
-              }
-            );
+            await auditDelete("Milestones", oldEntity, oldEntity.projectId);
           }
           return result;
         },
@@ -631,9 +510,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditCreate("Projects", result).catch((error: any) => {
-              console.error(`Failed to audit project create:`, error);
-            });
+            await auditCreate("Projects", result);
           }
           return result;
         },
@@ -651,9 +528,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
             // Audit log
-            auditUpdate("Projects", oldEntity, result).catch((error: any) => {
-              console.error(`Failed to audit project update:`, error);
-            });
+            await auditUpdate("Projects", oldEntity, result);
           }
           return result;
         },
@@ -664,9 +539,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("Projects", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit project delete:`, error);
-            });
+            await auditDelete("Projects", oldEntity);
           }
           return result;
         },
@@ -678,9 +551,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("User", result).catch((error: any) => {
-              console.error(`Failed to audit user create:`, error);
-            });
+            await auditCreate("User", result);
           }
           return result;
         },
@@ -703,18 +574,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           if (result?.id) {
             // Check for role/access level change
             if (oldEntity && oldEntity.access !== result.access) {
-              auditRoleChange(
+              await auditRoleChange(
                 result.id,
                 oldEntity.access,
                 result.access,
                 result.email
-              ).catch((error: any) => {
-                console.error(`Failed to audit role change:`, error);
-              });
+              );
             } else {
-              auditUpdate("User", oldEntity, result).catch((error: any) => {
-                console.error(`Failed to audit user update:`, error);
-              });
+              await auditUpdate("User", oldEntity, result);
             }
           }
           return result;
@@ -725,46 +592,38 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("User", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit user delete:`, error);
-            });
+            await auditDelete("User", oldEntity);
           }
           return result;
         },
         async updateMany({ args, query }: any) {
           const result = await query(args);
           if (result?.count > 0) {
-            auditBulkUpdate("User", result.count, args.where).catch(
-              (error: any) => {
-                console.error(`Failed to audit user bulk update:`, error);
-              }
-            );
+            await auditBulkUpdate("User", result.count, args.where);
           }
           return result;
         },
         async deleteMany({ args, query }: any) {
           const result = await query(args);
           if (result?.count > 0) {
-            auditBulkDelete("User", result.count, args.where).catch(
-              (error: any) => {
-                console.error(`Failed to audit user bulk delete:`, error);
-              }
-            );
+            await auditBulkDelete("User", result.count, args.where);
           }
           return result;
         },
       },
+      // Audit parity exempt: userProjectPermission.update is not hooked because
+      // permissions are grant/revoke only (no intermediate UPDATE path).
+      // The create/delete hooks call auditPermissionGrant/Revoke respectively.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       userProjectPermission: {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditPermissionGrant(
+            await auditPermissionGrant(
               "UserProjectPermission",
               result,
               result.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit permission grant:`, error);
-            });
+            );
           }
           return result;
         },
@@ -776,28 +635,28 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditPermissionRevoke(
+            await auditPermissionRevoke(
               "UserProjectPermission",
               oldEntity,
               oldEntity.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit permission revoke:`, error);
-            });
+            );
           }
           return result;
         },
       },
+      // Audit parity exempt: groupProjectPermission.update is not hooked because
+      // group permissions are grant/revoke only (no intermediate UPDATE path).
+      // The create/delete hooks call auditPermissionGrant/Revoke respectively.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       groupProjectPermission: {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditPermissionGrant(
+            await auditPermissionGrant(
               "GroupProjectPermission",
               result,
               result.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit group permission grant:`, error);
-            });
+            );
           }
           return result;
         },
@@ -809,13 +668,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditPermissionRevoke(
+            await auditPermissionRevoke(
               "GroupProjectPermission",
               oldEntity,
               oldEntity.projectId
-            ).catch((error: any) => {
-              console.error(`Failed to audit group permission revoke:`, error);
-            });
+            );
           }
           return result;
         },
@@ -824,9 +681,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("Account", result).catch((error: any) => {
-              console.error(`Failed to audit account create:`, error);
-            });
+            await auditCreate("Account", result);
           }
           return result;
         },
@@ -836,9 +691,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            auditUpdate("Account", oldEntity, result).catch((error: any) => {
-              console.error(`Failed to audit account update:`, error);
-            });
+            await auditUpdate("Account", oldEntity, result);
           }
           return result;
         },
@@ -848,9 +701,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("Account", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit account delete:`, error);
-            });
+            await auditDelete("Account", oldEntity);
           }
           return result;
         },
@@ -859,18 +710,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditSsoConfigChange("CREATE", result).catch((error: any) => {
-              console.error(`Failed to audit SSO provider create:`, error);
-            });
+            await auditSsoConfigChange("CREATE", result);
           }
           return result;
         },
         async update({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditSsoConfigChange("UPDATE", result).catch((error: any) => {
-              console.error(`Failed to audit SSO provider update:`, error);
-            });
+            await auditSsoConfigChange("UPDATE", result);
           }
           return result;
         },
@@ -880,23 +727,19 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditSsoConfigChange("DELETE", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit SSO provider delete:`, error);
-            });
+            await auditSsoConfigChange("DELETE", oldEntity);
           }
           return result;
         },
       },
+      // Audit parity exempt: allowedEmailDomain.update is not hooked because
+      // domain entries are immutable (allowed or not — no intermediate state).
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       allowedEmailDomain: {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("AllowedEmailDomain", result).catch((error: any) => {
-              console.error(
-                `Failed to audit allowed email domain create:`,
-                error
-              );
-            });
+            await auditCreate("AllowedEmailDomain", result);
           }
           return result;
         },
@@ -908,12 +751,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("AllowedEmailDomain", oldEntity).catch((error: any) => {
-              console.error(
-                `Failed to audit allowed email domain delete:`,
-                error
-              );
-            });
+            await auditDelete("AllowedEmailDomain", oldEntity);
           }
           return result;
         },
@@ -922,11 +760,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.key) {
-            auditSystemConfigChange(result.key, null, result.value).catch(
-              (error: any) => {
-                console.error(`Failed to audit app config create:`, error);
-              }
-            );
+            await auditSystemConfigChange(result.key, null, result.value);
           }
           return result;
         },
@@ -936,13 +770,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.key) {
-            auditSystemConfigChange(
+            await auditSystemConfigChange(
               result.key,
               oldEntity?.value,
               result.value
-            ).catch((error: any) => {
-              console.error(`Failed to audit app config update:`, error);
-            });
+            );
           }
           return result;
         },
@@ -952,11 +784,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditSystemConfigChange(oldEntity.key, oldEntity.value, null).catch(
-              (error: any) => {
-                console.error(`Failed to audit app config delete:`, error);
-              }
-            );
+            await auditSystemConfigChange(oldEntity.key, oldEntity.value, null);
           }
           return result;
         },
@@ -968,12 +796,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("UserIntegrationAuth", result).catch((error: any) => {
-              console.error(
-                `Failed to audit user integration auth create:`,
-                error
-              );
-            });
+            await auditCreate("UserIntegrationAuth", result);
           }
           return result;
         },
@@ -985,14 +808,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            auditUpdate("UserIntegrationAuth", oldEntity, result).catch(
-              (error: any) => {
-                console.error(
-                  `Failed to audit user integration auth update:`,
-                  error
-                );
-              }
-            );
+            await auditUpdate("UserIntegrationAuth", oldEntity, result);
           }
           return result;
         },
@@ -1004,14 +820,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("UserIntegrationAuth", oldEntity).catch(
-              (error: any) => {
-                console.error(
-                  `Failed to audit user integration auth delete:`,
-                  error
-                );
-              }
-            );
+            await auditDelete("UserIntegrationAuth", oldEntity);
           }
           return result;
         },
@@ -1023,9 +832,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("TestRunResult", result).catch((error: any) => {
-              console.error(`Failed to audit test run result create:`, error);
-            });
+            await auditCreate("TestRunResult", result);
           }
           return result;
         },
@@ -1035,11 +842,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            auditUpdate("TestRunResult", oldEntity, result).catch(
-              (error: any) => {
-                console.error(`Failed to audit test run result update:`, error);
-              }
-            );
+            await auditUpdate("TestRunResult", oldEntity, result);
           }
           return result;
         },
@@ -1049,9 +852,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("TestRunResult", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit test run result delete:`, error);
-            });
+            await auditDelete("TestRunResult", oldEntity);
           }
           return result;
         },
@@ -1060,11 +861,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("Comment", result, result.projectId ?? undefined).catch(
-              (error: any) => {
-                console.error(`Failed to audit comment create:`, error);
-              }
-            );
+            await auditCreate("Comment", result, result.projectId ?? undefined);
           }
           return result;
         },
@@ -1074,14 +871,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            auditUpdate(
+            await auditUpdate(
               "Comment",
               oldEntity,
               result,
               result.projectId ?? undefined
-            ).catch((error: any) => {
-              console.error(`Failed to audit comment update:`, error);
-            });
+            );
           }
           return result;
         },
@@ -1091,24 +886,23 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete(
+            await auditDelete(
               "Comment",
               oldEntity,
               oldEntity.projectId ?? undefined
-            ).catch((error: any) => {
-              console.error(`Failed to audit comment delete:`, error);
-            });
+            );
           }
           return result;
         },
       },
+      // Audit parity exempt: attachment.update is not hooked because attachments
+      // are immutable once uploaded (no in-place mutation path). Matches the
+      // lastActiveAt precedent at lib/prisma.ts:693-701.
       attachment: {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            auditCreate("Attachment", result).catch((error: any) => {
-              console.error(`Failed to audit attachment create:`, error);
-            });
+            await auditCreate("Attachment", result);
           }
           return result;
         },
@@ -1118,9 +912,172 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            auditDelete("Attachment", oldEntity).catch((error: any) => {
-              console.error(`Failed to audit attachment delete:`, error);
-            });
+            await auditDelete("Attachment", oldEntity);
+          }
+          return result;
+        },
+      },
+      // =============================================================================
+      // Phase 62: Integrations, Prompt Configurations, Test Run Cases
+      // =============================================================================
+      integration: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            await auditCreate("Integration", result);
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.integration.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            await auditUpdate("Integration", oldEntity, result);
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.integration.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            await auditDelete("Integration", oldEntity);
+          }
+          return result;
+        },
+      },
+      projectIntegration: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            await auditCreate("ProjectIntegration", result, result.projectId);
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.projectIntegration.findUnique({
+                where: args.where,
+              })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            await auditUpdate(
+              "ProjectIntegration",
+              oldEntity,
+              result,
+              result.projectId
+            );
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.projectIntegration.findUnique({
+                where: args.where,
+              })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            await auditDelete(
+              "ProjectIntegration",
+              oldEntity,
+              oldEntity.projectId
+            );
+          }
+          return result;
+        },
+      },
+      promptConfig: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            await auditCreate("PromptConfig", result);
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfig.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            await auditUpdate("PromptConfig", oldEntity, result);
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfig.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            await auditDelete("PromptConfig", oldEntity);
+          }
+          return result;
+        },
+      },
+      promptConfigPrompt: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            await auditCreate("PromptConfigPrompt", result);
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfigPrompt.findUnique({
+                where: args.where,
+              })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            await auditUpdate("PromptConfigPrompt", oldEntity, result);
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.promptConfigPrompt.findUnique({
+                where: args.where,
+              })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            await auditDelete("PromptConfigPrompt", oldEntity);
+          }
+          return result;
+        },
+      },
+      testRunCases: {
+        async create({ args, query }: any) {
+          const result = await query(args);
+          if (result?.id) {
+            await auditCreate("TestRunCases", result);
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.testRunCases.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (result?.id) {
+            await auditUpdate("TestRunCases", oldEntity, result);
+          }
+          return result;
+        },
+        async delete({ args, query }: any) {
+          const oldEntity = args.where
+            ? await baseClient.testRunCases.findUnique({ where: args.where })
+            : null;
+          const result = await query(args);
+          if (oldEntity) {
+            await auditDelete("TestRunCases", oldEntity);
           }
           return result;
         },
@@ -1128,6 +1085,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // =============================================================================
       // API Tokens - Security audit logging
       // =============================================================================
+      // Audit parity exempt: apiToken.create is not hooked because API token
+      // creation is audited explicitly at app/api/api-tokens/route.ts via
+      // captureAuditEvent("API_KEY_CREATED", ...) — the explicit route call
+      // masks the token secret value in a way the generic auditCreate cannot.
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       apiToken: {
         async delete({ args, query }: any) {
           // Fetch entity before deletion for audit (including user info)
@@ -1141,7 +1103,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            captureAuditEvent({
+            await captureAuditEvent({
               action: "API_KEY_DELETED",
               entityType: "ApiToken",
               entityId: oldEntity.id,
@@ -1151,8 +1113,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 tokenOwnerId: oldEntity.userId,
                 tokenOwnerEmail: oldEntity.user?.email,
               },
-            }).catch((error: any) => {
-              console.error(`Failed to audit API token delete:`, error);
             });
             // Evict the short-TTL auth cache so the token is rejected immediately.
             invalidateApiTokenCache(oldEntity.token).catch((error: any) => {
@@ -1182,7 +1142,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             oldEntity.isActive === true &&
             result.isActive === false
           ) {
-            captureAuditEvent({
+            await captureAuditEvent({
               action: "API_KEY_REVOKED",
               entityType: "ApiToken",
               entityId: result.id,
@@ -1192,8 +1152,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 tokenOwnerId: result.userId,
                 tokenOwnerEmail: oldEntity.user?.email,
               },
-            }).catch((error: any) => {
-              console.error(`Failed to audit API token revocation:`, error);
             });
           }
           // Evict the short-TTL auth cache on every write: revocation must be
@@ -1211,11 +1169,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async updateMany({ args, query }: any) {
           // Capture tokens affected by the bulk update so we can invalidate
-          // their cached entries after the write completes.
+          // their cached entries after the write completes. We also widen the
+          // selection to non-sensitive forensic fields (id, tokenPrefix,
+          // userId, name) so the bulk-update audit retains enough context to
+          // reconstruct which tokens were touched. The raw `token` secret is
+          // used only to key the in-memory cache and is never passed to audit.
           const affected = args.where
             ? await baseClient.apiToken.findMany({
                 where: args.where,
-                select: { token: true },
+                select: {
+                  token: true,
+                  id: true,
+                  tokenPrefix: true,
+                  userId: true,
+                  name: true,
+                },
               })
             : [];
           const result = await query(args);
@@ -1231,13 +1199,27 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
           }
+          if (result?.count > 0) {
+            await auditBulkUpdate("ApiToken", result.count, args.where);
+          }
           return result;
         },
         async deleteMany({ args, query }: any) {
+          // Pre-query MUST run BEFORE the delete — post-delete these rows are
+          // unrecoverable. Widened selection captures non-sensitive forensic
+          // fields (id, tokenPrefix, userId, name) for the audit record; the
+          // raw `token` value remains for cache eviction only and is never
+          // logged.
           const affected = args.where
             ? await baseClient.apiToken.findMany({
                 where: args.where,
-                select: { token: true },
+                select: {
+                  token: true,
+                  id: true,
+                  tokenPrefix: true,
+                  userId: true,
+                  name: true,
+                },
               })
             : [];
           const result = await query(args);
@@ -1252,6 +1234,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
+          }
+          if (result?.count > 0) {
+            await auditBulkDelete("ApiToken", result.count, args.where);
           }
           return result;
         },

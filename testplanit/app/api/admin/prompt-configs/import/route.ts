@@ -1,6 +1,7 @@
 import { prisma } from "~/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
 import { z } from "zod";
 
@@ -22,7 +23,7 @@ const ImportSchema = z.object({
   ),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -121,4 +122,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

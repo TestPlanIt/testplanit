@@ -30,6 +30,7 @@ import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
+import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
 import { POST } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
@@ -46,7 +47,13 @@ function makeAdminSession() {
 function makeRequest(userId = "user-1") {
   return new NextRequest(
     `http://localhost/api/admin/users/${userId}/revoke-password`,
-    { method: "POST" }
+    {
+      method: "POST",
+      headers: {
+        "x-forwarded-for": "10.0.0.1",
+        "user-agent": "vitest-agent/1.0",
+      },
+    }
   );
 }
 
@@ -228,7 +235,16 @@ describe("POST /api/admin/users/[userId]/revoke-password", () => {
   });
 
   it("fires PASSWORD_REVOKED audit event with revokedBy metadata", async () => {
-    mockGetServerAuthSession.mockResolvedValue(makeAdminSession());
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
+    mockGetServerAuthSession.mockImplementation(async () => {
+      updateAuditContext({
+        userId: "admin-1",
+        userEmail: "admin@test.com",
+        userName: "Admin",
+      });
+      return makeAdminSession();
+    });
     mockDb.user.findUnique.mockResolvedValue({
       id: "user-1",
       email: "user@test.com",
@@ -238,6 +254,20 @@ describe("POST /api/admin/users/[userId]/revoke-password", () => {
     } as any);
     setEmailEnv(true);
     mockDb.user.update.mockResolvedValue({} as any);
+
+    let capturedRow: Record<string, unknown> | null = null;
+    mockCaptureAuditEvent.mockImplementation(async (event) => {
+      const ctx = getAuditContext();
+      capturedRow = {
+        userId: event.userId ?? ctx?.userId ?? null,
+        userEmail: event.userEmail ?? ctx?.userEmail ?? null,
+        userName: event.userName ?? ctx?.userName ?? null,
+        ipAddress: ctx?.ipAddress ?? null,
+        userAgent: ctx?.userAgent ?? null,
+        requestId: ctx?.requestId ?? null,
+        metadata: event.metadata ?? null,
+      };
+    });
 
     await POST(makeRequest(), {
       params: Promise.resolve({ userId: "user-1" }),
@@ -251,5 +281,8 @@ describe("POST /api/admin/users/[userId]/revoke-password", () => {
         })
       );
     });
+    // D-18 standing enforcement (SC#4).
+    expect(capturedRow).not.toBeNull();
+    expectAuditRowComplete(capturedRow!);
   });
 });

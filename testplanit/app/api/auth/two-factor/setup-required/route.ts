@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
   encryptSecret,
   generateQRCodeDataURL,
@@ -13,7 +15,7 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
  * POST /api/auth/two-factor/setup-required
  * Generate a new TOTP secret for forced 2FA setup during sign-in
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { setupToken } = body;
@@ -74,6 +76,18 @@ export async function POST(request: NextRequest) {
       data: { twoFactorSecret: encryptedSecret },
     });
 
+    // Audit the forced 2FA setup initiation. The TOTP secret is NOT
+    // logged — only that the setup flow started for this user.
+    await auditAuthEvent(
+      "TWO_FACTOR_SETUP_REQUIRED",
+      tokenData.userId,
+      tokenData.email ?? user.email ?? "",
+      {
+        adminForced: true,
+        triggeredByAdminId: "unknown",
+      }
+    );
+
     return NextResponse.json({
       secret,
       qrCode,
@@ -85,4 +99,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

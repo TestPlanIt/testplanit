@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 
 /**
  * POST /api/auth/send-magic-link
@@ -12,7 +14,7 @@ import { prisma } from "~/lib/prisma";
  * - email: The email address to send the magic link to
  * - callbackUrl: Optional callback URL (defaults to home page)
  */
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const { email, callbackUrl = "/" } = body;
@@ -106,6 +108,13 @@ export async function POST(req: NextRequest) {
       `,
     });
 
+    // Audit magic-link request (the generated token is NOT logged — only
+    // the requested email and auth method).
+    await auditAuthEvent("MAGIC_LINK_REQUESTED", user.id, email, {
+      requestedEmail: email,
+      authMethod: "magic-link",
+    });
+
     return NextResponse.json({
       success: true,
       message: "Magic link sent successfully",
@@ -126,4 +135,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     // Get the current session to understand how the user signed in
     const session = await getServerAuthSession();
@@ -137,10 +138,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit successful logout
-    auditAuthEvent("LOGOUT", session.user.id, session.user.email || "", {
+    await auditAuthEvent("LOGOUT", session.user.id, session.user.email || "", {
       authMethod: user.authMethod,
       hasSsoAccounts: ssoAccounts.length > 0,
-    }).catch(console.error);
+    });
 
     // If we have SSO logout URLs, include them in the response
     if (logoutUrls.length > 0) {
@@ -169,10 +170,10 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // Handle SAML logout callback
-export async function GET(request: NextRequest) {
+export const GET = withAuditContext(async (request: NextRequest) => {
   try {
     // Handle SAML logout response
     const searchParams = request.nextUrl.searchParams;
@@ -192,4 +193,4 @@ export async function GET(request: NextRequest) {
       new URL("/signin?error=logout-failed", request.url)
     );
   }
-}
+});

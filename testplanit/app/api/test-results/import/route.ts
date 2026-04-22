@@ -19,6 +19,10 @@ import {
 } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
@@ -117,7 +121,7 @@ function parseDuration(duration: unknown): number {
   return 0;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   // Try session-based auth first, then fall back to API token auth
   const session = await getServerAuthSession();
   let userId: string | undefined = session?.user?.id;
@@ -131,6 +135,12 @@ export async function POST(request: NextRequest) {
       );
     }
     userId = apiAuth.userId;
+    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
+    // requests — enrich ALS with resolved identity so downstream audit
+    // emissions carry complete user context.
+    if (apiAuth.userId) {
+      enrichFromApiAuth({ userId: apiAuth.userId });
+    }
   }
 
   if (!userId) {
@@ -930,16 +940,11 @@ export async function POST(request: NextRequest) {
         // Audit the import
         const importedCount = caseOrder - 1;
         if (importedCount > 0) {
-          auditBulkCreate("JUnitTestResult", importedCount, projectId, {
+          await auditBulkCreate("JUnitTestResult", importedCount, projectId, {
             source: `${primaryFormat.toUpperCase()} Import`,
             testRunId,
             fileCount: files.length,
-          }).catch((error) =>
-            console.error(
-              "[AuditLog] Failed to audit test results import:",
-              error
-            )
-          );
+          });
         }
 
         // Advisory duplicate warnings — never blocks import
@@ -1045,4 +1050,4 @@ export async function POST(request: NextRequest) {
       Connection: "keep-alive",
     },
   });
-}
+});

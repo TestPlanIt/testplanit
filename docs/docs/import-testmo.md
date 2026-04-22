@@ -419,12 +419,14 @@ If importing from multiple Testmo projects:
 
 ### Audit Trail
 
-All import activities are logged:
-- Import job creation timestamp
-- User who initiated the import
-- Configuration changes
-- Success/failure status
-- Duration and statistics
+Testmo imports emit entries in the [audit log](/docs/user-guide/audit-logs):
+
+- `IMPORT_STARTED` — written when the user kicks off an import; pairs with the worker's `BULK_CREATE` event when the import finishes so start/finish can be correlated.
+- `BULK_CREATE` — written by the import worker once cases are materialized.
+
+Supporting steps (creating the import job, attaching files, updating configuration) are not individually audited — they are treated as setup for the `IMPORT_STARTED` event that follows.
+
+Each entry records the user who initiated the import, timestamp, and forensic metadata (source, configuration summary, success/failure status, duration, and row counts).
 
 ## Technical Details
 

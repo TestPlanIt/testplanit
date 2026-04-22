@@ -3,6 +3,11 @@ import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
+import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
 // Helper to check admin authentication (session or API token)
@@ -25,6 +30,12 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
+    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
+    // requests — explicitly enrich ALS with resolved identity so downstream
+    // audit emissions carry complete user context.
+    if (apiAuth.userId) {
+      enrichFromApiAuth({ userId: apiAuth.userId });
+    }
   }
 
   if (!userId) {
@@ -161,137 +172,197 @@ async function removeJob(
 }
 
 // POST: Perform actions on the queue (pause, resume, clean, drain, obliterate)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ queueName: string }> }
-) {
-  try {
-    const auth = await checkAdminAuth(request);
-    if (auth.error) return auth.error;
+export const POST = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ queueName: string }> }
+  ) => {
+    try {
+      const auth = await checkAdminAuth(request);
+      if (auth.error) return auth.error;
 
-    const { queueName } = await params;
-    const queue = getQueueByName(queueName);
+      const { queueName } = await params;
+      const queue = getQueueByName(queueName);
 
-    if (!queue) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
-    }
+      if (!queue) {
+        return NextResponse.json({ error: "Queue not found" }, { status: 404 });
+      }
 
-    const { action, grace, limit, jobTypes: _jobTypes } = await request.json();
+      const {
+        action,
+        grace,
+        limit,
+        jobTypes: _jobTypes,
+      } = await request.json();
 
-    switch (action) {
-      case "pause":
-        await queue.pause();
-        return NextResponse.json({ success: true, message: "Queue paused" });
+      switch (action) {
+        case "pause":
+          await queue.pause();
+          // Audit the admin queue operator action.
+          await auditSystemConfigChange(`queue.${queueName}.pause`, null, {
+            queueName,
+            action: "pause",
+            triggeredBy: auth.userId ?? "unknown",
+          });
+          return NextResponse.json({ success: true, message: "Queue paused" });
 
-      case "resume":
-        await queue.resume();
-        return NextResponse.json({ success: true, message: "Queue resumed" });
+        case "resume":
+          await queue.resume();
+          // Audit the admin queue operator action.
+          await auditSystemConfigChange(`queue.${queueName}.resume`, null, {
+            queueName,
+            action: "resume",
+            triggeredBy: auth.userId ?? "unknown",
+          });
+          return NextResponse.json({ success: true, message: "Queue resumed" });
 
-      case "clean":
-        // Clean completed and failed jobs
-        const cleanOptions = {
-          grace: grace || 0, // Grace period in milliseconds
-          limit: limit || 100, // Max number of jobs to clean
-        };
+        case "clean":
+          // Clean completed and failed jobs
+          const cleanOptions = {
+            grace: grace || 0, // Grace period in milliseconds
+            limit: limit || 100, // Max number of jobs to clean
+          };
 
-        const completedCleaned = await queue.clean(
-          cleanOptions.grace,
-          cleanOptions.limit,
-          "completed"
-        );
-        const failedCleaned = await queue.clean(
-          cleanOptions.grace,
-          cleanOptions.limit,
-          "failed"
-        );
+          const completedCleaned = await queue.clean(
+            cleanOptions.grace,
+            cleanOptions.limit,
+            "completed"
+          );
+          const failedCleaned = await queue.clean(
+            cleanOptions.grace,
+            cleanOptions.limit,
+            "failed"
+          );
 
-        return NextResponse.json({
-          success: true,
-          message: "Queue cleaned",
-          cleaned: {
-            completed: completedCleaned.length,
-            failed: failedCleaned.length,
-            total: completedCleaned.length + failedCleaned.length,
-          },
-        });
+          // Audit the admin queue clean operator action.
+          await auditSystemConfigChange(`queue.${queueName}.clean`, null, {
+            queueName,
+            action: "clean",
+            triggeredBy: auth.userId ?? "unknown",
+            cleaned: {
+              completed: completedCleaned.length,
+              failed: failedCleaned.length,
+            },
+          });
 
-      case "drain":
-        // Remove all waiting jobs
-        await queue.drain();
-        return NextResponse.json({
-          success: true,
-          message: "Queue drained (all waiting jobs removed)",
-        });
+          return NextResponse.json({
+            success: true,
+            message: "Queue cleaned",
+            cleaned: {
+              completed: completedCleaned.length,
+              failed: failedCleaned.length,
+              total: completedCleaned.length + failedCleaned.length,
+            },
+          });
 
-      case "obliterate":
-        // DANGEROUS: Completely wipe the queue
-        await queue.obliterate({ force: true });
-        return NextResponse.json({
-          success: true,
-          message: "Queue obliterated (all data removed)",
-        });
+        case "drain":
+          // Remove all waiting jobs
+          await queue.drain();
+          // Audit the admin queue drain operator action.
+          await auditSystemConfigChange(`queue.${queueName}.drain`, null, {
+            queueName,
+            action: "drain",
+            triggeredBy: auth.userId ?? "unknown",
+          });
+          return NextResponse.json({
+            success: true,
+            message: "Queue drained (all waiting jobs removed)",
+          });
 
-      default:
-        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-    }
-  } catch (error: any) {
-    console.error("Error performing queue action:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+        case "obliterate":
+          // DANGEROUS: Completely wipe the queue
+          await queue.obliterate({ force: true });
+          // Audit the admin queue obliterate operator action.
+          await auditSystemConfigChange(`queue.${queueName}.obliterate`, null, {
+            queueName,
+            action: "obliterate",
+            triggeredBy: auth.userId ?? "unknown",
+          });
+          return NextResponse.json({
+            success: true,
+            message: "Queue obliterated (all data removed)",
+          });
 
-// DELETE: Remove a specific job from the queue
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ queueName: string }> }
-) {
-  try {
-    const auth = await checkAdminAuth(request);
-    if (auth.error) return auth.error;
-
-    const { queueName } = await params;
-    const queue = getQueueByName(queueName);
-
-    if (!queue) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const jobId = searchParams.get("jobId");
-    const force = searchParams.get("force") === "true";
-
-    if (!jobId) {
+        default:
+          return NextResponse.json(
+            { error: "Invalid action" },
+            { status: 400 }
+          );
+      }
+    } catch (error: any) {
+      console.error("Error performing queue action:", error);
       return NextResponse.json(
-        { error: "Job ID is required" },
-        { status: 400 }
+        { error: error.message || "Internal server error" },
+        { status: 500 }
       );
     }
-
-    const job = await queue.getJob(jobId);
-    if (!job) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
-    }
-
-    const result = await removeJob(queue, job, force);
-
-    // Handle partial success (repeatable job schedule removed but instance locked)
-    if (typeof result === "object" && result.partialSuccess) {
-      return NextResponse.json({
-        success: true,
-        partialSuccess: true,
-        message: result.message,
-      });
-    }
-
-    return NextResponse.json({ success: true, message: "Job removed" });
-  } catch (error: any) {
-    console.error("Error removing job:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
   }
-}
+);
+
+// DELETE: Remove a specific job from the queue
+export const DELETE = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ queueName: string }> }
+  ) => {
+    try {
+      const auth = await checkAdminAuth(request);
+      if (auth.error) return auth.error;
+
+      const { queueName } = await params;
+      const queue = getQueueByName(queueName);
+
+      if (!queue) {
+        return NextResponse.json({ error: "Queue not found" }, { status: 404 });
+      }
+
+      const { searchParams } = new URL(request.url);
+      const jobId = searchParams.get("jobId");
+      const force = searchParams.get("force") === "true";
+
+      if (!jobId) {
+        return NextResponse.json(
+          { error: "Job ID is required" },
+          { status: 400 }
+        );
+      }
+
+      const job = await queue.getJob(jobId);
+      if (!job) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
+
+      const result = await removeJob(queue, job, force);
+
+      // Audit the admin job-delete operator action (queue-scoped DELETE).
+      await auditSystemConfigChange(
+        `queue.${queueName}.job.${jobId}.delete`,
+        null,
+        {
+          queueName,
+          jobId,
+          action: "delete",
+          triggeredBy: auth.userId ?? "unknown",
+          force,
+        }
+      );
+
+      // Handle partial success (repeatable job schedule removed but instance locked)
+      if (typeof result === "object" && result.partialSuccess) {
+        return NextResponse.json({
+          success: true,
+          partialSuccess: true,
+          message: result.message,
+        });
+      }
+
+      return NextResponse.json({ success: true, message: "Job removed" });
+    } catch (error: any) {
+      console.error("Error removing job:", error);
+      return NextResponse.json(
+        { error: error.message || "Internal server error" },
+        { status: 500 }
+      );
+    }
+  }
+);

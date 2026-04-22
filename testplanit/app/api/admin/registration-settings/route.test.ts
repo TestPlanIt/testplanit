@@ -22,6 +22,7 @@ vi.mock("~/lib/services/auditLog", () => ({
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { captureAuditEvent, calculateDiff } from "~/lib/services/auditLog";
+import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
 import { PATCH } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
@@ -38,7 +39,13 @@ function makeAdminSession() {
 function makeRequest(body: Record<string, unknown>) {
   return new NextRequest("http://localhost/api/admin/registration-settings", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      // Populate the headers withAuditContext extracts so ALS seeds
+      // ipAddress/userAgent/requestId for every test in this file.
+      "x-forwarded-for": "10.0.0.1",
+      "user-agent": "vitest-agent/1.0",
+    },
     body: JSON.stringify(body),
   });
 }
@@ -114,7 +121,17 @@ describe("PATCH /api/admin/registration-settings", () => {
   });
 
   it("calls calculateDiff and fires PASSWORD_POLICY_CHANGED when values change", async () => {
-    mockGetServerAuthSession.mockResolvedValue(makeAdminSession());
+    // Mirror the real NextAuth session callback (Plan 01 Task 3): when
+    // getServerAuthSession resolves, enrich ALS with identity fields.
+    const { updateAuditContext } = await import("~/lib/auditContext");
+    mockGetServerAuthSession.mockImplementation(async () => {
+      updateAuditContext({
+        userId: "admin-1",
+        userEmail: "admin@test.com",
+        userName: "Admin",
+      });
+      return makeAdminSession();
+    });
     const currentSettings = makeCurrentSettings({ minPasswordLength: 12 });
     mockDb.registrationSettings.findFirst.mockResolvedValue(
       currentSettings as any
@@ -125,6 +142,23 @@ describe("PATCH /api/admin/registration-settings", () => {
     } as any);
     mockCalculateDiff.mockReturnValue({
       minPasswordLength: { old: 12, new: 16 },
+    });
+
+    // Capture the row-shape via a fresh mockImplementation that reads
+    // ALS at call time (same pattern as Plan 05 Task 2 Test 1).
+    let capturedRow: Record<string, unknown> | null = null;
+    const { getAuditContext } = await import("~/lib/auditContext");
+    mockCaptureAuditEvent.mockImplementation(async (event) => {
+      const ctx = getAuditContext();
+      capturedRow = {
+        userId: event.userId ?? ctx?.userId ?? null,
+        userEmail: event.userEmail ?? ctx?.userEmail ?? null,
+        userName: event.userName ?? ctx?.userName ?? null,
+        ipAddress: ctx?.ipAddress ?? null,
+        userAgent: ctx?.userAgent ?? null,
+        requestId: ctx?.requestId ?? null,
+        metadata: event.metadata ?? null,
+      };
     });
 
     const res = await PATCH(makeRequest({ minPasswordLength: 16 }));
@@ -139,6 +173,9 @@ describe("PATCH /api/admin/registration-settings", () => {
         })
       );
     });
+    // D-18 standing enforcement: emitted row has complete actor context.
+    expect(capturedRow).not.toBeNull();
+    expectAuditRowComplete(capturedRow!);
   });
 
   it("does NOT fire audit event when calculateDiff returns undefined (no changes)", async () => {

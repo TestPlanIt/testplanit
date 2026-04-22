@@ -104,8 +104,30 @@ function AuditLogsContent({ session }: { session: Session }) {
   const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
-  const [selectedLog, setSelectedLog] = useState<ExtendedAuditLog | null>(null);
+  // Default to last 7 days so an unfiltered page load never scans the full
+  // audit history. Admins can widen via the dropdown. See Phase 63 for the
+  // full date-range picker + required-time-range redesign.
+  const [timeRangeFilter, setTimeRangeFilter] = useState<
+    "24h" | "7d" | "30d" | "90d" | "all"
+  >("7d");
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  const timeRangeCutoff = useMemo(() => {
+    const now = Date.now();
+    switch (timeRangeFilter) {
+      case "24h":
+        return new Date(now - 24 * 60 * 60 * 1000);
+      case "7d":
+        return new Date(now - 7 * 24 * 60 * 60 * 1000);
+      case "30d":
+        return new Date(now - 30 * 24 * 60 * 60 * 1000);
+      case "90d":
+        return new Date(now - 90 * 24 * 60 * 60 * 1000);
+      case "all":
+        return null;
+    }
+  }, [timeRangeFilter]);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -152,8 +174,12 @@ function AuditLogsContent({ session }: { session: Session }) {
       conditions.push({ entityType: entityTypeFilter });
     }
 
+    if (timeRangeCutoff) {
+      conditions.push({ timestamp: { gte: timeRangeCutoff } });
+    }
+
     return conditions.length > 0 ? { AND: conditions } : {};
-  }, [debouncedSearchString, actionFilter, entityTypeFilter]);
+  }, [debouncedSearchString, actionFilter, entityTypeFilter, timeRangeCutoff]);
 
   // Get total count
   const { data: totalCount } = useCountAuditLog({ where: whereClause });
@@ -165,16 +191,28 @@ function AuditLogsContent({ session }: { session: Session }) {
     }
   }, [totalCount, setTotalItems]);
 
-  // Fetch audit logs
+  // Fetch audit logs — list view only needs columns the table renders.
+  // Excludes `changes` and `metadata` (both Json columns) which can be very
+  // large for CREATE/UPDATE events on entities with rich payloads (e.g.,
+  // test cases with Tiptap step content). Those are fetched on demand in
+  // AuditLogDetailModal via useFindUniqueAuditLog.
   const { data: auditLogs, isLoading } = useFindManyAuditLog(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
         : { timestamp: "desc" },
-      include: {
-        project: {
-          select: { name: true },
-        },
+      select: {
+        id: true,
+        timestamp: true,
+        action: true,
+        entityType: true,
+        entityId: true,
+        entityName: true,
+        userId: true,
+        userEmail: true,
+        userName: true,
+        projectId: true,
+        project: { select: { name: true } },
       },
       where: whereClause,
       take: effectivePageSize,
@@ -192,29 +230,29 @@ function AuditLogsContent({ session }: { session: Session }) {
     orderBy: { entityType: "asc" },
   });
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  // Hard cap at 100 rows per page — removing "All" prevents an admin from
+  // requesting an unbounded row count against a table that can grow into the
+  // billions. See Phase 63 roadmap for the broader redesign.
+  const pageSizeOptions: PageSizeOption[] = useMemo(() => [25, 50, 100], []);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchString, actionFilter, entityTypeFilter, setCurrentPage]);
+  }, [
+    searchString,
+    actionFilter,
+    entityTypeFilter,
+    timeRangeFilter,
+    setCurrentPage,
+  ]);
 
   // Reset to first page when page size changes
   useEffect(() => {
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
-  const handleViewDetails = useCallback((log: ExtendedAuditLog) => {
-    setSelectedLog(log);
+  const handleViewDetails = useCallback((log: { id: string }) => {
+    setSelectedLogId(log.id);
   }, []);
 
   // Fetch all logs for export (no pagination)
@@ -430,6 +468,39 @@ function AuditLogsContent({ session }: { session: Session }) {
                   />
                 </div>
 
+                <div className="w-[160px]">
+                  <Label className="sr-only">{t("timeRange")}</Label>
+                  <Select
+                    value={timeRangeFilter}
+                    onValueChange={(value) =>
+                      setTimeRangeFilter(
+                        value as "24h" | "7d" | "30d" | "90d" | "all"
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="24h">
+                        {t("timeRangeOptions.last24h")}
+                      </SelectItem>
+                      <SelectItem value="7d">
+                        {t("timeRangeOptions.last7d")}
+                      </SelectItem>
+                      <SelectItem value="30d">
+                        {t("timeRangeOptions.last30d")}
+                      </SelectItem>
+                      <SelectItem value="90d">
+                        {t("timeRangeOptions.last90d")}
+                      </SelectItem>
+                      <SelectItem value="all">
+                        {t("timeRangeOptions.allTime")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="w-[180px]">
                   <Label className="sr-only">{t("filterAction")}</Label>
                   <Select
@@ -533,11 +604,12 @@ function AuditLogsContent({ session }: { session: Session }) {
         </CardContent>
       </Card>
 
-      {/* Detail Modal */}
+      {/* Detail Modal — fetches its own full record by id so the list query
+          doesn't have to carry changes/metadata JSON for every row. */}
       <AuditLogDetailModal
-        log={selectedLog}
-        open={!!selectedLog}
-        onClose={() => setSelectedLog(null)}
+        logId={selectedLogId}
+        open={!!selectedLogId}
+        onClose={() => setSelectedLogId(null)}
       />
     </main>
   );

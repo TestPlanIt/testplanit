@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
   decryptSecret,
@@ -12,7 +13,7 @@ import { authOptions } from "~/server/auth";
  * POST /api/auth/two-factor/enable
  * Verify the TOTP token and enable 2FA for the user
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -87,4 +88,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

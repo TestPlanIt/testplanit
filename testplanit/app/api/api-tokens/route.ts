@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { generateApiToken } from "~/lib/api-tokens";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
@@ -35,7 +36,7 @@ const createTokenSchema = z.object({
   expiresAt: dateOrDatetimeSchema.optional().nullable(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerAuthSession();
 
   if (!session?.user) {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit log the token creation
-    captureAuditEvent({
+    await captureAuditEvent({
       action: "API_KEY_CREATED",
       entityType: "ApiToken",
       entityId: apiToken.id,
@@ -81,9 +82,7 @@ export async function POST(request: NextRequest) {
         tokenPrefix: prefix,
         expiresAt: apiToken.expiresAt?.toISOString() || null,
       },
-    }).catch((error) =>
-      console.error("[AuditLog] Failed to audit API token creation:", error)
-    );
+    });
 
     // Return the token with the plaintext (only time it's ever shown)
     return NextResponse.json({
@@ -105,4 +104,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

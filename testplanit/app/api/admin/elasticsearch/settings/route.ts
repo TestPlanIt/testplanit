@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
@@ -25,6 +29,12 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
+    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
+    // requests, so enrich ALS with the resolved identity here so downstream
+    // audit emissions carry complete user context.
+    if (apiAuth.userId) {
+      enrichFromApiAuth({ userId: apiAuth.userId });
+    }
   }
 
   if (!userId) {
@@ -54,7 +64,7 @@ async function checkAdminAuth(
 }
 
 // GET: Retrieve current replica settings
-export async function GET(request: NextRequest) {
+export const GET = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -74,10 +84,10 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // POST: Save replica settings to database
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -113,12 +123,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit the config change
-    auditSystemConfigChange(
+    await auditSystemConfigChange(
       "elasticsearch_replicas",
       oldValue,
       numberOfReplicas
-    ).catch((error) =>
-      console.error("[AuditLog] Failed to audit ES settings change:", error)
     );
 
     return NextResponse.json({ success: true, numberOfReplicas });
@@ -129,10 +137,10 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // PUT: Update existing indices with new replica settings
-export async function PUT(request: NextRequest) {
+export const PUT = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -195,4 +203,4 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

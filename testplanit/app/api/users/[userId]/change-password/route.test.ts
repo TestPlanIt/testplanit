@@ -20,6 +20,9 @@ vi.mock("~/server/db", () => ({
 vi.mock("~/lib/services/auditLog", () => ({
   auditPasswordChange: vi.fn().mockResolvedValue(undefined),
   captureAuditEvent: vi.fn().mockResolvedValue(undefined),
+  // Plan 05 Task 3 D-18 addition — the route calls auditPasswordChange,
+  // not captureAuditEvent directly. We re-export both so the test can
+  // assert on either path.
 }));
 
 vi.mock("~/lib/session-cache", () => ({
@@ -46,6 +49,8 @@ import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { validatePasswordPolicy } from "~/lib/validate-password-policy";
 import { updatePasswordHistory } from "~/lib/password-history";
+import { auditPasswordChange } from "~/lib/services/auditLog";
+import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
 import { POST } from "./route";
 
 const mockGetServerAuthSession = vi.mocked(getServerAuthSession);
@@ -58,7 +63,13 @@ function makeRequest(userId: string, body: Record<string, unknown> = {}) {
     `http://localhost/api/users/${userId}/change-password`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // D-18: populate headers withAuditContext extracts so the ALS
+        // frame carries ipAddress/userAgent/requestId on every test.
+        "x-forwarded-for": "10.0.0.1",
+        "user-agent": "vitest-agent/1.0",
+      },
       body: JSON.stringify({
         currentPassword: "OldPassword1!",
         newPassword: "NewPassword2!",
@@ -174,5 +185,56 @@ describe("POST /api/users/[userId]/change-password", () => {
         data: expect.objectContaining({ mustChangePassword: false }),
       })
     );
+  });
+
+  it("emits audit row with complete actor context (D-18)", async () => {
+    const { updateAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
+    mockGetServerAuthSession.mockImplementation(async () => {
+      updateAuditContext({
+        userId: "user-1",
+        userEmail: "user@test.com",
+        userName: "User",
+      });
+      return makeUserSession();
+    });
+    mockDb.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      password: "hashed-old-password",
+      email: "user@test.com",
+    } as any);
+    mockDb.registrationSettings.findFirst.mockResolvedValue({
+      passwordHistoryDepth: 0,
+    } as any);
+    mockDb.user.update.mockResolvedValue({} as any);
+
+    let capturedRow: Record<string, unknown> | null = null;
+    vi.mocked(auditPasswordChange).mockImplementation(
+      async (
+        userId: string,
+        email: string,
+        _isReset?: boolean
+      ): Promise<void> => {
+        const ctx = getAuditContext();
+        capturedRow = {
+          userId: userId ?? ctx?.userId ?? null,
+          userEmail: email || ctx?.userEmail || null,
+          userName: ctx?.userName ?? null,
+          ipAddress: ctx?.ipAddress ?? null,
+          userAgent: ctx?.userAgent ?? null,
+          requestId: ctx?.requestId ?? null,
+          metadata: null,
+        };
+      }
+    );
+
+    const res = await POST(makeRequest("user-1"), {
+      params: Promise.resolve({ userId: "user-1" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(auditPasswordChange).toHaveBeenCalled();
+    expect(capturedRow).not.toBeNull();
+    expectAuditRowComplete(capturedRow!);
   });
 });

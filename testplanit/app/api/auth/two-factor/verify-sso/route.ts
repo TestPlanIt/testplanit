@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "~/lib/auth-security";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
 
@@ -9,7 +11,7 @@ import { authOptions } from "~/server/auth";
  * POST /api/auth/two-factor/verify-sso
  * Verify 2FA token for SSO users after sign-in
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -94,6 +96,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Audit successful 2FA verification during SSO flow. The verification
+    // code itself is NOT logged — only the verification method (totp or
+    // recovery-code).
+    await auditAuthEvent(
+      "TWO_FACTOR_VERIFIED",
+      session.user.id,
+      session.user.email ?? "",
+      {
+        provider: "sso",
+        method: usedBackupCode ? "recovery-code" : "totp",
+      }
+    );
+
     return NextResponse.json({
       success: true,
       usedBackupCode,
@@ -106,4 +121,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

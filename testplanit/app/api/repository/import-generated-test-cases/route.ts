@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
@@ -38,7 +39,7 @@ interface ImportRequest {
   sourceInfo?: SourceInfo;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -560,15 +561,22 @@ export async function POST(request: NextRequest) {
 
     // Audit the bulk import
     if (importedCases.length > 0) {
-      auditBulkCreate("RepositoryCases", importedCases.length, projectId, {
-        source: "AI Generated Test Cases",
-        templateId,
-        folderId,
-        sourceType: sourceInfo?.type,
-        sourceKey: sourceInfo?.issueKey || sourceInfo?.documentTitle,
-      }).catch((error) =>
-        console.error("[AuditLog] Failed to audit AI test case import:", error)
-      );
+      try {
+        await auditBulkCreate(
+          "RepositoryCases",
+          importedCases.length,
+          projectId,
+          {
+            source: "AI Generated Test Cases",
+            templateId,
+            folderId,
+            sourceType: sourceInfo?.type,
+            sourceKey: sourceInfo?.issueKey || sourceInfo?.documentTitle,
+          }
+        );
+      } catch (error) {
+        console.error("[AuditLog] Failed to audit AI test case import:", error);
+      }
     }
 
     return NextResponse.json({
@@ -594,4 +602,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

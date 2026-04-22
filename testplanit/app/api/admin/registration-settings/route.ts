@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { calculateDiff, captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -16,7 +17,7 @@ const POLICY_FIELDS = [
   "lockoutDurationMinutes",
 ] as const;
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withAuditContext(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -123,13 +124,13 @@ export async function PATCH(request: NextRequest) {
     // Calculate diff and fire audit event only if something actually changed (per D-13)
     const diff = calculateDiff(oldSnapshot, newSnapshot);
     if (diff) {
-      captureAuditEvent({
+      await captureAuditEvent({
         action: "PASSWORD_POLICY_CHANGED",
         entityType: "RegistrationSettings",
         entityId: (currentSettings as Record<string, unknown>).id as string,
         userId: session.user.id,
         metadata: { diff },
-      }).catch(console.error);
+      });
     }
 
     return NextResponse.json({ success: true, settings: updated });
@@ -140,4 +141,4 @@ export async function PATCH(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

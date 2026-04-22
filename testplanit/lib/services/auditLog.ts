@@ -79,7 +79,52 @@ const SENSITIVE_FIELDS = new Set([
   "private_key",
   "token",
   "emailVerifToken",
+  "credentials",
+  // 2FA secrets — encrypted TOTP and hashed backup codes must never surface
+  // in audit payloads. user.update goes through the unenhanced baseClient
+  // where @omit does not apply, so the allowlist is the only defense.
+  // (REVIEW CR-01, Phase 62.)
+  "twoFactorSecret",
+  "twoFactorBackupCodes",
 ]);
+
+/**
+ * Redact sensitive field values embedded in free-form strings (e.g., error
+ * messages, serialized job payloads echoed by BullMQ/Prisma). Pattern-matches
+ * `"fieldName":"value"` (JSON form) and `fieldName=value` (query-string/kv form)
+ * and replaces the value with `[REDACTED]`.
+ *
+ * Defense-in-depth against the Phase 62 CR-01 class of bug: if an upstream
+ * library serializes a job payload containing 2FA secrets, passwords, or
+ * tokens into an error message, running the message through this helper
+ * before logging prevents those values from hitting the log aggregator.
+ *
+ * @param s The string that may contain sensitive values
+ * @param fields Set of field names to redact (pass SENSITIVE_FIELDS)
+ * @returns The input string with sensitive values replaced by [REDACTED]
+ */
+export function redactSensitiveInString(
+  s: string,
+  fields: Set<string>
+): string {
+  if (!s || fields.size === 0) return s;
+  let result = s;
+  for (const fieldName of fields) {
+    // Escape regex-special characters in the field name defensively.
+    const escaped = fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Matches either JSON form ("field":"value") or kv form (field=value).
+    // Group 1 captures the JSON prefix ("field":); group 2 captures kv prefix (field=).
+    const pattern = new RegExp(
+      `("${escaped}"\\s*:\\s*)"[^"]*"|(\\b${escaped}\\s*=\\s*)\\S+`,
+      "g"
+    );
+    result = result.replace(pattern, (_match, jsonPrefix, kvPrefix) => {
+      if (jsonPrefix) return `${jsonPrefix}"[REDACTED]"`;
+      return `${kvPrefix}[REDACTED]`;
+    });
+  }
+  return result;
+}
 
 /**
  * Mask sensitive field values for audit logging.
@@ -217,8 +262,32 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
 
   const context = getAuditContext() || null;
 
+  // Phase 64 W5 Option A: merge systemReason from ALS into event.metadata.
+  // When a job was enqueued with `{ systemReason: "scheduled:..." }`, the
+  // enqueue helper embeds it in actorContext. Worker bodies re-establish
+  // the ALS frame via `runWithAuditContext(job.data.actorContext, ...)`,
+  // so it flows here as context.systemReason. Merging into event.metadata
+  // ensures the persisted AuditLog row surfaces the reason for downstream
+  // filtering/reporting (and makes D-17 `expectAuditRowComplete(row,
+  // { allowSystem: true })` pass). Caller-explicit event.metadata.systemReason
+  // wins over ALS to preserve intent when both are present.
+  const existingMetadata = event.metadata;
+  const alsSystemReason = context?.systemReason;
+  const mergedMetadata: Record<string, unknown> | undefined = alsSystemReason
+    ? {
+        ...(existingMetadata ?? {}),
+        systemReason:
+          (existingMetadata?.systemReason as string | undefined) ??
+          alsSystemReason,
+      }
+    : existingMetadata;
+  const eventWithMergedMetadata: AuditEvent =
+    mergedMetadata === existingMetadata
+      ? event
+      : { ...event, metadata: mergedMetadata };
+
   const jobData: AuditLogJobData = {
-    event,
+    event: eventWithMergedMetadata,
     context,
     queuedAt: new Date().toISOString(),
     // Include tenantId for multi-tenant support
@@ -227,13 +296,35 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
   };
 
   try {
+    // BullMQ rejects `:` in custom job IDs. Entity IDs may legitimately
+    // contain `:` as a pair separator (e.g., DUPLICATE_RESOLVED uses
+    // `${caseAId}:${caseBId}`), so sanitize here rather than force every
+    // caller to pre-mangle their entity IDs.
+    const safeEntityId = String(event.entityId).replace(/:/g, "_");
     await queue.add("audit-event", jobData, {
       // Use entity ID for deduplication within short window
-      jobId: `${event.action}-${event.entityType}-${event.entityId}-${Date.now()}`,
+      jobId: `${event.action}-${event.entityType}-${safeEntityId}-${Date.now()}`,
     });
   } catch (error) {
-    // Don't throw - audit logging should never block the main operation
-    console.error("[AuditLog] Failed to queue audit event:", error);
+    // Don't throw - audit logging should never block the main operation.
+    // Emit a structured payload so ops can diagnose enqueue failures
+    // without leaking sensitive values that BullMQ/Prisma errors may echo
+    // from serialized job payloads (defense-in-depth against CR-01 regressions).
+    const err = error instanceof Error ? error : new Error(String(error));
+    const rawMessage = err.message ?? "";
+    const redactedMessage = redactSensitiveInString(
+      rawMessage,
+      SENSITIVE_FIELDS
+    );
+    console.error("[AuditLog] Failed to queue audit event:", {
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      userId: event.userId ?? context?.userId ?? null,
+      requestId: context?.requestId ?? null,
+      errorName: err.name,
+      errorMessage: redactedMessage,
+    });
   }
 }
 
@@ -366,6 +457,12 @@ export async function auditAuthEvent(
     | "LOGIN"
     | "LOGOUT"
     | "LOGIN_FAILED"
+    | "MAGIC_LINK_REQUESTED"
+    | "TWO_FACTOR_ENABLED"
+    | "TWO_FACTOR_SETUP_REQUIRED"
+    | "TWO_FACTOR_CODES_REGENERATED"
+    | "TWO_FACTOR_VERIFIED"
+    | "SHARE_LINK_PASSWORD_VERIFY"
     | "ACCOUNT_LOCKED"
     | "ACCOUNT_UNLOCKED",
   userId: string | null,

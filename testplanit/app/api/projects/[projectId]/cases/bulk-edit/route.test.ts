@@ -108,6 +108,7 @@ describe("Bulk Edit API Route", () => {
   ): [NextRequest, { params: Promise<{ projectId: string }> }] => {
     const request = {
       json: async () => body,
+      headers: new Headers(),
     } as NextRequest;
     return [request, { params: Promise.resolve({ projectId }) }];
   };

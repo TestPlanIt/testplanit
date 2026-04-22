@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expectAuditRowComplete } from "../testing/auditAssertions";
 import {
   auditAuthEvent,
   auditBulkCreate,
@@ -20,24 +21,100 @@ import {
   type AuditEvent,
 } from "./auditLog";
 
-// Mock the queue
-const mockQueue = {
-  add: vi.fn(),
-};
+/**
+ * D-18 standing-discipline helper for this file. Builds a synthetic
+ * audit row from the jobData (event + context) that BullMQ receives,
+ * then runs expectAuditRowComplete on it. Every happy-path test that
+ * exercises captureAuditEvent or its callers invokes this helper on
+ * the last queued jobData, matching the SC#4 enforcement pattern
+ * (Plan 05 Task 3 / W3 closure).
+ */
+function expectLastQueuedRowComplete(
+  mockQueueAdd: ReturnType<typeof vi.fn>,
+  opts?: { allowSystem?: boolean }
+): void {
+  const calls = mockQueueAdd.mock.calls;
+  expect(calls.length).toBeGreaterThan(0);
+  const jobData = calls[calls.length - 1][1] as {
+    event: AuditEvent;
+    context: Record<string, unknown> | null;
+  };
+  const ev = jobData.event;
+  const ctx = jobData.context ?? {};
+  expectAuditRowComplete(
+    {
+      userId:
+        (ev.userId as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userId as
+          | string
+          | null
+          | undefined) ??
+        null,
+      userEmail:
+        (ev.userEmail as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userEmail as
+          | string
+          | null
+          | undefined) ??
+        null,
+      userName:
+        (ev.userName as string | null | undefined) ??
+        ((ctx as Record<string, unknown>).userName as
+          | string
+          | null
+          | undefined) ??
+        null,
+      ipAddress:
+        ((ctx as Record<string, unknown>).ipAddress as
+          | string
+          | null
+          | undefined) ?? null,
+      userAgent:
+        ((ctx as Record<string, unknown>).userAgent as
+          | string
+          | null
+          | undefined) ?? null,
+      requestId:
+        ((ctx as Record<string, unknown>).requestId as
+          | string
+          | null
+          | undefined) ?? null,
+      metadata: ev.metadata ?? null,
+    },
+    opts
+  );
+}
 
-vi.mock("../queues", () => ({
-  getAuditLogQueue: vi.fn(() => mockQueue),
+// Mock the queue (IN-07 fold-in: hoisted so the factory closure captures the
+// mock before any helper code runs — prevents leaking to real Valkey/DB).
+const mocks = vi.hoisted(() => ({
+  mockQueue: { add: vi.fn() },
 }));
 
-// Mock audit context
-vi.mock("../auditContext", () => ({
-  getAuditContext: vi.fn(() => ({
+vi.mock("../queues", () => ({
+  getAuditLogQueue: vi.fn(() => mocks.mockQueue),
+}));
+
+// Mock audit context — hoisted so individual tests can mutate the current
+// context (e.g., to override requestId for the D-19 smoke test) without
+// racing the mock factory evaluation.
+const auditContextMocks = vi.hoisted(() => ({
+  currentContext: {
     userId: "context-user-123",
     userEmail: "context@example.com",
     userName: "Context User",
     ipAddress: "192.168.1.1",
     userAgent: "Mozilla/5.0",
-  })),
+    requestId: "req-default",
+  } as Record<string, string> | null,
+}));
+
+vi.mock("../auditContext", () => ({
+  getAuditContext: vi.fn(() => auditContextMocks.currentContext),
+  // Re-export the sentinel so the D-18 enforcement helper (which
+  // imports SYSTEM_ACTOR_ID from ~/lib/auditContext) works inside this
+  // file's fully-mocked module graph.
+  SYSTEM_ACTOR_ID: "__system__",
 }));
 
 // Mock multi-tenant
@@ -224,11 +301,11 @@ describe("AuditLog Service", () => {
         projectId: 1,
       };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await captureAuditEvent(event);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event,
@@ -241,6 +318,8 @@ describe("AuditLog Service", () => {
           jobId: expect.stringMatching(/^CREATE-RepositoryCases-123-\d+$/),
         })
       );
+      // D-18: assert complete actor context on the queued row (SC#4).
+      expectLastQueuedRowComplete(mocks.mockQueue.add);
     });
 
     it("should log warning when queue is not available", async () => {
@@ -270,9 +349,9 @@ describe("AuditLog Service", () => {
       consoleWarnSpy.mockRestore();
     });
 
-    it("should handle queue errors gracefully", async () => {
-      const error = new Error("Queue error");
-      mockQueue.add.mockRejectedValue(error);
+    it("should handle queue errors gracefully with structured payload", async () => {
+      const error = new Error("Generic queue connection failure");
+      mocks.mockQueue.add.mockRejectedValue(error);
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
@@ -284,15 +363,172 @@ describe("AuditLog Service", () => {
         entityId: "123",
       };
 
-      // Should not throw
+      // Should not throw (Phase 63 D-02 — helpers never propagate)
       await captureAuditEvent(event);
 
+      // Phase 63 D-07/D-08: structured payload, not raw error
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         "[AuditLog] Failed to queue audit event:",
-        error
+        expect.objectContaining({
+          action: "CREATE",
+          entityType: "RepositoryCases",
+          entityId: "123",
+          userId: "context-user-123",
+          requestId: "req-default",
+          errorName: "Error",
+          errorMessage: "Generic queue connection failure",
+        })
       );
 
+      // Phase 63 D-10: stack traces must NOT be in the payload
+      const payload = consoleErrorSpy.mock.calls[0][1] as Record<
+        string,
+        unknown
+      >;
+      expect(payload).not.toHaveProperty("stack");
+
       consoleErrorSpy.mockRestore();
+    });
+
+    it("should redact sensitive values from enqueue-failure error messages (D-19)", async () => {
+      // Override context requestId so we can assert it surfaces in the payload
+      auditContextMocks.currentContext = {
+        userId: "u1",
+        userEmail: "u@e.com",
+        userName: "U",
+        ipAddress: "1.1.1.1",
+        userAgent: "UA",
+        requestId: "req-abc-123",
+      };
+
+      // Simulate a BullMQ error that echoes a serialized payload containing
+      // 2FA secrets + password — the exact CR-01 regression class we defend
+      // against (D-09).
+      const secretBearingError = new Error(
+        'BullMQ serialization failure: {"twoFactorSecret":"ENCRYPTED_TOTP_SEED_XYZ","password":"hunter2"}'
+      );
+      mocks.mockQueue.add.mockRejectedValue(secretBearingError);
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await captureAuditEvent({
+        action: "TWO_FACTOR_ENABLED",
+        entityType: "User",
+        entityId: "u1",
+        userId: "u1",
+      });
+
+      // All 7 required fields present in structured payload (D-08)
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[AuditLog] Failed to queue audit event:",
+        expect.objectContaining({
+          action: "TWO_FACTOR_ENABLED",
+          entityType: "User",
+          entityId: "u1",
+          userId: "u1",
+          requestId: "req-abc-123",
+          errorName: "Error",
+        })
+      );
+
+      // Redaction succeeded (D-09) — secrets gone, [REDACTED] present
+      const payload = consoleErrorSpy.mock.calls[0][1] as {
+        errorMessage: string;
+      };
+      expect(payload.errorMessage).toContain("[REDACTED]");
+      expect(payload.errorMessage).not.toContain("ENCRYPTED_TOTP_SEED_XYZ");
+      expect(payload.errorMessage).not.toContain("hunter2");
+
+      // No stack traces (D-10)
+      expect(payload).not.toHaveProperty("stack");
+
+      // Restore default context for downstream tests
+      consoleErrorSpy.mockRestore();
+      auditContextMocks.currentContext = {
+        userId: "context-user-123",
+        userEmail: "context@example.com",
+        userName: "Context User",
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
+        requestId: "req-default",
+      };
+    });
+
+    it("captureAuditEvent merges context.systemReason into event.metadata when present", async () => {
+      // Override ALS mock to include systemReason (Phase 64 W5 Option A).
+      auditContextMocks.currentContext = {
+        userId: "__system__",
+        userEmail: "",
+        userName: "",
+        ipAddress: "",
+        userAgent: "",
+        requestId: "req-scheduled-1",
+        systemReason: "scheduled:test-rollup",
+      } as unknown as typeof auditContextMocks.currentContext;
+
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c1",
+        // event.metadata omitted on purpose
+      });
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({
+        systemReason: "scheduled:test-rollup",
+      });
+
+      // Restore default context
+      auditContextMocks.currentContext = {
+        userId: "context-user-123",
+        userEmail: "context@example.com",
+        userName: "Context User",
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
+        requestId: "req-default",
+      };
+    });
+
+    it("captureAuditEvent preserves caller-explicit metadata.systemReason over ALS", async () => {
+      // Caller-explicit event.metadata.systemReason must win (Phase 64 W5).
+      auditContextMocks.currentContext = {
+        userId: "__system__",
+        userEmail: "",
+        userName: "",
+        ipAddress: "",
+        userAgent: "",
+        requestId: "req-scheduled-2",
+        systemReason: "scheduled:als-value",
+      } as unknown as typeof auditContextMocks.currentContext;
+
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-2" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c1",
+        metadata: { systemReason: "explicit:event-value" },
+      });
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata.systemReason).toBe("explicit:event-value");
+
+      // Restore default context
+      auditContextMocks.currentContext = {
+        userId: "context-user-123",
+        userEmail: "context@example.com",
+        userName: "Context User",
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
+        requestId: "req-default",
+      };
     });
   });
 
@@ -305,11 +541,11 @@ describe("AuditLog Service", () => {
         tenantId: "tenant-from-worker",
       };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await captureAuditEvent(event);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           tenantId: "tenant-from-worker",
@@ -330,11 +566,11 @@ describe("AuditLog Service", () => {
         entityId: "456",
       };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await captureAuditEvent(event);
 
-      const jobData = mockQueue.add.mock.calls[0][1];
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
       expect(jobData.tenantId).toBe("tenant-from-env");
 
       // Restore default
@@ -354,11 +590,11 @@ describe("AuditLog Service", () => {
         tenantId: "tenant-explicit",
       };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await captureAuditEvent(event);
 
-      const jobData = mockQueue.add.mock.calls[0][1];
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
       expect(jobData.tenantId).toBe("tenant-explicit");
 
       // Restore default
@@ -372,11 +608,11 @@ describe("AuditLog Service", () => {
         entityId: "456",
       };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await captureAuditEvent(event);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           tenantId: undefined,
@@ -395,11 +631,11 @@ describe("AuditLog Service", () => {
         stateId: 1,
       };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditCreate("RepositoryCases", entity, 1);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -415,6 +651,8 @@ describe("AuditLog Service", () => {
         }),
         expect.any(Object)
       );
+      // D-18 standing enforcement
+      expectLastQueuedRowComplete(mocks.mockQueue.add);
     });
   });
 
@@ -423,11 +661,11 @@ describe("AuditLog Service", () => {
       const oldEntity = { id: 123, name: "Old Name", stateId: 1 };
       const newEntity = { id: 123, name: "New Name", stateId: 2 };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditUpdate("RepositoryCases", oldEntity, newEntity, 1);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -449,7 +687,7 @@ describe("AuditLog Service", () => {
 
       await auditUpdate("RepositoryCases", entity, { ...entity }, 1);
 
-      expect(mockQueue.add).not.toHaveBeenCalled();
+      expect(mocks.mockQueue.add).not.toHaveBeenCalled();
     });
   });
 
@@ -457,11 +695,11 @@ describe("AuditLog Service", () => {
     it("should capture DELETE event", async () => {
       const entity = { id: 123, name: "Deleted Case", projectId: 1 };
 
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditDelete("RepositoryCases", entity, 1);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -478,11 +716,11 @@ describe("AuditLog Service", () => {
 
   describe("auditRoleChange", () => {
     it("should capture ROLE_CHANGED event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditRoleChange("user-123", "USER", "ADMIN", "test@example.com");
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -502,13 +740,13 @@ describe("AuditLog Service", () => {
 
   describe("auditAuthEvent", () => {
     it("should capture LOGIN event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditAuthEvent("LOGIN", "user-123", "test@example.com", {
         method: "password",
       });
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -526,13 +764,13 @@ describe("AuditLog Service", () => {
     });
 
     it("should capture LOGIN_FAILED event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditAuthEvent("LOGIN_FAILED", null, "test@example.com", {
         reason: "invalid_password",
       });
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -549,11 +787,11 @@ describe("AuditLog Service", () => {
 
   describe("auditPasswordChange", () => {
     it("should capture PASSWORD_CHANGED event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditPasswordChange("user-123", "test@example.com", false);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -567,11 +805,11 @@ describe("AuditLog Service", () => {
     });
 
     it("should capture PASSWORD_RESET event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditPasswordChange("user-123", "test@example.com", true);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -585,11 +823,11 @@ describe("AuditLog Service", () => {
 
   describe("auditSystemConfigChange", () => {
     it("should capture SYSTEM_CONFIG_CHANGED event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditSystemConfigChange("MAX_UPLOAD_SIZE", "10MB", "50MB");
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -608,13 +846,13 @@ describe("AuditLog Service", () => {
 
   describe("auditSsoConfigChange", () => {
     it("should capture SSO_CONFIG_CHANGED event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       const ssoProvider = { id: "sso-1", type: "SAML" };
 
       await auditSsoConfigChange("CREATE", ssoProvider);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -632,14 +870,14 @@ describe("AuditLog Service", () => {
 
   describe("auditDataExport", () => {
     it("should capture DATA_EXPORTED event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditDataExport("CSV", "TestRuns", {
         projectId: 1,
         status: "PASSED",
       });
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -660,11 +898,11 @@ describe("AuditLog Service", () => {
 
   describe("auditBulkCreate", () => {
     it("should capture BULK_CREATE event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await auditBulkCreate("RepositoryCases", 50, 1, { source: "import" });
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -685,13 +923,13 @@ describe("AuditLog Service", () => {
 
   describe("auditBulkUpdate", () => {
     it("should capture BULK_UPDATE event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       const where = { projectId: 1, stateId: 1 };
 
       await auditBulkUpdate("RepositoryCases", 25, where, 1);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -711,13 +949,13 @@ describe("AuditLog Service", () => {
 
   describe("auditBulkDelete", () => {
     it("should capture BULK_DELETE event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       const where = { projectId: 1, isDeleted: true };
 
       await auditBulkDelete("RepositoryCases", 10, where, 1);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -737,13 +975,13 @@ describe("AuditLog Service", () => {
 
   describe("auditPermissionGrant", () => {
     it("should capture PERMISSION_GRANT event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       const permission = { id: 1, userId: "user-123", projectId: 10 };
 
       await auditPermissionGrant("UserProjectPermission", permission, 10);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({
@@ -759,13 +997,13 @@ describe("AuditLog Service", () => {
 
   describe("auditPermissionRevoke", () => {
     it("should capture PERMISSION_REVOKE event", async () => {
-      mockQueue.add.mockResolvedValue({ id: "job-1" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       const permission = { id: 1, userId: "user-123", projectId: 10 };
 
       await auditPermissionRevoke("UserProjectPermission", permission, 10);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
+      expect(mocks.mockQueue.add).toHaveBeenCalledWith(
         "audit-event",
         expect.objectContaining({
           event: expect.objectContaining({

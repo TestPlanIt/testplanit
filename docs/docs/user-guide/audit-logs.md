@@ -36,8 +36,14 @@ Only users with administrative privileges can access the audit log viewer.
 | `LOGIN` | User successfully logged in |
 | `LOGOUT` | User logged out |
 | `LOGIN_FAILED` | Failed login attempt |
+| `SESSION_INVALIDATED` | An active session was invalidated |
 | `PASSWORD_CHANGED` | User changed their password |
 | `PASSWORD_RESET` | Password was reset |
+| `MAGIC_LINK_REQUESTED` | Magic link sign-in requested for a user |
+| `TWO_FACTOR_SETUP_REQUIRED` | Administrator enforced 2FA setup for a user |
+| `TWO_FACTOR_ENABLED` | User completed 2FA enrollment |
+| `TWO_FACTOR_VERIFIED` | User passed a 2FA challenge (SSO flow) |
+| `TWO_FACTOR_CODES_REGENERATED` | User regenerated their 2FA backup codes |
 
 ### Data Operations
 
@@ -81,8 +87,24 @@ Only users with administrative privileges can access the audit log viewer.
 
 | Action | Description |
 |--------|-------------|
-| `SYSTEM_CONFIG_CHANGED` | Application configuration was modified |
+| `SYSTEM_CONFIG_CHANGED` | Application configuration was modified (includes queue operator actions, integration sync, LLM cache operations) |
 | `SSO_CONFIG_CHANGED` | SSO provider settings were updated |
+
+### Share Links
+
+| Action | Description |
+|--------|-------------|
+| `SHARE_LINK_CREATED` | A share link was generated |
+| `SHARE_LINK_ACCESSED` | A share link was opened |
+| `SHARE_LINK_PASSWORD_VERIFY` | A password-protected share link was unlocked (success) or rejected (failure, for brute-force detection) |
+| `SHARE_LINK_REVOKED` | A share link was revoked |
+
+### Imports & Data Quality
+
+| Action | Description |
+|--------|-------------|
+| `IMPORT_STARTED` | A data import run (e.g., Testmo) was kicked off; pairs with the worker's `BULK_CREATE` event when the import completes |
+| `DUPLICATE_RESOLVED` | A duplicate-case scan result was resolved (merged, linked, or dismissed) |
 
 ### Data Export
 
@@ -94,11 +116,12 @@ Only users with administrative privileges can access the audit log viewer.
 
 The following entity types are tracked in the audit log:
 
-- **Test Management**: Test Cases, Test Runs, Test Results, Sessions, Shared Steps
+- **Test Management**: Test Cases, Test Runs, Test Run Cases, Test Results, Sessions, Shared Steps
 - **Project Management**: Projects, Milestones, Issues, Tags
 - **User Management**: Users, Groups, Permissions
 - **Security**: API Tokens
 - **Configuration**: SSO Providers, Email Domains, App Config
+- **Integrations**: Integrations, Project Integrations, Prompt Configurations
 - **Content**: Comments, Attachments
 
 ## Filtering Audit Logs
@@ -135,6 +158,20 @@ For UPDATE actions, you can view the specific fields that were modified:
 - **New Value**: The new value after the change
 
 Sensitive fields (passwords, tokens, API keys) are automatically masked in the audit log.
+
+### System-initiated events
+
+Some audit events are initiated by the system rather than a user — for example, scheduled jobs (budget alert checks, forecast recalculations, milestone-due notifications) or worker-to-worker chained operations that don't have an originating user request. These events are recorded with:
+
+- **User ID**: the literal string `__system__`
+- **User Name / Email**: empty
+- **Metadata**: a `systemReason` field naming the scheduled job or worker that triggered the event (e.g., `scheduled:budget-alert-check`, `scheduled:forecast-recalc`, `scheduled:milestone-due-notifications`)
+
+In the audit log viewer these rows display **System** in the User column. In CSV exports, the User ID column contains the literal `__system__` value, which makes it straightforward to include or exclude system events in spreadsheets and reporting tools.
+
+:::tip
+To find only user-initiated events, filter the audit log viewer by a specific user — system-initiated rows will be excluded automatically.
+:::
 
 ## Exporting Audit Logs
 
@@ -194,6 +231,6 @@ If audit logs are not being recorded:
 
 If audit logs show missing user information:
 
-1. The action may have been performed by a system process
+1. The action may have been performed by a system process — look for `__system__` as the User ID and a `systemReason` field in the metadata, which identifies the scheduled job or worker that triggered the event (see [System-initiated events](#system-initiated-events))
 2. The user session may have expired before the audit was captured
 3. Check that the user is properly authenticated

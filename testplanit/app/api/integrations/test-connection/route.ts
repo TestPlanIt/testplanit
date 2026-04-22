@@ -3,6 +3,7 @@ import { decrypt, isEncrypted } from "@/utils/encryption";
 import { IntegrationProvider } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
 
 interface TestConnectionRequest {
@@ -212,7 +213,7 @@ async function testSimpleUrlConnection(
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -349,4 +350,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

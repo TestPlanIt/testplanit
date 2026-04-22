@@ -2,6 +2,7 @@ import { prisma as defaultPrisma } from "@/lib/prismaBase";
 import type { PrismaClient } from "@prisma/client";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
+import { enqueueWithAuditContext } from "../../auditContextWrappers";
 import { getCurrentTenantId } from "../../multiTenantPrisma";
 import { getSyncQueue } from "../../queues";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
@@ -71,7 +72,12 @@ export class SyncService {
       removeOnFail: false,
     };
 
-    const job = await syncQueue.add("sync-issues", jobData, jobOptions);
+    const job = await enqueueWithAuditContext(
+      syncQueue,
+      "sync-issues",
+      jobData,
+      jobOptions
+    );
     return job.id || null;
   }
 
@@ -99,7 +105,11 @@ export class SyncService {
       tenantId: getCurrentTenantId(),
     };
 
-    const job = await syncQueue.add("sync-project-issues", jobData);
+    const job = await enqueueWithAuditContext(
+      syncQueue,
+      "sync-project-issues",
+      jobData
+    );
     return job.id || null;
   }
 
@@ -125,13 +135,18 @@ export class SyncService {
       tenantId: getCurrentTenantId(),
     };
 
-    const job = await syncQueue.add("create-issue", jobData, {
-      attempts: 2,
-      backoff: {
-        type: "fixed",
-        delay: 1000,
-      },
-    });
+    const job = await enqueueWithAuditContext(
+      syncQueue,
+      "create-issue",
+      jobData,
+      {
+        attempts: 2,
+        backoff: {
+          type: "fixed",
+          delay: 1000,
+        },
+      }
+    );
     return job.id || null;
   }
 
@@ -159,7 +174,11 @@ export class SyncService {
       tenantId: getCurrentTenantId(),
     };
 
-    const job = await syncQueue.add("update-issue", jobData);
+    const job = await enqueueWithAuditContext(
+      syncQueue,
+      "update-issue",
+      jobData
+    );
     return job.id || null;
   }
 
@@ -185,15 +204,20 @@ export class SyncService {
       tenantId: getCurrentTenantId(),
     };
 
-    const job = await syncQueue.add("refresh-issue", jobData, {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 1000,
-      },
-      removeOnComplete: true,
-      removeOnFail: false,
-    });
+    const job = await enqueueWithAuditContext(
+      syncQueue,
+      "refresh-issue",
+      jobData,
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 1000,
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      }
+    );
     return job.id || null;
   }
 

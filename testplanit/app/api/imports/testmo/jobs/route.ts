@@ -1,5 +1,9 @@
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  enqueueWithAuditContext,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
@@ -20,7 +24,20 @@ function getQueue() {
   return queue;
 }
 
-export async function POST(request: NextRequest) {
+// Phase 64 Plan 04 Rule 3: wrapped with withAuditContext so the
+// enqueueWithAuditContext call below has an ALS frame. The route itself
+// remains "audit: intentionally-skipped" at the direct-emission level
+// (Phase 62 / D-11) — this wrapping exists solely to propagate the user's
+// actorContext onto the job so testmoImportWorker's ALS can re-establish it
+// and captureAuditEvent at L7079 records the originating user.
+export const POST = withAuditContext(async (request: NextRequest) => {
+  // Audit: intentionally-skipped (Phase 62 / D-11).
+  // This endpoint is a Testmo-import preparation step (job create). The
+  // consequential event is the import START -> COMPLETE pair audited at:
+  //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
+  //   - testmoImportWorker.ts:7079 (IMPORT_COMPLETED / BULK_CREATE)
+  // Preparation state changes are not audit-relevant; matches the
+  // lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701.
   try {
     const session = await getServerSession(authOptions);
 
@@ -70,11 +87,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await testmoImportQueue.add(JOB_PROCESS_TESTMO_IMPORT, {
-      jobId: jobRecord.id,
-      mode: "analyze",
-      tenantId: getCurrentTenantId(),
-    });
+    await enqueueWithAuditContext(
+      testmoImportQueue,
+      JOB_PROCESS_TESTMO_IMPORT,
+      {
+        jobId: jobRecord.id,
+        mode: "analyze",
+        tenantId: getCurrentTenantId(),
+      }
+    );
 
     const payload = serializeImportJob(jobRecord);
 
@@ -86,7 +107,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 export async function GET(request: NextRequest) {
   try {

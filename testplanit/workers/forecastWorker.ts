@@ -1,5 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
+import { runWithAuditContext } from "../lib/auditContext";
+import type { ActorContextJobData } from "../lib/auditContextWrappers";
 import {
   disconnectAllTenantClients,
   getPrismaClientForJob,
@@ -27,401 +29,418 @@ interface _UpdateAllCasesJobData extends MultiTenantJobData {
   // No additional fields required for this job type
 }
 
+// Phase 64 D-10: every forecast job carries an actorContext injected by
+// enqueueWithAuditContext so the worker can re-establish the ALS frame.
+// Kept as an interface extension (rather than a strict generic) so the
+// existing discriminated cast to UpdateSingleCaseJobData inside the switch
+// continues to type-check. All job variants share the MultiTenantJobData
+// base (tenantId) plus the actorContext field.
+interface ForecastJobDataBase extends MultiTenantJobData {
+  actorContext?: ActorContextJobData<unknown>["actorContext"];
+}
+
 // Define job names for clarity and export them for the scheduler
 export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
 export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 
-const processor = async (job: Job) => {
-  console.log(
-    `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
-  );
-  let successCount = 0;
-  let failCount = 0;
+// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// downstream captureAuditEvent calls in this processor pick up the
+// originating user's context (or the systemReason for scheduled jobs, via
+// W5 Option A — no per-worker systemReason handling needed).
+const processor = async (job: Job<ForecastJobDataBase>) =>
+  runWithAuditContext(job.data.actorContext ?? {}, async () => {
+    console.log(
+      `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+    );
+    let successCount = 0;
+    let failCount = 0;
 
-  // Validate multi-tenant job data if in multi-tenant mode
-  validateMultiTenantJobData(job.data);
+    // Validate multi-tenant job data if in multi-tenant mode
+    validateMultiTenantJobData(job.data);
 
-  // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+    // Get the appropriate Prisma client (tenant-specific or default)
+    const prisma = getPrismaClientForJob(job.data);
 
-  switch (job.name) {
-    case JOB_UPDATE_SINGLE_CASE:
-      const singleData = job.data as UpdateSingleCaseJobData;
-      if (!singleData || typeof singleData.repositoryCaseId !== "number") {
-        throw new Error(
-          `Invalid data for job ${job.id}: repositoryCaseId missing or not a number.`
-        );
-      }
-      try {
-        await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
-          prismaClient: prisma,
-        });
-        successCount = 1;
-        console.log(
-          `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
-        );
-      } catch (error) {
-        console.error(
-          `Job ${job.id} failed for case ${singleData.repositoryCaseId}`,
-          error
-        );
-        throw error; // Re-throw to mark job as failed
-      }
-      break;
-
-    case JOB_UPDATE_ALL_CASES:
-      console.log(`Job ${job.id}: Starting update for all active cases.`);
-      // Reset counters for batch job
-      successCount = 0;
-      failCount = 0;
-      // Use unique case group IDs to avoid recalculating the same linked groups multiple times
-      const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma });
-
-      // Track affected TestRuns to update them once at the end
-      const affectedTestRunIds = new Set<number>();
-
-      // Process cases sequentially, skipping TestRun updates and collecting affected TestRuns
-      for (const caseId of caseIds) {
+    switch (job.name) {
+      case JOB_UPDATE_SINGLE_CASE:
+        const singleData = job.data as UpdateSingleCaseJobData;
+        if (!singleData || typeof singleData.repositoryCaseId !== "number") {
+          throw new Error(
+            `Invalid data for job ${job.id}: repositoryCaseId missing or not a number.`
+          );
+        }
         try {
-          const result = await updateRepositoryCaseForecast(caseId, {
-            skipTestRunUpdate: true,
-            collectAffectedTestRuns: true,
+          await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
             prismaClient: prisma,
           });
-
-          // Collect affected TestRun IDs
-          for (const testRunId of result.affectedTestRunIds) {
-            affectedTestRunIds.add(testRunId);
-          }
-
-          successCount++;
+          successCount = 1;
+          console.log(
+            `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
+          );
         } catch (error) {
           console.error(
-            `Job ${job.id}: Failed to update forecast for case ${caseId}`,
+            `Job ${job.id} failed for case ${singleData.repositoryCaseId}`,
             error
           );
-          failCount++;
-          // Continue processing other cases even if one fails
+          throw error; // Re-throw to mark job as failed
         }
-      }
+        break;
 
-      console.log(
-        `Job ${job.id}: Processed ${caseIds.length} unique case groups. Success: ${successCount}, Failed: ${failCount}`
-      );
+      case JOB_UPDATE_ALL_CASES:
+        console.log(`Job ${job.id}: Starting update for all active cases.`);
+        // Reset counters for batch job
+        successCount = 0;
+        failCount = 0;
+        // Use unique case group IDs to avoid recalculating the same linked groups multiple times
+        const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma });
 
-      // Filter out completed test runs (they're locked and don't need forecast updates)
-      console.log(
-        `Job ${job.id}: Filtering ${affectedTestRunIds.size} affected test runs...`
-      );
+        // Track affected TestRuns to update them once at the end
+        const affectedTestRunIds = new Set<number>();
 
-      const activeTestRuns = await prisma.testRuns.findMany({
-        where: {
-          id: { in: Array.from(affectedTestRunIds) },
-          isCompleted: false,
-        },
-        select: { id: true },
-      });
-
-      const activeTestRunIds = activeTestRuns.map(
-        (tr: { id: number }) => tr.id
-      );
-      const skippedCompletedCount =
-        affectedTestRunIds.size - activeTestRunIds.length;
-
-      console.log(
-        `Job ${job.id}: Updating ${activeTestRunIds.length} active test runs (skipped ${skippedCompletedCount} completed)...`
-      );
-      let testRunSuccessCount = 0;
-      let testRunFailCount = 0;
-
-      for (const testRunId of activeTestRunIds) {
-        try {
-          await updateTestRunForecast(testRunId, { prismaClient: prisma });
-          testRunSuccessCount++;
-        } catch (error) {
-          console.error(
-            `Job ${job.id}: Failed to update forecast for test run ${testRunId}`,
-            error
-          );
-          testRunFailCount++;
-        }
-      }
-
-      console.log(
-        `Job ${job.id} completed: Updated ${testRunSuccessCount} test runs. Failed: ${testRunFailCount}. Skipped ${skippedCompletedCount} completed.`
-      );
-
-      if (failCount > 0 || testRunFailCount > 0) {
-        // Indicate partial failure but don't necessarily throw to allow job completion
-        console.warn(
-          `Job ${job.id} finished with ${failCount} case failures and ${testRunFailCount} test run failures.`
-        );
-        // throw new Error(`Completed with failures.`); // Uncomment to mark job as failed
-      }
-      break;
-
-    case JOB_AUTO_COMPLETE_MILESTONES:
-      console.log(
-        `Job ${job.id}: Starting auto-completion check for milestones.`
-      );
-      try {
-        // Find all milestones that should be auto-completed
-        const now = new Date();
-        const milestonesToComplete = await prisma.milestones.findMany({
-          where: {
-            isCompleted: false,
-            isDeleted: false,
-            automaticCompletion: true,
-            completedAt: {
-              lte: now, // Due date has passed
-            },
-          },
-          select: {
-            id: true,
-            name: true,
-            projectId: true,
-          },
-        });
-
-        console.log(
-          `Job ${job.id}: Found ${milestonesToComplete.length} milestones to auto-complete.`
-        );
-
-        for (const milestone of milestonesToComplete) {
+        // Process cases sequentially, skipping TestRun updates and collecting affected TestRuns
+        for (const caseId of caseIds) {
           try {
-            await prisma.milestones.update({
-              where: { id: milestone.id },
-              data: { isCompleted: true },
+            const result = await updateRepositoryCaseForecast(caseId, {
+              skipTestRunUpdate: true,
+              collectAffectedTestRuns: true,
+              prismaClient: prisma,
             });
+
+            // Collect affected TestRun IDs
+            for (const testRunId of result.affectedTestRunIds) {
+              affectedTestRunIds.add(testRunId);
+            }
+
             successCount++;
-            // Audit logging — record milestone auto-completion
-            captureAuditEvent({
-              action: "UPDATE",
-              entityType: "Milestones",
-              entityId: String(milestone.id),
-              entityName: milestone.name,
-              projectId: milestone.projectId,
-              tenantId: job.data.tenantId,
-              metadata: {
-                source: "forecast-worker:auto-complete",
-                jobId: job.id,
-              },
-              changes: {
-                isCompleted: { old: false, new: true },
-              },
-            }).catch(() => {});
-            console.log(
-              `Job ${job.id}: Auto-completed milestone "${milestone.name}" (ID: ${milestone.id})`
-            );
           } catch (error) {
-            failCount++;
             console.error(
-              `Job ${job.id}: Failed to auto-complete milestone ${milestone.id}`,
+              `Job ${job.id}: Failed to update forecast for case ${caseId}`,
               error
             );
+            failCount++;
+            // Continue processing other cases even if one fails
           }
         }
 
         console.log(
-          `Job ${job.id} completed: Auto-completed ${successCount} milestones. Failed: ${failCount}`
+          `Job ${job.id}: Processed ${caseIds.length} unique case groups. Success: ${successCount}, Failed: ${failCount}`
         );
-      } catch (error) {
-        console.error(
-          `Job ${job.id}: Error in auto-complete milestones job`,
-          error
+
+        // Filter out completed test runs (they're locked and don't need forecast updates)
+        console.log(
+          `Job ${job.id}: Filtering ${affectedTestRunIds.size} affected test runs...`
         );
-        throw error;
-      }
-      break;
 
-    case JOB_MILESTONE_DUE_NOTIFICATIONS:
-      console.log(`Job ${job.id}: Starting milestone due notifications check.`);
-      try {
-        const now = new Date();
-
-        // Find all milestones that need notifications
-        // Include all users who have participated in the milestone:
-        // - Milestone creator
-        // - Test run creators and users with assigned/executed work
-        // - Session creators and assigned users
-        const milestonesToNotify = await prisma.milestones.findMany({
+        const activeTestRuns = await prisma.testRuns.findMany({
           where: {
+            id: { in: Array.from(affectedTestRunIds) },
             isCompleted: false,
-            isDeleted: false,
-            notifyDaysBefore: { gt: 0 },
-            completedAt: { not: null }, // Has a due date
           },
-          select: {
-            id: true,
-            name: true,
-            completedAt: true,
-            notifyDaysBefore: true,
-            createdBy: true, // Milestone creator
-            project: {
-              select: {
-                id: true,
-                name: true,
+          select: { id: true },
+        });
+
+        const activeTestRunIds = activeTestRuns.map(
+          (tr: { id: number }) => tr.id
+        );
+        const skippedCompletedCount =
+          affectedTestRunIds.size - activeTestRunIds.length;
+
+        console.log(
+          `Job ${job.id}: Updating ${activeTestRunIds.length} active test runs (skipped ${skippedCompletedCount} completed)...`
+        );
+        let testRunSuccessCount = 0;
+        let testRunFailCount = 0;
+
+        for (const testRunId of activeTestRunIds) {
+          try {
+            await updateTestRunForecast(testRunId, { prismaClient: prisma });
+            testRunSuccessCount++;
+          } catch (error) {
+            console.error(
+              `Job ${job.id}: Failed to update forecast for test run ${testRunId}`,
+              error
+            );
+            testRunFailCount++;
+          }
+        }
+
+        console.log(
+          `Job ${job.id} completed: Updated ${testRunSuccessCount} test runs. Failed: ${testRunFailCount}. Skipped ${skippedCompletedCount} completed.`
+        );
+
+        if (failCount > 0 || testRunFailCount > 0) {
+          // Indicate partial failure but don't necessarily throw to allow job completion
+          console.warn(
+            `Job ${job.id} finished with ${failCount} case failures and ${testRunFailCount} test run failures.`
+          );
+          // throw new Error(`Completed with failures.`); // Uncomment to mark job as failed
+        }
+        break;
+
+      case JOB_AUTO_COMPLETE_MILESTONES:
+        console.log(
+          `Job ${job.id}: Starting auto-completion check for milestones.`
+        );
+        try {
+          // Find all milestones that should be auto-completed
+          const now = new Date();
+          const milestonesToComplete = await prisma.milestones.findMany({
+            where: {
+              isCompleted: false,
+              isDeleted: false,
+              automaticCompletion: true,
+              completedAt: {
+                lte: now, // Due date has passed
               },
             },
-            // Get all users who have participated in this milestone's test runs
-            testRuns: {
-              where: {
-                isDeleted: false,
+            select: {
+              id: true,
+              name: true,
+              projectId: true,
+            },
+          });
+
+          console.log(
+            `Job ${job.id}: Found ${milestonesToComplete.length} milestones to auto-complete.`
+          );
+
+          for (const milestone of milestonesToComplete) {
+            try {
+              await prisma.milestones.update({
+                where: { id: milestone.id },
+                data: { isCompleted: true },
+              });
+              successCount++;
+              // Audit logging — record milestone auto-completion
+              captureAuditEvent({
+                action: "UPDATE",
+                entityType: "Milestones",
+                entityId: String(milestone.id),
+                entityName: milestone.name,
+                projectId: milestone.projectId,
+                tenantId: job.data.tenantId,
+                metadata: {
+                  source: "forecast-worker:auto-complete",
+                  jobId: job.id,
+                },
+                changes: {
+                  isCompleted: { old: false, new: true },
+                },
+              }).catch(() => {});
+              console.log(
+                `Job ${job.id}: Auto-completed milestone "${milestone.name}" (ID: ${milestone.id})`
+              );
+            } catch (error) {
+              failCount++;
+              console.error(
+                `Job ${job.id}: Failed to auto-complete milestone ${milestone.id}`,
+                error
+              );
+            }
+          }
+
+          console.log(
+            `Job ${job.id} completed: Auto-completed ${successCount} milestones. Failed: ${failCount}`
+          );
+        } catch (error) {
+          console.error(
+            `Job ${job.id}: Error in auto-complete milestones job`,
+            error
+          );
+          throw error;
+        }
+        break;
+
+      case JOB_MILESTONE_DUE_NOTIFICATIONS:
+        console.log(
+          `Job ${job.id}: Starting milestone due notifications check.`
+        );
+        try {
+          const now = new Date();
+
+          // Find all milestones that need notifications
+          // Include all users who have participated in the milestone:
+          // - Milestone creator
+          // - Test run creators and users with assigned/executed work
+          // - Session creators and assigned users
+          const milestonesToNotify = await prisma.milestones.findMany({
+            where: {
+              isCompleted: false,
+              isDeleted: false,
+              notifyDaysBefore: { gt: 0 },
+              completedAt: { not: null }, // Has a due date
+            },
+            select: {
+              id: true,
+              name: true,
+              completedAt: true,
+              notifyDaysBefore: true,
+              createdBy: true, // Milestone creator
+              project: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
-              select: {
-                createdById: true, // Test run creator
-                testCases: {
-                  select: {
-                    assignedToId: true, // Assigned user
-                    results: {
-                      select: {
-                        executedById: true, // User who executed the result
+              // Get all users who have participated in this milestone's test runs
+              testRuns: {
+                where: {
+                  isDeleted: false,
+                },
+                select: {
+                  createdById: true, // Test run creator
+                  testCases: {
+                    select: {
+                      assignedToId: true, // Assigned user
+                      results: {
+                        select: {
+                          executedById: true, // User who executed the result
+                        },
                       },
                     },
                   },
                 },
               },
-            },
-            // Get all users who have participated in this milestone's sessions
-            sessions: {
-              where: {
-                isDeleted: false,
+              // Get all users who have participated in this milestone's sessions
+              sessions: {
+                where: {
+                  isDeleted: false,
+                },
+                select: {
+                  createdById: true, // Session creator
+                  assignedToId: true, // Assigned user
+                },
               },
-              select: {
-                createdById: true, // Session creator
-                assignedToId: true, // Assigned user
-              },
             },
-          },
-        });
-
-        console.log(
-          `Job ${job.id}: Found ${milestonesToNotify.length} milestones to check for notifications.`
-        );
-
-        for (const milestone of milestonesToNotify) {
-          if (!milestone.completedAt) continue;
-
-          const dueDate = new Date(milestone.completedAt);
-          const timeDiff = dueDate.getTime() - now.getTime();
-          // Use conditional rounding:
-          // - Future dates (timeDiff >= 0): Math.ceil rounds up (conservative, only notify when truly within window)
-          // - Overdue dates (timeDiff < 0): Math.floor rounds down (correctly catches any overdue amount)
-          const daysDiff =
-            timeDiff >= 0
-              ? Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-              : Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-          const isOverdue = daysDiff < 0;
-
-          // Check if notification should be sent
-          // Send if: overdue OR within notifyDaysBefore days of due date
-          const shouldNotify =
-            isOverdue || daysDiff <= milestone.notifyDaysBefore;
+          });
 
           console.log(
-            `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - daysDiff: ${daysDiff}, notifyDaysBefore: ${milestone.notifyDaysBefore}, isOverdue: ${isOverdue}, shouldNotify: ${shouldNotify}`
+            `Job ${job.id}: Found ${milestonesToNotify.length} milestones to check for notifications.`
           );
 
-          if (!shouldNotify) continue;
+          for (const milestone of milestonesToNotify) {
+            if (!milestone.completedAt) continue;
 
-          // Collect unique user IDs from all participants
-          const userIds = new Set<string>();
+            const dueDate = new Date(milestone.completedAt);
+            const timeDiff = dueDate.getTime() - now.getTime();
+            // Use conditional rounding:
+            // - Future dates (timeDiff >= 0): Math.ceil rounds up (conservative, only notify when truly within window)
+            // - Overdue dates (timeDiff < 0): Math.floor rounds down (correctly catches any overdue amount)
+            const daysDiff =
+              timeDiff >= 0
+                ? Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+                : Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const isOverdue = daysDiff < 0;
 
-          // Add milestone creator
-          if (milestone.createdBy) {
-            userIds.add(milestone.createdBy);
-          }
+            // Check if notification should be sent
+            // Send if: overdue OR within notifyDaysBefore days of due date
+            const shouldNotify =
+              isOverdue || daysDiff <= milestone.notifyDaysBefore;
 
-          // Add test run creators, assigned users, and result executors
-          for (const testRun of milestone.testRuns) {
-            // Test run creator
-            if (testRun.createdById) {
-              userIds.add(testRun.createdById);
+            console.log(
+              `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - daysDiff: ${daysDiff}, notifyDaysBefore: ${milestone.notifyDaysBefore}, isOverdue: ${isOverdue}, shouldNotify: ${shouldNotify}`
+            );
+
+            if (!shouldNotify) continue;
+
+            // Collect unique user IDs from all participants
+            const userIds = new Set<string>();
+
+            // Add milestone creator
+            if (milestone.createdBy) {
+              userIds.add(milestone.createdBy);
             }
 
-            for (const testCase of testRun.testCases) {
-              // Assigned user
-              if (testCase.assignedToId) {
-                userIds.add(testCase.assignedToId);
+            // Add test run creators, assigned users, and result executors
+            for (const testRun of milestone.testRuns) {
+              // Test run creator
+              if (testRun.createdById) {
+                userIds.add(testRun.createdById);
               }
 
-              // Users who executed results
-              for (const result of testCase.results) {
-                if (result.executedById) {
-                  userIds.add(result.executedById);
+              for (const testCase of testRun.testCases) {
+                // Assigned user
+                if (testCase.assignedToId) {
+                  userIds.add(testCase.assignedToId);
+                }
+
+                // Users who executed results
+                for (const result of testCase.results) {
+                  if (result.executedById) {
+                    userIds.add(result.executedById);
+                  }
                 }
               }
             }
-          }
 
-          // Add session creators and assigned users
-          for (const session of milestone.sessions) {
-            // Session creator
-            if (session.createdById) {
-              userIds.add(session.createdById);
+            // Add session creators and assigned users
+            for (const session of milestone.sessions) {
+              // Session creator
+              if (session.createdById) {
+                userIds.add(session.createdById);
+              }
+
+              // Assigned user
+              if (session.assignedToId) {
+                userIds.add(session.assignedToId);
+              }
             }
 
-            // Assigned user
-            if (session.assignedToId) {
-              userIds.add(session.assignedToId);
+            if (userIds.size === 0) {
+              console.log(
+                `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - no participating users found, skipping notifications`
+              );
+              continue;
             }
-          }
 
-          if (userIds.size === 0) {
             console.log(
-              `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - no participating users found, skipping notifications`
+              `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - sending notifications to ${userIds.size} users`
             );
-            continue;
+
+            // Send notifications to each user
+            for (const userId of userIds) {
+              try {
+                await NotificationService.createMilestoneDueNotification(
+                  userId,
+                  milestone.name,
+                  milestone.project.name,
+                  dueDate,
+                  milestone.id,
+                  milestone.project.id,
+                  isOverdue,
+                  job.data.tenantId
+                );
+                successCount++;
+              } catch (error) {
+                failCount++;
+                console.error(
+                  `Job ${job.id}: Failed to send notification for milestone ${milestone.id} to user ${userId}`,
+                  error
+                );
+              }
+            }
           }
 
           console.log(
-            `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - sending notifications to ${userIds.size} users`
+            `Job ${job.id} completed: Sent ${successCount} milestone notifications. Failed: ${failCount}`
           );
-
-          // Send notifications to each user
-          for (const userId of userIds) {
-            try {
-              await NotificationService.createMilestoneDueNotification(
-                userId,
-                milestone.name,
-                milestone.project.name,
-                dueDate,
-                milestone.id,
-                milestone.project.id,
-                isOverdue,
-                job.data.tenantId
-              );
-              successCount++;
-            } catch (error) {
-              failCount++;
-              console.error(
-                `Job ${job.id}: Failed to send notification for milestone ${milestone.id} to user ${userId}`,
-                error
-              );
-            }
-          }
+        } catch (error) {
+          console.error(
+            `Job ${job.id}: Error in milestone due notifications job`,
+            error
+          );
+          throw error;
         }
+        break;
 
-        console.log(
-          `Job ${job.id} completed: Sent ${successCount} milestone notifications. Failed: ${failCount}`
-        );
-      } catch (error) {
-        console.error(
-          `Job ${job.id}: Error in milestone due notifications job`,
-          error
-        );
-        throw error;
-      }
-      break;
+      default:
+        throw new Error(`Unknown job type: ${job.name}`);
+    }
 
-    default:
-      throw new Error(`Unknown job type: ${job.name}`);
-  }
-
-  return { status: "completed", successCount, failCount }; // Return summary
-};
+    return { status: "completed", successCount, failCount }; // Return summary
+  });
 
 async function startWorker() {
   // Log multi-tenant mode status

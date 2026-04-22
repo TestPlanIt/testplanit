@@ -193,13 +193,16 @@ If a user is locked out:
 
 ### Audit Trail
 
-All 2FA-related actions are logged:
+All 2FA-related actions emit entries in the [audit log](/docs/user-guide/audit-logs):
 
-- 2FA setup completion
-- 2FA verification attempts (success/failure)
-- Backup code usage
-- 2FA disable events
-- Backup code regeneration
+| Action | Description |
+|--------|-------------|
+| `TWO_FACTOR_SETUP_REQUIRED` | Administrator enforced 2FA setup for a user |
+| `TWO_FACTOR_ENABLED` | User completed 2FA enrollment |
+| `TWO_FACTOR_VERIFIED` | User passed a 2FA challenge during the SSO flow |
+| `TWO_FACTOR_CODES_REGENERATED` | User regenerated their backup codes |
+
+Verification codes, TOTP secrets, and backup codes are never written to the audit payload.
 
 ## Troubleshooting
 
