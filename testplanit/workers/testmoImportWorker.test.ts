@@ -296,7 +296,7 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
     const { runWithAuditContext, updateAuditContext } =
       await import("../lib/auditContext");
     const { enqueueWithAuditContext } =
-      await import("../lib/auditContextWrappers");
+      await import("../lib/auditContextEnqueue");
     const { expectAuditRowComplete } =
       await import("../lib/testing/auditAssertions");
 
@@ -373,7 +373,7 @@ describe("testmoImportWorker — CTX-03 actor context propagation", () => {
   it("system path: audit row carries __system__ userId and systemReason when enqueued with no upstream context", async () => {
     const { SYSTEM_ACTOR_ID } = await import("../lib/auditContext");
     const { enqueueWithAuditContext } =
-      await import("../lib/auditContextWrappers");
+      await import("../lib/auditContextEnqueue");
     const { expectAuditRowComplete } =
       await import("../lib/testing/auditAssertions");
 

@@ -1,10 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  enqueueWithAuditContext,
-  withAuditContext,
-} from "~/lib/auditContextWrappers";
+import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
