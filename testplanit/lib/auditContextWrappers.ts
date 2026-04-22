@@ -1,4 +1,8 @@
-import { headers as nextHeaders } from "next/headers";
+// NOTE: `next/headers` is intentionally NOT imported at module-top.
+// This file is imported by BullMQ workers (via enqueueWithAuditContext), and
+// the workers Docker image strips Next.js deps to save ~900MB. A top-level
+// `import "next/headers"` would fail at worker startup with "Cannot find module".
+// The one function that needs it (withActionAuditContext) dynamic-imports below.
 import type { NextRequest } from "next/server";
 import type { Job, JobsOptions, Queue } from "bullmq";
 import {
@@ -50,6 +54,9 @@ export function withActionAuditContext<TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>
 ): (...args: TArgs) => Promise<TReturn> {
   return async (...args: TArgs): Promise<TReturn> => {
+    // Dynamic import keeps workers (which don't have next/ in node_modules)
+    // from crashing when this file is required for its enqueue helpers.
+    const { headers: nextHeaders } = await import("next/headers");
     const headersList = await nextHeaders();
     // next/headers returns ReadonlyHeaders which is structurally compatible
     // with Headers for the extractor's purposes.
