@@ -35,6 +35,7 @@ import {
 } from "../lib/queues";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import {
   normalizeMappingConfiguration,
@@ -353,6 +354,7 @@ interface ImportContext {
     string,
     { total: number; created: number; mapped: number }
   >;
+  entityRates: Record<string, number>;
   processedCount: number;
   startTime: number;
   lastProgressUpdate: number;
@@ -367,6 +369,7 @@ type EntitySummaryResult = Omit<ActivitySummaryEntry, "type" | "timestamp">;
 const createInitialContext = (jobId: string): ImportContext => ({
   activityLog: [],
   entityProgress: {},
+  entityRates: {},
   processedCount: 0,
   startTime: Date.now(),
   lastProgressUpdate: Date.now(),
@@ -546,6 +549,56 @@ const formatInProgressStatus = (
   return `${processed.toLocaleString()} / ${entry.total.toLocaleString()} processed`;
 };
 
+// Default rates (items/sec) based on observed import performance (v2, with batch size fix).
+// Used for phases that haven't started yet to estimate remaining time.
+const DEFAULT_ENTITY_RATES: Record<string, number> = {
+  workflows: 1000,
+  statuses: 1000,
+  groups: 1300,
+  tags: 2200,
+  roles: 700,
+  milestoneTypes: 1000,
+  configurations: 170,
+  templates: 350,
+  templateFields: 135,
+  users: 19,
+  userGroups: 875,
+  projects: 63,
+  projectLinks: 59,
+  milestones: 577,
+  milestoneLinks: 10,
+  sessions: 130,
+  sessionResults: 660,
+  sessionTags: 470,
+  repositories: 180,
+  repositoryFolders: 105,
+  repositoryCases: 54,
+  repositoryCaseTags: 3100,
+  automationCases: 154,
+  automationRuns: 459,
+  automationRunTests: 498,
+  automationRunFields: 1448,
+  automationRunLinks: 1045,
+  automationRunTestFields: 1073,
+  automationRunTags: 271,
+  sessionValues: 500,
+  testRuns: 1019,
+  runLinks: 500,
+  testRunCases: 725,
+  runTags: 381,
+  testRunResults: 478,
+  testRunStepResults: 42,
+  issueTargets: 10,
+  issues: 10,
+  projectIntegrations: 100,
+  milestoneIssues: 400,
+  repositoryCaseIssues: 370,
+  runIssues: 320,
+  runResultIssues: 310,
+  sessionIssues: 120,
+  sessionResultIssues: 80,
+};
+
 const calculateProgressMetrics = (
   context: ImportContext,
   totalCount: number
@@ -556,9 +609,6 @@ const calculateProgressMetrics = (
 
   // Don't calculate estimates until we have at least 2 seconds of data and some progress
   if (elapsedSeconds < 2 || context.processedCount === 0 || totalCount === 0) {
-    console.log(
-      `[calculateProgressMetrics] Skipping - elapsed: ${elapsedSeconds.toFixed(1)}s, processed: ${context.processedCount}, total: ${totalCount}`
-    );
     return { estimatedTimeRemaining: null, processingRate: null };
   }
 
@@ -568,11 +618,39 @@ const calculateProgressMetrics = (
     elapsedSeconds
   );
 
-  // Calculate remaining items
-  const remainingCount = totalCount - context.processedCount;
+  // Calculate per-entity weighted ETA using observed and default rates
+  let weightedRemainingSeconds = 0;
+  let hasEntityData = false;
 
-  // Calculate estimated seconds remaining
-  const estimatedSecondsRemaining = remainingCount / itemsPerSecond;
+  for (const [entity, progress] of Object.entries(context.entityProgress)) {
+    const remaining = Math.max(
+      0,
+      progress.total - progress.created - progress.mapped
+    );
+    if (remaining <= 0) continue;
+
+    // Use the observed rate for the current entity if available,
+    // otherwise fall back to default rates
+    let entityRate: number;
+    if (
+      context.entityRates &&
+      context.entityRates[entity] &&
+      context.entityRates[entity] > 0
+    ) {
+      entityRate = context.entityRates[entity];
+    } else {
+      entityRate = DEFAULT_ENTITY_RATES[entity] ?? 100;
+    }
+
+    weightedRemainingSeconds += remaining / entityRate;
+    hasEntityData = true;
+  }
+
+  // If we don't have entity-level data, fall back to overall rate
+  if (!hasEntityData) {
+    const remainingCount = totalCount - context.processedCount;
+    weightedRemainingSeconds = remainingCount / itemsPerSecond;
+  }
 
   // Format processing rate
   const processingRate =
@@ -581,13 +659,7 @@ const calculateProgressMetrics = (
       : `${(itemsPerSecond * 60).toFixed(1)} items/min`;
 
   // Format estimated time remaining (in seconds)
-  const estimatedTimeRemaining = Math.ceil(
-    estimatedSecondsRemaining
-  ).toString();
-
-  console.log(
-    `[calculateProgressMetrics] Calculated - processed: ${context.processedCount}/${totalCount}, elapsed: ${elapsedSeconds.toFixed(1)}s, rate: ${processingRate}, ETA: ${estimatedTimeRemaining}s`
-  );
+  const estimatedTimeRemaining = Math.ceil(weightedRemainingSeconds).toString();
 
   return { estimatedTimeRemaining, processingRate };
 };
@@ -1773,16 +1845,19 @@ const importProjects = async (
         orderBy: { id: "asc" },
       });
       if (fallbackTemplate?.id) {
-        try {
-          await tx.templateProjectAssignment.create({
-            data: {
-              projectId,
+        await tx.templateProjectAssignment.upsert({
+          where: {
+            templateId_projectId: {
               templateId: fallbackTemplate.id,
+              projectId,
             },
-          });
-        } catch {
-          // Ignore duplicate errors
-        }
+          },
+          create: {
+            projectId,
+            templateId: fallbackTemplate.id,
+          },
+          update: {},
+        });
         resolvedDefaultTemplateId = fallbackTemplate.id;
       }
     }
@@ -3462,16 +3537,28 @@ const importRepositoryCases = async (
           }
 
           const resolvedFolderId = folderId;
+          const className = toStringValue(record.key);
 
+          // Check for existing case matching the unique constraint
+          // (projectId, name, className, source) — including soft-deleted
+          // records since the constraint does not include isDeleted
           const existing = await tx.repositoryCases.findFirst({
             where: {
               projectId,
               name: caseName,
-              isDeleted: false,
+              className: className ?? null,
+              source: "MANUAL",
             },
           });
 
           if (existing) {
+            // Restore soft-deleted cases so they can be reused
+            if (existing.isDeleted) {
+              await tx.repositoryCases.update({
+                where: { id: existing.id },
+                data: { isDeleted: false },
+              });
+            }
             caseIdMap.set(caseSourceId, existing.id);
             const existingKey = toStringValue(record.key);
             if (existingKey) {
@@ -3509,7 +3596,7 @@ const importRepositoryCases = async (
                   resolvedTemplateIdsByName.get(templateName) ?? null;
                 if (!templateId) {
                   const existingTemplate = await tx.templates.findFirst({
-                    where: { templateName, isDeleted: false },
+                    where: { templateName },
                   });
 
                   if (existingTemplate) {
@@ -3570,7 +3657,6 @@ const importRepositoryCases = async (
           );
           const createdAt = toDateValue(record.created_at) ?? new Date();
           const order = toNumberValue(record.display_order) ?? 0;
-          const className = toStringValue(record.key);
           const estimateValue = toNumberValue(record.estimate);
           const { value: normalizedEstimate, adjustment: estimateAdjustment } =
             normalizeEstimate(estimateValue);
@@ -5309,13 +5395,16 @@ async function importStatuses(
     }
 
     const existingByName = await tx.status.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+      where: { name },
     });
 
     if (existingByName) {
+      if (existingByName.isDeleted) {
+        await tx.status.update({
+          where: { id: existingByName.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existingByName.id;
       config.name = existingByName.name;
@@ -5325,13 +5414,16 @@ async function importStatuses(
     }
 
     const existingStatus = await tx.status.findFirst({
-      where: {
-        systemName,
-        isDeleted: false,
-      },
+      where: { systemName },
     });
 
     if (existingStatus) {
+      if (existingStatus.isDeleted) {
+        await tx.status.update({
+          where: { id: existingStatus.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existingStatus.id;
       config.systemName = existingStatus.systemName;
@@ -5358,44 +5450,18 @@ async function importStatuses(
 
     const aliases = (config.aliases ?? "").trim();
 
-    let created;
-    try {
-      created = await tx.status.create({
-        data: {
-          name,
-          systemName,
-          aliases: aliases || null,
-          colorId,
-          isEnabled: config.isEnabled ?? true,
-          isSuccess: config.isSuccess ?? false,
-          isFailure: config.isFailure ?? false,
-          isCompleted: config.isCompleted ?? false,
-        },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        const duplicate = await tx.status.findFirst({
-          where: {
-            OR: [{ name }, { systemName }],
-            isDeleted: false,
-          },
-        });
-
-        if (duplicate) {
-          config.action = "map";
-          config.mappedTo = duplicate.id;
-          config.name = duplicate.name;
-          config.systemName = duplicate.systemName;
-          summary.mapped += 1;
-          continue;
-        }
-      }
-
-      throw error;
-    }
+    const created = await tx.status.create({
+      data: {
+        name,
+        systemName,
+        aliases: aliases || null,
+        colorId,
+        isEnabled: config.isEnabled ?? true,
+        isSuccess: config.isSuccess ?? false,
+        isFailure: config.isFailure ?? false,
+        isCompleted: config.isCompleted ?? false,
+      },
+    });
 
     if (scopeIds.length > 0) {
       await tx.statusScopeAssignment.createMany({
@@ -5538,8 +5604,9 @@ async function processImportMode(
         },
       });
 
-      // Use smaller batch size for large text datasets (like automation_run_test_fields with ~990K records)
-      const batchSize = datasetName === "automation_run_test_fields" ? 50 : 100;
+      // Use moderate batch size for large text datasets, larger for normal datasets
+      const batchSize =
+        datasetName === "automation_run_test_fields" ? 1000 : 5000;
       const allRows: any[] = [];
 
       for (let offset = 0; offset < totalCount; offset += batchSize) {
@@ -5685,6 +5752,34 @@ async function processImportMode(
     }
   };
 
+  const phaseDurations: { phase: string; durationMs: number; items: number }[] =
+    [];
+
+  const timedPhase = async <T>(
+    phaseName: string,
+    fn: () => Promise<T>,
+    itemCount?: (result: T) => number
+  ): Promise<T> => {
+    const phaseStart = Date.now();
+    console.log(`[IMPORT TIMING] ▶ ${phaseName} started`);
+    const result = await fn();
+    const durationMs = Date.now() - phaseStart;
+    const items = itemCount ? itemCount(result) : 0;
+    const durationSec = (durationMs / 1000).toFixed(1);
+    const rateNum =
+      items > 0 && durationMs > 0 ? items / (durationMs / 1000) : 0;
+    const rate = rateNum > 0 ? rateNum.toFixed(1) : "n/a";
+    console.log(
+      `[IMPORT TIMING] ✓ ${phaseName} completed in ${durationSec}s (${items} items, ${rate} items/sec)`
+    );
+    phaseDurations.push({ phase: phaseName, durationMs, items });
+    // Record observed rate for ETA calculations
+    if (rateNum > 0) {
+      context.entityRates[phaseName] = rateNum;
+    }
+    return result;
+  };
+
   const importStart = new Date();
 
   await prisma.testmoImportJob.update({
@@ -5719,40 +5814,52 @@ async function processImportMode(
 
     logMessage(context, "Processing workflow mappings");
     await persistProgress("workflows", "Processing workflow mappings");
-    const workflowSummary = await withTransaction((tx) =>
-      importWorkflows(tx, normalizedConfiguration)
+    const workflowSummary = await timedPhase(
+      "workflows",
+      () =>
+        withTransaction((tx) => importWorkflows(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, workflowSummary);
     await persistProgress("workflows", formatSummaryStatus(workflowSummary));
 
     logMessage(context, "Processing status mappings");
     await persistProgress("statuses", "Processing status mappings");
-    const statusSummary = await withTransaction((tx) =>
-      importStatuses(tx, normalizedConfiguration)
+    const statusSummary = await timedPhase(
+      "statuses",
+      () =>
+        withTransaction((tx) => importStatuses(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, statusSummary);
     await persistProgress("statuses", formatSummaryStatus(statusSummary));
 
     logMessage(context, "Processing group mappings");
     await persistProgress("groups", "Processing group mappings");
-    const groupSummary = await withTransaction((tx) =>
-      importGroups(tx, normalizedConfiguration)
+    const groupSummary = await timedPhase(
+      "groups",
+      () => withTransaction((tx) => importGroups(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, groupSummary);
     await persistProgress("groups", formatSummaryStatus(groupSummary));
 
     logMessage(context, "Processing tag mappings");
     await persistProgress("tags", "Processing tag mappings");
-    const tagSummary = await withTransaction((tx) =>
-      importTags(tx, normalizedConfiguration)
+    const tagSummary = await timedPhase(
+      "tags",
+      () => withTransaction((tx) => importTags(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, tagSummary);
     await persistProgress("tags", formatSummaryStatus(tagSummary));
 
     logMessage(context, "Processing role mappings");
     await persistProgress("roles", "Processing role mappings");
-    const roleSummary = await withTransaction((tx) =>
-      importRoles(tx, normalizedConfiguration)
+    const roleSummary = await timedPhase(
+      "roles",
+      () => withTransaction((tx) => importRoles(tx, normalizedConfiguration)),
+      (s) => s.total
     );
     recordEntitySummary(context, roleSummary);
     await persistProgress("roles", formatSummaryStatus(roleSummary));
@@ -5762,8 +5869,13 @@ async function processImportMode(
       "milestoneTypes",
       "Processing milestone type mappings"
     );
-    const milestoneSummary = await withTransaction((tx) =>
-      importMilestoneTypes(tx, normalizedConfiguration)
+    const milestoneSummary = await timedPhase(
+      "milestoneTypes",
+      () =>
+        withTransaction((tx) =>
+          importMilestoneTypes(tx, normalizedConfiguration)
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, milestoneSummary);
     await persistProgress(
@@ -5776,8 +5888,13 @@ async function processImportMode(
       "configurations",
       "Processing configuration mappings"
     );
-    const configurationSummary = await withTransaction((tx) =>
-      importConfigurations(tx, normalizedConfiguration)
+    const configurationSummary = await timedPhase(
+      "configurations",
+      () =>
+        withTransaction((tx) =>
+          importConfigurations(tx, normalizedConfiguration)
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, configurationSummary);
     await persistProgress(
@@ -5787,8 +5904,11 @@ async function processImportMode(
 
     logMessage(context, "Processing template mappings");
     await persistProgress("templates", "Processing template mappings");
-    const { summary: templateSummary, templateMap } = await withTransaction(
-      (tx) => importTemplates(tx, normalizedConfiguration)
+    const { summary: templateSummary, templateMap } = await timedPhase(
+      "templates",
+      () =>
+        withTransaction((tx) => importTemplates(tx, normalizedConfiguration)),
+      (r) => r.summary.total
     );
     recordEntitySummary(context, templateSummary);
     await persistProgress("templates", formatSummaryStatus(templateSummary));
@@ -5798,13 +5918,18 @@ async function processImportMode(
       "templateFields",
       "Processing template field mappings"
     );
-    const templateFieldSummary = await withTransaction((tx) =>
-      importTemplateFields(
-        tx,
-        normalizedConfiguration,
-        templateMap,
-        datasetRowsByName
-      )
+    const templateFieldSummary = await timedPhase(
+      "templateFields",
+      () =>
+        withTransaction((tx) =>
+          importTemplateFields(
+            tx,
+            normalizedConfiguration,
+            templateMap,
+            datasetRowsByName
+          )
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, templateFieldSummary);
     await persistProgress(
@@ -5823,16 +5948,26 @@ async function processImportMode(
 
     logMessage(context, "Processing user mappings");
     await persistProgress("users", "Processing user mappings");
-    const userSummary = await withTransaction((tx) =>
-      importUsers(tx, normalizedConfiguration, importJob)
+    const userSummary = await timedPhase(
+      "users",
+      () =>
+        withTransaction((tx) =>
+          importUsers(tx, normalizedConfiguration, importJob)
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, userSummary);
     await persistProgress("users", formatSummaryStatus(userSummary));
 
     logMessage(context, "Processing user group assignments");
     await persistProgress("userGroups", "Processing user group assignments");
-    const userGroupsSummary = await withTransaction((tx) =>
-      importUserGroups(tx, normalizedConfiguration, datasetRowsByName)
+    const userGroupsSummary = await timedPhase(
+      "userGroups",
+      () =>
+        withTransaction((tx) =>
+          importUserGroups(tx, normalizedConfiguration, datasetRowsByName)
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, userGroupsSummary);
     await persistProgress("userGroups", formatSummaryStatus(userGroupsSummary));
@@ -5857,28 +5992,34 @@ async function processImportMode(
     logMessage(context, "Processing project imports");
     await persistProgress("projects", "Processing project imports");
 
-    // Load projects dataset on-demand
-    if (datasetRowsByName.get("projects")?.length === 0) {
-      datasetRowsByName.set(
-        "projects",
-        await loadDatasetFromStaging("projects")
-      );
-    }
+    const projectImport = await timedPhase(
+      "projects",
+      async () => {
+        // Load projects dataset on-demand
+        if (datasetRowsByName.get("projects")?.length === 0) {
+          datasetRowsByName.set(
+            "projects",
+            await loadDatasetFromStaging("projects")
+          );
+        }
 
-    const projectImport = await withTransaction((tx) =>
-      importProjects(
-        tx,
-        datasetRowsByName,
-        importJob,
-        userIdMap,
-        statusIdMap,
-        workflowIdMap,
-        milestoneTypeIdMap,
-        templateIdMap,
-        templateMap,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importProjects(
+            tx,
+            datasetRowsByName,
+            importJob,
+            userIdMap,
+            statusIdMap,
+            workflowIdMap,
+            milestoneTypeIdMap,
+            templateIdMap,
+            templateMap,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, projectImport.summary);
     await persistProgress(
@@ -5891,21 +6032,27 @@ async function processImportMode(
     logMessage(context, "Processing project links");
     await persistProgress("projectLinks", "Processing project links");
 
-    if (datasetRowsByName.get("project_links")?.length === 0) {
-      datasetRowsByName.set(
-        "project_links",
-        await loadDatasetFromStaging("project_links")
-      );
-    }
+    const projectLinksImport = await timedPhase(
+      "projectLinks",
+      async () => {
+        if (datasetRowsByName.get("project_links")?.length === 0) {
+          datasetRowsByName.set(
+            "project_links",
+            await loadDatasetFromStaging("project_links")
+          );
+        }
 
-    const projectLinksImport = await withTransaction((tx) =>
-      importProjectLinks(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        context
-      )
+        return withTransaction((tx) =>
+          importProjectLinks(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            context
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, projectLinksImport);
     await persistProgress(
@@ -5917,25 +6064,31 @@ async function processImportMode(
     logMessage(context, "Processing milestone imports");
     await persistProgress("milestones", "Processing milestone imports");
 
-    // Load milestones dataset on-demand
-    if (datasetRowsByName.get("milestones")?.length === 0) {
-      datasetRowsByName.set(
-        "milestones",
-        await loadDatasetFromStaging("milestones")
-      );
-    }
+    const milestoneImport = await timedPhase(
+      "milestones",
+      async () => {
+        // Load milestones dataset on-demand
+        if (datasetRowsByName.get("milestones")?.length === 0) {
+          datasetRowsByName.set(
+            "milestones",
+            await loadDatasetFromStaging("milestones")
+          );
+        }
 
-    const milestoneImport = await withTransaction((tx) =>
-      importMilestones(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        milestoneTypeIdMap,
-        userIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importMilestones(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            milestoneTypeIdMap,
+            userIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, milestoneImport.summary);
     await persistProgress(
@@ -5948,21 +6101,27 @@ async function processImportMode(
     logMessage(context, "Processing milestone links");
     await persistProgress("milestoneLinks", "Processing milestone links");
 
-    if (datasetRowsByName.get("milestone_links")?.length === 0) {
-      datasetRowsByName.set(
-        "milestone_links",
-        await loadDatasetFromStaging("milestone_links")
-      );
-    }
+    const milestoneLinksImport = await timedPhase(
+      "milestoneLinks",
+      async () => {
+        if (datasetRowsByName.get("milestone_links")?.length === 0) {
+          datasetRowsByName.set(
+            "milestone_links",
+            await loadDatasetFromStaging("milestone_links")
+          );
+        }
 
-    const milestoneLinksImport = await withTransaction((tx) =>
-      importMilestoneLinks(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        milestoneImport.milestoneIdMap,
-        context
-      )
+        return withTransaction((tx) =>
+          importMilestoneLinks(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            milestoneImport.milestoneIdMap,
+            context
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, milestoneLinksImport);
     await persistProgress(
@@ -5977,28 +6136,34 @@ async function processImportMode(
     logMessage(context, "Processing session imports");
     await persistProgress("sessions", "Processing session imports");
 
-    // Load sessions dataset on-demand
-    if (datasetRowsByName.get("sessions")?.length === 0) {
-      datasetRowsByName.set(
-        "sessions",
-        await loadDatasetFromStaging("sessions")
-      );
-    }
+    const sessionImport = await timedPhase(
+      "sessions",
+      async () => {
+        // Load sessions dataset on-demand
+        if (datasetRowsByName.get("sessions")?.length === 0) {
+          datasetRowsByName.set(
+            "sessions",
+            await loadDatasetFromStaging("sessions")
+          );
+        }
 
-    const sessionImport = await withTransaction((tx) =>
-      importSessions(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        milestoneImport.milestoneIdMap,
-        configurationIdMap,
-        workflowIdMap,
-        userIdMap,
-        templateIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importSessions(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            milestoneImport.milestoneIdMap,
+            configurationIdMap,
+            workflowIdMap,
+            userIdMap,
+            templateIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, sessionImport.summary);
     await persistProgress(
@@ -6013,25 +6178,31 @@ async function processImportMode(
       "Processing session results imports"
     );
 
-    // Load session_results dataset on-demand
-    if (datasetRowsByName.get("session_results")?.length === 0) {
-      datasetRowsByName.set(
-        "session_results",
-        await loadDatasetFromStaging("session_results")
-      );
-    }
+    const sessionResultsImport = await timedPhase(
+      "sessionResults",
+      async () => {
+        // Load session_results dataset on-demand
+        if (datasetRowsByName.get("session_results")?.length === 0) {
+          datasetRowsByName.set(
+            "session_results",
+            await loadDatasetFromStaging("session_results")
+          );
+        }
 
-    const sessionResultsImport = await withTransaction((tx) =>
-      importSessionResults(
-        tx,
-        datasetRowsByName,
-        sessionImport.sessionIdMap,
-        statusIdMap,
-        userIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importSessionResults(
+            tx,
+            datasetRowsByName,
+            sessionImport.sessionIdMap,
+            statusIdMap,
+            userIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, sessionResultsImport.summary);
     await persistProgress(
@@ -6043,21 +6214,27 @@ async function processImportMode(
     logMessage(context, "Processing session tag assignments");
     await persistProgress("sessionTags", "Processing session tag assignments");
 
-    // Load session_tags dataset on-demand
-    if (datasetRowsByName.get("session_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "session_tags",
-        await loadDatasetFromStaging("session_tags")
-      );
-    }
+    const sessionTagsSummary = await timedPhase(
+      "sessionTags",
+      async () => {
+        // Load session_tags dataset on-demand
+        if (datasetRowsByName.get("session_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "session_tags",
+            await loadDatasetFromStaging("session_tags")
+          );
+        }
 
-    const sessionTagsSummary = await withTransaction((tx) =>
-      importSessionTags(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        sessionImport.sessionIdMap
-      )
+        return withTransaction((tx) =>
+          importSessionTags(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            sessionImport.sessionIdMap
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, sessionTagsSummary);
     await persistProgress(
@@ -6093,22 +6270,28 @@ async function processImportMode(
     logMessage(context, "Processing repository imports");
     await persistProgress("repositories", "Processing repository imports");
 
-    // Load repositories dataset on-demand
-    if (datasetRowsByName.get("repositories")?.length === 0) {
-      datasetRowsByName.set(
-        "repositories",
-        await loadDatasetFromStaging("repositories")
-      );
-    }
+    const repositoryImport = await timedPhase(
+      "repositories",
+      async () => {
+        // Load repositories dataset on-demand
+        if (datasetRowsByName.get("repositories")?.length === 0) {
+          datasetRowsByName.set(
+            "repositories",
+            await loadDatasetFromStaging("repositories")
+          );
+        }
 
-    const repositoryImport = await withTransaction((tx) =>
-      importRepositories(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importRepositories(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, repositoryImport.summary);
     await persistProgress(
@@ -6120,35 +6303,41 @@ async function processImportMode(
     logMessage(context, "Processing repository folders");
     await persistProgress("repositoryFolders", "Processing repository folders");
 
-    // Load repository_folders dataset on-demand
-    if (datasetRowsByName.get("repository_folders")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_folders",
-        await loadDatasetFromStaging("repository_folders")
-      );
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filtered = (
-        datasetRowsByName.get("repository_folders") ?? []
-      ).filter((row: any) => {
-        const repoId = toNumberValue(row.repo_id);
-        return repoId === null
-          ? true
-          : repositoryImport.masterRepositoryIds.has(repoId);
-      });
-      datasetRowsByName.set("repository_folders", filtered);
-    }
+    const folderImport = await timedPhase(
+      "repositoryFolders",
+      async () => {
+        // Load repository_folders dataset on-demand
+        if (datasetRowsByName.get("repository_folders")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_folders",
+            await loadDatasetFromStaging("repository_folders")
+          );
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filtered = (
+            datasetRowsByName.get("repository_folders") ?? []
+          ).filter((row: any) => {
+            const repoId = toNumberValue(row.repo_id);
+            return repoId === null
+              ? true
+              : repositoryImport.masterRepositoryIds.has(repoId);
+          });
+          datasetRowsByName.set("repository_folders", filtered);
+        }
 
-    const folderImport = await importRepositoryFolders(
-      prisma,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      repositoryImport.repositoryIdMap,
-      repositoryImport.canonicalRepoIdByProject,
-      importJob,
-      userIdMap,
-      context,
-      persistProgress
+        return importRepositoryFolders(
+          prisma,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          repositoryImport.repositoryIdMap,
+          repositoryImport.canonicalRepoIdByProject,
+          importJob,
+          userIdMap,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, folderImport.summary);
     await persistProgress(
@@ -6160,80 +6349,90 @@ async function processImportMode(
     logMessage(context, "Processing repository cases");
     await persistProgress("repositoryCases", "Processing repository cases");
 
-    // Load repository_cases and related datasets on-demand
-    if (datasetRowsByName.get("repository_cases")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_cases",
-        await loadDatasetFromStaging("repository_cases")
-      );
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filteredCases =
-        datasetRowsByName.get("repository_cases")?.filter((row: any) => {
-          const repoId = toNumberValue(row.repo_id);
-          return repoId === null
-            ? true
-            : repositoryImport.masterRepositoryIds.has(repoId);
-        }) ?? [];
-      datasetRowsByName.set("repository_cases", filteredCases);
-    }
-    if (datasetRowsByName.get("repository_case_steps")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_case_steps",
-        await loadDatasetFromStaging("repository_case_steps")
-      );
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filteredSteps =
-        datasetRowsByName.get("repository_case_steps")?.filter((row: any) => {
-          const repoId = toNumberValue(row.repo_id);
-          return repoId === null
-            ? true
-            : repositoryImport.masterRepositoryIds.has(repoId);
-        }) ?? [];
-      datasetRowsByName.set("repository_case_steps", filteredSteps);
-    }
+    const caseImport = await timedPhase(
+      "repositoryCases",
+      async () => {
+        // Load repository_cases and related datasets on-demand
+        if (datasetRowsByName.get("repository_cases")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_cases",
+            await loadDatasetFromStaging("repository_cases")
+          );
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filteredCases =
+            datasetRowsByName.get("repository_cases")?.filter((row: any) => {
+              const repoId = toNumberValue(row.repo_id);
+              return repoId === null
+                ? true
+                : repositoryImport.masterRepositoryIds.has(repoId);
+            }) ?? [];
+          datasetRowsByName.set("repository_cases", filteredCases);
+        }
+        if (datasetRowsByName.get("repository_case_steps")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_case_steps",
+            await loadDatasetFromStaging("repository_case_steps")
+          );
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filteredSteps =
+            datasetRowsByName
+              .get("repository_case_steps")
+              ?.filter((row: any) => {
+                const repoId = toNumberValue(row.repo_id);
+                return repoId === null
+                  ? true
+                  : repositoryImport.masterRepositoryIds.has(repoId);
+              }) ?? [];
+          datasetRowsByName.set("repository_case_steps", filteredSteps);
+        }
 
-    // Load repository_case_values dataset if not already loaded
-    // This dataset contains multi-select field values (one row per selected value)
-    if (
-      !datasetRowsByName.has("repository_case_values") ||
-      datasetRowsByName.get("repository_case_values")?.length === 0
-    ) {
-      const caseValuesData = await loadDatasetFromStaging(
-        "repository_case_values"
-      );
-      datasetRowsByName.set("repository_case_values", caseValuesData);
-    }
-    if (repositoryImport.masterRepositoryIds.size > 0) {
-      const filteredCaseValues =
-        datasetRowsByName.get("repository_case_values")?.filter((row: any) => {
-          const repoId = toNumberValue(row.repo_id);
-          return repoId === null
-            ? true
-            : repositoryImport.masterRepositoryIds.has(repoId);
-        }) ?? [];
-      datasetRowsByName.set("repository_case_values", filteredCaseValues);
-    }
+        // Load repository_case_values dataset if not already loaded
+        // This dataset contains multi-select field values (one row per selected value)
+        if (
+          !datasetRowsByName.has("repository_case_values") ||
+          datasetRowsByName.get("repository_case_values")?.length === 0
+        ) {
+          const caseValuesData = await loadDatasetFromStaging(
+            "repository_case_values"
+          );
+          datasetRowsByName.set("repository_case_values", caseValuesData);
+        }
+        if (repositoryImport.masterRepositoryIds.size > 0) {
+          const filteredCaseValues =
+            datasetRowsByName
+              .get("repository_case_values")
+              ?.filter((row: any) => {
+                const repoId = toNumberValue(row.repo_id);
+                return repoId === null
+                  ? true
+                  : repositoryImport.masterRepositoryIds.has(repoId);
+              }) ?? [];
+          datasetRowsByName.set("repository_case_values", filteredCaseValues);
+        }
 
-    const caseImport = await importRepositoryCases(
-      prisma,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      repositoryImport.repositoryIdMap,
-      repositoryImport.canonicalRepoIdByProject,
-      folderImport.folderIdMap,
-      folderImport.repositoryRootFolderMap,
-      templateIdMap,
-      templateMap,
-      workflowIdMap,
-      userIdMap,
-      caseFieldMap,
-      testmoFieldValueMap,
-      normalizedConfiguration,
-      importJob,
-      context,
-      persistProgress
+        return importRepositoryCases(
+          prisma,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          repositoryImport.repositoryIdMap,
+          repositoryImport.canonicalRepoIdByProject,
+          folderImport.folderIdMap,
+          folderImport.repositoryRootFolderMap,
+          templateIdMap,
+          templateMap,
+          workflowIdMap,
+          userIdMap,
+          caseFieldMap,
+          testmoFieldValueMap,
+          normalizedConfiguration,
+          importJob,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, caseImport.summary);
     await persistProgress(
@@ -6253,21 +6452,27 @@ async function processImportMode(
       "Processing repository case tag assignments"
     );
 
-    // Load repository_case_tags dataset on-demand
-    if (datasetRowsByName.get("repository_case_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_case_tags",
-        await loadDatasetFromStaging("repository_case_tags")
-      );
-    }
+    const repositoryCaseTagsSummary = await timedPhase(
+      "repositoryCaseTags",
+      async () => {
+        // Load repository_case_tags dataset on-demand
+        if (datasetRowsByName.get("repository_case_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_case_tags",
+            await loadDatasetFromStaging("repository_case_tags")
+          );
+        }
 
-    const repositoryCaseTagsSummary = await withTransaction((tx) =>
-      importRepositoryCaseTags(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        caseImport.caseIdMap
-      )
+        return withTransaction((tx) =>
+          importRepositoryCaseTags(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            caseImport.caseIdMap
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, repositoryCaseTagsSummary);
     await persistProgress(
@@ -6328,30 +6533,36 @@ async function processImportMode(
       "Processing automation case imports"
     );
 
-    // Load automation_cases dataset on-demand
-    if (datasetRowsByName.get("automation_cases")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_cases",
-        await loadDatasetFromStaging("automation_cases")
-      );
-    }
+    const automationCaseImport = await timedPhase(
+      "automationCases",
+      async () => {
+        // Load automation_cases dataset on-demand
+        if (datasetRowsByName.get("automation_cases")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_cases",
+            await loadDatasetFromStaging("automation_cases")
+          );
+        }
 
-    const automationCaseImport = await importAutomationCases(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      repositoryImport.repositoryIdMap,
-      folderImport.folderIdMap,
-      templateIdMap,
-      projectImport.defaultTemplateIdByProject,
-      workflowIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_CASE_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+        return importAutomationCases(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          repositoryImport.repositoryIdMap,
+          folderImport.folderIdMap,
+          templateIdMap,
+          projectImport.defaultTemplateIdByProject,
+          workflowIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_CASE_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, automationCaseImport.summary);
     await persistProgress(
@@ -6369,30 +6580,36 @@ async function processImportMode(
       "Processing automation run imports"
     );
 
-    // Load automation_runs dataset on-demand
-    if (datasetRowsByName.get("automation_runs")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_runs",
-        await loadDatasetFromStaging("automation_runs")
-      );
-    }
+    const automationRunImport = await timedPhase(
+      "automationRuns",
+      async () => {
+        // Load automation_runs dataset on-demand
+        if (datasetRowsByName.get("automation_runs")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_runs",
+            await loadDatasetFromStaging("automation_runs")
+          );
+        }
 
-    const automationRunImport = await importAutomationRuns(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      configurationIdMap,
-      milestoneImport.milestoneIdMap,
-      workflowIdMap,
-      userIdMap,
-      importJob.createdById,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+        return importAutomationRuns(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          configurationIdMap,
+          milestoneImport.milestoneIdMap,
+          workflowIdMap,
+          userIdMap,
+          importJob.createdById,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, automationRunImport.summary);
     await persistProgress(
@@ -6407,34 +6624,40 @@ async function processImportMode(
       "Processing automation run test imports"
     );
 
-    // Load automation_run_tests dataset on-demand
-    if (datasetRowsByName.get("automation_run_tests")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_tests",
-        await loadDatasetFromStaging("automation_run_tests")
-      );
-    }
+    const automationRunTestImport = await timedPhase(
+      "automationRunTests",
+      async () => {
+        // Load automation_run_tests dataset on-demand
+        if (datasetRowsByName.get("automation_run_tests")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_tests",
+            await loadDatasetFromStaging("automation_run_tests")
+          );
+        }
 
-    const automationRunTestImport = await importAutomationRunTests(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      automationRunImport.testSuiteIdMap,
-      automationRunImport.testRunTimestampMap,
-      automationRunImport.testRunProjectIdMap,
-      automationRunImport.testRunTestmoProjectIdMap,
-      automationCaseProjectMap,
-      statusIdMap,
-      userIdMap,
-      importJob.createdById,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_TEST_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+        return importAutomationRunTests(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          automationRunImport.testSuiteIdMap,
+          automationRunImport.testRunTimestampMap,
+          automationRunImport.testRunProjectIdMap,
+          automationRunImport.testRunTestmoProjectIdMap,
+          automationCaseProjectMap,
+          statusIdMap,
+          userIdMap,
+          importJob.createdById,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_TEST_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (r) => r.summary.total
     );
     const automationRunTestSummary = automationRunTestImport.summary;
     const automationRunTestCaseMap = automationRunTestImport.testRunCaseIdMap;
@@ -6454,25 +6677,31 @@ async function processImportMode(
       "Processing automation run fields"
     );
 
-    if (datasetRowsByName.get("automation_run_fields")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_fields",
-        await loadDatasetFromStaging("automation_run_fields")
-      );
-    }
+    const automationRunFieldsImport = await timedPhase(
+      "automationRunFields",
+      async () => {
+        if (datasetRowsByName.get("automation_run_fields")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_fields",
+            await loadDatasetFromStaging("automation_run_fields")
+          );
+        }
 
-    const automationRunFieldsImport = await importAutomationRunFields(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_FIELD_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+        return importAutomationRunFields(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_FIELD_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunFieldsImport);
     await persistProgress(
@@ -6488,27 +6717,33 @@ async function processImportMode(
       "Processing automation run links"
     );
 
-    if (datasetRowsByName.get("automation_run_links")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_links",
-        await loadDatasetFromStaging("automation_run_links")
-      );
-    }
+    const automationRunLinksImport = await timedPhase(
+      "automationRunLinks",
+      async () => {
+        if (datasetRowsByName.get("automation_run_links")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_links",
+            await loadDatasetFromStaging("automation_run_links")
+          );
+        }
 
-    const automationRunLinksImport = await importAutomationRunLinks(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      userIdMap,
-      importJob.createdById,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_LINK_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+        return importAutomationRunLinks(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          userIdMap,
+          importJob.createdById,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_LINK_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunLinksImport);
     await persistProgress(
@@ -6524,20 +6759,25 @@ async function processImportMode(
       "Processing automation run test fields"
     );
 
-    const automationRunTestFieldsImport = await importAutomationRunTestFields(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      projectImport.projectIdMap,
-      automationRunImport.testRunIdMap,
-      automationRunTestCaseMap,
-      automationRunJunitResultMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_TEST_FIELD_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+    const automationRunTestFieldsImport = await timedPhase(
+      "automationRunTestFields",
+      () =>
+        importAutomationRunTestFields(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          projectImport.projectIdMap,
+          automationRunImport.testRunIdMap,
+          automationRunTestCaseMap,
+          automationRunJunitResultMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_TEST_FIELD_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunTestFieldsImport);
     await persistProgress(
@@ -6553,24 +6793,30 @@ async function processImportMode(
       "Processing automation run tags"
     );
 
-    if (datasetRowsByName.get("automation_run_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "automation_run_tags",
-        await loadDatasetFromStaging("automation_run_tags")
-      );
-    }
+    const automationRunTagsImport = await timedPhase(
+      "automationRunTags",
+      async () => {
+        if (datasetRowsByName.get("automation_run_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "automation_run_tags",
+            await loadDatasetFromStaging("automation_run_tags")
+          );
+        }
 
-    const automationRunTagsImport = await importAutomationRunTags(
-      prisma,
-      normalizedConfiguration,
-      datasetRowsByName,
-      automationRunImport.testRunIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: AUTOMATION_RUN_TAG_CHUNK_SIZE,
-        transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
-      }
+        return importAutomationRunTags(
+          prisma,
+          normalizedConfiguration,
+          datasetRowsByName,
+          automationRunImport.testRunIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: AUTOMATION_RUN_TAG_CHUNK_SIZE,
+            transactionTimeoutMs: AUTOMATION_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, automationRunTagsImport);
     await persistProgress(
@@ -6584,27 +6830,33 @@ async function processImportMode(
     logMessage(context, "Processing session values imports");
     await persistProgress("sessionValues", "Processing session values imports");
 
-    // Load session_values dataset on-demand
-    if (datasetRowsByName.get("session_values")?.length === 0) {
-      datasetRowsByName.set(
-        "session_values",
-        await loadDatasetFromStaging("session_values")
-      );
-    }
+    const sessionValuesImport = await timedPhase(
+      "sessionValues",
+      async () => {
+        // Load session_values dataset on-demand
+        if (datasetRowsByName.get("session_values")?.length === 0) {
+          datasetRowsByName.set(
+            "session_values",
+            await loadDatasetFromStaging("session_values")
+          );
+        }
 
-    const sessionValuesImport = await withTransaction((tx) =>
-      importSessionValues(
-        tx,
-        datasetRowsByName,
-        sessionImport.sessionIdMap,
-        testmoFieldValueMap,
-        normalizedConfiguration,
-        caseImport.caseFieldMap,
-        caseImport.caseFieldMetadataById,
-        importJob,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importSessionValues(
+            tx,
+            datasetRowsByName,
+            sessionImport.sessionIdMap,
+            testmoFieldValueMap,
+            normalizedConfiguration,
+            caseImport.caseFieldMap,
+            caseImport.caseFieldMetadataById,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, sessionValuesImport.summary);
     await persistProgress(
@@ -6616,25 +6868,31 @@ async function processImportMode(
     logMessage(context, "Processing test run imports");
     await persistProgress("testRuns", "Processing test run imports");
 
-    // Load runs dataset on-demand
-    if (datasetRowsByName.get("runs")?.length === 0) {
-      datasetRowsByName.set("runs", await loadDatasetFromStaging("runs"));
-    }
+    const testRunImport = await timedPhase(
+      "testRuns",
+      async () => {
+        // Load runs dataset on-demand
+        if (datasetRowsByName.get("runs")?.length === 0) {
+          datasetRowsByName.set("runs", await loadDatasetFromStaging("runs"));
+        }
 
-    const testRunImport = await withTransaction((tx) =>
-      importTestRuns(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        repositoryImport.canonicalRepoIdByProject,
-        configurationIdMap,
-        milestoneImport.milestoneIdMap,
-        workflowIdMap,
-        userIdMap,
-        importJob,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importTestRuns(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            repositoryImport.canonicalRepoIdByProject,
+            configurationIdMap,
+            milestoneImport.milestoneIdMap,
+            workflowIdMap,
+            userIdMap,
+            importJob,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, testRunImport.summary);
     await persistProgress(
@@ -6647,21 +6905,27 @@ async function processImportMode(
     logMessage(context, "Processing run links");
     await persistProgress("runLinks", "Processing run links");
 
-    if (datasetRowsByName.get("run_links")?.length === 0) {
-      datasetRowsByName.set(
-        "run_links",
-        await loadDatasetFromStaging("run_links")
-      );
-    }
+    const runLinksImport = await timedPhase(
+      "runLinks",
+      async () => {
+        if (datasetRowsByName.get("run_links")?.length === 0) {
+          datasetRowsByName.set(
+            "run_links",
+            await loadDatasetFromStaging("run_links")
+          );
+        }
 
-    const runLinksImport = await withTransaction((tx) =>
-      importRunLinks(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        testRunImport.testRunIdMap,
-        context
-      )
+        return withTransaction((tx) =>
+          importRunLinks(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            testRunImport.testRunIdMap,
+            context
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runLinksImport);
     await persistProgress("runLinks", formatSummaryStatus(runLinksImport));
@@ -6670,24 +6934,30 @@ async function processImportMode(
     logMessage(context, "Processing test run case imports");
     await persistProgress("testRunCases", "Processing test run case imports");
 
-    // Load run_tests dataset on-demand
-    if (datasetRowsByName.get("run_tests")?.length === 0) {
-      datasetRowsByName.set(
-        "run_tests",
-        await loadDatasetFromStaging("run_tests")
-      );
-    }
+    const testRunCaseImport = await timedPhase(
+      "testRunCases",
+      async () => {
+        // Load run_tests dataset on-demand
+        if (datasetRowsByName.get("run_tests")?.length === 0) {
+          datasetRowsByName.set(
+            "run_tests",
+            await loadDatasetFromStaging("run_tests")
+          );
+        }
 
-    const testRunCaseImport = await importTestRunCases(
-      prisma,
-      datasetRowsByName,
-      testRunImport.testRunIdMap,
-      caseImport.caseIdMap,
-      caseImport.caseMetaMap,
-      userIdMap,
-      statusIdMap,
-      context,
-      persistProgress
+        return importTestRunCases(
+          prisma,
+          datasetRowsByName,
+          testRunImport.testRunIdMap,
+          caseImport.caseIdMap,
+          caseImport.caseMetaMap,
+          userIdMap,
+          statusIdMap,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, testRunCaseImport.summary);
     await persistProgress(
@@ -6699,21 +6969,27 @@ async function processImportMode(
     logMessage(context, "Processing run tag assignments");
     await persistProgress("runTags", "Processing run tag assignments");
 
-    // Load run_tags dataset on-demand
-    if (datasetRowsByName.get("run_tags")?.length === 0) {
-      datasetRowsByName.set(
-        "run_tags",
-        await loadDatasetFromStaging("run_tags")
-      );
-    }
+    const runTagsSummary = await timedPhase(
+      "runTags",
+      async () => {
+        // Load run_tags dataset on-demand
+        if (datasetRowsByName.get("run_tags")?.length === 0) {
+          datasetRowsByName.set(
+            "run_tags",
+            await loadDatasetFromStaging("run_tags")
+          );
+        }
 
-    const runTagsSummary = await withTransaction((tx) =>
-      importRunTags(
-        tx,
-        normalizedConfiguration,
-        datasetRowsByName,
-        testRunImport.testRunIdMap
-      )
+        return withTransaction((tx) =>
+          importRunTags(
+            tx,
+            normalizedConfiguration,
+            datasetRowsByName,
+            testRunImport.testRunIdMap
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runTagsSummary);
     await persistProgress("runTags", formatSummaryStatus(runTagsSummary));
@@ -6725,31 +7001,37 @@ async function processImportMode(
       "Processing test run result imports"
     );
 
-    // Load run_results dataset on-demand
-    if (datasetRowsByName.get("run_results")?.length === 0) {
-      datasetRowsByName.set(
-        "run_results",
-        await loadDatasetFromStaging("run_results")
-      );
-    }
-
     // Merge manual and automation test run case maps
     const mergedTestRunCaseIdMap = new Map(testRunCaseImport.testRunCaseIdMap);
     for (const [testmoId, testRunCaseId] of automationRunTestCaseMap) {
       mergedTestRunCaseIdMap.set(testmoId, testRunCaseId);
     }
 
-    const testRunResultImport = await importTestRunResults(
-      prisma,
-      datasetRowsByName,
-      testRunImport.testRunIdMap,
-      mergedTestRunCaseIdMap,
-      statusIdMap,
-      userIdMap,
-      resultFieldMap,
-      importJob,
-      context,
-      persistProgress
+    const testRunResultImport = await timedPhase(
+      "testRunResults",
+      async () => {
+        // Load run_results dataset on-demand
+        if (datasetRowsByName.get("run_results")?.length === 0) {
+          datasetRowsByName.set(
+            "run_results",
+            await loadDatasetFromStaging("run_results")
+          );
+        }
+
+        return importTestRunResults(
+          prisma,
+          datasetRowsByName,
+          testRunImport.testRunIdMap,
+          mergedTestRunCaseIdMap,
+          statusIdMap,
+          userIdMap,
+          resultFieldMap,
+          importJob,
+          context,
+          persistProgress
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, testRunResultImport.summary);
     await persistProgress(
@@ -6764,16 +7046,21 @@ async function processImportMode(
       "Processing test run step results"
     );
 
-    const stepResultsSummary = await importTestRunStepResults(
-      prisma,
-      datasetRowsByName,
-      testRunResultImport.testRunResultIdMap,
-      mergedTestRunCaseIdMap,
-      statusIdMap,
-      caseImport.caseIdMap,
-      importJob,
-      context,
-      persistProgress
+    const stepResultsSummary = await timedPhase(
+      "testRunStepResults",
+      () =>
+        importTestRunStepResults(
+          prisma,
+          datasetRowsByName,
+          testRunResultImport.testRunResultIdMap,
+          mergedTestRunCaseIdMap,
+          statusIdMap,
+          caseImport.caseIdMap,
+          importJob,
+          context,
+          persistProgress
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, stepResultsSummary);
     await persistProgress(
@@ -6785,8 +7072,18 @@ async function processImportMode(
     logMessage(context, "Processing issue targets");
     await persistProgress("issueTargets", "Processing issue targets");
 
-    const issueTargetsImport = await withTransaction((tx) =>
-      importIssueTargets(tx, normalizedConfiguration, context, persistProgress)
+    const issueTargetsImport = await timedPhase(
+      "issueTargets",
+      () =>
+        withTransaction((tx) =>
+          importIssueTargets(
+            tx,
+            normalizedConfiguration,
+            context,
+            persistProgress
+          )
+        ),
+      (r) => r.summary.total
     );
     recordEntitySummary(context, issueTargetsImport.summary);
     await persistProgress(
@@ -6799,20 +7096,29 @@ async function processImportMode(
     logMessage(context, "Processing issues");
     await persistProgress("issues", "Processing issues");
 
-    if (datasetRowsByName.get("issues")?.length === 0) {
-      datasetRowsByName.set("issues", await loadDatasetFromStaging("issues"));
-    }
+    const issuesImport = await timedPhase(
+      "issues",
+      async () => {
+        if (datasetRowsByName.get("issues")?.length === 0) {
+          datasetRowsByName.set(
+            "issues",
+            await loadDatasetFromStaging("issues")
+          );
+        }
 
-    const issuesImport = await withTransaction((tx) =>
-      importIssues(
-        tx,
-        datasetRowsByName,
-        issueTargetsImport.integrationIdMap,
-        projectImport.projectIdMap,
-        importJob.createdById,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importIssues(
+            tx,
+            datasetRowsByName,
+            issueTargetsImport.integrationIdMap,
+            projectImport.projectIdMap,
+            importJob.createdById,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (r) => r.summary.total
     );
     recordEntitySummary(context, issuesImport.summary);
     await persistProgress("issues", formatSummaryStatus(issuesImport.summary));
@@ -6824,15 +7130,20 @@ async function processImportMode(
       "Creating project-integration connections"
     );
 
-    const projectIntegrationsSummary = await withTransaction((tx) =>
-      createProjectIntegrations(
-        tx,
-        datasetRowsByName,
-        projectImport.projectIdMap,
-        issueTargetsImport.integrationIdMap,
-        context,
-        persistProgress
-      )
+    const projectIntegrationsSummary = await timedPhase(
+      "projectIntegrations",
+      () =>
+        withTransaction((tx) =>
+          createProjectIntegrations(
+            tx,
+            datasetRowsByName,
+            projectImport.projectIdMap,
+            issueTargetsImport.integrationIdMap,
+            context,
+            persistProgress
+          )
+        ),
+      (s) => s.total
     );
     recordEntitySummary(context, projectIntegrationsSummary);
     await persistProgress(
@@ -6853,22 +7164,28 @@ async function processImportMode(
       "Skipped (schema does not support milestone-issue relationships)"
     );
 
-    if (datasetRowsByName.get("milestone_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "milestone_issues",
-        await loadDatasetFromStaging("milestone_issues")
-      );
-    }
+    const milestoneIssuesSummary = await timedPhase(
+      "milestoneIssues",
+      async () => {
+        if (datasetRowsByName.get("milestone_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "milestone_issues",
+            await loadDatasetFromStaging("milestone_issues")
+          );
+        }
 
-    const milestoneIssuesSummary = await withTransaction((tx) =>
-      importMilestoneIssues(
-        tx,
-        datasetRowsByName,
-        milestoneImport.milestoneIdMap,
-        issuesImport.issueIdMap,
-        context,
-        persistProgress
-      )
+        return withTransaction((tx) =>
+          importMilestoneIssues(
+            tx,
+            datasetRowsByName,
+            milestoneImport.milestoneIdMap,
+            issuesImport.issueIdMap,
+            context,
+            persistProgress
+          )
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, milestoneIssuesSummary);
     await persistProgress(
@@ -6884,24 +7201,30 @@ async function processImportMode(
       "Processing repository case issue relationships"
     );
 
-    if (datasetRowsByName.get("repository_case_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "repository_case_issues",
-        await loadDatasetFromStaging("repository_case_issues")
-      );
-    }
+    const repositoryCaseIssuesSummary = await timedPhase(
+      "repositoryCaseIssues",
+      async () => {
+        if (datasetRowsByName.get("repository_case_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "repository_case_issues",
+            await loadDatasetFromStaging("repository_case_issues")
+          );
+        }
 
-    const repositoryCaseIssuesSummary = await importRepositoryCaseIssues(
-      prisma,
-      datasetRowsByName,
-      caseImport.caseIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
-      }
+        return importRepositoryCaseIssues(
+          prisma,
+          datasetRowsByName,
+          caseImport.caseIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, repositoryCaseIssuesSummary);
     await persistProgress(
@@ -6917,24 +7240,30 @@ async function processImportMode(
       "Processing test run issue relationships"
     );
 
-    if (datasetRowsByName.get("run_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "run_issues",
-        await loadDatasetFromStaging("run_issues")
-      );
-    }
+    const runIssuesSummary = await timedPhase(
+      "runIssues",
+      async () => {
+        if (datasetRowsByName.get("run_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "run_issues",
+            await loadDatasetFromStaging("run_issues")
+          );
+        }
 
-    const runIssuesSummary = await importRunIssues(
-      prisma,
-      datasetRowsByName,
-      testRunImport.testRunIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
-      }
+        return importRunIssues(
+          prisma,
+          datasetRowsByName,
+          testRunImport.testRunIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runIssuesSummary);
     await persistProgress("runIssues", formatSummaryStatus(runIssuesSummary));
@@ -6947,24 +7276,30 @@ async function processImportMode(
       "Processing test run result issue relationships"
     );
 
-    if (datasetRowsByName.get("run_result_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "run_result_issues",
-        await loadDatasetFromStaging("run_result_issues")
-      );
-    }
+    const runResultIssuesSummary = await timedPhase(
+      "runResultIssues",
+      async () => {
+        if (datasetRowsByName.get("run_result_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "run_result_issues",
+            await loadDatasetFromStaging("run_result_issues")
+          );
+        }
 
-    const runResultIssuesSummary = await importRunResultIssues(
-      prisma,
-      datasetRowsByName,
-      testRunResultImport.testRunResultIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
-      }
+        return importRunResultIssues(
+          prisma,
+          datasetRowsByName,
+          testRunResultImport.testRunResultIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, runResultIssuesSummary);
     await persistProgress(
@@ -6980,24 +7315,30 @@ async function processImportMode(
       "Processing session issue relationships"
     );
 
-    if (datasetRowsByName.get("session_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "session_issues",
-        await loadDatasetFromStaging("session_issues")
-      );
-    }
+    const sessionIssuesSummary = await timedPhase(
+      "sessionIssues",
+      async () => {
+        if (datasetRowsByName.get("session_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "session_issues",
+            await loadDatasetFromStaging("session_issues")
+          );
+        }
 
-    const sessionIssuesSummary = await importSessionIssues(
-      prisma,
-      datasetRowsByName,
-      sessionImport.sessionIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
-      }
+        return importSessionIssues(
+          prisma,
+          datasetRowsByName,
+          sessionImport.sessionIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, sessionIssuesSummary);
     await persistProgress(
@@ -7013,24 +7354,30 @@ async function processImportMode(
       "Processing session result issue relationships"
     );
 
-    if (datasetRowsByName.get("session_result_issues")?.length === 0) {
-      datasetRowsByName.set(
-        "session_result_issues",
-        await loadDatasetFromStaging("session_result_issues")
-      );
-    }
+    const sessionResultIssuesSummary = await timedPhase(
+      "sessionResultIssues",
+      async () => {
+        if (datasetRowsByName.get("session_result_issues")?.length === 0) {
+          datasetRowsByName.set(
+            "session_result_issues",
+            await loadDatasetFromStaging("session_result_issues")
+          );
+        }
 
-    const sessionResultIssuesSummary = await importSessionResultIssues(
-      prisma,
-      datasetRowsByName,
-      sessionResultsImport.sessionResultIdMap,
-      issuesImport.issueIdMap,
-      context,
-      persistProgress,
-      {
-        chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
-        transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
-      }
+        return importSessionResultIssues(
+          prisma,
+          datasetRowsByName,
+          sessionResultsImport.sessionResultIdMap,
+          issuesImport.issueIdMap,
+          context,
+          persistProgress,
+          {
+            chunkSize: ISSUE_RELATIONSHIP_CHUNK_SIZE,
+            transactionTimeoutMs: IMPORT_TRANSACTION_TIMEOUT_MS,
+          }
+        );
+      },
+      (s) => s.total
     );
     recordEntitySummary(context, sessionResultIssuesSummary);
     await persistProgress(
@@ -7038,6 +7385,24 @@ async function processImportMode(
       formatSummaryStatus(sessionResultIssuesSummary)
     );
     releaseDatasetRows(datasetRowsByName, "session_result_issues");
+
+    console.log("\n[IMPORT TIMING] ═══════════════════════════════════");
+    console.log("[IMPORT TIMING] Phase Duration Summary:");
+    for (const { phase, durationMs, items } of phaseDurations) {
+      const sec = (durationMs / 1000).toFixed(1);
+      const rate =
+        items > 0
+          ? ` (${(items / (durationMs / 1000)).toFixed(1)} items/sec)`
+          : "";
+      console.log(
+        `[IMPORT TIMING]   ${phase.padEnd(25)} ${sec.padStart(8)}s  ${String(items).padStart(8)} items${rate}`
+      );
+    }
+    const totalMs = phaseDurations.reduce((sum, p) => sum + p.durationMs, 0);
+    console.log(
+      `[IMPORT TIMING] ${"TOTAL".padEnd(25)} ${(totalMs / 1000).toFixed(1).padStart(8)}s`
+    );
+    console.log("[IMPORT TIMING] ═══════════════════════════════════\n");
 
     logMessage(context, "Finalizing import configuration");
     await persistProgress(null, "Finalizing import configuration");
@@ -7581,10 +7946,14 @@ async function startWorker() {
     process.exit(1);
   }
 
-  const worker = new Worker(TESTMO_IMPORT_QUEUE_NAME, processor, {
-    connection: valkeyConnection as any,
-    concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
-  });
+  const worker = new Worker(
+    TESTMO_IMPORT_QUEUE_NAME,
+    withTenantContext(processor),
+    {
+      connection: valkeyConnection as any,
+      concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
+    }
+  );
 
   worker.on("completed", (job) => {
     console.log(

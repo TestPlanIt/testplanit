@@ -1,0 +1,120 @@
+# RBAC for the multitenant-workers Deployment.
+#
+# The shared worker process serves jobs from many tenants but lives in a
+# single pod with one environment. Per-tenant ENCRYPTION_KEY values are
+# stored in the existing tpi-<tenant>-env Secrets used by the app pods.
+# The worker reads the caller's tenant key at job time via the Kubernetes
+# API (see lib/tenantSecrets.ts). This manifest grants it the minimum
+# permission to do that.
+#
+# Kubernetes API is on the critical path for every job: a cold cache plus
+# an API outage will fail jobs. Mitigated by a 10-min in-memory cache and
+# in-flight request deduplication (see lib/tenantSecrets.ts). Control
+# plane health should already be an SLO.
+#
+# RELEASE STEPS (one-time, before the image rollout):
+#
+#   1. kubectl -n testplanit apply -f k8s/multitenant-workers-rbac.yaml
+#
+#   2. Patch the Deployment to use the new ServiceAccount:
+#      kubectl -n testplanit patch deployment multitenant-workers \
+#        --type=strategic -p \
+#        '{"spec":{"template":{"spec":{"serviceAccountName":"multitenant-workers"}}}}'
+#
+#   3. kubectl -n testplanit rollout restart deployment/multitenant-workers
+#
+# TENANT LIFECYCLE: Kubernetes RBAC resourceNames does not support wildcards,
+# so every tenant must appear in the list below. The list below reflects the
+# tenants present when this file was introduced and WILL drift over time —
+# provisioning operations are expected to append/remove entries on the live
+# Role in the cluster, not this file. For an authoritative snapshot, read
+# from the cluster.
+#
+# DEPENDENCY: new-tenant provisioning onto the multitenant-workers pool
+# requires the provisioning scripts in the private-ops repo to `kubectl patch`
+# this Role when they create a tenant's tpi-<tenant>-env Secret, and to
+# remove the entry on deprovision. Without that step, a newly provisioned
+# tenant's first job will 403 when the worker tries to read its Secret.
+# That behavior is being added in a companion PR
+# (fix/tenant-aware-worker-encryption-key in private-ops); do not onboard
+# new tenants against this pool until it has merged and shipped.
+#
+# DISASTER RECOVERY: the resourceNames list below is a point-in-time
+# snapshot and will drift as tenants are added after this file was last
+# edited. If you re-apply this file during DR, tenants provisioned in the
+# interim will lose RBAC and 403 on their next job. Rebuild the list from
+# live cluster state after apply:
+#
+#   kubectl -n testplanit get secrets -o name \
+#     | grep '^secret/tpi-.*-env$' | sed 's|secret/||' \
+#     | xargs -I{} kubectl -n testplanit patch role \
+#       multitenant-workers-tenant-secrets --type=json \
+#       -p '[{"op":"add","path":"/rules/0/resourceNames/-","value":"{}"}]' \
+#       2>/dev/null || true
+#
+# (Duplicate adds are tolerated with `|| true`; a cleaner idempotent version
+# is in provision-customer-k8s.sh in private-ops.)
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: multitenant-workers
+  namespace: testplanit
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: multitenant-workers-tenant-secrets
+  namespace: testplanit
+rules:
+  # Read-only on per-tenant env secrets. Name-scoped via resourceNames to
+  # avoid granting "read every Secret in the namespace" — the worker only
+  # needs the tpi-*-env secrets that hold tenant ENCRYPTION_KEY values.
+  # resourceNames does not support wildcards, so the provisioning script
+  # appends each new tenant to this list; see provision-customer-k8s.sh.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      - tpi-afiy-env
+      - tpi-allego-env
+      - tpi-ashwini-env
+      - tpi-ayush-env
+      - tpi-bhargavqa-env
+      - tpi-cint-env
+      - tpi-comartoin-env
+      - tpi-demo-env
+      - tpi-falex-env
+      - tpi-horisentechnology-env
+      - tpi-hotel-env
+      - tpi-jgekko99-env
+      - tpi-mruga-env
+      - tpi-newproject-env
+      - tpi-nooo-env
+      - tpi-playwrightproject-env
+      - tpi-prasanth-env
+      - tpi-production-env
+      - tpi-qatest-env
+      - tpi-rohit-env
+      - tpi-rpsft-env
+      - tpi-rubenmariorossi-env
+      - tpi-single-env
+      - tpi-somaaliya-env
+      - tpi-tarsji-env
+      - tpi-testproject-env
+      - tpi-toyota-env
+      - tpi-ubg-env
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: multitenant-workers-tenant-secrets
+  namespace: testplanit
+subjects:
+  - kind: ServiceAccount
+    name: multitenant-workers
+    namespace: testplanit
+roleRef:
+  kind: Role
+  name: multitenant-workers-tenant-secrets
+  apiGroup: rbac.authorization.k8s.io

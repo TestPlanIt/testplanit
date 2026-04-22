@@ -12,6 +12,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { AUTO_TAG_QUEUE_NAME } from "../lib/queueNames";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 // ─── Job data / result types ────────────────────────────────────────────────
@@ -329,7 +330,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker<AutoTagJobData, AutoTagJobResult>(
       AUTO_TAG_QUEUE_NAME,
-      processor,
+      withTenantContext(processor),
       {
         connection: valkeyConnection as any,
         concurrency: parseInt(process.env.AUTO_TAG_CONCURRENCY || "3", 10), // Process up to 3 jobs in parallel (one per entity type)

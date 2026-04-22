@@ -187,6 +187,7 @@ describe("LastTestResultCell via getColumns", () => {
     comments: "Comments",
     configuration: "Configuration",
     lastTestResult: "Last Result",
+    newBadge: "New",
   };
 
   describe("Column definition", () => {

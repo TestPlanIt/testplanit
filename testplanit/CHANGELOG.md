@@ -1,3 +1,33 @@
+## [0.22.5](https://github.com/TestPlanIt/testplanit/compare/v0.22.4...v0.22.5) (2026-04-22)
+
+### Bug Fixes
+
+* **data-import:** Fix/testmo import fixes ([#230](https://github.com/TestPlanIt/testplanit/issues/230)) ([f0cafc9](https://github.com/TestPlanIt/testplanit/commit/f0cafc939096bf29067c4043d90a7d3265a04c61))
+
+## [0.22.4](https://github.com/TestPlanIt/testplanit/compare/v0.22.3...v0.22.4) (2026-04-21)
+
+### Bug Fixes
+
+* **tenants:** Fix/tenant aware worker encryption key ([#229](https://github.com/TestPlanIt/testplanit/issues/229)) ([a835f5a](https://github.com/TestPlanIt/testplanit/commit/a835f5afa6517855caa5fac6b5f3f11602351f55))
+
+## [0.22.3](https://github.com/TestPlanIt/testplanit/compare/v0.22.2...v0.22.3) (2026-04-19)
+
+### Enhancements
+
+* dialog polish, share link password policy, and review field fixes ([#228](https://github.com/TestPlanIt/testplanit/issues/228)) ([2844afd](https://github.com/TestPlanIt/testplanit/commit/2844afddcf603eac07e69daf8105430b304d6e01))
+
+## [0.22.2](https://github.com/TestPlanIt/testplanit/compare/v0.22.1...v0.22.2) (2026-04-19)
+
+### Bug Fixes
+
+* **#217:** highlight recently added test cases ([#226](https://github.com/TestPlanIt/testplanit/issues/226)) ([62c11a3](https://github.com/TestPlanIt/testplanit/commit/62c11a3b6d4cc55c3c03a89858800ffba8a9a17b)), closes [#217](https://github.com/TestPlanIt/testplanit/issues/217) [#217](https://github.com/TestPlanIt/testplanit/issues/217)
+
+## [0.22.1](https://github.com/TestPlanIt/testplanit/compare/v0.22.0...v0.22.1) (2026-04-19)
+
+### Bug Fixes
+
+* Bug fix batch for v0.22.1 ([#225](https://github.com/TestPlanIt/testplanit/issues/225)) ([ff68bb8](https://github.com/TestPlanIt/testplanit/commit/ff68bb83e08855c98d6da877988ce00d4246431b)), closes [#220](https://github.com/TestPlanIt/testplanit/issues/220) [#219](https://github.com/TestPlanIt/testplanit/issues/219) [#221](https://github.com/TestPlanIt/testplanit/issues/221) [#223](https://github.com/TestPlanIt/testplanit/issues/223)
+
 ## [0.22.0](https://github.com/TestPlanIt/testplanit/compare/v0.21.18...v0.22.0) (2026-04-18)
 
 ### Features

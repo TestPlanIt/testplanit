@@ -101,15 +101,27 @@ export const checkUpgradeNotifications = withActionAuditContext(
           ? pendingNotifications[0].notification.title
           : `What's New in TestPlanIt`;
 
+      // Strip HTML tags for the plain text message field
+      // Loop until no tags remain to handle nested/malformed tags (CodeQL CWE-20)
+      const stripHtml = (html: string) => {
+        let result = html;
+        let prev;
+        do {
+          prev = result;
+          result = result.replace(/<[^>]*>/g, "");
+        } while (result !== prev);
+        return result.replace(/\s+/g, " ").trim();
+      };
+
       let message: string;
       if (pendingNotifications.length === 1) {
-        message = pendingNotifications[0].notification.message;
+        message = stripHtml(pendingNotifications[0].notification.message);
       } else {
         // Combine multiple notifications into a single message
         message = pendingNotifications
           .map(
             ({ version, notification }) =>
-              `**${notification.title}** (v${version})\n${notification.message}`
+              `**${notification.title}** (v${version})\n${stripHtml(notification.message)}`
           )
           .join("\n\n");
       }

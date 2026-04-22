@@ -92,13 +92,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
 
-    if (action !== "cancel") {
-      return NextResponse.json(
-        { error: "Unsupported action" },
-        { status: 400 }
-      );
-    }
-
     const job = await db.testmoImportJob.findUnique({
       where: { id: jobId },
       include: { datasets: false },
@@ -115,27 +108,62 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!ACTIVE_STATUSES.has(job.status)) {
-      const payload = serializeImportJob(job);
-      return NextResponse.json({ job: payload }, { status: 200 });
+    if (action === "retry") {
+      // Allow retrying a failed or canceled job — reset to READY so the user
+      // can reconfigure the mapping and start the import again.
+      if (job.status !== "FAILED" && job.status !== "CANCELED") {
+        return NextResponse.json(
+          { error: "Only failed or canceled jobs can be retried" },
+          { status: 400 }
+        );
+      }
+
+      const updatedJob = await db.testmoImportJob.update({
+        where: { id: jobId },
+        data: {
+          status: "READY",
+          phase: "CONFIGURING",
+          statusMessage: "Ready for reconfiguration",
+          cancelRequested: false,
+          currentEntity: null,
+          processedCount: 0,
+          errorCount: 0,
+          skippedCount: 0,
+          totalCount: 0,
+          estimatedTimeRemaining: null,
+          processingRate: null,
+          lastImportStartedAt: null,
+        },
+      });
+
+      const payload: TestmoImportJobPayload = serializeImportJob(updatedJob);
+      return NextResponse.json({ job: payload });
     }
 
-    if (job.cancelRequested) {
-      const payload = serializeImportJob(job);
-      return NextResponse.json({ job: payload }, { status: 200 });
+    if (action === "cancel") {
+      if (!ACTIVE_STATUSES.has(job.status)) {
+        const payload = serializeImportJob(job);
+        return NextResponse.json({ job: payload }, { status: 200 });
+      }
+
+      if (job.cancelRequested) {
+        const payload = serializeImportJob(job);
+        return NextResponse.json({ job: payload }, { status: 200 });
+      }
+
+      const updatedJob = await db.testmoImportJob.update({
+        where: { id: jobId },
+        data: {
+          cancelRequested: true,
+          statusMessage: "Cancellation requested",
+        },
+      });
+
+      const payload: TestmoImportJobPayload = serializeImportJob(updatedJob);
+      return NextResponse.json({ job: payload });
     }
 
-    const updatedJob = await db.testmoImportJob.update({
-      where: { id: jobId },
-      data: {
-        cancelRequested: true,
-        statusMessage: "Cancellation requested",
-      },
-    });
-
-    const payload: TestmoImportJobPayload = serializeImportJob(updatedJob);
-
-    return NextResponse.json({ job: payload });
+    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   } catch (error) {
     console.error("Failed to update Testmo import job", error);
     return NextResponse.json(

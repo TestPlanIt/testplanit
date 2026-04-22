@@ -1251,7 +1251,7 @@ export function CreateProjectWizard({
 
       case WizardStep.TEMPLATES:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col h-full">
             <Alert>
               <AlertDescription className="flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -1268,7 +1268,7 @@ export function CreateProjectWizard({
               </Alert>
             )}
 
-            <ScrollArea className="h-[400px] border rounded-lg">
+            <ScrollArea className="flex-1 border rounded-lg">
               <div className="p-4 space-y-4">
                 {templates?.map((template) => {
                   const isSelected = localSelectedTemplates.includes(
@@ -1343,26 +1343,6 @@ export function CreateProjectWizard({
                 })}
               </div>
             </ScrollArea>
-
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                {t("admin.projects.wizard.labels.selected")}:{" "}
-                {localSelectedTemplates.length}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const defaultTemplate = templates?.find((t) => t.isDefault);
-                  if (defaultTemplate) {
-                    setLocalSelectedTemplates([defaultTemplate.id]);
-                    setValue("selectedTemplates", [defaultTemplate.id]);
-                  }
-                }}
-              >
-                {t("admin.projects.wizard.actions.selectDefault")}
-              </Button>
-            </div>
           </div>
         );
 

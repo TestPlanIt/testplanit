@@ -165,13 +165,16 @@ export async function importGroups(
     }
 
     const existing = await tx.groups.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+      where: { name },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.groups.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -243,13 +246,16 @@ export async function importTags(
     }
 
     const existing = await tx.tags.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+      where: { name },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.tags.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -320,13 +326,16 @@ export async function importRoles(
     }
 
     const existing = await tx.roles.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+      where: { name },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.roles.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;
@@ -426,13 +435,16 @@ export async function importMilestoneTypes(
     }
 
     const existing = await tx.milestoneTypes.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+      where: { name },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.milestoneTypes.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       config.action = "map";
       config.mappedTo = existing.id;
       config.name = existing.name;

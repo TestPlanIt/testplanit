@@ -33,8 +33,15 @@ import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { useCreateShareLink } from "~/lib/hooks";
+import {
+  useCreateShareLink,
+  useFindFirstRegistrationSettings,
+} from "~/lib/hooks";
 import { cn } from "~/utils";
+import {
+  PasswordStrengthIndicator,
+  type PasswordPolicy,
+} from "@/components/PasswordStrengthIndicator";
 
 interface ShareDialogProps {
   open: boolean;
@@ -55,6 +62,16 @@ export function ShareDialog({
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth.signup.errors");
   const { data: session } = useSession();
+  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+  const policy: PasswordPolicy | null = registrationSettings
+    ? {
+        minPasswordLength: registrationSettings.minPasswordLength ?? 8,
+        requireUppercase: registrationSettings.requireUppercase ?? false,
+        requireLowercase: registrationSettings.requireLowercase ?? false,
+        requireNumbers: registrationSettings.requireNumbers ?? false,
+        requiredSpecialChars: registrationSettings.requiredSpecialChars ?? null,
+      }
+    : null;
   const [activeTab, setActiveTab] = useState<"create" | "list">("create");
 
   // Form state
@@ -91,10 +108,24 @@ export function ShareDialog({
         return;
       }
 
-      // Validate password for PASSWORD_PROTECTED mode
-      if (mode === "PASSWORD_PROTECTED" && (!password || password.length < 4)) {
-        setPasswordError(tAuth("passwordRequired"));
-        return;
+      // Validate password for PASSWORD_PROTECTED mode against admin policy
+      if (mode === "PASSWORD_PROTECTED") {
+        if (!password) {
+          setPasswordError(tAuth("passwordRequired"));
+          return;
+        }
+        const minLen = policy?.minPasswordLength ?? 8;
+        const meetsPolicy =
+          password.length >= minLen &&
+          (!policy?.requireUppercase || /[A-Z]/.test(password)) &&
+          (!policy?.requireLowercase || /[a-z]/.test(password)) &&
+          (!policy?.requireNumbers || /\d/.test(password)) &&
+          (!policy?.requiredSpecialChars ||
+            [...policy.requiredSpecialChars].some((c) => password.includes(c)));
+        if (!meetsPolicy) {
+          setPasswordError(tCommon("errors.passwordDoesNotMeetPolicy"));
+          return;
+        }
       }
 
       if (mode === "PASSWORD_PROTECTED" && password !== confirmPassword) {
@@ -194,7 +225,7 @@ export function ShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t("dialogTitle")}</DialogTitle>
           <DialogDescription>{t("dialogDescription")}</DialogDescription>
@@ -203,8 +234,9 @@ export function ShareDialog({
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "create" | "list")}
+          className="flex-1 flex flex-col min-h-0"
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 shrink-0">
             <TabsTrigger data-testid="share-tab-create" value="create">
               {t("tabs.create")}
             </TabsTrigger>
@@ -213,7 +245,10 @@ export function ShareDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="create" className="space-y-4 mt-4">
+          <TabsContent
+            value="create"
+            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto"
+          >
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -320,6 +355,10 @@ export function ShareDialog({
                     placeholder="••••••••"
                     required
                     className={passwordError ? "border-destructive" : ""}
+                  />
+                  <PasswordStrengthIndicator
+                    password={password}
+                    policy={policy}
                   />
                   {passwordError && (
                     <p className="text-sm text-destructive">{passwordError}</p>

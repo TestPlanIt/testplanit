@@ -12,6 +12,7 @@ import {
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import {
   getUniqueCaseGroupIds,
@@ -449,14 +450,18 @@ async function startWorker() {
 
   // Initialize the worker only if Valkey connection exists
   if (valkeyConnection) {
-    const worker = new Worker(FORECAST_QUEUE_NAME, processor, {
-      connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.FORECAST_CONCURRENCY || "5", 10),
-      limiter: {
-        max: 100,
-        duration: 1000,
-      },
-    });
+    const worker = new Worker(
+      FORECAST_QUEUE_NAME,
+      withTenantContext(processor),
+      {
+        connection: valkeyConnection as any,
+        concurrency: parseInt(process.env.FORECAST_CONCURRENCY || "5", 10),
+        limiter: {
+          max: 100,
+          duration: 1000,
+        },
+      }
+    );
 
     worker.on("completed", (job, result) => {
       console.info(

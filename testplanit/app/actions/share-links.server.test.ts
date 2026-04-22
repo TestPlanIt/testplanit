@@ -556,7 +556,7 @@ describe("share-links server actions", () => {
       const createSpy = vi.mocked(prisma.auditLog.create);
       createSpy.mockReset();
       let capturedRow: Record<string, unknown> | null = null;
-      createSpy.mockImplementation(async (args: any) => {
+      createSpy.mockImplementation((async (args: any) => {
         const ctx = getAuditContext();
         capturedRow = {
           ...args.data,
@@ -565,7 +565,7 @@ describe("share-links server actions", () => {
           requestId: ctx?.requestId ?? null,
         };
         return {};
-      });
+      }) as typeof prisma.auditLog.create);
 
       // WR-05: Previously this block re-issued the getServerSession mock
       // with the rationale "mockReset above nukes it" — but the mockReset

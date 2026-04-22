@@ -10,6 +10,7 @@ import {
 } from "../lib/multiTenantPrisma";
 import { DUPLICATE_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { getElasticsearchClient } from "../services/elasticsearchService";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { DuplicateAnalysisService } from "../lib/llm/services/duplicate-detection/duplicate-analysis.service";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
@@ -293,7 +294,7 @@ export function startDuplicateScanWorker() {
 
   worker = new Worker<DuplicateScanJobData, DuplicateScanJobResult>(
     DUPLICATE_SCAN_QUEUE_NAME,
-    processor,
+    withTenantContext(processor),
     { connection: valkeyConnection as any, concurrency: 1 }
   );
 

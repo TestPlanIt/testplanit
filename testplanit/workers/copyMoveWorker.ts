@@ -12,6 +12,7 @@ import {
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService";
 import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSync";
@@ -867,7 +868,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker<CopyMoveJobData, CopyMoveJobResult>(
       COPY_MOVE_QUEUE_NAME,
-      processor,
+      withTenantContext(processor),
       {
         connection: valkeyConnection as any,
         concurrency: 1, // LOCKED: prevent ZenStack v3 deadlocks (40P01)

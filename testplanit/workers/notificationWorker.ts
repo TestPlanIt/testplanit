@@ -8,6 +8,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
+import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
 // Define job data structures with multi-tenant support
@@ -218,7 +219,7 @@ const startWorker = async () => {
   }
 
   if (valkeyConnection) {
-    worker = new Worker(NOTIFICATION_QUEUE_NAME, processor, {
+    worker = new Worker(NOTIFICATION_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
       concurrency: parseInt(process.env.NOTIFICATION_CONCURRENCY || "5", 10),
     });

@@ -2890,6 +2890,7 @@ export default function Cases({
         comments: t("comments.title"),
         configuration: t("common.fields.configuration"),
         lastTestResult: t("repository.columns.lastTestResult"),
+        newBadge: t("common.labels.new"),
       },
       isRunMode,
       isSelectionMode,

@@ -22,7 +22,6 @@ const mockFindFirst = vi.mocked(db.registrationSettings.findFirst);
 const mockIsPasswordInHistory = vi.mocked(isPasswordInHistory);
 
 /** Helper: build a settings object with sensible defaults (all rules disabled). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeSettings(
   overrides: Partial<{
     minPasswordLength: number;
