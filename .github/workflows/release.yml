@@ -88,6 +88,17 @@ jobs:
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
+    - name: Smoke-test workers image (AMD64)
+      run: |
+        VERSION="${{ github.ref_name }}"
+        VERSION_NUM="${VERSION#v}"
+        IMAGE="ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64"
+        docker pull "$IMAGE"
+        # Fail fast if any worker entrypoint's require graph is broken
+        # (e.g. a missing native dep or a stripped package — the failure
+        # mode from the 2026-04-22 next/headers incident).
+        docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
+
   # Build ARM64 images natively on macOS arm64 runner (using Colima)
   build-arm64:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -145,6 +156,17 @@ jobs:
           --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
+
+    - name: Smoke-test workers image (ARM64)
+      run: |
+        VERSION="${{ github.ref_name }}"
+        VERSION_NUM="${VERSION#v}"
+        IMAGE="ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64"
+        docker pull "$IMAGE"
+        # Fail fast if any worker entrypoint's require graph is broken
+        # (e.g. a missing native dep or a stripped package — the failure
+        # mode from the 2026-04-22 next/headers incident).
+        docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
 
   # Merge architecture-specific images into multi-arch manifests
   merge-manifests:
@@ -259,6 +281,12 @@ jobs:
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
+    - name: Smoke-test workers image (AMD64)
+      run: |
+        IMAGE="ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-amd64"
+        docker pull "$IMAGE"
+        docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
+
   # Manual build: ARM64 images natively on macOS arm64 runner (using Colima)
   docker-manual-arm64:
     if: github.event_name == 'workflow_dispatch'
@@ -313,6 +341,12 @@ jobs:
           --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
+
+    - name: Smoke-test workers image (ARM64)
+      run: |
+        IMAGE="ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-arm64"
+        docker pull "$IMAGE"
+        docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
 
   # Manual build: Merge architecture-specific images into multi-arch manifests
   docker-manual-merge:
