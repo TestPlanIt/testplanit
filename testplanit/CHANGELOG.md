@@ -1,3 +1,9 @@
+## [0.22.6](https://github.com/TestPlanIt/testplanit/compare/v0.22.5...v0.22.6) (2026-04-22)
+
+### Enhancements
+
+* **audit:** Implement audit log gaps ([#231](https://github.com/TestPlanIt/testplanit/issues/231)) ([2485e38](https://github.com/TestPlanIt/testplanit/commit/2485e388e9d12485b7b8a77cca849e701af30caa)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1) [#2](https://github.com/TestPlanIt/testplanit/issues/2) [SC#4](https://github.com/TestPlanIt/SC/issues/4) [SC#4](https://github.com/TestPlanIt/SC/issues/4)
+
 ## [0.22.5](https://github.com/TestPlanIt/testplanit/compare/v0.22.4...v0.22.5) (2026-04-22)
 
 ### Bug Fixes
