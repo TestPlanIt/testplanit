@@ -1,4 +1,4 @@
-import { ProjectAccessType } from "@prisma/client";
+import { getEnhancedDb } from "@/lib/auth/utils";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -42,59 +42,17 @@ export async function POST(
       );
     }
 
-    const isAdmin = session.user.access === "ADMIN";
-    const isProjectAdmin = session.user.access === "PROJECTADMIN";
+    // Route authorization through the ZenStack-enhanced client so RepositoryCases
+    // `@@allow('read')` rules (role checks, NO_ACCESS denies, defaultRole
+    // requirements, etc.) are enforced per-row instead of relying on a coarse
+    // project-level check.
+    const db = await getEnhancedDb(session);
 
-    const projectAccessWhere = isAdmin
-      ? { id: projectId, isDeleted: false }
-      : {
-          id: projectId,
-          isDeleted: false,
-          OR: [
-            {
-              userPermissions: {
-                some: {
-                  userId: session.user.id,
-                  accessType: { not: ProjectAccessType.NO_ACCESS },
-                },
-              },
-            },
-            {
-              groupPermissions: {
-                some: {
-                  group: {
-                    assignedUsers: {
-                      some: {
-                        userId: session.user.id,
-                      },
-                    },
-                  },
-                  accessType: { not: ProjectAccessType.NO_ACCESS },
-                },
-              },
-            },
-            {
-              defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
-            },
-            ...(isProjectAdmin
-              ? [
-                  {
-                    assignedUsers: {
-                      some: {
-                        userId: session.user.id,
-                      },
-                    },
-                  },
-                ]
-              : []),
-          ],
-        };
-
-    const project = await prisma.projects.findFirst({
-      where: projectAccessWhere,
+    const project = await db.projects.findUnique({
+      where: { id: projectId },
     });
 
-    if (!project) {
+    if (!project || project.isDeleted) {
       return NextResponse.json(
         { error: "Project not found or access denied" },
         { status: 404 }
@@ -107,7 +65,9 @@ export async function POST(
 
     // Walk the folder tree server-side. Returns the root plus every non-deleted
     // descendant within the same project. Keeps the wire payload bounded to one
-    // folderId regardless of tree depth.
+    // folderId regardless of tree depth. Safe to use raw Prisma here: we already
+    // gated on project read access, and RepositoryFolders read access is
+    // derived from project read access (see schema.zmodel).
     const descendantRows = await prisma.$queryRaw<Array<{ id: number }>>`
       WITH RECURSIVE descendants AS (
         SELECT id
@@ -142,10 +102,13 @@ export async function POST(
       folderId: { in: descendantIds },
     };
 
+    // Count + findMany run through the enhanced client — ZenStack applies
+    // RepositoryCases `@@allow('read')` as a filter, so a user who lacks row
+    // access sees those rows elided rather than returned.
     const [totalCount, cases] = await Promise.all([
-      prisma.repositoryCases.count({ where: enforcedWhere }),
+      db.repositoryCases.count({ where: enforcedWhere }),
       select
-        ? prisma.repositoryCases.findMany({
+        ? db.repositoryCases.findMany({
             where: enforcedWhere,
             orderBy: orderBy as never,
             select: select as never,
