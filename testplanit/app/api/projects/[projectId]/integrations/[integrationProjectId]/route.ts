@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -8,12 +9,12 @@ const updateProjectIntegrationSchema = z.object({
   config: z.record(z.string(), z.any()),
 });
 
-export async function PATCH(
+export const PATCH = withAuditContext(async (
   request: NextRequest,
   {
     params,
   }: { params: Promise<{ projectId: string; integrationProjectId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -83,14 +84,14 @@ export async function PATCH(
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withAuditContext(async (
   request: NextRequest,
   {
     params,
   }: { params: Promise<{ projectId: string; integrationProjectId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -143,4 +144,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

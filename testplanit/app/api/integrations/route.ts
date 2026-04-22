@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/utils/encryption";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
 
-export async function GET(_request: NextRequest) {
+export const GET = withAuditContext(async (_request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -47,9 +48,9 @@ export async function GET(_request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -113,4 +114,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
