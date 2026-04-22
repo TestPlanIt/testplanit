@@ -1,3 +1,9 @@
+## [0.22.7](https://github.com/TestPlanIt/testplanit/compare/v0.22.6...v0.22.7) (2026-04-22)
+
+### Bug Fixes
+
+* **workers:** lazy-load next/headers to unblock worker startup ([c804cac](https://github.com/TestPlanIt/testplanit/commit/c804cacefff88ef180de6e887172d9ebfd8356ab))
+
 ## [0.22.6](https://github.com/TestPlanIt/testplanit/compare/v0.22.5...v0.22.6) (2026-04-22)
 
 ### Enhancements
