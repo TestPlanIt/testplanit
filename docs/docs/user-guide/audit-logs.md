@@ -159,6 +159,20 @@ For UPDATE actions, you can view the specific fields that were modified:
 
 Sensitive fields (passwords, tokens, API keys) are automatically masked in the audit log.
 
+### System-initiated events
+
+Some audit events are initiated by the system rather than a user — for example, scheduled jobs (budget alert checks, forecast recalculations, milestone-due notifications) or worker-to-worker chained operations that don't have an originating user request. These events are recorded with:
+
+- **User ID**: the literal string `__system__`
+- **User Name / Email**: empty
+- **Metadata**: a `systemReason` field naming the scheduled job or worker that triggered the event (e.g., `scheduled:budget-alert-check`, `scheduled:forecast-recalc`, `scheduled:milestone-due-notifications`)
+
+In the audit log viewer these rows display **System** in the User column. In CSV exports, the User ID column contains the literal `__system__` value, which makes it straightforward to include or exclude system events in spreadsheets and reporting tools.
+
+:::tip
+To find only user-initiated events, filter the audit log viewer by a specific user — system-initiated rows will be excluded automatically.
+:::
+
 ## Exporting Audit Logs
 
 Administrators can export audit logs to CSV for compliance reporting or external analysis:
@@ -217,6 +231,6 @@ If audit logs are not being recorded:
 
 If audit logs show missing user information:
 
-1. The action may have been performed by a system process
+1. The action may have been performed by a system process — look for `__system__` as the User ID and a `systemReason` field in the metadata, which identifies the scheduled job or worker that triggered the event (see [System-initiated events](#system-initiated-events))
 2. The user session may have expired before the audit was captured
 3. Check that the user is properly authenticated
