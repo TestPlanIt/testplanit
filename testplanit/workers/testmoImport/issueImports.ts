@@ -117,14 +117,18 @@ export const importIssueTargets = async (
         : IntegrationProvider.SIMPLE_URL;
 
     // Check if an integration with this name already exists
+    // Don't filter isDeleted since @@unique([name]) doesn't include it
     const existing = await tx.integration.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+      where: { name },
     });
 
     if (existing) {
+      if (existing.isDeleted) {
+        await tx.integration.update({
+          where: { id: existing.id },
+          data: { isDeleted: false },
+        });
+      }
       integrationIdMap.set(sourceId, existing.id);
       config.action = "map";
       config.mappedTo = existing.id;

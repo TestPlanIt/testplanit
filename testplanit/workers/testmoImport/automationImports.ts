@@ -498,40 +498,18 @@ export const importAutomationCases = async (
             1;
           const normalizedClassName = className || null;
 
+          // Match on full unique constraint (projectId, name, className, source)
+          // without isDeleted filter since the constraint doesn't include it
           let repositoryCase = await tx.repositoryCases.findFirst({
             where: {
               projectId,
               name,
               className: normalizedClassName,
               source: "JUNIT",
-              isDeleted: false,
             },
           });
 
-          if (!repositoryCase && normalizedClassName) {
-            repositoryCase = await tx.repositoryCases.findFirst({
-              where: {
-                projectId,
-                name,
-                source: "JUNIT",
-                isDeleted: false,
-              },
-            });
-          }
-
           if (repositoryCase) {
-            if (
-              normalizedClassName &&
-              repositoryCase.className !== normalizedClassName
-            ) {
-              repositoryCase = await tx.repositoryCases.update({
-                where: { id: repositoryCase.id },
-                data: {
-                  className: normalizedClassName,
-                },
-              });
-            }
-
             repositoryCase = await tx.repositoryCases.update({
               where: { id: repositoryCase.id },
               data: {
