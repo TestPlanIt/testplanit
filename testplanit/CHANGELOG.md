@@ -1,3 +1,9 @@
+## [0.22.5](https://github.com/TestPlanIt/testplanit/compare/v0.22.4...v0.22.5) (2026-04-22)
+
+### Bug Fixes
+
+* **data-import:** Fix/testmo import fixes ([#230](https://github.com/TestPlanIt/testplanit/issues/230)) ([f0cafc9](https://github.com/TestPlanIt/testplanit/commit/f0cafc939096bf29067c4043d90a7d3265a04c61))
+
 ## [0.22.4](https://github.com/TestPlanIt/testplanit/compare/v0.22.3...v0.22.4) (2026-04-21)
 
 ### Bug Fixes
