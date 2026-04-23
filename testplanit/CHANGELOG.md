@@ -1,3 +1,9 @@
+## [0.22.8](https://github.com/TestPlanIt/testplanit/compare/v0.22.7...v0.22.8) (2026-04-23)
+
+### Bug Fixes
+
+* **cases:** resolve descendant cases server-side to avoid HTTP 414 on deep folders ([#236](https://github.com/TestPlanIt/testplanit/issues/236)) ([563deb4](https://github.com/TestPlanIt/testplanit/commit/563deb46cb5ba4a79c4d10690b23713b994a6434))
+
 ## [0.22.7](https://github.com/TestPlanIt/testplanit/compare/v0.22.6...v0.22.7) (2026-04-22)
 
 ### Bug Fixes
