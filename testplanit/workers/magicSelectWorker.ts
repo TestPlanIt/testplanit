@@ -1,5 +1,4 @@
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import {
   createBatches,
   executeBatches,
@@ -1137,13 +1136,8 @@ export function startMagicSelectWorker() {
   return worker;
 }
 
-// Run the worker if this file is executed directly
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
   console.log("Magic select worker running...");
   startMagicSelectWorker();
 }

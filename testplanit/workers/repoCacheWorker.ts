@@ -1,5 +1,4 @@
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import { repoFileCache } from "../lib/integrations/cache/RepoFileCache";
 import {
   disconnectAllTenantClients,
@@ -172,12 +171,7 @@ async function startWorker() {
   }
 }
 
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+if (require.main === module) {
   startWorker().catch((err) => {
     console.error("Failed to start worker:", err);
     process.exit(1);

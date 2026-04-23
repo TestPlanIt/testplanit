@@ -1,5 +1,4 @@
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import { DuplicateScanService } from "../lib/services/duplicateScanService";
 import {
   disconnectAllTenantClients,
@@ -338,13 +337,8 @@ export function startDuplicateScanWorker() {
   return worker;
 }
 
-// Run the worker if this file is executed directly
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
   console.log("Duplicate scan worker running...");
   startDuplicateScanWorker();
 }

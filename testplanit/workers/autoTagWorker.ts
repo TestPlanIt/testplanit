@@ -1,5 +1,4 @@
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import { TagAnalysisService } from "../lib/llm/services/auto-tag/tag-analysis.service";
 import type { EntityType } from "../lib/llm/services/auto-tag/types";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
@@ -380,13 +379,8 @@ const startWorker = async () => {
   });
 };
 
-// Run the worker if this file is executed directly
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
   console.log("Auto-tag worker running...");
   startWorker().catch((err) => {
     console.error("Failed to start auto-tag worker:", err);
