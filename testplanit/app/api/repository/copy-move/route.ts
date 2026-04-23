@@ -2,10 +2,8 @@ import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  enqueueWithAuditContext,
-  withAuditContext,
-} from "~/lib/auditContextWrappers";
+import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";

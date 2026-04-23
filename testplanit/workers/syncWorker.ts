@@ -1,7 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import { runWithAuditContext } from "../lib/auditContext";
-import type { ActorContextJobData } from "../lib/auditContextWrappers";
+import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
   SyncJobData,
   syncService,

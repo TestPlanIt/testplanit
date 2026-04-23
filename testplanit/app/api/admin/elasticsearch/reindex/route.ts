@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import {
-  enqueueWithAuditContext,
   enrichFromApiAuth,
   withAuditContext,
 } from "~/lib/auditContextWrappers";

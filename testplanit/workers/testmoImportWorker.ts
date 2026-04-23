@@ -28,7 +28,7 @@ import { runWithAuditContext } from "../lib/auditContext";
 import {
   enqueueWithAuditContext,
   type ActorContextJobData,
-} from "../lib/auditContextWrappers";
+} from "../lib/auditContextEnqueue";
 import {
   getElasticsearchReindexQueue,
   TESTMO_IMPORT_QUEUE_NAME,

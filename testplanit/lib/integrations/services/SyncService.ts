@@ -2,7 +2,7 @@ import { prisma as defaultPrisma } from "@/lib/prismaBase";
 import type { PrismaClient } from "@prisma/client";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
-import { enqueueWithAuditContext } from "../../auditContextWrappers";
+import { enqueueWithAuditContext } from "../../auditContextEnqueue";
 import { getCurrentTenantId } from "../../multiTenantPrisma";
 import { getSyncQueue } from "../../queues";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";

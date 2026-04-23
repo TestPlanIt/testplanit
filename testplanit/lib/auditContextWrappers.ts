@@ -1,18 +1,22 @@
-// NOTE: `next/headers` is intentionally NOT imported at module-top.
-// This file is imported by BullMQ workers (via enqueueWithAuditContext), and
-// the workers Docker image strips Next.js deps to save ~900MB. A top-level
-// `import "next/headers"` would fail at worker startup with "Cannot find module".
-// The one function that needs it (withActionAuditContext) dynamic-imports below.
+import { headers as nextHeaders } from "next/headers";
 import type { NextRequest } from "next/server";
-import type { Job, JobsOptions, Queue } from "bullmq";
 import {
   type AuditContext,
-  SYSTEM_ACTOR_ID,
   extractAuditContextFromHeaders,
-  getAuditContext,
   runWithAuditContext,
   updateAuditContext,
 } from "~/lib/auditContext";
+
+/**
+ * Next.js-specific audit-context HOFs.
+ *
+ * This file transitively imports `next/headers`, which is NOT present in
+ * the workers Docker image (Next.js deps are stripped to save ~900MB).
+ * Runtime-agnostic enqueue helpers (`enqueueWithAuditContext`,
+ * `ActorContextJobData`, `EnqueueSystemOptions`) live in
+ * `./auditContextEnqueue.ts` — workers and other non-Next.js contexts
+ * MUST import from there, never from this file.
+ */
 
 /**
  * HOF that wraps an API route handler in an AsyncLocalStorage frame
@@ -54,9 +58,6 @@ export function withActionAuditContext<TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>
 ): (...args: TArgs) => Promise<TReturn> {
   return async (...args: TArgs): Promise<TReturn> => {
-    // Dynamic import keeps workers (which don't have next/ in node_modules)
-    // from crashing when this file is required for its enqueue helpers.
-    const { headers: nextHeaders } = await import("next/headers");
     const headersList = await nextHeaders();
     // next/headers returns ReadonlyHeaders which is structurally compatible
     // with Headers for the extractor's purposes.
@@ -87,120 +88,4 @@ export function enrichFromApiAuth(apiAuth: {
     userEmail: apiAuth.userEmail,
     userName: apiAuth.userName,
   });
-}
-
-/**
- * System-actor stamping options. Callers that legitimately enqueue jobs
- * from outside any user request (scheduled jobs, worker-to-worker where
- * no upstream context exists, infrastructure tasks) MUST pass a
- * `systemReason` so the audit log records WHY the event has no actor.
- *
- * Convention: `scope:identifier` e.g. `"scheduled:daily-report-rollup"`,
- * `"scheduled:budget-alert-check"`, `"fixture:test-fixture"`. Free-form
- * is acceptable — it is stored as-is on the ALS frame and merged into
- * event.metadata by captureAuditEvent.
- *
- * Per Phase 64 D-14 / D-15 / W5.
- */
-export interface EnqueueSystemOptions {
-  systemReason: string;
-}
-
-export type ActorContextJobData<T> = T & {
-  actorContext: AuditContext;
-  /** Mirror of actorContext.systemReason for consumers that read job root directly. */
-  systemReason?: string;
-};
-
-/**
- * Enqueue a job with actor context stamped from the current ALS frame,
- * OR explicitly stamp as `__system__` when no ALS context is available
- * and a `systemReason` is provided.
- *
- * Throws at enqueue-time when no ALS context is present AND no
- * systemReason is provided — this is intentional: callers must decide
- * consciously whether a job is user-attributed or system-initiated.
- *
- * When stamping `__system__`, the systemReason is embedded INSIDE
- * actorContext (so `runWithAuditContext(job.data.actorContext, ...)` in
- * the worker re-populates ALS with systemReason, and captureAuditEvent
- * merges it into event.metadata — see W5 Option A). A root-level mirror
- * of systemReason is preserved for consumers that read the job data
- * directly.
- *
- * Per Phase 64 D-08 / D-14 / W5.
- */
-export function enqueueWithAuditContext<T extends object>(
-  queue: Queue,
-  name: string,
-  data: T,
-  opts?: JobsOptions
-): Promise<Job<ActorContextJobData<T>>>;
-export function enqueueWithAuditContext<T extends object>(
-  queue: Queue,
-  name: string,
-  data: T,
-  systemOpts: EnqueueSystemOptions,
-  opts?: JobsOptions
-): Promise<Job<ActorContextJobData<T>>>;
-export async function enqueueWithAuditContext<T extends object>(
-  queue: Queue,
-  name: string,
-  data: T,
-  optsOrSystem?: JobsOptions | EnqueueSystemOptions,
-  maybeOpts?: JobsOptions
-): Promise<Job<ActorContextJobData<T>>> {
-  const isSystemOpts =
-    typeof optsOrSystem === "object" &&
-    optsOrSystem !== null &&
-    "systemReason" in optsOrSystem &&
-    typeof (optsOrSystem as EnqueueSystemOptions).systemReason === "string";
-
-  const jobOpts: JobsOptions | undefined = isSystemOpts
-    ? maybeOpts
-    : (optsOrSystem as JobsOptions | undefined);
-
-  const alsContext = getAuditContext();
-  // WR-01: empty strings are "present but empty", which is just as
-  // invalid as absent. Compare explicitly against null/undefined AND ""
-  // so a future refactor that defaults a field to "" does not silently
-  // flip a user-attributed event into the system branch.
-  const isPresent = (value: unknown): boolean =>
-    typeof value === "string" && value.length > 0;
-  const hasAlsIdentity = Boolean(
-    alsContext &&
-    (isPresent(alsContext.userId) ||
-      isPresent(alsContext.userEmail) ||
-      isPresent(alsContext.userName) ||
-      isPresent(alsContext.ipAddress) ||
-      isPresent(alsContext.userAgent) ||
-      isPresent(alsContext.requestId))
-  );
-
-  let payload: ActorContextJobData<T>;
-
-  if (hasAlsIdentity && alsContext) {
-    payload = {
-      ...data,
-      actorContext: { ...alsContext },
-    };
-  } else if (isSystemOpts) {
-    const systemReason = (optsOrSystem as EnqueueSystemOptions).systemReason;
-    payload = {
-      ...data,
-      actorContext: { userId: SYSTEM_ACTOR_ID, systemReason },
-      systemReason,
-    };
-  } else {
-    throw new Error(
-      "enqueueWithAuditContext: no audit context present; pass { systemReason } to stamp __system__"
-    );
-  }
-
-  return queue.add(
-    name,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    payload as any,
-    jobOpts
-  ) as Promise<Job<ActorContextJobData<T>>>;
 }

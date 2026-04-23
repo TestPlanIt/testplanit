@@ -13,7 +13,7 @@
  */
 
 import { Queue } from "bullmq";
-import { enqueueWithAuditContext } from "../lib/auditContextWrappers";
+import { enqueueWithAuditContext } from "../lib/auditContextEnqueue";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
 
