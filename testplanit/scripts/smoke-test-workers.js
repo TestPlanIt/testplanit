@@ -28,7 +28,7 @@
 // Fill in dummy values for any env vars validated at module load time.
 // Using `||=` so any real value injected by the CI runner is preserved.
 process.env.DATABASE_URL ||= "postgresql://dummy:dummy@dummy:5432/dummy";
-process.env.NEXTAUTH_SECRET ||= "dummy-smoke-test-secret-min-32-characters-long";
+process.env.NEXTAUTH_SECRET ||= "dummy-secret-for-smoke-test-32ch";
 process.env.NEXTAUTH_URL ||= "http://localhost:3000";
 process.env.VALKEY_URL ||= "valkey://dummy:6379";
 process.env.NODE_ENV ||= "production";
