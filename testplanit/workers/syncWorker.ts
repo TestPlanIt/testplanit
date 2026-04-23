@@ -1,5 +1,4 @@
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
@@ -261,13 +260,8 @@ const startWorker = async () => {
   process.on("SIGTERM", shutdown);
 };
 
-// Run the worker if this file is executed directly (works with both ESM and CommonJS)
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
   console.log("Sync worker running...");
   startWorker().catch((err) => {
     console.error("Failed to start sync worker:", err);

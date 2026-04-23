@@ -15,7 +15,6 @@ import bcrypt from "bcrypt";
 import { Job, Worker } from "bullmq";
 import { Window as HappyDOMWindow } from "happy-dom";
 import { Readable } from "node:stream";
-import { pathToFileURL } from "node:url";
 import { emptyEditorContent } from "../app/constants/backend";
 import {
   disconnectAllTenantClients,
@@ -7986,12 +7985,7 @@ async function startWorker() {
 }
 
 // Start worker when file is run directly (works with both ESM and CommonJS)
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+if (require.main === module) {
   startWorker().catch((err) => {
     console.error("Failed to start Testmo import worker:", err);
     process.exit(1);

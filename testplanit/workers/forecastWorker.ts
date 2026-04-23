@@ -1,5 +1,4 @@
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
@@ -507,15 +506,8 @@ async function startWorker() {
   }
 }
 
-// Conditionally call startWorker only when this file is executed directly
-// This check ensures importing the file doesn't automatically start the worker
-// Works with both ESM and CommonJS
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as any).url === undefined
-) {
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
   startWorker().catch((err) => {
     console.error("Failed to start worker:", err);
     process.exit(1);

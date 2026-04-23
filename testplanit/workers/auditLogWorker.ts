@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client";
 import { Job, Worker } from "bullmq";
-import { pathToFileURL } from "node:url";
 import {
   disconnectAllTenantClients,
   getPrismaClientForJob,
@@ -166,13 +165,8 @@ const startWorker = async () => {
   });
 };
 
-// Run the worker if this file is executed directly
-if (
-  (typeof import.meta !== "undefined" &&
-    import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  typeof import.meta === "undefined" ||
-  (import.meta as unknown as { url?: string })?.url === undefined
-) {
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
   console.log("[AuditLogWorker] Running as standalone process...");
   startWorker().catch((err) => {
     console.error("[AuditLogWorker] Failed to start:", err);
