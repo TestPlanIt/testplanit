@@ -355,5 +355,7 @@ export function startGenerateFromUrlWorker() {
   return worker;
 }
 
-// Auto-start
-startGenerateFromUrlWorker();
+// Run the worker only when this file is executed directly (not on require)
+if (require.main === module) {
+  startGenerateFromUrlWorker();
+}
