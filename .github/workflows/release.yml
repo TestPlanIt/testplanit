@@ -11,6 +11,14 @@
 # - Production image: ghcr.io/testplanit/testplanit:latest (for Next.js server)
 # - Workers image: ghcr.io/testplanit/testplanit:latest-workers (for background workers)
 #
+# Workers image SHA tags:
+# - Every build also publishes ghcr.io/testplanit/testplanit:workers-sha-<short-sha>
+#   so the k8s Deployment can pin to a specific commit rather than the floating
+#   :latest-workers tag. :latest-workers is retained as a convenience alias but
+#   Deployments SHOULD reference :workers-sha-<short-sha> so `kubectl rollout
+#   undo` has real history to roll back to. See multitenant-workers Deployment
+#   manifest in the private-ops repo.
+#
 # IMPORTANT: Docker images are built with BASE_DOMAIN=testplanit.com which enables a wildcard
 # pattern (*.testplanit.com) for Next.js image optimization. This allows a SINGLE Docker image
 # to serve ALL customer subdomains (e.g., company1.testplanit.com, company2.testplanit.com, etc.)
@@ -77,6 +85,7 @@ jobs:
       run: |
         VERSION="${{ github.ref_name }}"
         VERSION_NUM="${VERSION#v}"
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/amd64" \
@@ -84,6 +93,7 @@ jobs:
           --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-amd64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers-amd64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64" \
           --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
@@ -146,6 +156,7 @@ jobs:
       run: |
         VERSION="${{ github.ref_name }}"
         VERSION_NUM="${VERSION#v}"
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/arm64" \
@@ -153,6 +164,7 @@ jobs:
           --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-arm64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers-arm64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64" \
           --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
@@ -197,6 +209,7 @@ jobs:
       run: |
         VERSION="${{ github.ref_name }}"
         VERSION_NUM="${VERSION#v}"
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
         # Create production manifests
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION_NUM} \
@@ -215,6 +228,12 @@ jobs:
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
           ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
           ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+
+        # SHA-pinned workers manifest — the k8s Deployment SHOULD reference
+        # this tag (not :latest-workers) so rollbacks work.
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA} \
+          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64 \
+          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64
 
         # Only update 'latest' if this is the newest semantic version
         # Filter to only 3-part semver tags (vX.Y.Z) to avoid non-semver tags like v1.1 breaking the comparison
@@ -273,10 +292,12 @@ jobs:
     - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/amd64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-amd64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-amd64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64" \
           --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
@@ -334,10 +355,12 @@ jobs:
     - name: Build and push ARM64 images
       working-directory: ./testplanit
       run: |
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/arm64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-arm64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-arm64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64" \
           --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
@@ -376,6 +399,7 @@ jobs:
     - name: Create multi-arch manifests
       run: |
         VERSION="${{ github.event.inputs.tag }}"
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
         # Create production manifest
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION} \
@@ -386,6 +410,12 @@ jobs:
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
           ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
           ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+
+        # SHA-pinned workers manifest — the k8s Deployment SHOULD reference
+        # this tag (not :latest-workers) so rollbacks work.
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA} \
+          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64 \
+          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64
 
         # Update 'latest' if this is the newest semantic version
         # Filter to only 3-part semver tags (vX.Y.Z) to avoid non-semver tags like v1.1 breaking the comparison
