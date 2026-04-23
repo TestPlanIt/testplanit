@@ -1,3 +1,9 @@
+## [0.22.9](https://github.com/TestPlanIt/testplanit/compare/v0.22.8...v0.22.9) (2026-04-23)
+
+### Bug Fixes
+
+* **workers:** use require.main === module guard so require() doesn't start workers ([#239](https://github.com/TestPlanIt/testplanit/issues/239)) ([900ad63](https://github.com/TestPlanIt/testplanit/commit/900ad630dceb56e502ad1e8d99e9d7066a3a4c0f)), closes [#237](https://github.com/TestPlanIt/testplanit/issues/237)
+
 ## [0.22.8](https://github.com/TestPlanIt/testplanit/compare/v0.22.7...v0.22.8) (2026-04-23)
 
 ### Bug Fixes
