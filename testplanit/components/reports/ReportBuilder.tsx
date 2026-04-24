@@ -89,6 +89,10 @@ import {
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
+import {
+  buildCleanReportUrlParams,
+  isUrlInSyncWithReportType,
+} from "./reportUrlUtils";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -922,15 +926,11 @@ function ReportBuilderContent({
     // Mark the new report as already run to prevent auto-run from interfering
     lastRunReportType.current = defaultReport;
 
-    // Update URL with a CLEAN param set — report-specific params (dimensions,
-    // metrics, date range, etc.) from the previously selected report do not
-    // apply to the new one and would otherwise be re-hydrated by the metadata
-    // effect and fed into an auto-run against an incompatible report.
-    const newParams = new URLSearchParams();
-    newParams.set("reportType", defaultReport);
-    newParams.set("tab", newTab);
-    newParams.set("page", "1");
-    newParams.set("pageSize", "10");
+    // Update URL with a CLEAN param set — see reportUrlUtils for rationale.
+    const newParams = buildCleanReportUrlParams({
+      reportType: defaultReport,
+      tab: newTab,
+    });
 
     router.replace(`${pathname}?${newParams.toString()}`);
   };
@@ -972,13 +972,11 @@ function ReportBuilderContent({
 
       // Guard against URL-state race: when reportType changes, the metadata
       // effect can fire once with stale searchParams (before router.replace's
-      // URL update lands). If the URL's reportType param still points at the
-      // OLD report, skip loading dimensions/metrics from URL — otherwise we
-      // pick up the previous report's selections and auto-run dispatches them
-      // against the new report, which rejects them as unsupported.
-      const urlReportType = searchParams.get("reportType");
-      const urlInSyncWithState =
-        !urlReportType || urlReportType === reportType;
+      // URL update lands). See reportUrlUtils for rationale.
+      const urlInSyncWithState = isUrlInSyncWithReportType(
+        searchParams.get("reportType"),
+        reportType
+      );
 
       try {
         const url = new URL(currentReport.endpoint, window.location.origin);

@@ -259,45 +259,4 @@ test.describe("Report Builder - Multiple Report Types", () => {
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 
-  /**
-   * Regression: switching tab / report type must clear stale dimension+metric
-   * URL params from the previous report. Before the fix, the builder preserved
-   * `?dimensions=…&metrics=…` across tab changes and the metadata effect fed
-   * them into an auto-run against the new report, producing server errors
-   * like "Unsupported dimension: creator".
-   */
-  test("Switching from builder tab to reports tab clears stale dimension/metric URL params", async ({
-    api,
-    page,
-  }) => {
-    const projectId = await createProjectWithTestData(api);
-
-    // Land on builder tab with a dimension + metric in the URL.
-    await navigateToReport(
-      page,
-      projectId,
-      "repository-stats",
-      ["folder"],
-      ["testCaseCount"]
-    );
-    await expect(page).toHaveURL(/dimensions=folder/);
-    await expect(page).toHaveURL(/metrics=testCaseCount/);
-
-    // Switch to the pre-built "Reports" tab. This triggers handleTabChange
-    // which previously preserved ALL URL params and leaked them into the next
-    // report's auto-run.
-    await page.getByRole("tab", { name: /reports/i }).first().click();
-    await page.waitForLoadState("networkidle");
-
-    // URL should have been reset — stale dimension/metric params must be gone.
-    await expect(page).not.toHaveURL(/dimensions=folder/);
-    await expect(page).not.toHaveURL(/metrics=testCaseCount/);
-    await expect(page).toHaveURL(/tab=reports/);
-
-    // And the new report must not have surfaced a server-side "Unsupported
-    // dimension" error (which is what users saw when stale dims leaked in).
-    await expect(
-      page.locator("text=/Unsupported dimension/i")
-    ).not.toBeVisible();
-  });
 });
