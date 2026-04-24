@@ -3430,7 +3430,8 @@
         "fields": {
           "email_invalid": "Adresse e-mail invalide",
           "password_error": "Un mot de passe est requis.",
-          "confirmPassword_error": "Confirmer le mot de passe est requis"
+          "confirmPassword_error": "Confirmer le mot de passe est requis",
+          "passwordOptionalHelp": "Laisser vide pour exiger que l'utilisateur se connecte via un lien magique ou l'authentification unique (SSO)."
         }
       },
       "edit": {
@@ -4433,7 +4434,15 @@
         "ipAddress": "Adresse IP",
         "userAgent": "Agent utilisateur"
       },
-      "exportCsv": "Exporter au format CSV"
+      "exportCsv": "Exporter au format CSV",
+      "timeRange": "Période",
+      "timeRangeOptions": {
+        "last24h": "Dernières 24 heures",
+        "last7d": "Les 7 derniers jours",
+        "last30d": "30 derniers jours",
+        "last90d": "90 derniers jours",
+        "allTime": "Tout le temps"
+      }
     }
   },
   "components": {
@@ -6297,7 +6306,8 @@
     "uppercase": "Au moins une lettre majuscule",
     "lowercase": "Au moins une lettre minuscule",
     "numbers": "Au moins un nombre",
-    "specialChars": "Caractère spécial provenant de : {chars}"
+    "specialChars": "Caractère spécial provenant de : {chars}",
+    "history": "Ce mot de passe a été utilisé dans votre dernier {depth} mot de passe"
   },
   "TrialExpired": {
     "title": "Votre période d'essai a expiré.",

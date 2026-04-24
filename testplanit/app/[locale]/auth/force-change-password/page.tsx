@@ -14,6 +14,10 @@ import {
   PasswordStrengthIndicator,
   type PasswordPolicy,
 } from "@/components/PasswordStrengthIndicator";
+import {
+  translatePolicyViolation,
+  type PolicyViolation,
+} from "~/lib/password-policy-messages";
 import { KeyRound, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -75,8 +79,14 @@ export default function ForceChangePasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Policy violations come back as structured objects (GitHub #227) —
+        // localize each with the shared helper.
         if (data.errors && Array.isArray(data.errors)) {
-          setErrors(data.errors);
+          setErrors(
+            (data.errors as PolicyViolation[]).map((v) =>
+              translatePolicyViolation(v, t)
+            )
+          );
         } else {
           setErrors([data.error || t("auth.forceChangePassword.genericError")]);
         }

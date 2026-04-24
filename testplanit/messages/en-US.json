@@ -3430,7 +3430,8 @@
         "fields": {
           "email_invalid": "Invalid email address",
           "password_error": "Password is required",
-          "confirmPassword_error": "Confirm Password is required"
+          "confirmPassword_error": "Confirm Password is required",
+          "passwordOptionalHelp": "Leave blank to require the user to sign in via magic link or SSO."
         }
       },
       "edit": {
@@ -6305,7 +6306,8 @@
     "uppercase": "At least one uppercase letter",
     "lowercase": "At least one lowercase letter",
     "numbers": "At least one number",
-    "specialChars": "Special character from: {chars}"
+    "specialChars": "Special character from: {chars}",
+    "history": "Password was used in your last {depth} passwords"
   },
   "TrialExpired": {
     "title": "Your Trial Has Expired",

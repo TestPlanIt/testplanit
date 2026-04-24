@@ -7,22 +7,16 @@
  * compliant.
  *
  * All checks run server-side only — the function is never exported to the
- * client bundle.
+ * client bundle. Violations carry a machine-readable `rule` + structured
+ * `params` so clients can localize the message (GitHub #227); the shared type
+ * lives in `lib/password-policy-messages.ts` to stay client-safe.
  */
 
 import { isPasswordInHistory } from "~/lib/password-history";
+import type { PolicyViolation } from "~/lib/password-policy-messages";
 import { db } from "~/server/db";
 
-/**
- * A single policy violation describing which rule failed and a
- * human-readable message suitable for display in the UI.
- */
-export interface PolicyViolation {
-  /** Machine-readable rule identifier */
-  rule: string;
-  /** Human-readable violation message (per D-02) */
-  message: string;
-}
+export type { PolicyViolation } from "~/lib/password-policy-messages";
 
 /**
  * Validate `plaintext` against the configured password policy for the current
@@ -53,39 +47,25 @@ export async function validatePasswordPolicy(
 
   const violations: PolicyViolation[] = [];
 
-  // Length check
   if (plaintext.length < settings.minPasswordLength) {
     violations.push({
       rule: "minLength",
-      message: `Password must be at least ${settings.minPasswordLength} characters`,
+      params: { count: settings.minPasswordLength },
     });
   }
 
-  // Uppercase check
   if (settings.requireUppercase && !/[A-Z]/.test(plaintext)) {
-    violations.push({
-      rule: "uppercase",
-      message: "Password must contain at least one uppercase letter",
-    });
+    violations.push({ rule: "uppercase" });
   }
 
-  // Lowercase check
   if (settings.requireLowercase && !/[a-z]/.test(plaintext)) {
-    violations.push({
-      rule: "lowercase",
-      message: "Password must contain at least one lowercase letter",
-    });
+    violations.push({ rule: "lowercase" });
   }
 
-  // Numbers check
   if (settings.requireNumbers && !/[0-9]/.test(plaintext)) {
-    violations.push({
-      rule: "numbers",
-      message: "Password must contain at least one number",
-    });
+    violations.push({ rule: "numbers" });
   }
 
-  // Special characters check
   if (settings.requiredSpecialChars) {
     const escaped = settings.requiredSpecialChars.replace(
       /[-[\]{}()*+?.,\\^$|#\s]/g,
@@ -95,12 +75,11 @@ export async function validatePasswordPolicy(
     if (!specialCharRegex.test(plaintext)) {
       violations.push({
         rule: "specialChars",
-        message: `Password must contain at least one special character (${settings.requiredSpecialChars})`,
+        params: { chars: settings.requiredSpecialChars },
       });
     }
   }
 
-  // Password history check
   if (settings.passwordHistoryDepth > 0) {
     const inHistory = await isPasswordInHistory(
       userId,
@@ -110,7 +89,7 @@ export async function validatePasswordPolicy(
     if (inHistory) {
       violations.push({
         rule: "history",
-        message: `Password was used in your last ${settings.passwordHistoryDepth} passwords`,
+        params: { depth: settings.passwordHistoryDepth },
       });
     }
   }

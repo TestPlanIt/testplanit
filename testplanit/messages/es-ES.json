@@ -3430,7 +3430,8 @@
         "fields": {
           "email_invalid": "Dirección de correo inválida",
           "password_error": "Se requiere contraseña",
-          "confirmPassword_error": "Confirmar contraseña es necesario"
+          "confirmPassword_error": "Confirmar contraseña es necesario",
+          "passwordOptionalHelp": "Déjelo en blanco para que el usuario deba iniciar sesión mediante enlace mágico o SSO."
         }
       },
       "edit": {
@@ -4433,7 +4434,15 @@
         "ipAddress": "Dirección IP",
         "userAgent": "Agente de usuario"
       },
-      "exportCsv": "Exportar CSV"
+      "exportCsv": "Exportar CSV",
+      "timeRange": "Intervalo de tiempo",
+      "timeRangeOptions": {
+        "last24h": "Últimas 24 horas",
+        "last7d": "Últimos 7 días",
+        "last30d": "Últimos 30 días",
+        "last90d": "Últimos 90 días",
+        "allTime": "Todos los tiempos"
+      }
     }
   },
   "components": {
@@ -6297,7 +6306,8 @@
     "uppercase": "Al menos una letra mayúscula",
     "lowercase": "Al menos una letra minúscula",
     "numbers": "Al menos un número",
-    "specialChars": "Carácter especial de: {chars}"
+    "specialChars": "Carácter especial de: {chars}",
+    "history": "La contraseña se utilizó en tus últimas {depth} contraseñas"
   },
   "TrialExpired": {
     "title": "Su período de prueba ha expirado.",

@@ -15,6 +15,10 @@ import {
   PasswordStrengthIndicator,
   type PasswordPolicy,
 } from "@/components/PasswordStrengthIndicator";
+import {
+  translatePolicyViolation,
+  type PolicyViolation,
+} from "~/lib/password-policy-messages";
 import { Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -39,7 +43,7 @@ export function ChangePasswordModal({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
 
   useEffect(() => {
@@ -56,21 +60,21 @@ export function ChangePasswordModal({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError(null);
+    setErrors([]);
 
     if (newPassword !== confirmPassword) {
-      setError(t("validation.passwordsDoNotMatch"));
+      setErrors([t("validation.passwordsDoNotMatch")]);
       return;
     }
 
     const minLen = policy?.minPasswordLength ?? 8;
     if (newPassword.length < minLen) {
-      setError(t("validation.newPasswordTooShort"));
+      setErrors([t("validation.newPasswordTooShort")]);
       return;
     }
 
     if (!session?.user?.id) {
-      setError(tCommon("errors.unauthenticated"));
+      setErrors([tCommon("errors.unauthenticated")]);
       return;
     }
 
@@ -91,13 +95,23 @@ export function ChangePasswordModal({
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error || tCommon("errors.somethingWentWrong"));
+        // Policy violations come back as structured objects (GitHub #227) —
+        // localize each with the shared helper.
+        if (Array.isArray(result.errors)) {
+          setErrors(
+            (result.errors as PolicyViolation[]).map((v) =>
+              translatePolicyViolation(v, tGlobal)
+            )
+          );
+        } else {
+          setErrors([result.error || tCommon("errors.somethingWentWrong")]);
+        }
       } else {
         toast.success(t("success.passwordChanged"));
         onClose();
       }
     } catch {
-      setError(tCommon("errors.somethingWentWrong"));
+      setErrors([tCommon("errors.somethingWentWrong")]);
     }
     setIsLoading(false);
   };
@@ -113,9 +127,20 @@ export function ChangePasswordModal({
             <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {error && (
-              <div className="text-destructive text-sm bg-destructive/10 p-3 rounded-md">
-                {error}
+            {errors.length > 0 && (
+              <div
+                className="text-destructive text-sm bg-destructive/10 p-3 rounded-md"
+                role="alert"
+              >
+                {errors.length === 1 ? (
+                  errors[0]
+                ) : (
+                  <ul className="list-disc list-inside space-y-1">
+                    {errors.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
             <div className="grid grid-cols-4 items-center gap-4 text-right">
