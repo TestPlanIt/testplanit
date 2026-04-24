@@ -922,8 +922,11 @@ function ReportBuilderContent({
     // Mark the new report as already run to prevent auto-run from interfering
     lastRunReportType.current = defaultReport;
 
-    // ALWAYS update URL to ensure tab switches properly
-    const newParams = new URLSearchParams(searchParams.toString());
+    // Update URL with a CLEAN param set — report-specific params (dimensions,
+    // metrics, date range, etc.) from the previously selected report do not
+    // apply to the new one and would otherwise be re-hydrated by the metadata
+    // effect and fed into an auto-run against an incompatible report.
+    const newParams = new URLSearchParams();
     newParams.set("reportType", defaultReport);
     newParams.set("tab", newTab);
     newParams.set("page", "1");
@@ -967,6 +970,16 @@ function ReportBuilderContent({
     async function fetchMetadata() {
       if (!currentReport) return;
 
+      // Guard against URL-state race: when reportType changes, the metadata
+      // effect can fire once with stale searchParams (before router.replace's
+      // URL update lands). If the URL's reportType param still points at the
+      // OLD report, skip loading dimensions/metrics from URL — otherwise we
+      // pick up the previous report's selections and auto-run dispatches them
+      // against the new report, which rejects them as unsupported.
+      const urlReportType = searchParams.get("reportType");
+      const urlInSyncWithState =
+        !urlReportType || urlReportType === reportType;
+
       try {
         const url = new URL(currentReport.endpoint, window.location.origin);
         if (mode === "project" && projectId) {
@@ -1004,6 +1017,14 @@ function ReportBuilderContent({
         setMetricOptions(metOpts);
         setFilteredDimensionOptions(dimOpts);
         setFilteredMetricOptions(metOpts);
+
+        // Skip loading URL-based selections if the URL is still for the
+        // previous report type (see guard above). The dimOpts we just fetched
+        // are for the new report, so any URL param values belong to an old
+        // report whose selections do not apply here.
+        if (!urlInSyncWithState) {
+          return;
+        }
 
         // Load from URL parameters if present
         const dimensionsParam = searchParams.get("dimensions");
