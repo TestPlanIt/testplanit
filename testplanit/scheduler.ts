@@ -147,24 +147,28 @@ async function scheduleJobs() {
   }
 }
 
-// Run the scheduling function
-scheduleJobs()
-  .then(async () => {
-    console.log("Scheduling script finished successfully.");
-    // Close all queue instances before exiting to flush pending Redis
-    // operations and tear down event stream listeners cleanly.
-    const forecastQueue = getForecastQueue();
-    const notificationQueue = getNotificationQueue();
-    const repoCacheQueue = getRepoCacheQueue();
-    await Promise.all([
-      forecastQueue?.close(),
-      notificationQueue?.close(),
-      repoCacheQueue?.close(),
-    ]);
-    console.log("All queues closed.");
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error("Scheduling script failed unexpectedly:", err);
-    process.exit(1);
-  });
+// Run the scheduling function only when executed directly (not on require).
+// The CI smoke test require()s this module to validate its import graph;
+// running scheduleJobs() then would try to connect to Valkey and fail.
+if (require.main === module) {
+  scheduleJobs()
+    .then(async () => {
+      console.log("Scheduling script finished successfully.");
+      // Close all queue instances before exiting to flush pending Redis
+      // operations and tear down event stream listeners cleanly.
+      const forecastQueue = getForecastQueue();
+      const notificationQueue = getNotificationQueue();
+      const repoCacheQueue = getRepoCacheQueue();
+      await Promise.all([
+        forecastQueue?.close(),
+        notificationQueue?.close(),
+        repoCacheQueue?.close(),
+      ]);
+      console.log("All queues closed.");
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error("Scheduling script failed unexpectedly:", err);
+      process.exit(1);
+    });
+}
