@@ -1,3 +1,9 @@
+## [0.22.10](https://github.com/TestPlanIt/testplanit/compare/v0.22.9...v0.22.10) (2026-04-24)
+
+### Bug Fixes
+
+* **workers:** guard generateFromUrlWorker + stub env in smoke test ([#240](https://github.com/TestPlanIt/testplanit/issues/240)) ([3e2db54](https://github.com/TestPlanIt/testplanit/commit/3e2db549c54107e4028a080a44aef6fb17a05756)), closes [#237](https://github.com/TestPlanIt/testplanit/issues/237)
+
 ## [0.22.9](https://github.com/TestPlanIt/testplanit/compare/v0.22.8...v0.22.9) (2026-04-23)
 
 ### Bug Fixes
