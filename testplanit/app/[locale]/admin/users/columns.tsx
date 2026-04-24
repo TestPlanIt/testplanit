@@ -28,7 +28,7 @@ export interface ExtendedUser extends User {
     emailVerified: Date | null;
     emailVerifToken: string | null;
     emailTokenExpires: Date | null;
-    password: string;
+    password: string | null;
     createdAt: Date;
     updatedAt: Date;
   } | null;

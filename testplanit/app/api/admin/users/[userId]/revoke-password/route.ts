@@ -68,12 +68,10 @@ export const POST = withAuditContext(
     }
 
     // Revoke: set password to null, update passwordChangedAt to trigger session invalidation (Pitfall 6)
-    // Note: schema defines password as String (non-nullable) but the DB column allows null.
-    // Using type assertion until schema is updated to String? in a future migration.
     await db.user.update({
       where: { id: userId },
       data: {
-        password: null as unknown as string,
+        password: null,
         passwordChangedAt: new Date(),
         mustChangePassword: false, // no point forcing change if password is null
       },
