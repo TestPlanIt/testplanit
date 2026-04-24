@@ -111,7 +111,9 @@ function ApiTokensList() {
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateApiTokenRef = useRef(updateApiToken);
-  updateApiTokenRef.current = updateApiToken;
+  useEffect(() => {
+    updateApiTokenRef.current = updateApiToken;
+  });
 
   const { data: totalFilteredTokens } = useFindManyApiToken(
     {

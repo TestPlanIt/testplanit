@@ -84,11 +84,13 @@ function LlmIntegrationList() {
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateLlmIntegrationRef = useRef(updateLlmIntegration);
-  updateLlmIntegrationRef.current = updateLlmIntegration;
   const updateLlmProviderConfigRef = useRef(updateLlmProviderConfig);
-  updateLlmProviderConfigRef.current = updateLlmProviderConfig;
   const updateManyLlmProviderConfigRef = useRef(updateManyLlmProviderConfig);
-  updateManyLlmProviderConfigRef.current = updateManyLlmProviderConfig;
+  useEffect(() => {
+    updateLlmIntegrationRef.current = updateLlmIntegration;
+    updateLlmProviderConfigRef.current = updateLlmProviderConfig;
+    updateManyLlmProviderConfigRef.current = updateManyLlmProviderConfig;
+  });
 
   const handleToggle = useCallback(
     async (
@@ -265,16 +267,19 @@ function LlmIntegrationList() {
     { enabled: !!session?.user, refetchInterval: 10_000 }
   );
 
-  const usageByIntegrationIdRef = useRef(new Map<number, number>());
-  useMemo(() => {
+  const usageByIntegrationId = useMemo(() => {
     const map = new Map<number, number>();
     for (const row of monthlyUsageGroups ?? []) {
       if (row.llmIntegrationId != null) {
         map.set(row.llmIntegrationId, Number(row._sum?.totalCost ?? 0));
       }
     }
-    usageByIntegrationIdRef.current = map;
+    return map;
   }, [monthlyUsageGroups]);
+  const usageByIntegrationIdRef = useRef(usageByIntegrationId);
+  useEffect(() => {
+    usageByIntegrationIdRef.current = usageByIntegrationId;
+  });
 
   const [editingIntegration, setEditingIntegration] =
     useState<ExtendedLlmIntegration | null>(null);
@@ -282,6 +287,7 @@ function LlmIntegrationList() {
     useState<ExtendedLlmIntegration | null>(null);
 
   const columns = useMemo(
+    // eslint-disable-next-line react-hooks/refs
     () =>
       getColumns(
         userPreferences,
@@ -467,7 +473,7 @@ function LlmIntegrationList() {
         <EditLlmIntegration
           integration={editingIntegration}
           currentSpend={
-            usageByIntegrationIdRef.current.get(editingIntegration.id) ?? 0
+            usageByIntegrationId.get(editingIntegration.id) ?? 0
           }
           open={true}
           onClose={() => setEditingIntegration(null)}

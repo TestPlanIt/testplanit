@@ -1566,7 +1566,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             folderStatsData={folderStatsData}
                             dndRootElement={
                               skipDndProvider
-                                ? dndContainerRef.current
+                                ? // eslint-disable-next-line react-hooks/refs
+                                  dndContainerRef.current
                                 : undefined
                             }
                             onCopyMoveFolder={

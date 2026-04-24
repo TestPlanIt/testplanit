@@ -771,6 +771,7 @@ export function QuickScriptModal({
             isGenerating={isExporting}
             progress={generationProgress || undefined}
             batchCount={
+              // eslint-disable-next-line react-hooks/refs
               isBatchModeRef.current ? selectedCaseIds.length : undefined
             }
             streamingCode={streamingCode}

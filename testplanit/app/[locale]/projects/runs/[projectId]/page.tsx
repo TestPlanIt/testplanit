@@ -156,32 +156,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setTotalRemainingEstimateForDisplay,
   ] = useState<number>(0);
 
-  // State for new recent results chart (manual)
-  const [recentResultsChartData, setRecentResultsChartData] = useState<any[]>(
-    []
-  ); // Data for donut
-  const [recentResultsSuccessRate, setRecentResultsSuccessRate] =
-    useState<number>(0);
-  const [recentResultsDateRange, setRecentResultsDateRange] = useState<{
-    first?: Date;
-    last?: Date;
-  }>({});
-
-  // State for automated results chart
-  const [automatedResultsChartData, setAutomatedResultsChartData] = useState<
-    any[]
-  >([]);
-  const [automatedResultsSuccessRate, setAutomatedResultsSuccessRate] =
-    useState<number>(0);
-  const [automatedResultsDateRange, setAutomatedResultsDateRange] = useState<{
-    first?: Date;
-    last?: Date;
-  }>({});
-
-  // State for new line chart
-  const [completedRunsMonthlyData, setCompletedRunsMonthlyData] = useState<
-    Array<{ month: string; count: number; manual: number; automated: number }>
-  >([]);
+  // Derived values for recent results, automated results, and completed runs
+  // charts are computed below via useMemo from query data.
 
   // State for chart overlay
   const [isChartDialogOpen, setIsChartDialogOpen] = useState(false);
@@ -661,12 +637,21 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     );
 
   // --- Process Recent Manual Results ---
-  useMemo(() => {
+  const {
+    recentResultsChartData,
+    recentResultsSuccessRate,
+    recentResultsDateRange,
+  } = useMemo<{
+    recentResultsChartData: any[];
+    recentResultsSuccessRate: number;
+    recentResultsDateRange: { first?: Date; last?: Date };
+  }>(() => {
     if (!rawRecentResults || rawRecentResults.length === 0) {
-      setRecentResultsChartData([]);
-      setRecentResultsSuccessRate(0);
-      setRecentResultsDateRange({});
-      return;
+      return {
+        recentResultsChartData: [],
+        recentResultsSuccessRate: 0,
+        recentResultsDateRange: {},
+      };
     }
 
     // Group by status and calculate metrics
@@ -719,9 +704,14 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     const successRate =
       totalDisplayed > 0 ? (successfulCount / totalDisplayed) * 100 : 0;
 
-    setRecentResultsChartData(chartData);
-    setRecentResultsSuccessRate(successRate);
-    setRecentResultsDateRange({ first: firstResultDate, last: lastResultDate });
+    return {
+      recentResultsChartData: chartData,
+      recentResultsSuccessRate: successRate,
+      recentResultsDateRange: {
+        first: firstResultDate,
+        last: lastResultDate,
+      },
+    };
   }, [rawRecentResults]);
 
   // --- Fetch Recent Automated (JUnit) Test Results (two-query approach) ---
@@ -788,12 +778,21 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     );
 
   // --- Process Automated Results ---
-  useMemo(() => {
+  const {
+    automatedResultsChartData,
+    automatedResultsSuccessRate,
+    automatedResultsDateRange,
+  } = useMemo<{
+    automatedResultsChartData: any[];
+    automatedResultsSuccessRate: number;
+    automatedResultsDateRange: { first?: Date; last?: Date };
+  }>(() => {
     if (!rawAutomatedResults || rawAutomatedResults.length === 0) {
-      setAutomatedResultsChartData([]);
-      setAutomatedResultsSuccessRate(0);
-      setAutomatedResultsDateRange({});
-      return;
+      return {
+        automatedResultsChartData: [],
+        automatedResultsSuccessRate: 0,
+        automatedResultsDateRange: {},
+      };
     }
 
     // Helper to get the effective date (use executedAt or createdAt)
@@ -852,16 +851,18 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     const successRate =
       totalDisplayed > 0 ? (successfulCount / totalDisplayed) * 100 : 0;
 
-    setAutomatedResultsChartData(chartData);
-    setAutomatedResultsSuccessRate(successRate);
-    setAutomatedResultsDateRange({
-      first: firstResultDate,
-      last: lastResultDate,
-    });
+    return {
+      automatedResultsChartData: chartData,
+      automatedResultsSuccessRate: successRate,
+      automatedResultsDateRange: {
+        first: firstResultDate,
+        last: lastResultDate,
+      },
+    };
   }, [rawAutomatedResults]);
 
   // --- Process Completed Runs for Line Chart ---
-  useMemo(() => {
+  const completedRunsMonthlyData = useMemo(() => {
     const monthCounts: {
       [key: string]: {
         total: number;
@@ -916,7 +917,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }
 
     // Reverse to chronological order
-    setCompletedRunsMonthlyData(monthsData.reverse());
+    return monthsData.reverse();
   }, [completedRunsLast6Months]);
 
   const handleOpenChartOverlay = (details: ZoomedChartDetails) => {

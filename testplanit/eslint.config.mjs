@@ -114,6 +114,7 @@ const eslintConfig = [
       "react-hooks/static-components": "off",
       "react-hooks/purity": "off",
       "react-hooks/incompatible-library": "warn", // Keep as warning
+      "react-hooks/preserve-manual-memoization": "warn", // Advisory: React Compiler couldn't preserve a useMemo; not a correctness issue
 
       // Avoid hardcoded labels in component markup
       "react/jsx-no-literals": [

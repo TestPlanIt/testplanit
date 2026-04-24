@@ -1739,6 +1739,7 @@ function ReportBuilderContent({
   // Use refs for stable references that don't change on re-renders
   const _chartDimensions = useMemo(
     () => {
+      // eslint-disable-next-line react-hooks/refs
       const result = lastUsedDimensionsRef.current.map((d) => ({
         value: d.value,
         label: d.label,
@@ -1751,6 +1752,7 @@ function ReportBuilderContent({
 
   const _chartMetrics = useMemo(
     () => {
+      // eslint-disable-next-line react-hooks/refs
       const result = lastUsedMetricsRef.current.map((m) => ({
         value: m.value,
         label: m.label,
@@ -1764,9 +1766,11 @@ function ReportBuilderContent({
 
   const _chartKey = useMemo(
     () => {
+      /* eslint-disable react-hooks/refs */
       const result = chartDataRef.current
         ? JSON.stringify(chartDataRef.current.slice(0, 5))
         : null;
+      /* eslint-enable react-hooks/refs */
       return result;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
