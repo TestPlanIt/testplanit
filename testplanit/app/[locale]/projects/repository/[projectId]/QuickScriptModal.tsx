@@ -391,7 +391,7 @@ export function QuickScriptModal({
         URL.revokeObjectURL(url);
       }
 
-      logDataExport({
+      void logDataExport({
         exportType: `${previewResults.some((r) => r.generatedBy === "ai") ? "AI Export" : "QuickScript"} (${selectedTemplate.name})`,
         entityType: "RepositoryCases",
         recordCount: previewResults.length,
@@ -771,6 +771,7 @@ export function QuickScriptModal({
             isGenerating={isExporting}
             progress={generationProgress || undefined}
             batchCount={
+              // eslint-disable-next-line react-hooks/refs
               isBatchModeRef.current ? selectedCaseIds.length : undefined
             }
             streamingCode={streamingCode}

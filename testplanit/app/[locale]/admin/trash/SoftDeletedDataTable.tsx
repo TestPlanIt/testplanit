@@ -122,7 +122,7 @@ export default function SoftDeletedDataTable({
 
   useEffect(() => {
     if (itemType) {
-      fetchData();
+      void fetchData();
     }
   }, [itemType, fetchData]);
 
@@ -168,7 +168,7 @@ export default function SoftDeletedDataTable({
           errorData.error || `Failed to ${alertActionType} ${itemType}`
         );
       }
-      fetchData(); // Refetch data on success
+      void fetchData(); // Refetch data on success
     } catch (e: any) {
       setError(
         e.message || `An unexpected error occurred during ${alertActionType}.`

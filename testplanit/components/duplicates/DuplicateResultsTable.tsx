@@ -60,7 +60,7 @@ export function DuplicateResultsTable({
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const handleResolved = useCallback(() => {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ["duplicate-scan-candidates", projectId],
     });
     setRowSelection({});

@@ -960,7 +960,7 @@ export function AddResultModal({
 
           // --- Trigger forecast update for this case ---
           if (selectedCase.id && hasSubmittedElapsedTime)
-            fetch(`/api/forecast/update?caseId=${selectedCase.id}`);
+            void fetch(`/api/forecast/update?caseId=${selectedCase.id}`);
         });
 
         await Promise.all(bulkPromises);
@@ -1209,7 +1209,7 @@ export function AddResultModal({
 
         // --- Trigger forecast update for this case ---
         if (repositoryCase?.id && hasSubmittedElapsedTime)
-          fetch(`/api/forecast/update?caseId=${repositoryCase.id}`);
+          void fetch(`/api/forecast/update?caseId=${repositoryCase.id}`);
       }
 
       // Reset form with current status and default values
@@ -1647,7 +1647,7 @@ export function AddResultModal({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              form.handleSubmit(handleSubmit)(e);
+              void form.handleSubmit(handleSubmit)(e);
             }}
             className="space-y-2"
           >

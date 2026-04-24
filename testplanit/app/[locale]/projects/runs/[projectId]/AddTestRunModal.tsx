@@ -171,7 +171,7 @@ const BasicInfoDialog = React.memo(
       if (mainFormMilestoneId !== null && mainFormMilestoneId !== undefined) {
         basicInfoForm.setValue("milestoneId", mainFormMilestoneId);
         setTimeout(() => {
-          basicInfoForm.trigger("milestoneId");
+          void basicInfoForm.trigger("milestoneId");
         }, 10);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -610,7 +610,7 @@ const TestCasesDialog = React.memo(
         }
       };
 
-      fetchTestCases();
+      void fetchTestCases();
     }, [selectedTestCases, open, projectId]);
 
     useEffect(() => {
@@ -648,7 +648,7 @@ const TestCasesDialog = React.memo(
       };
 
       if (open) {
-        fetchForecast();
+        void fetchForecast();
       }
     }, [selectedTestCases, open]);
 
@@ -1137,7 +1137,7 @@ export default function AddTestRunModal({
   const handleNext = () => {
     if (step === 1) {
       setValue("testCases", selectedCaseIds); // Ensure selectedCaseIds from state is used
-      handleSubmit(onSubmit, (errors) => {
+      void handleSubmit(onSubmit, (errors) => {
         console.error("Form validation errors:", errors);
       })();
     } else {

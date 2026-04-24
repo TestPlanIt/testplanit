@@ -287,7 +287,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
       setIsSubmitting(false);
 
       // Refetch all queries to refresh the table data immediately
-      queryClient.refetchQueries();
+      void queryClient.refetchQueries();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {

@@ -501,7 +501,7 @@ const TreeView: React.FC<{
             )
         );
         if (newParentId !== null && newParentId !== undefined) {
-          ensureFolderChildrenLoaded(newParentId);
+          void ensureFolderChildrenLoaded(newParentId);
         }
       } catch (error) {
         console.error("Failed to update folder:", error);
@@ -530,7 +530,7 @@ const TreeView: React.FC<{
       };
 
       addAncestor(selectedFolderId);
-      ensureFolderPathLoaded(selectedFolderId);
+      void ensureFolderPathLoaded(selectedFolderId);
 
       if (Object.keys(openNodes).length > 0) {
         setInitialOpenState(openNodes);
@@ -564,7 +564,7 @@ const TreeView: React.FC<{
       prevSelectedFolderIdRef.current !== selectedFolderId
     ) {
       prevSelectedFolderIdRef.current = selectedFolderId;
-      ensureFolderPathLoaded(selectedFolderId);
+      void ensureFolderPathLoaded(selectedFolderId);
       // Small delay to ensure tree is fully rendered
       setTimeout(() => {
         const nodeId = selectedFolderId.toString();
@@ -578,7 +578,7 @@ const TreeView: React.FC<{
           while (parent && !parent.isRoot) {
             const parentFolderId = Number(parent.id);
             if (!Number.isNaN(parentFolderId)) {
-              ensureFolderChildrenLoaded(parentFolderId);
+              void ensureFolderChildrenLoaded(parentFolderId);
             }
             parent.open();
             parent = parent.parent;
@@ -600,12 +600,12 @@ const TreeView: React.FC<{
       const expandParentId = event.detail?.expandParentId;
       if (folderId && treeRef.current) {
         const nodeId = folderId.toString();
-        ensureFolderPathLoaded(folderId);
+        void ensureFolderPathLoaded(folderId);
 
         // If we need to expand a parent (creating a child folder), first load its children
         // This triggers a state update, so we need to wait for re-render before accessing the child
         if (expandParentId) {
-          ensureFolderChildrenLoaded(expandParentId);
+          void ensureFolderChildrenLoaded(expandParentId);
         }
 
         // Helper function to select node with retry logic for newly created nodes
@@ -614,7 +614,7 @@ const TreeView: React.FC<{
           // We call ensureFolderChildrenLoaded on each retry to ensure the state update
           // triggers a re-render that includes the children in the tree
           if (expandParentId) {
-            ensureFolderChildrenLoaded(expandParentId);
+            void ensureFolderChildrenLoaded(expandParentId);
             const parentNode = treeRef.current?.get(expandParentId.toString());
             if (parentNode) {
               parentNode.open();
@@ -630,7 +630,7 @@ const TreeView: React.FC<{
             while (parent && !parent.isRoot) {
               const parentFolderId = Number(parent.id);
               if (!Number.isNaN(parentFolderId)) {
-                ensureFolderChildrenLoaded(parentFolderId);
+                void ensureFolderChildrenLoaded(parentFolderId);
               }
               parent.open();
               parent = parent.parent;
@@ -834,8 +834,8 @@ const TreeView: React.FC<{
                   count: itemsToUpdate.length,
                 }),
               });
-              refetchCases();
-              refetchFolders();
+              void refetchCases();
+              void refetchFolders();
               onRefetchStats?.();
             } catch (error) {
               console.error("Failed to move test case(s):", error);
@@ -844,7 +844,7 @@ const TreeView: React.FC<{
               });
             }
           };
-          processDrop();
+          void processDrop();
         },
         collect: (monitor: any) => ({
           isOver: monitor.isOver(),
@@ -1068,7 +1068,7 @@ const TreeView: React.FC<{
           (max, f) => Math.max(max, f.order),
           -1
         );
-        handleMove({
+        void handleMove({
           dragIds: item.dragIds || [item.id],
           parentId: null,
           index: maxOrder + 1,

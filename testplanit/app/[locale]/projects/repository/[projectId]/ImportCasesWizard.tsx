@@ -347,7 +347,7 @@ export function ImportCasesWizard({
       setIsCheckingDuplicates(false);
     };
 
-    checkDuplicates();
+    void checkDuplicates();
   }, [currentPage, parsedData, fieldMappings, projectId]);
 
   // Check if project has an active LLM integration (for markdown parsing)

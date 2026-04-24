@@ -79,7 +79,7 @@ export function LlmIntegrationsList({
       setShowSwitchDialog(true);
     } else {
       // No current integration, proceed directly
-      handleAssignIntegration(integrationId);
+      void handleAssignIntegration(integrationId);
     }
   };
 

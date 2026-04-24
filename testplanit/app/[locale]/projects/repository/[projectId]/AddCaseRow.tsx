@@ -364,7 +364,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                          handleSubmit(onSubmit)();
+                          void handleSubmit(onSubmit)();
                         }
                       }}
                     />

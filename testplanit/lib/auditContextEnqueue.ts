@@ -123,10 +123,7 @@ export async function enqueueWithAuditContext<T extends object>(
     );
   }
 
-  return queue.add(
-    name,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    payload as any,
-    jobOpts
-  ) as Promise<Job<ActorContextJobData<T>>>;
+  return queue.add(name, payload as any, jobOpts) as Promise<
+    Job<ActorContextJobData<T>>
+  >;
 }

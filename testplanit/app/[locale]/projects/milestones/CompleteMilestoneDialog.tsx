@@ -158,7 +158,7 @@ export function CompleteMilestoneDialog({
         }
       };
 
-      fetchImpactData();
+      void fetchImpactData();
     } else if (!open) {
       // Reset all state when dialog closes
       setShowConfirmation(false);

@@ -364,7 +364,7 @@ export function ManageExternalIssues({
   useEffect(() => {
     // Only fetch if entity exists (testCaseId > 0)
     if (testCaseId > 0) {
-      fetchLinkedIssues();
+      void fetchLinkedIssues();
     } else {
       // For new entities, just set loading to false
       setIsLoading(false);
@@ -380,7 +380,7 @@ export function ManageExternalIssues({
       linkedIssues.length === 0 &&
       !isLoading
     ) {
-      fetchLinkedIssues();
+      void fetchLinkedIssues();
     }
   }, [linkedIssueIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -595,7 +595,7 @@ export function ManageExternalIssues({
         linkedIssueIds={linkedIssues.map((issue) => issue.key)}
         onIssueSelected={(issue) => {
           if (issue.isExternal) {
-            handleLinkIssue({
+            void handleLinkIssue({
               id: Number(issue.id),
               key: (issue as any).key || issue.externalKey || String(issue.id),
               summary: issue.title,

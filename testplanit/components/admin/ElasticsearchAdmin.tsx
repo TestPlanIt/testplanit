@@ -104,8 +104,8 @@ export function ElasticsearchAdmin({
   }, []);
 
   useEffect(() => {
-    checkElasticsearchStatus();
-    loadReplicaSettings();
+    void checkElasticsearchStatus();
+    void loadReplicaSettings();
   }, [checkElasticsearchStatus]);
 
   const loadReplicaSettings = async () => {
@@ -213,7 +213,7 @@ export function ElasticsearchAdmin({
 
           // Refresh status after reindex
           setTimeout(() => {
-            checkElasticsearchStatus();
+            void checkElasticsearchStatus();
             setProgress(null);
             setCurrentJobId(null);
             setJobLogs([]);

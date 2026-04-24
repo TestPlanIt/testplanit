@@ -375,15 +375,15 @@ export function ShareContent({
 
     // If already viewed in this session, just fetch data without counting
     if (hasViewedInSession()) {
-      fetchShareDataWithoutCounting();
+      void fetchShareDataWithoutCounting();
       return;
     }
 
     if (shareData.mode === "PUBLIC") {
-      handlePasswordVerified();
+      void handlePasswordVerified();
     } else if (shareData.mode === "PASSWORD_PROTECTED" && session) {
       // Check if user has project access (bypass password)
-      checkProjectAccess();
+      void checkProjectAccess();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

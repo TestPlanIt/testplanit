@@ -132,7 +132,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
       }
     };
 
-    fetchIssueCounts();
+    void fetchIssueCounts();
   }, [processedProjectsData]);
 
   const projectsForCards = useMemo(() => {

@@ -395,7 +395,7 @@ export function useDrillDownExport({
       URL.revokeObjectURL(link.href);
 
       // Log export for audit trail
-      logDataExport({
+      void logDataExport({
         exportType: "DrillDown-CSV",
         entityType: context.metricId,
         recordCount: allRecords.length,

@@ -261,11 +261,11 @@ export function BulkEditModal({
   }, [isOpen, selectedCaseIds, projectId]);
 
   useEffect(() => {
-    fetchCases();
+    void fetchCases();
   }, [fetchCases]);
 
   const refetchCases = useCallback(() => {
-    fetchCases();
+    void fetchCases();
   }, [fetchCases]);
 
   const { data: workflowsData, isLoading: isLoadingWorkflows } =

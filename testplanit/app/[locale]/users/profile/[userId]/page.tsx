@@ -293,7 +293,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
       // Refetch all queries to refresh UI with updated profile data
       // Run this after closing the edit mode so the UI doesn't stay in submitting state
-      queryClient.refetchQueries();
+      void queryClient.refetchQueries();
     } catch (err: any) {
       // Handle errors from the new API endpoint
       if (err.message?.includes("Email already exists")) {

@@ -88,7 +88,7 @@ const useDynamicIcon = (name: keyof typeof dynamicIconImports) => {
       }
     };
 
-    loadIcon();
+    void loadIcon();
 
     return () => {
       mounted = false;

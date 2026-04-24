@@ -374,7 +374,7 @@ export function AutoTagWizardDialog({
       !autoStartedRef.current
     ) {
       autoStartedRef.current = true;
-      handleStart();
+      void handleStart();
     }
     if (!open) {
       autoStartedRef.current = false;
@@ -521,11 +521,13 @@ export function AutoTagWizardDialog({
 
   // Stable refs so reviewColumns doesn't recompute on every toggle
   const mergedSelectionsRef = useRef(mergedSelections);
-  mergedSelectionsRef.current = mergedSelections;
   const handleToggleRef = useRef(handleToggle);
-  handleToggleRef.current = handleToggle;
   const handleEditRef = useRef(handleEdit);
-  handleEditRef.current = handleEdit;
+  useEffect(() => {
+    mergedSelectionsRef.current = mergedSelections;
+    handleToggleRef.current = handleToggle;
+    handleEditRef.current = handleEdit;
+  });
 
   // ── Review filters & pagination ─────────────────────────────────
 

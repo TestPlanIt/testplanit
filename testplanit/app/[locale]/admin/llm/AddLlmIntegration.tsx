@@ -314,7 +314,7 @@ export function AddLlmIntegration({
 
     // Debounce the API calls to avoid too many requests
     const timeoutId = setTimeout(() => {
-      fetchAvailableModels(provider, apiKey, endpoint);
+      void fetchAvailableModels(provider, apiKey, endpoint);
     }, 1000); // 1 second delay
 
     return () => clearTimeout(timeoutId);

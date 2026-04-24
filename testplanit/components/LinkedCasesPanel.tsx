@@ -298,10 +298,10 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
         },
       });
       setIsModalOpen(false);
-      refetch();
+      void refetch();
       // --- Trigger forecast update for both cases ---
-      fetch(`/api/forecast/update?caseId=${caseId}`);
-      fetch(`/api/forecast/update?caseId=${validCaseId}`);
+      void fetch(`/api/forecast/update?caseId=${caseId}`);
+      void fetch(`/api/forecast/update?caseId=${validCaseId}`);
       return null;
     } catch (e: any) {
       return e.message || tLinkedCases("failedToCreate");
@@ -323,10 +323,10 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
         data: { isDeleted: true },
       });
       setOpenPopoverLinkId(null);
-      refetch();
+      void refetch();
       // --- Trigger forecast update for both cases ---
-      fetch(`/api/forecast/update?caseId=${caseId}`);
-      if (otherCaseId) fetch(`/api/forecast/update?caseId=${otherCaseId}`);
+      void fetch(`/api/forecast/update?caseId=${caseId}`);
+      if (otherCaseId) void fetch(`/api/forecast/update?caseId=${otherCaseId}`);
     } catch {
       // Optionally show error
     }

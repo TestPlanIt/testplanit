@@ -73,7 +73,7 @@ export default function UploadProjectIcon({
     if (!files || files.length === 0) {
       return;
     }
-    handleFileRead(files[0]);
+    void handleFileRead(files[0]);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -82,7 +82,7 @@ export default function UploadProjectIcon({
     setIsDragging(false);
     const files = event.dataTransfer.files;
     if (files.length) {
-      handleFileRead(files[0]);
+      void handleFileRead(files[0]);
     }
   };
 

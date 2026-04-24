@@ -31,4 +31,4 @@ async function reindexIssues() {
   }
 }
 
-reindexIssues();
+void reindexIssues();

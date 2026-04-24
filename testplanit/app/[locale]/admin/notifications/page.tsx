@@ -160,7 +160,7 @@ function NotificationSettingsContent() {
       }
     };
 
-    checkEmailServerConfig();
+    void checkEmailServerConfig();
   }, [defaultMode]);
 
   const loadNotificationHistory = useCallback(
@@ -187,7 +187,7 @@ function NotificationSettingsContent() {
   // Load notification history when page or pageSize changes
   useEffect(() => {
     const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
-    loadNotificationHistory(currentPage, effectivePageSize);
+    void loadNotificationHistory(currentPage, effectivePageSize);
   }, [currentPage, pageSize, loadNotificationHistory]);
 
   const handleSendSystemNotification = async () => {
@@ -215,7 +215,7 @@ function NotificationSettingsContent() {
         // Reload the first page after sending
         setCurrentPage(1);
         const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
-        loadNotificationHistory(1, effectivePageSize);
+        void loadNotificationHistory(1, effectivePageSize);
       } else {
         toast.error(tGlobal("common.errors.error"), {
           description:

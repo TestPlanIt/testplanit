@@ -29,17 +29,12 @@ import {
  *
  * Per Phase 64 D-01.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withAuditContext<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   H extends (req: NextRequest, ...rest: any[]) => Promise<Response>,
 >(handler: H): H {
   const wrapped = (async (req: NextRequest, ...rest: unknown[]) => {
     const ctx: AuditContext = extractAuditContextFromHeaders(req.headers);
-    return runWithAuditContext(ctx, () =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handler(req, ...(rest as any))
-    );
+    return runWithAuditContext(ctx, () => handler(req, ...(rest as any)));
   }) as H;
   return wrapped;
 }

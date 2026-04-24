@@ -62,7 +62,7 @@ export function CommentsSection({
       }
     }
 
-    fetchComments();
+    void fetchComments();
   }, [entityType, entityId, t]);
 
   if (isLoading) {

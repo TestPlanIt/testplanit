@@ -345,7 +345,7 @@ export default function MilestoneDetailsPage() {
       }
     };
 
-    fetchMilestoneForecast();
+    void fetchMilestoneForecast();
   }, [milestoneId, tCommon]);
 
   const { mutateAsync: updateMilestone } = useUpdateMilestones();

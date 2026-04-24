@@ -211,7 +211,7 @@ function TagList() {
       }
     };
 
-    fetchCountsAndProjects();
+    void fetchCountsAndProjects();
   }, [tags]);
 
   const mappedTags = useMemo(() => {

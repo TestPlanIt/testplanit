@@ -314,10 +314,10 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       setActiveTab(newTab);
       if (newTab === "completed") {
         // Refetch completed sessions when switching to completed tab
-        refetchCompletedSessions();
+        void refetchCompletedSessions();
       } else if (newTab === "active") {
         // Refetch active sessions when switching to active tab
-        refetchIncompleteSessions();
+        void refetchIncompleteSessions();
       }
     },
     [setActiveTab, refetchCompletedSessions, refetchIncompleteSessions]
@@ -514,14 +514,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   );
 
   // --- Data for Recent Session Results Donut Chart ---
-  // Add state for chart data
-  const [recentSessionResultsChartData, setRecentSessionResultsChartData] =
-    useState<any[]>([]);
-  // Add state for success rate and date range
-  const [recentSessionResultsSuccessRate, setRecentSessionResultsSuccessRate] =
-    useState<number>(0);
-  const [recentSessionResultsDateRange, setRecentSessionResultsDateRange] =
-    useState<{ first?: Date; last?: Date }>({});
+  // Chart data, success rate, and date range are derived via useMemo below.
 
   // Query 1: Get the most recent session result to determine the date range
   const { data: latestSessionResult } = useFindFirstSessionResults(
@@ -585,12 +578,21 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   );
 
   // Process session results for the chart
-  const _processedRecentSessionResults = useMemo(() => {
+  const {
+    recentSessionResultsChartData,
+    recentSessionResultsSuccessRate,
+    recentSessionResultsDateRange,
+  } = useMemo<{
+    recentSessionResultsChartData: RecentResultStatusItem[];
+    recentSessionResultsSuccessRate: number;
+    recentSessionResultsDateRange: { first?: Date; last?: Date };
+  }>(() => {
     if (!recentRawSessionResults || recentRawSessionResults.length === 0) {
-      setRecentSessionResultsChartData([]);
-      setRecentSessionResultsSuccessRate(0);
-      setRecentSessionResultsDateRange({});
-      return;
+      return {
+        recentSessionResultsChartData: [],
+        recentSessionResultsSuccessRate: 0,
+        recentSessionResultsDateRange: {},
+      };
     }
 
     const summary: { [statusId: string]: RecentResultStatusItem } = {};
@@ -636,13 +638,14 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     const successRate =
       totalResults > 0 ? (successfulCount / totalResults) * 100 : 0;
 
-    // Update all relevant states
-    setRecentSessionResultsChartData(chartData);
-    setRecentSessionResultsSuccessRate(successRate);
-    setRecentSessionResultsDateRange({
-      first: firstResultDate,
-      last: lastResultDate,
-    });
+    return {
+      recentSessionResultsChartData: chartData,
+      recentSessionResultsSuccessRate: successRate,
+      recentSessionResultsDateRange: {
+        first: firstResultDate,
+        last: lastResultDate,
+      },
+    };
   }, [recentRawSessionResults]);
 
   // --- Data for Completed Sessions Line Chart (Last 6 Months) ---

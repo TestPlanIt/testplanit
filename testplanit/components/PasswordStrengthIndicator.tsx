@@ -41,7 +41,7 @@ export function PasswordStrengthIndicator({
   // Dynamic import of zxcvbn-ts (D-09, avoid adding ~800KB to initial bundle)
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const { zxcvbn, zxcvbnOptions } = await import("@zxcvbn-ts/core");
       const { dictionary } = await import("@zxcvbn-ts/language-en");
       zxcvbnOptions.setOptions({ dictionary });

@@ -73,7 +73,9 @@ function PromptConfigList() {
   const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
 
   const updatePromptConfigRef = useRef(updatePromptConfig);
-  updatePromptConfigRef.current = updatePromptConfig;
+  useEffect(() => {
+    updatePromptConfigRef.current = updatePromptConfig;
+  });
 
   // Query for total filtered configs (for pagination)
   const { data: totalFilteredConfigs } = useFindManyPromptConfig(
@@ -227,6 +229,7 @@ function PromptConfigList() {
     () =>
       getColumns(
         userPreferences,
+        // eslint-disable-next-line react-hooks/refs
         handleToggleDefault,
         tCommon,
         t,
@@ -346,7 +349,7 @@ function PromptConfigList() {
           onClose={() => setShowAddDialog(false)}
           onSuccess={() => {
             setShowAddDialog(false);
-            refetch();
+            void refetch();
           }}
         />
       )}

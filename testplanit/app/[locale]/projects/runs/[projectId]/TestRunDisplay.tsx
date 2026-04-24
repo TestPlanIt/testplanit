@@ -346,7 +346,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           data: { milestoneId: targetMilestoneId },
         });
         // Invalidate test runs query to refresh the data
-        queryClient.invalidateQueries({ queryKey: ["testRuns"] });
+        void queryClient.invalidateQueries({ queryKey: ["testRuns"] });
       } catch (error) {
         console.error("Failed to update test run milestone:", error);
       }

@@ -108,7 +108,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
       }
     };
 
-    fetchMilestoneForecast();
+    void fetchMilestoneForecast();
   }, [milestone.id]);
 
   if (!session || !colorMap) return null;

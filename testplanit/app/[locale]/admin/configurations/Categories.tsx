@@ -190,7 +190,7 @@ function ConfigCategoriesList() {
       setAddingVariantForCategory(null);
       setNewVariantName("");
       setVariantError(null);
-      refetch();
+      void refetch();
     } catch (error) {
       console.error("Failed to create variant:", error);
       setVariantError(tCommon("errors.unknown"));
@@ -203,7 +203,7 @@ function ConfigCategoriesList() {
   ) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleVariantSubmit(categoryId);
+      void handleVariantSubmit(categoryId);
     } else if (e.key === "Escape") {
       handleVariantCancel();
     }
@@ -229,7 +229,7 @@ function ConfigCategoriesList() {
       setIsAdding(false);
       setNewRecordName("");
       setError(null);
-      refetch();
+      void refetch();
     } catch (error) {
       console.error("Failed to create category:", error);
       setError(tCommon("errors.unknown"));
@@ -249,7 +249,7 @@ function ConfigCategoriesList() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      onSubmit();
+      void onSubmit();
     } else if (e.key === "Escape") {
       handleCancel();
     }
@@ -316,11 +316,11 @@ function ConfigCategoriesList() {
 
   const handleVariantUpdate = (_updatedVariant: Variant) => {
     setVariantToEdit(null);
-    refetch();
+    void refetch();
   };
 
   const handleVariantDelete = (_variantId: number) => {
-    refetch();
+    void refetch();
   };
 
   const [editingCategory, setEditingCategory] =

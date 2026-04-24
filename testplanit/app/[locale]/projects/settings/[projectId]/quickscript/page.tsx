@@ -236,7 +236,7 @@ export default function QuickScriptPage() {
       });
       setPreview(null);
       toast.success(t("disconnectSuccess"));
-      refetchConfig();
+      void refetchConfig();
     } catch {
       toast.error(t("disconnectError"));
     }
@@ -401,7 +401,7 @@ export default function QuickScriptPage() {
       const listData = await post("list-only");
       if (!listData.success) {
         setRefreshError(listData.error ?? t("listError"));
-        refetchConfig();
+        void refetchConfig();
         return;
       }
 
@@ -411,7 +411,7 @@ export default function QuickScriptPage() {
 
       if (!contentData.success) {
         setRefreshError(contentData.error ?? t("contentsError"));
-        refetchConfig();
+        void refetchConfig();
         return;
       }
 
@@ -430,7 +430,7 @@ export default function QuickScriptPage() {
           })
         );
       }
-      refetchConfig();
+      void refetchConfig();
     } catch (err) {
       setRefreshError(err instanceof Error ? err.message : t("networkError"));
     } finally {
@@ -489,7 +489,7 @@ export default function QuickScriptPage() {
       }
 
       toast.success(t("saved"));
-      refetchConfig();
+      void refetchConfig();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t("saveError");
       toast.error(message);

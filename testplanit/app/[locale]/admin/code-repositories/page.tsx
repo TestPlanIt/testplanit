@@ -228,7 +228,7 @@ function CodeRepositoryList() {
       {
         onSuccess: () => {
           toast.success("Repository deleted");
-          refetch();
+          void refetch();
         },
         onError: (error) => {
           toast.error("Failed to delete repository", {
@@ -400,7 +400,9 @@ function CodeRepositoryList() {
             setSelectedRepo(null);
           }}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ["CodeRepository"] });
+            void queryClient.invalidateQueries({
+              queryKey: ["CodeRepository"],
+            });
             setModalOpen(false);
             setSelectedRepo(null);
           }}

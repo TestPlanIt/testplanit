@@ -113,7 +113,7 @@ const Projects = () => {
       }
     };
 
-    fetchIssueCounts();
+    void fetchIssueCounts();
   }, [processedProjectsData]);
 
   const projectsForCards = useMemo(

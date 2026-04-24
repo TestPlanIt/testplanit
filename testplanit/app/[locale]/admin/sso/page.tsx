@@ -227,7 +227,7 @@ export default function SSOAdminPage() {
       }
     };
 
-    checkMagicLinkConfig();
+    void checkMagicLinkConfig();
   }, []);
 
   // Sync optimistic toggle state with server data
@@ -292,7 +292,7 @@ export default function SSOAdminPage() {
       setGoogleConfigured(true);
       setIsGoogleConfigOpen(false);
       setGoogleClientSecret(""); // Clear the secret from memory
-      refetch(); // Refresh SSO providers
+      void refetch(); // Refresh SSO providers
     } catch (error) {
       console.error("Failed to save Google OAuth config:", error);
       toast.error(t("admin.sso.messages.googleConfigFailed"));
@@ -349,7 +349,7 @@ export default function SSOAdminPage() {
       toast.success(t("admin.sso.messages.samlConfigSaved"));
       setSamlConfigured(true);
       setIsSamlConfigOpen(false);
-      refetch(); // Refresh SSO providers
+      void refetch(); // Refresh SSO providers
     } catch (error) {
       console.error("Failed to save SAML config:", error);
       toast.error(t("admin.sso.messages.googleConfigFailed"));
@@ -397,7 +397,7 @@ export default function SSOAdminPage() {
         });
         toast.success(t("admin.sso.messages.googleCreated"));
       }
-      refetch();
+      void refetch();
     } catch {
       setToggleState((prev) => ({
         ...prev,
@@ -449,7 +449,7 @@ export default function SSOAdminPage() {
       setAppleConfigured(true);
       setIsAppleConfigOpen(false);
       setApplePrivateKey(""); // Clear the private key from memory
-      refetch(); // Refresh SSO providers
+      void refetch(); // Refresh SSO providers
     } catch (error) {
       console.error("Failed to save Apple config:", error);
       toast.error(t("admin.sso.messages.appleConfigFailed"));
@@ -489,7 +489,7 @@ export default function SSOAdminPage() {
         });
         toast.success(t("admin.sso.messages.appleCreated"));
       }
-      refetch();
+      void refetch();
     } catch {
       setToggleState((prev) => ({
         ...prev,
@@ -540,7 +540,7 @@ export default function SSOAdminPage() {
       setMicrosoftConfigured(true);
       setIsMicrosoftConfigOpen(false);
       setMicrosoftClientSecret(""); // Clear the secret from memory
-      refetch();
+      void refetch();
     } catch (error) {
       console.error("Failed to save Microsoft config:", error);
       toast.error(t("admin.sso.messages.microsoftConfigFailed"));
@@ -583,7 +583,7 @@ export default function SSOAdminPage() {
         });
         toast.success(t("admin.sso.messages.microsoftCreated"));
       }
-      refetch();
+      void refetch();
     } catch {
       setToggleState((prev) => ({
         ...prev,
@@ -627,7 +627,7 @@ export default function SSOAdminPage() {
         });
         toast.success(t("admin.sso.messages.magicLinkCreated"));
       }
-      refetch();
+      void refetch();
     } catch {
       setToggleState((prev) => ({
         ...prev,
@@ -672,7 +672,7 @@ export default function SSOAdminPage() {
             : t("admin.sso.messages.samlCreated")
         );
       }
-      refetch();
+      void refetch();
     } catch {
       setToggleState((prev) => ({ ...prev, [SsoProviderType.SAML]: !enabled }));
       toast.error(t("admin.sso.messages.updateFailed"));
@@ -696,7 +696,7 @@ export default function SSOAdminPage() {
           ? t("admin.sso.messages.forceSsoEnabled")
           : t("admin.sso.messages.forceSsoDisabled")
       );
-      refetch();
+      void refetch();
     } catch {
       setToggleState((prev) => ({ ...prev, forceSso: !enabled }));
       toast.error(t("admin.sso.messages.forceSsoUpdateFailed"));
@@ -721,7 +721,7 @@ export default function SSOAdminPage() {
           ? t("admin.sso.messages.force2FANonSSOEnabled")
           : t("admin.sso.messages.force2FANonSSODisabled")
       );
-      refetchSettings();
+      void refetchSettings();
     } catch {
       setToggleState((prev) => ({ ...prev, force2FANonSSO: !enabled }));
       toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
@@ -755,7 +755,7 @@ export default function SSOAdminPage() {
           ? t("admin.sso.messages.force2FAAllLoginsEnabled")
           : t("admin.sso.messages.force2FAAllLoginsDisabled")
       );
-      refetchSettings();
+      void refetchSettings();
     } catch {
       setToggleState((prev) => ({ ...prev, force2FAAllLogins: !enabled }));
       toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
@@ -779,7 +779,7 @@ export default function SSOAdminPage() {
           ? t("admin.sso.messages.domainRestrictionEnabled")
           : t("admin.sso.messages.domainRestrictionDisabled")
       );
-      refetchSettings();
+      void refetchSettings();
     } catch {
       toast.error(t("admin.sso.messages.domainRestrictionUpdateFailed"));
     }
@@ -810,7 +810,7 @@ export default function SSOAdminPage() {
       });
       toast.success(t("admin.sso.messages.domainAdded"));
       setNewDomain("");
-      refetchDomains();
+      void refetchDomains();
     } catch (error: any) {
       if (error.info?.code === "P2002") {
         toast.error(t("admin.sso.messages.domainExists"));
@@ -833,7 +833,7 @@ export default function SSOAdminPage() {
           ? t("admin.sso.messages.domainEnabled")
           : t("admin.sso.messages.domainDisabled")
       );
-      refetchDomains();
+      void refetchDomains();
     } catch {
       toast.error(t("admin.sso.messages.domainUpdateFailed"));
     }
@@ -845,7 +845,7 @@ export default function SSOAdminPage() {
         where: { id: domainId },
       });
       toast.success(t("admin.sso.messages.domainDeleted"));
-      refetchDomains();
+      void refetchDomains();
     } catch {
       toast.error(t("admin.sso.messages.domainDeleteFailed"));
     }
@@ -860,7 +860,7 @@ export default function SSOAdminPage() {
         create: { id: "default-registration-settings", defaultAccess: value },
         update: { defaultAccess: value },
       });
-      refetchSettings();
+      void refetchSettings();
       toast.success(t("admin.sso.messages.defaultAccessUpdated"));
     } catch {
       toast.error(t("admin.sso.messages.defaultAccessUpdateFailed"));
@@ -893,7 +893,7 @@ export default function SSOAdminPage() {
         update: { requireEmailVerification: enabled },
       });
       toast.success(t("admin.sso.messages.emailVerificationEnabled"));
-      refetchSettings();
+      void refetchSettings();
     } catch {
       toast.error(t("admin.sso.messages.emailVerificationUpdateFailed"));
     }
@@ -931,7 +931,7 @@ export default function SSOAdminPage() {
           count: result.verifiedCount || 0,
         })
       );
-      refetchSettings();
+      void refetchSettings();
       setShowEmailVerificationConfirm(false);
     } catch (error) {
       console.error("Error disabling email verification:", error);
@@ -1378,7 +1378,7 @@ export default function SSOAdminPage() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        handleAddDomain();
+                        void handleAddDomain();
                       }
                     }}
                   />

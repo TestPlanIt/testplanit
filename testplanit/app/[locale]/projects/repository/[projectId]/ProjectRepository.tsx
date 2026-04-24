@@ -531,9 +531,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Listen for repository cases changes (e.g., after import or bulk delete) to refresh folder stats
   useEffect(() => {
     const handleRepositoryCasesChanged = () => {
-      refetchFolderStats();
+      void refetchFolderStats();
       // Also refetch the folder tree — imports may create new subfolders
-      refetchFoldersRef.current?.();
+      void refetchFoldersRef.current?.();
     };
 
     window.addEventListener(
@@ -1137,7 +1137,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
     };
 
-    doSearch();
+    void doSearch();
     return () => {
       cancelled = true;
     };
@@ -1566,7 +1566,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             folderStatsData={folderStatsData}
                             dndRootElement={
                               skipDndProvider
-                                ? dndContainerRef.current
+                                ? // eslint-disable-next-line react-hooks/refs
+                                  dndContainerRef.current
                                 : undefined
                             }
                             onCopyMoveFolder={

@@ -504,7 +504,7 @@ export function SessionResultsList({
       );
 
       // Force revalidation with updated resolver
-      form.trigger();
+      void form.trigger();
     }
   }, [templateResultFields, form, locale, tCommon]);
 
@@ -941,7 +941,7 @@ export function SessionResultsList({
     // This effect runs when refreshResults changes
     if (refreshResults > 0) {
       // If we've had at least one refresh, refetch the data
-      refetch();
+      void refetch();
     }
   }, [refreshResults, refetch]);
 
@@ -1683,7 +1683,7 @@ export function SessionResultsList({
                   }
 
                   // Call the save handler with the complete data
-                  handleSaveEdit(fieldsToSave);
+                  void handleSaveEdit(fieldsToSave);
                 }}
                 className="space-y-4"
               >

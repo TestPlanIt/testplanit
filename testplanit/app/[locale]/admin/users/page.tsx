@@ -107,7 +107,7 @@ function UserList() {
         }
 
         // Refetch all queries to refresh the table data immediately
-        queryClient.refetchQueries();
+        void queryClient.refetchQueries();
       } catch (error) {
         console.error(`Failed to update ${key} for User ${id}`, error);
       }

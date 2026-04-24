@@ -122,7 +122,7 @@ export function QueueJobsView({
   }, [queueName, state, page, t]);
 
   useEffect(() => {
-    loadJobs();
+    void loadJobs();
   }, [loadJobs]);
 
   // Reset to first page when state filter changes

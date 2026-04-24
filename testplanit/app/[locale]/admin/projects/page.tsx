@@ -154,7 +154,7 @@ function ProjectAdmin() {
       if (isCompleted) {
         setIsAlertDialogOpen(true);
       } else {
-        updateProjectsRef.current({
+        void updateProjectsRef.current({
           where: { id },
           data: { isCompleted, completedAt: null },
         });

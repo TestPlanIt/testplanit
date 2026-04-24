@@ -96,7 +96,7 @@ export function TwoFactorSettings({
         // Silently fail - default to allowing disable
       }
     }
-    checkTwoFactorRequired();
+    void checkTwoFactorRequired();
   }, []);
 
   async function startSetup() {
@@ -197,7 +197,7 @@ export function TwoFactorSettings({
   }
 
   function copyBackupCodes(codes: string[]) {
-    navigator.clipboard.writeText(codes.join("\n"));
+    void navigator.clipboard.writeText(codes.join("\n"));
     setCopiedCodes(true);
     setTimeout(() => setCopiedCodes(false), 2000);
   }
@@ -239,7 +239,7 @@ export function TwoFactorSettings({
   function handleSwitchChange(checked: boolean) {
     if (checked) {
       // Enable 2FA - start setup
-      startSetup();
+      void startSetup();
     } else {
       // Disable 2FA - open confirmation dialog
       setIsDisableOpen(true);
@@ -462,7 +462,7 @@ export function TwoFactorSettings({
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && disableCode.length === 8) {
-                    disable2FA();
+                    void disable2FA();
                   }
                 }}
               />
@@ -505,7 +505,7 @@ export function TwoFactorSettings({
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
-                disable2FA();
+                void disable2FA();
               }}
               disabled={
                 isLoading || disableCode.length < (disableUseBackupCode ? 8 : 6)

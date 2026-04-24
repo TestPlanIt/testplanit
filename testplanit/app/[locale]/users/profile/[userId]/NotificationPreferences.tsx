@@ -71,7 +71,7 @@ export function NotificationPreferences({
       }
     };
 
-    checkEmailServerConfig();
+    void checkEmailServerConfig();
   }, [notificationMode]);
 
   const handleSave = () => {

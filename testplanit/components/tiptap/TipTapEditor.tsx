@@ -348,7 +348,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
       if (e.dataTransfer?.files) {
-        handleFile(editor, Array.from(e.dataTransfer.files));
+        void handleFile(editor, Array.from(e.dataTransfer.files));
       }
     };
 
@@ -1161,7 +1161,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             style={{ display: "none" }}
             onChange={(e) => {
               if (e.target.files) {
-                handleFile(editor, Array.from(e.target.files));
+                void handleFile(editor, Array.from(e.target.files));
               }
             }}
             ref={fileInputRef}

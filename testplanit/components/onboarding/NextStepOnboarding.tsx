@@ -1152,9 +1152,11 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   const pathnameRef = useRef(pathname);
   const searchParamsRef = useRef(searchParams);
   const routerRef = useRef(router);
-  pathnameRef.current = pathname;
-  searchParamsRef.current = searchParams;
-  routerRef.current = router;
+  useEffect(() => {
+    pathnameRef.current = pathname;
+    searchParamsRef.current = searchParams;
+    routerRef.current = router;
+  });
 
   useEffect(() => {
     // Only set up override once — save the ORIGINAL Controller function

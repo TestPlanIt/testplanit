@@ -1451,7 +1451,7 @@ export default function TestRunPage() {
           onSubmit={(e) => {
             e.preventDefault();
             if (!isEditMode) return;
-            handleSubmit(onSubmit)(e);
+            void handleSubmit(onSubmit)(e);
           }}
         >
           <CardHeader>

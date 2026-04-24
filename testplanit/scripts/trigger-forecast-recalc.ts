@@ -35,4 +35,4 @@ async function triggerForecastRecalculation() {
   }
 }
 
-triggerForecastRecalculation();
+void triggerForecastRecalculation();

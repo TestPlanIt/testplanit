@@ -292,7 +292,7 @@ export function CreateIssueDialog({
       }
     };
 
-    checkAuthStatus();
+    void checkAuthStatus();
   }, [useIntegration, activeIntegration, checkAuth]);
 
   // Fetch issue type fields when issue type changes
@@ -318,7 +318,7 @@ export function CreateIssueDialog({
   // Fetch fields when issue type changes
   useEffect(() => {
     if (selectedIssueType) {
-      fetchIssueTypeFields();
+      void fetchIssueTypeFields();
     }
   }, [selectedIssueType, fetchIssueTypeFields]);
 

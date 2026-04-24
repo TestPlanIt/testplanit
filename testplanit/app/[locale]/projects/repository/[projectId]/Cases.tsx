@@ -2445,7 +2445,7 @@ export default function Cases({
       }
     };
 
-    fetchSearchData();
+    void fetchSearchData();
     return () => {
       cancelled = true;
     };
@@ -2495,7 +2495,7 @@ export default function Cases({
   // Refetch all repository cases data (both list and count)
   const refetchRepositoryCases = useCallback(() => {
     refetchData();
-    refetchFilteredCount();
+    void refetchFilteredCount();
   }, [refetchData, refetchFilteredCount]);
 
   // Listen for repository cases changes (e.g., after import or bulk delete)

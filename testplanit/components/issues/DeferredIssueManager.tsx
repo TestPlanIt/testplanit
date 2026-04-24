@@ -161,7 +161,7 @@ export function DeferredIssueManager({
         // Add the new Issue ID to the linked issues
         const updatedIds = [...linkedIssueIds, newIssue.id];
         onIssuesChange(updatedIds);
-        refetch(); // Refresh the display
+        void refetch(); // Refresh the display
         toast.success(`Issue ${issue.key} linked successfully`);
       }
     } catch (error: any) {
@@ -238,7 +238,7 @@ export function DeferredIssueManager({
         projectId={projectId}
         linkedIssueIds={linkedIssueIds.map((id) => String(id))}
         onIssueSelected={(issue) => {
-          handleAddIssue(issue);
+          void handleAddIssue(issue);
           setIsSearchOpen(false);
         }}
       />
