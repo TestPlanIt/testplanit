@@ -1,3 +1,9 @@
+## [0.22.11](https://github.com/TestPlanIt/testplanit/compare/v0.22.10...v0.22.11) (2026-04-24)
+
+### Bug Fixes
+
+* **scheduler:** add require.main guard so smoke-test require() doesn't run scheduling ([#241](https://github.com/TestPlanIt/testplanit/issues/241)) ([c230dc8](https://github.com/TestPlanIt/testplanit/commit/c230dc8f99e5c75069e924268ec38f20059bce5e)), closes [#237](https://github.com/TestPlanIt/testplanit/issues/237)
+
 ## [0.22.10](https://github.com/TestPlanIt/testplanit/compare/v0.22.9...v0.22.10) (2026-04-24)
 
 ### Bug Fixes
