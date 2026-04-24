@@ -211,7 +211,7 @@ export function QuickScriptModal({
   // AbortController for the active streaming fetch
   const abortControllerRef = useRef<AbortController | null>(null);
   // True when the current preview was generated as a single batch AI call
-  const isBatchModeRef = useRef(false);
+  const [isBatchMode, setIsBatchMode] = useState(false);
   // Monotonically-increasing run ID — prevents a stale finally block from a
   // cancelled run resetting isExporting after a new export has already started.
   const exportRunIdRef = useRef(0);
@@ -338,7 +338,7 @@ export function QuickScriptModal({
         streamingFlushRef.current = null;
       }
       casesDataRef.current = [];
-      isBatchModeRef.current = false;
+      setIsBatchMode(false);
       abortControllerRef.current = null;
     } else {
       // When modal opens, set output mode based on selection count
@@ -451,7 +451,7 @@ export function QuickScriptModal({
     async (caseId: number) => {
       if (!effectiveTemplateId) return;
 
-      if (isBatchModeRef.current) {
+      if (isBatchMode) {
         const result = await generateAiExportBatch({
           caseIds: selectedCaseIds,
           projectId,
@@ -475,7 +475,13 @@ export function QuickScriptModal({
       updated[idx] = result;
       setPreviewResults(updated);
     },
-    [previewResults, effectiveTemplateId, projectId, selectedCaseIds]
+    [
+      previewResults,
+      effectiveTemplateId,
+      projectId,
+      selectedCaseIds,
+      isBatchMode,
+    ]
   );
 
   const handleExport = useCallback(async () => {
@@ -513,7 +519,7 @@ export function QuickScriptModal({
 
         // Single-file mode with multiple cases: one streaming LLM call for the whole file
         if (outputMode === "single" && response.data.length > 1) {
-          isBatchModeRef.current = true;
+          setIsBatchMode(true);
           setStreamingCode("");
           try {
             const raw = await streamExportCase(
@@ -543,7 +549,7 @@ export function QuickScriptModal({
         }
 
         // Individual mode or single case: fire all LLM calls in parallel
-        isBatchModeRef.current = false;
+        setIsBatchMode(false);
 
         // Build per-file progress list and abort controllers
         const fileProgressList: ParallelFileProgress[] = response.data.map(
@@ -770,10 +776,7 @@ export function QuickScriptModal({
             language={selectedTemplate?.language || ""}
             isGenerating={isExporting}
             progress={generationProgress || undefined}
-            batchCount={
-              // eslint-disable-next-line react-hooks/refs
-              isBatchModeRef.current ? selectedCaseIds.length : undefined
-            }
+            batchCount={isBatchMode ? selectedCaseIds.length : undefined}
             streamingCode={streamingCode}
             parallelProgress={parallelProgress}
             fileStreamingSnippets={fileStreamingSnippets}

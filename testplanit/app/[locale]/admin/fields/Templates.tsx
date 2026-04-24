@@ -69,8 +69,9 @@ export default function TemplateComponent() {
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render,
   // which would cause useCallback/useMemo to recompute and remount table cells.
   const updateTemplateRef = useRef(updateTemplate);
-  // eslint-disable-next-line react-hooks/refs
-  updateTemplateRef.current = updateTemplate;
+  useEffect(() => {
+    updateTemplateRef.current = updateTemplate;
+  });
 
   const { data: projects } = useFindManyProjects({
     where: { isDeleted: false },

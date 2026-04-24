@@ -107,8 +107,9 @@ function Configurations(): React.ReactElement | null {
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const updateConfigurationRef = useRef(updateConfiguration);
-  // eslint-disable-next-line react-hooks/refs
-  updateConfigurationRef.current = updateConfiguration;
+  useEffect(() => {
+    updateConfigurationRef.current = updateConfiguration;
+  });
 
   const handleToggle = useCallback((id: number, isEnabled: boolean) => {
     updateConfigurationRef.current({

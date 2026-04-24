@@ -128,8 +128,9 @@ function ProjectAdmin() {
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateProjectsRef = useRef(updateProjects);
-  // eslint-disable-next-line react-hooks/refs
-  updateProjectsRef.current = updateProjects;
+  useEffect(() => {
+    updateProjectsRef.current = updateProjects;
+  });
 
   const {
     handleSubmit,
