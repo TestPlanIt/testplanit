@@ -258,5 +258,4 @@ test.describe("Report Builder - Multiple Report Types", () => {
     const table = page.locator("table").first();
     await expect(table).toBeVisible({ timeout: 10000 });
   });
-
 });
