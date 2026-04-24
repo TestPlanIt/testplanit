@@ -349,7 +349,7 @@ function PromptConfigList() {
           onClose={() => setShowAddDialog(false)}
           onSuccess={() => {
             setShowAddDialog(false);
-            refetch();
+            void refetch();
           }}
         />
       )}

@@ -1315,7 +1315,7 @@ export function GenerateTestCasesWizard({
   // Fetch recent jobs when dialog opens
   useEffect(() => {
     if (open && sourceType === "url") {
-      fetchRecentUrlJobs();
+      void fetchRecentUrlJobs();
     }
   }, [open, sourceType, fetchRecentUrlJobs]);
 
@@ -1603,7 +1603,7 @@ export function GenerateTestCasesWizard({
               data.result?.selectedFieldIds
             );
             setIsGenerating(true);
-            streamUrlTestCases(
+            void streamUrlTestCases(
               data.result.crawledPages,
               data.result.selectedFieldIds
             );
@@ -1714,7 +1714,7 @@ export function GenerateTestCasesWizard({
           );
           setCurrentStep(WizardStep.REVIEW_GENERATED);
           setIsGenerating(true);
-          streamUrlTestCases(
+          void streamUrlTestCases(
             data.result.crawledPages,
             data.result.selectedFieldIds
           );
@@ -1781,7 +1781,7 @@ export function GenerateTestCasesWizard({
     url.searchParams.delete("urlJobId");
     window.history.replaceState({}, "", url.toString());
 
-    handleResumeUrlJob(urlJobIdParam);
+    void handleResumeUrlJob(urlJobIdParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -3859,7 +3859,9 @@ export function GenerateTestCasesWizard({
                                                 setIsGenerating(true);
                                                 setSourceType("url");
                                               } else {
-                                                handleResumeUrlJob(job.jobId);
+                                                void handleResumeUrlJob(
+                                                  job.jobId
+                                                );
                                               }
                                             }}
                                           >

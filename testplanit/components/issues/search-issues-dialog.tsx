@@ -205,7 +205,7 @@ export function SearchIssuesDialog({
   // Trigger external search when searchExternal changes or query changes
   useEffect(() => {
     if (searchExternal && debouncedSearchQuery.length > 0) {
-      searchExternalIssues();
+      void searchExternalIssues();
     }
   }, [searchExternal, debouncedSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 

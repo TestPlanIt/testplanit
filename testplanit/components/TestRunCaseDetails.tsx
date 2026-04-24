@@ -537,7 +537,7 @@ export function TestRunCaseDetails({
       await invalidateAfterSubmit();
 
       // --- Trigger forecast update for this case ---
-      fetch(`/api/forecast/update?caseId=${caseId}`);
+      void fetch(`/api/forecast/update?caseId=${caseId}`);
 
       toast.success(tCommon("actions.resultAdded"), {
         description: tCommon("actions.resultAddedDescription"),

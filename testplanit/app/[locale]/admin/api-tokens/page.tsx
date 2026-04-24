@@ -272,7 +272,7 @@ function ApiTokensList() {
         data: { isActive: false },
       });
       toast.success(t("revokeSuccess"));
-      refetchTokens();
+      void refetchTokens();
       setRevokeDialogOpen(false);
       setTokenToRevoke(null);
     } catch {
@@ -304,7 +304,7 @@ function ApiTokensList() {
       );
 
       toast.success(t("revokeAllSuccess"));
-      refetchTokens();
+      void refetchTokens();
       setRevokeAllDialogOpen(false);
       setRevokeAllConfirmText("");
     } catch {

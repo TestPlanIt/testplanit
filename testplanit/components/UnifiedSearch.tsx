@@ -286,7 +286,7 @@ export function UnifiedSearch({
   // Perform search when triggered or when tab/page changes
   useEffect(() => {
     if (debouncedQuery.trim() && searchTrigger > 0) {
-      performSearch(currentPage, selectedTab);
+      void performSearch(currentPage, selectedTab);
     } else if (!debouncedQuery.trim()) {
       setResults(null);
     }
@@ -576,7 +576,7 @@ export function UnifiedSearch({
               setSelectedTab(newTab);
               setCurrentPage(1); // Reset to first page when changing tabs
               // Perform search for the specific tab
-              performSearch(1, newTab);
+              void performSearch(1, newTab);
             }}
             className="w-full"
           >
@@ -695,7 +695,7 @@ export function UnifiedSearch({
             onChange={(e) => {
               const page = parseInt(e.target.value) || 1;
               if (page >= 1 && page <= totalPagesForTab) {
-                performSearch(page, selectedTab);
+                void performSearch(page, selectedTab);
               }
             }}
             className="w-16 h-9 text-center"

@@ -117,7 +117,7 @@ export const Header = () => {
         // Silently fail - trial indicator is not critical
       }
     };
-    fetchTrialConfig();
+    void fetchTrialConfig();
   }, []);
 
   useEffect(() => {

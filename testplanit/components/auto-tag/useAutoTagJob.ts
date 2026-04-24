@@ -227,7 +227,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
     };
 
     // Initial fetch immediately
-    poll();
+    void poll();
 
     // Then poll at interval
     intervalRef.current = setInterval(poll, POLL_INTERVAL_MS);

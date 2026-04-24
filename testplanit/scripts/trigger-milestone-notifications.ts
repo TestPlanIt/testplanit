@@ -35,4 +35,4 @@ async function triggerMilestoneNotifications() {
   }
 }
 
-triggerMilestoneNotifications();
+void triggerMilestoneNotifications();

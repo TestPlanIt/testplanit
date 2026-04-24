@@ -773,7 +773,7 @@ const Signin: NextPage = () => {
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && twoFactorCode.length === 8) {
-                      handle2FASubmit();
+                      void handle2FASubmit();
                     }
                   }}
                 />

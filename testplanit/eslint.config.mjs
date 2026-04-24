@@ -87,15 +87,8 @@ const eslintConfig = [
       // get flagged here. Also catches unrelated floating-promise bugs across the
       // codebase (Phase 63 D-04/D-06). Override to "off" for test files below
       // where promise-chaining patterns are common in Playwright/Vitest.
-      //
-      // TEMPORARY: set to "warn" instead of "error" due to 242 incidental findings
-      // surfaced across UI components, admin pages, and projects. Restore to "error"
-      // after follow-up sweep plans land. Audit-scope callsites (lib/services/auditLog.ts,
-      // lib/prisma.ts, app/api/model/[...path]/route.ts) are already clean — the
-      // regression gate is advisory-only until the incidental sweep completes.
-      // D-04 deviation.
       "@typescript-eslint/no-floating-promises": [
-        "warn",
+        "error",
         {
           ignoreVoid: true, // `void fn()` is the explicit opt-out for genuinely fire-and-forget cases
           ignoreIIFE: false,

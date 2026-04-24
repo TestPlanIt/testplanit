@@ -310,7 +310,7 @@ export function TestmoImportPanel() {
   );
 
   const handleRefreshJobHistory = useCallback(() => {
-    refreshJobHistory();
+    void refreshJobHistory();
   }, [refreshJobHistory]);
 
   const selectedJobSummary = useMemo(
@@ -787,7 +787,7 @@ export function TestmoImportPanel() {
       await loadJobDetails(latestJob.id, { autoStep: false });
     };
 
-    hydrateFromLatestJob();
+    void hydrateFromLatestJob();
 
     return () => {
       cancelled = true;
@@ -1000,7 +1000,7 @@ export function TestmoImportPanel() {
       setCurrentJob(job);
       setErrorKey(null);
       setPollingError(null);
-      refreshJobHistory();
+      void refreshJobHistory();
       setUploadProgress({ state: "complete", percent: 100 });
       success = true;
     } catch (error) {
@@ -1303,7 +1303,7 @@ export function TestmoImportPanel() {
     };
 
     // Poll immediately
-    poll();
+    void poll();
 
     // Determine polling interval based on job status
     // Use shorter interval during active import, longer for queued/waiting states
@@ -1433,7 +1433,7 @@ export function TestmoImportPanel() {
       }
     };
 
-    fetchAnalysis();
+    void fetchAnalysis();
 
     return () => {
       cancelled = true;

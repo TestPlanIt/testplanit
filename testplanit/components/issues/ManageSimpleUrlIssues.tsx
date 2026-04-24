@@ -127,7 +127,7 @@ export function ManageSimpleUrlIssues({
 
       setIsAddOpen(false);
       toast.success(t("common.messages.created"));
-      refetch();
+      void refetch();
     } catch {
       toast.error(t("common.messages.createError"));
     }
@@ -147,7 +147,7 @@ export function ManageSimpleUrlIssues({
     setLinkedIssueIds([...linkedIssueIds, selectedExisting.id]);
     setSelectedExisting(null);
     setIsLinkOpen(false);
-    refetch();
+    void refetch();
   };
 
   const getIssueUrl = (issue: any) =>
@@ -218,7 +218,7 @@ export function ManageSimpleUrlIssues({
               onSubmit={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                form.handleSubmit(onSubmit)(e);
+                void form.handleSubmit(onSubmit)(e);
               }}
               className="space-y-4"
               autoComplete="off"

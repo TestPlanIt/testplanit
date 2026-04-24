@@ -172,7 +172,7 @@ export function StaticReportViewer({
   }, [shareData, t, config]);
 
   useEffect(() => {
-    fetchReportData();
+    void fetchReportData();
   }, [fetchReportData]);
 
   if (isLoading) {

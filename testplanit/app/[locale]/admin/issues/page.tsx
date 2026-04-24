@@ -269,7 +269,7 @@ function IssueList() {
       }
     };
 
-    fetchCountsAndProjects();
+    void fetchCountsAndProjects();
   }, [issues]);
 
   const mappedIssues = useMemo(() => {

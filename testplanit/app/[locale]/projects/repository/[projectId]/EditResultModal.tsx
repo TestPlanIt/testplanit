@@ -858,7 +858,7 @@ export function EditResultModal({
       }
 
       // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["testRunResults", testRunId, testRunCaseId],
       });
 
@@ -890,7 +890,7 @@ export function EditResultModal({
       });
 
       // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["testRunResults", testRunId, testRunCaseId],
       });
 
@@ -1369,7 +1369,7 @@ export function EditResultModal({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              form.handleSubmit(onSubmit)(e);
+              void form.handleSubmit(onSubmit)(e);
             }}
             className="space-y-2"
           >

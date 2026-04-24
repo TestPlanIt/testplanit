@@ -278,7 +278,7 @@ export function CopyMoveDialog({
   // ── Preflight helper ─────────────────────────────────────────────────────
   const triggerPreflight = useCallback(
     (op: "copy" | "move", projId: number) => {
-      job.runPreflight({
+      void job.runPreflight({
         operation: op,
         caseIds: effectiveCaseIds,
         sourceProjectId,
@@ -301,7 +301,7 @@ export function CopyMoveDialog({
 
   const handleGo = () => {
     if (!targetProjectId || !targetFolderId) return;
-    job.submit({
+    void job.submit({
       operation,
       caseIds: effectiveCaseIds,
       sourceProjectId,
@@ -515,7 +515,7 @@ export function CopyMoveDialog({
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            handleCreateFolder();
+                            void handleCreateFolder();
                           }
                         }}
                       />

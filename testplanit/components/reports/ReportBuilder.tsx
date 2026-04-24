@@ -1118,7 +1118,7 @@ function ReportBuilderContent({
       }
     }
 
-    fetchMetadata();
+    void fetchMetadata();
   }, [
     reportType,
     currentReport,
@@ -1556,7 +1556,7 @@ function ReportBuilderContent({
 
     if (shouldAutoRun) {
       lastRunReportType.current = reportType;
-      runReport(lastUsedDimensions, lastUsedMetrics);
+      void runReport(lastUsedDimensions, lastUsedMetrics);
     }
   }, [
     reportType,
@@ -1617,7 +1617,7 @@ function ReportBuilderContent({
       !currentReport?.isPreBuilt
     ) {
       // Standard server-side pagination for other reports
-      fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, sortConfig, reportType, allResults]);
@@ -1630,7 +1630,7 @@ function ReportBuilderContent({
       lastUsedMetrics.length > 0 &&
       results
     ) {
-      fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortConfig]);
@@ -1644,7 +1644,7 @@ function ReportBuilderContent({
       results
     ) {
       // Automatically re-run report when filters or date grouping change
-      runReport(lastUsedDimensions, lastUsedMetrics);
+      void runReport(lastUsedDimensions, lastUsedMetrics);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilterValues, dateGrouping]);
@@ -1685,7 +1685,7 @@ function ReportBuilderContent({
 
   const handleRunReport = () => {
     setCurrentPage(1); // Reset to first page when running new report
-    runReport(dimensions, metrics);
+    void runReport(dimensions, metrics);
   };
 
   const handleDimensionsChange = (newDimensions: any[]) => {

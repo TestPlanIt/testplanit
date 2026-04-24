@@ -335,7 +335,7 @@ function LlmIntegrationList() {
       });
 
       // Refetch to update UI
-      refetch();
+      void refetch();
     } catch (error) {
       console.error("Error testing connections:", error);
       toast.error(tGlobal("common.errors.error"), {
@@ -465,16 +465,14 @@ function LlmIntegrationList() {
           onClose={() => setShowAddDialog(false)}
           onSuccess={() => {
             setShowAddDialog(false);
-            refetch();
+            void refetch();
           }}
         />
       )}
       {editingIntegration && (
         <EditLlmIntegration
           integration={editingIntegration}
-          currentSpend={
-            usageByIntegrationId.get(editingIntegration.id) ?? 0
-          }
+          currentSpend={usageByIntegrationId.get(editingIntegration.id) ?? 0}
           open={true}
           onClose={() => setEditingIntegration(null)}
         />

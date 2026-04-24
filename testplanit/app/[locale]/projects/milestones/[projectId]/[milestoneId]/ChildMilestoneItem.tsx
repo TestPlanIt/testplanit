@@ -80,7 +80,7 @@ export default function ChildMilestoneItem({
       }
     };
 
-    fetchMilestoneForecast();
+    void fetchMilestoneForecast();
   }, [milestone.id]);
 
   return (

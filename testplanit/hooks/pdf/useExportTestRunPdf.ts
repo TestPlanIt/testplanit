@@ -348,7 +348,7 @@ export function useExportTestRunPdf({
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       pdf.save(`test-run-export-${timestamp}.pdf`);
 
-      logDataExport({
+      void logDataExport({
         exportType: "PDF",
         entityType: "test-run",
         recordCount: 1,

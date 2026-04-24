@@ -132,7 +132,7 @@ export function SelectedTestCasesDrawer({
       }
     };
 
-    fetchTestCases();
+    void fetchTestCases();
   }, [casesToDisplay, open, projectId, currentPage, effectivePageSize]);
 
   const handlePageSizeChange = (newSize: number | "All") => {

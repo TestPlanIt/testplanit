@@ -391,7 +391,7 @@ export function QuickScriptModal({
         URL.revokeObjectURL(url);
       }
 
-      logDataExport({
+      void logDataExport({
         exportType: `${previewResults.some((r) => r.generatedBy === "ai") ? "AI Export" : "QuickScript"} (${selectedTemplate.name})`,
         entityType: "RepositoryCases",
         recordCount: previewResults.length,

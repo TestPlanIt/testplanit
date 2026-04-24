@@ -88,7 +88,7 @@ export function MultiAsyncCombobox<T>({
     if (!open) return;
     let ignore = false;
     setLoading(true);
-    fetchOptions(search, page, pageSize)
+    void fetchOptions(search, page, pageSize)
       .then((result) => {
         if (ignore) return;
         if (Array.isArray(result)) {

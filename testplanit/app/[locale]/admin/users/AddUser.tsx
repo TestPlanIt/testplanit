@@ -323,7 +323,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
       }
     };
 
-    checkEmailServerConfig();
+    void checkEmailServerConfig();
   }, []);
 
   // Function to restore deleted user
@@ -368,7 +368,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
       }
 
       // Refetch all queries to update the user list immediately (optimistic update)
-      queryClient.refetchQueries();
+      void queryClient.refetchQueries();
 
       setShowRestoreDialog(false);
       setDeletedUser(null);
@@ -451,7 +451,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
       }
 
       // Refetch all queries to update the user list immediately (optimistic update)
-      queryClient.refetchQueries();
+      void queryClient.refetchQueries();
 
       onClose();
       setIsSubmitting(false);
@@ -917,7 +917,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
               type="button"
               onClick={() => {
                 const formData = form.getValues();
-                handleRestoreUser(deletedUser.id, formData);
+                void handleRestoreUser(deletedUser.id, formData);
               }}
               disabled={isSubmitting}
             >

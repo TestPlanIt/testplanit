@@ -130,7 +130,7 @@ export function ShareLinkList({
         description: t("toast.linkRevokedDescription"),
       });
 
-      refetch();
+      void refetch();
       setRevokeDialogOpen(false);
       setSelectedShareId(null);
     } catch {
@@ -154,7 +154,7 @@ export function ShareLinkList({
         description: t("toast.linkDeletedDescription"),
       });
 
-      refetch();
+      void refetch();
       setDeleteDialogOpen(false);
       setSelectedShareId(null);
     } catch {
@@ -185,7 +185,7 @@ export function ShareLinkList({
         }
       );
 
-      refetch();
+      void refetch();
     } catch {
       toast.error(t("toast.notificationUpdateFailed"), {
         description: t("toast.notificationUpdateFailedDescription"),
@@ -483,7 +483,7 @@ export function ShareLinkList({
           onOpenChange={setEditDialogOpen}
           shareLink={selectedShare}
           onSuccess={() => {
-            refetch();
+            void refetch();
             setEditDialogOpen(false);
             setSelectedShare(null);
           }}

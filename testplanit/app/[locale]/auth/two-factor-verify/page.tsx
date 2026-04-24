@@ -119,7 +119,7 @@ export default function TwoFactorVerifyPage() {
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && verificationCode.length === 8) {
-                      handleVerify();
+                      void handleVerify();
                     }
                   }}
                 />

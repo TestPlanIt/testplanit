@@ -224,7 +224,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
     };
 
     // Initial fetch immediately
-    poll();
+    void poll();
 
     // Then poll at interval
     intervalRef.current = setInterval(poll, POLL_INTERVAL_MS);

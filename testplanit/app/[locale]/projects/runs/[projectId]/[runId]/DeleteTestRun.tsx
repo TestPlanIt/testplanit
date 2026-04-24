@@ -92,7 +92,7 @@ export function DeleteTestRunModal({
       });
 
       // Invalidate the test runs list to refresh the summary page
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         predicate: (query) => {
           const queryKey = query.queryKey;
           return (

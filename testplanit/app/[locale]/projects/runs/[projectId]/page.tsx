@@ -389,12 +389,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       setActiveTab(newTab);
       if (newTab === "completed" && numericProjectId) {
         // Invalidate completed runs query to fetch fresh data
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ["completedTestRuns", numericProjectId],
         });
       } else if (newTab === "active") {
         // Refetch active runs when switching to active tab
-        refetchIncompleteTestRuns();
+        void refetchIncompleteTestRuns();
       }
     },
     [setActiveTab, numericProjectId, queryClient, refetchIncompleteTestRuns]
@@ -1023,7 +1023,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             projectId={parseInt(projectId)}
                             onSuccess={() => {
                               router.refresh();
-                              refetchIncompleteTestRuns();
+                              void refetchIncompleteTestRuns();
                             }}
                             open={importDialogOpen}
                             onClose={() => {

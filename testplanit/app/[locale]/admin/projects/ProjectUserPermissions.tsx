@@ -97,7 +97,7 @@ export function ProjectUserPermissions({
       }
     };
 
-    loadEffectiveAccess();
+    void loadEffectiveAccess();
   }, [projectId, userPermissionsState]);
 
   // --- Handlers ---

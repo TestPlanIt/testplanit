@@ -114,9 +114,9 @@ export function ApiTokenSettings({
       }
 
       setNewToken(data);
-      refetchTokens();
+      void refetchTokens();
       // Invalidate the query cache for API tokens
-      queryClient.invalidateQueries({ queryKey: ["ApiToken"] });
+      void queryClient.invalidateQueries({ queryKey: ["ApiToken"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create token");
     } finally {
@@ -132,7 +132,7 @@ export function ApiTokenSettings({
       await deleteToken.mutateAsync({
         where: { id: tokenToDelete },
       });
-      refetchTokens();
+      void refetchTokens();
       setIsDeleteOpen(false);
       setTokenToDelete(null);
     } catch (err) {
@@ -144,7 +144,7 @@ export function ApiTokenSettings({
 
   function copyToken() {
     if (newToken?.token) {
-      navigator.clipboard.writeText(newToken.token);
+      void navigator.clipboard.writeText(newToken.token);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

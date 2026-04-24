@@ -308,7 +308,7 @@ export function StepDuplicateResultsTable({
   );
 
   const handleResolved = useCallback(() => {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       predicate: (q) => {
         const key = q.queryKey as string[];
         return (
@@ -359,7 +359,7 @@ export function StepDuplicateResultsTable({
 
       setRowSelection({});
       setIsBulkProcessing(false);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         predicate: (q) => {
           const key = q.queryKey as string[];
           return (

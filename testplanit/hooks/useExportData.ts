@@ -725,7 +725,7 @@ export function useExportData<
           URL.revokeObjectURL(url);
 
           // Log export for audit trail
-          logDataExport({
+          void logDataExport({
             exportType: "CSV",
             entityType: fileNamePrefix,
             recordCount: transformedAndFormattedData.length,
@@ -1077,7 +1077,7 @@ export function useExportData<
           doc.save(fileName);
 
           // Log export for audit trail
-          logDataExport({
+          void logDataExport({
             exportType: "PDF",
             entityType: fileNamePrefix,
             recordCount: transformedAndFormattedData.length,

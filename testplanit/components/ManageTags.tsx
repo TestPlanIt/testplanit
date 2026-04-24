@@ -100,7 +100,7 @@ export function ManageTags({
           };
           setAllTagOptions([...allTagOptions, restoredOption]);
           setSelectedTags([...selectedTags, existingTag.id]);
-          refetch();
+          void refetch();
         } else {
           // Tag already exists (case-insensitive match), select it instead of creating
           if (!selectedTags.includes(existingTag.id)) {
@@ -118,7 +118,7 @@ export function ManageTags({
         const newOption: TagOption = { label: newTag.name, value: newTag.id };
         setAllTagOptions([...allTagOptions, newOption]);
         setSelectedTags([...selectedTags, newTag.id]);
-        refetch();
+        void refetch();
       }
     } catch (error) {
       console.error("Failed to create tag:", error);

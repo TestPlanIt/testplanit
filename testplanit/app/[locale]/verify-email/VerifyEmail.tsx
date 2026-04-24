@@ -60,7 +60,7 @@ const VerifyEmail = () => {
 
   useEffect(() => {
     if (tokenParam && emailParam) {
-      onSubmit({ token: tokenParam, email: emailParam });
+      void onSubmit({ token: tokenParam, email: emailParam });
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [tokenParam, emailParam]);

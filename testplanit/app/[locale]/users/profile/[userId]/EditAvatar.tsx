@@ -71,7 +71,7 @@ export function EditAvatar({ user, open, onClose }: EditAvatarProps) {
       await updateSession();
 
       // Refetch all queries to refresh UI with new avatar
-      queryClient.refetchQueries();
+      void queryClient.refetchQueries();
     } catch {
       form.setError("root", {
         type: "custom",

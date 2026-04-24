@@ -54,7 +54,7 @@ export function DeleteUser({ user, open, onClose }: DeleteUserProps) {
       setIsSubmitting(false);
 
       // Refetch all queries to refresh the table with soft-deleted user removed
-      queryClient.refetchQueries();
+      void queryClient.refetchQueries();
     } catch {
       form.setError("root", {
         type: "custom",

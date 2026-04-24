@@ -242,7 +242,7 @@ export function CreateIssueJiraForm({
       }
     };
 
-    fetchIssueTypes();
+    void fetchIssueTypes();
   }, [open, selectedProjectKey, integrationId, integrationProjects]);
 
   // Fetch fields based on issue type
@@ -362,7 +362,7 @@ export function CreateIssueJiraForm({
     };
 
     if (open && selectedProjectKey && selectedIssueType) {
-      fetchFields();
+      void fetchFields();
     }
   }, [open, selectedProjectKey, selectedIssueType, integrationId, t]);
 
@@ -506,7 +506,7 @@ export function CreateIssueJiraForm({
               onSubmit={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                form.handleSubmit(onSubmit)(e);
+                void form.handleSubmit(onSubmit)(e);
               }}
               className="space-y-4"
               autoComplete="off"
@@ -603,7 +603,7 @@ export function CreateIssueJiraForm({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    form.handleSubmit(onSubmit)();
+                    void form.handleSubmit(onSubmit)();
                   }}
                 >
                   {isLoading && (

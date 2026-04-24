@@ -352,7 +352,7 @@ export function useExportSessionPdf({
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       pdf.save(`session-export-${timestamp}.pdf`);
 
-      logDataExport({
+      void logDataExport({
         exportType: "PDF",
         entityType: "session",
         recordCount: 1,

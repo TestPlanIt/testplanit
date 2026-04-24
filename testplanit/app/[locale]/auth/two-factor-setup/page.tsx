@@ -87,7 +87,7 @@ export default function TwoFactorSetupPage() {
   // Start setup automatically
   useEffect(() => {
     if ((token || isSsoFlow) && !setupData) {
-      startSetup();
+      void startSetup();
     }
   }, [token, isSsoFlow, setupData, startSetup]);
 
@@ -139,7 +139,7 @@ export default function TwoFactorSetupPage() {
 
   function copyBackupCodes() {
     if (!backupCodes) return;
-    navigator.clipboard.writeText(backupCodes.join("\n"));
+    void navigator.clipboard.writeText(backupCodes.join("\n"));
     setCopiedCodes(true);
     setTimeout(() => setCopiedCodes(false), 2000);
   }

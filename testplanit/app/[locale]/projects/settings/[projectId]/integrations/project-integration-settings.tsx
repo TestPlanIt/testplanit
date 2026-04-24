@@ -127,13 +127,13 @@ export function ProjectIntegrationSettings({
       return;
     }
 
-    loadExternalProjects();
+    void loadExternalProjects();
   }, [integration.id, loadExternalProjects]);
 
   useEffect(() => {
     // Only check auth and load projects for integrations that support it
     if (integration.provider !== "SIMPLE_URL") {
-      checkAuthAndLoadProjects();
+      void checkAuthAndLoadProjects();
     }
   }, [checkAuthAndLoadProjects, integration.provider]);
 
@@ -355,7 +355,7 @@ export function ProjectIntegrationSettings({
                         onClick={() => {
                           setShowAddPanel(true);
                           if (externalProjects.length === 0) {
-                            loadExternalProjects();
+                            void loadExternalProjects();
                           }
                         }}
                       >
@@ -463,7 +463,7 @@ export function ProjectIntegrationSettings({
                                   : null
                               }
                               onValueChange={(value) => {
-                                updateIntegrationProject({
+                                void updateIntegrationProject({
                                   where: { id: ip.id },
                                   data: {
                                     defaultIssueType: value?.id || null,
@@ -551,7 +551,7 @@ export function ProjectIntegrationSettings({
                       onClick={() => {
                         setShowAddPanel(true);
                         if (externalProjects.length === 0) {
-                          loadExternalProjects();
+                          void loadExternalProjects();
                         }
                       }}
                     >

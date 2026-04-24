@@ -87,7 +87,7 @@ export default function StepDuplicatesPage() {
                 count: status.result?.matchesFound ?? 0,
               })
             );
-            queryClient.invalidateQueries({
+            void queryClient.invalidateQueries({
               predicate: (q) => {
                 const key = q.queryKey as string[];
                 return (
@@ -120,7 +120,7 @@ export default function StepDuplicatesPage() {
           pollingRef.current = false;
         }
       };
-      poll();
+      void poll();
     },
     [queryClient, storageKey, t]
   );

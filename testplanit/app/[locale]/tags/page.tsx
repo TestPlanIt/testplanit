@@ -279,7 +279,7 @@ function Tags() {
       }
     };
 
-    fetchCountsAndProjects();
+    void fetchCountsAndProjects();
   }, [tags]);
 
   const mappedTags = useMemo(() => {

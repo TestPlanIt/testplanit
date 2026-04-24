@@ -307,7 +307,7 @@ export function MagicSelectDialog({
   // Auto-fetch count when dialog opens
   useEffect(() => {
     if (open) {
-      fetchCaseCount();
+      void fetchCaseCount();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

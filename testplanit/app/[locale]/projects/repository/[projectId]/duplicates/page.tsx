@@ -78,7 +78,7 @@ export default function DuplicatesPage() {
                 count: status.result?.pairsFound ?? 0,
               })
             );
-            queryClient.invalidateQueries({
+            void queryClient.invalidateQueries({
               queryKey: ["duplicate-scan-candidates", projectId],
             });
             sessionStorage.removeItem(storageKey);
@@ -103,7 +103,7 @@ export default function DuplicatesPage() {
           pollingRef.current = false;
         }
       };
-      poll();
+      void poll();
     },
     [projectId, queryClient, storageKey, t]
   );

@@ -314,10 +314,10 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       setActiveTab(newTab);
       if (newTab === "completed") {
         // Refetch completed sessions when switching to completed tab
-        refetchCompletedSessions();
+        void refetchCompletedSessions();
       } else if (newTab === "active") {
         // Refetch active sessions when switching to active tab
-        refetchIncompleteSessions();
+        void refetchIncompleteSessions();
       }
     },
     [setActiveTab, refetchCompletedSessions, refetchIncompleteSessions]

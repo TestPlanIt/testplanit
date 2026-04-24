@@ -93,7 +93,7 @@ export default function ProjectDocumentation({
       setIsLoading(false);
     };
 
-    fetchData();
+    void fetchData();
   }, [refetchProject]);
 
   useEffect(() => {

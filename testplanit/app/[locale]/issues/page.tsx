@@ -419,7 +419,7 @@ function Issues() {
       }
     };
 
-    fetchCountsAndProjects();
+    void fetchCountsAndProjects();
   }, [issues]);
 
   // Map issues with counts and projects

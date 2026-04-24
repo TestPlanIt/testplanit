@@ -94,7 +94,7 @@ export default function SecurityAdminPage() {
       });
       if (response.ok) {
         toast.success(t("saved"));
-        refetch();
+        void refetch();
       } else {
         toast.error(t("saveFailed"));
       }

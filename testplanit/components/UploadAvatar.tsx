@@ -58,7 +58,7 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
     if (!files || files.length === 0) {
       return;
     }
-    handleFileRead(files[0]);
+    void handleFileRead(files[0]);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -67,7 +67,7 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
     setIsDragging(false);
     const files = event.dataTransfer.files;
     if (files.length) {
-      handleFileRead(files[0]);
+      void handleFileRead(files[0]);
     }
   };
 

@@ -374,7 +374,7 @@ export function AutoTagWizardDialog({
       !autoStartedRef.current
     ) {
       autoStartedRef.current = true;
-      handleStart();
+      void handleStart();
     }
     if (!open) {
       autoStartedRef.current = false;

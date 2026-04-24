@@ -95,7 +95,7 @@ export function QueueManagement() {
   }, [t]);
 
   useEffect(() => {
-    loadQueues();
+    void loadQueues();
     // Auto-refresh every 10 seconds
     const interval = setInterval(loadQueues, 10000);
     return () => clearInterval(interval);

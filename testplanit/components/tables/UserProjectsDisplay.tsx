@@ -40,7 +40,7 @@ export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
       }
     };
 
-    fetchProjects();
+    void fetchProjects();
   }, [userId]);
 
   const { data: allProjects, isLoading: projectsLoading } = useFindManyProjects(

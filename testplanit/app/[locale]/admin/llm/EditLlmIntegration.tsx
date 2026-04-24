@@ -241,7 +241,7 @@ export function EditLlmIntegration({
 
     // Debounce the API calls to avoid too many requests
     const timeoutId = setTimeout(() => {
-      fetchAvailableModels(provider, apiKey, endpoint);
+      void fetchAvailableModels(provider, apiKey, endpoint);
     }, 1000); // 1 second delay
 
     return () => clearTimeout(timeoutId);
@@ -851,7 +851,7 @@ export function EditLlmIntegration({
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleResetSpend();
+                                void handleResetSpend();
                               }}
                               disabled={resettingSpend || currentSpend === 0}
                             >

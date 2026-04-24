@@ -201,7 +201,7 @@ export function NotificationBell() {
   useEffect(() => {
     const handleFocus = () => {
       if (session?.user?.id) {
-        refetch();
+        void refetch();
       }
     };
 
@@ -234,7 +234,7 @@ export function NotificationBell() {
 
     const result = await markNotificationAsRead(id);
     if (result.success) {
-      refetch();
+      void refetch();
     } else {
       toast.error(t("error.markRead"));
     }
@@ -243,7 +243,7 @@ export function NotificationBell() {
   const handleMarkUnread = async (id: string) => {
     const result = await markNotificationAsUnread(id);
     if (result.success) {
-      refetch();
+      void refetch();
     } else {
       toast.error(t("error.markUnread"));
     }
@@ -252,7 +252,7 @@ export function NotificationBell() {
   const handleDelete = async (id: string) => {
     const result = await deleteNotification(id);
     if (result.success) {
-      refetch();
+      void refetch();
       toast.success(t("success.deleted"));
     } else {
       toast.error(t("error.delete"));
@@ -262,7 +262,7 @@ export function NotificationBell() {
   const handleMarkAllRead = async () => {
     const result = await markAllNotificationsAsRead();
     if (result.success) {
-      refetch();
+      void refetch();
       toast.success(t("success.markedAllRead"));
     } else {
       toast.error(t("error.markAllRead"));
@@ -272,7 +272,7 @@ export function NotificationBell() {
   const handleDeleteAll = async () => {
     const result = await deleteAllNotifications();
     if (result.success) {
-      refetch();
+      void refetch();
       toast.success(t("success.deletedAll"));
     } else {
       toast.error(t("error.deleteAll"));

@@ -444,7 +444,7 @@ function ProjectIssues() {
       }
     };
 
-    fetchCounts();
+    void fetchCounts();
   }, [issues, projectId]);
 
   // Map issues with counts

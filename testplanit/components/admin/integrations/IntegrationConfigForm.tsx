@@ -339,7 +339,7 @@ export function IntegrationConfigForm({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(settings.forgeApiKey);
+                      void navigator.clipboard.writeText(settings.forgeApiKey);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}

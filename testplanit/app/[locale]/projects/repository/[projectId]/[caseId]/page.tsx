@@ -1576,7 +1576,7 @@ export default function TestCaseDetails() {
       setIsEditMode(false);
       setPendingAttachmentChanges({ edits: [], deletes: [] });
       setSelectedFiles([]);
-      refetch();
+      void refetch();
     } catch (error) {
       console.error("Error in handleSave:", error);
       setIsSubmitting(false);

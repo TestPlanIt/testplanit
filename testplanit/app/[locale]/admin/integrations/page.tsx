@@ -227,7 +227,7 @@ function IntegrationList() {
           toast.success(t("deleteSuccess"), {
             description: t("deleteSuccessDescription"),
           });
-          refetch();
+          void refetch();
         },
         onError: (error) => {
           toast.error(t("errors.deleteFailed"), {
@@ -260,7 +260,7 @@ function IntegrationList() {
             id: toastId,
             description: t("testSuccessDescription"),
           });
-          refetch();
+          void refetch();
         } else {
           toast.error(t("testFailed"), {
             id: toastId,
@@ -424,7 +424,7 @@ function IntegrationList() {
           }}
           integration={selectedIntegration}
           onSuccess={() => {
-            refetch();
+            void refetch();
             setModalOpen(false);
             setSelectedIntegration(null);
           }}
