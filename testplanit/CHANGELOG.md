@@ -1,3 +1,9 @@
+## [0.22.13](https://github.com/TestPlanIt/testplanit/compare/v0.22.12...v0.22.13) (2026-04-24)
+
+### Bug Fixes
+
+* **reports:** Fix/report type switch stale dimensions ([#245](https://github.com/TestPlanIt/testplanit/issues/245)) ([fc287db](https://github.com/TestPlanIt/testplanit/commit/fc287db33026501a419ba370e9553cfeef424249))
+
 ## [0.22.12](https://github.com/TestPlanIt/testplanit/compare/v0.22.11...v0.22.12) (2026-04-24)
 
 ### Enhancements
