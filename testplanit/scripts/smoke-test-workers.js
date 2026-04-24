@@ -12,14 +12,27 @@
  *
  * What it does: `require()` each compiled worker entry so Node's CJS
  * resolver walks the full import graph. Any missing/unresolved module
- * throws synchronously and fails this script. Only require-time errors
- * count; the workers' connection attempts to Valkey/Postgres that fire
- * from the main-guard (`typeof import.meta === "undefined"` branch)
- * happen asynchronously and we exit(0) before they escape, so we
- * don't need a live Valkey/Postgres in CI.
+ * throws synchronously and fails this script. Workers use a
+ * `require.main === module` guard so startup side-effects (BullMQ
+ * Worker construction, Valkey connection) only fire when the file is
+ * executed directly — not when loaded via require here.
+ *
+ * Env shims below satisfy modules that validate process.env at load
+ * time (env.js uses @t3-oss/env-nextjs which throws synchronously on
+ * missing DATABASE_URL / NEXTAUTH_* during createEnv). We're not
+ * testing runtime config correctness, just module-graph integrity.
  *
  * Keep the list in sync with ecosystem.config.js + scripts/build-workers.js.
  */
+
+// Fill in dummy values for any env vars validated at module load time.
+// Using `||=` so any real value injected by the CI runner is preserved.
+process.env.DATABASE_URL ||= "postgresql://dummy:dummy@dummy:5432/dummy";
+process.env.NEXTAUTH_SECRET ||= "dummy-secret-for-smoke-test-32ch";
+process.env.NEXTAUTH_URL ||= "http://localhost:3000";
+process.env.VALKEY_URL ||= "valkey://dummy:6379";
+process.env.NODE_ENV ||= "production";
+process.env.SKIP_VALKEY_CONNECTION ||= "true";
 
 const path = require("path");
 
