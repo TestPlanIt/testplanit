@@ -136,7 +136,10 @@ export default function ForceChangePasswordPage() {
 
         <CardContent>
           {errors.length > 0 && (
-            <div className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md">
+            <div
+              className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md"
+              role="alert"
+            >
               {errors.map((err, i) => (
                 <p key={i} className="text-sm text-destructive">
                   {err}
