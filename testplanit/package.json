@@ -271,7 +271,7 @@
     "typescript-string-operations": "^1.6.1",
     "undici": "^7.25.0",
     "use-debounce": "^10.1.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "vaul": "^1.1.2",
     "xml-crypto": "^6.1.2",
     "xml-encryption": "^3.1.0",
