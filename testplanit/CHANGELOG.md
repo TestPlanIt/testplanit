@@ -1,3 +1,9 @@
+## [0.22.12](https://github.com/TestPlanIt/testplanit/compare/v0.22.11...v0.22.12) (2026-04-24)
+
+### Enhancements
+
+* **users:** Enhancement/create user password hardening ([#242](https://github.com/TestPlanIt/testplanit/issues/242)) ([08c61c9](https://github.com/TestPlanIt/testplanit/commit/08c61c9bae134789dbc95913291f95219c64afec))
+
 ## [0.22.11](https://github.com/TestPlanIt/testplanit/compare/v0.22.10...v0.22.11) (2026-04-24)
 
 ### Bug Fixes
