@@ -36,8 +36,9 @@ export default function ResultFields() {
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateResultFieldRef = useRef(updateResultField);
-  // eslint-disable-next-line react-hooks/refs
-  updateResultFieldRef.current = updateResultField;
+  useEffect(() => {
+    updateResultFieldRef.current = updateResultField;
+  });
 
   const handleSortChange = (column: string) => {
     const direction =

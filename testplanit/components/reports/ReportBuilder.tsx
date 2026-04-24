@@ -260,7 +260,6 @@ function ReportBuilderContent({
   const [metrics, setMetrics] = useState<any[]>([]);
   const [results, setResults] = useState<any[] | null>(null);
   const [allResults, setAllResults] = useState<any[] | null>(null); // Full dataset for charts
-  const chartDataRef = useRef<any[] | null>(null); // Stable reference for chart data
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [compatWarning, setCompatWarning] = useState<string | null>(null);
@@ -299,9 +298,6 @@ function ReportBuilderContent({
   const [lastUsedDateGrouping, setLastUsedDateGrouping] = useState<
     "daily" | "weekly" | "monthly" | "quarterly" | "annually"
   >("weekly");
-  const lastUsedDimensionsRef = useRef<any[]>([]); // Stable reference for chart
-  const lastUsedMetricsRef = useRef<any[]>([]); // Stable reference for chart
-  const [chartDataVersion, setChartDataVersion] = useState(0); // Version counter for chart updates
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(undefined);
@@ -953,10 +949,6 @@ function ReportBuilderContent({
     setCompatWarning(null);
     setLastUsedDimensions([]);
     setLastUsedMetrics([]);
-    lastUsedDimensionsRef.current = [];
-    lastUsedMetricsRef.current = [];
-    chartDataRef.current = null;
-    setChartDataVersion(0);
     setLastUsedDateRange(undefined);
     setLastUsedConsecutiveRuns(10);
     setReportGeneratedAt(null);
@@ -1100,8 +1092,6 @@ function ReportBuilderContent({
             setMetrics(selectedMets);
             setLastUsedDimensions(selectedDims);
             setLastUsedMetrics(selectedMets);
-            lastUsedDimensionsRef.current = selectedDims; // Update stable ref
-            lastUsedMetricsRef.current = selectedMets; // Update stable ref
 
             // Also set the last used date range if present
             if (startDateParam) {
@@ -1327,11 +1317,8 @@ function ReportBuilderContent({
           // Store all data when running a new report
           if (updateUrl) {
             setAllResults(allData);
-            chartDataRef.current = allData;
-            setChartDataVersion((prev) => prev + 1);
             // Set lastUsedDimensions for flaky tests so columns can access them
             setLastUsedDimensions(selectedDimensions);
-            lastUsedDimensionsRef.current = selectedDimensions;
 
             // Set initial sort order for flaky tests: Flips Desc
             if (
@@ -1418,8 +1405,6 @@ function ReportBuilderContent({
           // Chart should always show the full dataset, not update on pagination
           if (updateUrl) {
             setAllResults(newAllResults);
-            chartDataRef.current = newAllResults;
-            setChartDataVersion((prev) => prev + 1);
           }
 
           setTotalCount(
@@ -1431,8 +1416,6 @@ function ReportBuilderContent({
         if (updateUrl) {
           setLastUsedDimensions(selectedDimensions);
           setLastUsedMetrics(selectedMetrics);
-          lastUsedDimensionsRef.current = selectedDimensions; // Update stable ref
-          lastUsedMetricsRef.current = selectedMetrics; // Update stable ref
           setLastUsedDateRange(
             dateRange?.from ? (dateRange as DateRange) : undefined
           );
@@ -1734,48 +1717,6 @@ function ReportBuilderContent({
       </span>
     );
   }, [reportSummary, lastUsedDateRange, session]);
-
-  // Memoize chart props to prevent unnecessary re-renders when pagination/sorting changes
-  // Use refs for stable references that don't change on re-renders
-  const _chartDimensions = useMemo(
-    () => {
-      // eslint-disable-next-line react-hooks/refs
-      const result = lastUsedDimensionsRef.current.map((d) => ({
-        value: d.value,
-        label: d.label,
-      }));
-      return result;
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chartDataVersion] // Only recompute when chart data version changes
-  );
-
-  const _chartMetrics = useMemo(
-    () => {
-      // eslint-disable-next-line react-hooks/refs
-      const result = lastUsedMetricsRef.current.map((m) => ({
-        value: m.value,
-        label: m.label,
-        originalLabel: m.apiLabel,
-      }));
-      return result;
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chartDataVersion] // Only recompute when chart data version changes
-  );
-
-  const _chartKey = useMemo(
-    () => {
-      /* eslint-disable react-hooks/refs */
-      const result = chartDataRef.current
-        ? JSON.stringify(chartDataRef.current.slice(0, 5))
-        : null;
-      /* eslint-enable react-hooks/refs */
-      return result;
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chartDataVersion, allResults] // Only recompute when chart data version changes
-  );
 
   return (
     <div>

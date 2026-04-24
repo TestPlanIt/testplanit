@@ -184,8 +184,9 @@ function CodeRepositoryList() {
 
   // Stabilize mutation ref -- ZenStack's mutate changes identity every render
   const updateRef = useRef(updateCodeRepository);
-  // eslint-disable-next-line react-hooks/refs
-  updateRef.current = updateCodeRepository;
+  useEffect(() => {
+    updateRef.current = updateCodeRepository;
+  });
 
   const handleToggleStatus = useCallback(
     (id: number, currentStatus: string) => {

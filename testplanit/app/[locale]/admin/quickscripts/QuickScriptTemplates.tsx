@@ -32,7 +32,7 @@ import { CaseExportTemplate } from "@prisma/client";
 import { CirclePlus, Pencil, ScrollText, Search, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useFindManyCaseExportTemplate,
   useUpdateCaseExportTemplate,
@@ -67,8 +67,9 @@ export default function QuickScriptTemplates() {
     useUpdateManyCaseExportTemplate();
 
   const updateTemplateRef = useRef(updateTemplate);
-  // eslint-disable-next-line react-hooks/refs
-  updateTemplateRef.current = updateTemplate;
+  useEffect(() => {
+    updateTemplateRef.current = updateTemplate;
+  });
 
   const { data, isLoading } = useFindManyCaseExportTemplate(
     {

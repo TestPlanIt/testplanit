@@ -188,10 +188,10 @@ function RoleList() {
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateRoleRef = useRef(updateRole);
   const updateManyRolesRef = useRef(updateManyRoles);
-  // eslint-disable-next-line react-hooks/refs
-  updateRoleRef.current = updateRole;
-  // eslint-disable-next-line react-hooks/refs
-  updateManyRolesRef.current = updateManyRoles;
+  useEffect(() => {
+    updateRoleRef.current = updateRole;
+    updateManyRolesRef.current = updateManyRoles;
+  });
 
   const handleToggleDefault = useCallback(
     async (id: number, isDefault: boolean) => {
