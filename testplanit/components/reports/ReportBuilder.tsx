@@ -89,6 +89,10 @@ import {
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
+import {
+  buildCleanReportUrlParams,
+  isUrlInSyncWithReportType,
+} from "./reportUrlUtils";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -918,12 +922,11 @@ function ReportBuilderContent({
     // Mark the new report as already run to prevent auto-run from interfering
     lastRunReportType.current = defaultReport;
 
-    // ALWAYS update URL to ensure tab switches properly
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.set("reportType", defaultReport);
-    newParams.set("tab", newTab);
-    newParams.set("page", "1");
-    newParams.set("pageSize", "10");
+    // Update URL with a CLEAN param set — see reportUrlUtils for rationale.
+    const newParams = buildCleanReportUrlParams({
+      reportType: defaultReport,
+      tab: newTab,
+    });
 
     router.replace(`${pathname}?${newParams.toString()}`);
   };
@@ -958,6 +961,14 @@ function ReportBuilderContent({
   useEffect(() => {
     async function fetchMetadata() {
       if (!currentReport) return;
+
+      // Guard against URL-state race: when reportType changes, the metadata
+      // effect can fire once with stale searchParams (before router.replace's
+      // URL update lands). See reportUrlUtils for rationale.
+      const urlInSyncWithState = isUrlInSyncWithReportType(
+        searchParams.get("reportType"),
+        reportType
+      );
 
       try {
         const url = new URL(currentReport.endpoint, window.location.origin);
@@ -996,6 +1007,14 @@ function ReportBuilderContent({
         setMetricOptions(metOpts);
         setFilteredDimensionOptions(dimOpts);
         setFilteredMetricOptions(metOpts);
+
+        // Skip loading URL-based selections if the URL is still for the
+        // previous report type (see guard above). The dimOpts we just fetched
+        // are for the new report, so any URL param values belong to an old
+        // report whose selections do not apply here.
+        if (!urlInSyncWithState) {
+          return;
+        }
 
         // Load from URL parameters if present
         const dimensionsParam = searchParams.get("dimensions");
