@@ -92,7 +92,7 @@ describe("POST /api/users/[userId]/change-password", () => {
     mockUpdatePasswordHistory.mockResolvedValue(undefined);
   });
 
-  it("calls validatePasswordPolicy and returns 400 with violation messages on policy violation", async () => {
+  it("calls validatePasswordPolicy and returns 400 with structured violations on policy violation", async () => {
     mockGetServerAuthSession.mockResolvedValue(makeUserSession());
     mockDb.user.findUnique.mockResolvedValue({
       id: "user-1",
@@ -100,11 +100,8 @@ describe("POST /api/users/[userId]/change-password", () => {
       email: "user@test.com",
     } as any);
     mockValidatePasswordPolicy.mockResolvedValue([
-      { rule: "minLength", message: "Password must be at least 12 characters" },
-      {
-        rule: "uppercase",
-        message: "Password must contain at least one uppercase letter",
-      },
+      { rule: "minLength", params: { count: 12 } },
+      { rule: "uppercase" },
     ]);
 
     const res = await POST(makeRequest("user-1"), {
@@ -114,7 +111,10 @@ describe("POST /api/users/[userId]/change-password", () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.errors).toBeDefined();
-    expect(body.errors).toContain("Password must be at least 12 characters");
+    expect(body.errors).toEqual([
+      { rule: "minLength", params: { count: 12 } },
+      { rule: "uppercase" },
+    ]);
     expect(mockValidatePasswordPolicy).toHaveBeenCalledWith(
       "user-1",
       "NewPassword2!"

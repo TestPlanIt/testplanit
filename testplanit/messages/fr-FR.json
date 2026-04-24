@@ -3430,7 +3430,8 @@
         "fields": {
           "email_invalid": "Adresse e-mail invalide",
           "password_error": "Un mot de passe est requis.",
-          "confirmPassword_error": "Confirmer le mot de passe est requis"
+          "confirmPassword_error": "Confirmer le mot de passe est requis",
+          "passwordOptionalHelp": "Laisser vide pour exiger que l'utilisateur se connecte via un lien magique ou l'authentification unique (SSO)."
         }
       },
       "edit": {
@@ -4433,7 +4434,15 @@
         "ipAddress": "Adresse IP",
         "userAgent": "Agent utilisateur"
       },
-      "exportCsv": "Exporter au format CSV"
+      "exportCsv": "Exporter au format CSV",
+      "timeRange": "Période",
+      "timeRangeOptions": {
+        "last24h": "Dernières 24 heures",
+        "last7d": "Les 7 derniers jours",
+        "last30d": "30 derniers jours",
+        "last90d": "90 derniers jours",
+        "allTime": "Tout le temps"
+      }
     }
   },
   "components": {
@@ -4766,9 +4775,9 @@
     "user": {
       "name": "## Nom d'utilisateur\nLe nom complet de l'utilisateur.\n\n- Utilisé pour l'identification dans tout le système\n- Affiché dans les tâches et les rapports\n- Doit être unique pour chaque utilisateur",
       "email": "## Adresse e-mail\nL'adresse e-mail de l'utilisateur pour l'accès à son compte.\n\n- Utilisée pour la connexion au système.\n- Doit être unique pour chaque utilisateur.\n- Utilisée pour les notifications système.",
-      "password": "## Mot de passe\nLe mot de passe du compte utilisateur.\n\n- Doit comporter au moins 4 caractères\n- Utilisé pour un accès sécurisé au compte\n- Doit rester confidentiel",
+      "password": "## Mot de passe\nMot de passe du compte utilisateur.\n\n- Facultatif lorsqu'une méthode de connexion sans mot de passe est configurée (fournisseur d'authentification unique Magic Link ou serveur de messagerie) — laisser vide pour exiger une connexion via Magic Link ou SSO.\n- S'il est renseigné, il doit respecter la politique de mots de passe définie dans **Admin → Sécurité** (longueur minimale et classes de caractères).\n- Utilisé pour l'accès sécurisé au compte.\n- Doit rester confidentiel.",
       "token": "## Jeton de vérification\nSaisissez le jeton que vous avez reçu par e-mail pour vérifier votre compte. Si vous n'avez pas de jeton, vous pouvez en demander un nouveau.",
-      "confirmPassword": "## Confirmer le mot de passe\nSaisissez à nouveau le mot de passe pour vérifier qu'il a été saisi correctement.\n\n- Doit correspondre exactement au mot de passe\n- Permet d'éviter les erreurs de saisie\n- Requis pour la création du compte",
+      "confirmPassword": "## Confirmer le mot de passe\nSaisissez à nouveau le mot de passe pour vérifier qu'il a été saisi correctement.\n\n- Doit correspondre exactement au mot de passe\n- Permet d'éviter les erreurs de saisie\n- Requis uniquement lorsqu'un mot de passe est saisi — laissez vide si le champ du mot de passe est vide",
       "access": "## Niveau d'accès au système\nDétermine les autorisations système de l'utilisateur.\n\n- **Administrateur :** Accès complet au système et à sa configuration\n- **Administrateur de projet :** Peut gérer les projets qui lui sont attribués\n- **Utilisateur :** Accès standard aux projets qui lui sont attribués\n- **Aucun :** Peut uniquement consulter son tableau de bord",
       "role": "## Rôle système\nCe rôle détermine les autorisations par défaut de l'utilisateur pour les projets.\n\n- Définit les niveaux d'accès par défaut pour les projets\n- Personnalisable dans l'administration des rôles\n- Affecte les fonctionnalités disponibles",
       "active": "## Statut actif\nDétermine si un utilisateur peut accéder au système.\n\n- Les utilisateurs actifs peuvent se connecter et accéder à leurs ressources attribuées.\n- Les utilisateurs inactifs ne peuvent pas se connecter, mais leurs données sont conservées.\n  - Utilisez cette option pour désactiver temporairement l'accès sans supprimer le compte.",
@@ -6297,7 +6306,8 @@
     "uppercase": "Au moins une lettre majuscule",
     "lowercase": "Au moins une lettre minuscule",
     "numbers": "Au moins un nombre",
-    "specialChars": "Caractère spécial provenant de : {chars}"
+    "specialChars": "Caractère spécial provenant de : {chars}",
+    "history": "Ce mot de passe a été utilisé dans votre dernier {depth} mot de passe"
   },
   "TrialExpired": {
     "title": "Votre période d'essai a expiré.",

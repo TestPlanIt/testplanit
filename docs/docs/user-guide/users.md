@@ -34,16 +34,16 @@ The main view displays a table of all registered users (excluding those marked a
 
 1. Click the **Add User** button above the user table.
 2. A modal dialog will appear. Fill in the user details:
-    - **Name**: Full name of the user (required).
-    - **Email**: User's email address (required, must be unique).
-    - **Password**: Set an initial password (required, min 4 characters).
-    - **Confirm Password**: Re-enter the password (must match).
-    - **Is Active**: Toggle switch, defaults to active.
-    - **Access**: Select the system access level (ADMIN, PROJECTADMIN, USER, NONE). Defaults to USER.
-    - **Role**: Select the user's Role from the dropdown. Defaults to the system's default role.
-    - **Groups**: Use the multi-select dropdown to assign the user to relevant Groups. Use "Select All" for convenience.
-    - **Projects**: Use the multi-select dropdown to assign the user to relevant Projects. Use "Select All" for convenience.
-    - **API Access**: Toggle switch to grant API access. Defaults to off.
+   - **Name**: Full name of the user (required).
+   - **Email**: User's email address (required, must be unique).
+   - **Password**: Set an initial password. Labeled **(Optional)** when a passwordless login method is available (an enabled Magic Link SSO provider or a configured email server) — in that case you can leave it blank and the user signs in via magic link or SSO. When supplied, the password must satisfy the Security Settings policy (minimum length, character classes); the live strength indicator and checklist show which rules are met.
+   - **Confirm Password**: Re-enter the password (must match). Only required when a password is entered.
+   - **Is Active**: Toggle switch, defaults to active.
+   - **Access**: Select the system access level (ADMIN, PROJECTADMIN, USER, NONE). Defaults to USER.
+   - **Role**: Select the user's Role from the dropdown. Defaults to the system's default role.
+   - **Groups**: Use the multi-select dropdown to assign the user to relevant Groups. Use "Select All" for convenience.
+   - **Projects**: Use the multi-select dropdown to assign the user to relevant Projects. Use "Select All" for convenience.
+   - **API Access**: Toggle switch to grant API access. Defaults to off.
 3. Click **Submit**. The user account is created, and default user preferences are automatically assigned.
 
 ## Editing an Existing User
@@ -51,15 +51,15 @@ The main view displays a table of all registered users (excluding those marked a
 1. Locate the user you wish to modify in the table.
 2. Click the three-dot menu in the **Actions** column and select **Edit**.
 3. A modal dialog will appear. You can modify:
-    - Name
-    - Email
-    - Is Active (Cannot disable your own account)
-    - Access Level (Cannot change your own access level)
-    - Role (Cannot change your own role)
-    - Group assignments
-    - Project assignments
-    - API Access
-    - _(Note: Password cannot be changed from this screen. Users manage their own passwords via profile settings or password reset functionality)._
+   - Name
+   - Email
+   - Is Active (Cannot disable your own account)
+   - Access Level (Cannot change your own access level)
+   - Role (Cannot change your own role)
+   - Group assignments
+   - Project assignments
+   - API Access
+   - _(Note: Password cannot be changed from this screen. Users manage their own passwords via profile settings or password reset functionality)._
 4. Click **Submit** to save changes. Project and Group assignments are updated based on additions and removals.
 
 ## Deleting a User

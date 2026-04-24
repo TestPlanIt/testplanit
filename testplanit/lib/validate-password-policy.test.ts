@@ -66,9 +66,7 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "short");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("minLength");
-    expect(violations[0].message).toBe(
-      "Password must be at least 12 characters"
-    );
+    expect(violations[0].params).toEqual({ count: 12 });
   });
 
   it("returns an uppercase violation when requireUppercase is true and password has no uppercase", async () => {
@@ -76,7 +74,7 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "alllowercase");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("uppercase");
-    expect(violations[0].message).toContain("uppercase");
+    expect(violations[0].params).toBeUndefined();
   });
 
   it("does not return uppercase violation when requireUppercase is false", async () => {
@@ -90,7 +88,7 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "ALLUPPERCASE");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("lowercase");
-    expect(violations[0].message).toContain("lowercase");
+    expect(violations[0].params).toBeUndefined();
   });
 
   it("returns a numbers violation when requireNumbers is true and password has no digit", async () => {
@@ -98,7 +96,7 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "NoDigitsHere");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("numbers");
-    expect(violations[0].message).toContain("number");
+    expect(violations[0].params).toBeUndefined();
   });
 
   it("returns a specialChars violation when requiredSpecialChars is set and password has none of those chars", async () => {
@@ -108,8 +106,7 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "NoSpecialChars");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("specialChars");
-    expect(violations[0].message).toContain("special character");
-    expect(violations[0].message).toContain("!@#$");
+    expect(violations[0].params).toEqual({ chars: "!@#$" });
   });
 
   it("does not return specialChars violation when password contains a required special char", async () => {
@@ -126,7 +123,7 @@ describe("validatePasswordPolicy", () => {
     const violations = await validatePasswordPolicy("user-1", "OldPassword1");
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("history");
-    expect(violations[0].message).toContain("last 5 passwords");
+    expect(violations[0].params).toEqual({ depth: 5 });
     expect(mockIsPasswordInHistory).toHaveBeenCalledWith(
       "user-1",
       "OldPassword1",

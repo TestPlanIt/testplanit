@@ -48,13 +48,11 @@ export const POST = withAuditContext(
       );
     }
 
-    // Validate against password policy (per D-01)
+    // Validate against password policy (per D-01). Returns structured
+    // violations (rule + params) so clients can localize — see GitHub #227.
     const violations = await validatePasswordPolicy(userId, newPassword);
     if (violations.length > 0) {
-      return NextResponse.json(
-        { errors: violations.map((v) => v.message) },
-        { status: 400 }
-      );
+      return NextResponse.json({ errors: violations }, { status: 400 });
     }
 
     try {

@@ -14,6 +14,10 @@ import {
   PasswordStrengthIndicator,
   type PasswordPolicy,
 } from "@/components/PasswordStrengthIndicator";
+import {
+  translatePolicyViolation,
+  type PolicyViolation,
+} from "~/lib/password-policy-messages";
 import { KeyRound, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -75,8 +79,14 @@ export default function ForceChangePasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Policy violations come back as structured objects (GitHub #227) —
+        // localize each with the shared helper.
         if (data.errors && Array.isArray(data.errors)) {
-          setErrors(data.errors);
+          setErrors(
+            (data.errors as PolicyViolation[]).map((v) =>
+              translatePolicyViolation(v, t)
+            )
+          );
         } else {
           setErrors([data.error || t("auth.forceChangePassword.genericError")]);
         }
@@ -126,7 +136,10 @@ export default function ForceChangePasswordPage() {
 
         <CardContent>
           {errors.length > 0 && (
-            <div className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md">
+            <div
+              className="p-3 mb-4 bg-destructive/10 border border-destructive rounded-md"
+              role="alert"
+            >
               {errors.map((err, i) => (
                 <p key={i} className="text-sm text-destructive">
                   {err}

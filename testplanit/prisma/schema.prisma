@@ -337,7 +337,7 @@ model User {
   emailVerified           DateTime?
   emailVerifToken         String?
   emailTokenExpires       DateTime?
-  password                String
+  password                String?
   image                   String?
   accounts                Account[]
   authMethod              AuthMethod              @default(INTERNAL)

@@ -77,7 +77,7 @@ model User {
     emailVerified           DateTime?
     emailVerifToken         String?
     emailTokenExpires       DateTime?
-    password                String                  @password @omit @length(4)
+    password                String?                 @password @omit @length(4)
     image                   String?
     accounts                Account[]
     authMethod              AuthMethod              @default(INTERNAL)

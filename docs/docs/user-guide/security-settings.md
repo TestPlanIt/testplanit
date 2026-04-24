@@ -72,6 +72,7 @@ This targets users with INTERNAL or BOTH auth methods who are active and not alr
 From the **Admin → User Management** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link).
 
 **Prerequisites:** At least one passwordless login method must be configured before passwords can be revoked:
+
 - A Magic Link SSO provider is enabled, **or**
 - An email server is configured for Magic Link delivery
 
@@ -82,7 +83,7 @@ If no passwordless login method is available, the revoke action is blocked with 
 
 ## Password Strength Indicator
 
-When users set or change their password (on the signup page, profile change password modal, or forced password change page), a real-time **Password Strength Indicator** is displayed. This shows:
+When users set or change their password (on the signup page, profile change password modal, forced password change page, or the admin **Add User** dialog), a real-time **Password Strength Indicator** is displayed. This shows:
 
 - A **strength bar** with four levels (Weak, Fair, Strong, Very Strong) powered by the zxcvbn algorithm, which evaluates password strength beyond simple rule checks
 - A **policy checklist** showing which requirements are met or unmet based on the current password policy

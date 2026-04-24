@@ -8,6 +8,7 @@ import {
   useCreateUser,
   useCreateUserPreferences,
   useFindFirstRegistrationSettings,
+  useFindFirstSsoProvider,
   useFindManyGroups,
   useFindManyProjects,
   useFindManyRoles,
@@ -57,6 +58,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  PasswordStrengthIndicator,
+  type PasswordPolicy,
+} from "@/components/PasswordStrengthIndicator";
 import { Switch } from "@/components/ui/switch";
 import { Roles } from "@prisma/client";
 
@@ -84,6 +89,35 @@ export function AddUser({ open, onClose }: AddUserProps) {
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
+  // Fetch roles, projects, groups, and registration settings...
+  const { data: roles } = useFindManyRoles();
+  const defaultRoleId = roles?.find((role) => role.isDefault)?.id;
+  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+
+  // Email server configuration status
+  const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
+
+  // Mirrors the revoke-password pre-flight: a passwordless login path exists
+  // when either an enabled MAGIC_LINK SSO provider is present or the email
+  // server env vars are configured.
+  const { data: magicLinkProvider } = useFindFirstSsoProvider({
+    where: { type: "MAGIC_LINK", enabled: true },
+    select: { id: true },
+  });
+  const passwordRequired = !magicLinkProvider && !isEmailServerConfigured;
+
+  // Password policy pulled from RegistrationSettings — same source the user's
+  // own ChangePasswordModal uses.
+  const policy: PasswordPolicy | null = registrationSettings
+    ? {
+        minPasswordLength: registrationSettings.minPasswordLength,
+        requireUppercase: registrationSettings.requireUppercase,
+        requireLowercase: registrationSettings.requireLowercase,
+        requireNumbers: registrationSettings.requireNumbers,
+        requiredSpecialChars: registrationSettings.requiredSpecialChars,
+      }
+    : null;
+
   // Define a Zod schema specifically for form validation
   const AddUserFormValidationSchema = z
     .object({
@@ -93,8 +127,8 @@ export function AddUser({ open, onClose }: AddUserProps) {
       email: z
         .email()
         .min(1, { message: tGlobal("auth.signup.errors.emailRequired") }),
-      password: z.string().min(4, t("fields.password_error")),
-      confirmPassword: z.string().min(4, t("fields.confirmPassword_error")),
+      password: z.string(),
+      confirmPassword: z.string(),
       isActive: z.boolean(),
       access: z.enum(["ADMIN", "USER", "PROJECTADMIN", "NONE"]),
       roleId: z
@@ -105,6 +139,70 @@ export function AddUser({ open, onClose }: AddUserProps) {
       groups: z.array(z.number()).optional(),
     })
     .superRefine(({ confirmPassword, password }, ctx) => {
+      if (passwordRequired && password.length === 0) {
+        ctx.issues.push({
+          code: "custom",
+          message: t("fields.password_error"),
+          path: ["password"],
+          input: "",
+        });
+        return;
+      }
+
+      if (password.length === 0) {
+        return;
+      }
+
+      if (policy) {
+        if (password.length < policy.minPasswordLength) {
+          ctx.issues.push({
+            code: "custom",
+            message: tGlobal("passwordStrength.minLength", {
+              count: policy.minPasswordLength,
+            }),
+            path: ["password"],
+            input: "",
+          });
+        }
+        if (policy.requireUppercase && !/[A-Z]/.test(password)) {
+          ctx.issues.push({
+            code: "custom",
+            message: tGlobal("passwordStrength.uppercase"),
+            path: ["password"],
+            input: "",
+          });
+        }
+        if (policy.requireLowercase && !/[a-z]/.test(password)) {
+          ctx.issues.push({
+            code: "custom",
+            message: tGlobal("passwordStrength.lowercase"),
+            path: ["password"],
+            input: "",
+          });
+        }
+        if (policy.requireNumbers && !/[0-9]/.test(password)) {
+          ctx.issues.push({
+            code: "custom",
+            message: tGlobal("passwordStrength.numbers"),
+            path: ["password"],
+            input: "",
+          });
+        }
+        if (
+          policy.requiredSpecialChars &&
+          ![...policy.requiredSpecialChars].some((c) => password.includes(c))
+        ) {
+          ctx.issues.push({
+            code: "custom",
+            message: tGlobal("passwordStrength.specialChars", {
+              chars: policy.requiredSpecialChars,
+            }),
+            path: ["password"],
+            input: "",
+          });
+        }
+      }
+
       if (confirmPassword !== password) {
         ctx.issues.push({
           code: "custom",
@@ -114,14 +212,6 @@ export function AddUser({ open, onClose }: AddUserProps) {
         });
       }
     });
-
-  // Fetch roles, projects, groups, and registration settings...
-  const { data: roles } = useFindManyRoles();
-  const defaultRoleId = roles?.find((role) => role.isDefault)?.id;
-  const { data: registrationSettings } = useFindFirstRegistrationSettings();
-
-  // Email server configuration status
-  const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
   // Add roleOptions mapping here
   const roleOptions =
@@ -303,11 +393,18 @@ export function AddUser({ open, onClose }: AddUserProps) {
         isEmailServerConfigured &&
         (registrationSettings?.requireEmailVerification ?? true);
 
+      // If the admin skipped the password (allowed when a passwordless login
+      // method is available), store an unusable random secret — same pattern as
+      // SAML auto-provisioning in app/api/auth/saml/callback/route.ts. User
+      // signs in via magic link / SSO.
+      const passwordForApi =
+        data.password.length > 0 ? data.password : crypto.randomUUID();
+
       // Construct payload matching UserCreateInput for the API
       const apiPayload = {
         name: data.name,
         email: data.email,
-        password: data.password,
+        password: passwordForApi,
         access: data.access,
         roleId: parseInt(data.roleId), // Convert string roleId to number
         isActive: data.isActive,
@@ -462,6 +559,13 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.password")}
+                      {!passwordRequired && (
+                        <span className="text-muted-foreground text-xs ml-2">
+                          {"("}
+                          {tCommon("fields.optional")}
+                          {")"}
+                        </span>
+                      )}
                       <HelpPopover helpKey="user.password" />
                     </FormLabel>
                     <FormControl>
@@ -473,6 +577,15 @@ export function AddUser({ open, onClose }: AddUserProps) {
                         {...field}
                       />
                     </FormControl>
+                    {!passwordRequired && !field.value && (
+                      <p className="text-muted-foreground text-xs">
+                        {t("fields.passwordOptionalHelp")}
+                      </p>
+                    )}
+                    <PasswordStrengthIndicator
+                      password={field.value}
+                      policy={policy}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -484,6 +597,13 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.confirmPassword")}
+                      {!passwordRequired && (
+                        <span className="text-muted-foreground text-xs ml-2">
+                          {"("}
+                          {tCommon("fields.optional")}
+                          {")"}
+                        </span>
+                      )}
                       <HelpPopover helpKey="user.confirmPassword" />
                     </FormLabel>
                     <FormControl>

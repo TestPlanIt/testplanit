@@ -144,6 +144,7 @@ const metadata: ModelMeta = {
                 }, password: {
                     name: "password",
                     type: "String",
+                    isOptional: true,
                 }, image: {
                     name: "image",
                     type: "String",

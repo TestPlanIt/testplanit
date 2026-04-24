@@ -18,3 +18,8 @@ CHANGELOG.md
 
 # Local GSD planning artifacts (never committed)
 .planning/
+
+# Local runtime state (all gitignored — never committed)
+.claude/
+docker-data/
+test-results/

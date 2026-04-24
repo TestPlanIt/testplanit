@@ -2501,7 +2501,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -2875,7 +2882,6 @@
           "id",
           "name",
           "email",
-          "password",
           "authMethod",
           "access",
           "roleId",
@@ -12377,10 +12383,13 @@
           "password": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/StringFilter"
+                "$ref": "#/components/schemas/StringNullableFilter"
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -12805,7 +12814,14 @@
             ]
           },
           "password": {
-            "$ref": "#/components/schemas/SortOrder"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -13144,10 +13160,13 @@
           "password": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/StringFilter"
+                "$ref": "#/components/schemas/StringNullableFilter"
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -13638,10 +13657,13 @@
           "password": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -66116,7 +66138,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -66354,7 +66383,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -66438,7 +66466,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -66815,7 +66846,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -66949,7 +66987,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -67033,7 +67070,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -203426,7 +203466,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -203661,7 +203708,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -203710,7 +203756,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -203952,7 +204005,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -204111,7 +204163,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -204520,7 +204575,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -205224,7 +205282,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -205459,7 +205524,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -205508,7 +205572,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -205750,7 +205821,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -205925,7 +205995,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -206160,7 +206237,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -206209,7 +206285,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -206444,7 +206527,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -214272,7 +214354,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -214681,7 +214766,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -215516,10 +215604,13 @@
           "password": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/StringFilter"
+                "$ref": "#/components/schemas/StringNullableFilter"
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -223762,7 +223853,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -223997,7 +224095,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -224046,7 +224143,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -224288,7 +224392,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -224447,7 +224550,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -224856,7 +224962,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -225247,7 +225356,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -225482,7 +225598,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -225531,7 +225646,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -225773,7 +225895,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -225932,7 +226053,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -226341,7 +226465,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -226732,7 +226859,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -226967,7 +227101,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -227016,7 +227149,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -227258,7 +227398,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -227417,7 +227556,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -227826,7 +227968,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -228606,7 +228751,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -228841,7 +228993,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -228890,7 +229041,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -229132,7 +229290,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -229410,7 +229567,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -229819,7 +229979,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -230407,7 +230570,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -230641,8 +230811,7 @@
         },
         "required": [
           "name",
-          "email",
-          "password"
+          "email"
         ]
       },
       "UserUncheckedCreateWithoutRoleInput": {
@@ -230690,7 +230859,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -230931,8 +231107,7 @@
         },
         "required": [
           "name",
-          "email",
-          "password"
+          "email"
         ]
       },
       "UserCreateOrConnectWithoutRoleInput": {
@@ -232141,7 +232316,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -232376,7 +232558,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -232425,7 +232606,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -232667,7 +232855,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -238850,7 +239037,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -239259,7 +239449,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -245025,7 +245218,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -245260,7 +245460,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -245309,7 +245508,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -245551,7 +245757,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -246086,7 +246291,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -246495,7 +246703,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -251515,7 +251726,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -251750,7 +251968,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -251799,7 +252016,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -252041,7 +252265,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -254669,7 +254892,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -255078,7 +255304,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -281797,7 +282026,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -282032,7 +282268,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -282081,7 +282316,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -282323,7 +282565,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -283816,7 +284057,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -284225,7 +284469,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -285335,7 +285582,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -285570,7 +285824,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -285619,7 +285872,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -285861,7 +286121,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -287058,7 +287317,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -287467,7 +287729,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -293559,7 +293824,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -293794,7 +294066,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -293843,7 +294114,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -294085,7 +294363,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -298578,7 +298855,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -298987,7 +299267,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -307918,7 +308201,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -308153,7 +308443,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -308202,7 +308491,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -308444,7 +308740,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -310498,7 +310793,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -310907,7 +311205,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -315731,7 +316032,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -315966,7 +316274,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -316015,7 +316322,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -316257,7 +316571,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -316328,7 +316641,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -316563,7 +316883,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -316612,7 +316931,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -316854,7 +317180,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -320087,7 +320412,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -320496,7 +320824,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -320975,7 +321306,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -321384,7 +321718,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -322648,7 +322985,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -322883,7 +323227,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -322932,7 +323275,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -323174,7 +323524,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -324734,7 +325083,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -325143,7 +325495,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -330061,7 +330416,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -330296,7 +330658,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -330345,7 +330706,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -330587,7 +330955,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -333679,7 +334046,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -334088,7 +334458,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -335801,7 +336174,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -336036,7 +336416,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -336085,7 +336464,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -336327,7 +336713,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -337989,7 +338374,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -338398,7 +338786,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -339509,7 +339900,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -339744,7 +340142,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -339793,7 +340190,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -340035,7 +340439,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -340106,7 +340509,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -340341,7 +340751,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -340390,7 +340799,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -340632,7 +341048,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -342743,7 +343158,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -343152,7 +343570,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -343631,7 +344052,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -344040,7 +344464,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -347090,7 +347517,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -347325,7 +347759,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -347374,7 +347807,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -347616,7 +348056,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -349733,7 +350172,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -350142,7 +350584,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -359319,7 +359764,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -359554,7 +360006,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -359603,7 +360054,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -359845,7 +360303,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -360163,7 +360620,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -360572,7 +361032,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -361492,7 +361955,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -361727,7 +362197,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -361776,7 +362245,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -362018,7 +362494,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -362636,7 +363111,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -363045,7 +363523,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -366907,7 +367388,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -367142,7 +367630,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -367191,7 +367678,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -367433,7 +367927,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -368700,7 +369193,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -369109,7 +369605,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -370119,7 +370618,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -370354,7 +370860,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -370403,7 +370908,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -370645,7 +371157,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -372138,7 +372649,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -372547,7 +373061,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -373948,7 +374465,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -374183,7 +374707,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -374232,7 +374755,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -374474,7 +375004,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -375583,7 +376112,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -375992,7 +376524,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -376704,7 +377239,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -376939,7 +377481,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -376988,7 +377529,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -377230,7 +377778,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -377908,7 +378455,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -378317,7 +378867,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -379198,7 +379751,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -379433,7 +379993,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -379482,7 +380041,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -379724,7 +380290,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -380716,7 +381281,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -381125,7 +381693,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -381892,7 +382463,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -382127,7 +382705,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -382176,7 +382753,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -382418,7 +383002,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -383357,7 +383940,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -383766,7 +384352,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -384978,7 +385567,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -385213,7 +385809,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -385262,7 +385857,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -385504,7 +386106,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -385663,7 +386264,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -386072,7 +386676,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -386839,7 +387446,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -387074,7 +387688,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -387123,7 +387736,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -387365,7 +387985,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -388183,7 +388802,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -388592,7 +389214,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -389325,7 +389950,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -389560,7 +390192,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -389609,7 +390240,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -389851,7 +390489,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -390482,7 +391119,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -390891,7 +391531,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -396501,7 +397144,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -396736,7 +397386,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -396785,7 +397434,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -397027,7 +397683,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -397987,7 +398642,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -398396,7 +399054,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -402318,7 +402979,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -402553,7 +403221,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -402602,7 +403269,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -402844,7 +403518,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -403003,7 +403676,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -403412,7 +404088,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -404128,7 +404807,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -404363,7 +405049,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -404412,7 +405097,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -404654,7 +405346,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -404964,7 +405655,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -405373,7 +406067,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -408903,7 +409600,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -409138,7 +409842,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -409187,7 +409890,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -409429,7 +410139,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -412064,7 +412773,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -412473,7 +413185,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -413097,7 +413812,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -413332,7 +414054,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "role"
         ]
       },
@@ -413381,7 +414102,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -413623,7 +414351,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -414055,7 +414782,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -414464,7 +415194,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -415853,7 +416586,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -415977,7 +416717,6 @@
         "required": [
           "name",
           "email",
-          "password",
           "roleId"
         ]
       },
@@ -419157,7 +419896,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -419566,7 +420308,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -419982,7 +420727,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -433596,7 +434344,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -433726,8 +434481,7 @@
         },
         "required": [
           "name",
-          "email",
-          "password"
+          "email"
         ]
       },
       "RolePermissionCreateManyRoleInput": {
@@ -433961,7 +434715,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -434370,7 +435127,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -434789,7 +435549,10 @@
                 "type": "string"
               },
               {
-                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -530476,7 +531239,14 @@
             ]
           },
           "password": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "image": {
             "oneOf": [
@@ -530661,7 +531431,6 @@
           "id",
           "name",
           "email",
-          "password",
           "authMethod",
           "access",
           "roleId",

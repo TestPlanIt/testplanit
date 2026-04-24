@@ -2,6 +2,9 @@ import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
 
 const TEST_EMAIL_DOMAIN = process.env.TEST_EMAIL_DOMAIN || "example.com";
+// Matches global-setup.ts seeded admin.
+const ADMIN_EMAIL = "admin@example.com";
+const ADMIN_PASSWORD = "admin";
 
 /**
  * Password Change E2E Tests
@@ -219,6 +222,104 @@ test.describe("Password Change", () => {
 
       // Dialog should still be open
       await expect(dialog).toBeVisible({ timeout: 2000 });
+    } finally {
+      await api.deleteUser(userId);
+    }
+  });
+
+  test("Server-side policy violation is displayed as localized checklist text (#227)", async ({
+    page,
+    api,
+    baseURL,
+  }) => {
+    // Proves the rule → translation wiring introduced in #227. Before the
+    // fix, the server emitted hardcoded English sentences like
+    // "Password must be at least 12 characters". After the fix, the server
+    // emits { rule: "minLength", params: { count: 12 } } and the client
+    // renders the translated `passwordStrength.minLength` key, which in
+    // en-US is "At least 12 characters" — no "Password must be" prefix.
+    //
+    // We drive this through the force-change-password flow because
+    // ChangePasswordModal has a client-side min-length pre-check that would
+    // short-circuit before the server policy ever runs. force-change-password
+    // has no such pre-check, so a too-short password reaches the server.
+
+    const timestamp = Date.now();
+    const testEmail = `pw-policy-loc-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const originalPassword = "LongEnoughPassword123!";
+
+    // Read the tenant's current minPasswordLength so the assertion adapts to
+    // whatever the seeded policy is. RegistrationSettings is publicly
+    // readable (@@allow('read', true) in schema.zmodel).
+    const settingsRes = await page.request.get(
+      `${baseURL}/api/model/registrationSettings/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({ select: { minPasswordLength: true } }),
+        },
+      }
+    );
+    expect(settingsRes.ok()).toBeTruthy();
+    const minPasswordLength =
+      (await settingsRes.json()).data?.minPasswordLength ?? 12;
+
+    const userResult = await api.createUser({
+      name: `Policy Localization User ${timestamp}`,
+      email: testEmail,
+      password: originalPassword,
+    });
+    const userId = userResult.data.id;
+
+    try {
+      const signinPage = new SigninPage(page);
+
+      // Admin sets mustChangePassword on the test user so the next signin
+      // routes to /auth/force-change-password.
+      await signinPage.goto();
+      await signinPage.fillCredentials(ADMIN_EMAIL, ADMIN_PASSWORD);
+      await signinPage.submit();
+      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+        timeout: 30000,
+      });
+
+      const forceRes = await page.request.post(
+        `${baseURL}/api/admin/users/${userId}/force-change-password`
+      );
+      expect(forceRes.ok()).toBeTruthy();
+
+      // Swap to the test user.
+      await page.context().clearCookies();
+      await signinPage.goto();
+      await signinPage.fillCredentials(testEmail, originalPassword);
+      await signinPage.submit();
+      await page.waitForURL(
+        (url) => url.pathname.includes("/auth/force-change-password"),
+        { timeout: 30000 }
+      );
+
+      // Passes client "passwords match" + "non-empty" checks; fails server
+      // minPasswordLength. The two-rule stuff (uppercase/numbers/etc.) would
+      // need a RegistrationSettings mutation and parallel-test risk, so we
+      // stick to minLength which is always enforced.
+      const tooShort = "a".repeat(Math.max(1, minPasswordLength - 1));
+      await page.locator("#newPassword").fill(tooShort);
+      await page.locator("#confirmPassword").fill(tooShort);
+
+      await page
+        .getByRole("button", { name: /change password/i })
+        .first()
+        .click();
+
+      // The error alert is `role="alert"` — added alongside #227 so tests can
+      // scope to it without relying on the strength indicator elsewhere on
+      // the page (which also renders "At least N characters" as a checklist
+      // item). Exact-match ensures we fail if the server regresses to the
+      // old "Password must be at least N characters" English string.
+      const errorAlert = page.getByRole("alert").first();
+      await expect(errorAlert).toBeVisible({ timeout: 10000 });
+      await expect(errorAlert.locator("p").first()).toHaveText(
+        `At least ${minPasswordLength} characters`
+      );
     } finally {
       await api.deleteUser(userId);
     }
