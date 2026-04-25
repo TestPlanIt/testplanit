@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "@prisma/client";
@@ -89,38 +88,36 @@ function MenuLink({
           : `/projects/${option.path}/${projectId}`;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            id={option.id}
-            href={href}
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              menuButtonClass,
-              "flex items-center py-2 md:py-0 no-underline",
-              isActive
-                ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                : "hover:bg-primary/10 hover:text-primary"
-            )}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          id={option.id}
+          href={href}
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            menuButtonClass,
+            "flex items-center py-2 md:py-0 no-underline",
+            isActive
+              ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+              : "hover:bg-primary/10 hover:text-primary"
+          )}
+        >
+          <IconComponent className="min-w-6 min-h-6" />
+          <span
+            className={`hidden md:inline-block ${isActive ? "font-bold" : ""} ${
+              isCollapsed
+                ? "md:max-w-0 md:opacity-0 md:overflow-hidden"
+                : "md:max-w-[200px] md:opacity-100"
+            } md:whitespace-nowrap md:transition-all md:duration-500`}
           >
-            <IconComponent className="min-w-6 min-h-6" />
-            <span
-              className={`hidden md:inline-block ${isActive ? "font-bold" : ""} ${
-                isCollapsed
-                  ? "md:max-w-0 md:opacity-0 md:overflow-hidden"
-                  : "md:max-w-[200px] md:opacity-100"
-              } md:whitespace-nowrap md:transition-all md:duration-500`}
-            >
-              {option.label}
-            </span>
-          </Link>
-        </TooltipTrigger>
-        {isCollapsed && (
-          <TooltipContent side="right">{option.label}</TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
+            {option.label}
+          </span>
+        </Link>
+      </TooltipTrigger>
+      {isCollapsed && (
+        <TooltipContent side="right">{option.label}</TooltipContent>
+      )}
+    </Tooltip>
   );
 }
 

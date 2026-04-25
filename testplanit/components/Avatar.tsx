@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Image from "next/image";
@@ -103,16 +102,14 @@ const Avatar: React.FC<AvatarProps> = ({
   const displayText = width && width < 50 ? abbreviateAltText(alt) : alt;
 
   return showTooltip ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger type="button" className="cursor-default">
-          {renderContent()}
-        </TooltipTrigger>
-        <TooltipContent>
-          <div>{prependText ? `${prependText}: ${alt}` : alt}</div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger type="button" className="cursor-default">
+        {renderContent()}
+      </TooltipTrigger>
+      <TooltipContent>
+        <div>{prependText ? `${prependText}: ${alt}` : alt}</div>
+      </TooltipContent>
+    </Tooltip>
   ) : (
     renderContent()
   );

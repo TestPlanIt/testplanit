@@ -3,7 +3,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Combine, LinkIcon, PlayCircle } from "lucide-react";
@@ -95,26 +94,24 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
                         {testRun.name}
                       </span>
                       {(testRun as any).configurationGroupId && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="shrink-0 mr-1">
-                                <Combine className="w-4 h-4 text-muted-foreground" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-background/50">
-                                {t("common.labels.multiConfiguration")}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="shrink-0 mr-1">
+                              <Combine className="w-4 h-4 text-muted-foreground" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-background/50">
+                              {t("common.labels.multiConfiguration")}
+                            </p>
+                            {testRun.configuration && (
+                              <p className="flex text-xs text-background">
+                                <Combine className="w-4 h-4 shrink-0 mr-1" />
+                                {testRun.configuration.name}
                               </p>
-                              {testRun.configuration && (
-                                <p className="flex text-xs text-background">
-                                  <Combine className="w-4 h-4 shrink-0 mr-1" />
-                                  {testRun.configuration.name}
-                                </p>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                       <LinkIcon className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>

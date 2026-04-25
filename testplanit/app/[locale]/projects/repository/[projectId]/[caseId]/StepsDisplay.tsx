@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -317,39 +316,37 @@ export const StepsDisplay: React.FC<StepsProps> = ({
     <div data-testid="steps-display">
       <div className="flex items-center">
         <div className="font-bold">{tGlobal("common.fields.steps")}</div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setExpandAll(!expandAll);
-                  return false;
-                }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  return false;
-                }}
-              >
-                <ChevronRightCircle
-                  className={`h-4 w-4 shrink-0 transition-transform ${
-                    expandAll ? "rotate-90" : ""
-                  }`}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div>
-                {expandAll ? t_repo_steps("collapse") : t_repo_steps("expand")}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpandAll(!expandAll);
+                return false;
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              }}
+            >
+              <ChevronRightCircle
+                className={`h-4 w-4 shrink-0 transition-transform ${
+                  expandAll ? "rotate-90" : ""
+                }`}
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div>
+              {expandAll ? t_repo_steps("collapse") : t_repo_steps("expand")}
+            </div>
+          </TooltipContent>
+        </Tooltip>
       </div>
       {steps.length > 0 && (
         <ol className="ml-1 mr-6 min-w-[200px]">

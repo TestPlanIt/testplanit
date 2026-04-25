@@ -41,7 +41,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -943,21 +942,19 @@ function SearchResultCard({
                   />
                 ),
                 hit.source.folderPath && hit.source.folderPath !== "/" && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <MetadataItem className="flex items-center gap-1 text-muted-foreground min-w-0">
-                          <Folder className="h-3 w-3 shrink-0" />
-                          <span className="truncate">
-                            {hit.source.folderPath}
-                          </span>
-                        </MetadataItem>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{hit.source.folderPath}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <MetadataItem className="flex items-center gap-1 text-muted-foreground min-w-0">
+                        <Folder className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {hit.source.folderPath}
+                        </span>
+                      </MetadataItem>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{hit.source.folderPath}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ),
                 hit.source.templateName && (
                   <MetadataItem className="flex items-center gap-1 min-w-0">

@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -248,37 +247,35 @@ export function TestRunCasesSummary({
   if (summaryData.totalCases === 0) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <TooltipProvider>
-          <div className="flex h-2.5 w-full rounded-full overflow-hidden">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href={`/projects/runs/${projectId}/${testRunId}`}
-                  className="h-full w-full transition-all hover:opacity-80 cursor-pointer"
-                  style={{
-                    backgroundColor: firstStatus?.color?.value || "#B1B2B3",
-                    display: "block",
-                  }}
-                  aria-label={tCommon("labels.viewTestRunDetails")}
-                />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="border-0 px-3 py-2"
+        <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/projects/runs/${projectId}/${testRunId}`}
+                className="h-full w-full transition-all hover:opacity-80 cursor-pointer"
                 style={{
                   backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+                  display: "block",
                 }}
-              >
-                <div className="font-semibold text-sm">
-                  {firstStatus?.name || tCommon("labels.untested")}
-                </div>
-                <div className="text-xs opacity-90">
-                  {tCommon("labels.noResults")}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+                aria-label={tCommon("labels.viewTestRunDetails")}
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="border-0 px-3 py-2"
+              style={{
+                backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+              }}
+            >
+              <div className="font-semibold text-sm">
+                {firstStatus?.name || tCommon("labels.untested")}
+              </div>
+              <div className="text-xs opacity-90">
+                {tCommon("labels.noResults")}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         <div className="flex items-center gap-1 text-muted-foreground text-xs">
           <HelpCircle className="w-4 h-4" />
@@ -321,63 +318,61 @@ export function TestRunCasesSummary({
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Color bar for JUnit test results */}
-        <TooltipProvider>
-          <div
-            className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
-            data-testid="test-run-cases-status-bar"
-          >
-            {resultSegments.map((result, index) => {
-              const testCount = result.count;
-              const widthPercent =
-                totalTestCount > 0
-                  ? (testCount / totalTestCount) * 100
-                  : 100 / Math.max(resultSegments.length, 1);
-              const segmentStyle = {
-                backgroundColor: result.statusColor,
-                width: `${widthPercent}%`,
-                minWidth: "4px",
-              };
-              const segmentClass = cn(
-                "h-full transition-all border-x-[0.5px] border-primary-foreground rounded-sm cursor-default"
-              );
-              const testCountLabel = `${testCount} ${tCommon("plural.case", {
-                count: testCount,
-              })}`;
+        <div
+          className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+          data-testid="test-run-cases-status-bar"
+        >
+          {resultSegments.map((result, index) => {
+            const testCount = result.count;
+            const widthPercent =
+              totalTestCount > 0
+                ? (testCount / totalTestCount) * 100
+                : 100 / Math.max(resultSegments.length, 1);
+            const segmentStyle = {
+              backgroundColor: result.statusColor,
+              width: `${widthPercent}%`,
+              minWidth: "4px",
+            };
+            const segmentClass = cn(
+              "h-full transition-all border-x-[0.5px] border-primary-foreground rounded-sm cursor-default"
+            );
+            const testCountLabel = `${testCount} ${tCommon("plural.case", {
+              count: testCount,
+            })}`;
 
-              return (
-                <Tooltip key={`${result.id}-${index}`}>
-                  <TooltipTrigger asChild>
-                    <div
-                      className={segmentClass}
-                      style={segmentStyle}
-                      aria-label={testCountLabel}
-                      tabIndex={0}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    className="border-0 text-muted px-3 py-2"
-                    style={{ backgroundColor: result.statusColor }}
-                  >
-                    <div className="flex items-center gap-1 font-semibold text-sm">
-                      <div className="rounded-full bg-muted w-2 h-2" />
-                      {result.statusName}
+            return (
+              <Tooltip key={`${result.id}-${index}`}>
+                <TooltipTrigger asChild>
+                  <div
+                    className={segmentClass}
+                    style={segmentStyle}
+                    aria-label={testCountLabel}
+                    tabIndex={0}
+                  />
+                </TooltipTrigger>
+                <TooltipContent
+                  className="border-0 text-muted px-3 py-2"
+                  style={{ backgroundColor: result.statusColor }}
+                >
+                  <div className="flex items-center gap-1 font-semibold text-sm">
+                    <div className="rounded-full bg-muted w-2 h-2" />
+                    {result.statusName}
+                  </div>
+                  <div className="text-xs opacity-90 mt-1 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <ListChecks className="h-3 w-3" />
+                      {testCountLabel}
                     </div>
-                    <div className="text-xs opacity-90 mt-1 space-y-1">
-                      <div className="flex items-center gap-1">
-                        <ListChecks className="h-3 w-3" />
-                        {testCountLabel}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <HelpCircle className="h-3 w-3" />
-                        {result.resultType}
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <HelpCircle className="h-3 w-3" />
+                      {result.resultType}
                     </div>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-        </TooltipProvider>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
         {/* Summary text below the bar */}
         <div className="flex justify-between items-center">
           <div
@@ -387,59 +382,53 @@ export function TestRunCasesSummary({
             {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
             {summaryText ? ` (${summaryText})` : ""}
             {totalElapsedDisplay ? (
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center ml-1 cursor-default">
-                      {" • "}
-                      <Clock className="h-3 w-3 ml-1" />
-                      {totalElapsedDisplay}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {`${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center ml-1 cursor-default">
+                    {" • "}
+                    <Clock className="h-3 w-3 ml-1" />
+                    {totalElapsedDisplay}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {`${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`}
+                </TooltipContent>
+              </Tooltip>
             ) : null}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {/* Display loading spinner when automated test run is still adding cases, otherwise show completion percentage */}
             {summaryData.workflowType === "IN_PROGRESS" ? (
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="font-medium">
-                        {tCommon("status.importing")}
-                      </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="font-medium">
+                      {tCommon("status.importing")}
                     </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {tCommon("status.addingTestCases")}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("status.addingTestCases")}
+                </TooltipContent>
+              </Tooltip>
             ) : (
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3 w-3" />
-                      <span className="font-medium">
-                        {summaryData.completionRate.toFixed(0)}
-                        {"%"}
-                      </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span className="font-medium">
+                      {summaryData.completionRate.toFixed(0)}
+                      {"%"}
                     </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {tCommon("fields.completionRate")}:{" "}
-                    {summaryData.completionRate.toFixed(1)}
-                    {"%"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("fields.completionRate")}:{" "}
+                  {summaryData.completionRate.toFixed(1)}
+                  {"%"}
+                </TooltipContent>
+              </Tooltip>
             )}
 
             {/* Display comments count if any exist */}
@@ -448,21 +437,19 @@ export function TestRunCasesSummary({
                 href={`/projects/runs/${projectId}/${testRunId}#comments`}
                 className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors text-xs"
               >
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        {summaryData.commentsCount}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {tCommon("plural.comment", {
-                        count: summaryData.commentsCount,
-                      })}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {summaryData.commentsCount}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tCommon("plural.comment", {
+                      count: summaryData.commentsCount,
+                    })}
+                  </TooltipContent>
+                </Tooltip>
               </Link>
             )}
           </div>
@@ -501,126 +488,124 @@ export function TestRunCasesSummary({
   return (
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for individual test results */}
-      <TooltipProvider>
-        <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
-          data-testid="test-run-cases-status-bar"
-        >
-          {caseDetails.map((item, index) => {
-            const color = item.colorValue || "#9ca3af";
+      <div
+        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        data-testid="test-run-cases-status-bar"
+      >
+        {caseDetails.map((item, index) => {
+          const color = item.colorValue || "#9ca3af";
 
-            // Calculate segment width based on total elapsed time
-            const minSegmentWidth = 3;
-            let segmentWidth = 100 / totalItems;
+          // Calculate segment width based on total elapsed time
+          const minSegmentWidth = 3;
+          let segmentWidth = 100 / totalItems;
 
-            // If we have elapsed time data, make width proportional to elapsed time
-            if (summaryData.totalElapsed > 0 && !item.isPending) {
-              const proportionalWidth =
-                ((item.elapsed || 0) / summaryData.totalElapsed) * 100;
-              segmentWidth = Math.max(proportionalWidth, minSegmentWidth);
-            } else if (summaryData.totalElapsed > 0 && item.isPending) {
-              segmentWidth = minSegmentWidth;
-            }
+          // If we have elapsed time data, make width proportional to elapsed time
+          if (summaryData.totalElapsed > 0 && !item.isPending) {
+            const proportionalWidth =
+              ((item.elapsed || 0) / summaryData.totalElapsed) * 100;
+            segmentWidth = Math.max(proportionalWidth, minSegmentWidth);
+          } else if (summaryData.totalElapsed > 0 && item.isPending) {
+            segmentWidth = minSegmentWidth;
+          }
 
-            // Use the item's testRunId if available (for multi-config), otherwise fall back to prop
-            const itemTestRunId = item.testRunId || testRunId;
+          // Use the item's testRunId if available (for multi-config), otherwise fall back to prop
+          const itemTestRunId = item.testRunId || testRunId;
 
-            return (
-              <Tooltip key={`${item.id}-${index}`}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={`/projects/runs/${projectId}/${itemTestRunId}?selectedCase=${item.repositoryCaseId}`}
-                    className="h-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] border-primary-foreground rounded-sm"
-                    style={{
-                      backgroundColor: color,
-                      width: `${segmentWidth}%`,
-                      minWidth: "4px",
-                    }}
-                    aria-label={item.caseName || `Test case ${index + 1}`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent
-                  className="border-0 text-muted px-3 py-2"
-                  style={{ backgroundColor: color }}
-                >
-                  <div className="flex items-center gap-1 font-semibold text-sm">
-                    <div className="rounded-full bg-muted w-2 h-2" />
-                    {item.statusName || tCommon("labels.untested")}
+          return (
+            <Tooltip key={`${item.id}-${index}`}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/projects/runs/${projectId}/${itemTestRunId}?selectedCase=${item.repositoryCaseId}`}
+                  className="h-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] border-primary-foreground rounded-sm"
+                  style={{
+                    backgroundColor: color,
+                    width: `${segmentWidth}%`,
+                    minWidth: "4px",
+                  }}
+                  aria-label={item.caseName || `Test case ${index + 1}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent
+                className="border-0 text-muted px-3 py-2"
+                style={{ backgroundColor: color }}
+              >
+                <div className="flex items-center gap-1 font-semibold text-sm">
+                  <div className="rounded-full bg-muted w-2 h-2" />
+                  {item.statusName || tCommon("labels.untested")}
+                </div>
+                <div className="text-xs opacity-90 mt-1">
+                  <div className="flex items-center gap-1">
+                    <ListChecks className="h-3 w-3" />
+                    {item.caseName || `Test case ${index + 1}`}
                   </div>
-                  <div className="text-xs opacity-90 mt-1">
-                    <div className="flex items-center gap-1">
-                      <ListChecks className="h-3 w-3" />
-                      {item.caseName || `Test case ${index + 1}`}
-                    </div>
-                    {item.configurationName && (
-                      <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
-                        <span>{item.configurationName}</span>
-                      </div>
-                    )}
-                  </div>
-                  {!item.isPending ? (
-                    <div className="text-xs opacity-90 mt-1">
-                      {item.executedAt && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <DateFormatter
-                            date={item.executedAt}
-                            formatString={dateTimeFormat}
-                            timezone={session?.user.preferences?.timezone}
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <User className="h-3 w-3" />
-                        {item.executedByName || tCommon("labels.unknown")}
-                      </div>
-
-                      {item.elapsed && item.elapsed > 0 ? (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3" />
-                          {toHumanReadable(item.elapsed, {
-                            isSeconds: true,
-                            locale,
-                          })}
-                          {item.resultCount && item.resultCount > 1 && (
-                            <span className="ml-1">
-                              {`(${item.resultCount} ${tGlobal("common.results")})`}
-                            </span>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="text-xs opacity-90 mt-1">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {tCommon("status.pending")}
-                      </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        {item.estimate && item.estimate > 0 && (
-                          <>
-                            <CalendarClock className="h-3 w-3" />
-                            <span>
-                              {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
-                                item.estimate,
-                                {
-                                  isSeconds: true,
-                                  locale,
-                                }
-                              )}`}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                  {item.configurationName && (
+                    <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
+                      <span>{item.configurationName}</span>
                     </div>
                   )}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-      </TooltipProvider>
+                </div>
+                {!item.isPending ? (
+                  <div className="text-xs opacity-90 mt-1">
+                    {item.executedAt && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <DateFormatter
+                          date={item.executedAt}
+                          formatString={dateTimeFormat}
+                          timezone={session?.user.preferences?.timezone}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <User className="h-3 w-3" />
+                      {item.executedByName || tCommon("labels.unknown")}
+                    </div>
+
+                    {item.elapsed && item.elapsed > 0 ? (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Clock className="h-3 w-3" />
+                        {toHumanReadable(item.elapsed, {
+                          isSeconds: true,
+                          locale,
+                        })}
+                        {item.resultCount && item.resultCount > 1 && (
+                          <span className="ml-1">
+                            {`(${item.resultCount} ${tGlobal("common.results")})`}
+                          </span>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="text-xs opacity-90 mt-1">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {tCommon("status.pending")}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      {item.estimate && item.estimate > 0 && (
+                        <>
+                          <CalendarClock className="h-3 w-3" />
+                          <span>
+                            {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
+                              item.estimate,
+                              {
+                                isSeconds: true,
+                                locale,
+                              }
+                            )}`}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
 
       {/* Container for Summary Text and Issues */}
       <div className="flex justify-between items-center">
@@ -632,44 +617,40 @@ export function TestRunCasesSummary({
           {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
           {summaryText ? ` (${summaryText})` : ""}
           {totalElapsedText ? (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="inline-flex items-center ml-1 cursor-default"
-                    data-testid="total-elapsed-display"
-                  >
-                    {" • "}
-                    <Clock className="h-3 w-3 ml-1" />
-                    {`${totalElapsedText}`}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {`${tCommon("fields.totalElapsed")}: ${totalElapsedText}`}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center ml-1 cursor-default"
+                  data-testid="total-elapsed-display"
+                >
+                  {" • "}
+                  <Clock className="h-3 w-3 ml-1" />
+                  {`${totalElapsedText}`}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {`${tCommon("fields.totalElapsed")}: ${totalElapsedText}`}
+              </TooltipContent>
+            </Tooltip>
           ) : (
             ""
           )}
           {totalEstimateText ? (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="inline-flex items-center ml-1 cursor-default"
-                    data-testid="total-estimate-display"
-                  >
-                    {" • "}
-                    <CalendarClock className="h-3 w-3 ml-1" />
-                    {`${totalEstimateText}`}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center ml-1 cursor-default"
+                  data-testid="total-estimate-display"
+                >
+                  {" • "}
+                  <CalendarClock className="h-3 w-3 ml-1" />
+                  {`${totalEstimateText}`}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
+              </TooltipContent>
+            </Tooltip>
           ) : (
             ""
           )}
@@ -677,24 +658,22 @@ export function TestRunCasesSummary({
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Display completion percentage */}
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span className="font-medium">
-                    {summaryData.completionRate.toFixed(0)}
-                    {"%"}
-                  </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3" />
+                <span className="font-medium">
+                  {summaryData.completionRate.toFixed(0)}
+                  {"%"}
                 </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {tCommon("fields.completionRate")}:{" "}
-                {summaryData.completionRate.toFixed(1)}
-                {"%"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {tCommon("fields.completionRate")}:{" "}
+              {summaryData.completionRate.toFixed(1)}
+              {"%"}
+            </TooltipContent>
+          </Tooltip>
 
           {/* Display comments count if any exist */}
           {summaryData.commentsCount > 0 && (
@@ -702,21 +681,19 @@ export function TestRunCasesSummary({
               href={`/projects/runs/${projectId}/${testRunId}#comments`}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors text-xs"
             >
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquare className="h-3 w-3" />
-                      {summaryData.commentsCount}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {tCommon("plural.comment", {
-                      count: summaryData.commentsCount,
-                    })}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    {summaryData.commentsCount}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("plural.comment", {
+                    count: summaryData.commentsCount,
+                  })}
+                </TooltipContent>
+              </Tooltip>
             </Link>
           )}
 

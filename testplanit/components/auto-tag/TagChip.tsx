@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tag } from "lucide-react";
@@ -107,25 +106,23 @@ export function TagChip({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge
-            variant={isAccepted ? "default" : "outline"}
-            className={cn(
-              "cursor-pointer select-none transition-all",
-              !isExisting && "outline-2 outline-offset-1 outline-primary/50",
-              !isAccepted && "opacity-50"
-            )}
-            onClick={handleClick}
-            onDoubleClick={handleDoubleClick}
-          >
-            <Tag className="mr-1 h-3 w-3" />
-            {tagName}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">{tooltip}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge
+          variant={isAccepted ? "default" : "outline"}
+          className={cn(
+            "cursor-pointer select-none transition-all",
+            !isExisting && "outline-2 outline-offset-1 outline-primary/50",
+            !isAccepted && "opacity-50"
+          )}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+        >
+          <Tag className="mr-1 h-3 w-3" />
+          {tagName}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }

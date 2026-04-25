@@ -32,7 +32,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
@@ -1175,18 +1174,14 @@ export function ImportCasesWizard({
               <SelectItem key={template.id} value={template.id.toString()}>
                 {template.templateName}
                 {template.isDefault && (
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger className="ml-1" asChild>
-                        <Badge variant="secondary">
-                          <Star className="h-3 w-3 fill-current text-primary-background" />
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {tCommon("defaultOption")}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="ml-1" asChild>
+                      <Badge variant="secondary">
+                        <Star className="h-3 w-3 fill-current text-primary-background" />
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>{tCommon("defaultOption")}</TooltipContent>
+                  </Tooltip>
                 )}
               </SelectItem>
             ))}
@@ -1580,43 +1575,41 @@ export function ImportCasesWizard({
                       const warning = duplicateWarnings.get(globalIndex);
                       if (!warning) return null;
                       return (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="right"
-                              className="max-w-[300px]"
-                            >
-                              {warning.existingSimilar.length > 0 && (
-                                <p>
-                                  {tGlobal(
-                                    "repository.duplicates.importWarningTooltip",
-                                    {
-                                      count: warning.existingSimilar.length,
-                                      names: warning.existingSimilar
-                                        .map((c) => c.name)
-                                        .join(", "),
-                                    }
-                                  )}
-                                </p>
-                              )}
-                              {warning.intraImportRows.length > 0 && (
-                                <p>
-                                  {tGlobal(
-                                    "repository.duplicates.importIntraWarningTooltip",
-                                    {
-                                      rows: warning.intraImportRows
-                                        .map((r) => r + 1)
-                                        .join(", "),
-                                    }
-                                  )}
-                                </p>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="max-w-[300px]"
+                          >
+                            {warning.existingSimilar.length > 0 && (
+                              <p>
+                                {tGlobal(
+                                  "repository.duplicates.importWarningTooltip",
+                                  {
+                                    count: warning.existingSimilar.length,
+                                    names: warning.existingSimilar
+                                      .map((c) => c.name)
+                                      .join(", "),
+                                  }
+                                )}
+                              </p>
+                            )}
+                            {warning.intraImportRows.length > 0 && (
+                              <p>
+                                {tGlobal(
+                                  "repository.duplicates.importIntraWarningTooltip",
+                                  {
+                                    rows: warning.intraImportRows
+                                      .map((r) => r + 1)
+                                      .join(", "),
+                                  }
+                                )}
+                              </p>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
                       );
                     })()}
                   </div>

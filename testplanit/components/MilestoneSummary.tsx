@@ -5,7 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -93,35 +92,33 @@ export function MilestoneSummary({
   if (summaryData.totalItems === 0 || summaryData.segments.length === 0) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <TooltipProvider>
-          <div className="flex h-2.5 w-full rounded-full overflow-hidden">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className="h-full w-full transition-all hover:opacity-80 cursor-default"
-                  style={{
-                    backgroundColor: firstStatus?.color?.value || "#B1B2B3",
-                  }}
-                  aria-label={tCommon("labels.noResults")}
-                />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="border-0 px-3 py-2"
+        <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="h-full w-full transition-all hover:opacity-80 cursor-default"
                 style={{
                   backgroundColor: firstStatus?.color?.value || "#B1B2B3",
                 }}
-              >
-                <div className="font-semibold text-sm">
-                  {firstStatus?.name || tCommon("labels.untested")}
-                </div>
-                <div className="text-xs opacity-90">
-                  {tCommon("labels.noResults")}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+                aria-label={tCommon("labels.noResults")}
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="border-0 px-3 py-2"
+              style={{
+                backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+              }}
+            >
+              <div className="font-semibold text-sm">
+                {firstStatus?.name || tCommon("labels.untested")}
+              </div>
+              <div className="text-xs opacity-90">
+                {tCommon("labels.noResults")}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         <div className="flex items-center gap-1 text-muted-foreground text-xs">
           <HelpCircle className="w-4 h-4" />
@@ -164,106 +161,104 @@ export function MilestoneSummary({
   return (
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for milestone items */}
-      <TooltipProvider>
-        <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
-          data-testid="milestone-summary-bar"
-        >
-          {summaryData.segments.map((segment, _index) => {
-            const color = segment.colorValue || "#9ca3af";
+      <div
+        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        data-testid="milestone-summary-bar"
+      >
+        {summaryData.segments.map((segment, _index) => {
+          const color = segment.colorValue || "#9ca3af";
 
-            // Calculate segment width based on elapsed time or item count
-            const minSegmentWidth = 3;
-            let segmentWidth = 100 / summaryData.totalItems;
+          // Calculate segment width based on elapsed time or item count
+          const minSegmentWidth = 3;
+          let segmentWidth = 100 / summaryData.totalItems;
 
-            // If we have elapsed time data, make width proportional to elapsed time
-            if (summaryData.totalElapsed > 0 && !segment.isPending) {
-              const proportionalWidth =
-                ((segment.elapsed || 0) / summaryData.totalElapsed) * 100;
-              segmentWidth = Math.max(proportionalWidth, minSegmentWidth);
-            } else if (summaryData.totalElapsed > 0 && segment.isPending) {
-              segmentWidth = minSegmentWidth;
-            }
+          // If we have elapsed time data, make width proportional to elapsed time
+          if (summaryData.totalElapsed > 0 && !segment.isPending) {
+            const proportionalWidth =
+              ((segment.elapsed || 0) / summaryData.totalElapsed) * 100;
+            segmentWidth = Math.max(proportionalWidth, minSegmentWidth);
+          } else if (summaryData.totalElapsed > 0 && segment.isPending) {
+            segmentWidth = minSegmentWidth;
+          }
 
-            const targetUrl =
-              segment.type === "test-run"
-                ? `/projects/runs/${projectId}/${segment.sourceId}`
-                : `/projects/sessions/${projectId}/${segment.sourceId}`;
+          const targetUrl =
+            segment.type === "test-run"
+              ? `/projects/runs/${projectId}/${segment.sourceId}`
+              : `/projects/sessions/${projectId}/${segment.sourceId}`;
 
-            return (
-              <Tooltip key={segment.id}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={targetUrl}
-                    className="h-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] border-primary-foreground rounded-sm"
-                    style={{
-                      backgroundColor: color,
-                      width: `${segmentWidth}%`,
-                      minWidth: "4px",
-                    }}
-                    aria-label={segment.sourceName}
-                  />
-                </TooltipTrigger>
-                <TooltipContent
-                  className="border-0 text-muted px-3 py-2"
-                  style={{ backgroundColor: color }}
-                >
-                  <div className="flex items-center gap-1 font-semibold text-sm">
-                    <div className="rounded-full bg-muted w-2 h-2" />
-                    {segment.statusName || tCommon("labels.untested")}
+          return (
+            <Tooltip key={segment.id}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={targetUrl}
+                  className="h-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] border-primary-foreground rounded-sm"
+                  style={{
+                    backgroundColor: color,
+                    width: `${segmentWidth}%`,
+                    minWidth: "4px",
+                  }}
+                  aria-label={segment.sourceName}
+                />
+              </TooltipTrigger>
+              <TooltipContent
+                className="border-0 text-muted px-3 py-2"
+                style={{ backgroundColor: color }}
+              >
+                <div className="flex items-center gap-1 font-semibold text-sm">
+                  <div className="rounded-full bg-muted w-2 h-2" />
+                  {segment.statusName || tCommon("labels.untested")}
+                </div>
+                <div className="text-xs opacity-90 mt-1">
+                  <div className="flex items-center gap-1">
+                    {segment.type === "test-run" ? (
+                      <SquarePlay className="h-3 w-3" />
+                    ) : (
+                      <FlaskConical className="h-3 w-3" />
+                    )}
+                    {segment.sourceName}
                   </div>
+                  {segment.itemCount && segment.itemCount > 1 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <ListChecks className="h-3 w-3" />
+                      {`${segment.itemCount} ${tCommon("plural.case", {
+                        count: segment.itemCount,
+                      })}`}
+                    </div>
+                  )}
+                </div>
+                {!segment.isPending &&
+                segment.elapsed &&
+                segment.elapsed > 0 ? (
                   <div className="text-xs opacity-90 mt-1">
                     <div className="flex items-center gap-1">
-                      {segment.type === "test-run" ? (
-                        <SquarePlay className="h-3 w-3" />
-                      ) : (
-                        <FlaskConical className="h-3 w-3" />
-                      )}
-                      {segment.sourceName}
+                      <Clock className="h-3 w-3" />
+                      {toHumanReadable(segment.elapsed, {
+                        isSeconds: true,
+                        locale,
+                      })}
                     </div>
-                    {segment.itemCount && segment.itemCount > 1 && (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <ListChecks className="h-3 w-3" />
-                        {`${segment.itemCount} ${tCommon("plural.case", {
-                          count: segment.itemCount,
-                        })}`}
-                      </div>
-                    )}
                   </div>
-                  {!segment.isPending &&
-                  segment.elapsed &&
-                  segment.elapsed > 0 ? (
-                    <div className="text-xs opacity-90 mt-1">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {toHumanReadable(segment.elapsed, {
+                ) : segment.isPending &&
+                  segment.estimate &&
+                  segment.estimate > 0 ? (
+                  <div className="text-xs opacity-90 mt-1">
+                    <div className="flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3" />
+                      {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
+                        segment.estimate,
+                        {
                           isSeconds: true,
                           locale,
-                        })}
-                      </div>
+                        }
+                      )}`}
                     </div>
-                  ) : segment.isPending &&
-                    segment.estimate &&
-                    segment.estimate > 0 ? (
-                    <div className="text-xs opacity-90 mt-1">
-                      <div className="flex items-center gap-1">
-                        <CalendarClock className="h-3 w-3" />
-                        {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
-                          segment.estimate,
-                          {
-                            isSeconds: true,
-                            locale,
-                          }
-                        )}`}
-                      </div>
-                    </div>
-                  ) : null}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-      </TooltipProvider>
+                  </div>
+                ) : null}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
 
       {/* Container for Summary Text and Issues */}
       <div className="flex flex-wrap justify-between items-center gap-y-1">
@@ -274,44 +269,40 @@ export function MilestoneSummary({
         >
           {`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}
           {totalElapsedText ? (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="inline-flex items-center ml-1 cursor-default"
-                    data-testid="total-elapsed-display"
-                  >
-                    {" • "}
-                    <Clock className="h-3 w-3 ml-1" />
-                    {`${totalElapsedText}`}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {`${tCommon("fields.totalElapsed")}: ${totalElapsedText}`}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center ml-1 cursor-default"
+                  data-testid="total-elapsed-display"
+                >
+                  {" • "}
+                  <Clock className="h-3 w-3 ml-1" />
+                  {`${totalElapsedText}`}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {`${tCommon("fields.totalElapsed")}: ${totalElapsedText}`}
+              </TooltipContent>
+            </Tooltip>
           ) : (
             ""
           )}
           {totalEstimateText ? (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="inline-flex items-center ml-1 cursor-default"
-                    data-testid="total-estimate-display"
-                  >
-                    {" • "}
-                    <CalendarClock className="h-3 w-3 ml-1" />
-                    {`${totalEstimateText}`}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center ml-1 cursor-default"
+                  data-testid="total-estimate-display"
+                >
+                  {" • "}
+                  <CalendarClock className="h-3 w-3 ml-1" />
+                  {`${totalEstimateText}`}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
+              </TooltipContent>
+            </Tooltip>
           ) : (
             ""
           )}
@@ -319,24 +310,22 @@ export function MilestoneSummary({
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Display completion percentage */}
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span className="font-medium">
-                    {summaryData.completionRate.toFixed(2)}
-                    {"%"}
-                  </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3" />
+                <span className="font-medium">
+                  {summaryData.completionRate.toFixed(2)}
+                  {"%"}
                 </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {tCommon("fields.completionRate")}:{" "}
-                {summaryData.completionRate.toFixed(2)}
-                {"%"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {tCommon("fields.completionRate")}:{" "}
+              {summaryData.completionRate.toFixed(2)}
+              {"%"}
+            </TooltipContent>
+          </Tooltip>
 
           {/* Display comments count if any exist */}
           {summaryData.commentsCount > 0 && (
@@ -344,21 +333,19 @@ export function MilestoneSummary({
               href={`/projects/milestones/${projectId}/${milestoneId}#comments`}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors text-xs"
             >
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquare className="h-3 w-3" />
-                      {summaryData.commentsCount}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {tCommon("plural.comment", {
-                      count: summaryData.commentsCount,
-                    })}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    {summaryData.commentsCount}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("plural.comment", {
+                    count: summaryData.commentsCount,
+                  })}
+                </TooltipContent>
+              </Tooltip>
             </Link>
           )}
 

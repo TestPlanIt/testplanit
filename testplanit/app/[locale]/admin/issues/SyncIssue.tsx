@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
@@ -72,26 +71,22 @@ export function SyncIssue({ issue }: SyncIssueProps) {
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSync}
-            disabled={isSyncing}
-            className="px-2 py-1 h-auto"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
-            />
-            <span className="sr-only">{t("syncIssue")}</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{t("syncIssue")}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="px-2 py-1 h-auto"
+        >
+          <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+          <span className="sr-only">{t("syncIssue")}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{t("syncIssue")}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

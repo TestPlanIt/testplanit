@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ExternalLink } from "lucide-react";
@@ -24,21 +23,16 @@ export const EmailCell: React.FC<EmailCellProps> = ({ email, fullWidth }) => {
         aria-label={`Email ${email}`}
       >
         <span className="flex items-center truncate gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                type="button"
-                className="text-left block truncate"
-              >
-                {email}
-                {/* Apply flex and items-center to this span */}
-              </TooltipTrigger>
-              <TooltipContent align="start">
-                {/* eslint-disable-next-line react/jsx-no-literals */}
-                <span>mailto:{email}</span>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger type="button" className="text-left block truncate">
+              {email}
+              {/* Apply flex and items-center to this span */}
+            </TooltipTrigger>
+            <TooltipContent align="start">
+              {/* eslint-disable-next-line react/jsx-no-literals */}
+              <span>mailto:{email}</span>
+            </TooltipContent>
+          </Tooltip>
         </span>
         <ExternalLink className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </Link>

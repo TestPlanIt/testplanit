@@ -22,7 +22,6 @@ import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -184,12 +183,33 @@ export function AddFolder({
                 {t("repository.addFolder")}
               </DialogDescription>
               <div className="text-sm text-muted-foreground">
-                <TooltipProvider>
-                  {effectiveParentId !== null && parent?.name ? (
-                    <div className="flex items-center gap-1">
-                      <span>
-                        {t("repository.parentFolder")}: {parent.name}
-                      </span>
+                {effectiveParentId !== null && parent?.name ? (
+                  <div className="flex items-center gap-1">
+                    <span>
+                      {t("repository.parentFolder")}: {parent.name}
+                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0"
+                          onClick={() => setEffectiveParentId(null)}
+                          data-testid="remove-parent-folder-button"
+                        >
+                          <CircleX className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("repository.removeParentFolder")}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span>{t("repository.rootFolder")}</span>
+                    {parentId !== null && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -197,41 +217,18 @@ export function AddFolder({
                             variant="ghost"
                             size="sm"
                             className="h-5 w-5 p-0"
-                            onClick={() => setEffectiveParentId(null)}
-                            data-testid="remove-parent-folder-button"
+                            onClick={() => setEffectiveParentId(parentId)}
                           >
-                            <CircleX className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                            <Undo2 className="h-4 w-4 text-muted-foreground hover:text-primary" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {t("repository.removeParentFolder")}
+                          {t("repository.createInSelectedFolder")}
                         </TooltipContent>
                       </Tooltip>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <span>{t("repository.rootFolder")}</span>
-                      {parentId !== null && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-5 w-5 p-0"
-                              onClick={() => setEffectiveParentId(parentId)}
-                            >
-                              <Undo2 className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t("repository.createInSelectedFolder")}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
-                  )}
-                </TooltipProvider>
+                    )}
+                  </div>
+                )}
               </div>
             </DialogHeader>
             <FormField

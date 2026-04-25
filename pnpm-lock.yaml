@@ -359,11 +359,11 @@ importers:
         specifier: ^2.11.2
         version: 2.11.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(nodemailer@8.0.6)
       '@aws-sdk/client-s3':
-        specifier: ^3.1036.0
-        version: 3.1036.0
+        specifier: ^3.1037.0
+        version: 3.1037.0
       '@aws-sdk/s3-request-presigner':
-        specifier: ^3.1036.0
-        version: 3.1036.0
+        specifier: ^3.1037.0
+        version: 3.1037.0
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -390,7 +390,7 @@ importers:
         version: 5.2.8
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.73.1(react@19.2.5))
+        version: 5.2.2(react-hook-form@7.74.0(react@19.2.5))
       '@mozilla/readability':
         specifier: ^0.6.0
         version: 0.6.0
@@ -503,8 +503,8 @@ importers:
         specifier: ^1.29.1
         version: 1.29.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tanstack/react-query':
-        specifier: ^5.100.1
-        version: 5.100.1(react@19.2.5)
+        specifier: ^5.100.5
+        version: 5.100.5(react@19.2.5)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -692,14 +692,14 @@ importers:
         specifier: ^6.0.168
         version: 6.0.168(zod@4.3.6)
       axios:
-        specifier: 1.15.0
-        version: 1.15.0
+        specifier: 1.15.2
+        version: 1.15.2
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
       bullmq:
-        specifier: ^5.76.1
-        version: 5.76.1
+        specifier: ^5.76.2
+        version: 5.76.2
       busboy:
         specifier: ^1.6.0
         version: 1.6.0
@@ -804,7 +804,7 @@ importers:
         version: 2.1.1
       multer-s3:
         specifier: ^3.0.1
-        version: 3.0.1(@aws-sdk/client-s3@3.1036.0)
+        version: 3.0.1(@aws-sdk/client-s3@3.1037.0)
       mustache:
         specifier: ^4.2.0
         version: 4.2.0
@@ -875,8 +875,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react-hook-form:
-        specifier: ^7.73.1
-        version: 7.73.1(react@19.2.5)
+        specifier: ^7.74.0
+        version: 7.74.0(react@19.2.5)
       react-hot-toast:
         specifier: ^2.6.0
         version: 2.6.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -1017,8 +1017,8 @@ importers:
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.2.4)
       '@tanstack/eslint-plugin-query':
-        specifier: ^5.100.1
-        version: 5.100.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+        specifier: ^5.100.5
+        version: 5.100.5(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -1128,8 +1128,8 @@ importers:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.10)
       baseline-browser-mapping:
-        specifier: ^2.10.21
-        version: 2.10.21
+        specifier: ^2.10.22
+        version: 2.10.22
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -1387,11 +1387,14 @@ packages:
   '@atlaskit/adf-schema@52.6.0':
     resolution: {integrity: sha512-IzefZydnqyWgrAyuPkT5ER2TaBk5zuWv5N0T+Dqot8l06tZ7aEX5GeXY0IY6Jlg3qtxwdbyZhnbVxe8OqzPjmg==}
 
+  '@atlaskit/adf-schema@52.6.1':
+    resolution: {integrity: sha512-KTXLLy4XhLlrziqedjiDvWt7h5YwMV/6YrQab9lq4KKj/Qul1sIR54sOf8iGPeTk2QVmdPugsuSmY4cAQ2OMUw==}
+
   '@atlaskit/adf-utils@19.27.26':
     resolution: {integrity: sha512-0uGU+4qMrOL/g+0PcYY28Fw4Apf1CEhfy91v4jn46Kyn9fGBeYVdlVVL5Y343EFEM5/a0DbBhLfsBVU6OQoYtQ==}
 
-  '@atlaskit/adf-utils@19.27.42':
-    resolution: {integrity: sha512-VjuM/aYQpsGMEt8mChkxFYlBjboZsjG1gWhZVzVnVxeTSnOLCRacI3xDFXFUPuB+lwc98MYfktjlkDqJrb80vg==}
+  '@atlaskit/adf-utils@19.27.43':
+    resolution: {integrity: sha512-9de1+M2GvUr0yYIEoIFJBUduu1kW91wFVwZBZOe43fGZDCIQ/ABDvyPSC4qFo+2IostiorfK0aZW0MejGCcutw==}
 
   '@atlaskit/afm-i18n-platform-elements-emoji@2.7.0':
     resolution: {integrity: sha512-Jn9Jk49L06oaS7bYCDKqN9IhJRu2nkI5JKq5W2r4IEHYSa89XZ1odrcrUQ9qb9ATHX7a3ZjNaQakPiypyUpQQA==}
@@ -1510,8 +1513,8 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/avatar@25.13.0':
-    resolution: {integrity: sha512-jVfmz4IGjqH3jN4ncz45EwoNCvifUng6BhB6NphXyZv5rR52gJqjPi2Y+JVOEK8WltKy9y3WtaxGH/rEEidalw==}
+  '@atlaskit/avatar@25.14.0':
+    resolution: {integrity: sha512-J0nJhNjrG1JADGEM6oCAYbAOvfD6lKJqyPR1DR8fwsNjiXNwLj5vCWLeXfGDHnZwaUyzkZrGoQXDf3qqt8cIHQ==}
     peerDependencies:
       react: ^18.2.0
 
@@ -1753,11 +1756,11 @@ packages:
   '@atlaskit/editor-prosemirror@7.3.0':
     resolution: {integrity: sha512-6KB4CuURZ+fU1DJMlmCox6q8T5ooVaCE+eZVrAlcODIfTyLu/wCvJfPJLOJUPZBvzCHqoWCebFmpu39uwUUleg==}
 
-  '@atlaskit/editor-shared-styles@3.10.62':
-    resolution: {integrity: sha512-/XufaEHFGreiVMVfSxKu1YYICF2+XTD/VOVwpumkheA9nnMd3oS9dCzyvXcQqLSxqyxeyQ64Gr25pRfOD9dcvg==}
+  '@atlaskit/editor-shared-styles@3.10.63':
+    resolution: {integrity: sha512-czjU0WbTfYIy5KL2MiCIXIRtdL4wNDV6Mgs7ZdvvFJLA3SMF4Ggm8vXuXBS9GVotKiPll0a9iQW/DZTPi7ercg==}
 
-  '@atlaskit/editor-tables@2.9.78':
-    resolution: {integrity: sha512-htwCy+P+2QkPiznceUzSgz8JvPT1sApNnOcW6U3s/tMfjInJIh6BQbkhggbhQEQ+1KwCuH4MlJpOVoT6OSYUpw==}
+  '@atlaskit/editor-tables@2.9.79':
+    resolution: {integrity: sha512-5dt+7EBazT8JZFaWMXWZAfsZ/VPdBWsCfAJrWGGeAQjNY/isWLaqXG+HvUMC+zzOCZcW/ScbjUNOXMweA1DbIg==}
 
   '@atlaskit/emoji@67.14.4':
     resolution: {integrity: sha512-MFunrAfxN4nqySPZY4sOuvKS6QFuuBIaBK6fvntq2WaI9AUIm0UW9Qa4FhJrmfdXKqGyq45cl1pV//FZzr5T9A==}
@@ -1773,8 +1776,8 @@ packages:
       react-dom: ^18.2.0
       react-intl-next: npm:react-intl@^5.18.1
 
-  '@atlaskit/emoji@70.2.2':
-    resolution: {integrity: sha512-iMVQIc0TthttMSHu6eQzHT095bSjwefQcuGUyFq8pSacpwMI1gECJpwMBNqa8H0e9FFLbRVPRc1cOYosf7xfHw==}
+  '@atlaskit/emoji@70.2.3':
+    resolution: {integrity: sha512-71ejk1XUkqCAOfVlNiFYGG0LRXGnijfOSv6ZY4ZM1+iXqSFMIMl0KWkXiyaYdIwhAId6UwKt7aJn6A2bt/SN3g==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
@@ -2227,8 +2230,8 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/lozenge@13.7.1':
-    resolution: {integrity: sha512-EYlif+2P3A+WERp9zUF3Srb8rZsAaXKPNilXfWDYZC6K48iaWf/+kIVqAkifb2NIX6bdl05zQ19VCI2zfPb+dg==}
+  '@atlaskit/lozenge@13.8.0':
+    resolution: {integrity: sha512-TCe4Co4+tFHW1+2BdNWJk2Yrh+37LeXEcO7Q0avmbYOSRGRW9NKjXdkd77HVDwrs+combXgKiSmn0OTZYr4HbQ==}
     peerDependencies:
       react: ^18.2.0
 
@@ -2494,8 +2497,8 @@ packages:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  '@atlaskit/popup@4.16.6':
-    resolution: {integrity: sha512-jKjHEzfGZNcu+wVFRWQ2emlfqv+he0oxEHGLUnlQStsruYBSgSLDFvhhmGMXErs+vNokIy3oJq1OOpTf9FsR+w==}
+  '@atlaskit/popup@4.17.0':
+    resolution: {integrity: sha512-L/Vy7z3qmdNZghpM6udLG2TPCMmwXAZl6ssC8KzpRbH4d9sh0Zv47zGpT3P7TblfNK9059daiHDEzKoW8TSLNA==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
@@ -2924,6 +2927,11 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
+  '@atlaskit/tmp-editor-statsig@69.0.0':
+    resolution: {integrity: sha512-bXemj57d1+++W2mlA6FYL9ej15wLodrgxQWD6AF1azexd/YahncG835s4mKVO8zNVIJx5ny372k0rEfJnwwwCw==}
+    peerDependencies:
+      react: ^18.2.0
+
   '@atlaskit/toggle@15.2.15':
     resolution: {integrity: sha512-6PJN3nnK8km+Ei6X7kkqw43D2/uWzKyXjP1/sbXELTi2S+R/FbcNVDFYEpM16WwluKnX1sfJk+RH43buxlW92w==}
     peerDependencies:
@@ -3127,8 +3135,8 @@ packages:
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
 
-  '@aws-sdk/client-s3@3.1036.0':
-    resolution: {integrity: sha512-QGjLHw1xklwWX+MWt/7X66lMxjNQLOb0tjcwAU3PaBrYZ51kphDlfvc2sInNEsIU03+I158Y4WSMhl8l71SAsw==}
+  '@aws-sdk/client-s3@3.1037.0':
+    resolution: {integrity: sha512-DBmA1jAW8ST6C4srBxeL1/RLIir/d8WOm4s4mi59mGp6mBktHM59Kwb7GuURaCO60cotuce5zr0sKpMLPcBQyA==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.974.5':
@@ -3225,8 +3233,8 @@ packages:
     resolution: {integrity: sha512-CvJ2ZIjK/jVD/lbOpowBVElJyC1YxLTIJ13yM0AEo0t2v7swOzGjSA6lJGH+DwZXQhcjUjoYwc8bVYCX5MDr1A==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/s3-request-presigner@3.1036.0':
-    resolution: {integrity: sha512-5LEXxcZrrCrPvd7/zIyadEIBsMeXyT6sg9tn3OkkwZ9Rl6Wfq7gxOI82Ei30cj0QXvzJwjcizpskmPh8M5QNtQ==}
+  '@aws-sdk/s3-request-presigner@3.1037.0':
+    resolution: {integrity: sha512-rZQS8DxrqPYXzOvaoysf6L4fHmgFbndZz3GfUMhlHG1iWmcQqH7v0AGhpjyNBY3cYAX8+CAkOkD4VUrntnHNbQ==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/signature-v4-multi-region@3.996.22':
@@ -7784,8 +7792,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@tanstack/eslint-plugin-query@5.100.1':
-    resolution: {integrity: sha512-E96snDcmEriKTDGwdRSE1Hf5GJlZZWtbmYSY07Xxku1L9pdqaVNJKOvADSaj5QF9sZXI+F3EIbFosUTKjsx0Xg==}
+  '@tanstack/eslint-plugin-query@5.100.5':
+    resolution: {integrity: sha512-WKt+xyxvMQkUL4sqMQ8l3gzCplNi9HedVQN32WmBJYKITJ9a5r3H5cpICp8y96V8ZL5rZH0EZRgpO6sy8fAgrQ==}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: ^5.4.0 || ^6.0.0
@@ -7803,8 +7811,8 @@ packages:
     resolution: {integrity: sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w==}
     engines: {node: '>=18'}
 
-  '@tanstack/query-core@5.100.1':
-    resolution: {integrity: sha512-awvQhOO/2TrSCHE5LKKsXcvvj6WSBncwEcMFCB/ez0Qs0b17iyyivoGArNV3HFfXryZwCpnb/olsaBBKrIbtSw==}
+  '@tanstack/query-core@5.100.5':
+    resolution: {integrity: sha512-t20KrhKkf0HXzqQkPbJ5erhFesup68BAbwFgYmTrS7bxMF7O5MdmL8jUkik4thsG7Hg00fblz30h6yF1d5TxGg==}
 
   '@tanstack/react-form@1.29.1':
     resolution: {integrity: sha512-hVHk4g0phd0HxRsv2ry6Xt8BqmalT55Q3cokhJBCC1St0hcGZhgwJJbohm9atao45BPG9e55DGvtbwExqZe35g==}
@@ -7815,8 +7823,8 @@ packages:
       '@tanstack/react-start':
         optional: true
 
-  '@tanstack/react-query@5.100.1':
-    resolution: {integrity: sha512-UgWRLhQKprC37SsO6y1zRabOqDmM2gsdTNPbqTT35yl7kOOhwXU4nyfOiGHXPwoEFJV1IpSk85hjIFjNFWVpzw==}
+  '@tanstack/react-query@5.100.5':
+    resolution: {integrity: sha512-aNwj1mi2v2bQ9IxkyR1grLOUkv3BYWoykHy9KDyLNbjC3tsahbOHJibK+Wjtr1wRhG59/AvJhiJG5OlthaCgJA==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -9582,8 +9590,8 @@ packages:
     resolution: {integrity: sha512-byD6KPdvo72y/wj2T/4zGEvvlis+PsZsn/yPS3pEO+sFpcrqRpX/TJCxvVaEsNeMrfQbCr7w163YqoD9IYwHXw==}
     engines: {node: '>=4'}
 
-  axios@1.15.0:
-    resolution: {integrity: sha512-wWyJDlAatxk30ZJer+GeCWS209sA42X+N5jU2jy6oHTp7ufw8uzUTVFBX9+wTfAlhiJXGS0Bq7X6efruWjuK9Q==}
+  axios@1.15.2:
+    resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -9722,8 +9730,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.10.21:
-    resolution: {integrity: sha512-Q+rUQ7Uz8AHM7DEaNdwvfFCTq7a43lNTzuS94eiWqwyxfV/wJv+oUivef51T91mmRY4d4A1u9rcSvkeufCVXlA==}
+  baseline-browser-mapping@2.10.22:
+    resolution: {integrity: sha512-6qruVrb5rse6WylFkU0FhBKKGuecWseqdpQfhkawn6ztyk2QlfwSRjsDxMCLJrkfmfN21qvhl9ABgaMeRkuwww==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -9842,8 +9850,9 @@ packages:
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
-  bullmq@5.76.1:
-    resolution: {integrity: sha512-9Xc5Pj4Ho0clodowuuUSydMOR4gCn+YxYYVQXbGJycO8r4jyxsff1rZl3CKj3k50c/B42gDDNTLJH6uwb3dYmg==}
+  bullmq@5.76.2:
+    resolution: {integrity: sha512-kkNU6TPAjqV3Ep0kIaYhT79Z2IMoA7vadqjmr/zvmPicg0K/cOAecqZTihD726LbI043yPU0MBv/nMQmd5rNIg==}
+    engines: {node: '>=12.22.0'}
 
   bun-types@1.3.11:
     resolution: {integrity: sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg==}
@@ -11770,6 +11779,10 @@ packages:
 
   fast-xml-parser@5.7.1:
     resolution: {integrity: sha512-8Cc3f8GUGUULg34pBch/KGyPLglS+OFs05deyOlY7fL2MTagYPKrVQNmR1fLF/yJ9PH5ZSTd3YDF6pnmeZU+zA==}
+    hasBin: true
+
+  fast-xml-parser@5.7.2:
+    resolution: {integrity: sha512-P7oW7tLbYnhOLQk/Gv7cZgzgMPP/XN03K02/Jy6Y/NHzyIAIpxuZIM/YqAkfiXFPxA2CTm7NtCijK9EDu09u2w==}
     hasBin: true
 
   fastest-levenshtein@1.0.16:
@@ -15909,8 +15922,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-hook-form@7.73.1:
-    resolution: {integrity: sha512-VAfVYOPcx3piiEVQy95vyFmBwbVUsP/AUIN+mpFG8h11yshDd444nn0VyfaGWSRnhOLVgiDu7HIuBtAIzxn9dA==}
+  react-hook-form@7.74.0:
+    resolution: {integrity: sha512-yR6wHr99p9wFv686jhRWVSFhUvDvNbdUf2dKlbno8/VKOCuoNobDGC6S+M2dua9A9Yo8vpcrp8assIYbsZCQ9g==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -17995,10 +18008,6 @@ packages:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
     hasBin: true
 
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
-    hasBin: true
-
   uuid@14.0.0:
     resolution: {integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==}
     hasBin: true
@@ -18975,7 +18984,7 @@ snapshots:
 
   '@atlaskit/adf-schema@47.7.1(react@19.2.5)':
     dependencies:
-      '@atlaskit/editor-prosemirror': 7.3.0
+      '@atlaskit/editor-prosemirror': 7.0.0
       '@atlaskit/feature-gate-js-client': 4.26.5(react@19.2.5)
       '@babel/runtime': 7.29.2
       css-color-names: 0.0.4
@@ -19019,6 +19028,18 @@ snapshots:
     transitivePeerDependencies:
       - react
 
+  '@atlaskit/adf-schema@52.6.1(react@19.2.5)':
+    dependencies:
+      '@atlaskit/adf-schema-generator': 2.2.0
+      '@atlaskit/editor-prosemirror': 7.3.0
+      '@atlaskit/tmp-editor-statsig': 69.0.0(react@19.2.5)
+      '@babel/runtime': 7.29.2
+      css-color-names: 0.0.4
+      linkify-it: 3.0.3
+      memoize-one: 6.0.0
+    transitivePeerDependencies:
+      - react
+
   '@atlaskit/adf-utils@19.27.26(react@18.3.1)':
     dependencies:
       '@atlaskit/adf-schema': 52.6.0(react@18.3.1)
@@ -19028,11 +19049,11 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/adf-utils@19.27.42(react@19.2.5)':
+  '@atlaskit/adf-utils@19.27.43(react@19.2.5)':
     dependencies:
-      '@atlaskit/adf-schema': 52.6.0(react@19.2.5)
+      '@atlaskit/adf-schema': 52.6.1(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
-      '@atlaskit/tmp-editor-statsig': 68.1.0(react@19.2.5)
+      '@atlaskit/tmp-editor-statsig': 69.0.0(react@19.2.5)
       '@babel/runtime': 7.29.2
     transitivePeerDependencies:
       - react
@@ -19260,13 +19281,13 @@ snapshots:
 
   '@atlaskit/avatar-group@12.7.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/css': 0.19.4(react@19.2.5)
       '@atlaskit/ds-lib': 7.0.0(react@19.2.5)
       '@atlaskit/menu': 8.5.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/motion': 6.0.0(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
-      '@atlaskit/popup': 4.16.6(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/popup': 4.17.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/tokens': 13.0.1(react@19.2.5)
       '@atlaskit/tooltip': 21.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@babel/runtime': 7.29.2
@@ -19332,7 +19353,7 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/avatar@25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@atlaskit/avatar@25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/css': 0.19.4(react@19.2.5)
@@ -19782,7 +19803,7 @@ snapshots:
     dependencies:
       '@atlaskit/adf-schema': 47.7.1(react@19.2.5)
       '@atlaskit/editor-prosemirror': 7.0.0
-      '@atlaskit/editor-tables': 2.9.78(react@19.2.5)
+      '@atlaskit/editor-tables': 2.9.79(react@19.2.5)
       '@babel/runtime': 7.29.2
       memoize-one: 6.0.0
     transitivePeerDependencies:
@@ -20022,7 +20043,7 @@ snapshots:
     dependencies:
       '@atlaskit/activity-provider': 2.5.3(@types/node@25.6.0)(react@19.2.5)
       '@atlaskit/adf-schema': 47.7.1(react@19.2.5)
-      '@atlaskit/adf-utils': 19.27.42(react@19.2.5)
+      '@atlaskit/adf-utils': 19.27.43(react@19.2.5)
       '@atlaskit/analytics-listeners': 8.15.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/analytics-namespaced-context': 6.14.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/analytics-next': 10.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -20035,8 +20056,8 @@ snapshots:
       '@atlaskit/editor-json-transformer': 8.31.8(react@19.2.5)
       '@atlaskit/editor-palette': 1.7.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/editor-prosemirror': 7.0.0
-      '@atlaskit/editor-shared-styles': 3.10.62(@types/react@19.2.14)(react@19.2.5)
-      '@atlaskit/editor-tables': 2.9.78(react@19.2.5)
+      '@atlaskit/editor-shared-styles': 3.10.63(@types/react@19.2.14)(react@19.2.5)
+      '@atlaskit/editor-tables': 2.9.79(react@19.2.5)
       '@atlaskit/emoji': 67.14.4(@atlaskit/media-core@34.5.0(react@19.2.5))(@babel/core@7.29.0)(@types/node@25.6.0)(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.5(react@19.2.5))(react-intl@5.25.1(react@19.2.5)(typescript@5.9.3))(react@19.2.5)
       '@atlaskit/icon': 23.11.0(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/icon-object': 6.11.1(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.5)
@@ -20123,8 +20144,8 @@ snapshots:
 
   '@atlaskit/editor-json-transformer@8.31.8(react@19.2.5)':
     dependencies:
-      '@atlaskit/adf-schema': 52.6.0(react@19.2.5)
-      '@atlaskit/adf-utils': 19.27.42(react@19.2.5)
+      '@atlaskit/adf-schema': 52.6.1(react@19.2.5)
+      '@atlaskit/adf-utils': 19.27.43(react@19.2.5)
       '@atlaskit/editor-prosemirror': 7.3.0
       '@babel/runtime': 7.29.2
       lodash: 4.18.1
@@ -20170,10 +20191,10 @@ snapshots:
       prosemirror-utils: 1.2.2(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)
       prosemirror-view: 1.41.5
 
-  '@atlaskit/editor-shared-styles@3.10.62(@types/react@19.2.14)(react@19.2.5)':
+  '@atlaskit/editor-shared-styles@3.10.63(@types/react@19.2.14)(react@19.2.5)':
     dependencies:
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
-      '@atlaskit/tmp-editor-statsig': 68.1.0(react@19.2.5)
+      '@atlaskit/tmp-editor-statsig': 69.0.0(react@19.2.5)
       '@atlaskit/tokens': 13.0.1(react@19.2.5)
       '@babel/runtime': 7.29.2
       '@emotion/react': 11.14.0(@types/react@19.2.14)(react@19.2.5)
@@ -20182,11 +20203,11 @@ snapshots:
       - react
       - supports-color
 
-  '@atlaskit/editor-tables@2.9.78(react@19.2.5)':
+  '@atlaskit/editor-tables@2.9.79(react@19.2.5)':
     dependencies:
       '@atlaskit/editor-prosemirror': 7.3.0
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
-      '@atlaskit/tmp-editor-statsig': 68.1.0(react@19.2.5)
+      '@atlaskit/tmp-editor-statsig': 69.0.0(react@19.2.5)
       '@babel/runtime': 7.29.2
     transitivePeerDependencies:
       - react
@@ -20276,7 +20297,7 @@ snapshots:
       - prop-types
       - supports-color
 
-  '@atlaskit/emoji@70.2.2(@atlaskit/media-core@34.5.0(react@19.2.5))(@types/node@25.6.0)(@types/react@19.2.14)(eslint@9.39.4(jiti@2.6.1))(immer@11.1.4)(prop-types@15.8.1)(react-dom@19.2.5(react@19.2.5))(react-intl@5.25.1(react@19.2.5)(typescript@5.9.3))(react@19.2.5)':
+  '@atlaskit/emoji@70.2.3(@atlaskit/media-core@34.5.0(react@19.2.5))(@types/node@25.6.0)(@types/react@19.2.14)(eslint@9.39.4(jiti@2.6.1))(immer@11.1.4)(prop-types@15.8.1)(react-dom@19.2.5(react@19.2.5))(react-intl@5.25.1(react@19.2.5)(typescript@5.9.3))(react@19.2.5)':
     dependencies:
       '@atlaskit/afm-i18n-platform-elements-emoji': 2.7.0
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -20290,7 +20311,7 @@ snapshots:
       '@atlaskit/primitives': 19.0.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/spinner': 19.1.2(react@19.2.5)
       '@atlaskit/textfield': 8.3.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/tmp-editor-statsig': 68.1.0(react@19.2.5)
+      '@atlaskit/tmp-editor-statsig': 69.0.0(react@19.2.5)
       '@atlaskit/tokens': 13.0.1(react@19.2.5)
       '@atlaskit/tooltip': 21.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/ufo': 0.4.3(react@19.2.5)
@@ -21099,7 +21120,7 @@ snapshots:
       '@atlaskit/afm-i18n-platform-jql-jql-editor': 2.10.0
       '@atlaskit/analytics-gas-types': 5.1.8(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/button': 23.11.3(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/css': 0.19.4(react@19.2.5)
       '@atlaskit/editor-prosemirror': 7.3.0
@@ -21304,7 +21325,7 @@ snapshots:
       '@atlaskit/adf-schema': 47.7.1(react@19.2.5)
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/atlassian-context': 0.2.0(react@19.2.5)
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/avatar-group': 12.7.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/badge': 18.6.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/button': 21.1.7(@babel/core@7.29.0)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -21716,7 +21737,7 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/lozenge@13.7.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@atlaskit/lozenge@13.8.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/badge': 18.6.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -21740,7 +21761,7 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-next': 10.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/dropdown-menu': 12.26.5(@babel/core@7.29.0)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/editor-shared-styles': 3.10.62(@types/react@19.2.14)(react@19.2.5)
+      '@atlaskit/editor-shared-styles': 3.10.63(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/icon': 23.11.0(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/media-client': 31.1.2(@atlaskit/media-core@34.5.0(react@19.2.5))(@babel/core@7.29.0)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/media-client-react': 3.0.1(@atlaskit/analytics-next@10.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@atlaskit/media-core@34.5.0(react@19.2.5))(@babel/core@7.29.0)(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -22644,7 +22665,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/popup@4.16.6(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@atlaskit/popup@4.17.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@atlaskit/css': 0.19.4(react@19.2.5)
       '@atlaskit/ds-lib': 7.0.0(react@19.2.5)
@@ -22809,11 +22830,11 @@ snapshots:
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/app-provider': 2.3.0(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/css': 0.10.7(@types/react@19.2.14)(react@19.2.5)
-      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.14)(react@19.2.5)
-      '@atlaskit/interaction-context': 3.1.0(react@19.2.5)
+      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.14)(react@19.2.5)
+      '@atlaskit/interaction-context': 3.0.0(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.14)(react@19.2.5)
-      '@atlaskit/visually-hidden': 3.0.5(react@19.2.5)
+      '@atlaskit/visually-hidden': 3.0.2(react@19.2.5)
       '@babel/runtime': 7.29.2
       '@compiled/react': 0.18.6(react@19.2.5)
       '@emotion/react': 11.14.0(@types/react@19.2.14)(react@19.2.5)
@@ -22832,10 +22853,10 @@ snapshots:
       '@atlaskit/app-provider': 2.3.0(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/css': 0.10.7(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.14)(react@19.2.5)
-      '@atlaskit/interaction-context': 3.1.0(react@19.2.5)
+      '@atlaskit/interaction-context': 3.0.0(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.14)(react@19.2.5)
-      '@atlaskit/visually-hidden': 3.0.5(react@19.2.5)
+      '@atlaskit/visually-hidden': 3.0.2(react@19.2.5)
       '@babel/runtime': 7.29.2
       '@compiled/react': 0.18.6(react@19.2.5)
       '@emotion/react': 11.14.0(@types/react@19.2.14)(react@19.2.5)
@@ -23549,7 +23570,7 @@ snapshots:
     dependencies:
       '@atlaskit/analytics-gas-types': 5.1.8(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/avatar-group': 12.7.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/badge': 18.6.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/button': 21.1.7(@babel/core@7.29.0)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -23669,7 +23690,7 @@ snapshots:
 
   '@atlaskit/spinner@18.0.3(@types/react@19.2.14)(react@19.2.5)':
     dependencies:
-      '@atlaskit/interaction-context': 3.1.0(react@19.2.5)
+      '@atlaskit/interaction-context': 3.0.0(react@19.2.5)
       '@atlaskit/theme': 18.0.3(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.14)(react@19.2.5)
       '@babel/runtime': 7.29.2
@@ -23762,12 +23783,12 @@ snapshots:
   '@atlaskit/tag@14.12.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/css': 0.19.4(react@19.2.5)
       '@atlaskit/ds-lib': 7.0.0(react@19.2.5)
       '@atlaskit/icon': 34.3.0(react@19.2.5)
       '@atlaskit/link': 3.4.2(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/lozenge': 13.7.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/lozenge': 13.8.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/motion': 6.0.0(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
       '@atlaskit/primitives': 19.0.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -23900,7 +23921,7 @@ snapshots:
 
   '@atlaskit/teams-avatar@2.6.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/css': 0.19.4(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
       '@atlaskit/primitives': 19.0.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -24021,7 +24042,7 @@ snapshots:
   '@atlaskit/theme@18.0.1(@types/react@19.2.14)(react@19.2.5)':
     dependencies:
       '@atlaskit/codemod-utils': 4.2.5
-      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.14)(react@19.2.5)
+      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.14)(react@19.2.5)
       '@babel/runtime': 7.29.2
       react: 19.2.5
@@ -24161,6 +24182,13 @@ snapshots:
       '@babel/runtime': 7.29.2
       react: 19.2.5
 
+  '@atlaskit/tmp-editor-statsig@69.0.0(react@19.2.5)':
+    dependencies:
+      '@atlaskit/feature-gate-js-client': 5.5.11(react@19.2.5)
+      '@atlaskit/react-ufo': 5.16.2(react@19.2.5)
+      '@babel/runtime': 7.29.2
+      react: 19.2.5
+
   '@atlaskit/toggle@15.2.15(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@atlaskit/analytics-next': 11.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -24283,7 +24311,7 @@ snapshots:
 
   '@atlaskit/tokens@4.5.2(@types/react@19.2.14)(react@19.2.5)':
     dependencies:
-      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.14)(react@19.2.5)
+      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
       '@babel/runtime': 7.29.2
       '@babel/traverse': 7.29.0
@@ -24369,7 +24397,7 @@ snapshots:
   '@atlaskit/tooltip@20.0.4(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.14)(react@19.2.5)
+      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/layering': 2.2.1(@types/react@19.2.14)(react@19.2.5)
       '@atlaskit/motion': 5.7.0(react@19.2.5)
       '@atlaskit/popper': 7.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -24466,9 +24494,9 @@ snapshots:
 
   '@atlaskit/townsquare-emoji-provider@1.0.9(@atlaskit/media-core@34.5.0(react@19.2.5))(@types/node@25.6.0)(@types/react@19.2.14)(eslint@9.39.4(jiti@2.6.1))(immer@11.1.4)(prop-types@15.8.1)(react-dom@19.2.5(react@19.2.5))(react-intl@5.25.1(react@19.2.5)(typescript@5.9.3))(react@19.2.5)':
     dependencies:
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/css': 0.19.4(react@19.2.5)
-      '@atlaskit/emoji': 70.2.2(@atlaskit/media-core@34.5.0(react@19.2.5))(@types/node@25.6.0)(@types/react@19.2.14)(eslint@9.39.4(jiti@2.6.1))(immer@11.1.4)(prop-types@15.8.1)(react-dom@19.2.5(react@19.2.5))(react-intl@5.25.1(react@19.2.5)(typescript@5.9.3))(react@19.2.5)
+      '@atlaskit/emoji': 70.2.3(@atlaskit/media-core@34.5.0(react@19.2.5))(@types/node@25.6.0)(@types/react@19.2.14)(eslint@9.39.4(jiti@2.6.1))(immer@11.1.4)(prop-types@15.8.1)(react-dom@19.2.5(react@19.2.5))(react-intl@5.25.1(react@19.2.5)(typescript@5.9.3))(react@19.2.5)
       '@atlaskit/primitives': 19.0.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/tokens': 13.0.1(react@19.2.5)
       '@babel/runtime': 7.29.2
@@ -24535,11 +24563,11 @@ snapshots:
     dependencies:
       '@atlaskit/afm-i18n-platform-elements-user-picker': 2.87.0
       '@atlaskit/analytics-next': 11.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@atlaskit/avatar': 25.13.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/avatar': 25.14.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/feature-gate-js-client': 5.5.11(react@19.2.5)
       '@atlaskit/icon': 34.3.0(react@19.2.5)
       '@atlaskit/logo': 20.1.0(react@19.2.5)
-      '@atlaskit/lozenge': 13.7.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@atlaskit/lozenge': 13.8.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@atlaskit/people-teams-ui-public': 3.7.14(prop-types@15.8.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(scheduler@0.27.0)(typescript@5.9.3)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.5)
       '@atlaskit/popper': 7.2.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -24694,7 +24722,7 @@ snapshots:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
-  '@aws-sdk/client-s3@3.1036.0':
+  '@aws-sdk/client-s3@3.1037.0':
     dependencies:
       '@aws-crypto/sha1-browser': 5.2.0
       '@aws-crypto/sha256-browser': 5.2.0
@@ -24880,9 +24908,9 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/lib-storage@3.1036.0(@aws-sdk/client-s3@3.1036.0)':
+  '@aws-sdk/lib-storage@3.1036.0(@aws-sdk/client-s3@3.1037.0)':
     dependencies:
-      '@aws-sdk/client-s3': 3.1036.0
+      '@aws-sdk/client-s3': 3.1037.0
       '@smithy/middleware-endpoint': 4.4.32
       '@smithy/protocol-http': 5.3.14
       '@smithy/smithy-client': 4.12.13
@@ -25039,7 +25067,7 @@ snapshots:
       '@smithy/types': 4.14.1
       tslib: 2.8.1
 
-  '@aws-sdk/s3-request-presigner@3.1036.0':
+  '@aws-sdk/s3-request-presigner@3.1037.0':
     dependencies:
       '@aws-sdk/signature-v4-multi-region': 3.996.22
       '@aws-sdk/types': 3.973.8
@@ -25118,7 +25146,7 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.19':
     dependencies:
       '@smithy/types': 4.14.1
-      fast-xml-parser: 5.7.1
+      fast-xml-parser: 5.7.2
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.2.4': {}
@@ -28245,10 +28273,10 @@ snapshots:
     dependencies:
       hono: 4.12.15
 
-  '@hookform/resolvers@5.2.2(react-hook-form@7.73.1(react@19.2.5))':
+  '@hookform/resolvers@5.2.2(react-hook-form@7.74.0(react@19.2.5))':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.73.1(react@19.2.5)
+      react-hook-form: 7.74.0(react@19.2.5)
 
   '@humanfs/core@0.19.1': {}
 
@@ -31275,7 +31303,7 @@ snapshots:
       '@swagger-api/apidom-core': 1.10.2
       '@swagger-api/apidom-error': 1.10.2
       '@types/ramda': 0.30.2
-      axios: 1.15.0
+      axios: 1.15.2
       minimatch: 10.2.5
       ramda: 0.30.1
       ramda-adjunct: 5.1.0(ramda@0.30.1)
@@ -31557,7 +31585,7 @@ snapshots:
 
   '@tanstack/devtools-event-client@0.4.3': {}
 
-  '@tanstack/eslint-plugin-query@5.100.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
+  '@tanstack/eslint-plugin-query@5.100.5(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/utils': 8.59.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.39.4(jiti@2.6.1)
@@ -31578,7 +31606,7 @@ snapshots:
 
   '@tanstack/pacer-lite@0.1.1': {}
 
-  '@tanstack/query-core@5.100.1': {}
+  '@tanstack/query-core@5.100.5': {}
 
   '@tanstack/react-form@1.29.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
@@ -31588,9 +31616,9 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
-  '@tanstack/react-query@5.100.1(react@19.2.5)':
+  '@tanstack/react-query@5.100.5(react@19.2.5)':
     dependencies:
-      '@tanstack/query-core': 5.100.1
+      '@tanstack/query-core': 5.100.5
       react: 19.2.5
 
   '@tanstack/react-store@0.9.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
@@ -33655,7 +33683,7 @@ snapshots:
 
   axe-core@4.11.2: {}
 
-  axios@1.15.0:
+  axios@1.15.2:
     dependencies:
       follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.5
@@ -33789,7 +33817,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.10.21: {}
+  baseline-browser-mapping@2.10.22: {}
 
   basic-ftp@5.3.0: {}
 
@@ -33913,7 +33941,7 @@ snapshots:
 
   browserslist@4.28.2:
     dependencies:
-      baseline-browser-mapping: 2.10.21
+      baseline-browser-mapping: 2.10.22
       caniuse-lite: 1.0.30001790
       electron-to-chromium: 1.5.344
       node-releases: 2.0.38
@@ -33940,7 +33968,7 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bullmq@5.76.1:
+  bullmq@5.76.2:
     dependencies:
       cron-parser: 4.9.0
       ioredis: 5.10.1
@@ -33948,7 +33976,6 @@ snapshots:
       node-abort-controller: 3.1.1
       semver: 7.7.4
       tslib: 2.8.1
-      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
@@ -36246,6 +36273,13 @@ snapshots:
       path-expression-matcher: 1.5.0
 
   fast-xml-parser@5.7.1:
+    dependencies:
+      '@nodable/entities': 2.1.0
+      fast-xml-builder: 1.1.5
+      path-expression-matcher: 1.5.0
+      strnum: 2.2.3
+
+  fast-xml-parser@5.7.2:
     dependencies:
       '@nodable/entities': 2.1.0
       fast-xml-builder: 1.1.5
@@ -38984,10 +39018,10 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  multer-s3@3.0.1(@aws-sdk/client-s3@3.1036.0):
+  multer-s3@3.0.1(@aws-sdk/client-s3@3.1037.0):
     dependencies:
-      '@aws-sdk/client-s3': 3.1036.0
-      '@aws-sdk/lib-storage': 3.1036.0(@aws-sdk/client-s3@3.1036.0)
+      '@aws-sdk/client-s3': 3.1037.0
+      '@aws-sdk/lib-storage': 3.1036.0(@aws-sdk/client-s3@3.1037.0)
       file-type: 3.9.0
       html-comment-regex: 1.1.2
       run-parallel: 1.2.0
@@ -39095,7 +39129,7 @@ snapshots:
     dependencies:
       '@next/env': 16.2.4
       '@swc/helpers': 0.5.15
-      baseline-browser-mapping: 2.10.21
+      baseline-browser-mapping: 2.10.22
       caniuse-lite: 1.0.30001790
       postcss: 8.4.31
       react: 19.2.5
@@ -40528,9 +40562,9 @@ snapshots:
 
   prosemirror-commands@1.6.2:
     dependencies:
-      prosemirror-model: 1.25.4
-      prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.0
+      prosemirror-model: 1.24.1
+      prosemirror-state: 1.4.3
+      prosemirror-transform: 1.10.2
 
   prosemirror-commands@1.7.1:
     dependencies:
@@ -40540,9 +40574,9 @@ snapshots:
 
   prosemirror-dropcursor@1.8.1:
     dependencies:
-      prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.0
-      prosemirror-view: 1.41.8
+      prosemirror-state: 1.4.3
+      prosemirror-transform: 1.10.2
+      prosemirror-view: 1.37.1
 
   prosemirror-dropcursor@1.8.2:
     dependencies:
@@ -40559,9 +40593,9 @@ snapshots:
 
   prosemirror-history@1.4.1:
     dependencies:
-      prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.0
-      prosemirror-view: 1.41.8
+      prosemirror-state: 1.4.3
+      prosemirror-transform: 1.10.2
+      prosemirror-view: 1.37.1
       rope-sequence: 1.3.4
 
   prosemirror-history@1.5.0:
@@ -40573,7 +40607,7 @@ snapshots:
 
   prosemirror-keymap@1.2.2:
     dependencies:
-      prosemirror-state: 1.4.4
+      prosemirror-state: 1.4.3
       w3c-keyname: 2.2.8
 
   prosemirror-keymap@1.2.3:
@@ -40585,7 +40619,7 @@ snapshots:
     dependencies:
       '@types/markdown-it': 14.1.2
       markdown-it: 14.1.1
-      prosemirror-model: 1.25.4
+      prosemirror-model: 1.24.1
 
   prosemirror-markdown@1.13.2:
     dependencies:
@@ -40609,9 +40643,9 @@ snapshots:
 
   prosemirror-state@1.4.3:
     dependencies:
-      prosemirror-model: 1.25.4
-      prosemirror-transform: 1.12.0
-      prosemirror-view: 1.41.8
+      prosemirror-model: 1.24.1
+      prosemirror-transform: 1.10.2
+      prosemirror-view: 1.37.1
 
   prosemirror-state@1.4.4:
     dependencies:
@@ -40629,7 +40663,7 @@ snapshots:
 
   prosemirror-transform@1.10.2:
     dependencies:
-      prosemirror-model: 1.25.4
+      prosemirror-model: 1.24.1
 
   prosemirror-transform@1.10.5:
     dependencies:
@@ -40651,9 +40685,9 @@ snapshots:
 
   prosemirror-view@1.37.1:
     dependencies:
-      prosemirror-model: 1.25.4
-      prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.0
+      prosemirror-model: 1.24.1
+      prosemirror-state: 1.4.3
+      prosemirror-transform: 1.10.2
 
   prosemirror-view@1.41.5:
     dependencies:
@@ -40945,7 +40979,7 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  react-hook-form@7.73.1(react@19.2.5):
+  react-hook-form@7.74.0(react@19.2.5):
     dependencies:
       react: 19.2.5
 
@@ -43496,8 +43530,6 @@ snapshots:
   uuid-validate@0.0.3: {}
 
   uuid@10.0.0: {}
-
-  uuid@11.1.0: {}
 
   uuid@14.0.0: {}
 

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
@@ -54,22 +53,20 @@ export function getColumns(
         const value = row.original.value;
         const displayValue = formatValue(value);
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="font-mono truncate">
-                  {typeof value === "object"
-                    ? JSON.stringify(value)
-                    : String(value)}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="w-auto max-w-[500px]">
-                <div className="font-mono whitespace-break-spaces">
-                  {displayValue}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="font-mono truncate">
+                {typeof value === "object"
+                  ? JSON.stringify(value)
+                  : String(value)}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="w-auto max-w-[500px]">
+              <div className="font-mono whitespace-break-spaces">
+                {displayValue}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         );
       },
     },

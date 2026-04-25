@@ -54,7 +54,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "@prisma/client";
@@ -4292,21 +4291,16 @@ export function GenerateTestCasesWizard({
                                 <div className="flex items-center justify-between w-full gap-2">
                                   <span>{template.templateName}</span>
                                   {template.isDefault && (
-                                    <TooltipProvider delayDuration={300}>
-                                      <Tooltip>
-                                        <TooltipTrigger
-                                          className="ml-1"
-                                          asChild
-                                        >
-                                          <Badge variant="secondary">
-                                            <Star className="h-3 w-3 fill-current text-primary-background" />
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          {tCommon("defaultOption")}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger className="ml-1" asChild>
+                                        <Badge variant="secondary">
+                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {tCommon("defaultOption")}
+                                      </TooltipContent>
+                                    </Tooltip>
                                   )}
                                 </div>
                               </SelectItem>

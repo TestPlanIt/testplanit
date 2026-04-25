@@ -16,7 +16,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -255,39 +254,35 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                       className="min-w-6 min-h-6 text-primary"
                     />
                   )}
-                  <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="truncate inline-block">
+                        {testRun.name}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">{testRun.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  {testRun.configurationGroupId && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="truncate inline-block">
-                          {testRun.name}
+                        <span className="shrink-0">
+                          <Combine className="w-4 h-4 text-muted-foreground" />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="text-sm">{testRun.name}</p>
+                        <p className="text-background/50">
+                          {tCommon("labels.multiConfiguration")}
+                        </p>
+                        {testRun.configuration && (
+                          <p className="flex text-xs text-background">
+                            <Combine className="w-4 h-4 shrink-0 mr-1" />
+                            {testRun.configuration.name}
+                          </p>
+                        )}
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
-                  {testRun.configurationGroupId && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="shrink-0">
-                            <Combine className="w-4 h-4 text-muted-foreground" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-background/50">
-                            {tCommon("labels.multiConfiguration")}
-                          </p>
-                          {testRun.configuration && (
-                            <p className="flex text-xs text-background">
-                              <Combine className="w-4 h-4 shrink-0 mr-1" />
-                              {testRun.configuration.name}
-                            </p>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
                   )}
                   <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </h3>
@@ -309,24 +304,20 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
         {/* Configuration Column */}
         <div className="flex items-center min-w-0">
           {testRun.configuration ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground truncate cursor-default">
-                    <Combine className="w-4 h-4 shrink-0" />
-                    <span className="truncate">
-                      {testRun.configuration.name}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="flex">
-                    <Combine className="w-4 h-4 shrink-0 mr-1" />
-                    {testRun.configuration.name}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground truncate cursor-default">
+                  <Combine className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{testRun.configuration.name}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="flex">
+                  <Combine className="w-4 h-4 shrink-0 mr-1" />
+                  {testRun.configuration.name}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <span className="text-sm text-muted-foreground">{"—"}</span>
           )}

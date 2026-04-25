@@ -9,7 +9,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
@@ -55,21 +54,19 @@ export const getColumns = (
       const title = getValue() as string;
       const columnWidth = column.getSize();
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="font-medium truncate block"
-                style={{ maxWidth: columnWidth - 20 }}
-              >
-                {title}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{title}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className="font-medium truncate block"
+              style={{ maxWidth: columnWidth - 20 }}
+            >
+              {title}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{title}</p>
+          </TooltipContent>
+        </Tooltip>
       );
     },
   },

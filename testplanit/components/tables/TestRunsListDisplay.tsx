@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Prisma } from "@prisma/client";
@@ -118,23 +117,21 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
     }
 
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{deletedContent}</TooltipTrigger>
-          <TooltipContent>
-            <span className="line-through">{name}</span>
-            <p className="text-xs text-primary-foreground/40 mt-1">
-              {t("status.deleted")}
+      <Tooltip>
+        <TooltipTrigger asChild>{deletedContent}</TooltipTrigger>
+        <TooltipContent>
+          <span className="line-through">{name}</span>
+          <p className="text-xs text-primary-foreground/40 mt-1">
+            {t("status.deleted")}
+          </p>
+          {configurationGroupId && configuration && (
+            <p className="flex text-xs mt-1">
+              <Combine className="w-3 h-3 shrink-0 mr-1" />
+              {configuration.name}
             </p>
-            {configurationGroupId && configuration && (
-              <p className="flex text-xs mt-1">
-                <Combine className="w-3 h-3 shrink-0 mr-1" />
-                {configuration.name}
-              </p>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+          )}
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
@@ -160,20 +157,18 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent>
-          <span>{name}</span>
-          {configurationGroupId && configuration && (
-            <p className="flex text-xs mt-1">
-              <Combine className="w-3 h-3 shrink-0 mr-1" />
-              {configuration.name}
-            </p>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>
+        <span>{name}</span>
+        {configurationGroupId && configuration && (
+          <p className="flex text-xs mt-1">
+            <Combine className="w-3 h-3 shrink-0 mr-1" />
+            {configuration.name}
+          </p>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

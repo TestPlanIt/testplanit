@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -127,37 +126,35 @@ export function SessionResultsSummary({
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Show a default status bar at the top */}
-        <TooltipProvider>
-          <div className="h-2.5 w-full rounded-full overflow-hidden">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href={`/projects/sessions/${projectId}/${sessionId}`}
-                  className="h-full w-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] rounded-sm"
-                  style={{
-                    backgroundColor: firstStatus?.color?.value || "#B1B2B3",
-                    display: "block",
-                  }}
-                  aria-label={t("sessions.actions.viewSessionDetails")}
-                />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="border-0 text-white px-3 py-2"
+        <div className="h-2.5 w-full rounded-full overflow-hidden">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/projects/sessions/${projectId}/${sessionId}`}
+                className="h-full w-full transition-all hover:opacity-80 cursor-pointer border-x-[0.5px] rounded-sm"
                 style={{
                   backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+                  display: "block",
                 }}
-              >
-                <div className="font-semibold text-sm">
-                  {firstStatus?.name || t("common.labels.untested")}
-                </div>
-                <div className="text-xs opacity-90">
-                  {t("common.labels.noResults")}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+                aria-label={t("sessions.actions.viewSessionDetails")}
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="border-0 text-white px-3 py-2"
+              style={{
+                backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+              }}
+            >
+              <div className="font-semibold text-sm">
+                {firstStatus?.name || t("common.labels.untested")}
+              </div>
+              <div className="text-xs opacity-90">
+                {t("common.labels.noResults")}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         {/* Show "No results recorded" message below */}
         <div
@@ -181,92 +178,90 @@ export function SessionResultsSummary({
   return (
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for results at the top */}
-      <TooltipProvider>
-        <div className="flex h-2.5 w-full rounded-full overflow-hidden">
-          {summaryData.results.map((result, _index) => {
-            const color = result.statusColorValue || "#B1B2B3";
-            // Calculate width: equal distribution if no duration, or proportional if durations exist
+      <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+        {summaryData.results.map((result, _index) => {
+          const color = result.statusColorValue || "#B1B2B3";
+          // Calculate width: equal distribution if no duration, or proportional if durations exist
 
-            // Ensure each segment is visible with a minimum width
-            let width;
-            if (hasElapsed) {
-              // If this result has elapsed time, make it proportional
-              if (result.elapsed && result.elapsed > 0) {
-                width = `${Math.max(5, (result.elapsed / totalElapsed) * 100)}%`;
-              } else {
-                // If no elapsed time but others have it, give it a minimum width
-                width = "5%";
-              }
+          // Ensure each segment is visible with a minimum width
+          let width;
+          if (hasElapsed) {
+            // If this result has elapsed time, make it proportional
+            if (result.elapsed && result.elapsed > 0) {
+              width = `${Math.max(5, (result.elapsed / totalElapsed) * 100)}%`;
             } else {
-              // Equal distribution if no elapsed times
-              width = `${100 / summaryData.results.length}%`;
+              // If no elapsed time but others have it, give it a minimum width
+              width = "5%";
             }
+          } else {
+            // Equal distribution if no elapsed times
+            width = `${100 / summaryData.results.length}%`;
+          }
 
-            // Get issues for this result
-            const resultIssues = summaryData.resultIssues.filter((issue) =>
-              result.issueIds.includes(issue.id)
-            );
+          // Get issues for this result
+          const resultIssues = summaryData.resultIssues.filter((issue) =>
+            result.issueIds.includes(issue.id)
+          );
 
-            return (
-              <Tooltip key={result.id}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={`/projects/sessions/${projectId}/${sessionId}#result-${result.id}`}
-                    className="border-x border-primary-foreground rounded-sm h-full transition-all hover:opacity-80 cursor-pointer"
-                    style={{
-                      backgroundColor: color,
-                      width: width,
-                      minWidth: "4px",
-                      display: "block",
-                    }}
-                    aria-label={`View ${result.statusName} result details`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent
-                  className="border-0 text-muted px-3 py-2"
-                  style={{ backgroundColor: color }}
-                >
-                  <div className="flex items-center gap-1 font-semibold text-sm">
-                    <div className="rounded-full bg-muted w-2 h-2" />
-                    {result.statusName || t("common.labels.untested")}
+          return (
+            <Tooltip key={result.id}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/projects/sessions/${projectId}/${sessionId}#result-${result.id}`}
+                  className="border-x border-primary-foreground rounded-sm h-full transition-all hover:opacity-80 cursor-pointer"
+                  style={{
+                    backgroundColor: color,
+                    width: width,
+                    minWidth: "4px",
+                    display: "block",
+                  }}
+                  aria-label={`View ${result.statusName} result details`}
+                />
+              </TooltipTrigger>
+              <TooltipContent
+                className="border-0 text-muted px-3 py-2"
+                style={{ backgroundColor: color }}
+              >
+                <div className="flex items-center gap-1 font-semibold text-sm">
+                  <div className="rounded-full bg-muted w-2 h-2" />
+                  {result.statusName || t("common.labels.untested")}
+                </div>
+
+                <div className="text-xs opacity-90 mt-1">
+                  <div className="flex items-center gap-1">
+                    <DateFormatter
+                      date={result.createdAt}
+                      formatString={dateTimeFormat}
+                      timezone={session?.user.preferences?.timezone}
+                    />
                   </div>
-
-                  <div className="text-xs opacity-90 mt-1">
-                    <div className="flex items-center gap-1">
-                      <DateFormatter
-                        date={result.createdAt}
-                        formatString={dateTimeFormat}
-                        timezone={session?.user.preferences?.timezone}
+                  {result.elapsed && result.elapsed > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Clock className="h-3 w-3" />
+                      {toHumanReadable(result.elapsed, {
+                        isSeconds: true,
+                        locale,
+                      })}
+                    </div>
+                  )}
+                  {/* Display issues for this specific result in the tooltip */}
+                  {resultIssues && resultIssues.length > 0 && (
+                    <div className="mt-1">
+                      <IssuesListDisplay
+                        // Map issues to add projectIds
+                        issues={resultIssues.map((issue) => ({
+                          ...issue,
+                          projectIds: projectId ? [Number(projectId)] : [],
+                        }))}
                       />
                     </div>
-                    {result.elapsed && result.elapsed > 0 && (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Clock className="h-3 w-3" />
-                        {toHumanReadable(result.elapsed, {
-                          isSeconds: true,
-                          locale,
-                        })}
-                      </div>
-                    )}
-                    {/* Display issues for this specific result in the tooltip */}
-                    {resultIssues && resultIssues.length > 0 && (
-                      <div className="mt-1">
-                        <IssuesListDisplay
-                          // Map issues to add projectIds
-                          issues={resultIssues.map((issue) => ({
-                            ...issue,
-                            projectIds: projectId ? [Number(projectId)] : [],
-                          }))}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-      </TooltipProvider>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
 
       {/* Show different message based on whether there's elapsed time */}
       <div className="flex justify-between items-center">
@@ -303,21 +298,19 @@ export function SessionResultsSummary({
                 }
               )}
             >
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3" />
-                      {summaryData.commentsCount}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t("common.plural.comment", {
-                      count: summaryData.commentsCount,
-                    })}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1">
+                    <MessageCircle className="h-3 w-3" />
+                    {summaryData.commentsCount}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("common.plural.comment", {
+                    count: summaryData.commentsCount,
+                  })}
+                </TooltipContent>
+              </Tooltip>
             </Link>
           )}
           {/* Display aggregated issues list */}

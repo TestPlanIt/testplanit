@@ -2,7 +2,6 @@ import { Avatar } from "@/components/Avatar";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LinkIcon, Star } from "lucide-react";
@@ -65,32 +64,30 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         width={20}
         image={user?.image ?? ""}
       />
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            className="text-left block truncate min-w-0"
+      <Tooltip>
+        <TooltipTrigger
+          type="button"
+          className="text-left block truncate min-w-0"
+        >
+          <div
+            className={cn(
+              "flex items-center truncate",
+              isCurrentUser && "font-extrabold",
+              className
+            )}
           >
-            <div
-              className={cn(
-                "flex items-center truncate",
-                isCurrentUser && "font-extrabold",
-                className
-              )}
-            >
-              {isCurrentUser && (
-                <Star className="w-4 h-4 min-w-4 mr-1 fill-primary text-primary shrink-0" />
-              )}
-              <span className="truncate">{user?.name}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent align="start">
-            <div className="flex items-center gap-1">
-              <div>{user?.name}</div>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            {isCurrentUser && (
+              <Star className="w-4 h-4 min-w-4 mr-1 fill-primary text-primary shrink-0" />
+            )}
+            <span className="truncate">{user?.name}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent align="start">
+          <div className="flex items-center gap-1">
+            <div>{user?.name}</div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
     </span>
   );
 

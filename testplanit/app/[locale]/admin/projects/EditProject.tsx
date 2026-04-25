@@ -36,7 +36,6 @@ import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -955,21 +954,16 @@ export function EditProjectModal({
                                 >
                                   {role.name}
                                   {role.isDefault && (
-                                    <TooltipProvider delayDuration={300}>
-                                      <Tooltip>
-                                        <TooltipTrigger
-                                          className="ml-1"
-                                          asChild
-                                        >
-                                          <Badge variant="secondary">
-                                            <Star className="h-3 w-3 fill-current text-primary-background" />
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          {tCommon("defaultOption")}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger className="ml-1" asChild>
+                                        <Badge variant="secondary">
+                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {tCommon("defaultOption")}
+                                      </TooltipContent>
+                                    </Tooltip>
                                   )}
                                 </SelectItem>
                               ))}

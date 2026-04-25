@@ -17,7 +17,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -150,66 +149,62 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
             <MilestonesSection projectId={project.id} />
           </ResizablePanel>
           <div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      type="button"
-                      data-testid="collapse-left-panel"
-                      onClick={toggleLeftCollapse}
-                      variant="secondary"
-                      size="sm"
-                      className={`p-0 transform ${
-                        isLeftCollapsed
-                          ? "rounded-l-none rotate-180"
-                          : "rounded-r-none"
-                      }`}
-                    >
-                      <ChevronLeft />
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div>
-                    {isLeftCollapsed
-                      ? t("common.actions.expandLeftPanel")
-                      : t("common.actions.collapseLeftPanel")}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button
+                    type="button"
+                    data-testid="collapse-left-panel"
+                    onClick={toggleLeftCollapse}
+                    variant="secondary"
+                    size="sm"
+                    className={`p-0 transform ${
+                      isLeftCollapsed
+                        ? "rounded-l-none rotate-180"
+                        : "rounded-r-none"
+                    }`}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div>
+                  {isLeftCollapsed
+                    ? t("common.actions.expandLeftPanel")
+                    : t("common.actions.collapseLeftPanel")}
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
           <ResizableHandle withHandle className="w-1" />
           <div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      type="button"
-                      onClick={toggleRightCollapse}
-                      variant="secondary"
-                      size="sm"
-                      className={`p-0 transform ${
-                        isRightCollapsed
-                          ? "rounded-l-none"
-                          : "rounded-r-none rotate-180"
-                      }`}
-                    >
-                      <ChevronLeft />
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div>
-                    {isRightCollapsed
-                      ? t("common.actions.expandRightPanel")
-                      : t("common.actions.collapseRightPanel")}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button
+                    type="button"
+                    onClick={toggleRightCollapse}
+                    variant="secondary"
+                    size="sm"
+                    className={`p-0 transform ${
+                      isRightCollapsed
+                        ? "rounded-l-none"
+                        : "rounded-r-none rotate-180"
+                    }`}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div>
+                  {isRightCollapsed
+                    ? t("common.actions.expandRightPanel")
+                    : t("common.actions.collapseRightPanel")}
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
           <ResizablePanel
             id="overview-right"

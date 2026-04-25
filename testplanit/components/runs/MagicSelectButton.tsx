@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Wand2 } from "lucide-react";
@@ -63,21 +62,19 @@ export function MagicSelectButton({
   // Show disabled button with tooltip if no LLM integration
   if (!isLoading && !hasLlmIntegration) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <Button size="lg" variant="outline" disabled>
-                <Wand2 className="h-4 w-4" />
-                {tGlobal("runs.magicSelect.title")}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t("noLlmIntegration")}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>
+            <Button size="lg" variant="outline" disabled>
+              <Wand2 className="h-4 w-4" />
+              {tGlobal("runs.magicSelect.title")}
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{t("noLlmIntegration")}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 

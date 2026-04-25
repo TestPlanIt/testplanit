@@ -2,7 +2,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import * as d3 from "d3";
@@ -453,18 +452,16 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               <p className="text-xs text-muted-foreground">
                 {t("stats.issuesWithFailures")}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs">
-                      {t("stats.issuesWithFailuresTooltip")}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="text-xs">
+                    {t("stats.issuesWithFailuresTooltip")}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -482,18 +479,16 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
               <p className="text-xs text-muted-foreground">
                 {t("stats.issuesWithUntested")}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs">
-                      {t("stats.issuesWithUntestedTooltip")}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="text-xs">
+                    {t("stats.issuesWithUntestedTooltip")}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>

@@ -14,7 +14,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -142,26 +141,24 @@ const SessionItem: React.FC<SessionItemProps> = ({
                   {testSession.name}
                 </span>
                 {testSession.configurationGroupId && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="shrink-0">
-                          <Combine className="w-4 h-4 text-muted-foreground" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-background/50">
-                          {t("common.labels.multiConfiguration")}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="shrink-0">
+                        <Combine className="w-4 h-4 text-muted-foreground" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-background/50">
+                        {t("common.labels.multiConfiguration")}
+                      </p>
+                      {testSession.configuration && (
+                        <p className="flex text-xs text-background">
+                          <Combine className="w-4 h-4 shrink-0 mr-1" />
+                          {testSession.configuration.name}
                         </p>
-                        {testSession.configuration && (
-                          <p className="flex text-xs text-background">
-                            <Combine className="w-4 h-4 shrink-0 mr-1" />
-                            {testSession.configuration.name}
-                          </p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </h3>
@@ -183,24 +180,22 @@ const SessionItem: React.FC<SessionItemProps> = ({
       {/* Configuration Column */}
       <div className="flex items-center min-w-0">
         {testSession.configuration ? (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground truncate cursor-default">
-                  <Combine className="w-4 h-4 shrink-0" />
-                  <span className="truncate">
-                    {testSession.configuration.name}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="flex">
-                  <Combine className="w-4 h-4 shrink-0 mr-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground truncate cursor-default">
+                <Combine className="w-4 h-4 shrink-0" />
+                <span className="truncate">
                   {testSession.configuration.name}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="flex">
+                <Combine className="w-4 h-4 shrink-0 mr-1" />
+                {testSession.configuration.name}
+              </p>
+            </TooltipContent>
+          </Tooltip>
         ) : (
           <span className="text-sm text-muted-foreground">{"—"}</span>
         )}
