@@ -33,6 +33,30 @@ export class ApiHelper {
   }
 
   /**
+   * Remove resources from the auto-cleanup tracking lists. Use this from a
+   * `setup` test in a `serial`-mode describe whose later tests need the
+   * resources to outlive the setup test's `api` fixture teardown — without
+   * this, cleanup() schedules deletions that race with subsequent tests
+   * (e.g. a source case getting soft-deleted right before a collision test
+   * tries to read it). The describe is responsible for cleaning up the
+   * resources itself in `afterAll`.
+   */
+  untrackProject(projectId: number): void {
+    const idx = this.createdProjectIds.indexOf(projectId);
+    if (idx >= 0) this.createdProjectIds.splice(idx, 1);
+  }
+
+  untrackCase(caseId: number): void {
+    const idx = this.createdCaseIds.indexOf(caseId);
+    if (idx >= 0) this.createdCaseIds.splice(idx, 1);
+  }
+
+  untrackTag(tagId: number): void {
+    const idx = this.createdTagIds.indexOf(tagId);
+    if (idx >= 0) this.createdTagIds.splice(idx, 1);
+  }
+
+  /**
    * Get an available template ID for the project
    * Templates have a many-to-many relationship with projects via TemplateProjectAssignment
    */

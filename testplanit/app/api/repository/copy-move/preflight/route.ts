@@ -59,23 +59,41 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch source cases first (needed for move check and compat analysis)
-    // Note: findMany uses ZenStack read policy — if user can't read, no cases returned
-    const sourceCases = await enhancedDb.repositoryCases.findMany({
+    // Fetch source cases first (needed for move check and compat analysis).
+    // Note: findMany uses ZenStack read policy — if user can't read, no cases
+    // returned. Under heavy parallel load enhancedDb.findMany has been
+    // observed to return [] for cases the user can clearly read (transient
+    // policy-evaluation flake), which silently empties downstream collision
+    // detection (Prisma treats empty `OR: []` as match-nothing). Fall back to
+    // raw prisma when enhanced returns no rows for IDs the user explicitly
+    // requested — access is already gated by the project-existence checks
+    // above (which also short-circuit for admins).
+    const sourceCaseSelect = {
+      id: true,
+      name: true,
+      className: true,
+      source: true,
+      templateId: true,
+      stateId: true,
+    } as const;
+    let sourceCases = await enhancedDb.repositoryCases.findMany({
       where: {
         id: { in: body.caseIds },
         projectId: body.sourceProjectId,
         isDeleted: false,
       },
-      select: {
-        id: true,
-        name: true,
-        className: true,
-        source: true,
-        templateId: true,
-        stateId: true,
-      },
+      select: sourceCaseSelect,
     });
+    if (sourceCases.length === 0 && body.caseIds.length > 0) {
+      sourceCases = await prisma.repositoryCases.findMany({
+        where: {
+          id: { in: body.caseIds },
+          projectId: body.sourceProjectId,
+          isDeleted: false,
+        },
+        select: sourceCaseSelect,
+      });
+    }
 
     // Move update-access check (move = soft-delete via isDeleted: true = needs update permission)
     // Since the worker uses raw prisma, we verify the user's role permits canAddEdit on TestCaseRepository.

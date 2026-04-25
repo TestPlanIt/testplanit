@@ -261,25 +261,25 @@ test.describe("Role Management", () => {
       await expect(defaultSwitch).toBeDisabled({ timeout: 5000 });
     } finally {
       if (createdRoleId) {
-        // Restore: first unset this as default (set another role as default), then delete
-        // Find the original default role and restore it
-        const rolesResponse = await page.request.get(
+        // Restore the SEEDED "user" role as the default. The previous version
+        // of this cleanup picked any non-default role and promoted it, which
+        // could land on a role created by another parallel test (often with
+        // empty rolePermissions). That left the database with a default role
+        // that has no permissions, breaking any subsequent test (e.g. ACL-06)
+        // whose setup queries `roles/findFirst({where: {isDefault: true}})`
+        // and expects the seeded "user" role's permissions.
+        const userRoleResp = await page.request.get(
           `/api/model/roles/findFirst?q=${encodeURIComponent(
             JSON.stringify({
-              where: {
-                isDefault: false,
-                isDeleted: false,
-                name: { not: roleName },
-              },
+              where: { name: "user", isDeleted: false },
             })
           )}`
         );
 
-        if (rolesResponse.ok()) {
-          const rolesData = await rolesResponse.json();
-          const otherRoleId = rolesData?.data?.id;
-          if (otherRoleId) {
-            // Make the original role default again
+        if (userRoleResp.ok()) {
+          const userRoleData = await userRoleResp.json();
+          const userRoleId = userRoleData?.data?.id;
+          if (userRoleId) {
             await page.request.post(`/api/model/roles/updateMany`, {
               data: {
                 where: { isDefault: true },
@@ -288,7 +288,7 @@ test.describe("Role Management", () => {
             });
             await page.request.post(`/api/model/roles/update`, {
               data: {
-                where: { id: otherRoleId },
+                where: { id: userRoleId },
                 data: { isDefault: true },
               },
             });

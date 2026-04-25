@@ -618,10 +618,15 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     // Create a regular USER-access member with the default "user" role
     memberEmail = `acl-steps-${Date.now()}@example.com`;
 
-    // Look up the default role (seeded as "user")
+    // Look up the seeded "user" role by NAME — not by `isDefault: true`,
+    // because the role-management test toggles `isDefault` on a custom role
+    // mid-run. A parallel `findFirst({where: { isDefault: true }})` can land
+    // on that custom role (which has empty rolePermissions), giving this
+    // member a roleId with no TestCaseRepository permission — which then
+    // makes the Step create fail with DENIED_BY_POLICY in unrelated ways.
     const rolesResponse = await api["request"].get(
       `${baseURL}/api/model/roles/findFirst?q=${encodeURIComponent(
-        JSON.stringify({ where: { isDefault: true } })
+        JSON.stringify({ where: { name: "user", isDeleted: false } })
       )}`
     );
     const defaultRole = await rolesResponse.json();

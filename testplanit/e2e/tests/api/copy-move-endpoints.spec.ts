@@ -51,6 +51,40 @@ test.describe("Copy-Move API Endpoints", () => {
   let moveCaseId: number | undefined;
   let moveJobId: string | undefined;
 
+  // Clean up shared resources at the very end of the outer describe — the
+  // setup test in the preflight inner describe detaches these from the api
+  // fixture's per-test auto-cleanup so they survive across sibling
+  // describes (preflight tests, copy-move submit tests, status/cancel
+  // tests, folder-tree tests, etc.). Doing the cleanup here (outer
+  // afterAll) ensures it runs only after every dependent test has finished.
+  test.afterAll(async ({ request, baseURL }) => {
+    const ops: Array<Promise<unknown>> = [];
+    if (sourceCaseId) {
+      ops.push(
+        request
+          .patch(`${baseURL}/api/model/repositoryCases/update`, {
+            data: {
+              where: { id: sourceCaseId },
+              data: { isDeleted: true },
+            },
+          })
+          .catch(() => {})
+      );
+    }
+    for (const id of [sourceProjectId, targetProjectId]) {
+      if (id) {
+        ops.push(
+          request
+            .patch(`${baseURL}/api/model/projects/update`, {
+              data: { where: { id }, data: { isDeleted: true } },
+            })
+            .catch(() => {})
+        );
+      }
+    }
+    await Promise.all(ops);
+  });
+
   /**
    * POST /api/repository/copy-move/preflight (TEST-02)
    *
@@ -194,6 +228,18 @@ test.describe("Copy-Move API Endpoints", () => {
       expect(sourceProjectId).toBeGreaterThan(0);
       expect(targetProjectId).toBeGreaterThan(0);
       expect(sourceCaseId).toBeGreaterThan(0);
+
+      // Detach these resources from the api fixture's auto-cleanup so they
+      // survive the setup test's teardown. Subsequent tests in this serial
+      // describe rely on `sourceCaseId` etc. existing in the database; the
+      // fire-and-forget delete-test-case call would otherwise race the next
+      // test (e.g. the collision test reads sourceCases for the OR clause
+      // and finds nothing once the source case has been soft-deleted). The
+      // afterAll below cleans these up explicitly.
+      api.untrackProject(sourceProjectId);
+      api.untrackProject(targetProjectId);
+      api.untrackCase(sourceCaseId);
+      api.untrackTag(tagId);
     });
 
     // TODO(flake-cleanup): Preflight occasionally returns 403 for admin
