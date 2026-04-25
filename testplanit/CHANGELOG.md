@@ -1,3 +1,9 @@
+## [0.22.15](https://github.com/TestPlanIt/testplanit/compare/v0.22.14...v0.22.15) (2026-04-25)
+
+### Bug Fixes
+
+* **e2e:** unblock 9 skipped/flaky tests + spawn BullMQ workers in E2E ([#247](https://github.com/TestPlanIt/testplanit/issues/247)) ([9ab4dc6](https://github.com/TestPlanIt/testplanit/commit/9ab4dc65fc360abbe67584b5f079b132c5e8b32a))
+
 ## [0.22.14](https://github.com/TestPlanIt/testplanit/compare/v0.22.13...v0.22.14) (2026-04-25)
 
 ### Bug Fixes
