@@ -2,7 +2,6 @@ import { DateFormatter } from "@/components/DateFormatter";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSession } from "next-auth/react";
@@ -73,13 +72,11 @@ export function DateTextDisplay({
   );
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent>
-          <p className="text-sm">{tooltipContent}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>
+        <p className="text-sm">{tooltipContent}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Integration } from "@prisma/client";
@@ -68,25 +67,21 @@ export function SyncIntegrationButton({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            onClick={handleSync}
-            disabled={isSyncing}
-            className="px-2 py-1 h-auto"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
-            />
-            <span className="sr-only">{t("syncIntegration")}</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{t("syncIntegration")}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="px-2 py-1 h-auto"
+        >
+          <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+          <span className="sr-only">{t("syncIntegration")}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{t("syncIntegration")}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

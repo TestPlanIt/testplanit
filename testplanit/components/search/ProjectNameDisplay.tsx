@@ -2,7 +2,6 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import React from "react";
@@ -27,19 +26,17 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
   const content = (
     <span className="flex items-center gap-1">
       <ProjectIcon iconUrl={iconUrl} width={16} height={16} />
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            className="text-left truncate max-w-[200px] inline-block"
-          >
-            {projectName}
-          </TooltipTrigger>
-          <TooltipContent>
-            <div>{projectName}</div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          type="button"
+          className="text-left truncate max-w-[200px] inline-block"
+        >
+          {projectName}
+        </TooltipTrigger>
+        <TooltipContent>
+          <div>{projectName}</div>
+        </TooltipContent>
+      </Tooltip>
     </span>
   );
 

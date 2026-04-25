@@ -2,7 +2,6 @@ import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "@prisma/client";
@@ -112,16 +111,14 @@ export const CaseDisplay: React.FC<Case> = ({
   const shouldShowTooltip = hasClampedClass || !isLargeOrXl;
 
   return shouldShowTooltip ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="text-left">{content}</div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div>{name}</div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="text-left">{content}</div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div>{name}</div>
+      </TooltipContent>
+    </Tooltip>
   ) : (
     content
   );

@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { ThemeProvider } from "~/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { SearchStateProvider } from "~/lib/contexts/SearchStateContext";
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +41,9 @@ export default function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider>{content}</SessionProvider>
+      <SessionProvider>
+        <TooltipProvider delayDuration={300}>{content}</TooltipProvider>
+      </SessionProvider>
     </QueryClientProvider>
   );
 }

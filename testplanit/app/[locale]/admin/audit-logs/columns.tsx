@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AuditAction, AuditLog } from "@prisma/client";
@@ -116,16 +115,14 @@ export const getColumns = (
     cell: ({ getValue }) => {
       const name = getValue() as string | null;
       return name ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="truncate max-w-[200px] block">{name}</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{name}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="truncate max-w-[200px] block">{name}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{name}</p>
+          </TooltipContent>
+        </Tooltip>
       ) : (
         <span className="text-muted-foreground">-</span>
       );

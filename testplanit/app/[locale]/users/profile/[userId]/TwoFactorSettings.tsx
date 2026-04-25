@@ -30,7 +30,6 @@ import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Check, Copy, Info, Loader2, RefreshCw, Shield } from "lucide-react";
@@ -265,22 +264,20 @@ export function TwoFactorSettings({
             </Button>
           )}
           {twoFactorRequired && twoFactorEnabled ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Switch
-                      checked={twoFactorEnabled}
-                      disabled
-                      className="cursor-not-allowed"
-                    />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("users.profile.twoFactor.disableNotAllowed")}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Switch
+                    checked={twoFactorEnabled}
+                    disabled
+                    className="cursor-not-allowed"
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t("users.profile.twoFactor.disableNotAllowed")}</p>
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <Switch
               checked={twoFactorEnabled}

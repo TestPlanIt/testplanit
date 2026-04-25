@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Attachments } from "@prisma/client";
@@ -239,25 +238,23 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                   >
                     {t("common.status.pendingDelete")}
                   </Badge>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-nowrap shrink-0"
-                          onClick={(e) => handleUndoDelete(attachment.id, e)}
-                        >
-                          <Undo2 className="h-4 w-4" />
-                          {t("common.actions.undo")}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {t("common.actions.undoDelete")}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-nowrap shrink-0"
+                        onClick={(e) => handleUndoDelete(attachment.id, e)}
+                      >
+                        <Undo2 className="h-4 w-4" />
+                        {t("common.actions.undo")}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t("common.actions.undoDelete")}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -373,25 +370,23 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                       </div>
                       <div className="flex space-x-2 items-end">
                         {attachment.mimeType !== "text/uri-list" ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Link
-                                  className="inline-flex h-9 items-center justify-center rounded-md px-3 bg-primary text-primary-foreground hover:bg-primary/90"
-                                  href={
-                                    getStorageUrlClient(attachment.url) ||
-                                    attachment.url
-                                  }
-                                  target="_blank"
-                                >
-                                  <Download className="h-5 w-5 shrink-0" />
-                                </Link>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {t("common.actions.download")}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link
+                                className="inline-flex h-9 items-center justify-center rounded-md px-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                                href={
+                                  getStorageUrlClient(attachment.url) ||
+                                  attachment.url
+                                }
+                                target="_blank"
+                              >
+                                <Download className="h-5 w-5 shrink-0" />
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("common.actions.download")}
+                            </TooltipContent>
+                          </Tooltip>
                         ) : null}
                         {/* In deferred mode, show delete button */}
                         {deferredMode && !preventEditing && (
@@ -515,28 +510,25 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             <UserNameCell userId={prevAttachment.createdById} />
                           </div>
                           <div className="flex space-x-2 mt-4">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger type="button">
-                                  <Button type="button" className="mt-4">
-                                    <Link
-                                      href={
-                                        getStorageUrlClient(
-                                          prevAttachment.url
-                                        ) || prevAttachment.url
-                                      }
-                                      download={prevAttachment.name}
-                                      target="_blank"
-                                    >
-                                      <Download className="inline w-5 h-5" />
-                                    </Link>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {t("common.actions.download")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger type="button">
+                                <Button type="button" className="mt-4">
+                                  <Link
+                                    href={
+                                      getStorageUrlClient(prevAttachment.url) ||
+                                      prevAttachment.url
+                                    }
+                                    download={prevAttachment.name}
+                                    target="_blank"
+                                  >
+                                    <Download className="inline w-5 h-5" />
+                                  </Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {t("common.actions.download")}
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>

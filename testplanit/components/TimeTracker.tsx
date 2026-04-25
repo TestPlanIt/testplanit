@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Clock, Pause, Play } from "lucide-react";
@@ -191,33 +190,31 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
       <div
         className={`overflow-auto flex items-center justify-center p-2 border-2 border-primary/30 rounded-md ${isRunning ? "border-destructive" : ""}`}
       >
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Clock
-                className={`h-4 w-4 shrink-0 mr-1 ${
-                  isRunning
-                    ? "text-destructive animate-spin"
-                    : seconds > 0 ||
-                        displayMinutes !== "00" ||
-                        displaySeconds !== "00"
-                      ? "text-muted-foreground cursor-pointer hover:text-primary"
-                      : "text-muted-foreground"
-                }`}
-                onClick={handleClockClick}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              {isRunning
-                ? tCommon("fields.isActive")
-                : seconds > 0 ||
-                    displayMinutes !== "00" ||
-                    displaySeconds !== "00"
-                  ? tCommon("actions.reset")
-                  : tCommon("fields.elapsed")}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Clock
+              className={`h-4 w-4 shrink-0 mr-1 ${
+                isRunning
+                  ? "text-destructive animate-spin"
+                  : seconds > 0 ||
+                      displayMinutes !== "00" ||
+                      displaySeconds !== "00"
+                    ? "text-muted-foreground cursor-pointer hover:text-primary"
+                    : "text-muted-foreground"
+              }`}
+              onClick={handleClockClick}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            {isRunning
+              ? tCommon("fields.isActive")
+              : seconds > 0 ||
+                  displayMinutes !== "00" ||
+                  displaySeconds !== "00"
+                ? tCommon("actions.reset")
+                : tCommon("fields.elapsed")}
+          </TooltipContent>
+        </Tooltip>
         <div className="flex items-center">
           <Input
             type="text"
@@ -247,23 +244,19 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
           className="ml-2"
         >
           {isRunning ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Pause className="h-4 w-4" />
-                </TooltipTrigger>
-                <TooltipContent>{tCommon("actions.pause")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Pause className="h-4 w-4" />
+              </TooltipTrigger>
+              <TooltipContent>{tCommon("actions.pause")}</TooltipContent>
+            </Tooltip>
           ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Play className="h-4 w-4" />
-                </TooltipTrigger>
-                <TooltipContent>{tCommon("actions.start")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Play className="h-4 w-4" />
+              </TooltipTrigger>
+              <TooltipContent>{tCommon("actions.start")}</TooltipContent>
+            </Tooltip>
           )}
         </Button>
       </div>

@@ -38,7 +38,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Attachments, Issue } from "@prisma/client";
@@ -242,26 +241,24 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
           <PlayCircle className="mr-1 h-4 w-4 shrink-0" />
           <span className="truncate">{testRun.name}</span>
           {(testRun as any).configurationGroupId && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="ml-1 shrink-0">
-                    <Combine className="w-3 h-3 text-muted-foreground" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-background/50">
-                    {tCommon("labels.multiConfiguration")}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ml-1 shrink-0">
+                  <Combine className="w-3 h-3 text-muted-foreground" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-background/50">
+                  {tCommon("labels.multiConfiguration")}
+                </p>
+                {testRun.configuration && (
+                  <p className="flex text-xs text-background">
+                    <Combine className="w-3 h-3 shrink-0 mr-1" />
+                    {testRun.configuration.name}
                   </p>
-                  {testRun.configuration && (
-                    <p className="flex text-xs text-background">
-                      <Combine className="w-3 h-3 shrink-0 mr-1" />
-                      {testRun.configuration.name}
-                    </p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                )}
+              </TooltipContent>
+            </Tooltip>
           )}
         </DropdownMenuItem>
       ))}
@@ -1217,32 +1214,30 @@ export default function TestResultHistory({
           <TableHeader>
             <TableRow className="text-nowrap">
               <TableHead className="w-8">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          toggleExpanded("all");
-                        }}
-                      >
-                        {allExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {allExpanded
-                        ? tCommon("actions.collapse")
-                        : tCommon("actions.expand")}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        toggleExpanded("all");
+                      }}
+                    >
+                      {allExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {allExpanded
+                      ? tCommon("actions.collapse")
+                      : tCommon("actions.expand")}
+                  </TooltipContent>
+                </Tooltip>
               </TableHead>
               <TableHead className="w-[300px]">
                 {tCommon("actions.junit.import.testRun.label")}
@@ -1442,35 +1437,31 @@ export default function TestResultHistory({
                     </TableCell>
                     <TableCell className="max-w-[50px]">
                       {result.sourceType === "manual" && result.editedAt && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex justify-center">
-                                <History className="h-4 w-4 text-muted-foreground" />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex justify-center">
+                              <History className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="flex gap-1">
+                              <div>{tCommon("lastEditedBy")}</div>
+                              {result.editedBy?.name}
+                              <div>{tCommon("on")}</div>
+                              <div>
+                                <DateFormatter
+                                  date={result.editedAt}
+                                  formatString={
+                                    session?.user.preferences?.dateFormat +
+                                    " " +
+                                    session?.user.preferences?.timeFormat
+                                  }
+                                  timezone={session?.user.preferences?.timezone}
+                                />
                               </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="flex gap-1">
-                                <div>{tCommon("lastEditedBy")}</div>
-                                {result.editedBy?.name}
-                                <div>{tCommon("on")}</div>
-                                <div>
-                                  <DateFormatter
-                                    date={result.editedAt}
-                                    formatString={
-                                      session?.user.preferences?.dateFormat +
-                                      " " +
-                                      session?.user.preferences?.timeFormat
-                                    }
-                                    timezone={
-                                      session?.user.preferences?.timezone
-                                    }
-                                  />
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
                     <TableCell className="max-w-[100px]">

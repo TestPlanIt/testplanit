@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LinkIcon } from "lucide-react";
@@ -29,16 +28,14 @@ export const ProjectNameCell: React.FC<ProjectNameCellProps> = ({
         className="flex items-center truncate group"
         href={`/projects/overview/${projectId}`}
       >
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger type="button" className="text-left block truncate">
-              <span className="truncate">{value}</span>
-            </TooltipTrigger>
-            <TooltipContent align="start">
-              <div>{value}</div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger type="button" className="text-left block truncate">
+            <span className="truncate">{value}</span>
+          </TooltipTrigger>
+          <TooltipContent align="start">
+            <div>{value}</div>
+          </TooltipContent>
+        </Tooltip>
         <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </Link>
       {note && (

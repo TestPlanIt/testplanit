@@ -2,7 +2,6 @@ import { DateFormatter } from "@/components/DateFormatter";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow, type Locale } from "date-fns";
@@ -56,19 +55,17 @@ export function RelativeTimeTooltip({
   );
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>{displayContent}</TooltipTrigger>
-        <TooltipContent>
-          <div className="flex gap-1">
-            <DateFormatter
-              date={dateObj}
-              formatString={formatString}
-              timezone={userTimezone}
-            />
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{displayContent}</TooltipTrigger>
+      <TooltipContent>
+        <div className="flex gap-1">
+          <DateFormatter
+            date={dateObj}
+            formatString={formatString}
+            timezone={userTimezone}
+          />
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }

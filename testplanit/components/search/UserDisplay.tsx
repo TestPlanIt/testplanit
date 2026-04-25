@@ -2,7 +2,6 @@ import { Avatar } from "@/components/Avatar";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
@@ -48,26 +47,24 @@ export const UserDisplay: React.FC<UserDisplayProps> = ({
         width={avatarSize}
         image={userImage ?? ""}
       />
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            className="text-left min-w-0 flex-1 overflow-hidden"
+      <Tooltip>
+        <TooltipTrigger
+          type="button"
+          className="text-left min-w-0 flex-1 overflow-hidden"
+        >
+          <span
+            className={`flex items-center gap-1 ${isCurrentUser ? "font-semibold" : ""} ${size === "large" ? "text-base" : ""}`}
           >
-            <span
-              className={`flex items-center gap-1 ${isCurrentUser ? "font-semibold" : ""} ${size === "large" ? "text-base" : ""}`}
-            >
-              {isCurrentUser && (
-                <Star className="w-3 h-3 shrink-0 fill-primary text-primary" />
-              )}
-              <span className="truncate block">{userName}</span>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div>{userName}</div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            {isCurrentUser && (
+              <Star className="w-3 h-3 shrink-0 fill-primary text-primary" />
+            )}
+            <span className="truncate block">{userName}</span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div>{userName}</div>
+        </TooltipContent>
+      </Tooltip>
     </span>
   );
 

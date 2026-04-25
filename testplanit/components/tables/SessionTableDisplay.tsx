@@ -2,7 +2,6 @@ import DynamicIcon from "@/components/DynamicIcon";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LinkIcon } from "lucide-react";
@@ -86,13 +85,11 @@ export const SessionTableDisplay: React.FC<SessionDisplayProps> = ({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent>
-          <span>{name}</span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>
+        <span>{name}</span>
+      </TooltipContent>
+    </Tooltip>
   );
 };

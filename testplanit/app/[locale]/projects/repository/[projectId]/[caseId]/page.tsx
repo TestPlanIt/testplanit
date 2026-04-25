@@ -47,7 +47,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VersionSelect } from "@/components/VersionSelect";
@@ -2250,67 +2249,63 @@ export default function TestCaseDetails() {
                 </div>
               </ResizablePanel>
               <div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          type="button"
-                          onClick={toggleCollapseLeft}
-                          variant="secondary"
-                          size="sm"
-                          data-testid="toggle-left-panel-button"
-                          className={`p-0 transform ${
-                            isCollapsedLeft
-                              ? "rounded-l-none rotate-180"
-                              : "rounded-r-none"
-                          }`}
-                        >
-                          <ChevronLeft />
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div>
-                        {isCollapsedLeft
-                          ? t("common.actions.expandLeftPanel")
-                          : t("common.actions.collapseLeftPanel")}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        onClick={toggleCollapseLeft}
+                        variant="secondary"
+                        size="sm"
+                        data-testid="toggle-left-panel-button"
+                        className={`p-0 transform ${
+                          isCollapsedLeft
+                            ? "rounded-l-none rotate-180"
+                            : "rounded-r-none"
+                        }`}
+                      >
+                        <ChevronLeft />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div>
+                      {isCollapsedLeft
+                        ? t("common.actions.expandLeftPanel")
+                        : t("common.actions.collapseLeftPanel")}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <ResizableHandle withHandle className="w-1" />
               <div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          type="button"
-                          onClick={toggleCollapseRight}
-                          variant="secondary"
-                          size="sm"
-                          data-testid="toggle-right-panel-button"
-                          className={`p-0 transform ${
-                            isCollapsedRight
-                              ? "rounded-l-none"
-                              : "rounded-r-none rotate-180"
-                          }`}
-                        >
-                          <ChevronLeft />
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div>
-                        {isCollapsedRight
-                          ? t("common.actions.expandRightPanel")
-                          : t("common.actions.collapseRightPanel")}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        onClick={toggleCollapseRight}
+                        variant="secondary"
+                        size="sm"
+                        data-testid="toggle-right-panel-button"
+                        className={`p-0 transform ${
+                          isCollapsedRight
+                            ? "rounded-l-none"
+                            : "rounded-r-none rotate-180"
+                        }`}
+                      >
+                        <ChevronLeft />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div>
+                      {isCollapsedRight
+                        ? t("common.actions.expandRightPanel")
+                        : t("common.actions.collapseRightPanel")}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <ResizablePanel
                 id="case-detail-right"

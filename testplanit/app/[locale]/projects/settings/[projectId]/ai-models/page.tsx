@@ -20,7 +20,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
@@ -250,18 +249,16 @@ export default function ProjectAiModelsPage() {
                     <SelectItem key={config.id} value={config.id}>
                       {config.name}
                       {config.isDefault && (
-                        <TooltipProvider delayDuration={300}>
-                          <Tooltip>
-                            <TooltipTrigger className="ml-1" asChild>
-                              <Badge variant="secondary">
-                                <Star className="h-3 w-3 fill-current text-primary-background" />
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {tCommon("defaultOption")}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="ml-1" asChild>
+                            <Badge variant="secondary">
+                              <Star className="h-3 w-3 fill-current text-primary-background" />
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {tCommon("defaultOption")}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </SelectItem>
                   ))}

@@ -17,7 +17,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -293,16 +292,14 @@ export function ExportPreviewPane({
                         ? t("aiGenerated")
                         : t("templateGenerated")}
                       {result.generatedBy === "template" && result.error && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle className="h-4 w-4 shrink-0" />
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs">
-                              {result.error}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            {result.error}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </Badge>
                     {results.length > 1 && (
@@ -448,16 +445,14 @@ function SingleResultView({
           <Badge variant="secondary" className="flex items-center gap-1">
             {t("fallbackBadge")}
             {result.error && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-4 w-4 shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    {result.error}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {result.error}
+                </TooltipContent>
+              </Tooltip>
             )}
           </Badge>
           {onRetry && (

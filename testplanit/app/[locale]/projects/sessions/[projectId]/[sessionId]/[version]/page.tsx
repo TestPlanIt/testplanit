@@ -28,7 +28,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VersionNavigation } from "@/components/VersionNavigation";
@@ -369,58 +368,54 @@ export default function SessionVersionPage() {
 
           {/* Panel controls */}
           <div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={toggleCollapseLeft}
-                    variant="secondary"
-                    size="sm"
-                    className={`p-0 transform ${
-                      isCollapsedLeft
-                        ? "rounded-l-none rotate-180"
-                        : "rounded-r-none"
-                    }`}
-                  >
-                    <ChevronLeft />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isCollapsedLeft
-                    ? t("common.actions.expandLeftPanel")
-                    : t("common.actions.collapseLeftPanel")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={toggleCollapseLeft}
+                  variant="secondary"
+                  size="sm"
+                  className={`p-0 transform ${
+                    isCollapsedLeft
+                      ? "rounded-l-none rotate-180"
+                      : "rounded-r-none"
+                  }`}
+                >
+                  <ChevronLeft />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCollapsedLeft
+                  ? t("common.actions.expandLeftPanel")
+                  : t("common.actions.collapseLeftPanel")}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <ResizableHandle withHandle className="w-1" />
 
           {/* Right panel controls */}
           <div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={toggleCollapseRight}
-                    variant="secondary"
-                    size="sm"
-                    className={`p-0 transform ${
-                      isCollapsedRight
-                        ? "rounded-l-none"
-                        : "rounded-r-none rotate-180"
-                    }`}
-                  >
-                    <ChevronLeft />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isCollapsedRight
-                    ? t("common.actions.expandRightPanel")
-                    : t("common.actions.collapseRightPanel")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={toggleCollapseRight}
+                  variant="secondary"
+                  size="sm"
+                  className={`p-0 transform ${
+                    isCollapsedRight
+                      ? "rounded-l-none"
+                      : "rounded-r-none rotate-180"
+                  }`}
+                >
+                  <ChevronLeft />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCollapsedRight
+                  ? t("common.actions.expandRightPanel")
+                  : t("common.actions.collapseRightPanel")}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <ResizablePanel

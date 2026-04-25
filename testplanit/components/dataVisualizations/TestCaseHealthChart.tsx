@@ -2,7 +2,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import * as d3 from "d3";
@@ -398,18 +397,16 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
               <p className="text-xs text-muted-foreground">
                 {t("stats.needsAttention")}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs">
-                      {t("stats.needsAttentionTooltip")}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="text-xs">
+                    {t("stats.needsAttentionTooltip")}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -452,16 +449,14 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
               <p className="text-xs text-muted-foreground">
                 {t("stats.healthy")}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs">{t("stats.healthyTooltip")}</div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="text-xs">{t("stats.healthyTooltip")}</div>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -479,30 +474,28 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
               <p className="text-xs text-muted-foreground">
                 {t("stats.avgScore")}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <div className="text-xs space-y-1">
-                      <p className="font-semibold">
-                        {t("healthScoreTooltip.title")}
-                      </p>
-                      <ul className="list-disc pl-3 space-y-0.5">
-                        <li>{t("healthScoreTooltip.neverExecuted")}</li>
-                        <li>{t("healthScoreTooltip.stale90")}</li>
-                        <li>{t("healthScoreTooltip.stale60")}</li>
-                        <li>{t("healthScoreTooltip.stale30")}</li>
-                        <li>{t("healthScoreTooltip.alwaysPassing")}</li>
-                        <li>{t("healthScoreTooltip.alwaysFailing")}</li>
-                        <li>{t("healthScoreTooltip.lowPassRate")}</li>
-                        <li>{t("healthScoreTooltip.lowExecutions")}</li>
-                      </ul>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="text-xs space-y-1">
+                    <p className="font-semibold">
+                      {t("healthScoreTooltip.title")}
+                    </p>
+                    <ul className="list-disc pl-3 space-y-0.5">
+                      <li>{t("healthScoreTooltip.neverExecuted")}</li>
+                      <li>{t("healthScoreTooltip.stale90")}</li>
+                      <li>{t("healthScoreTooltip.stale60")}</li>
+                      <li>{t("healthScoreTooltip.stale30")}</li>
+                      <li>{t("healthScoreTooltip.alwaysPassing")}</li>
+                      <li>{t("healthScoreTooltip.alwaysFailing")}</li>
+                      <li>{t("healthScoreTooltip.lowPassRate")}</li>
+                      <li>{t("healthScoreTooltip.lowExecutions")}</li>
+                    </ul>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>

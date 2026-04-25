@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CirclePlay, Combine, Trash2 } from "lucide-react";
@@ -63,24 +62,22 @@ export function TestRunNameDisplay({
 
   // Configuration indicator for multi-config test runs
   const configIndicator = configurationGroupId ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="ml-1 shrink-0">
-            <Combine className="w-3 h-3 text-muted-foreground" />
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="text-background/50">{t("multiConfiguration")}</p>
-          {configuration && (
-            <p className="flex text-xs text-background">
-              <Combine className="w-3 h-3 shrink-0 mr-1" />
-              {configuration.name}
-            </p>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="ml-1 shrink-0">
+          <Combine className="w-3 h-3 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="text-background/50">{t("multiConfiguration")}</p>
+        {configuration && (
+          <p className="flex text-xs text-background">
+            <Combine className="w-3 h-3 shrink-0 mr-1" />
+            {configuration.name}
+          </p>
+        )}
+      </TooltipContent>
+    </Tooltip>
   ) : null;
 
   const content = (

@@ -11,7 +11,6 @@ import { IconName } from "~/types/globals";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -201,19 +200,14 @@ export const getColumns = (
         >
           {row.original.scope.map((scope, index) => (
             <span key={index}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger type="button" className="cursor-default">
-                    <DynamicIcon
-                      name={scope.scope.icon as IconName}
-                      size={20}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div>{scope.scope.name}</div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger type="button" className="cursor-default">
+                  <DynamicIcon name={scope.scope.icon as IconName} size={20} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div>{scope.scope.name}</div>
+                </TooltipContent>
+              </Tooltip>
             </span>
           ))}
         </div>

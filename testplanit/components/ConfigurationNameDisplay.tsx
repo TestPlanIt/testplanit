@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Combine } from "lucide-react";
@@ -66,14 +65,12 @@ export function ConfigurationNameDisplay({
 
   if (truncate) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent>
-            <p>{displayName}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipContent>
+          <p>{displayName}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 

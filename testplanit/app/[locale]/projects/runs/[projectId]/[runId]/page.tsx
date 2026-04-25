@@ -60,7 +60,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1835,30 +1834,28 @@ export default function TestRunPage() {
               </ResizablePanel>
               <ResizableHandle withHandle className="w-1" />
               <div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          type="button"
-                          onClick={toggleCollapseRight}
-                          variant="secondary"
-                          size="sm"
-                          className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
-                        >
-                          <ChevronLeft />
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div>
-                        {isCollapsedRight
-                          ? t("common.actions.expandRightPanel")
-                          : t("common.actions.collapseRightPanel")}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        onClick={toggleCollapseRight}
+                        variant="secondary"
+                        size="sm"
+                        className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                      >
+                        <ChevronLeft />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div>
+                      {isCollapsedRight
+                        ? t("common.actions.expandRightPanel")
+                        : t("common.actions.collapseRightPanel")}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <ResizablePanel
                 id="test-run-right"

@@ -2,7 +2,6 @@ import { DateFormatter } from "@/components/DateFormatter";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
@@ -43,24 +42,22 @@ export const LastActiveDisplay: React.FC<LastActiveDisplayProps> = ({
       : defaultFormatString;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="truncate">
-            {formatDistanceToNow(dateObj, {
-              addSuffix: true,
-              locale: dateFnsLocale,
-            })}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <DateFormatter
-            date={dateObj}
-            formatString={formatString}
-            timezone={preferredTimezone}
-          />
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="truncate">
+          {formatDistanceToNow(dateObj, {
+            addSuffix: true,
+            locale: dateFnsLocale,
+          })}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <DateFormatter
+          date={dateObj}
+          formatString={formatString}
+          timezone={preferredTimezone}
+        />
+      </TooltipContent>
+    </Tooltip>
   );
 };

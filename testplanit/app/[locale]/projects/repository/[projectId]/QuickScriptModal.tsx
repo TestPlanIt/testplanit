@@ -49,7 +49,6 @@ import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Check, ChevronsUpDown, Loader2, Sparkles, Star } from "lucide-react";
@@ -810,18 +809,16 @@ export function QuickScriptModal({
                             ? selectedTemplate.name
                             : t("templatePlaceholder")}
                           {selectedTemplate?.isDefault && (
-                            <TooltipProvider delayDuration={300}>
-                              <Tooltip>
-                                <TooltipTrigger className="ml-1" asChild>
-                                  <Badge variant="secondary">
-                                    <Star className="h-3 w-3 fill-current text-primary-background" />
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {tCommon("defaultOption")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="ml-1" asChild>
+                                <Badge variant="secondary">
+                                  <Star className="h-3 w-3 fill-current text-primary-background" />
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {tCommon("defaultOption")}
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -858,21 +855,19 @@ export function QuickScriptModal({
                                     />
                                     {tmpl.name}
                                     {tmpl.isDefault && (
-                                      <TooltipProvider delayDuration={300}>
-                                        <Tooltip>
-                                          <TooltipTrigger
-                                            className="ml-1"
-                                            asChild
-                                          >
-                                            <Badge variant="secondary">
-                                              <Star className="h-3 w-3 fill-current text-primary-background" />
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            {tCommon("defaultOption")}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger
+                                          className="ml-1"
+                                          asChild
+                                        >
+                                          <Badge variant="secondary">
+                                            <Star className="h-3 w-3 fill-current text-primary-background" />
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          {tCommon("defaultOption")}
+                                        </TooltipContent>
+                                      </Tooltip>
                                     )}
                                   </CommandItem>
                                 ))}

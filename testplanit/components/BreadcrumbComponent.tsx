@@ -9,7 +9,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Folders } from "lucide-react";
@@ -45,44 +44,40 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
             <BreadcrumbItem className="p-0 m-0">
               {index === breadcrumbItems.length - 1 && !isLastClickable ? (
                 <BreadcrumbPage className="overflow-hidden">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger
-                        type="button"
-                        className="text-muted-foreground font-bold"
-                      >
-                        <div className="cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button">
-                          <span className="truncate">{folder.text}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div>{folder.text}</div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger
+                      type="button"
+                      className="text-muted-foreground font-bold"
+                    >
+                      <div className="cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button">
+                        <span className="truncate">{folder.text}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div>{folder.text}</div>
+                    </TooltipContent>
+                  </Tooltip>
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink
                   asChild
                   className="p-0 m-0 overflow-hidden w-fit"
                 >
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger type="button">
-                        <Link
-                          href={`/projects/repository/${projectId}/?node=${folder.id}`}
-                          className="text-primary/50 cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
-                          onClick={() => onClick && onClick(folder.id)}
-                          type="button"
-                        >
-                          <span className="truncate">{folder.text}</span>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div>{folder.text}</div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger type="button">
+                      <Link
+                        href={`/projects/repository/${projectId}/?node=${folder.id}`}
+                        className="text-primary/50 cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
+                        onClick={() => onClick && onClick(folder.id)}
+                        type="button"
+                      >
+                        <span className="truncate">{folder.text}</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div>{folder.text}</div>
+                    </TooltipContent>
+                  </Tooltip>
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>
