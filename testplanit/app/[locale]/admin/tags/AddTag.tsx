@@ -1,7 +1,8 @@
 "use client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useCreateTags, useFindManyTags, useUpdateTags } from "~/lib/hooks";
+import { useUpdateTags } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -45,18 +46,13 @@ export function AddTag({ open, onClose }: AddTagProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tTags = useTranslations("tags.add");
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createTag } = useCreateTags();
+  // Restoring a soft-deleted tag is a separate operation from creating a
+  // new one — kept on the auto-generated update hook so the React Query
+  // cache invalidation (cases-with-tags lists, filter dropdowns, etc.)
+  // stays automatic.
   const { mutateAsync: updateTag } = useUpdateTags();
-  // Query all tags (including soft-deleted) for case-insensitive duplicate
-  // checking. Track loading state so we can block submit until the data
-  // arrives — without this the user can race the query, `allTags` is
-  // undefined, the existing-tag check is skipped, and the create call
-  // hits a P2002 unique-constraint error instead of triggering the
-  // soft-deleted-tag restore path.
-  const { data: allTags, isPending: isAllTagsPending } = useFindManyTags({
-    select: { id: true, name: true, isDeleted: true },
-  });
 
   const form = useForm<AddTagFormData>({
     resolver: zodResolver(AddTagSchema),
@@ -72,62 +68,75 @@ export function AddTag({ open, onClose }: AddTagProps) {
   async function onSubmit(data: AddTagFormData) {
     setIsSubmitting(true);
 
-    // Check for case-insensitive duplicate (including soft-deleted tags)
-    const nameToCheck = data.name.toLowerCase();
-    const existingTag = allTags?.find(
-      (tag) => tag.name.toLowerCase() === nameToCheck
-    );
+    // Atomic detection + create on the server. Replaces the previous
+    // `useFindManyTags` pre-load + client-side scan, which (a) doesn't
+    // scale past a few thousand tags and (b) raced the submit click —
+    // the user could submit before the cache resolved, the existing-tag
+    // check skipped, and the create call hit P2002 with no soft-deleted
+    // restore offered.
+    try {
+      const response = await fetch("/api/admin/tags/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: data.name }),
+      });
 
-    if (existingTag) {
-      if (existingTag.isDeleted) {
-        // Restore the soft-deleted tag
-        try {
-          await updateTag({
-            where: { id: existingTag.id },
-            data: { isDeleted: false },
-          });
-          onClose();
-          setIsSubmitting(false);
-          return;
-        } catch {
-          form.setError("root", {
+      if (response.status === 409) {
+        const errBody = await response.json().catch(() => ({}));
+        if (errBody?.code === "RESTORE_REQUIRED") {
+          // Restore the soft-deleted tag (server returned its id).
+          try {
+            await updateTag({
+              where: { id: errBody.tagId },
+              data: { isDeleted: false },
+            });
+            onClose();
+            setIsSubmitting(false);
+            return;
+          } catch {
+            form.setError("root", {
+              type: "custom",
+              message: tCommon("errors.unknown"),
+            });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+        if (errBody?.code === "EXISTS_ACTIVE") {
+          form.setError("name", {
             type: "custom",
-            message: tCommon("errors.unknown"),
+            message: tTags("errors.nameExists"),
           });
           setIsSubmitting(false);
           return;
         }
-      } else {
-        // Tag already exists and is active
-        form.setError("name", {
-          type: "custom",
-          message: tTags("errors.nameExists"),
-        });
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
-    try {
-      await createTag({
-        data: {
-          name: data.name,
-        },
-      });
-      onClose();
-      setIsSubmitting(false);
-    } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
-        form.setError("name", {
-          type: "custom",
-          message: tTags("errors.nameExists"),
-        });
-      } else {
         form.setError("root", {
           type: "custom",
           message: tCommon("errors.unknown"),
         });
+        setIsSubmitting(false);
+        return;
       }
+
+      if (!response.ok) {
+        form.setError("root", {
+          type: "custom",
+          message: tCommon("errors.unknown"),
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 201 — refresh the tags list so the new tag appears immediately.
+      void queryClient.refetchQueries();
+      onClose();
+      setIsSubmitting(false);
+    } catch (err) {
+      console.error("[AddTag] submit error:", err);
+      form.setError("root", {
+        type: "custom",
+        message: tCommon("errors.unknown"),
+      });
       setIsSubmitting(false);
       return;
     }
@@ -172,7 +181,7 @@ export function AddTag({ open, onClose }: AddTagProps) {
               <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting || isAllTagsPending}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
