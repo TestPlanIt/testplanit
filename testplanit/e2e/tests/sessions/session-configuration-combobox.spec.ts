@@ -236,7 +236,10 @@ test.describe("Session Configuration Combobox", () => {
     await expect(submitButton).toBeVisible();
     await submitButton.click();
 
-    // Wait for dialog to close (indicates successful creation)
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    // Wait for dialog to close (indicates successful creation). 15s wasn't
+    // enough under 8-worker load — the new-session create path includes
+    // configuration linkage + ES indexing + multiple round-trips, and the
+    // form's submit→close transition is gated on all of them resolving.
+    await expect(dialog).not.toBeVisible({ timeout: 30000 });
   });
 });

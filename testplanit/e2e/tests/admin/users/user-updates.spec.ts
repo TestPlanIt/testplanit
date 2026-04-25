@@ -510,11 +510,15 @@ test.describe("User Update Operations", () => {
         const submitButton = dialog.getByRole("button", { name: /submit/i });
         await submitButton.click();
 
-        // Wait for restore dialog to appear
+        // Wait for restore dialog to appear. The flow is: submit →
+        // server P2002 unique constraint → client `findFirst` for the
+        // soft-deleted user → state update → dialog render. Under
+        // 8-worker parallel load each step can add latency, so 5s
+        // wasn't enough.
         const restoreDialog = page
           .locator('[role="dialog"]')
           .filter({ hasText: /restore deleted user/i });
-        await expect(restoreDialog).toBeVisible({ timeout: 5000 });
+        await expect(restoreDialog).toBeVisible({ timeout: 15000 });
 
         // Verify the restore dialog message contains the email
         await expect(restoreDialog.getByText(testEmail)).toBeVisible();
