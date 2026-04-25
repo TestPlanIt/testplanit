@@ -311,8 +311,10 @@ test.describe("Drag & Drop", () => {
     const testCaseRow = page.locator(`text="${caseName}"`).first();
     const targetFolderElement = repositoryPage.getFolderById(targetFolderId);
 
-    await expect(testCaseRow).toBeVisible({ timeout: 5000 });
-    await expect(targetFolderElement).toBeVisible({ timeout: 5000 });
+    // 5s is too tight under parallel load — case list render after folder
+    // selection can lag (ES indexing + cases query complete out of order).
+    await expect(testCaseRow).toBeVisible({ timeout: 10000 });
+    await expect(targetFolderElement).toBeVisible({ timeout: 10000 });
 
     // Wait for elements to have stable bounding boxes (not animating)
     await expect(async () => {

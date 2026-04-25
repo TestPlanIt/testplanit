@@ -25,8 +25,12 @@ export default defineConfig({
   // Fail the build on CI if test.only is left in source code
   forbidOnly: isCI,
 
-  // Retry on CI only
-  retries: isCI ? 2 : 0,
+  // Retry on CI, and on the prod-build local suite. 8 parallel workers
+  // against a single DB / Elasticsearch / webserver instance produces
+  // enough race conditions (ES indexing lag, mutation-then-read races,
+  // access-manifest cache contention) that one retry catches the
+  // overwhelming majority of false failures. Real bugs still fail twice.
+  retries: isCI ? 2 : useProdBuild ? 1 : 0,
 
   // Limit workers for stability (dev server can get overwhelmed)
   // Production build can handle more workers than dev server

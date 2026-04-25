@@ -76,9 +76,9 @@ test.describe("User Management Gaps", () => {
           await emailInput.fill(testEmail);
           await passwordInput.fill(testPassword);
 
-          const signInButton = unauthPage.getByRole("button", {
-            name: /sign in/i,
-          });
+          // Use the testid — `name: /sign in/i` also matches the "Sign in
+          // with Magic Link" buttons, which triggers a strict-mode violation.
+          const signInButton = unauthPage.getByTestId("signin-button");
           await signInButton.click();
           await unauthPage.waitForLoadState("networkidle");
 
