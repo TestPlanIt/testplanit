@@ -1,3 +1,9 @@
+## [0.22.14](https://github.com/TestPlanIt/testplanit/compare/v0.22.13...v0.22.14) (2026-04-25)
+
+### Bug Fixes
+
+* **e2e:** unblock ACL-06 + collision detection by fixing test pollution and shared-state races ([99e05e0](https://github.com/TestPlanIt/testplanit/commit/99e05e0b63358d8cb92261859457bb888736fbe1))
+
 ## [0.22.13](https://github.com/TestPlanIt/testplanit/compare/v0.22.12...v0.22.13) (2026-04-24)
 
 ### Bug Fixes
