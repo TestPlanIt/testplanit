@@ -196,6 +196,12 @@ test.describe("Role Management", () => {
       // Wait for dialog to close
       await expect(alertDialog).not.toBeVisible({ timeout: 10000 });
 
+      // Let the soft-delete mutation settle on the server before reloading.
+      // Mirrors the passing status-delete test pattern; without this the
+      // dialog can close ahead of the final commit and the reload reads a
+      // stale row.
+      await page.waitForTimeout(1000);
+
       // Reload and verify role is gone
       await page.reload();
       await page.waitForLoadState("networkidle");
