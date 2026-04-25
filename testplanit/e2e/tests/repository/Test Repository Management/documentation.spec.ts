@@ -433,13 +433,7 @@ test.describe("Documentation", () => {
     expect(hasContent || hasPlaceholder !== null).toBeTruthy();
   });
 
-  // TODO(flake-cleanup): Tiptap consistently swallows the leading keystroke
-  // after editor click + select-all on this page, leaving the doc as
-  // `placeholder + typed-text-minus-first-char`. Fails twice with retries.
-  test.skip("Documentation persists after page reload", async ({
-    api,
-    page,
-  }) => {
+  test("Documentation persists after page reload", async ({ api, page }) => {
     const projectId = await createTestProject(api);
     await page.goto(`/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -456,10 +450,22 @@ test.describe("Documentation", () => {
     await page.waitForLoadState("networkidle");
 
     const editor = page.locator(".ProseMirror").first();
+    // Tiptap's ProseMirror takes a tick after the edit-mode transition to
+    // become a fully-wired contenteditable. Under heavy parallel load the
+    // click → Ctrl+A → type sequence races initialization and the first
+    // typed keystroke gets eaten ("Persistent" → "ersistent"). Wait for
+    // contenteditable + focus before each input step so the editor has
+    // settled before we drive it.
+    await expect(editor).toHaveAttribute("contenteditable", "true");
     await editor.click();
+    await expect(editor).toBeFocused();
 
     const testContent = `Persistent content ${Date.now()}`;
     await page.keyboard.press("ControlOrMeta+a");
+    // Let the select-all selection register in ProseMirror's view before
+    // the first keystroke arrives — without this Tiptap occasionally
+    // swallows the leading character.
+    await page.waitForTimeout(100);
     await page.keyboard.type(testContent);
 
     // Save
