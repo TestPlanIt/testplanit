@@ -1,3 +1,9 @@
+## [0.22.16](https://github.com/TestPlanIt/testplanit/compare/v0.22.15...v0.22.16) (2026-04-25)
+
+### Bug Fixes
+
+* **admin:** atomic soft-delete-aware create endpoints for users + tags ([#248](https://github.com/TestPlanIt/testplanit/issues/248)) ([0ad6ac9](https://github.com/TestPlanIt/testplanit/commit/0ad6ac98a8fede934c62975774d1012485d7e1c8))
+
 ## [0.22.15](https://github.com/TestPlanIt/testplanit/compare/v0.22.14...v0.22.15) (2026-04-25)
 
 ### Bug Fixes
