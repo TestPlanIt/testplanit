@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import {
   useCreateManyGroupAssignment,
   useCreateManyProjectAssignment,
-  useCreateUser,
-  useCreateUserPreferences,
   useFindFirstRegistrationSettings,
   useFindFirstSsoProvider,
   useFindManyGroups,
@@ -76,10 +74,12 @@ export function AddUser({ open, onClose }: AddUserProps) {
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletedUser, setDeletedUser] = useState<any | null>(null);
+  const [deletedUser, setDeletedUser] = useState<{
+    id: string;
+    name: string;
+    email: string;
+  } | null>(null);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
-  const { mutateAsync: createUser } = useCreateUser();
-  const { mutateAsync: createUserPreferences } = useCreateUserPreferences();
   const { mutateAsync: createManyProjectAssignment } =
     useCreateManyProjectAssignment();
   const { mutateAsync: createManyGroupAssignment } =
@@ -400,43 +400,73 @@ export function AddUser({ open, onClose }: AddUserProps) {
       const passwordForApi =
         data.password.length > 0 ? data.password : crypto.randomUUID();
 
-      // Construct payload matching UserCreateInput for the API
+      // Construct payload for the new admin create endpoint. The server
+      // does atomic soft-delete detection and returns RESTORE_REQUIRED /
+      // EXISTS_ACTIVE / 201 — collapsing the previous P2002 + follow-up
+      // findFirst race into one round-trip.
       const apiPayload = {
         name: data.name,
         email: data.email,
         password: passwordForApi,
         access: data.access,
-        roleId: parseInt(data.roleId), // Convert string roleId to number
+        roleId: parseInt(data.roleId),
         isActive: data.isActive,
         isApi: data.isApi,
-        emailVerified: requireEmailVerification ? null : new Date(),
-        // createdById is typically set by the server/hook
+        emailVerified: requireEmailVerification ? undefined : null,
       };
 
-      // Validate the apiPayload against UserCreateSchema if desired (optional extra check)
-      // UserCreateSchema.parse(apiPayload);
-
-      const newUser = await createUser({
-        data: apiPayload,
+      const response = await fetch("/api/admin/users/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload),
       });
 
-      // Create default user preferences
-      await createUserPreferences({
-        data: {
-          userId: newUser!.id,
-          itemsPerPage: "P10",
-          dateFormat: "MM_DD_YYYY_DASH",
-          timeFormat: "HH_MM_A",
-          theme: "Light",
-          locale: "en_US",
-        },
-      });
+      if (response.status === 409) {
+        const errBody = await response.json().catch(() => ({}));
+        if (errBody?.code === "RESTORE_REQUIRED") {
+          setDeletedUser({
+            id: errBody.userId,
+            name: errBody.name,
+            email: errBody.email,
+          });
+          setShowRestoreDialog(true);
+          setIsSubmitting(false);
+          return;
+        }
+        if (errBody?.code === "EXISTS_ACTIVE") {
+          form.setError("root", {
+            type: "custom",
+            message: tGlobal("common.errors.emailExists"),
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        // Unknown 409 shape — surface generic error.
+        form.setError("root", {
+          type: "custom",
+          message: tCommon("errors.unknown"),
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Handle assignments using form data
+      if (!response.ok) {
+        form.setError("root", {
+          type: "custom",
+          message: tCommon("errors.unknown"),
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: newUser } = await response.json();
+
+      // Project / group assignments stay client-side. They're independent
+      // of "create a user" and would bloat the server endpoint.
       if (Array.isArray(data.projects) && data.projects.length > 0) {
         await createManyProjectAssignment({
           data: data.projects.map((projectId: number) => ({
-            userId: newUser!.id,
+            userId: newUser.id,
             projectId: projectId,
           })),
         });
@@ -444,7 +474,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
       if (Array.isArray(data.groups) && data.groups.length > 0) {
         await createManyGroupAssignment({
           data: data.groups.map((groupId: number) => ({
-            userId: newUser!.id,
+            userId: newUser.id,
             groupId: groupId,
           })),
         });
@@ -455,49 +485,12 @@ export function AddUser({ open, onClose }: AddUserProps) {
 
       onClose();
       setIsSubmitting(false);
-    } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
-        // Check if there's a soft-deleted user with this email using the API endpoint
-        try {
-          const response = await fetch(
-            `/api/model/user/findFirst?q=${encodeURIComponent(
-              JSON.stringify({
-                where: { email: data.email, isDeleted: true },
-                select: { id: true, email: true, name: true },
-              })
-            )}`,
-            {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-
-          if (response.ok) {
-            const result = await response.json();
-
-            if (result.data && result.data.id) {
-              // Found a deleted user, show restore dialog
-              setDeletedUser(result.data);
-              setShowRestoreDialog(true);
-              setIsSubmitting(false);
-              return;
-            }
-          }
-        } catch (checkErr) {
-          console.error("Error checking for deleted user:", checkErr);
-        }
-
-        // No deleted user found or error checking, show regular error
-        form.setError("root", {
-          type: "custom",
-          message: tGlobal("common.errors.emailExists"),
-        });
-      } else {
-        form.setError("root", {
-          type: "custom",
-          message: tCommon("errors.unknown"),
-        });
-      }
+    } catch (err) {
+      console.error("[AddUser] submit error:", err);
+      form.setError("root", {
+        type: "custom",
+        message: tCommon("errors.unknown"),
+      });
       setIsSubmitting(false);
       return;
     }
@@ -896,7 +889,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
             <DialogTitle>{tGlobal("admin.users.restore.title")}</DialogTitle>
             <DialogDescription>
               {tGlobal("admin.users.restore.description", {
-                email: deletedUser?.email,
+                email: deletedUser?.email ?? "",
               })}
             </DialogDescription>
           </DialogHeader>
@@ -916,6 +909,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
             <Button
               type="button"
               onClick={() => {
+                if (!deletedUser) return;
                 const formData = form.getValues();
                 void handleRestoreUser(deletedUser.id, formData);
               }}
