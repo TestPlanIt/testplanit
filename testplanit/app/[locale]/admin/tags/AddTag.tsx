@@ -48,8 +48,13 @@ export function AddTag({ open, onClose }: AddTagProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createTag } = useCreateTags();
   const { mutateAsync: updateTag } = useUpdateTags();
-  // Query all tags (including soft-deleted) for case-insensitive duplicate checking
-  const { data: allTags } = useFindManyTags({
+  // Query all tags (including soft-deleted) for case-insensitive duplicate
+  // checking. Track loading state so we can block submit until the data
+  // arrives — without this the user can race the query, `allTags` is
+  // undefined, the existing-tag check is skipped, and the create call
+  // hits a P2002 unique-constraint error instead of triggering the
+  // soft-deleted-tag restore path.
+  const { data: allTags, isPending: isAllTagsPending } = useFindManyTags({
     select: { id: true, name: true, isDeleted: true },
   });
 
@@ -167,7 +172,7 @@ export function AddTag({ open, onClose }: AddTagProps) {
               <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isAllTagsPending}>
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

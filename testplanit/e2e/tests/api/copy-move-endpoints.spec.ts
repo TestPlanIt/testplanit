@@ -898,8 +898,10 @@ test.describe("Copy-Move API Endpoints", () => {
             })
           )}`
         );
-        const targetFolders = await foldersRes.json();
-        const parentFolderInTarget = targetFolders.find(
+        // ZenStack's RPC findMany wraps the rows in `{ data: [...] }`,
+        // not a bare array.
+        const targetFoldersBody = await foldersRes.json();
+        const parentFolderInTarget = targetFoldersBody.data.find(
           (f: any) => f.name === "ParentFolder"
         );
         expect(parentFolderInTarget).toBeTruthy();
@@ -917,8 +919,8 @@ test.describe("Copy-Move API Endpoints", () => {
               })
             )}`
           );
-          const subFolders = await subFoldersRes.json();
-          const childFolderInTarget = subFolders.find(
+          const subFoldersBody = await subFoldersRes.json();
+          const childFolderInTarget = subFoldersBody.data.find(
             (f: any) => f.name === "ChildFolder"
           );
           expect(childFolderInTarget).toBeTruthy();
@@ -992,8 +994,9 @@ test.describe("Copy-Move API Endpoints", () => {
             JSON.stringify({ where: { id: sourceFolderId } })
           )}`
         );
+        // ZenStack's RPC findFirst wraps the row in `{ data: { ... } }`.
         const updatedSourceFolder = await sourceFolderRes.json();
-        expect(updatedSourceFolder.isDeleted).toBe(true);
+        expect(updatedSourceFolder.data.isDeleted).toBe(true);
       }
     });
   });

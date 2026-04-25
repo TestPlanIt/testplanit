@@ -174,34 +174,22 @@ test.describe("Sorting", () => {
     await repositoryPage.goto(projectId);
 
     await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await waitForTableStable(page);
 
-    // Verify the table is visible
-    const table = page.locator("table").first();
+    // Use the cases-table testid — `page.locator("table").first()` can match
+    // the folder tree or another table on the page before the cases table
+    // hydrates, which produced a "Received: 10" mismatch under load.
+    const table = repositoryPage.casesTable;
     await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Wait for rows to appear in tbody
     const rows = table.locator("tbody tr");
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    expect(await rows.count()).toBe(2);
+    await expect(rows).toHaveCount(2, { timeout: 10000 });
 
     // Find the State column sort button
-    const stateHeader = table
-      .locator("th")
-      .filter({ hasText: "State" })
-      .first();
-    await expect(stateHeader).toBeVisible({ timeout: 5000 });
+    await clickSortButton(page, "State");
 
-    // The sort button is inside the header with accessible name "Sort column"
-    const sortButton = stateHeader
-      .getByRole("button", { name: "Sort column" })
-      .first();
-    await expect(sortButton).toBeVisible({ timeout: 5000 });
-    await sortButton.click();
-
-    // Wait for rows to reappear after sort (sorting triggers data refetch)
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    expect(await rows.count()).toBe(2);
+    // Verify rows still present after sort
+    await expect(rows).toHaveCount(2);
   });
 
   test("Maintain Test Case Order Within Folder", async ({ api, page }) => {

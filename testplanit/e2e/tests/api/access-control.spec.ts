@@ -674,12 +674,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     await memberCtx.close();
   });
 
-  // TODO(flake-cleanup): The first ACL-06 test fails consistently (twice with
-  // retries) — manifest cache race when computing access for the freshly
-  // created member user. The subsequent update/delete tests in the same
-  // describe pass because the cache is warm by then. Skip until manifest
-  // invalidation is tightened on user create.
-  test.skip("GLOBAL_ROLE member can create a Step on a RepositoryCase", async ({
+  test("GLOBAL_ROLE member can create a Step on a RepositoryCase", async ({
     baseURL,
   }) => {
     // This tests the fix: GLOBAL_ROLE users could create RepositoryCases
@@ -740,8 +735,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     expect(result.data.testCaseId).toBe(caseId);
   });
 
-  // TODO(flake-cleanup): Same manifest cache race as ACL-06 create.
-  test.skip("GLOBAL_ROLE member can update a Step", async ({ baseURL }) => {
+  test("GLOBAL_ROLE member can update a Step", async ({ baseURL }) => {
     // First create a step
     const createResponse = await memberCtx.request.post(
       `${baseURL}/api/model/steps/create`,
@@ -802,10 +796,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     expect(updateResponse.status()).toBe(200);
   });
 
-  // TODO(flake-cleanup): Same manifest cache race as ACL-06 create.
-  test.skip("GLOBAL_ROLE member can soft-delete a Step", async ({
-    baseURL,
-  }) => {
+  test("GLOBAL_ROLE member can soft-delete a Step", async ({ baseURL }) => {
     // Create a step to delete
     const createResponse = await memberCtx.request.post(
       `${baseURL}/api/model/steps/create`,

@@ -463,10 +463,7 @@ test.describe("SSO and Magic Link", () => {
     }
   });
 
-  // TODO(flake-cleanup): Magic link callback redirects to a non `/en-US` URL
-  // (likely signin or error) instead of completing auth. Fails twice with
-  // retries on, suggesting a real auth-flow regression rather than a flake.
-  test.skip("Magic link full authentication flow via DB token", async ({
+  test("Magic link full authentication flow via DB token", async ({
     page,
     api,
     baseURL,
@@ -482,20 +479,6 @@ test.describe("SSO and Magic Link", () => {
       return;
     }
 
-    // Check if email provider is configured (required for NextAuth email callback)
-    // If no email server is configured, NextAuth won't register the email provider
-    const checkRes = await page.request.get(
-      `${baseURL}/api/auth/callback/email?token=test&email=test@example.com&callbackUrl=/`
-    );
-    const checkText = await checkRes.text();
-    if (checkText.includes("not supported")) {
-      test.skip(
-        true,
-        "Email provider not configured in test environment - skipping magic link token flow test"
-      );
-      return;
-    }
-
     const userResult = await api.createUser({
       name: `Magic Link User ${timestamp}`,
       email: testEmail,
@@ -506,6 +489,28 @@ test.describe("SSO and Magic Link", () => {
     try {
       // Sign in as admin to insert the verificationToken via authenticated API
       await signInAsAdmin(page, baseURL!);
+
+      // Ensure a MAGIC_LINK SsoProvider record exists. Without one, the
+      // server's `getAuthOptions` won't register the NextAuth EmailProvider
+      // and /api/auth/callback/email returns "not supported". Doing this
+      // after admin sign-in (the API requires admin) and before the email-
+      // provider availability check below.
+      await ensureSsoProvider(page, baseURL!, "MAGIC_LINK", "Magic Link", {});
+
+      // Confirm the email provider is available — if the env doesn't have
+      // EMAIL_SERVER_* configured, NextAuth still won't register it and we
+      // should skip rather than fail the assertion.
+      const checkRes = await page.request.get(
+        `${baseURL}/api/auth/callback/email?token=test&email=test@example.com&callbackUrl=/`
+      );
+      const checkText = await checkRes.text();
+      if (checkText.includes("not supported")) {
+        test.skip(
+          true,
+          "Email provider not configured in test environment - skipping magic link token flow test"
+        );
+        return;
+      }
 
       // Generate a known token pair
       const plainToken = randomBytes(32).toString("hex");
@@ -540,10 +545,18 @@ test.describe("SSO and Magic Link", () => {
         timeout: 15000,
       });
 
-      // Assert user is authenticated (not redirected to signin)
+      // Assert user is authenticated. Don't constrain on a specific locale
+      // prefix — NextAuth's callbackUrl handling can land on `/` (no locale)
+      // and middleware doesn't always rewrite client-side URLs immediately.
+      // The only meaningful signal here is "not redirected back to signin"
+      // and "the session cookie resolves to a real user".
       const currentUrl = page.url();
       expect(currentUrl).not.toContain("/signin");
-      expect(currentUrl).toContain("/en-US");
+
+      const sessionRes = await page.request.get(`${baseURL}/api/auth/session`);
+      expect(sessionRes.ok()).toBeTruthy();
+      const session = await sessionRes.json();
+      expect(session?.user?.email).toBe(testEmail);
     } finally {
       await api.deleteUser(userId);
     }
