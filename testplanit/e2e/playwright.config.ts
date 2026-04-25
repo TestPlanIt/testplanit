@@ -106,6 +106,9 @@ export default defineConfig({
         stderr: "pipe",
       },
 
+  // Global teardown stops the BullMQ workers spawned by globalSetup.
+  globalTeardown: require.resolve("./global-teardown"),
+
   // Output directory
   outputDir: "test-results",
 });

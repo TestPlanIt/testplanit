@@ -1,10 +1,41 @@
 import { chromium, FullConfig } from "@playwright/test";
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 
 const AUTH_DIR = path.join(__dirname, ".auth");
 const ADMIN_AUTH_FILE = path.join(AUTH_DIR, "admin.json");
+const WORKERS_PID_FILE = path.join(AUTH_DIR, "workers.pid");
+
+/**
+ * Spawn the BullMQ workers (`pnpm workers`) as a detached child process so
+ * the copy-move / sync / etc. queues actually have consumers during the
+ * E2E run. Without this, any test that submits a job (`Copy data carry-
+ * over verification`, `Move operation`, etc.) will time out waiting for
+ * a job that nobody is consuming. global-teardown.ts kills the process
+ * group when the suite finishes.
+ *
+ * Playwright's `webServer` config can't host this — workers don't expose
+ * HTTP, and using a second `webServer` entry that shares Next's URL gets
+ * silently skipped due to `reuseExistingServer: true` (or fails port-
+ * conflict checks if false).
+ */
+function spawnWorkers(): void {
+  console.log("Spawning BullMQ workers (pnpm workers)...");
+  const child = spawn("pnpm", ["workers"], {
+    cwd: path.join(__dirname, ".."),
+    env: process.env,
+    detached: true,
+    stdio: ["ignore", "inherit", "inherit"],
+  });
+  if (typeof child.pid !== "number") {
+    console.error("Failed to spawn workers — no PID returned");
+    return;
+  }
+  fs.writeFileSync(WORKERS_PID_FILE, String(child.pid));
+  child.unref();
+  console.log(`Workers spawned with PID ${child.pid}`);
+}
 
 async function globalSetup(config: FullConfig) {
   console.log("Running global setup...");
@@ -86,6 +117,10 @@ async function globalSetup(config: FullConfig) {
     await context.close();
     await browser.close();
   }
+
+  // Spawn BullMQ workers as a detached child process. global-teardown
+  // kills the process group when the suite finishes.
+  spawnWorkers();
 
   console.log("Global setup complete.");
 }
