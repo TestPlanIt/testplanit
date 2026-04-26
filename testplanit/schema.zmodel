@@ -389,6 +389,7 @@ model Projects {
     groupPermissions            GroupProjectPermission[]
     sharedStepGroups            SharedStepGroup[]
     projectIntegrations         ProjectIntegration[]
+    webhookConfigs              WebhookConfig[]
     projectLlmIntegrations      ProjectLlmIntegration[]
     codeRepositoryConfig        ProjectCodeRepositoryConfig?
     promptConfigId              String?
@@ -3445,6 +3446,113 @@ model IntegrationProject {
         projectIntegration.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
     )
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// =============================================================================
+// Webhooks (v0.23.0 Phase 1) — three-model architecture per BLOCKER #1:
+//   WebhookConfig:     per-project receiver config (one row per (projectId, adapterType, direction))
+//   WebhookDelivery:   delivery LOG — every HTTP attempt gets its own row (NO unique constraint on payloadDigest)
+//   WebhookEventDedup: idempotency tracker — one row per APPLIED payload, @@unique([webhookConfigId, payloadDigest])
+// Phase 1 writes INBOUND only; OUTBOUND placeholder reserved for Phase 2+.
+// =============================================================================
+
+model WebhookConfig {
+    id              String              @id @default(cuid())
+    projectId       Int
+    project         Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    adapterType     AdapterType
+    direction       WebhookDirection
+    token           String              @unique // routing key, e.g. "whk_<32-byte-hex>"
+    secret          String              // HMAC verification secret, encrypted at rest by application code
+    isActive        Boolean             @default(true)
+    lastReceivedAt  DateTime?           @db.Timestamptz(6)
+    createdAt       DateTime            @default(now()) @db.Timestamptz(6)
+    updatedAt       DateTime            @updatedAt
+    deliveries      WebhookDelivery[]
+    eventDedups     WebhookEventDedup[]
+
+    @@unique([projectId, adapterType, direction]) // one config per (project, adapter, direction)
+    @@index([projectId])
+    @@index([token])
+
+    @@deny('all', !auth())
+
+    // Project-admin-only management — tighter read than ProjectIntegration (D-21):
+    // non-admin members must NOT see the secret/token.
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// Delivery LOG — every inbound HTTP attempt and (Phase 2+) every outbound dispatch
+// gets its own row. Duplicates produce SEPARATE rows with `error='duplicate'`.
+// NO unique constraint on (webhookConfigId, payloadDigest) — that lives on
+// WebhookEventDedup. Indexes only.
+model WebhookDelivery {
+    id              String           @id @default(cuid())
+    webhookConfigId String
+    webhookConfig   WebhookConfig    @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    direction       WebhookDirection
+    adapterType     AdapterType
+    eventType       String?          // e.g. "jira:issue_updated"; nullable because adapter may fail before parsing
+    statusCode      Int?             // HTTP response code (nullable — set after delivery resolves)
+    latencyMs       Int?             // wall-clock receive→respond duration (nullable — set on finalize)
+    payloadDigest   String           // sha256 hex digest of the raw request body — for correlation/admin search, NOT for uniqueness
+    error           String?          // structured reason: "duplicate", "no-link", "synthetic", null on success
+    attempt         Int              @default(1) // Phase 1 always 1 for INBOUND; reserved for Phase 2+ outbound retries
+    receivedAt      DateTime         @default(now()) @db.Timestamptz(6)
+
+    // Indexes only — no unique constraint per BLOCKER #1 / D-03 REVISED
+    @@index([webhookConfigId, receivedAt])
+    @@index([direction, receivedAt])
+    @@index([payloadDigest])
+
+    // Audit-row-style posture: read by project admins; writes only via system code (raw prisma, NOT ZenStack RPC).
+    @@deny('all', !auth())
+    @@deny('create, update, delete', true) // No client-side writes — receiver uses raw prisma client
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read',
+        webhookConfig.project.creator == auth() ||
+        webhookConfig.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        webhookConfig.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+}
+
+// Idempotency tracker — one row per APPLIED payload. The dedup INSERT inside
+// the sync service's transaction is what enforces "at-most-once Issue update"
+// (WBHK-06). Phase 1 writes INBOUND only. Phase 2+ outbound dispatch does NOT
+// use this table (each retry gets its own delivery row, full attempt history).
+model WebhookEventDedup {
+    id              String        @id @default(cuid())
+    webhookConfigId String
+    webhookConfig   WebhookConfig @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    payloadDigest   String
+    processedAt     DateTime      @default(now()) @db.Timestamptz(6)
+
+    @@unique([webhookConfigId, payloadDigest]) // BLOCKER #1 / D-04 REVISED — actual idempotency guard for WBHK-06
+    @@index([webhookConfigId, processedAt])
+
+    // Same posture as WebhookDelivery: system-only writes, project-admin reads.
+    @@deny('all', !auth())
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read',
+        webhookConfig.project.creator == auth() ||
+        webhookConfig.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        webhookConfig.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
 }
 
 // LLM Integration Models
