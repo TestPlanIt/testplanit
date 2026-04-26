@@ -371,15 +371,19 @@ describe("POST /api/webhooks/[token]", () => {
   // T-04-01 mitigation: 401 and 404 bodies are byte-identical so callers can't enumerate.
   it("Body equality — 401 and 404 share the exact same JSON body shape", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(null);
-    const r404 = await POST(...Object.values(makeRequest("{}", FULL_TOKEN)) as [any, any]);
+    const a = makeRequest("{}", FULL_TOKEN);
+    const r404 = await POST(a.req, { params: a.params });
 
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "signature-mismatch",
     } satisfies VerifyResult);
-    const r401 = await POST(...Object.values(makeRequest("{}", FULL_TOKEN)) as [any, any]);
+    const b = makeRequest("{}", FULL_TOKEN);
+    const r401 = await POST(b.req, { params: b.params });
 
+    expect(r404.status).toBe(404);
+    expect(r401.status).toBe(401);
     expect(await r404.json()).toEqual(await r401.json());
   });
 });
