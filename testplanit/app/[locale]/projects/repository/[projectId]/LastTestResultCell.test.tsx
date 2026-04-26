@@ -10,6 +10,16 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
+// These tests exercise real Radix tooltip behaviour (user.hover triggers
+// TooltipContent rendering). Override the global stub from vitest.setup
+// with the real module so user.hover actually opens the bubble.
+vi.mock("@/components/ui/tooltip", async () =>
+  vi.importActual<typeof import("@/components/ui/tooltip")>(
+    "@/components/ui/tooltip"
+  )
+);
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 // Mock server-side modules first (before any other imports)
 vi.mock("~/app/actions/test-run", () => ({
   getMaxOrderInTestRun: vi.fn(),
@@ -263,10 +273,15 @@ describe("LastTestResultCell via getColumns", () => {
       mockRow: { original: ExtendedCases }
     ) => {
       const cell = column?.cell;
-      if (typeof cell === "function") {
-        return render(<div>{cell({ row: mockRow } as any)}</div>);
-      }
-      return render(<div>{cell}</div>);
+      const node =
+        typeof cell === "function" ? cell({ row: mockRow } as any) : cell;
+      // Wrap in a real TooltipProvider since the page-level provider in
+      // app/providers.tsx isn't included in unit-test renders.
+      return render(
+        <TooltipProvider>
+          <div>{node}</div>
+        </TooltipProvider>
+      );
     };
 
     it("should render null when lastTestResult is undefined", () => {

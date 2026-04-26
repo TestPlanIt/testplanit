@@ -2,6 +2,36 @@ import "@testing-library/jest-dom";
 import React from "react";
 import { afterAll, beforeAll, vi } from "vitest";
 
+// The app's root <TooltipProvider> lives in app/providers.tsx, which test
+// renders don't include. Without a provider in scope Radix's <Tooltip>
+// throws "Tooltip must be used within TooltipProvider". Stub the module so
+// every tooltip primitive is a transparent pass-through in tests; tests
+// that need to assert on tooltip structure can still vi.mock the module
+// locally (per-file mocks override this global stub).
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  // Radix's TooltipTrigger renders a <button> by default and merges props
+  // onto its child when `asChild` is set. Match that so tests that assert on
+  // the trigger's tag name (e.g. Avatar wraps its image in a button) still
+  // see the right shape.
+  TooltipTrigger: ({
+    children,
+    asChild,
+  }: {
+    children: React.ReactNode;
+    asChild?: boolean;
+  }) => (asChild ? <>{children}</> : <button type="button">{children}</button>),
+  // TooltipContent is portaled and only rendered while open in real Radix;
+  // emit nothing by default so its children don't double up alongside the
+  // trigger's children in queries like getByText.
+  TooltipContent: () => null,
+  // TooltipPortal: same — closed by default.
+  TooltipPortal: () => null,
+}));
+
 // Suppress React's contentEditable warnings in tests
 // TipTap editor triggers these warnings, which can cause worker crashes in CI
 const originalError = console.error;

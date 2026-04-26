@@ -331,8 +331,11 @@ describe("SessionResultsSummary", () => {
     await screen.findByTestId("elapsed-time");
 
     // 1. Check Status Bar segments for proportional width
+    // The component no longer wraps itself in <TooltipProvider> (the root
+    // provider lives in app/providers.tsx). Anchor on the first <Tooltip>
+    // wrapper instead — its parent is the status-bar flex container.
     const statusBarContainer =
-      screen.getByTestId("tooltip-provider").firstElementChild;
+      screen.getAllByTestId("tooltip")[0].parentElement;
     expect(statusBarContainer).toHaveClass("flex"); // Check it's the flex container
 
     const segments = statusBarContainer!.querySelectorAll(
@@ -451,8 +454,11 @@ describe("SessionResultsSummary", () => {
     await screen.findByText("Results recorded, but no time elapsed");
 
     // 1. Check Status Bar segments for equal width
+    // The component no longer wraps itself in <TooltipProvider> (the root
+    // provider lives in app/providers.tsx). Anchor on the first <Tooltip>
+    // wrapper instead — its parent is the status-bar flex container.
     const statusBarContainer =
-      screen.getByTestId("tooltip-provider").firstElementChild;
+      screen.getAllByTestId("tooltip")[0].parentElement;
     expect(statusBarContainer).toHaveClass("flex");
 
     const segments = statusBarContainer!.querySelectorAll(
