@@ -1,3 +1,9 @@
+## [0.22.17](https://github.com/TestPlanIt/testplanit/compare/v0.22.16...v0.22.17) (2026-04-26)
+
+### Bug Fixes
+
+* **tests:** repair unit tests broken by TooltipProvider hoisting ([8ee514f](https://github.com/TestPlanIt/testplanit/commit/8ee514f6f3011c29b95afa4424ab25a613518d33)), closes [#249](https://github.com/TestPlanIt/testplanit/issues/249)
+
 ## [0.22.16](https://github.com/TestPlanIt/testplanit/compare/v0.22.15...v0.22.16) (2026-04-25)
 
 ### Bug Fixes
