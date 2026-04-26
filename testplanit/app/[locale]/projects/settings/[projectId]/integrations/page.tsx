@@ -20,6 +20,7 @@ import {
   useFindManyProjectIntegration,
 } from "~/lib/hooks";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
+import { WebhookConfigForm } from "./webhook-config-form";
 
 export default function ProjectIntegrationsPage() {
   const params = useParams();
@@ -187,6 +188,8 @@ export default function ProjectIntegrationsPage() {
               integration={currentIntegration.integration}
             />
           )}
+
+          <WebhookConfigForm projectId={projectId} />
         </CardContent>
       </Card>
     </main>
