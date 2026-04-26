@@ -202,13 +202,16 @@ test.describe("Role Management", () => {
       // stale row.
       await page.waitForTimeout(1000);
 
-      // Reload and verify role is gone
-      await page.reload();
-      await page.waitForLoadState("networkidle");
-
-      await expect(
-        page.locator("tr").filter({ hasText: roleName })
-      ).toHaveCount(0, { timeout: 5000 });
+      // Retry the reload + check — under parallel load the table can read
+      // a stale row even after a single networkidle, so reload until the
+      // row is gone or the budget expires.
+      await expect(async () => {
+        await page.reload();
+        await page.waitForLoadState("networkidle");
+        await expect(
+          page.locator("tr").filter({ hasText: roleName })
+        ).toHaveCount(0, { timeout: 5000 });
+      }).toPass({ timeout: 20000 });
 
       // Role was deleted, clear ID so cleanup doesn't double-delete
       createdRoleId = undefined;
