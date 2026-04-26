@@ -423,7 +423,7 @@ const TreeView: React.FC<{
 
           const url = new URL(window.location.href);
           url.searchParams.set("node", folderId.toString());
-          window.history.pushState({}, "", url.toString());
+          window.history.replaceState({}, "", url.toString());
         }
       }
     },
@@ -641,7 +641,7 @@ const TreeView: React.FC<{
             // Update URL with the new folder ID
             const url = new URL(window.location.href);
             url.searchParams.set("node", folderId.toString());
-            window.history.pushState({}, "", url.toString());
+            window.history.replaceState({}, "", url.toString());
           } else if (retriesLeft > 0) {
             // Node not found yet (may still be rendering after state update), retry after a delay
             // Use longer delay to allow React to complete its render cycle
