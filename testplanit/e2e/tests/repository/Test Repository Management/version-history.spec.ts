@@ -49,11 +49,8 @@ test.describe("Version History", () => {
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
     // Initially, version selector should not be visible (only 1 version exists)
-    // The version selector is a combobox that shows when there are 2+ versions
-    const versionCombobox = page
-      .locator('button[role="combobox"]')
-      .filter({ hasText: /v\d+/ });
-    await expect(versionCombobox).not.toBeVisible({ timeout: 3000 });
+    const versionSelector = page.getByTestId("version-select-trigger");
+    await expect(versionSelector).not.toBeVisible({ timeout: 3000 });
 
     // Update test case via API to create version 2
     await api.updateTestCaseName(testCaseId, `Updated ${testCaseName}`);
@@ -64,12 +61,7 @@ test.describe("Version History", () => {
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
     // Now version selector should be visible (2 versions exist)
-    // The version selector is a combobox with version badge like "v2"
-    const versionSelectorAfterEdit = page
-      .locator('button[role="combobox"]')
-      .filter({ hasText: /v\d+/ })
-      .first();
-    await expect(versionSelectorAfterEdit).toBeVisible({ timeout: 10000 });
+    await expect(versionSelector).toBeVisible({ timeout: 10000 });
   });
 
   test("Navigate to Previous Version via Selector", async ({ api, page }) => {
@@ -95,11 +87,8 @@ test.describe("Version History", () => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
-    // Click on the version selector (it's a combobox)
-    const versionSelector = page
-      .locator('button[role="combobox"]')
-      .filter({ hasText: /v\d+/ })
-      .first();
+    // Click on the version selector
+    const versionSelector = page.getByTestId("version-select-trigger");
     await expect(versionSelector).toBeVisible({ timeout: 10000 });
     await versionSelector.click();
 
@@ -404,12 +393,8 @@ test.describe("Version History", () => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
-    // Click on the version selector to open dropdown (it's a combobox).
-    // Use last() to avoid matching the project selector combobox in the sidebar.
-    const versionSelector = page
-      .locator('button[role="combobox"]')
-      .filter({ hasText: /v\d+/ })
-      .last();
+    // Click on the version selector to open dropdown
+    const versionSelector = page.getByTestId("version-select-trigger");
     await expect(versionSelector).toBeVisible({ timeout: 10000 });
     await versionSelector.click();
 

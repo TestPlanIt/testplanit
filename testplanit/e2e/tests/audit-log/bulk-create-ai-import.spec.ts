@@ -20,14 +20,23 @@ import { expect, test } from "../../fixtures";
 
 test.describe("Audit Log BULK_CREATE - AI import", () => {
   test("AI import endpoint produces a BULK_CREATE AuditLog row for RepositoryCases", async ({
+    api,
     page,
     request,
   }) => {
-    // Step 1: Trigger AI import via API (lower-flake than UI automation).
+    // Build self-contained fixtures so the import payload always matches a
+    // real project/folder/template — the previous hardcoded `1`s skipped
+    // whenever seed state didn't line up.
+    const projectId = await api.createProject(
+      `E2E Audit AI Import ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    );
+    const folderId = await api.getRootFolderId(projectId);
+    const templateId = await api.getTemplateId(projectId);
+
     const importPayload = {
-      projectId: 1, // seeded project id
-      folderId: 1,
-      templateId: 1,
+      projectId,
+      folderId,
+      templateId,
       testCases: [
         {
           id: `gen-e2e-${Date.now()}`,
@@ -42,22 +51,7 @@ test.describe("Audit Log BULK_CREATE - AI import", () => {
       "/api/repository/import-generated-test-cases",
       { data: importPayload }
     );
-
-    // The import route may reject in E2E seed state (missing seeded ids,
-    // workflow not configured, template not mapped to project). The
-    // integration test is authoritative for call-shape; here we only need
-    // to observe end-to-end delivery when the handler actually runs.
-    if (res.status() !== 200) {
-      // Degrading gracefully — see header comment.
-      console.warn(
-        `[bulk-create-ai-import] AI import returned ${res.status()} in E2E seed state; skipping BULK_CREATE audit-row assertion.`
-      );
-      test.skip(
-        true,
-        `AI import returned ${res.status()} in E2E seed state; skipping audit-row assertion`
-      );
-      return;
-    }
+    expect(res.status(), await res.text()).toBe(200);
 
     // Step 2: Navigate to the admin audit-log page.
     await page.goto("/en-US/admin/audit-logs");

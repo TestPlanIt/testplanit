@@ -29,17 +29,30 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Fetch full user for enhance
+    // Fetch full user for access decisions and enhance
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       include: { role: { include: { rolePermissions: true } } },
     });
 
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const isAdmin = user?.access === "ADMIN";
 
-    // Source access check
-    const sourceProject = await enhancedDb.projects.findFirst({
-      where: { id: body.sourceProjectId },
+    // Pick the read client up-front: admins use raw prisma so reads are
+    // deterministic — the policy layer has been observed to return no rows
+    // under heavy parallel load even though @@allow('all', auth().access ==
+    // 'ADMIN') is unconditional. Non-admin requests stay on the enhanced
+    // client so per-model policies (which can be stricter than the
+    // project-level policy alone) are enforced.
+    const reader = isAdmin
+      ? prisma
+      : (enhance(db, { user: user ?? undefined }) as unknown as typeof prisma);
+
+    // Project access checks
+    const sourceProject = await reader.projects.findFirst({
+      where: isAdmin
+        ? { id: body.sourceProjectId, isDeleted: false }
+        : { id: body.sourceProjectId },
+      select: { id: true },
     });
     if (!sourceProject) {
       return NextResponse.json(
@@ -47,10 +60,11 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
-
-    // Target access check
-    const targetProject = await enhancedDb.projects.findFirst({
-      where: { id: body.targetProjectId },
+    const targetProject = await reader.projects.findFirst({
+      where: isAdmin
+        ? { id: body.targetProjectId, isDeleted: false }
+        : { id: body.targetProjectId },
+      select: { id: true },
     });
     if (!targetProject) {
       return NextResponse.json(
@@ -59,15 +73,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch source cases first (needed for move check and compat analysis).
-    // Note: findMany uses ZenStack read policy — if user can't read, no cases
-    // returned. Under heavy parallel load enhancedDb.findMany has been
-    // observed to return [] for cases the user can clearly read (transient
-    // policy-evaluation flake), which silently empties downstream collision
-    // detection (Prisma treats empty `OR: []` as match-nothing). Fall back to
-    // raw prisma when enhanced returns no rows for IDs the user explicitly
-    // requested — access is already gated by the project-existence checks
-    // above (which also short-circuit for admins).
     const sourceCaseSelect = {
       id: true,
       name: true,
@@ -76,7 +81,7 @@ export async function POST(request: Request) {
       templateId: true,
       stateId: true,
     } as const;
-    let sourceCases = await enhancedDb.repositoryCases.findMany({
+    const sourceCases = await reader.repositoryCases.findMany({
       where: {
         id: { in: body.caseIds },
         projectId: body.sourceProjectId,
@@ -84,16 +89,6 @@ export async function POST(request: Request) {
       },
       select: sourceCaseSelect,
     });
-    if (sourceCases.length === 0 && body.caseIds.length > 0) {
-      sourceCases = await prisma.repositoryCases.findMany({
-        where: {
-          id: { in: body.caseIds },
-          projectId: body.sourceProjectId,
-          isDeleted: false,
-        },
-        select: sourceCaseSelect,
-      });
-    }
 
     // Move update-access check (move = soft-delete via isDeleted: true = needs update permission)
     // Since the worker uses raw prisma, we verify the user's role permits canAddEdit on TestCaseRepository.
@@ -117,7 +112,7 @@ export async function POST(request: Request) {
     ];
 
     const targetTemplateAssignments =
-      await enhancedDb.templateProjectAssignment.findMany({
+      await reader.templateProjectAssignment.findMany({
         where: { projectId: body.targetProjectId },
         include: { template: { select: { id: true, templateName: true } } },
       });
@@ -133,7 +128,7 @@ export async function POST(request: Request) {
     // Fetch actual template names for missing IDs
     const missingTemplateRecords =
       missingTemplateIds.length > 0
-        ? await enhancedDb.templates.findMany({
+        ? await reader.templates.findMany({
             where: { id: { in: missingTemplateIds } },
             select: { id: true, templateName: true },
           })
@@ -160,7 +155,7 @@ export async function POST(request: Request) {
     ];
 
     const targetWorkflowAssignments =
-      await enhancedDb.projectWorkflowAssignment.findMany({
+      await reader.projectWorkflowAssignment.findMany({
         where: { projectId: body.targetProjectId },
         include: {
           workflow: { select: { id: true, name: true, isDefault: true } },
@@ -187,7 +182,7 @@ export async function POST(request: Request) {
 
     // We need source state names — fetch from the source project's workflow assignments
     const sourceWorkflowAssignments =
-      await enhancedDb.projectWorkflowAssignment.findMany({
+      await reader.projectWorkflowAssignment.findMany({
         where: { projectId: body.sourceProjectId },
         include: {
           workflow: { select: { id: true, name: true, isDefault: true } },
@@ -238,9 +233,7 @@ export async function POST(request: Request) {
       source: c.source as RepositoryCaseSource,
     }));
 
-    // Use prisma directly for collision detection — access is already verified above
-    // and ZenStack's enhanced DB can have issues matching null fields in OR clauses
-    const collisionCases = await prisma.repositoryCases.findMany({
+    const collisionCases = await reader.repositoryCases.findMany({
       where: {
         projectId: body.targetProjectId,
         isDeleted: false,
@@ -269,7 +262,7 @@ export async function POST(request: Request) {
 
     // ─── Resolve target repository ────────────────────────────────────────────
 
-    const targetRepository = await enhancedDb.repositories.findFirst({
+    const targetRepository = await reader.repositories.findFirst({
       where: {
         projectId: body.targetProjectId,
         isActive: true,

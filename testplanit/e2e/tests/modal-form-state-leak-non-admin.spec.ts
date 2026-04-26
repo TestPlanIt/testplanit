@@ -120,9 +120,10 @@ test("Repository AddCase modal resets between opens", async ({ page, api }) => {
   await repositoryPage.goto(projectId);
 
   const addCaseButton = page.getByTestId("add-case-button");
-  await expect(addCaseButton).toBeVisible({ timeout: 10000 });
+  await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
 
-  const caseNameInput = page.getByTestId("case-name-input");
+  const dialog = page.getByTestId("add-case-dialog");
+  const caseNameInput = dialog.getByTestId("case-name-input");
   const caseCancelButton = page.getByTestId("case-cancel-button");
 
   // --- First open: fill name, cancel ---

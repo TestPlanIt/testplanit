@@ -77,7 +77,7 @@ test.describe("Tag Detail Page Filters", () => {
 
   test("should display filter bar with all controls", async ({ page }) => {
     await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
-    await page.waitForLoadState("load");
+    await page.waitForLoadState("networkidle");
 
     // Filter bar should be visible
     await expect(page.getByTestId("case-type-filter-select")).toBeVisible({

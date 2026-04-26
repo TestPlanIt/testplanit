@@ -5,12 +5,14 @@ import { TemplatesFieldsPage } from "../../../page-objects/admin/templates-field
  * Default Template Behavior Tests
  *
  * Tests for the special behaviors of default templates:
- * - Only one default template at a time
  * - Setting default auto-enables template
  * - Cannot disable default template
  * - Cannot delete default template
  * - Default template auto-assigned to all projects
  * - Default indicator in templates list
+ *
+ * Mutual-exclusion of the default flag is covered by the
+ * "Changing default unsets previous default" cascade test below.
  */
 
 test.describe("Default Template - Basic Behavior", () => {
@@ -19,74 +21,6 @@ test.describe("Default Template - Basic Behavior", () => {
   test.beforeEach(async ({ page }) => {
     templatesPage = new TemplatesFieldsPage(page);
     await templatesPage.goto();
-  });
-
-  test.skip("Only one default template at a time", async ({ api, page }) => {
-    // Skipping test because it's difficuklt to isolate the test from other tests that may create templates and set them as default.
-    // Create two templates
-    const template1Name = `E2E Default 1 ${Date.now()}`;
-    const template2Name = `E2E Default 2 ${Date.now()}`;
-
-    const template1Id = await api.createTemplate({
-      name: template1Name,
-      isDefault: true,
-    });
-    const template2Id = await api.createTemplate({
-      name: template2Name,
-      isDefault: false,
-    });
-
-    console.log(`Created template1: ${template1Name} (ID: ${template1Id})`);
-    console.log(`Created template2: ${template2Name} (ID: ${template2Id})`);
-
-    await templatesPage.goto();
-
-    // Both should be visible
-    await templatesPage.expectTemplateInTable(template1Name);
-    await templatesPage.expectTemplateInTable(template2Name);
-
-    // Set template2 as default via edit
-    console.log(`Setting ${template2Name} as default via UI`);
-    await templatesPage.clickEditTemplate(template2Name);
-    await templatesPage.toggleTemplateDefault(true);
-    await templatesPage.submitTemplate();
-
-    // Wait for the dialog to close and mutations to complete
-    await page.waitForLoadState("networkidle");
-    console.log("Dialog closed, network idle");
-
-    // Poll the API to wait for the cascade update to complete
-    // The UI mutations happen asynchronously, so we poll until both conditions are met
-    await expect
-      .poll(
-        async () => {
-          const template1Verification = await api.verifyTemplate(template1Id);
-          const template2Verification = await api.verifyTemplate(template2Id);
-          console.log(
-            `Poll: ${template1Name} isDefault=${template1Verification.isDefault}, ${template2Name} isDefault=${template2Verification.isDefault}`
-          );
-          return (
-            !template1Verification.isDefault && template2Verification.isDefault
-          );
-        },
-        {
-          message: `Expected ${template2Name} to be default and ${template1Name} to not be default`,
-          timeout: 20000,
-          intervals: [100, 250, 500, 1000],
-        }
-      )
-      .toBe(true);
-
-    console.log("Cascade complete");
-
-    // Final verification
-    const template1Verification = await api.verifyTemplate(template1Id);
-    const template2Verification = await api.verifyTemplate(template2Id);
-    console.log(
-      `Final: ${template1Name} isDefault=${template1Verification.isDefault}, ${template2Name} isDefault=${template2Verification.isDefault}`
-    );
-    expect(template1Verification.isDefault).toBe(false);
-    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Setting default auto-enables template", async ({ api }) => {

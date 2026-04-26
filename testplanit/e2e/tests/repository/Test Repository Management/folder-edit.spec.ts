@@ -81,7 +81,11 @@ test.describe("Folder Edit", () => {
       await repositoryPage.verifyFolderExists(newName);
     }).toPass({ timeout: 15000 });
 
-    await repositoryPage.verifyFolderNotExists(originalName);
+    // Same retry envelope on the negative assertion — react-arborist can
+    // briefly show both the old and new node during the cache swap.
+    await expect(async () => {
+      await repositoryPage.verifyFolderNotExists(originalName);
+    }).toPass({ timeout: 10000 });
   });
 
   test("Edit Folder Documentation", async ({ api, page }) => {
