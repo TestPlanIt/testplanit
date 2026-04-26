@@ -242,13 +242,7 @@ test.describe("Copy-Move API Endpoints", () => {
       api.untrackTag(tagId);
     });
 
-    // TODO(flake-cleanup): Preflight occasionally returns 403 for admin
-    // (manifest cache race after the setup test creates the projects).
-    // Sometimes passes on retry, but in serial mode a retry-pass still
-    // marks subsequent tests in the describe as "did not run" and causes
-    // the data-carry-over test to fail with a job-timeout. Skip until the
-    // manifest invalidation on project create is tightened.
-    test.skip("returns preflight response with access and compatibility info", async ({
+    test("returns preflight response with access and compatibility info", async ({
       request,
       baseURL,
     }) => {
@@ -278,10 +272,7 @@ test.describe("Copy-Move API Endpoints", () => {
       expect(typeof body.targetTemplateId).toBe("number");
     });
 
-    // TODO(flake-cleanup): Preflight returns 0 collisions even after creating
-    // a case with the same name in the target project. Real read-your-writes
-    // bug in the preflight endpoint — fails twice (initial + retry).
-    test.skip("detects collisions when target has case with same name", async ({
+    test("detects collisions when target has case with same name", async ({
       request,
       baseURL,
       api,
@@ -345,10 +336,7 @@ test.describe("Copy-Move API Endpoints", () => {
       expect(body.canAutoAssignTemplates).toBe(true);
     });
 
-    // TODO(flake-cleanup): Preflight returns 400 when computing workflow
-    // mappings for name-matched states — real endpoint bug, fails twice
-    // with retries.
-    test.skip("returns workflowMappings with name-matched states", async ({
+    test("returns workflowMappings with name-matched states", async ({
       request,
       baseURL,
     }) => {

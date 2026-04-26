@@ -7,11 +7,21 @@ const {
   mockEnhance,
   mockPrismaUserFindUnique,
   mockPrismaRepositoryCasesFindMany,
+  mockPrismaProjectsFindFirst,
+  mockPrismaTemplateProjectAssignmentFindMany,
+  mockPrismaTemplatesFindMany,
+  mockPrismaProjectWorkflowAssignmentFindMany,
+  mockPrismaRepositoriesFindFirst,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
   mockPrismaUserFindUnique: vi.fn(),
   mockPrismaRepositoryCasesFindMany: vi.fn(),
+  mockPrismaProjectsFindFirst: vi.fn(),
+  mockPrismaTemplateProjectAssignmentFindMany: vi.fn(),
+  mockPrismaTemplatesFindMany: vi.fn(),
+  mockPrismaProjectWorkflowAssignmentFindMany: vi.fn(),
+  mockPrismaRepositoriesFindFirst: vi.fn(),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -33,8 +43,25 @@ vi.mock("~/lib/prisma", () => ({
     user: {
       findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
     },
+    projects: {
+      findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
+    },
     repositoryCases: {
       findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
+    },
+    templateProjectAssignment: {
+      findMany: (...args: any[]) =>
+        mockPrismaTemplateProjectAssignmentFindMany(...args),
+    },
+    templates: {
+      findMany: (...args: any[]) => mockPrismaTemplatesFindMany(...args),
+    },
+    projectWorkflowAssignment: {
+      findMany: (...args: any[]) =>
+        mockPrismaProjectWorkflowAssignmentFindMany(...args),
+    },
+    repositories: {
+      findFirst: (...args: any[]) => mockPrismaRepositoriesFindFirst(...args),
     },
   },
 }));
@@ -117,26 +144,41 @@ function setupDefaultMocks() {
   mockPrismaUserFindUnique.mockResolvedValue(baseUser);
   mockEnhance.mockReturnValue(mockEnhancedDb);
 
-  mockEnhancedDb.projects.findFirst
+  // Admin path uses raw prisma; non-admin uses enhancedDb. Seed both so
+  // tests work regardless of which user.access the test sets.
+  mockPrismaProjectsFindFirst
     .mockResolvedValueOnce({ id: 10 }) // source
     .mockResolvedValueOnce({ id: 20 }); // target
+  mockEnhancedDb.projects.findFirst
+    .mockResolvedValueOnce({ id: 10 })
+    .mockResolvedValueOnce({ id: 20 });
 
-  mockEnhancedDb.repositoryCases.findMany.mockResolvedValueOnce(
-    baseSourceCases
-  ); // source cases (via enhancedDb)
+  // Source cases first, then collision check (both via reader).
+  mockPrismaRepositoryCasesFindMany
+    .mockResolvedValueOnce(baseSourceCases)
+    .mockResolvedValueOnce([]);
+  mockEnhancedDb.repositoryCases.findMany
+    .mockResolvedValueOnce(baseSourceCases)
+    .mockResolvedValueOnce([]);
 
-  mockPrismaRepositoryCasesFindMany.mockResolvedValueOnce([]); // collision check (via prisma, no collisions by default)
-
+  mockPrismaTemplateProjectAssignmentFindMany.mockResolvedValue(
+    baseTargetTemplateAssignments
+  );
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
     baseTargetTemplateAssignments
   );
 
+  mockPrismaProjectWorkflowAssignmentFindMany.mockResolvedValue(
+    baseTargetWorkflowAssignments
+  );
   mockEnhancedDb.projectWorkflowAssignment.findMany.mockResolvedValue(
     baseTargetWorkflowAssignments
   );
 
+  mockPrismaRepositoriesFindFirst.mockResolvedValue(baseTargetRepository);
   mockEnhancedDb.repositories.findFirst.mockResolvedValue(baseTargetRepository);
 
+  mockPrismaTemplatesFindMany.mockResolvedValue([]);
   mockEnhancedDb.templates.findMany.mockResolvedValue([]);
 }
 
@@ -168,9 +210,9 @@ describe("POST /api/repository/copy-move/preflight", () => {
   });
 
   // Test 3
-  it("returns 403 when user cannot read source project", async () => {
+  it("returns 403 when user cannot read source project (non-admin)", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue(baseUser);
+    mockPrismaUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockEnhancedDb.projects.findFirst.mockResolvedValue(null); // source not found
     const { POST } = await import("./route");
@@ -181,9 +223,9 @@ describe("POST /api/repository/copy-move/preflight", () => {
   });
 
   // Test 4
-  it("returns 403 when user cannot access target project", async () => {
+  it("returns 403 when user cannot access target project (non-admin)", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue(baseUser);
+    mockPrismaUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockEnhancedDb.projects.findFirst
       .mockResolvedValueOnce({ id: 10 }) // source found
@@ -195,14 +237,28 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(data.error).toMatch(/target/i);
   });
 
+  // Test 3b — admin path uses raw prisma; verify same denial behaviour.
+  it("returns 403 when admin source project missing/deleted", async () => {
+    mockGetServerSession.mockResolvedValue(baseSession);
+    mockPrismaUserFindUnique.mockResolvedValue(baseUser); // ADMIN
+    mockEnhance.mockReturnValue(mockEnhancedDb);
+    mockPrismaProjectsFindFirst.mockResolvedValue(null);
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(validBody));
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toMatch(/source/i);
+  });
+
   // Test 5
   it("returns templateMismatch=true and missingTemplates array when source template not assigned to target", async () => {
     setupDefaultMocks();
     // Override: source case uses templateId 99 which is not in target assignments
-    mockEnhancedDb.repositoryCases.findMany
+    mockPrismaRepositoryCasesFindMany
       .mockReset()
-      .mockResolvedValue([{ ...baseSourceCases[0], templateId: 99 }]);
-    mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue([
+      .mockResolvedValueOnce([{ ...baseSourceCases[0], templateId: 99 }])
+      .mockResolvedValueOnce([]); // collision check
+    mockPrismaTemplateProjectAssignmentFindMany.mockResolvedValue([
       { templateId: 10, template: { id: 10, name: "Default Template" } },
     ]);
 
@@ -284,16 +340,10 @@ describe("POST /api/repository/copy-move/preflight", () => {
   it("returns workflowMappings with isDefaultFallback=true when state name not found in target", async () => {
     setupDefaultMocks();
     // Source case has a state "Custom State" (id=999) not in target workflow
-    mockEnhancedDb.repositoryCases.findMany
+    mockPrismaRepositoryCasesFindMany
       .mockReset()
-      .mockResolvedValue([{ ...baseSourceCases[0], stateId: 999 }]);
-
-    // We need to also mock to return workflow state name for source
-    // The route fetches source workflow states separately — let's provide that info
-    // via source cases: we need a way to get state names. Let's check what the route does.
-    // Per plan: route uses projectWorkflowAssignment for target, and needs source state names.
-    // Source state names need to come from somewhere — the route queries source workflow states.
-    // For this test, we'll need projectWorkflowAssignment for source project too.
+      .mockResolvedValueOnce([{ ...baseSourceCases[0], stateId: 999 }])
+      .mockResolvedValueOnce([]); // collision check
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
@@ -309,9 +359,10 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 12
   it("returns unmappedStates list for states that fell back to default", async () => {
     setupDefaultMocks();
-    mockEnhancedDb.repositoryCases.findMany
+    mockPrismaRepositoryCasesFindMany
       .mockReset()
-      .mockResolvedValue([{ ...baseSourceCases[0], stateId: 999 }]);
+      .mockResolvedValueOnce([{ ...baseSourceCases[0], stateId: 999 }])
+      .mockResolvedValueOnce([]); // collision check
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
@@ -325,18 +376,18 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 13
   it("returns collisions array when target has cases with matching name/className/source", async () => {
     setupDefaultMocks();
-    // Override: source cases via enhancedDb, collision check via prisma
-    mockEnhancedDb.repositoryCases.findMany
+    // Admin path: both source cases and collision check go through prisma.
+    mockPrismaRepositoryCasesFindMany
       .mockReset()
-      .mockResolvedValueOnce(baseSourceCases); // source cases
-    mockPrismaRepositoryCasesFindMany.mockReset().mockResolvedValueOnce([
-      {
-        id: 99,
-        name: "Test Case 1",
-        className: null,
-        source: "MANUAL",
-      },
-    ]); // collision check
+      .mockResolvedValueOnce(baseSourceCases) // source cases
+      .mockResolvedValueOnce([
+        {
+          id: 99,
+          name: "Test Case 1",
+          className: null,
+          source: "MANUAL",
+        },
+      ]); // collision check
 
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
