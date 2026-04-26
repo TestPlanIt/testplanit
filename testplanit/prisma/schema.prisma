@@ -140,6 +140,17 @@ enum IntegrationProvider {
   SIMPLE_URL
 }
 
+enum AdapterType {
+  JIRA
+  GITHUB
+  AZURE_DEVOPS
+}
+
+enum WebhookDirection {
+  INBOUND
+  OUTBOUND
+}
+
 enum LlmProvider {
   OPENAI
   ANTHROPIC
@@ -296,6 +307,7 @@ enum AuditAction {
   PASSWORD_POLICY_CHANGED
   FORCE_PASSWORD_CHANGE
   PASSWORD_REVOKED
+  WEBHOOK_RECEIVED
 }
 
 model AppConfig {
@@ -512,6 +524,7 @@ model Projects {
   groupPermissions            GroupProjectPermission[]
   sharedStepGroups            SharedStepGroup[]
   projectIntegrations         ProjectIntegration[]
+  webhookConfigs              WebhookConfig[]
   projectLlmIntegrations      ProjectLlmIntegration[]
   codeRepositoryConfig        ProjectCodeRepositoryConfig?
   promptConfigId              String?
@@ -1849,6 +1862,56 @@ model IntegrationProject {
   @@unique([projectIntegrationId, externalProjectId])
   @@index([projectIntegrationId])
   @@index([isActive])
+}
+
+model WebhookConfig {
+  id             String              @id() @default(cuid())
+  projectId      Int
+  project        Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  adapterType    AdapterType
+  direction      WebhookDirection
+  token          String              @unique()
+  secret         String
+  isActive       Boolean             @default(true)
+  lastReceivedAt DateTime?           @db.Timestamptz(6)
+  createdAt      DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt()
+  deliveries     WebhookDelivery[]
+  eventDedups    WebhookEventDedup[]
+
+  @@unique([projectId, adapterType, direction])
+  @@index([projectId])
+  @@index([token])
+}
+
+model WebhookDelivery {
+  id              String           @id() @default(cuid())
+  webhookConfigId String
+  webhookConfig   WebhookConfig    @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+  direction       WebhookDirection
+  adapterType     AdapterType
+  eventType       String?
+  statusCode      Int?
+  latencyMs       Int?
+  payloadDigest   String
+  error           String?
+  attempt         Int              @default(1)
+  receivedAt      DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@index([webhookConfigId, receivedAt])
+  @@index([direction, receivedAt])
+  @@index([payloadDigest])
+}
+
+model WebhookEventDedup {
+  id              String        @id() @default(cuid())
+  webhookConfigId String
+  webhookConfig   WebhookConfig @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+  payloadDigest   String
+  processedAt     DateTime      @default(now()) @db.Timestamptz(6)
+
+  @@unique([webhookConfigId, payloadDigest])
+  @@index([webhookConfigId, processedAt])
 }
 
 model LlmProviderConfig {
