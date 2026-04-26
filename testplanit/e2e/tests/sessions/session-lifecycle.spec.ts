@@ -29,14 +29,17 @@ test.describe("Session Lifecycle", () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Fill in the session name
+    // The submit button is gated on defaultTemplate + defaultWorkflow
+    // queries resolving — and the form's init useEffect only runs once
+    // those land. Wait for enabled before typing so the lazy reset() does
+    // not wipe the name.
+    const submitButton = dialog.locator('button[type="submit"]');
+    await expect(submitButton).toBeEnabled({ timeout: 15000 });
+
     const nameInput = dialog.locator('input[name="name"]');
     await expect(nameInput).toBeVisible({ timeout: 5000 });
     await nameInput.fill(sessionName);
 
-    // Submit the form
-    const submitButton = dialog.locator('button[type="submit"]');
-    await expect(submitButton).toBeVisible();
     await submitButton.click();
 
     // Dialog should close after successful creation
@@ -84,6 +87,12 @@ test.describe("Session Lifecycle", () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
+    // Wait for the submit button to be enabled before typing — the form
+    // resets itself once default template/workflow queries resolve, and
+    // typing earlier loses the value. (Same race as the basic-create test.)
+    const submitButton = dialog.locator('button[type="submit"]');
+    await expect(submitButton).toBeEnabled({ timeout: 15000 });
+
     // Fill the session name
     const nameInput = dialog.locator('input[name="name"]');
     await expect(nameInput).toBeVisible({ timeout: 5000 });
@@ -124,7 +133,6 @@ test.describe("Session Lifecycle", () => {
     await milestoneOption.click();
 
     // Submit the form
-    const submitButton = dialog.locator('button[type="submit"]');
     await submitButton.click();
 
     // Dialog should close after successful creation
