@@ -2533,6 +2533,25 @@ enum IntegrationProvider {
     @@allow('read', auth().access != null)
 }
 
+enum AdapterType {
+    JIRA
+    GITHUB
+    AZURE_DEVOPS
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum WebhookDirection {
+    INBOUND
+    OUTBOUND
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
 enum LlmProvider {
     OPENAI
     ANTHROPIC
@@ -4082,6 +4101,8 @@ enum AuditAction {
     PASSWORD_POLICY_CHANGED
     FORCE_PASSWORD_CHANGE
     PASSWORD_REVOKED
+    // v0.23.0 Phase 1 — webhook system
+    WEBHOOK_RECEIVED
 }
 
 model AuditLog {
