@@ -1,3 +1,9 @@
+## [0.22.18](https://github.com/TestPlanIt/testplanit/compare/v0.22.17...v0.22.18) (2026-04-26)
+
+### Bug Fixes
+
+* **repository:** keep browser history clean on auto-select + folder click ([#250](https://github.com/TestPlanIt/testplanit/issues/250)) ([42ce3a7](https://github.com/TestPlanIt/testplanit/commit/42ce3a73658eb725c8ba8e302def4639052a8d41))
+
 ## [0.22.17](https://github.com/TestPlanIt/testplanit/compare/v0.22.16...v0.22.17) (2026-04-26)
 
 ### Bug Fixes
