@@ -11,6 +11,7 @@ export interface IssueAdapterCapabilities {
   webhooks: boolean;
   customFields: boolean;
   attachments: boolean;
+  linkedIssues: boolean;
 }
 
 export interface IssueSearchOptions {
@@ -95,6 +96,13 @@ export interface WebhookData {
   active: boolean;
 }
 
+export interface LinkedIssueRef {
+  id: string;
+  key?: string;
+  linkType: string;
+  direction: "outward" | "inward";
+}
+
 export interface FieldMapping {
   sourceField: string;
   targetField: string;
@@ -154,6 +162,13 @@ export interface IssueAdapter {
    * Sync issue data from the external system
    */
   syncIssue(issueId: string): Promise<IssueData>;
+
+  /**
+   * Get linked issues 1 level deep (returns lightweight refs only — no body, no comments).
+   * Adapters without a tracker-style "linked" concept omit this method and declare
+   * `linkedIssues: false` in their capabilities.
+   */
+  getLinkedIssues?(issueId: string): Promise<LinkedIssueRef[]>;
 
   /**
    * Register a webhook for receiving updates
