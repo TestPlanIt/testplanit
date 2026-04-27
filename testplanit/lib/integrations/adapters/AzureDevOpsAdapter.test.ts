@@ -537,6 +537,312 @@ describe("AzureDevOpsAdapter", () => {
     });
   });
 
+  describe("getLinkedIssues", () => {
+    const mockWorkItemWithRelations = {
+      id: 123,
+      fields: { "System.Title": "Source" },
+      relations: [
+        {
+          rel: "System.LinkTypes.Related",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/200",
+          attributes: { name: "Related" },
+        },
+        {
+          rel: "System.LinkTypes.Hierarchy-Forward",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/201",
+          attributes: { name: "Child" },
+        },
+        {
+          rel: "System.LinkTypes.Hierarchy-Reverse",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/202",
+          attributes: { name: "Parent" },
+        },
+        {
+          rel: "System.LinkTypes.Successor",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/203",
+        },
+        {
+          rel: "System.LinkTypes.Predecessor",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/204",
+        },
+        {
+          rel: "System.LinkTypes.Tested-By",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/205",
+        },
+        {
+          rel: "System.LinkTypes.Affects-Forward",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/206",
+        },
+        {
+          rel: "System.LinkTypes.Duplicate-Reverse",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/207",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should map every System.LinkTypes.* relation with correct direction semantics", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItemWithRelations),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toHaveLength(8);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          {
+            id: "200",
+            key: "200",
+            linkType: "Related",
+            direction: "outward",
+          },
+          {
+            id: "201",
+            key: "201",
+            linkType: "Hierarchy-Forward",
+            direction: "outward",
+          },
+          {
+            id: "202",
+            key: "202",
+            linkType: "Hierarchy-Reverse",
+            direction: "inward",
+          },
+          {
+            id: "203",
+            key: "203",
+            linkType: "Successor",
+            direction: "outward",
+          },
+          {
+            id: "204",
+            key: "204",
+            linkType: "Predecessor",
+            direction: "outward",
+          },
+          {
+            id: "205",
+            key: "205",
+            linkType: "Tested-By",
+            direction: "outward",
+          },
+          {
+            id: "206",
+            key: "206",
+            linkType: "Affects-Forward",
+            direction: "outward",
+          },
+          {
+            id: "207",
+            key: "207",
+            linkType: "Duplicate-Reverse",
+            direction: "inward",
+          },
+        ])
+      );
+    });
+
+    it("should filter out ArtifactLink and AttachedFile relations", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+            relations: [
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/300",
+              },
+              {
+                rel: "System.LinkTypes.Successor",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/301",
+              },
+              { rel: "ArtifactLink", url: "vstfs:///Git/Commit/abc" },
+              {
+                rel: "AttachedFile",
+                url: "https://dev.azure.com/org/proj/_apis/wit/attachments/x",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toHaveLength(2);
+      expect(result.every((r) => r.linkType !== "ArtifactLink")).toBe(true);
+      expect(result.every((r) => r.linkType !== "AttachedFile")).toBe(true);
+    });
+
+    it("should return [] when relations field is missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return [] when relations array is empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+            relations: [],
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should call the work-item endpoint with $expand=relations", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItemWithRelations),
+      });
+
+      await adapter.getLinkedIssues!("123");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      const decodedUrl = decodeURIComponent(calledUrl);
+      expect(decodedUrl).toContain("$expand=relations");
+      expect(decodedUrl).not.toContain("$expand=all");
+      expect(calledUrl).toContain("/_apis/wit/workitems/123");
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 500 by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve("Internal Server Error"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+
+    it("should silently drop malformed relation entries while keeping valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+            relations: [
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/400",
+              },
+              { rel: "System.LinkTypes.Related" },
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/notWorkItems/500",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "400",
+        key: "400",
+        linkType: "Related",
+        direction: "outward",
+      });
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+  });
+
   describe("searchIssues", () => {
     beforeEach(async () => {
       mockFetch.mockResolvedValueOnce({
