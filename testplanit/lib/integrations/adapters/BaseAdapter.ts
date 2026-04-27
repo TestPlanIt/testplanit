@@ -167,6 +167,11 @@ export abstract class BaseAdapter implements IssueAdapter {
       } catch (error) {
         lastError = error as Error;
 
+        const status = this.parseStatusFromError(lastError);
+        if (status !== null && status >= 400 && status < 500) {
+          throw lastError;
+        }
+
         if (i < retries) {
           const delay = this.retryDelay * Math.pow(2, i); // Exponential backoff
           console.warn(`Request failed, retrying in ${delay}ms...`, error);
