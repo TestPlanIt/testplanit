@@ -15,6 +15,7 @@ import {
   STEP_SCAN_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  WEBHOOK_DISPATCH_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 
@@ -35,6 +36,7 @@ export {
   STEP_SCAN_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,
+  WEBHOOK_DISPATCH_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -53,6 +55,7 @@ let _duplicateScanQueue: Queue | null = null;
 let _stepScanQueue: Queue | null = null;
 let _magicSelectQueue: Queue | null = null;
 let _generateFromUrlQueue: Queue | null = null;
+let _webhookDispatchQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -590,6 +593,45 @@ export function getGenerateFromUrlQueue(): Queue | null {
 }
 
 /**
+ * v0.23.0 Phase 2 (OUT-10) — outbound webhook dispatch queue.
+ *
+ * Configured for OUT-01's 7-attempt schedule (1 initial + 6 retries, ~21h
+ * total). The retry curve itself lives at `lib/webhooks/retry-delay.ts` and
+ * is registered as a custom backoff strategy on the WORKER (RESEARCH
+ * Pitfall 6: BullMQ requires custom backoff strategies on Worker.settings,
+ * not Queue.defaultJobOptions.backoff).
+ *
+ * Concurrency starts at 5 (CONTEXT D-24); admins tune via the
+ * WEBHOOK_DISPATCH_CONCURRENCY env var on the Worker.
+ *
+ * Retention: 7 days for completed jobs (sufficient for ad-hoc debugging),
+ * 30 days for failed jobs (admin replay UI lands in Phase 4).
+ */
+export function getWebhookDispatchQueue(): Queue | null {
+  if (_webhookDispatchQueue) return _webhookDispatchQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${WEBHOOK_DISPATCH_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _webhookDispatchQueue = new Queue(WEBHOOK_DISPATCH_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 7, // OUT-01: 1 initial + 6 retries
+      backoff: { type: "custom" }, // strategy on Worker (Pitfall 6)
+      removeOnComplete: { age: 3600 * 24 * 7, count: 10_000 },
+      removeOnFail: { age: 3600 * 24 * 30 },
+    },
+  });
+  console.log(`Queue "${WEBHOOK_DISPATCH_QUEUE_NAME}" initialized.`);
+  _webhookDispatchQueue.on("error", (error) => {
+    console.error(`Queue ${WEBHOOK_DISPATCH_QUEUE_NAME} error:`, error);
+  });
+  return _webhookDispatchQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -610,5 +652,6 @@ export function getAllQueues() {
     stepScanQueue: getStepScanQueue(),
     "magic-select": getMagicSelectQueue(),
     "generate-from-url": getGenerateFromUrlQueue(),
+    webhookDispatchQueue: getWebhookDispatchQueue(),
   };
 }
