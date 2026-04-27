@@ -237,5 +237,35 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "webhook-dispatch-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/webhookDispatchWorker.ts"
+        : "dist/workers/webhookDispatchWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "512M",
+      node_args: "--max-old-space-size=384",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "webhook-outbox-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/webhookOutboxWorker.ts"
+        : "dist/workers/webhookOutboxWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "512M",
+      node_args: "--max-old-space-size=384",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };
