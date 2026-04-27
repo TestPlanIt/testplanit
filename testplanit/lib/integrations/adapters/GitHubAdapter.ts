@@ -339,7 +339,7 @@ export class GitHubAdapter extends BaseAdapter {
     let issueNumber = issueId;
 
     // Check if issueId includes repo context (format: "owner/repo#123")
-    const repoIssueMatch = issueId.match(/^([^/]+)\/([^#]+)#(\d+)$/);
+    const repoIssueMatch = issueId.match(/^([^/]+)\/([^/#]+)#(\d+)$/);
     if (repoIssueMatch) {
       owner = repoIssueMatch[1];
       repo = repoIssueMatch[2];

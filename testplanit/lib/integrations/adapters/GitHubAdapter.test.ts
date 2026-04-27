@@ -654,6 +654,31 @@ describe("GitHubAdapter", () => {
         )
       ).toBe(true);
     });
+
+    it("should reject owner/repo/sub#number forms with slashes in the repo segment", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getLinkedIssues!("acme/foo/bar#42");
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/foo/bar/issues/42/sub_issues")
+        )
+      ).toBe(false);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/foo/issues/bar#42/sub_issues")
+        )
+      ).toBe(false);
+    });
   });
 
   describe("searchIssues", () => {
