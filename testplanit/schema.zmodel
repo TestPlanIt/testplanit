@@ -3477,8 +3477,14 @@ model WebhookConfig {
 
     @@deny('all', !auth())
 
-    // Project-admin-only management — tighter read than ProjectIntegration (D-21):
-    // non-admin members must NOT see the secret/token.
+    // Access policy (matches the project's two-tier admin hierarchy):
+    //   - System Admin (User.access == 'ADMIN') — full read+CRUD across all projects.
+    //   - Project Admin — full read+CRUD on their project, granted via any of:
+    //       project.creator, SPECIFIC_ROLE='Project Admin' on this project,
+    //       or assigned to this project with global User.access='PROJECTADMIN'.
+    //   - Everyone else (regular project members, NO_ACCESS) — denied.
+    // Webhook secrets are sensitive: regular members must not see the URL/secret
+    // even if they have project read access.
     @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
     @@allow('read',
@@ -3519,9 +3525,14 @@ model WebhookDelivery {
     @@index([direction, receivedAt])
     @@index([payloadDigest])
 
-    // Audit-row-style posture: read by project admins; writes only via system code (raw prisma, NOT ZenStack RPC).
+    // Audit-row-style posture: System Admin and Project Admin can read for the
+    // admin delivery-history UI (Phase 4+). Writes are intentionally unallowed for
+    // ALL clients — the receiver service writes rows using a raw prisma client that
+    // bypasses ZenStack policies entirely. Adding a CRUD allow here would NOT enable
+    // client writes (the deny('create, update, delete', true) below blocks them
+    // unconditionally) and would only confuse future maintainers.
     @@deny('all', !auth())
-    @@deny('create, update, delete', true) // No client-side writes — receiver uses raw prisma client
+    @@deny('create, update, delete', true) // System-only writes via raw prisma; no client-side mutations
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         webhookConfig.project.creator == auth() ||
