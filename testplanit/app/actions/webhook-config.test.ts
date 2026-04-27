@@ -820,4 +820,277 @@ describe("webhook-config server actions", () => {
       });
     });
   });
+
+  // =========================================================================
+  // v0.23.0 Phase 2 / Task 6.2 — Two-secret rotation lifecycle (D-04..D-06)
+  // =========================================================================
+
+  describe("rotateOutboundSecret (Phase 2)", () => {
+    function buildTxMock() {
+      return {
+        webhookConfigSecret: {
+          findMany: (args: any) =>
+            mockWebhookConfigSecretFindMany(args),
+          create: (args: any) => mockWebhookConfigSecretCreate(args),
+          update: (args: any) => mockWebhookConfigSecretUpdate(args),
+        },
+        webhookConfig: {
+          update: (args: any) => mockWebhookConfigUpdate(args),
+        },
+      };
+    }
+
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { rotateOutboundSecret } = await import("./webhook-config");
+
+      const result = await rotateOutboundSecret("cfg-1");
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+    });
+
+    it("rejects INBOUND configs", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+        adapterType: "JIRA",
+      });
+      const { rotateOutboundSecret } = await import("./webhook-config");
+
+      const result = await rotateOutboundSecret("cfg-jira");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Not an outbound webhook",
+      });
+    });
+
+    it("rejects SLACK configs (no rotatable secret)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+        adapterType: "SLACK",
+      });
+      const { rotateOutboundSecret } = await import("./webhook-config");
+
+      const result = await rotateOutboundSecret("cfg-slack");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Slack webhooks do not have a rotatable secret",
+      });
+    });
+
+    it("steady-state: demotes prior active with autoRetireAt ≈ now+7d, creates new active, updates WebhookConfig.secret", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+        adapterType: "GENERIC_HMAC",
+      });
+      mockTransaction.mockImplementation(async (fn: any) =>
+        fn(buildTxMock())
+      );
+      mockWebhookConfigSecretFindMany.mockResolvedValue([
+        { id: "sec-old" },
+      ]);
+      mockWebhookConfigSecretUpdate.mockResolvedValue({ id: "sec-old" });
+      mockWebhookConfigSecretCreate.mockResolvedValue({ id: "sec-new" });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
+
+      const before = Date.now();
+      const { rotateOutboundSecret } = await import("./webhook-config");
+      const result = await rotateOutboundSecret("cfg-1");
+      const after = Date.now();
+
+      expect(result.success).toBe(true);
+      expect(result.secret).toBeTruthy();
+      expect(result.secret!.startsWith("enc:")).toBe(false);
+
+      // Demote old: autoRetireAt set
+      expect(mockWebhookConfigSecretUpdate).toHaveBeenCalledTimes(1);
+      const demoteCall = mockWebhookConfigSecretUpdate.mock.calls[0][0];
+      expect(demoteCall.where).toEqual({ id: "sec-old" });
+      const ts = (demoteCall.data.autoRetireAt as Date).getTime();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      expect(ts).toBeGreaterThanOrEqual(before + sevenDays - 1);
+      expect(ts).toBeLessThanOrEqual(after + sevenDays + 1);
+
+      // Create new active
+      expect(mockWebhookConfigSecretCreate).toHaveBeenCalledTimes(1);
+      const createCall = mockWebhookConfigSecretCreate.mock.calls[0][0];
+      expect(createCall.data).toMatchObject({
+        webhookConfigId: "cfg-1",
+        secret: `enc:${result.secret}`,
+      });
+      expect(createCall.data.activatedAt).toBeInstanceOf(Date);
+
+      // WebhookConfig.secret kept in sync
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+        data: { secret: `enc:${result.secret}` },
+      });
+    });
+
+    it("zero-active recovery: no demotion when no active exists; just creates new", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+        adapterType: "GENERIC_HMAC",
+      });
+      mockTransaction.mockImplementation(async (fn: any) =>
+        fn(buildTxMock())
+      );
+      mockWebhookConfigSecretFindMany.mockResolvedValue([]); // zero active
+      mockWebhookConfigSecretCreate.mockResolvedValue({ id: "sec-new" });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
+
+      const { rotateOutboundSecret } = await import("./webhook-config");
+      const result = await rotateOutboundSecret("cfg-1");
+
+      expect(result.success).toBe(true);
+      expect(mockWebhookConfigSecretUpdate).not.toHaveBeenCalled();
+      expect(mockWebhookConfigSecretCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("multiple-active corruption: returns 'Multiple active secrets — contact support'", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+        adapterType: "GENERIC_HMAC",
+      });
+      mockTransaction.mockImplementation(async (fn: any) =>
+        fn(buildTxMock())
+      );
+      mockWebhookConfigSecretFindMany.mockResolvedValue([
+        { id: "sec-a" },
+        { id: "sec-b" },
+      ]);
+
+      const { rotateOutboundSecret } = await import("./webhook-config");
+      const result = await rotateOutboundSecret("cfg-corrupt");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Multiple active secrets — contact support",
+      });
+    });
+  });
+
+  describe("retireOutboundSecretNow (Phase 2)", () => {
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { retireOutboundSecretNow } = await import("./webhook-config");
+
+      const result = await retireOutboundSecretNow("sec-1");
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+    });
+
+    it("rejects retiring the active secret with 'rotate first'", async () => {
+      mockWebhookConfigSecretFindUnique.mockResolvedValue({
+        id: "sec-active",
+        retiredAt: null,
+        autoRetireAt: null, // active = both null
+        webhookConfig: { projectId: 42 },
+      });
+      const { retireOutboundSecretNow } = await import("./webhook-config");
+
+      const result = await retireOutboundSecretNow("sec-active");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Cannot retire the active secret — rotate first",
+      });
+      expect(mockWebhookConfigSecretUpdate).not.toHaveBeenCalled();
+    });
+
+    it("rejects an already-retired secret with 'Already retired'", async () => {
+      mockWebhookConfigSecretFindUnique.mockResolvedValue({
+        id: "sec-old",
+        retiredAt: new Date(),
+        autoRetireAt: new Date(),
+        webhookConfig: { projectId: 42 },
+      });
+      const { retireOutboundSecretNow } = await import("./webhook-config");
+
+      const result = await retireOutboundSecretNow("sec-old");
+
+      expect(result).toEqual({ success: false, error: "Already retired" });
+      expect(mockWebhookConfigSecretUpdate).not.toHaveBeenCalled();
+    });
+
+    it("happy path: retires a retiring secret (sets retiredAt = now)", async () => {
+      mockWebhookConfigSecretFindUnique.mockResolvedValue({
+        id: "sec-retiring",
+        retiredAt: null,
+        autoRetireAt: new Date(Date.now() + 86400000),
+        webhookConfig: { projectId: 42 },
+      });
+      mockWebhookConfigSecretUpdate.mockResolvedValue({ id: "sec-retiring" });
+      const { retireOutboundSecretNow } = await import("./webhook-config");
+
+      const result = await retireOutboundSecretNow("sec-retiring");
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigSecretUpdate).toHaveBeenCalledTimes(1);
+      const call = mockWebhookConfigSecretUpdate.mock.calls[0][0];
+      expect(call.where).toEqual({ id: "sec-retiring" });
+      expect(call.data.retiredAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("extendRetiringSecret (Phase 2)", () => {
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { extendRetiringSecret } = await import("./webhook-config");
+
+      const result = await extendRetiringSecret("sec-1");
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+    });
+
+    it("rejects extending an active secret", async () => {
+      mockWebhookConfigSecretFindUnique.mockResolvedValue({
+        id: "sec-active",
+        retiredAt: null,
+        autoRetireAt: null,
+        webhookConfig: { projectId: 42 },
+      });
+      const { extendRetiringSecret } = await import("./webhook-config");
+
+      const result = await extendRetiringSecret("sec-active");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Cannot extend the active secret",
+      });
+    });
+
+    it("happy path: adds 7 days to autoRetireAt", async () => {
+      const oldExpiry = new Date(Date.UTC(2026, 4, 1));
+      mockWebhookConfigSecretFindUnique.mockResolvedValue({
+        id: "sec-retiring",
+        retiredAt: null,
+        autoRetireAt: oldExpiry,
+        webhookConfig: { projectId: 42 },
+      });
+      mockWebhookConfigSecretUpdate.mockResolvedValue({ id: "sec-retiring" });
+      const { extendRetiringSecret } = await import("./webhook-config");
+
+      const result = await extendRetiringSecret("sec-retiring");
+
+      expect(result.success).toBe(true);
+      expect(result.newAutoRetireAt).toBeInstanceOf(Date);
+      const expected = new Date(
+        oldExpiry.getTime() + 7 * 24 * 60 * 60 * 1000
+      );
+      expect(result.newAutoRetireAt!.getTime()).toBe(expected.getTime());
+
+      const call = mockWebhookConfigSecretUpdate.mock.calls[0][0];
+      expect(call.where).toEqual({ id: "sec-retiring" });
+      expect((call.data.autoRetireAt as Date).getTime()).toBe(
+        expected.getTime()
+      );
+    });
+  });
 });
