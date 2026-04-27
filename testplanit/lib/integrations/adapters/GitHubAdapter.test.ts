@@ -679,6 +679,26 @@ describe("GitHubAdapter", () => {
         )
       ).toBe(false);
     });
+
+    it("should throw on bare '#' input rather than building a malformed URL", async () => {
+      await expect(adapter.getLinkedIssues!("#")).rejects.toThrow(
+        "Invalid GitHub issue reference: #"
+      );
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues//sub_issues"))).toBe(
+        false
+      );
+    });
+
+    it("should throw on '#abc' (non-numeric) input rather than building a malformed URL", async () => {
+      await expect(adapter.getLinkedIssues!("#abc")).rejects.toThrow(
+        "Invalid GitHub issue reference: #abc"
+      );
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues/abc/sub_issues"))).toBe(
+        false
+      );
+    });
   });
 
   describe("searchIssues", () => {

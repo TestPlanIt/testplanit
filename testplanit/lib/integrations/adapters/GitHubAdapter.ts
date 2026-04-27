@@ -347,6 +347,9 @@ export class GitHubAdapter extends BaseAdapter {
     } else if (issueId.startsWith("#")) {
       // Just a number with # prefix
       issueNumber = issueId.substring(1);
+      if (!issueNumber || !/^\d+$/.test(issueNumber)) {
+        throw new Error(`Invalid GitHub issue reference: ${issueId}`);
+      }
     }
 
     if (!owner || !repo) {
