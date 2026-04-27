@@ -25,6 +25,14 @@ export interface AuditContext {
    * captureAuditEvent merges it into event.metadata automatically.
    */
   systemReason?: string;
+  /**
+   * Phase 2 / D-01a — suppression hatch for backfill scripts and migrations
+   * that mutate domain entities without producing outbound webhook events.
+   * webhookEvents.emit() short-circuits when this flag is true. Audit
+   * emission is unaffected (audit events still flow). Defaults to undefined
+   * (= no suppression) so existing callers are unchanged.
+   */
+  suppressWebhooks?: boolean;
 }
 
 /**
