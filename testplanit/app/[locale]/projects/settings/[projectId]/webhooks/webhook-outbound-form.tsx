@@ -559,12 +559,58 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             <Switch
               checked={config.isActive}
               onCheckedChange={(next: boolean) =>
-                handleToggleActive(config.id, next)
+                void handleToggleActive(config.id, next)
               }
               aria-label={t("outboundActiveToggle")}
               data-testid={`webhook-outbound-active-toggle-${config.id}`}
             />
             <span className="text-sm">{t("outboundActiveToggle")}</span>
+          </div>
+
+          <div
+            data-testid={`webhook-outbound-subs-editor-${config.id}`}
+            className="space-y-2 rounded-md border p-3"
+          >
+            <h4 className="text-sm font-semibold">
+              {t("outboundCreateSubscriptionsTitle")}
+            </h4>
+            {(
+              [
+                {
+                  key: "testRunsAndSessions",
+                  label: "outboundSubsTestRunsAndSessions",
+                },
+                { key: "issues", label: "outboundSubsIssues" },
+                { key: "cases", label: "outboundSubsCases" },
+              ] as const
+            ).map(({ key, label }) => (
+              <div key={key} className="space-y-1">
+                <h5 className="text-xs font-semibold">{t(label)}</h5>
+                {EVENT_CATALOG[key].map((eventName) => {
+                  const checked = config.subscribedEvents.includes(eventName);
+                  return (
+                    <label
+                      key={eventName}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <Checkbox
+                        data-testid={`webhook-outbound-config-${config.id}-event-${eventName}`}
+                        checked={checked}
+                        onCheckedChange={() => {
+                          const next = checked
+                            ? config.subscribedEvents.filter(
+                                (e) => e !== eventName
+                              )
+                            : [...config.subscribedEvents, eventName];
+                          void handleUpdateSubscriptions(config.id, next);
+                        }}
+                      />
+                      <code>{eventName}</code>
+                    </label>
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {!isSlack && (
@@ -718,7 +764,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             <AlertDialogAction
               data-testid="webhook-outbound-rotate-dialog-confirm"
               onClick={() => {
-                if (rotateDialogConfigId) handleRotate(rotateDialogConfigId);
+                if (rotateDialogConfigId)
+                  void handleRotate(rotateDialogConfigId);
               }}
             >
               {t("outboundHmacRotateButton")}
@@ -747,7 +794,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             <AlertDialogAction
               data-testid="webhook-outbound-delete-dialog-confirm"
               onClick={() => {
-                if (deleteDialogConfigId) handleDelete(deleteDialogConfigId);
+                if (deleteDialogConfigId)
+                  void handleDelete(deleteDialogConfigId);
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -777,7 +825,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             <AlertDialogAction
               data-testid="webhook-outbound-retire-dialog-confirm"
               onClick={() => {
-                if (retireDialogSecretId) handleRetireNow(retireDialogSecretId);
+                if (retireDialogSecretId)
+                  void handleRetireNow(retireDialogSecretId);
               }}
             >
               {t("outboundHmacRetireNowButton")}

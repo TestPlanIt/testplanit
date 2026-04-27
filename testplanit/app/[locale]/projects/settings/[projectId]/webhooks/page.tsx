@@ -11,14 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
-import {
-  notFound,
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { usePathname, useRouter } from "~/lib/navigation";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useFindFirstProjects } from "~/lib/hooks";
 import { WebhookConfigForm } from "./webhook-config-form";
