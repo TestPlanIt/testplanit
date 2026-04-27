@@ -3477,9 +3477,9 @@ model WebhookConfig {
 
     @@deny('all', !auth())
 
-    // Access policy (matches the project's two-tier admin hierarchy):
-    //   - System Admin (User.access == 'ADMIN') — full read+CRUD across all projects.
-    //   - Project Admin — full read+CRUD on their project, granted via any of:
+    // Read policy (matches the project's two-tier admin hierarchy):
+    //   - System Admin (User.access == 'ADMIN') — full read across all projects.
+    //   - Project Admin — read on their project, granted via any of:
     //       project.creator, SPECIFIC_ROLE='Project Admin' on this project,
     //       or assigned to this project with global User.access='PROJECTADMIN'.
     //   - Everyone else (regular project members, NO_ACCESS) — denied.
@@ -3493,13 +3493,18 @@ model WebhookConfig {
         project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
     )
 
-    @@allow('create,update,delete',
-        project.creator == auth() ||
-        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
-        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
-    )
+    @@allow('read', auth().access == 'ADMIN')
 
-    @@allow('all', auth().access == 'ADMIN')
+    // Write policy (CR-02): ALL client-side writes are blocked. Mutations must
+    // flow through the server actions in `app/actions/webhook-config.ts` so:
+    //   - `token` is generated as 32 random bytes (never client-supplied)
+    //   - `secret` is encrypted at rest via `utils/encryption.ts`
+    //   - `isActive` toggle goes through `setWebhookActive` (audit-logged)
+    // Mirrors the WebhookDelivery + WebhookEventDedup posture (system-only
+    // writes via raw prisma). Adding an @@allow here would let a project
+    // admin write plaintext secrets and predictable tokens via ZenStack RPC,
+    // bypassing the encryption-at-rest invariant entirely.
+    @@deny('create, update, delete', true)
 }
 
 // Delivery LOG — every inbound HTTP attempt and (Phase 2+) every outbound dispatch

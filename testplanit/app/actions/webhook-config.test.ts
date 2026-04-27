@@ -13,9 +13,25 @@ const mockWebhookConfigFindUnique = vi.fn();
 const mockWebhookConfigCreate = vi.fn();
 const mockWebhookConfigUpdate = vi.fn();
 const mockWebhookConfigDelete = vi.fn();
-const mockGetEnhancedDb = vi.fn();
-vi.mock("~/lib/auth/utils", () => ({
-  getEnhancedDb: (...args: unknown[]) => mockGetEnhancedDb(...args),
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    webhookConfig: {
+      findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
+      findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
+      create: (...args: unknown[]) => mockWebhookConfigCreate(...args),
+      update: (...args: unknown[]) => mockWebhookConfigUpdate(...args),
+      delete: (...args: unknown[]) => mockWebhookConfigDelete(...args),
+    },
+  },
+}));
+
+// CR-02: server actions authorize via canManageWebhookConfig before raw writes.
+// Default to "authorized" so existing tests continue to exercise the happy path;
+// authorization-denial tests override to false.
+const mockCanManageWebhookConfig = vi.fn();
+vi.mock("~/lib/webhooks/auth", () => ({
+  canManageWebhookConfig: (...args: unknown[]) =>
+    mockCanManageWebhookConfig(...args),
 }));
 
 const mockEncrypt = vi.fn();
@@ -58,15 +74,8 @@ describe("webhook-config server actions", () => {
       user: { id: "user-123" },
     });
 
-    mockGetEnhancedDb.mockResolvedValue({
-      webhookConfig: {
-        findFirst: mockWebhookConfigFindFirst,
-        findUnique: mockWebhookConfigFindUnique,
-        create: mockWebhookConfigCreate,
-        update: mockWebhookConfigUpdate,
-        delete: mockWebhookConfigDelete,
-      },
-    });
+    // Default: authorization passes (System Admin / Project Admin happy path).
+    mockCanManageWebhookConfig.mockResolvedValue(true);
 
     mockEncrypt.mockImplementation(async (s: string) => `enc:${s}`);
     mockDecrypt.mockImplementation(async (s: string) =>
@@ -150,6 +159,7 @@ describe("webhook-config server actions", () => {
   describe("deleteJiraWebhook", () => {
     // ─── Test 4: deleteJiraWebhook ────────────────────────────────────────
     it("Test 4 (happy path): returns success", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
       mockWebhookConfigDelete.mockResolvedValue({ id: "cfg-1" });
 
       const result = await deleteJiraWebhook("cfg-1");
@@ -160,18 +170,29 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("Test 4 (denial path): returns friendly error string when ZenStack policy denies (raw error logged server-side per LO-04)", async () => {
+    it("Test 4 (denial path): returns friendly error string when delete throws (raw error logged server-side per LO-04)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
       mockWebhookConfigDelete.mockRejectedValue(
-        new Error("denied by policy: cannot delete")
+        new Error("delete failed at DB layer")
       );
 
       const result = await deleteJiraWebhook("cfg-1");
 
       expect(result.success).toBe(false);
-      // Raw error message is NOT bubbled to client — it would leak policy
+      // Raw error message is NOT bubbled to client — it would leak DB
       // implementation detail. The raw error is captured server-side via
-      // console.error inside the catch (verified by tests in earlier rounds).
+      // console.error inside the catch.
       expect(result.error).toBe("Failed to delete webhook configuration");
+    });
+
+    it("Test 4 (forbidden path): non-admin user gets a Forbidden error and delete is never invoked (CR-02)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+
+      const result = await deleteJiraWebhook("cfg-1");
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
     });
 
     it("Test 4 (unauth): returns Unauthorized when session missing", async () => {
@@ -181,6 +202,68 @@ describe("webhook-config server actions", () => {
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
       expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("setWebhookActive (CR-02 — replaces ZenStack RPC update)", () => {
+    it("happy path: project admin toggles isActive=false, raw prisma.update is invoked with the correct shape", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
+      const { setWebhookActive } = await import("./webhook-config");
+
+      const result = await setWebhookActive("cfg-1", false);
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+        data: { isActive: false },
+      });
+    });
+
+    it("forbidden path: non-admin user gets Forbidden error and update is never invoked", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+      const { setWebhookActive } = await import("./webhook-config");
+
+      const result = await setWebhookActive("cfg-1", true);
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("unauth: returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { setWebhookActive } = await import("./webhook-config");
+
+      const result = await setWebhookActive("cfg-1", true);
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("not-found: missing config returns 'Not found' and update is never invoked", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue(null);
+      const { setWebhookActive } = await import("./webhook-config");
+
+      const result = await setWebhookActive("cfg-missing", true);
+
+      expect(result).toEqual({ success: false, error: "Not found" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("update failure → friendly error string (raw error logged via console.error per LO-04)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
+      mockWebhookConfigUpdate.mockRejectedValue(
+        new Error("constraint violation")
+      );
+      const { setWebhookActive } = await import("./webhook-config");
+
+      const result = await setWebhookActive("cfg-1", false);
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to update webhook configuration",
+      });
     });
   });
 

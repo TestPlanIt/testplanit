@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─── Hoisted mock refs ───────────────────────────────────────────────────
 const {
   mockFindFirstWebhookConfig,
-  mockUpdateWebhookConfig,
+  mockSetWebhookActive,
   mockCreateOrRotate,
   mockDelete,
   mockSendTest,
@@ -13,7 +13,7 @@ const {
   mockToastError,
 } = vi.hoisted(() => ({
   mockFindFirstWebhookConfig: vi.fn(),
-  mockUpdateWebhookConfig: vi.fn(),
+  mockSetWebhookActive: vi.fn(),
   mockCreateOrRotate: vi.fn(),
   mockDelete: vi.fn(),
   mockSendTest: vi.fn(),
@@ -24,13 +24,13 @@ const {
 vi.mock("~/lib/hooks", () => ({
   useFindFirstWebhookConfig: (...args: any[]) =>
     mockFindFirstWebhookConfig(...args),
-  useUpdateWebhookConfig: () => ({ mutateAsync: mockUpdateWebhookConfig }),
 }));
 
 vi.mock("~/app/actions/webhook-config", () => ({
   createOrRotateJiraWebhook: (...args: any[]) => mockCreateOrRotate(...args),
   deleteJiraWebhook: (...args: any[]) => mockDelete(...args),
   sendTestWebhook: (...args: any[]) => mockSendTest(...args),
+  setWebhookActive: (...args: any[]) => mockSetWebhookActive(...args),
 }));
 
 vi.mock("sonner", () => ({

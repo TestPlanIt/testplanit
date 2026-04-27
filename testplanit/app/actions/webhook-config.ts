@@ -2,7 +2,8 @@
 
 import { createHmac, randomBytes } from "node:crypto";
 
-import { getEnhancedDb } from "~/lib/auth/utils";
+import { prisma } from "~/lib/prisma";
+import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -62,12 +63,18 @@ export async function createOrRotateJiraWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
-  let db;
+  // CR-02: schema denies all client writes; this server action authorizes the
+  // caller explicitly (mirroring the prior @@allow policy) and writes via raw
+  // `prisma` to bypass the deny.
+  let authorized: boolean;
   try {
-    db = await getEnhancedDb(session);
+    authorized = await canManageWebhookConfig(session, projectId);
   } catch (err) {
-    console.error("[webhook-config] getEnhancedDb failed", err);
+    console.error("[webhook-config] auth check failed", err);
     return { success: false, error: "Failed to save webhook configuration" };
+  }
+  if (!authorized) {
+    return { success: false, error: "Forbidden" };
   }
 
   const token = generateToken();
@@ -85,7 +92,7 @@ export async function createOrRotateJiraWebhook(
   const url = `${origin}/api/webhooks/${token}`;
 
   try {
-    const existing = await db.webhookConfig.findFirst({
+    const existing = await prisma.webhookConfig.findFirst({
       where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
       select: { id: true },
     });
@@ -93,13 +100,13 @@ export async function createOrRotateJiraWebhook(
     let config: { id: string };
     if (existing) {
       // D-07: rotation overwrites — old token immediately invalid.
-      config = await db.webhookConfig.update({
+      config = await prisma.webhookConfig.update({
         where: { id: existing.id },
         data: { token, secret: encryptedSecret, isActive: true },
         select: { id: true },
       });
     } else {
-      config = await db.webhookConfig.create({
+      config = await prisma.webhookConfig.create({
         data: {
           projectId,
           adapterType: "JIRA",
@@ -147,20 +154,98 @@ export async function deleteJiraWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
-  let db;
+  // CR-02: authorize before raw write. Look up the config's projectId so the
+  // helper can match the caller against the right project's admin list.
+  let projectId: number;
   try {
-    db = await getEnhancedDb(session);
+    const config = await prisma.webhookConfig.findUnique({
+      where: { id: configId },
+      select: { projectId: true },
+    });
+    if (!config) {
+      return { success: false, error: "Not found" };
+    }
+    projectId = config.projectId;
   } catch (err) {
-    console.error("[webhook-config] getEnhancedDb failed (delete)", err);
+    console.error("[webhook-config] lookup failed (delete)", err);
     return { success: false, error: "Failed to delete webhook configuration" };
   }
 
+  let authorized: boolean;
   try {
-    await db.webhookConfig.delete({ where: { id: configId } });
+    authorized = await canManageWebhookConfig(session, projectId);
+  } catch (err) {
+    console.error("[webhook-config] auth check failed (delete)", err);
+    return { success: false, error: "Failed to delete webhook configuration" };
+  }
+  if (!authorized) {
+    return { success: false, error: "Forbidden" };
+  }
+
+  try {
+    await prisma.webhookConfig.delete({ where: { id: configId } });
     return { success: true };
   } catch (err) {
     console.error("[webhook-config] delete failed", err);
     return { success: false, error: "Failed to delete webhook configuration" };
+  }
+}
+
+export interface SetActiveResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * CR-02: replaces the form's previous `useUpdateWebhookConfig` ZenStack RPC
+ * call. Toggles `isActive` only — no other field is mutable here. Schema
+ * `@@deny('create, update, delete', true)` blocks any client-side write,
+ * so this server action is the sole `isActive` mutation surface.
+ */
+export async function setWebhookActive(
+  configId: string,
+  isActive: boolean
+): Promise<SetActiveResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  let projectId: number;
+  try {
+    const config = await prisma.webhookConfig.findUnique({
+      where: { id: configId },
+      select: { projectId: true },
+    });
+    if (!config) {
+      return { success: false, error: "Not found" };
+    }
+    projectId = config.projectId;
+  } catch (err) {
+    console.error("[webhook-config] lookup failed (setActive)", err);
+    return { success: false, error: "Failed to update webhook configuration" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, projectId);
+  } catch (err) {
+    console.error("[webhook-config] auth check failed (setActive)", err);
+    return { success: false, error: "Failed to update webhook configuration" };
+  }
+  if (!authorized) {
+    return { success: false, error: "Forbidden" };
+  }
+
+  try {
+    await prisma.webhookConfig.update({
+      where: { id: configId },
+      data: { isActive },
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("[webhook-config] setActive failed", err);
+    return { success: false, error: "Failed to update webhook configuration" };
   }
 }
 
@@ -194,17 +279,12 @@ export async function sendTestWebhook(
     return { ok: false, statusCode: 401, error: "Unauthorized" };
   }
 
-  let db;
-  try {
-    db = await getEnhancedDb(session);
-  } catch (err) {
-    console.error("[webhook-config] getEnhancedDb failed (sendTest)", err);
-    return { ok: false, statusCode: 401, error: "Unauthorized" };
-  }
-
+  // CR-02: read via raw prisma (the schema's @@allow('read', ...) clause is
+  // bypassed here, but we authorize through `canManageWebhookConfig` below
+  // before exposing anything sensitive).
   let config: { token: string; secret: string; projectId: number } | null;
   try {
-    config = await db.webhookConfig.findUnique({
+    config = await prisma.webhookConfig.findUnique({
       where: { id: configId },
       select: { token: true, secret: true, projectId: true },
     });
@@ -218,6 +298,17 @@ export async function sendTestWebhook(
   }
   if (!config) {
     return { ok: false, statusCode: 404, error: "Not found" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, config.projectId);
+  } catch (err) {
+    console.error("[webhook-config] auth check failed (sendTest)", err);
+    return { ok: false, statusCode: 500, error: "Authorization check failed" };
+  }
+  if (!authorized) {
+    return { ok: false, statusCode: 403, error: "Forbidden" };
   }
 
   let plainSecret: string;

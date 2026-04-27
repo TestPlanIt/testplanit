@@ -28,8 +28,9 @@ import {
   createOrRotateJiraWebhook,
   deleteJiraWebhook,
   sendTestWebhook,
+  setWebhookActive,
 } from "~/app/actions/webhook-config";
-import { useFindFirstWebhookConfig, useUpdateWebhookConfig } from "~/lib/hooks";
+import { useFindFirstWebhookConfig } from "~/lib/hooks";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 
 interface WebhookConfigFormProps {
@@ -93,7 +94,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     },
   });
 
-  const { mutateAsync: updateWebhookConfig } = useUpdateWebhookConfig();
 
   const [revealed, setRevealed] = useState<RevealedSecret | null>(null);
   const [testResult, setTestResult] = useState<TestResultDisplay | null>(null);
@@ -163,10 +163,14 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const handleToggleActive = async (next: boolean) => {
     if (!webhook) return;
     try {
-      await updateWebhookConfig({
-        where: { id: webhook.id },
-        data: { isActive: next },
-      });
+      // CR-02: schema denies all client writes on WebhookConfig; isActive
+      // toggles flow through the dedicated server action.
+      const result = await setWebhookActive(webhook.id, next);
+      if (!result.success) {
+        toast.error(result.error ?? t("saveError"));
+        return;
+      }
+      await refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveError"));
     }
