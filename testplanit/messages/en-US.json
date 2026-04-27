@@ -52,6 +52,7 @@
       "start": "Start",
       "pause": "Pause",
       "reset": "Reset",
+      "copy": "Copy",
       "copyLink": "Copy link",
       "copied": "Copied!",
       "complete": "Complete",

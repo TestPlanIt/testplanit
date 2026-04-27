@@ -251,7 +251,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   onClick={() => copy(revealed.secret, t("secretCopied"))}
                   aria-label={t("copySecret")}
                 >
-                  {tActions("copyLink")}
+                  {tActions("copy")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
