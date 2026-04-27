@@ -607,6 +607,10 @@ describe("JiraAdapter", () => {
       });
     });
 
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
     it("should return refs for all four sources on the happy path", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
