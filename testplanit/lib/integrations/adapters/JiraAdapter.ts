@@ -46,6 +46,7 @@ export class JiraAdapter extends BaseAdapter {
       webhooks: true,
       customFields: true,
       attachments: true,
+      linkedIssues: false, // flipped to true in Plan 01-02 when getLinkedIssues() is implemented
     };
   }
 

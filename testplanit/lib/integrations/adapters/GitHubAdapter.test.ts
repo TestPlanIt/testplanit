@@ -63,6 +63,7 @@ describe("GitHubAdapter", () => {
         webhooks: true,
         customFields: false,
         attachments: false,
+        linkedIssues: false,
       });
     });
   });

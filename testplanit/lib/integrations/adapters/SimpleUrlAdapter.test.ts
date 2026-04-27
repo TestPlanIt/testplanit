@@ -43,6 +43,7 @@ describe("SimpleUrlAdapter", () => {
         webhooks: false,
         customFields: false,
         attachments: false,
+        linkedIssues: false,
       });
     });
   });

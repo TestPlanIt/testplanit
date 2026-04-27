@@ -21,6 +21,7 @@ class TestAdapter extends BaseAdapter {
       webhooks: false,
       customFields: false,
       attachments: false,
+      linkedIssues: false,
     };
   }
 

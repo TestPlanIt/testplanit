@@ -34,6 +34,7 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       webhooks: true,
       customFields: true,
       attachments: true,
+      linkedIssues: false, // flipped to true in Plan 01-04 when getLinkedIssues() is implemented
     };
   }
 

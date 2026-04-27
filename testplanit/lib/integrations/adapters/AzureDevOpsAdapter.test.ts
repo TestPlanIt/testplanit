@@ -66,6 +66,7 @@ describe("AzureDevOpsAdapter", () => {
         webhooks: true,
         customFields: true,
         attachments: true,
+        linkedIssues: false,
       });
     });
   });

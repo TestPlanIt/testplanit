@@ -27,6 +27,7 @@ export class SimpleUrlAdapter extends BaseAdapter {
       webhooks: false, // No webhook support
       customFields: false, // No custom field support
       attachments: false, // No attachment support
+      linkedIssues: false, // No tracker-style relationships in URL-only integrations
     };
   }
 

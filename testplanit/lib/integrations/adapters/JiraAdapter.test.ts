@@ -67,6 +67,7 @@ describe("JiraAdapter", () => {
         webhooks: true,
         customFields: true,
         attachments: true,
+        linkedIssues: false,
       });
     });
   });
