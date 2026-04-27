@@ -12,6 +12,14 @@ vi.mock("../lib/webhooks/dispatch", () => ({
   dispatchWebhook: vi.fn(),
 }));
 
+// Phase 2 / Plan 02-06 — daily auto-retire helper invoked when the cron
+// schedules a job named "retire-expired-secrets" onto this worker's queue.
+const mockRetireExpiredSecrets = vi.fn();
+vi.mock("../lib/webhooks/secret-rotation", () => ({
+  retireExpiredSecrets: (...args: unknown[]) =>
+    mockRetireExpiredSecrets(...args),
+}));
+
 vi.mock("../lib/valkey", () => ({
   default: null,
 }));
@@ -200,5 +208,43 @@ describe("webhookDispatchWorker.processor", () => {
     // The original job.data.attempt MUST remain 1 — we built a new object via spread.
     expect(job.data.attempt).toBe(1);
     expect(job.data).toBe(originalData); // reference identity preserved
+  });
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Plan 02-06 / Task 6.3 — daily auto-retire cron job dispatch
+  // ──────────────────────────────────────────────────────────────────────
+
+  it("10. Phase 2 — job.name='retire-expired-secrets' calls retireExpiredSecrets and skips dispatchWebhook", async () => {
+    mockRetireExpiredSecrets.mockResolvedValue({ retiredCount: 3 });
+    const job = {
+      id: "cron-1",
+      name: "retire-expired-secrets",
+      attemptsMade: 0,
+      data: { tenantId: undefined },
+    } as any;
+
+    await processor(job);
+
+    expect(mockRetireExpiredSecrets).toHaveBeenCalledTimes(1);
+    expect(mockedDispatch).not.toHaveBeenCalled();
+    // The cron path bypasses tenant validation — multi-tenant single-job
+    // semantics use the per-tenant jobId discriminator instead.
+    expect(mockedValidate).not.toHaveBeenCalled();
+  });
+
+  it("11. Phase 2 — cron path passes the tenant-scoped prisma client", async () => {
+    mockRetireExpiredSecrets.mockResolvedValue({ retiredCount: 0 });
+    const job = {
+      id: "cron-2",
+      name: "retire-expired-secrets",
+      attemptsMade: 0,
+      data: { tenantId: "tenant-A" },
+    } as any;
+
+    await processor(job);
+
+    expect(mockedGetPrisma).toHaveBeenCalledWith({ tenantId: "tenant-A" });
+    const [calledPrisma] = mockRetireExpiredSecrets.mock.calls[0];
+    expect(calledPrisma).toEqual({ __mock: "prisma" });
   });
 });

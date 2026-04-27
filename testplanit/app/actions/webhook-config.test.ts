@@ -1093,4 +1093,122 @@ describe("webhook-config server actions", () => {
       );
     });
   });
+
+  // =========================================================================
+  // v0.23.0 Phase 2 / Task 6.3 — sendTestOutboundWebhook (synthetic emit)
+  // =========================================================================
+
+  describe("sendTestOutboundWebhook (Phase 2)", () => {
+    function buildEmitTxMock() {
+      // Pass-through: $transaction(async (tx) => fn(tx)). The mock just runs
+      // the closure with a stub client that webhookEvents.emit will receive,
+      // and we let the emit mock capture the actual call.
+      return mockTransaction.mockImplementation(async (fn: any) =>
+        fn({} as any)
+      );
+    }
+
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { sendTestOutboundWebhook } = await import("./webhook-config");
+
+      const result = await sendTestOutboundWebhook("cfg-1");
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+      expect(mockWebhookEventsEmit).not.toHaveBeenCalled();
+    });
+
+    it("returns 'Not found' when config doesn't exist", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue(null);
+      const { sendTestOutboundWebhook } = await import("./webhook-config");
+
+      const result = await sendTestOutboundWebhook("missing");
+
+      expect(result).toEqual({ success: false, error: "Not found" });
+      expect(mockWebhookEventsEmit).not.toHaveBeenCalled();
+    });
+
+    it("rejects INBOUND configs", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+      });
+      const { sendTestOutboundWebhook } = await import("./webhook-config");
+
+      const result = await sendTestOutboundWebhook("cfg-jira");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Not an outbound webhook",
+      });
+      expect(mockWebhookEventsEmit).not.toHaveBeenCalled();
+    });
+
+    it("happy path: emits a webhook.test event in a transaction with the canonical payload", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+      });
+      buildEmitTxMock();
+      mockWebhookEventsEmit.mockResolvedValue({
+        eventId: "evt_abc",
+        outboxRowId: "row_1",
+      });
+
+      const { sendTestOutboundWebhook } = await import("./webhook-config");
+      const result = await sendTestOutboundWebhook("cfg-out");
+
+      expect(result.success).toBe(true);
+      expect(result.eventId).toBe("evt_abc");
+
+      expect(mockWebhookEventsEmit).toHaveBeenCalledTimes(1);
+      const [eventName, payload, opts] = mockWebhookEventsEmit.mock.calls[0];
+      expect(eventName).toBe("webhook.test");
+      expect(payload).toMatchObject({
+        source: "TestPlanIt",
+        message: "Webhook pipeline is healthy",
+        configId: "cfg-out",
+      });
+      // dispatchedAt is an ISO timestamp string
+      expect(typeof payload.dispatchedAt).toBe("string");
+      expect(() => new Date(payload.dispatchedAt)).not.toThrow();
+
+      expect(opts.projectId).toBe(42);
+      expect(opts.tx).toBeDefined();
+      expect(opts.actorUserId).toBe("user-123");
+    });
+
+    it("returns success even when emit returns null (suppression hatch)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+      });
+      buildEmitTxMock();
+      mockWebhookEventsEmit.mockResolvedValue(null);
+
+      const { sendTestOutboundWebhook } = await import("./webhook-config");
+      const result = await sendTestOutboundWebhook("cfg-out");
+
+      expect(result.success).toBe(true);
+      expect(result.eventId).toBeUndefined();
+    });
+
+    it("returns error when transaction throws", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+      });
+      mockTransaction.mockImplementation(async () => {
+        throw new Error("DB exploded");
+      });
+
+      const { sendTestOutboundWebhook } = await import("./webhook-config");
+      const result = await sendTestOutboundWebhook("cfg-out");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to send test webhook",
+      });
+    });
+  });
 });
