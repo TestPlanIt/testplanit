@@ -2538,6 +2538,9 @@ enum AdapterType {
     JIRA
     GITHUB
     AZURE_DEVOPS
+    // v0.23.0 Phase 2 — outbound webhook adapters
+    SLACK
+    GENERIC_HMAC
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -2547,6 +2550,19 @@ enum AdapterType {
 enum WebhookDirection {
     INBOUND
     OUTBOUND
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+// v0.23.0 Phase 2 — outbound webhook endpoint health.
+// Phase 2 only writes HEALTHY (default). DEGRADED/DISABLED transitions land in
+// Phase 4 (DEL-04..07) — column added now to avoid a Phase 4 migration (D-26).
+enum EndpointHealth {
+    HEALTHY
+    DEGRADED
+    DISABLED
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -4227,6 +4243,8 @@ enum AuditAction {
     PASSWORD_REVOKED
     // v0.23.0 Phase 1 — webhook system
     WEBHOOK_RECEIVED
+    // v0.23.0 Phase 2 — outbound webhook dispatch
+    WEBHOOK_DISPATCHED
 }
 
 model AuditLog {
