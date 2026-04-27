@@ -1,6 +1,8 @@
 import type { AdapterType } from "@prisma/client";
+import { genericHmacAdapter } from "./generic-hmac";
 import { jiraAdapter } from "./jira";
-import type { WebhookAdapter } from "./types";
+import { slackAdapter } from "./slack";
+import type { OutboundWebhookAdapter, WebhookAdapter } from "./types";
 
 /**
  * Registry of INBOUND webhook adapters keyed by AdapterType.
@@ -43,10 +45,54 @@ export function getAdapter(adapterType: AdapterType): WebhookAdapter {
     }
     if (adapterType === "SLACK" || adapterType === "GENERIC_HMAC") {
       throw new Error(
-        `Adapter ${adapterType} is OUTBOUND-only (Phase 2); inbound receiver should never see this type`
+        `Adapter ${adapterType} is OUTBOUND-only — call getOutboundAdapter() instead`
       );
     }
     throw new Error(`Unknown adapter type: ${adapterType}`);
+  }
+  return adapter;
+}
+
+/**
+ * v0.23.0 Phase 2 — Outbound adapter registry. JIRA / GITHUB / AZURE_DEVOPS
+ * are inbound-only and surface as `null` here. Future outbound adapters
+ * (Microsoft Teams etc.) slot in by adding to AdapterType + this map.
+ *
+ * Exhaustive Record (LO-05) forces a compile-time decision per enum value;
+ * Plan 02-04's dispatch service throws on `null` to surface misconfigured
+ * outbound configs at runtime instead of silently dropping events.
+ */
+export const OUTBOUND_ADAPTER_REGISTRY: Record<
+  AdapterType,
+  OutboundWebhookAdapter | null
+> = {
+  JIRA: null,
+  GITHUB: null,
+  AZURE_DEVOPS: null,
+  SLACK: slackAdapter,
+  GENERIC_HMAC: genericHmacAdapter,
+};
+
+/**
+ * Look up the outbound adapter for a given AdapterType. Throws when the
+ * type is inbound-only or unknown — the dispatch service catches and
+ * records a terminal failure on the WebhookDelivery row.
+ */
+export function getOutboundAdapter(
+  adapterType: AdapterType
+): OutboundWebhookAdapter {
+  const adapter = OUTBOUND_ADAPTER_REGISTRY[adapterType];
+  if (!adapter) {
+    if (
+      adapterType === "JIRA" ||
+      adapterType === "GITHUB" ||
+      adapterType === "AZURE_DEVOPS"
+    ) {
+      throw new Error(
+        `Adapter ${adapterType} is INBOUND-only — call getAdapter() instead`
+      );
+    }
+    throw new Error(`Unknown outbound adapter type: ${adapterType}`);
   }
   return adapter;
 }
