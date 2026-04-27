@@ -1,7 +1,6 @@
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
-import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import type {
   ApplyJiraIssueUpdateInput,
@@ -26,24 +25,34 @@ function truncate(s: string): string {
  * dedup table — no INSERT, no DELETE — which preserves D-14 retry-after-link
  * semantics without serializing on the dedup row during the no-link lifetime.
  *
+ * Idempotency check pattern: a pre-INSERT SELECT against `WebhookEventDedup`
+ * detects duplicates without relying on catch-after-throw inside the transaction.
+ * Postgres aborts the tx on any error (including unique-constraint P2002), so a
+ * try/catch around tx.create() inside $transaction() leaves subsequent tx
+ * operations unable to run. The SELECT pattern keeps the tx clean. The TOCTOU
+ * race (two concurrent webhooks both passing the SELECT) is handled by the
+ * unique constraint at INSERT time: the loser's tx aborts, the outer catch
+ * returns `outcome: "error"` (5xx), and Jira's retry sees the now-committed
+ * row from the winner and correctly returns `outcome: "duplicate"` on the
+ * second attempt.
+ *
  * Flow inside the transaction:
  *   1. Always INSERT a WebhookDelivery row (delivery log entry).
- *   2. If payload.synthetic (D-20): try INSERT WebhookEventDedup.
- *        - On P2002: finalize delivery row error='duplicate', return 'duplicate'.
- *          (SC#5 demo lock: a second synthetic click for the same payloadDigest
- *          collides with the first click's dedup row.)
- *        - On success: finalize delivery row error='synthetic', update
- *          WebhookConfig.lastReceivedAt, return 'synthetic'. Issue lookup and
- *          mutation are skipped entirely.
- *   3. Otherwise look up linked Issue (tenant-scoped to projectId — T-03-01).
- *   4. If no linked Issue (D-14): finalize delivery row error='no-link', update
- *      WebhookConfig.lastReceivedAt, return 'no-link'. Dedup table untouched.
- *   5. If linked Issue: try INSERT WebhookEventDedup.
- *        - On P2002 (WBHK-06): finalize delivery row error='duplicate',
- *          return 'duplicate'. No Issue mutation.
- *        - On success: update Issue.externalStatus + Issue.lastSyncedAt, update
- *          WebhookConfig.lastReceivedAt, finalize delivery row error=null,
- *          return 'updated'.
+ *   2. SELECT WebhookEventDedup to detect a prior application of this payload.
+ *   3. If payload.synthetic (D-20):
+ *        - Existing dedup row → finalize delivery error='duplicate',
+ *          return 'duplicate'. (SC#5 demo lock: second synthetic click.)
+ *        - No prior row → INSERT dedup, finalize delivery error='synthetic',
+ *          update WebhookConfig.lastReceivedAt, return 'synthetic'.
+ *   4. Otherwise look up linked Issue (tenant-scoped to projectId — T-03-01).
+ *   5. No linked Issue (D-14) → finalize delivery error='no-link', update
+ *      WebhookConfig.lastReceivedAt, return 'no-link'. Dedup never touched.
+ *   6. Linked Issue:
+ *        - Existing dedup row → finalize delivery error='duplicate',
+ *          return 'duplicate' (WBHK-06). No Issue mutation.
+ *        - No prior row → INSERT dedup, update Issue.externalStatus +
+ *          Issue.lastSyncedAt, update WebhookConfig.lastReceivedAt, finalize
+ *          delivery error=null, return 'updated'.
  *
  * After tx commit: emit WEBHOOK_RECEIVED audit (D-16, D-17). actor='__system__'.
  * Audit emission is awaited (Phase 63 REL-01 — no fire-and-forget) — the
@@ -88,29 +97,37 @@ export async function applyJiraIssueUpdate(
         },
       });
 
-      // Step 2: Synthetic short-circuit (D-20). Dedup INSERT lives INSIDE this
-      // branch so two synthetic clicks demonstrate the duplicate path (SC#5 lock).
-      if (payload.synthetic) {
-        try {
-          await tx.webhookEventDedup.create({
-            data: {
-              webhookConfigId,
-              payloadDigest,
-              processedAt: receivedAt,
-            },
-          });
-        } catch (err) {
-          if (isUniqueConstraintError(err)) {
-            // Second synthetic click for the same payloadDigest.
-            await tx.webhookDelivery.update({
-              where: { id: delivery.id },
-              data: { statusCode, latencyMs, error: "duplicate" },
-            });
-            return { outcome: "duplicate", deliveryId: delivery.id };
-          }
-          throw err; // non-P2002 → caller maps to "error"
-        }
+      // Step 2: Pre-INSERT SELECT for prior application of this payload.
+      // Doing this BEFORE any branch lets us avoid a try/catch around
+      // tx.webhookEventDedup.create — Postgres aborts the tx on P2002 so we
+      // cannot recover from a thrown unique-constraint error inside the
+      // transaction. The unique constraint still backstops the rare TOCTOU
+      // race (two concurrent webhooks both passing the SELECT) — the loser's
+      // INSERT throws, the outer catch returns 'error', and Jira's retry
+      // resolves cleanly via the now-committed row.
+      const priorDedup = await tx.webhookEventDedup.findFirst({
+        where: { webhookConfigId, payloadDigest },
+        select: { id: true },
+      });
 
+      // Step 3: Synthetic short-circuit (D-20). Dedup is written INSIDE this
+      // branch so two synthetic clicks demonstrate the duplicate path (SC#5).
+      if (payload.synthetic) {
+        if (priorDedup) {
+          // Second synthetic click for the same payloadDigest.
+          await tx.webhookDelivery.update({
+            where: { id: delivery.id },
+            data: { statusCode, latencyMs, error: "duplicate" },
+          });
+          return { outcome: "duplicate", deliveryId: delivery.id };
+        }
+        await tx.webhookEventDedup.create({
+          data: {
+            webhookConfigId,
+            payloadDigest,
+            processedAt: receivedAt,
+          },
+        });
         await tx.webhookDelivery.update({
           where: { id: delivery.id },
           data: { statusCode, latencyMs, error: "synthetic" },
@@ -122,7 +139,7 @@ export async function applyJiraIssueUpdate(
         return { outcome: "synthetic", deliveryId: delivery.id };
       }
 
-      // Step 3: Linked-Issue lookup (tenant-scoped — T-03-01).
+      // Step 4: Linked-Issue lookup (tenant-scoped — T-03-01).
       const linkedIssue = await tx.issue.findFirst({
         where: {
           externalKey: payload.issueKey,
@@ -132,7 +149,7 @@ export async function applyJiraIssueUpdate(
         select: { id: true },
       });
 
-      // Step 4: No-link path (D-14). Dedup table is NEVER touched in this branch
+      // Step 5: No-link path (D-14). Dedup table is NEVER touched in this branch
       // — no INSERT, no DELETE — so a future receipt of the same payload (after
       // a link is created) can be applied normally.
       if (!linkedIssue) {
@@ -147,28 +164,24 @@ export async function applyJiraIssueUpdate(
         return { outcome: "no-link", deliveryId: delivery.id };
       }
 
-      // Step 5: Linked-Issue branch. Dedup INSERT first (idempotency); on success
-      // apply externalStatus + lastSyncedAt (D-09 + WARNING #11 convergence with
-      // polling-sync freshness indicator).
-      try {
-        await tx.webhookEventDedup.create({
-          data: {
-            webhookConfigId,
-            payloadDigest,
-            processedAt: receivedAt,
-          },
+      // Step 6: Linked-Issue branch. If we already saw this payloadDigest, no
+      // double-update (WBHK-06). Otherwise INSERT dedup + apply externalStatus
+      // + lastSyncedAt (D-09 + WARNING #11 convergence with polling-sync
+      // freshness indicator).
+      if (priorDedup) {
+        await tx.webhookDelivery.update({
+          where: { id: delivery.id },
+          data: { statusCode, latencyMs, error: "duplicate" },
         });
-      } catch (err) {
-        if (isUniqueConstraintError(err)) {
-          // WBHK-06: same payloadDigest already applied → no double-update.
-          await tx.webhookDelivery.update({
-            where: { id: delivery.id },
-            data: { statusCode, latencyMs, error: "duplicate" },
-          });
-          return { outcome: "duplicate", deliveryId: delivery.id };
-        }
-        throw err; // non-P2002 → caller maps to "error"
+        return { outcome: "duplicate", deliveryId: delivery.id };
       }
+      await tx.webhookEventDedup.create({
+        data: {
+          webhookConfigId,
+          payloadDigest,
+          processedAt: receivedAt,
+        },
+      });
 
       await tx.issue.update({
         where: { id: linkedIssue.id },

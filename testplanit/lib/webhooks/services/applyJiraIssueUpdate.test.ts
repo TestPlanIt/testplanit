@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
       update: vi.fn(),
     },
     webhookEventDedup: {
+      findFirst: vi.fn(),
       create: vi.fn(),
       delete: vi.fn(),
     },
@@ -106,6 +107,9 @@ const resetTxMocks = () => {
   mocks.tx.issue.update.mockResolvedValue({});
   mocks.tx.webhookEventDedup.create.mockResolvedValue({});
   mocks.tx.webhookEventDedup.delete.mockResolvedValue({});
+  // Default: no prior dedup row (the SELECT pattern's "first time" path).
+  // Tests that exercise the duplicate path override this to return a row.
+  mocks.tx.webhookEventDedup.findFirst.mockResolvedValue(null);
   mocks.tx.issue.findFirst.mockResolvedValue(null);
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
     return (
@@ -189,18 +193,20 @@ describe("applyJiraIssueUpdate", () => {
     const first = await applyJiraIssueUpdate(input);
     expect(first.outcome).toBe("synthetic");
 
-    // Reset only call counts; keep mock implementations the same except the dedup.
+    // Reset only call counts; keep mock implementations the same except the dedup SELECT.
     mocks.tx.webhookDelivery.create.mockClear();
     mocks.tx.webhookDelivery.update.mockClear();
     mocks.tx.webhookConfig.update.mockClear();
     mocks.tx.issue.findFirst.mockClear();
     mocks.tx.issue.update.mockClear();
     mocks.tx.webhookEventDedup.create.mockClear();
+    mocks.tx.webhookEventDedup.findFirst.mockClear();
     mocks.captureAuditEvent.mockClear();
     mocks.tx.webhookDelivery.create.mockResolvedValue({ id: "del_2" });
-    mocks.tx.webhookEventDedup.create.mockRejectedValueOnce(p2002());
+    // Second synthetic call: priorDedup SELECT returns the row from click 1 → outcome 'duplicate'.
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({ id: "dedup_1" });
 
-    // Second synthetic call: dedup INSERT throws P2002 → outcome 'duplicate'.
+    // Second synthetic call: priorDedup detected → outcome 'duplicate'.
     const second = await applyJiraIssueUpdate(input);
     expect(second.outcome).toBe("duplicate");
     expect(second.deliveryId).toBe("del_2");
@@ -225,11 +231,12 @@ describe("applyJiraIssueUpdate", () => {
     );
   });
 
-  it("Test 2: linked-Issue duplicate (P2002) — fresh delivery row, no Issue mutation, attempt=1", async () => {
+  it("Test 2: linked-Issue duplicate (priorDedup detected) — fresh delivery row, no Issue mutation, attempt=1", async () => {
     const applyJiraIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 99 });
-    mocks.tx.webhookEventDedup.create.mockRejectedValueOnce(p2002());
+    // priorDedup SELECT returns a row → linked-Issue branch detects duplicate.
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({ id: "dedup_1" });
 
     const result = await applyJiraIssueUpdate(input);
 
