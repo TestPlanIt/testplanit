@@ -102,9 +102,9 @@ interface OutboundConfig {
  * generic-HMAC URL = a normal setup) with per-config Card showing the admin
  * label (`config.name`), URL, subscriptions, rotation panel (HMAC only),
  * send-test, and delete. All confirmations use shadcn AlertDialog (D-31) —
- * never `window.confirm`. Auto-detect of Slack vs Generic HMAC happens
- * client-side via `isSlackWebhookUrl()` so the admin sees the badge BEFORE
- * submitting (D-29).
+ * native browser confirms are forbidden. Auto-detect of Slack vs Generic
+ * HMAC happens client-side via `isSlackWebhookUrl()` so the admin sees the
+ * badge BEFORE submitting (D-29).
  *
  * HI-01: the `secret` column is explicitly excluded from the read select
  * clause; only post-create / post-rotate plaintext secrets reach the
