@@ -680,3 +680,232 @@ export async function updateOutboundSubscriptions(
     return { success: false, error: "Failed to update subscriptions" };
   }
 }
+
+// =============================================================================
+// v0.23.0 Phase 2 / Task 6.2 — Two-secret rotation lifecycle (D-04..D-06)
+// =============================================================================
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+export interface RotateResult {
+  success: boolean;
+  /** Plaintext NEW secret — show ONCE on rotation (D-06). */
+  secret?: string;
+  error?: string;
+}
+
+/**
+ * Plan 02-06 / Task 6.2 — D-04..D-06 hybrid rotation flow.
+ *
+ * Steady-state semantics:
+ *   1. The unique current active row (`retiredAt IS NULL AND autoRetireAt IS NULL`)
+ *      is demoted: `autoRetireAt = NOW() + 7d`. The dispatcher signs with both
+ *      keys during the overlap window so consumers can verify with either.
+ *   2. A new active row is created: `secret = enc(plaintext)`, `activatedAt = NOW()`,
+ *      no autoRetireAt set.
+ *   3. `WebhookConfig.secret` (Phase 1 column) is updated to the new encrypted
+ *      secret so legacy read paths stay in lockstep.
+ *
+ * Corrupt-state branches:
+ *   - Zero active rows: create new without demoting (recovery path; should
+ *     never happen post-create but a corrupted seed run shouldn't brick the
+ *     admin UI).
+ *   - Multiple active rows: returns an error and does NOT touch any rows.
+ *     Operations should run a one-off cleanup before retry.
+ */
+export async function rotateOutboundSecret(
+  configId: string
+): Promise<RotateResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const config = await prisma.webhookConfig.findUnique({
+    where: { id: configId },
+    select: { projectId: true, direction: true, adapterType: true },
+  });
+  if (!config) return { success: false, error: "Not found" };
+  if (config.direction !== "OUTBOUND") {
+    return { success: false, error: "Not an outbound webhook" };
+  }
+  if (config.adapterType === "SLACK") {
+    return {
+      success: false,
+      error: "Slack webhooks do not have a rotatable secret",
+    };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, config.projectId);
+  } catch {
+    return { success: false, error: "Failed to rotate secret" };
+  }
+  if (!authorized) return { success: false, error: "Forbidden" };
+
+  const plaintextSecret = generateSecret();
+  let encryptedSecret: string;
+  try {
+    encryptedSecret = await encrypt(plaintextSecret);
+  } catch {
+    return { success: false, error: "Failed to rotate secret" };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const activeSecrets = await tx.webhookConfigSecret.findMany({
+        where: {
+          webhookConfigId: configId,
+          retiredAt: null,
+          autoRetireAt: null,
+        },
+        select: { id: true },
+      });
+      if (activeSecrets.length > 1) {
+        throw new Error("MULTIPLE_ACTIVE");
+      }
+      // Demote the previous active (if exists). Zero-active is a recovery
+      // path — proceed to create a new active without demoting.
+      if (activeSecrets.length === 1) {
+        await tx.webhookConfigSecret.update({
+          where: { id: activeSecrets[0].id },
+          data: { autoRetireAt: new Date(Date.now() + SEVEN_DAYS_MS) },
+        });
+      }
+      await tx.webhookConfigSecret.create({
+        data: {
+          webhookConfigId: configId,
+          secret: encryptedSecret,
+          activatedAt: new Date(),
+        },
+      });
+      // Keep the Phase 1 column in lockstep with the canonical active.
+      await tx.webhookConfig.update({
+        where: { id: configId },
+        data: { secret: encryptedSecret },
+      });
+    });
+    return { success: true, secret: plaintextSecret };
+  } catch (err) {
+    if (err instanceof Error && err.message === "MULTIPLE_ACTIVE") {
+      return {
+        success: false,
+        error: "Multiple active secrets — contact support",
+      };
+    }
+    console.error("[webhook-config] rotateOutboundSecret failed", err);
+    return { success: false, error: "Failed to rotate secret" };
+  }
+}
+
+/**
+ * Plan 02-06 / Task 6.2 — manual immediate retire (admin override).
+ *
+ * Rejects retiring the current active row (callers must rotate first to
+ * avoid bricking the dispatcher) and idempotently rejects already-retired rows.
+ */
+export async function retireOutboundSecretNow(
+  secretId: string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const secret = await prisma.webhookConfigSecret.findUnique({
+    where: { id: secretId },
+    select: {
+      retiredAt: true,
+      autoRetireAt: true,
+      webhookConfig: { select: { projectId: true } },
+    },
+  });
+  if (!secret) return { success: false, error: "Not found" };
+  if (secret.retiredAt) return { success: false, error: "Already retired" };
+  if (secret.autoRetireAt === null) {
+    return {
+      success: false,
+      error: "Cannot retire the active secret — rotate first",
+    };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(
+      session,
+      secret.webhookConfig.projectId
+    );
+  } catch {
+    return { success: false, error: "Failed to retire secret" };
+  }
+  if (!authorized) return { success: false, error: "Forbidden" };
+
+  try {
+    await prisma.webhookConfigSecret.update({
+      where: { id: secretId },
+      data: { retiredAt: new Date() },
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("[webhook-config] retireOutboundSecretNow failed", err);
+    return { success: false, error: "Failed to retire secret" };
+  }
+}
+
+/**
+ * Plan 02-06 / Task 6.2 — extend the auto-retire window by 7 more days.
+ *
+ * Additive: each call adds 7 days to the existing `autoRetireAt` (so a
+ * second click within the window pushes it 14 days from the original
+ * demotion, not 7 from "now"). This matches the admin's mental model
+ * of "I need more time" without producing surprising regressions when
+ * clicking late in the window.
+ */
+export async function extendRetiringSecret(
+  secretId: string
+): Promise<{ success: boolean; newAutoRetireAt?: Date; error?: string }> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const secret = await prisma.webhookConfigSecret.findUnique({
+    where: { id: secretId },
+    select: {
+      retiredAt: true,
+      autoRetireAt: true,
+      webhookConfig: { select: { projectId: true } },
+    },
+  });
+  if (!secret) return { success: false, error: "Not found" };
+  if (secret.retiredAt) return { success: false, error: "Already retired" };
+  if (secret.autoRetireAt === null) {
+    return { success: false, error: "Cannot extend the active secret" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(
+      session,
+      secret.webhookConfig.projectId
+    );
+  } catch {
+    return { success: false, error: "Failed to extend secret" };
+  }
+  if (!authorized) return { success: false, error: "Forbidden" };
+
+  const newAutoRetireAt = new Date(
+    secret.autoRetireAt.getTime() + SEVEN_DAYS_MS
+  );
+  try {
+    await prisma.webhookConfigSecret.update({
+      where: { id: secretId },
+      data: { autoRetireAt: newAutoRetireAt },
+    });
+    return { success: true, newAutoRetireAt };
+  } catch (err) {
+    console.error("[webhook-config] extendRetiringSecret failed", err);
+    return { success: false, error: "Failed to extend secret" };
+  }
+}
