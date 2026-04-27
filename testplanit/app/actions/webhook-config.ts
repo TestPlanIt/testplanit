@@ -6,6 +6,7 @@ import { prisma } from "~/lib/prisma";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
+import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -401,5 +402,281 @@ export async function sendTestWebhook(
       statusCode: 0,
       error: err instanceof Error ? err.message : String(err),
     };
+  }
+}
+
+// =============================================================================
+// v0.23.0 Phase 2 — outbound webhook server actions (Plan 02-06)
+// =============================================================================
+
+const DEFAULT_OUTBOUND_PRESET: string[] = [
+  "test_run.completed",
+  "issue.created",
+];
+
+/**
+ * E2E HTTP override (Plan 02-08): when WEBHOOK_OUTBOUND_ALLOW_HTTP=true,
+ * skip the HTTPS-only check on outbound URLs. Production deploys NEVER set
+ * this var; it exists ONLY so the E2E can point at a local node:http stub
+ * server. Documented inline rather than tucked away in env.example.
+ *
+ * Read at function-call time (not module load) so tests + integration
+ * environments can flip the flag without re-importing.
+ */
+function isHttpOutboundAllowed(): boolean {
+  return process.env.WEBHOOK_OUTBOUND_ALLOW_HTTP === "true";
+}
+
+export interface CreateOutboundResult {
+  success: boolean;
+  configId?: string;
+  /** Plaintext secret — show ONCE on creation (D-06). Only set for GENERIC_HMAC. */
+  secret?: string;
+  error?: string;
+}
+
+/**
+ * Plan 02-06 / Task 6.1 — create an OUTBOUND WebhookConfig for the project.
+ *
+ * Auto-detects adapterType from the URL hostname (D-29):
+ *  - hooks.slack.com → SLACK   (no signing secret; URL is the credential)
+ *  - everything else → GENERIC_HMAC (seeds an initial WebhookConfigSecret)
+ *
+ * Both `name` and `url` are persisted into the new WebhookConfig columns
+ * added in Plan 02-01 (Blocker 4 fix).
+ */
+export async function createOutboundWebhook(input: {
+  projectId: number;
+  name: string;
+  url: string;
+  subscribedEvents?: string[];
+}): Promise<CreateOutboundResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // Blocker 4: name column is nullable on the schema for back-compat with
+  // INBOUND configs that don't carry an admin label, but OUTBOUND requires
+  // it per D-28. Validate trim-non-empty up front.
+  const trimmedName = input.name?.trim() ?? "";
+  if (trimmedName.length === 0) {
+    return { success: false, error: "Name is required" };
+  }
+
+  // URL validation runs BEFORE auth so invalid input doesn't probe the
+  // project-admin check (cheap-fail-first).
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(input.url);
+  } catch {
+    return { success: false, error: "Invalid URL" };
+  }
+  if (parsedUrl.protocol !== "https:" && !isHttpOutboundAllowed()) {
+    return { success: false, error: "URL must use HTTPS" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, input.projectId);
+  } catch (err) {
+    console.error(
+      "[webhook-config] auth check failed (createOutbound)",
+      err
+    );
+    return { success: false, error: "Failed to save webhook configuration" };
+  }
+  if (!authorized) {
+    return { success: false, error: "Forbidden" };
+  }
+
+  const adapterType: "SLACK" | "GENERIC_HMAC" = isSlackWebhookUrl(input.url)
+    ? "SLACK"
+    : "GENERIC_HMAC";
+  const subscribedEvents =
+    input.subscribedEvents ?? DEFAULT_OUTBOUND_PRESET;
+  const token = generateToken();
+
+  if (adapterType === "SLACK") {
+    // D-18: Slack URL is the credential — no HMAC signing secret needed.
+    try {
+      const config = await prisma.webhookConfig.create({
+        data: {
+          projectId: input.projectId,
+          adapterType: "SLACK",
+          direction: "OUTBOUND",
+          token,
+          secret: "", // Slack URL is the credential
+          subscribedEvents,
+          isActive: true,
+          name: trimmedName, // Blocker 4 — Plan 02-01 column
+          url: input.url, // Blocker 4 — Plan 02-01 column
+        },
+        select: { id: true },
+      });
+      return { success: true, configId: config.id };
+    } catch (err) {
+      console.error(
+        "[webhook-config] createOutboundWebhook (Slack) failed",
+        err
+      );
+      if (isUniqueConstraintError(err)) {
+        return {
+          success: false,
+          error: "An outbound Slack webhook for this project already exists",
+        };
+      }
+      return { success: false, error: "Failed to save webhook configuration" };
+    }
+  }
+
+  // GENERIC_HMAC path — seed an initial WebhookConfigSecret in the same tx
+  // so the dispatcher's two-secret signing has an active row from t=0.
+  const plaintextSecret = generateSecret();
+  let encryptedSecret: string;
+  try {
+    encryptedSecret = await encrypt(plaintextSecret);
+  } catch (err) {
+    console.error(
+      "[webhook-config] encrypt failed (createOutbound HMAC)",
+      err
+    );
+    return { success: false, error: "Failed to save webhook configuration" };
+  }
+
+  try {
+    const created = await prisma.$transaction(async (tx) => {
+      const config = await tx.webhookConfig.create({
+        data: {
+          projectId: input.projectId,
+          adapterType: "GENERIC_HMAC",
+          direction: "OUTBOUND",
+          token,
+          // Phase 1 column kept in sync with the active WebhookConfigSecret —
+          // the rotation flow keeps this lockstep so legacy code paths that
+          // read `WebhookConfig.secret` directly still see the current key.
+          secret: encryptedSecret,
+          subscribedEvents,
+          isActive: true,
+          name: trimmedName, // Blocker 4
+          url: input.url, // Blocker 4
+        },
+        select: { id: true },
+      });
+      await tx.webhookConfigSecret.create({
+        data: {
+          webhookConfigId: config.id,
+          secret: encryptedSecret,
+          activatedAt: new Date(),
+        },
+      });
+      return config;
+    });
+    return {
+      success: true,
+      configId: created.id,
+      secret: plaintextSecret,
+    };
+  } catch (err) {
+    console.error("[webhook-config] createOutboundWebhook (HMAC) failed", err);
+    if (isUniqueConstraintError(err)) {
+      return {
+        success: false,
+        error: "An outbound HMAC webhook for this project already exists",
+      };
+    }
+    return { success: false, error: "Failed to save webhook configuration" };
+  }
+}
+
+/**
+ * Plan 02-06 / Task 6.1 — hard-delete an OUTBOUND webhook config.
+ *
+ * Cascades to WebhookDelivery + WebhookEventDedup + WebhookConfigSecret rows
+ * via `onDelete: Cascade` on the FK relations.
+ */
+export async function deleteOutboundWebhook(
+  configId: string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const config = await prisma.webhookConfig.findUnique({
+    where: { id: configId },
+    select: { projectId: true, direction: true },
+  });
+  if (!config) return { success: false, error: "Not found" };
+  if (config.direction !== "OUTBOUND") {
+    return { success: false, error: "Not an outbound webhook" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, config.projectId);
+  } catch (err) {
+    console.error(
+      "[webhook-config] auth check failed (deleteOutbound)",
+      err
+    );
+    return { success: false, error: "Failed to delete webhook configuration" };
+  }
+  if (!authorized) return { success: false, error: "Forbidden" };
+
+  try {
+    await prisma.webhookConfig.delete({ where: { id: configId } });
+    return { success: true };
+  } catch (err) {
+    console.error("[webhook-config] deleteOutboundWebhook failed", err);
+    return { success: false, error: "Failed to delete webhook configuration" };
+  }
+}
+
+/**
+ * Plan 02-06 / Task 6.1 — atomic update of `WebhookConfig.subscribedEvents`.
+ *
+ * Defensive runtime check on the array shape (matches Phase 1 pattern) — the
+ * type system catches most callers but server-action arguments deserialize
+ * from the wire and could in principle arrive as a non-array.
+ */
+export async function updateOutboundSubscriptions(
+  configId: string,
+  subscribedEvents: string[]
+): Promise<{ success: boolean; error?: string }> {
+  if (!Array.isArray(subscribedEvents)) {
+    return { success: false, error: "subscribedEvents must be an array" };
+  }
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const config = await prisma.webhookConfig.findUnique({
+    where: { id: configId },
+    select: { projectId: true, direction: true },
+  });
+  if (!config) return { success: false, error: "Not found" };
+  if (config.direction !== "OUTBOUND") {
+    return { success: false, error: "Not an outbound webhook" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, config.projectId);
+  } catch {
+    return { success: false, error: "Failed to update subscriptions" };
+  }
+  if (!authorized) return { success: false, error: "Forbidden" };
+
+  try {
+    await prisma.webhookConfig.update({
+      where: { id: configId },
+      data: { subscribedEvents },
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("[webhook-config] updateOutboundSubscriptions failed", err);
+    return { success: false, error: "Failed to update subscriptions" };
   }
 }
