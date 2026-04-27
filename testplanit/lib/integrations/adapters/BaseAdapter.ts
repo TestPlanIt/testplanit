@@ -179,6 +179,20 @@ export abstract class BaseAdapter implements IssueAdapter {
   }
 
   /**
+   * Parse the HTTP status from a makeRequest() error.
+   * makeRequest throws `new Error('HTTP ${status}: ${errorText}')` on non-2xx,
+   * so a regex pulls the status back out for fail-soft log-level routing.
+   * Returns null for non-HTTP errors (network, abort, malformed message).
+   */
+  protected parseStatusFromError(error: unknown): number | null {
+    if (error instanceof Error) {
+      const match = error.message.match(/^HTTP (\d+):/);
+      if (match) return parseInt(match[1], 10);
+    }
+    return null;
+  }
+
+  /**
    * Sleep for specified milliseconds
    */
   protected sleep(ms: number): Promise<void> {
