@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { AdapterType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -81,7 +82,7 @@ async function handleWebhookReceive(
   let webhookConfig: {
     id: string;
     projectId: number;
-    adapterType: "JIRA" | "GITHUB" | "AZURE_DEVOPS";
+    adapterType: AdapterType;
     secret: string;
     isActive: boolean;
   } | null = null;

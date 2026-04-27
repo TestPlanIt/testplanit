@@ -29,6 +29,14 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     expect(() => getAdapter("AZURE_DEVOPS")).toThrowError(/not implemented/i);
   });
 
+  it("throws an error containing 'OUTBOUND-only' for AdapterType.SLACK (Phase 2 outbound-only — must never reach inbound receiver)", () => {
+    expect(() => getAdapter("SLACK")).toThrowError(/OUTBOUND-only/);
+  });
+
+  it("throws an error containing 'OUTBOUND-only' for AdapterType.GENERIC_HMAC (Phase 2 outbound-only — must never reach inbound receiver)", () => {
+    expect(() => getAdapter("GENERIC_HMAC")).toThrowError(/OUTBOUND-only/);
+  });
+
   it("throws an error containing 'unknown adapter type' for an unknown AdapterType", () => {
     expect(() => getAdapter("UNKNOWN" as AdapterType)).toThrowError(
       /unknown adapter type/i
@@ -45,5 +53,9 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     // future AdapterType enum value forces a compile-time decision here.
     expect(registry.GITHUB).toBeNull();
     expect(registry.AZURE_DEVOPS).toBeNull();
+    // Phase 2 outbound-only adapters: null in the inbound registry; outbound
+    // dispatch lives in workers/webhook-dispatch-worker.ts, not here.
+    expect(registry.SLACK).toBeNull();
+    expect(registry.GENERIC_HMAC).toBeNull();
   });
 });
