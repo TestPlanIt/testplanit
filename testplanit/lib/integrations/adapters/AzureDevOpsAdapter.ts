@@ -5,6 +5,7 @@ import {
   IssueAdapterCapabilities,
   IssueData,
   IssueSearchOptions,
+  LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
 
@@ -34,7 +35,7 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       webhooks: true,
       customFields: true,
       attachments: true,
-      linkedIssues: false, // flipped to true in Plan 01-04 when getLinkedIssues() is implemented
+      linkedIssues: true,
     };
   }
 
@@ -267,6 +268,25 @@ export class AzureDevOpsAdapter extends BaseAdapter {
     return this.mapAzureDevOpsWorkItem(response);
   }
 
+  async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
+    try {
+      const response = await this.makeRequest<any>(
+        this.buildUrl(
+          `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}&$expand=relations`
+        )
+      );
+      return this.mapWorkItemRelations(response);
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[AzureDevOpsAdapter] getLinkedIssues failed for ${issueId}:`,
+        error
+      );
+      return [];
+    }
+  }
+
   async searchIssues(options: IssueSearchOptions): Promise<{
     issues: IssueData[];
     total: number;
@@ -486,6 +506,42 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       id: uploadResponse.id,
       url: uploadResponse.url,
     };
+  }
+
+  private mapWorkItemRelations(workItem: any): LinkedIssueRef[] {
+    const relations = Array.isArray(workItem?.relations)
+      ? workItem.relations
+      : [];
+    const refs: LinkedIssueRef[] = [];
+    const SYSTEM_PREFIX = "System.LinkTypes.";
+
+    for (const relation of relations) {
+      const rel = relation?.rel;
+      if (typeof rel !== "string" || !rel.startsWith(SYSTEM_PREFIX)) continue;
+
+      const url = relation?.url;
+      if (typeof url !== "string") continue;
+
+      const idMatch = url.match(/workItems\/(\d+)$/i);
+      if (!idMatch) continue;
+
+      const linkType = rel.substring(SYSTEM_PREFIX.length);
+      let direction: "outward" | "inward";
+      if (linkType.endsWith("-Reverse")) {
+        direction = "inward";
+      } else {
+        direction = "outward";
+      }
+
+      refs.push({
+        id: idMatch[1],
+        key: idMatch[1],
+        linkType,
+        direction,
+      });
+    }
+
+    return refs;
   }
 
   private mapAzureDevOpsWorkItem(workItem: any): IssueData {

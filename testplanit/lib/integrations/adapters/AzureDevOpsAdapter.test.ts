@@ -66,7 +66,7 @@ describe("AzureDevOpsAdapter", () => {
         webhooks: true,
         customFields: true,
         attachments: true,
-        linkedIssues: false,
+        linkedIssues: true,
       });
     });
   });
@@ -810,7 +810,7 @@ describe("AzureDevOpsAdapter", () => {
               { rel: "System.LinkTypes.Related" },
               {
                 rel: "System.LinkTypes.Related",
-                url: "https://dev.azure.com/org/proj/_apis/wit/notWorkItems/500",
+                url: "https://dev.azure.com/org/proj/_apis/wit/attachments/abc",
               },
             ],
           }),
