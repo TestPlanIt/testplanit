@@ -67,7 +67,7 @@ interface TestResultDisplay {
  * 'duplicate' on the second.
  */
 export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
-  const t = useTranslations("projects.settings.integrations.webhooks");
+  const t = useTranslations("projects.settings.webhooks");
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
 

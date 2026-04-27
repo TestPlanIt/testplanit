@@ -32,6 +32,7 @@ import {
   Share2,
   Sparkles,
   Tags as TagsIcon,
+  Webhook,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -259,6 +260,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.integrations"),
             path: "settings/integrations",
             id: "settings-integrations-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Webhook,
+            label: t("admin.menu.webhooks"),
+            path: "settings/webhooks",
+            id: "settings-webhooks-link",
             section: "settings" as MenuSection,
           },
           {

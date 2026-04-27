@@ -36,10 +36,11 @@ test.describe("Jira inbound webhook — admin form + send-test self-loop", () =>
     page,
     baseURL,
   }) => {
-    await page.goto(`${baseURL}/projects/settings/${projectId}/integrations`);
+    await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
 
-    // Form is mounted on the integrations page (extends, not replaces, the
-    // existing project-integration-settings card).
+    // Form is mounted on the dedicated /webhooks page — sibling to
+    // /integrations (Phase 1.5 relocation; webhooks are a transport-layer
+    // concern, not nested under any specific feature integration).
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
 
