@@ -390,6 +390,7 @@ model Projects {
     sharedStepGroups            SharedStepGroup[]
     projectIntegrations         ProjectIntegration[]
     webhookConfigs              WebhookConfig[]
+    webhookOutboxEvents         WebhookOutboxEvent[]
     projectLlmIntegrations      ProjectLlmIntegration[]
     codeRepositoryConfig        ProjectCodeRepositoryConfig?
     promptConfigId              String?
@@ -3628,6 +3629,50 @@ model WebhookConfigSecret {
         webhookConfig.project.creator == auth() ||
         webhookConfig.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
         webhookConfig.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+}
+
+// v0.23.0 Phase 2 — transactional outbox table for outbound webhook events (D-01, D-03).
+//
+// Each domain mutation that should fire an outbound event writes ONE row here
+// inside the producing transaction (via the lib/webhooks/events.ts helper that
+// the lib/prisma.ts $extends middleware calls — D-01 revised). Crash safety is
+// guaranteed because the row commits in the same tx as the entity change.
+//
+// The webhookOutboxWorker polls this table every ~2s for `dispatchedAt IS NULL`
+// rows using `SELECT ... FOR UPDATE SKIP LOCKED` (D-02), fans each row out to
+// every matching WebhookConfig (subscribedEvents match — D-33), enqueues one
+// dispatch job per matching config, and marks `dispatchedAt = now()`.
+//
+// Deliberately NO FK to WebhookConfig (D-03): one outbox row → N delivery
+// chains; the fan-out happens at dispatch time. eventId is the stable UUID
+// that lands on every WebhookDelivery row produced from this row (OUT-05).
+model WebhookOutboxEvent {
+    id              String      @id @default(cuid())
+    projectId       Int
+    project         Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    eventName       String      // e.g. "test_run.completed", "issue.created" (D-09..D-13 catalog)
+    eventId         String      // UUID v4 generated at emit time (OUT-05); stable across retries; lands on every WebhookDelivery row
+    eventTimestamp  DateTime    @default(now()) @db.Timestamptz(6) // ISO-8601 envelope eventTimestamp (OUT-20)
+    actorUserId     String?     // null when actor is the system (e.g. backfill, cron); resolved from auditContext at emit time (D-01)
+    payload         Json        // event-specific data; full envelope is built at dispatch time (D-14)
+    dispatchedAt    DateTime?   @db.Timestamptz(6) // null = pending poll; non-null = the poller has fanned out and enqueued
+    createdAt       DateTime    @default(now()) @db.Timestamptz(6)
+
+    @@index([dispatchedAt, createdAt]) // poller scans WHERE dispatchedAt IS NULL ORDER BY createdAt
+    @@index([projectId, eventName])    // ad-hoc admin reads for a single project's event stream
+
+    // Same posture as WebhookConfig/WebhookDelivery: deny-all-writes at the
+    // policy layer; the lib/webhooks/events.ts helper writes via raw prisma
+    // (D-32). Reads are project-admin scoped — note the policy traverses
+    // `project` directly because there is NO FK to WebhookConfig (D-03).
+    @@deny('all', !auth())
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
     )
 }
 
