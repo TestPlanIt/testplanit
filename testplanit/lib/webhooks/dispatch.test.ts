@@ -366,7 +366,7 @@ describe("dispatchWebhook", () => {
     // Success path
     const fetchSuccess = vi
       .fn()
-      .mockResolvedValue(new Response("", { status: 204 }));
+      .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSuccess as any;
     const prismaSuccess = buildPrismaMock({
       outboxEvent: baseOutboxEvent,
