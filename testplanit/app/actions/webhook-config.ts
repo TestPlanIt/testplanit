@@ -66,15 +66,20 @@ export async function createOrRotateJiraWebhook(
   try {
     db = await getEnhancedDb(session);
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    console.error("[webhook-config] getEnhancedDb failed", err);
+    return { success: false, error: "Failed to save webhook configuration" };
   }
 
   const token = generateToken();
   const plaintextSecret = generateSecret();
-  const encryptedSecret = await encrypt(plaintextSecret);
+
+  let encryptedSecret: string;
+  try {
+    encryptedSecret = await encrypt(plaintextSecret);
+  } catch (err) {
+    console.error("[webhook-config] encrypt failed", err);
+    return { success: false, error: "Failed to save webhook configuration" };
+  }
 
   const origin = process.env.NEXTAUTH_URL ?? "";
   const url = `${origin}/api/webhooks/${token}`;
@@ -114,10 +119,12 @@ export async function createOrRotateJiraWebhook(
       secret: plaintextSecret,
     };
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    // Friendly error to client, raw error logged server-side (LO-04). Includes
+    // the create-race case (concurrent admins both creating) which surfaces as
+    // P2002 on the (projectId, adapterType, direction) unique constraint —
+    // see ME-03 for retry-with-update follow-up; for now a friendly message.
+    console.error("[webhook-config] createOrRotate failed", err);
+    return { success: false, error: "Failed to save webhook configuration" };
   }
 }
 
@@ -144,20 +151,16 @@ export async function deleteJiraWebhook(
   try {
     db = await getEnhancedDb(session);
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    console.error("[webhook-config] getEnhancedDb failed (delete)", err);
+    return { success: false, error: "Failed to delete webhook configuration" };
   }
 
   try {
     await db.webhookConfig.delete({ where: { id: configId } });
     return { success: true };
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    console.error("[webhook-config] delete failed", err);
+    return { success: false, error: "Failed to delete webhook configuration" };
   }
 }
 
@@ -195,22 +198,43 @@ export async function sendTestWebhook(
   try {
     db = await getEnhancedDb(session);
   } catch (err) {
-    return {
-      ok: false,
-      statusCode: 401,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    console.error("[webhook-config] getEnhancedDb failed (sendTest)", err);
+    return { ok: false, statusCode: 401, error: "Unauthorized" };
   }
 
-  const config = await db.webhookConfig.findUnique({
-    where: { id: configId },
-    select: { token: true, secret: true, projectId: true },
-  });
+  let config: { token: string; secret: string; projectId: number } | null;
+  try {
+    config = await db.webhookConfig.findUnique({
+      where: { id: configId },
+      select: { token: true, secret: true, projectId: true },
+    });
+  } catch (err) {
+    console.error("[webhook-config] findUnique failed (sendTest)", err);
+    return {
+      ok: false,
+      statusCode: 500,
+      error: "Failed to load webhook configuration",
+    };
+  }
   if (!config) {
     return { ok: false, statusCode: 404, error: "Not found" };
   }
 
-  const plainSecret = await decrypt(config.secret);
+  let plainSecret: string;
+  try {
+    plainSecret = await decrypt(config.secret);
+  } catch (err) {
+    // CR-02 mitigation context: a project admin who bypassed the server
+    // action and wrote a non-encrypted blob into `secret` would surface here.
+    // After Cluster 3 CR-02 fix this becomes effectively unreachable.
+    console.error("[webhook-config] decrypt failed (sendTest)", err);
+    return {
+      ok: false,
+      statusCode: 500,
+      error: "Webhook secret could not be decrypted",
+    };
+  }
+
   const sig =
     "sha256=" +
     createHmac("sha256", plainSecret).update(SYNTHETIC_PAYLOAD).digest("hex");
@@ -237,6 +261,10 @@ export async function sendTestWebhook(
       outcome: upstreamBody.outcome,
     };
   } catch (err) {
+    // Network/fetch failure (target unreachable, DNS, TLS, etc). The error
+    // text is genuinely useful diagnostically for admins debugging connectivity
+    // — keep it through to the UI (ME-02 i18n template will surface it).
+    console.error("[webhook-config] fetch failed (sendTest)", err);
     return {
       ok: false,
       statusCode: 0,

@@ -205,7 +205,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           statusCode: testResult.statusCode,
           outcome: testResult.outcome ?? "",
         })
-      : t("testFailure", { statusCode: testResult.statusCode });
+      : t("testFailure", {
+          statusCode: testResult.statusCode,
+          error: testResult.error ?? "",
+        });
     return (
       <div
         data-testid="webhook-test-result"

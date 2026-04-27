@@ -110,100 +110,90 @@ export async function applyJiraIssueUpdate(
         select: { id: true },
       });
 
+      // Outcome is computed via the branch logic below; the SHARED tail at
+      // the bottom of the tx finalizes the delivery row + bumps
+      // WebhookConfig.lastReceivedAt unconditionally so the admin UI's
+      // "last received" timestamp is honest during replay storms (ME-01 —
+      // every accepted receipt counts, including duplicates).
+      let outcome: TxOutcome;
+      let deliveryError: string | null = null;
+
       // Step 3: Synthetic short-circuit (D-20). Dedup is written INSIDE this
       // branch so two synthetic clicks demonstrate the duplicate path (SC#5).
       if (payload.synthetic) {
         if (priorDedup) {
-          // Second synthetic click for the same payloadDigest.
-          await tx.webhookDelivery.update({
-            where: { id: delivery.id },
-            data: { statusCode, latencyMs, error: "duplicate" },
+          deliveryError = "duplicate";
+          outcome = { outcome: "duplicate", deliveryId: delivery.id };
+        } else {
+          await tx.webhookEventDedup.create({
+            data: {
+              webhookConfigId,
+              payloadDigest,
+              processedAt: receivedAt,
+            },
           });
-          return { outcome: "duplicate", deliveryId: delivery.id };
+          deliveryError = "synthetic";
+          outcome = { outcome: "synthetic", deliveryId: delivery.id };
         }
-        await tx.webhookEventDedup.create({
-          data: {
-            webhookConfigId,
-            payloadDigest,
-            processedAt: receivedAt,
+      } else {
+        // Step 4: Linked-Issue lookup (tenant-scoped — T-03-01).
+        const linkedIssue = await tx.issue.findFirst({
+          where: {
+            externalKey: payload.issueKey,
+            isDeleted: false,
+            project: { id: projectId },
           },
+          select: { id: true },
         });
-        await tx.webhookDelivery.update({
-          where: { id: delivery.id },
-          data: { statusCode, latencyMs, error: "synthetic" },
-        });
-        await tx.webhookConfig.update({
-          where: { id: webhookConfigId },
-          data: { lastReceivedAt: receivedAt },
-        });
-        return { outcome: "synthetic", deliveryId: delivery.id };
+
+        if (!linkedIssue) {
+          // Step 5: No-link path (D-14). Dedup table is NEVER touched in this
+          // branch — no INSERT, no DELETE — so a future receipt of the same
+          // payload (after a link is created) can be applied normally.
+          deliveryError = "no-link";
+          outcome = { outcome: "no-link", deliveryId: delivery.id };
+        } else if (priorDedup) {
+          // Step 6a: Already-applied payload — no double-update (WBHK-06).
+          deliveryError = "duplicate";
+          outcome = { outcome: "duplicate", deliveryId: delivery.id };
+        } else {
+          // Step 6b: First-time linked apply — INSERT dedup + update Issue.
+          await tx.webhookEventDedup.create({
+            data: {
+              webhookConfigId,
+              payloadDigest,
+              processedAt: receivedAt,
+            },
+          });
+          await tx.issue.update({
+            where: { id: linkedIssue.id },
+            data: {
+              externalStatus: payload.externalStatus,
+              lastSyncedAt: receivedAt,
+              // D-10: deliberately NOT touching Issue.status (internal normalized status).
+            },
+          });
+          deliveryError = null;
+          outcome = {
+            outcome: "updated",
+            deliveryId: delivery.id,
+            issueId: linkedIssue.id,
+          };
+        }
       }
 
-      // Step 4: Linked-Issue lookup (tenant-scoped — T-03-01).
-      const linkedIssue = await tx.issue.findFirst({
-        where: {
-          externalKey: payload.issueKey,
-          isDeleted: false,
-          project: { id: projectId },
-        },
-        select: { id: true },
-      });
-
-      // Step 5: No-link path (D-14). Dedup table is NEVER touched in this branch
-      // — no INSERT, no DELETE — so a future receipt of the same payload (after
-      // a link is created) can be applied normally.
-      if (!linkedIssue) {
-        await tx.webhookDelivery.update({
-          where: { id: delivery.id },
-          data: { statusCode, latencyMs, error: "no-link" },
-        });
-        await tx.webhookConfig.update({
-          where: { id: webhookConfigId },
-          data: { lastReceivedAt: receivedAt },
-        });
-        return { outcome: "no-link", deliveryId: delivery.id };
-      }
-
-      // Step 6: Linked-Issue branch. If we already saw this payloadDigest, no
-      // double-update (WBHK-06). Otherwise INSERT dedup + apply externalStatus
-      // + lastSyncedAt (D-09 + WARNING #11 convergence with polling-sync
-      // freshness indicator).
-      if (priorDedup) {
-        await tx.webhookDelivery.update({
-          where: { id: delivery.id },
-          data: { statusCode, latencyMs, error: "duplicate" },
-        });
-        return { outcome: "duplicate", deliveryId: delivery.id };
-      }
-      await tx.webhookEventDedup.create({
-        data: {
-          webhookConfigId,
-          payloadDigest,
-          processedAt: receivedAt,
-        },
-      });
-
-      await tx.issue.update({
-        where: { id: linkedIssue.id },
-        data: {
-          externalStatus: payload.externalStatus,
-          lastSyncedAt: receivedAt,
-          // D-10: deliberately NOT touching Issue.status (internal normalized status).
-        },
-      });
+      // Shared tail: finalize delivery row + bump lastReceivedAt for ALL
+      // outcomes (ME-01). lastReceivedAt reflects every successful HTTP
+      // receipt, not just the non-duplicate first-time applies.
       await tx.webhookDelivery.update({
         where: { id: delivery.id },
-        data: { statusCode, latencyMs, error: null },
+        data: { statusCode, latencyMs, error: deliveryError },
       });
       await tx.webhookConfig.update({
         where: { id: webhookConfigId },
         data: { lastReceivedAt: receivedAt },
       });
-      return {
-        outcome: "updated",
-        deliveryId: delivery.id,
-        issueId: linkedIssue.id,
-      };
+      return outcome;
     });
   } catch (err) {
     // D-11: any throw inside the transaction rolls back. No delivery, no dedup, no audit.

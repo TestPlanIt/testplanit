@@ -1068,7 +1068,7 @@
           "deleteConfirm": "Delete this webhook configuration? Inbound deliveries will be rejected.",
           "sendTest": "Send test webhook",
           "testSuccess": "Test webhook accepted (HTTP {statusCode}, outcome: {outcome})",
-          "testFailure": "Test webhook failed (HTTP {statusCode})",
+          "testFailure": "Test webhook failed (HTTP {statusCode}): {error}",
           "saveError": "Failed to save webhook configuration",
           "lastReceived": "Last received: {timestamp}",
           "lastReceivedNever": "No deliveries yet",

@@ -121,6 +121,8 @@ export async function POST(
     adapter = getAdapter(webhookConfig.adapterType);
   } catch (err) {
     // Unknown / not-yet-implemented adapter (GITHUB, AZURE_DEVOPS — Phase 3).
+    // Return 501 (ME-04) so the sender (Jira/GitHub/ADO) does NOT retry —
+    // a missing adapter is a config mismatch, not a transient server fault.
     console.error(
       "[webhooks] no adapter registered for token",
       redactToken(token),
@@ -128,7 +130,7 @@ export async function POST(
       webhookConfig.adapterType,
       err
     );
-    return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: false }, { status: 501 });
   }
 
   // 5. HMAC verification (D-12 / WBHK-02). Pure function, no I/O.

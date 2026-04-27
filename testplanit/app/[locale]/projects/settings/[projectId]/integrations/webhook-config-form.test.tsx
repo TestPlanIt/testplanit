@@ -47,7 +47,7 @@ vi.mock("sonner", () => ({
 // production.
 const KEY_TEMPLATES: Record<string, string> = {
   testSuccess: "HTTP {statusCode} {outcome}",
-  testFailure: "HTTP {statusCode} testFailure",
+  testFailure: "HTTP {statusCode} testFailure {error}",
   lastReceived: "Last received: {timestamp}",
 };
 

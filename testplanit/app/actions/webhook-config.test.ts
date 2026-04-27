@@ -160,7 +160,7 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("Test 4 (denial path): returns error from ZenStack policy", async () => {
+    it("Test 4 (denial path): returns friendly error string when ZenStack policy denies (raw error logged server-side per LO-04)", async () => {
       mockWebhookConfigDelete.mockRejectedValue(
         new Error("denied by policy: cannot delete")
       );
@@ -168,7 +168,10 @@ describe("webhook-config server actions", () => {
       const result = await deleteJiraWebhook("cfg-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("denied by policy");
+      // Raw error message is NOT bubbled to client — it would leak policy
+      // implementation detail. The raw error is captured server-side via
+      // console.error inside the catch (verified by tests in earlier rounds).
+      expect(result.error).toBe("Failed to delete webhook configuration");
     });
 
     it("Test 4 (unauth): returns Unauthorized when session missing", async () => {
