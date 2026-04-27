@@ -165,6 +165,41 @@ describe("POST /api/webhooks/[token]", () => {
     expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
   });
 
+  it("Test 5b (HI-03) — returns 400 on unparseable-body (client bug, not auth)", async () => {
+    // HMAC succeeded but the body wasn't valid JSON. Senders should NOT retry
+    // a 400 — the bug is on their side; retrying won't fix it.
+    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: false,
+      reason: "unparseable-body",
+    } satisfies VerifyResult);
+    const { req, params } = makeRequest("not-json", FULL_TOKEN);
+
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false });
+    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+  });
+
+  it("Test 5c (HI-03) — returns 200 on missing-required-field (HMAC valid, event non-actionable)", async () => {
+    // HMAC succeeded and the JSON parsed, but the payload lacks issue.key or
+    // status — typical for jira:issue_deleted, comment-only events, etc.
+    // 200 prevents Jira from retry-storming a non-actionable event forever.
+    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: false,
+      reason: "missing-required-field",
+    } satisfies VerifyResult);
+    const { req, params } = makeRequest("{}", FULL_TOKEN);
+
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: false });
+    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+  });
+
   it("Test 6 — happy path: verifies, computes payloadDigest, returns 200 (WBHK-01/04/07)", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({

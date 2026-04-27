@@ -157,6 +157,40 @@ describe("webhook-config server actions", () => {
         select: { id: true },
       });
     });
+
+    it("Test 3b (HI-05/ME-03): concurrent-create race — P2002 on first INSERT triggers a single retry via the rotate path", async () => {
+      // Two admins click 'Configure Jira webhook' simultaneously: both
+      // findFirst() return null, both attempt create(), one wins and the
+      // loser hits P2002. The loser should fall through to the
+      // isUniqueConstraintError branch and rotate the now-existing row.
+      const Prisma = await import("@prisma/client");
+      const p2002 = new Prisma.Prisma.PrismaClientKnownRequestError(
+        "Unique constraint failed",
+        { code: "P2002", clientVersion: "test" }
+      );
+      // First findFirst (pre-create check): no row yet.
+      // Second findFirst (retry-after-P2002): the winner's row.
+      mockWebhookConfigFindFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: "cfg-winner" });
+      mockWebhookConfigCreate.mockRejectedValueOnce(p2002);
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-winner" });
+
+      const result = await createOrRotateJiraWebhook(42);
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-winner");
+      expect(mockWebhookConfigCreate).toHaveBeenCalledTimes(1);
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-winner" },
+        data: expect.objectContaining({
+          token: expect.stringMatching(/^whk_[0-9a-f]{64}$/),
+          secret: expect.stringMatching(/^enc:/),
+          isActive: true,
+        }),
+        select: { id: true },
+      });
+    });
   });
 
   describe("deleteJiraWebhook", () => {

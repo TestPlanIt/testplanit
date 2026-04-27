@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getAdapter } from "~/lib/webhooks/adapters";
 import type { VerifyResult } from "~/lib/webhooks/adapters/types";
@@ -41,7 +42,15 @@ import { decrypt } from "~/utils/encryption";
  */
 const MAX_WEBHOOK_BYTES = 1_048_576;
 
-export async function POST(
+/**
+ * The webhook receiver runs without a user session — `__system__` is the
+ * audit actor (Phase 64 D-13). `withAuditContext` (ME-05) seeds the ALS
+ * frame with ipAddress (sender's address — useful for forensics and rate-
+ * limiting investigations), userAgent (typically "JIRA Webhooks"), and a
+ * per-request requestId. The downstream `captureAuditEvent` call inside
+ * `applyJiraIssueUpdate` picks these up automatically.
+ */
+async function handleWebhookReceive(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ): Promise<Response> {
@@ -141,12 +150,32 @@ export async function POST(
   );
   if (!verify.valid) {
     console.warn(
-      "[webhooks] HMAC verification rejected for token",
+      "[webhooks] verify rejected for token",
       redactToken(token),
       "reason=",
       verify.reason
     );
-    return NextResponse.json({ ok: false }, { status: 401 });
+    // HI-03: map VerifyFail.reason to the right HTTP status so senders
+    // (Jira / GitHub / ADO) take the right retry posture.
+    //   - missing- / malformed- / signature-mismatch → 401 (genuine auth fail)
+    //   - unparseable-body → 400 (client bug; do not retry)
+    //   - missing-required-field → 200 (HMAC succeeded but the event is
+    //     non-actionable, e.g., jira:issue_deleted without a status field;
+    //     200 prevents retry storms but we DO NOT write a delivery row
+    //     because we have no parsed payload — a follow-up could log a
+    //     minimal "non-actionable" delivery row keyed by raw payloadDigest)
+    let status: number;
+    switch (verify.reason) {
+      case "unparseable-body":
+        status = 400;
+        break;
+      case "missing-required-field":
+        status = 200;
+        break;
+      default:
+        status = 401;
+    }
+    return NextResponse.json({ ok: false }, { status });
   }
 
   // 6. Compute payloadDigest over the EXACT raw bytes (D-04 idempotency key).
@@ -181,3 +210,10 @@ export async function POST(
     { status: 200 }
   );
 }
+
+// ME-05: wrap with `withAuditContext` so the inbound webhook handler runs
+// inside an AsyncLocalStorage frame seeded with ipAddress/userAgent/requestId.
+// `captureAuditEvent` in the downstream sync service picks these up
+// automatically — same posture as the v0.22.1 actor-context completeness
+// pattern (Phase 64), even though the receiver has no user session.
+export const POST = withAuditContext(handleWebhookReceive);

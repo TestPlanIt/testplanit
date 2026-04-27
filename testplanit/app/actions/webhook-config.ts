@@ -3,6 +3,7 @@
 import { createHmac, randomBytes } from "node:crypto";
 
 import { prisma } from "~/lib/prisma";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { decrypt, encrypt } from "~/utils/encryption";
@@ -130,10 +131,45 @@ export async function createOrRotateJiraWebhook(
       secret: plaintextSecret,
     };
   } catch (err) {
-    // Friendly error to client, raw error logged server-side (LO-04). Includes
-    // the create-race case (concurrent admins both creating) which surfaces as
-    // P2002 on the (projectId, adapterType, direction) unique constraint —
-    // see ME-03 for retry-with-update follow-up; for now a friendly message.
+    // ME-03 / HI-05: discriminate the concurrent-create race using the
+    // shared `isUniqueConstraintError` helper. If two admins click
+    // 'Configure Jira webhook' simultaneously, both findFirst() return
+    // null, both attempt create(), one wins and the loser hits P2002 on
+    // the @@unique([projectId, adapterType, direction]) constraint. The
+    // loser falls back to a single retry that takes the rotate-existing
+    // branch — yielding the same end-state as the winner: one config row,
+    // a fresh URL/secret pair returned. (Server actions are
+    // non-recursive so we cap at one retry; if that also fails we
+    // surface the friendly error.)
+    if (isUniqueConstraintError(err)) {
+      console.warn(
+        "[webhook-config] createOrRotate hit concurrent-create race; retrying via rotate path"
+      );
+      try {
+        const existing = await prisma.webhookConfig.findFirst({
+          where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
+          select: { id: true },
+        });
+        if (existing) {
+          const config = await prisma.webhookConfig.update({
+            where: { id: existing.id },
+            data: { token, secret: encryptedSecret, isActive: true },
+            select: { id: true },
+          });
+          return {
+            success: true,
+            configId: config.id,
+            url,
+            secret: plaintextSecret,
+          };
+        }
+      } catch (retryErr) {
+        console.error(
+          "[webhook-config] createOrRotate concurrent-race retry failed",
+          retryErr
+        );
+      }
+    }
     console.error("[webhook-config] createOrRotate failed", err);
     return { success: false, error: "Failed to save webhook configuration" };
   }

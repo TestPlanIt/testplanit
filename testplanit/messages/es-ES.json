@@ -1068,7 +1068,7 @@
           "deleteConfirm": "¿Eliminar esta configuración de webhook? Se rechazarán las entregas entrantes.",
           "sendTest": "Enviar webhook de prueba",
           "testSuccess": "Webhook de prueba aceptado (HTTP {statusCode}, resultado: {outcome})",
-          "testFailure": "La prueba del webhook falló (HTTP {statusCode})",
+          "testFailure": "La prueba del webhook falló (HTTP {statusCode}): {error}",
           "saveError": "No se pudo guardar la configuración del webhook.",
           "lastReceived": "Última recepción: {timestamp}",
           "lastReceivedNever": "Aún no hay entregas",
