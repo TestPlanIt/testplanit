@@ -3481,11 +3481,17 @@ model WebhookConfig {
     token           String              @unique // routing key, e.g. "whk_<32-byte-hex>"
     secret          String              // HMAC verification secret, encrypted at rest by application code
     isActive        Boolean             @default(true)
+    // v0.23.0 Phase 2 — outbound dispatch additions (all nullable for Phase 1 back-compat)
+    subscribedEvents String[]           @default([])     // OUT-19: per-event opt-in; empty array = subscribe-all (D-33)
+    endpointHealth  EndpointHealth      @default(HEALTHY) // Phase 2 only writes HEALTHY; DEGRADED/DISABLED transitions land in Phase 4 (DEL-04..07)
+    url             String?                              // OUTBOUND destination URL (e.g. https://hooks.slack.com/services/...). Phase 1 INBOUND leaves NULL — receiver derives URL from token.
+    name            String?                              // D-28: admin-facing label for OUTBOUND configs (e.g. "Engineering Slack"). Phase 1 INBOUND leaves NULL.
     lastReceivedAt  DateTime?           @db.Timestamptz(6)
     createdAt       DateTime            @default(now()) @db.Timestamptz(6)
     updatedAt       DateTime            @updatedAt
     deliveries      WebhookDelivery[]
     eventDedups     WebhookEventDedup[]
+    secrets         WebhookConfigSecret[] // v0.23.0 Phase 2 — two-secret overlap rotation (D-04)
 
     @@unique([projectId, adapterType, direction]) // one config per (project, adapter, direction)
     @@index([projectId])
