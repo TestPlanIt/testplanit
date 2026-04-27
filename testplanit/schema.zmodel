@@ -3593,6 +3593,44 @@ model WebhookEventDedup {
     )
 }
 
+// v0.23.0 Phase 2 — two-secret overlap rotation (D-04..07).
+//
+// Child rows are the rotation history of `WebhookConfig.secret`. Steady state
+// is one row (active). Pressing "Rotate" creates a NEW row (becomes the active
+// one — its activatedAt is now()) and demotes the previous row by setting
+// autoRetireAt = now() + 7d. A daily scheduler cron retires rows where
+// retiredAt IS NULL AND autoRetireAt < now(). During the rotation window the
+// generic-HMAC adapter signs with BOTH secrets and emits both v1= entries
+// (D-06: Stripe wire format `t=<ts>,v1=<active>,v1=<retiring>`).
+//
+// `secret` is encrypted at rest using the same `utils/encryption.ts` helper
+// Phase 1 uses for `WebhookConfig.secret` (D-07).
+model WebhookConfigSecret {
+    id              String        @id @default(cuid())
+    webhookConfigId String
+    webhookConfig   WebhookConfig @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    secret          String        // HMAC signing secret; encrypted at rest by application code (utils/encryption.ts)
+    activatedAt     DateTime      @default(now()) @db.Timestamptz(6)
+    retiredAt       DateTime?     @db.Timestamptz(6) // null = currently active or retiring; non-null = retired and unused
+    autoRetireAt    DateTime?     @db.Timestamptz(6) // null = no auto-retire scheduled (steady state); non-null = retiring; cron retires when now() > autoRetireAt
+    createdAt       DateTime      @default(now()) @db.Timestamptz(6)
+
+    @@index([webhookConfigId, activatedAt])
+    @@index([retiredAt, autoRetireAt]) // for the daily auto-retire cron sweep
+
+    // Same posture as WebhookConfig: ALL client writes blocked at policy layer.
+    // Server actions in app/actions/webhook-config.ts use raw `prisma` after
+    // calling canManageWebhookConfig(session, projectId) — D-32.
+    @@deny('all', !auth())
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read',
+        webhookConfig.project.creator == auth() ||
+        webhookConfig.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        webhookConfig.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+}
+
 // LLM Integration Models
 
 model LlmProviderConfig {
