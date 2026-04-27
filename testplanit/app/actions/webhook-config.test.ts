@@ -13,6 +13,11 @@ const mockWebhookConfigFindUnique = vi.fn();
 const mockWebhookConfigCreate = vi.fn();
 const mockWebhookConfigUpdate = vi.fn();
 const mockWebhookConfigDelete = vi.fn();
+const mockWebhookConfigSecretCreate = vi.fn();
+const mockWebhookConfigSecretFindMany = vi.fn();
+const mockWebhookConfigSecretFindUnique = vi.fn();
+const mockWebhookConfigSecretUpdate = vi.fn();
+const mockTransaction = vi.fn();
 vi.mock("~/lib/prisma", () => ({
   prisma: {
     webhookConfig: {
@@ -22,6 +27,14 @@ vi.mock("~/lib/prisma", () => ({
       update: (...args: unknown[]) => mockWebhookConfigUpdate(...args),
       delete: (...args: unknown[]) => mockWebhookConfigDelete(...args),
     },
+    webhookConfigSecret: {
+      create: (...args: unknown[]) => mockWebhookConfigSecretCreate(...args),
+      findMany: (...args: unknown[]) => mockWebhookConfigSecretFindMany(...args),
+      findUnique: (...args: unknown[]) =>
+        mockWebhookConfigSecretFindUnique(...args),
+      update: (...args: unknown[]) => mockWebhookConfigSecretUpdate(...args),
+    },
+    $transaction: (...args: unknown[]) => mockTransaction(...args),
   },
 }));
 
@@ -39,6 +52,15 @@ const mockDecrypt = vi.fn();
 vi.mock("~/utils/encryption", () => ({
   encrypt: (...args: unknown[]) => mockEncrypt(...args),
   decrypt: (...args: unknown[]) => mockDecrypt(...args),
+}));
+
+// Phase 2 — webhookEvents.emit is called by sendTestOutboundWebhook to fire
+// the synthetic webhook.test event into the outbox.
+const mockWebhookEventsEmit = vi.fn();
+vi.mock("~/lib/webhooks/events", () => ({
+  webhookEvents: {
+    emit: (...args: unknown[]) => mockWebhookEventsEmit(...args),
+  },
 }));
 
 // Capture original fetch, install a vitest spy default.
@@ -468,6 +490,334 @@ describe("webhook-config server actions", () => {
       expect(result.ok).toBe(false);
       expect(result.statusCode).toBe(0);
       expect(result.error).toContain("ECONNREFUSED");
+    });
+  });
+
+  // =========================================================================
+  // v0.23.0 Phase 2 — Outbound webhook server actions (Plan 02-06)
+  // =========================================================================
+
+  describe("createOutboundWebhook (Phase 2)", () => {
+    beforeEach(() => {
+      delete process.env.WEBHOOK_OUTBOUND_ALLOW_HTTP;
+    });
+
+    it("returns Unauthorized when session is missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "My Hook",
+        url: "https://example.com/hook",
+      });
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("Blocker 4: rejects when name is empty/whitespace with 'Name is required'", async () => {
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const r1 = await createOutboundWebhook({
+        projectId: 42,
+        name: "",
+        url: "https://example.com/hook",
+      });
+      const r2 = await createOutboundWebhook({
+        projectId: 42,
+        name: "   ",
+        url: "https://example.com/hook",
+      });
+
+      expect(r1).toEqual({ success: false, error: "Name is required" });
+      expect(r2).toEqual({ success: false, error: "Name is required" });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("rejects with 'Forbidden' when canManageWebhookConfig returns false", async () => {
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "My Hook",
+        url: "https://example.com/hook",
+      });
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("rejects invalid URLs with 'Invalid URL'", async () => {
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "My Hook",
+        url: "not-a-url",
+      });
+
+      expect(result).toEqual({ success: false, error: "Invalid URL" });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("rejects http:// URLs with 'URL must use HTTPS' when ALLOW_HTTP_OUTBOUND is unset", async () => {
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "My Hook",
+        url: "http://example.com/hook",
+      });
+
+      expect(result).toEqual({ success: false, error: "URL must use HTTPS" });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("E2E override: accepts http:// URLs when WEBHOOK_OUTBOUND_ALLOW_HTTP=true", async () => {
+      process.env.WEBHOOK_OUTBOUND_ALLOW_HTTP = "true";
+      // Re-import after env mutation so the module-level constant picks up.
+      vi.resetModules();
+      mockTransaction.mockImplementation(async (fn: any) =>
+        fn({
+          webhookConfig: {
+            create: (args: any) => mockWebhookConfigCreate(args),
+          },
+          webhookConfigSecret: {
+            create: (args: any) => mockWebhookConfigSecretCreate(args),
+          },
+        })
+      );
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-http" });
+      mockWebhookConfigSecretCreate.mockResolvedValue({ id: "sec-http" });
+
+      const { createOutboundWebhook } = await import("./webhook-config");
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "Local Stub",
+        url: "http://localhost:9999/hook",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-http");
+      delete process.env.WEBHOOK_OUTBOUND_ALLOW_HTTP;
+    });
+
+    it("Slack URL: auto-detects adapterType=SLACK, sets secret='', NO WebhookConfigSecret row, persists name+url (Blocker 4)", async () => {
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-slack" });
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "  Team Slack  ", // whitespace should be trimmed
+        url: "https://hooks.slack.com/services/T000/B000/abc",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-slack");
+      expect(result.secret).toBeUndefined();
+
+      expect(mockWebhookConfigCreate).toHaveBeenCalledTimes(1);
+      const callArg = mockWebhookConfigCreate.mock.calls[0][0];
+      expect(callArg.data).toMatchObject({
+        projectId: 42,
+        adapterType: "SLACK",
+        direction: "OUTBOUND",
+        secret: "", // Slack URL is the credential (D-18)
+        name: "Team Slack", // trimmed
+        url: "https://hooks.slack.com/services/T000/B000/abc",
+        isActive: true,
+      });
+      expect(callArg.data.subscribedEvents).toEqual([
+        "test_run.completed",
+        "issue.created",
+      ]);
+      // No secret row for Slack
+      expect(mockWebhookConfigSecretCreate).not.toHaveBeenCalled();
+    });
+
+    it("Slack URL: maps unique-constraint error to friendly message", async () => {
+      const Prisma = await import("@prisma/client");
+      const p2002 = new Prisma.Prisma.PrismaClientKnownRequestError(
+        "Unique constraint failed",
+        { code: "P2002", clientVersion: "test" }
+      );
+      mockWebhookConfigCreate.mockRejectedValueOnce(p2002);
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "Team Slack",
+        url: "https://hooks.slack.com/services/T000/B000/abc",
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: "An outbound Slack webhook for this project already exists",
+      });
+    });
+
+    it("Generic-HMAC URL: detects GENERIC_HMAC, creates WebhookConfigSecret row, returns plaintext secret, persists name+url (Blocker 4)", async () => {
+      // Arrange: $transaction calls back with a tx client mock.
+      mockTransaction.mockImplementation(async (fn: any) =>
+        fn({
+          webhookConfig: {
+            create: (args: any) => mockWebhookConfigCreate(args),
+          },
+          webhookConfigSecret: {
+            create: (args: any) => mockWebhookConfigSecretCreate(args),
+          },
+        })
+      );
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-hmac" });
+      mockWebhookConfigSecretCreate.mockResolvedValue({ id: "sec-1" });
+
+      const { createOutboundWebhook } = await import("./webhook-config");
+      const result = await createOutboundWebhook({
+        projectId: 42,
+        name: "Custom HMAC",
+        url: "https://example.com/webhooks/in",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-hmac");
+      expect(result.secret).toBeTruthy();
+      // Plaintext, not encrypted blob
+      expect(result.secret!.startsWith("enc:")).toBe(false);
+
+      // Config create payload — Blocker 4 — name and url persisted into columns.
+      const cfgCallArg = mockWebhookConfigCreate.mock.calls[0][0];
+      expect(cfgCallArg.data).toMatchObject({
+        projectId: 42,
+        adapterType: "GENERIC_HMAC",
+        direction: "OUTBOUND",
+        name: "Custom HMAC",
+        url: "https://example.com/webhooks/in",
+        isActive: true,
+      });
+      expect(cfgCallArg.data.secret).toBe(`enc:${result.secret}`);
+
+      // Secret row created with same encrypted secret
+      expect(mockWebhookConfigSecretCreate).toHaveBeenCalledTimes(1);
+      const secCallArg = mockWebhookConfigSecretCreate.mock.calls[0][0];
+      expect(secCallArg.data).toMatchObject({
+        webhookConfigId: "cfg-hmac",
+        secret: `enc:${result.secret}`,
+      });
+      expect(secCallArg.data.activatedAt).toBeInstanceOf(Date);
+    });
+
+    it("respects custom subscribedEvents when provided", async () => {
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-slack-2" });
+      const { createOutboundWebhook } = await import("./webhook-config");
+
+      await createOutboundWebhook({
+        projectId: 42,
+        name: "Team Slack",
+        url: "https://hooks.slack.com/services/T1/B1/zzz",
+        subscribedEvents: ["test_run.state_changed"],
+      });
+
+      const callArg = mockWebhookConfigCreate.mock.calls[0][0];
+      expect(callArg.data.subscribedEvents).toEqual([
+        "test_run.state_changed",
+      ]);
+    });
+  });
+
+  describe("deleteOutboundWebhook (Phase 2)", () => {
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { deleteOutboundWebhook } = await import("./webhook-config");
+
+      const result = await deleteOutboundWebhook("cfg-1");
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+
+    it("returns 'Not found' when config doesn't exist", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue(null);
+      const { deleteOutboundWebhook } = await import("./webhook-config");
+
+      const result = await deleteOutboundWebhook("cfg-missing");
+
+      expect(result).toEqual({ success: false, error: "Not found" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+
+    it("rejects INBOUND configs with 'Not an outbound webhook'", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+      });
+      const { deleteOutboundWebhook } = await import("./webhook-config");
+
+      const result = await deleteOutboundWebhook("cfg-inbound");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Not an outbound webhook",
+      });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+
+    it("happy path: deletes the config", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+      });
+      mockWebhookConfigDelete.mockResolvedValue({ id: "cfg-1" });
+      const { deleteOutboundWebhook } = await import("./webhook-config");
+
+      const result = await deleteOutboundWebhook("cfg-1");
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigDelete).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+      });
+    });
+  });
+
+  describe("updateOutboundSubscriptions (Phase 2)", () => {
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { updateOutboundSubscriptions } = await import("./webhook-config");
+
+      const result = await updateOutboundSubscriptions("cfg-1", ["a"]);
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+    });
+
+    it("rejects non-array argument with type-guard error", async () => {
+      const { updateOutboundSubscriptions } = await import("./webhook-config");
+
+      // @ts-expect-error testing runtime guard
+      const result = await updateOutboundSubscriptions("cfg-1", "not-array");
+
+      expect(result).toEqual({
+        success: false,
+        error: "subscribedEvents must be an array",
+      });
+    });
+
+    it("happy path: updates subscribedEvents column", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+      });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
+      const { updateOutboundSubscriptions } = await import("./webhook-config");
+
+      const events = ["issue.created", "test_run.state_changed"];
+      const result = await updateOutboundSubscriptions("cfg-1", events);
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+        data: { subscribedEvents: events },
+      });
     });
   });
 });
