@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GitHubAdapter } from "./GitHubAdapter";
 
 // Mock global fetch
@@ -384,6 +384,275 @@ describe("GitHubAdapter", () => {
       await expect(adapterNoRepo.getIssue("42")).rejects.toThrow(
         "GitHub repository not configured"
       );
+    });
+  });
+
+  describe("getLinkedIssues", () => {
+    const mockSubIssuesResponse = [
+      {
+        id: 1234567,
+        number: 42,
+        title: "Sub one",
+        html_url: "https://github.com/testowner/testrepo/issues/42",
+      },
+      {
+        id: 1234568,
+        number: 43,
+        title: "Sub two",
+        html_url: "https://github.com/testowner/testrepo/issues/43",
+      },
+    ];
+
+    const mockTimelineResponse = [
+      { event: "labeled", actor: { login: "u" } },
+      {
+        event: "cross-referenced",
+        actor: { login: "u" },
+        source: {
+          type: "issue",
+          issue: {
+            id: 9876543,
+            number: 99,
+            repository: { full_name: "acme/other-repo" },
+          },
+        },
+      },
+      { event: "closed", actor: { login: "u" } },
+    ];
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should return refs from both sub_issues and cross-referenced timeline events on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSubIssuesResponse),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(3);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          {
+            id: "1234567",
+            key: "#42",
+            linkType: "sub_issue",
+            direction: "outward",
+          },
+          {
+            id: "1234568",
+            key: "#43",
+            linkType: "sub_issue",
+            direction: "outward",
+          },
+          {
+            id: "9876543",
+            key: "#99",
+            linkType: "cross_referenced",
+            direction: "inward",
+          },
+        ])
+      );
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/sub_issues")
+        )
+      ).toBe(true);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/timeline")
+        )
+      ).toBe(true);
+    });
+
+    it("should return only sub_issues entries when timeline call fails with 503 and log at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSubIssuesResponse),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(2);
+      expect(result.every((r) => r.linkType === "sub_issue")).toBe(true);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("timeline");
+      errorSpy.mockRestore();
+    });
+
+    it("should return only cross-referenced entries when sub_issues call fails with 403 and log at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].linkType).toBe("cross_referenced");
+      expect(result[0].direction).toBe("inward");
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("sub_issues");
+      warnSpy.mockRestore();
+    });
+
+    it("should return [] and log error twice when both sub_issues and timeline fail with 5xx", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        statusText: "Bad Gateway",
+        text: () => Promise.resolve("Bad Gateway"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        statusText: "Bad Gateway",
+        text: () => Promise.resolve("Bad Gateway"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(2);
+      errorSpy.mockRestore();
+    });
+
+    it("should return only cross-referenced entries when sub_issues raises a network error", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].linkType).toBe("cross_referenced");
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("sub_issues");
+      errorSpy.mockRestore();
+    });
+
+    it("should filter timeline events to only cross-referenced ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { event: "labeled", actor: { login: "u" } },
+            {
+              event: "cross-referenced",
+              actor: { login: "u" },
+              source: {
+                type: "issue",
+                issue: { id: 1, number: 1 },
+              },
+            },
+            { event: "closed", actor: { login: "u" } },
+          ]),
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "1",
+        key: "#1",
+        linkType: "cross_referenced",
+        direction: "inward",
+      });
+    });
+
+    it("should parse owner/repo#number form for both sub_issues and timeline URLs", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getLinkedIssues!("acme/widgets#42");
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/widgets/issues/42/sub_issues")
+        )
+      ).toBe(true);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/widgets/issues/42/timeline")
+        )
+      ).toBe(true);
+    });
+
+    it("should use configured owner/repo and the issue number when issueId starts with #", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getLinkedIssues!("#42");
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/sub_issues")
+        )
+      ).toBe(true);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/timeline")
+        )
+      ).toBe(true);
     });
   });
 
