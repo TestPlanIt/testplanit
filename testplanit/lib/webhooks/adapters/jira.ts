@@ -38,8 +38,21 @@ interface JiraWebhookPayload {
     key?: string;
     fields?: { status?: { name?: string } };
   };
-  metadata?: { synthetic?: boolean };
+  // NOTE: `metadata.synthetic` is intentionally NOT modeled here. HI-02:
+  // any caller with a valid HMAC could otherwise set `metadata.synthetic`
+  // to `true` and silently suppress production Issue updates.
 }
+
+/**
+ * HI-02 sentinel: the self-loop server action emits this exact issue.key
+ * in its synthetic Jira-shaped payload. The receiver detects this key and
+ * short-circuits the linked-Issue step. A real Jira instance — or anyone
+ * with the secret — cannot trigger the synthetic path because it would
+ * have to send `__synthetic__` as the actual Jira issue key, which Jira
+ * itself does not produce. Server-side intent is bound to a value an
+ * external caller cannot legitimately forge.
+ */
+export const SYNTHETIC_ISSUE_KEY = "__synthetic__";
 
 function parsePayload(rawBody: Buffer): JiraWebhookPayload | null {
   try {
@@ -58,7 +71,11 @@ function buildPayload(p: JiraWebhookPayload): ParsedWebhookPayload | null {
     eventType,
     issueKey,
     externalStatus,
-    synthetic: p.metadata?.synthetic === true,
+    // HI-02: `synthetic` is bound to the sentinel issue.key, NOT to any
+    // wire-controllable metadata field. This is the only way for the
+    // receiver to learn "this came from the self-loop" without trusting
+    // attacker-supplied JSON.
+    synthetic: issueKey === SYNTHETIC_ISSUE_KEY,
   };
 }
 

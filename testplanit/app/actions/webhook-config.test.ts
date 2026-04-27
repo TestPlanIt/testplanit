@@ -58,10 +58,13 @@ import {
 const EXPECTED_SYNTHETIC_PAYLOAD = JSON.stringify({
   webhookEvent: "jira:issue_updated",
   issue: {
-    key: "FAKE-9999",
+    // HI-02: synthetic intent is bound to the sentinel issue.key — no
+    // wire-controllable `metadata.synthetic` boolean. A real Jira can't
+    // legitimately produce this key, so the synthetic path is reachable
+    // only via the server-side self-loop.
+    key: "__synthetic__",
     fields: { status: { name: "Synthetic Test" } },
   },
-  metadata: { synthetic: true },
 });
 
 describe("webhook-config server actions", () => {
@@ -391,8 +394,8 @@ describe("webhook-config server actions", () => {
       expect(sig1).toBe(expectedSignature());
     });
 
-    // ─── Test 9: D-20 sentinel propagated ────────────────────────────────
-    it("Test 9: synthetic payload contains metadata.synthetic === true (D-20 sentinel)", async () => {
+    // ─── Test 9: HI-02 sentinel issue.key in synthetic payload ───────────
+    it("Test 9 (HI-02): synthetic payload uses sentinel issue.key='__synthetic__' and contains NO wire-supplied metadata.synthetic boolean", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
@@ -408,7 +411,13 @@ describe("webhook-config server actions", () => {
 
       const body = fetchSpy.mock.calls[0][1].body as string;
       const parsed = JSON.parse(body);
-      expect(parsed.metadata).toEqual({ synthetic: true });
+      // Synthetic intent is bound to the issue.key sentinel.
+      expect(parsed.issue.key).toBe("__synthetic__");
+      // The wire-controllable metadata.synthetic boolean MUST NOT be present —
+      // the receiver-side adapter ignores it for non-sentinel keys, and we
+      // don't want a misleading marker on the wire that could confuse log
+      // analysis or external observers.
+      expect(parsed.metadata).toBeUndefined();
     });
 
     // ─── Test 10: fetch throws → returned as { ok: false, statusCode: 0 } ─

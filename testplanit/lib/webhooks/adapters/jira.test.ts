@@ -120,10 +120,16 @@ describe("jiraAdapter", () => {
     });
   });
 
-  it("Test 7 (synthetic ping per D-20): metadata.synthetic === true is propagated to payload.synthetic", () => {
+  it("Test 7a (HI-02): synthetic flag is bound to issue.key === '__synthetic__', NOT to wire metadata", () => {
+    // The self-loop server action sends issue.key='__synthetic__'; the adapter
+    // detects that exact key and sets payload.synthetic=true. A real Jira can't
+    // legitimately produce this key, so external callers cannot forge synthetic.
     const syntheticPayload = {
-      ...validJiraPayload,
-      metadata: { synthetic: true },
+      webhookEvent: "jira:issue_updated",
+      issue: {
+        key: "__synthetic__",
+        fields: { status: { name: "Synthetic Test" } },
+      },
     };
     const body = bodyOf(syntheticPayload);
     const sig = signBody(body, SECRET);
@@ -132,8 +138,26 @@ describe("jiraAdapter", () => {
     expect(result.valid).toBe(true);
     if (result.valid) {
       expect(result.payload.synthetic).toBe(true);
+      expect(result.payload.issueKey).toBe("__synthetic__");
+    }
+  });
+
+  it("Test 7b (HI-02): wire-supplied metadata.synthetic=true is IGNORED for non-sentinel issue keys", () => {
+    // A real Jira instance (or anyone with the secret) attempting to forge
+    // synthetic via the metadata field MUST NOT succeed. The adapter binds
+    // synthetic to the issue.key sentinel, never to wire-supplied metadata.
+    const forgedPayload = {
+      ...validJiraPayload,
+      metadata: { synthetic: true }, // ← attacker-supplied, must be ignored
+    };
+    const body = bodyOf(forgedPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.payload.synthetic).toBe(false);
       expect(result.payload.issueKey).toBe("DEMO-1");
-      expect(result.payload.externalStatus).toBe("Done");
     }
   });
 

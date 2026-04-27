@@ -3,12 +3,13 @@
 import { createHmac, randomBytes } from "node:crypto";
 
 import { prisma } from "~/lib/prisma";
+import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
- * D-20 / BLOCKER #5 — byte-identical synthetic payload across clicks.
+ * D-20 / BLOCKER #5 / HI-02 — byte-identical synthetic payload across clicks.
  *
  * The two-click SC#5 demo determinism depends on this payload being LITERALLY
  * the same bytes every time `sendTestWebhook` runs. A `Date.now`, a `nonce`,
@@ -18,16 +19,19 @@ import { getServerAuthSession } from "~/server/auth";
  * Static literal → identical SHA-256 digest → second click of `sendTestWebhook`
  * deterministically returns `outcome='duplicate'` from the receiver. SC#5 demo lock.
  *
- * `metadata.synthetic === true` is the D-20 sentinel that plan 01-03's sync
- * service uses to short-circuit BEFORE touching any production Issue.
+ * HI-02: synthetic intent is bound to `issue.key === SYNTHETIC_ISSUE_KEY` (the
+ * sentinel `__synthetic__`). The receiver-side adapter detects that exact key
+ * to short-circuit; we no longer use a wire-controllable `metadata.synthetic`
+ * boolean (which any HMAC-valid sender could forge). A real Jira instance
+ * cannot legitimately produce an issue with this key, so the synthetic path
+ * is reachable only by the server's own self-loop.
  */
 const SYNTHETIC_PAYLOAD = JSON.stringify({
   webhookEvent: "jira:issue_updated",
   issue: {
-    key: "FAKE-9999",
+    key: SYNTHETIC_ISSUE_KEY,
     fields: { status: { name: "Synthetic Test" } },
   },
-  metadata: { synthetic: true },
 });
 
 function generateToken(): string {
