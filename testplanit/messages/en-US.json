@@ -1072,7 +1072,9 @@
           "copyUrl": "Copy webhook URL",
           "copySecret": "Copy webhook secret",
           "urlCopied": "Webhook URL copied to clipboard",
-          "secretCopied": "Webhook secret copied to clipboard"
+          "secretCopied": "Webhook secret copied to clipboard",
+          "nextSteps": "Next: paste these into Jira's webhook configuration. Use \"Send test webhook\" below to verify the pipeline. Click \"Done\" once you've saved the secret to hide it (it cannot be shown again).",
+          "revealDone": "Done"
         },
         "configuredIntegration": "Configured Integration",
         "noIntegrationAssigned": "No issue integration assigned",

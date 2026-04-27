@@ -121,10 +121,14 @@ describe("WebhookConfigForm", () => {
       configurable: true,
       value: { origin: "https://app.example.test" },
     });
-    // Default: no config + not loading.
+    // Default: no config + not loading. `refetch` is included because
+    // handleCreate / handleRotate await it after a successful mutation
+    // so the just-created webhook populates `data` and the action buttons
+    // render alongside the reveal block.
     mockFindFirstWebhookConfig.mockReturnValue({
       data: null,
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: null }),
     });
   });
 
@@ -163,6 +167,7 @@ describe("WebhookConfigForm", () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: { ...baseConfig } }),
     });
 
     render(<WebhookConfigForm projectId={42} />);
@@ -186,6 +191,7 @@ describe("WebhookConfigForm", () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: { ...baseConfig } }),
     });
     mockSendTest.mockResolvedValue({
       ok: true,
@@ -210,6 +216,7 @@ describe("WebhookConfigForm", () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: { ...baseConfig } }),
     });
     mockSendTest.mockResolvedValue({
       ok: true,
@@ -233,6 +240,7 @@ describe("WebhookConfigForm", () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: { ...baseConfig } }),
     });
     mockSendTest.mockResolvedValue({
       ok: false,
@@ -255,6 +263,7 @@ describe("WebhookConfigForm", () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: { ...baseConfig } }),
     });
     mockCreateOrRotate.mockResolvedValue({
       success: true,
@@ -288,6 +297,7 @@ describe("WebhookConfigForm", () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: { ...baseConfig } }),
     });
     mockDelete.mockResolvedValue({ success: true });
 

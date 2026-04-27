@@ -1072,7 +1072,9 @@
           "copyUrl": "Copier l'URL du webhook",
           "copySecret": "Copier le secret du webhook",
           "urlCopied": "URL du webhook copiée dans le presse-papiers",
-          "secretCopied": "Secret du webhook copié dans le presse-papiers"
+          "secretCopied": "Secret du webhook copié dans le presse-papiers",
+          "nextSteps": "Ensuite : collez ces informations dans la configuration webhook de Jira. Utilisez l’option « Envoyer un webhook de test » ci-dessous pour vérifier le pipeline. Cliquez sur « Terminé » une fois le secret enregistré pour le masquer (il ne pourra plus être affiché).",
+          "revealDone": "Fait"
         },
         "configuredIntegration": "Intégration configurée",
         "noIntegrationAssigned": "Aucune intégration problématique assignée",

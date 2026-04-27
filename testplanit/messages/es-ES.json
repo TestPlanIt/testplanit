@@ -1072,7 +1072,9 @@
           "copyUrl": "Copiar la URL del webhook",
           "copySecret": "Copiar secreto del webhook",
           "urlCopied": "URL del webhook copiada al portapapeles",
-          "secretCopied": "Secreto del webhook copiado al portapapeles"
+          "secretCopied": "Secreto del webhook copiado al portapapeles",
+          "nextSteps": "A continuación: pega estos datos en la configuración de webhook de Jira. Usa la opción \"Enviar webhook de prueba\" que aparece a continuación para verificar el flujo de trabajo. Haz clic en \"Listo\" una vez que hayas guardado el secreto para ocultarlo (no se podrá volver a mostrar).",
+          "revealDone": "Hecho"
         },
         "configuredIntegration": "Integración configurada",
         "noIntegrationAssigned": "No hay integración de la incidencia asignada",

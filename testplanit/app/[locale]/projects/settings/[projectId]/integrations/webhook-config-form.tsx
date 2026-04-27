@@ -59,7 +59,11 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const t = useTranslations("projects.settings.integrations.webhooks");
   const tActions = useTranslations("common.actions");
 
-  const { data: webhook, isLoading } = useFindFirstWebhookConfig({
+  const {
+    data: webhook,
+    isLoading,
+    refetch,
+  } = useFindFirstWebhookConfig({
     where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
   });
 
@@ -85,6 +89,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       const result = await createOrRotateJiraWebhook(projectId);
       if (result.success && result.url && result.secret) {
         setRevealed({ url: result.url, secret: result.secret });
+        await refetch();
       } else {
         toast.error(result.error ?? t("saveError"));
       }
@@ -102,6 +107,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       const result = await createOrRotateJiraWebhook(projectId);
       if (result.success && result.url && result.secret) {
         setRevealed({ url: result.url, secret: result.secret });
+        await refetch();
       } else {
         toast.error(result.error ?? t("saveError"));
       }
@@ -236,6 +242,20 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-primary/20">
+              <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
+                {t("nextSteps")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid="webhook-reveal-done-button"
+                onClick={() => setRevealed(null)}
+              >
+                {t("revealDone")}
+              </Button>
             </div>
           </div>
         )}
