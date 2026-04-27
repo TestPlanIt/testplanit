@@ -7,16 +7,20 @@ import type {
 } from "./types";
 
 const SIGNATURE_HEADER_PRIMARY = "x-hub-signature-256";
-const SIGNATURE_HEADER_LEGACY = "x-hub-signature";
+// Atlassian's legacy webhook setup form labels its signature header
+// `x-hub-signature` — same name GitHub uses for SHA-1, but Jira sends
+// SHA-256 under it. We accept both header names; the strict
+// `sha256=` prefix + 64-hex-char regex below prevents a real GitHub
+// SHA-1 signature (`sha1=...`) from passing verification.
+const SIGNATURE_HEADER_FALLBACK = "x-hub-signature";
 const SIGNATURE_PREFIX = "sha256=";
 const HEX_64_RE = /^[0-9a-f]{64}$/;
 
 function readSignature(headers: Headers): string | null {
   // Headers API is case-insensitive — `headers.get` handles casing.
-  // Prefer the newer header per Atlassian's evolving docs; fall back to legacy.
   const raw =
     headers.get(SIGNATURE_HEADER_PRIMARY) ??
-    headers.get(SIGNATURE_HEADER_LEGACY);
+    headers.get(SIGNATURE_HEADER_FALLBACK);
   return raw ? raw.trim() : null;
 }
 

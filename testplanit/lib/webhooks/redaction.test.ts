@@ -20,8 +20,17 @@ describe("redactToken", () => {
     expect(redactToken("whk_short")).toBe("whk_…[redacted]");
   });
 
-  it("returns the input unchanged when it is not a whk_ token", () => {
-    expect(redactToken("not-a-webhook-token")).toBe("not-a-webhook-token");
+  it("sanitizes and truncates non-whk_ inputs (ME-06 log-injection prevention)", () => {
+    // Long non-whk_ input: keep first 16 chars, append redacted marker.
+    expect(redactToken("not-a-webhook-token")).toBe(
+      "not-a-webhook-to…[redacted]"
+    );
+    // Short non-whk_ input (≤16 chars): no truncation.
+    expect(redactToken("plain")).toBe("plain");
+    // Control chars / newlines stripped to "_" before truncation so an
+    // attacker can't inject fake log entries via /api/webhooks/<arbitrary>.
+    expect(redactToken("evil\n[FAKE LOG]")).toBe("evil__FAKE_LOG_");
+    expect(redactToken("a\rb\tc\x00d")).toBe("a_b_c_d");
   });
 
   it("returns empty string for nullish input", () => {

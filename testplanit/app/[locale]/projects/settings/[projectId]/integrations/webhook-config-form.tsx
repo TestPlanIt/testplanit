@@ -70,12 +70,27 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
 
+  // Explicit `select` excludes the encrypted `secret` field — the form never
+  // displays it, but auto-generated ZenStack hooks ship every scalar by
+  // default. Don't send encrypted secrets to the browser even if encrypted
+  // at rest (HI-01).
   const {
     data: webhook,
     isLoading,
     refetch,
   } = useFindFirstWebhookConfig({
     where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
+    select: {
+      id: true,
+      projectId: true,
+      adapterType: true,
+      direction: true,
+      token: true,
+      isActive: true,
+      lastReceivedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
   const { mutateAsync: updateWebhookConfig } = useUpdateWebhookConfig();

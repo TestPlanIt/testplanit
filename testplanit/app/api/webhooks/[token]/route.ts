@@ -31,6 +31,16 @@ import { decrypt } from "~/utils/encryption";
  * today; we use console.{warn,error} with token-redacted strings. Promotion to
  * Pino with a redaction config is a captured follow-up post-demo.
  */
+/**
+ * Maximum body size accepted by the receiver. Real Jira webhook payloads cap
+ * around 50 KiB; 1 MiB gives a generous safety margin while preventing
+ * unauthenticated callers from buffering multi-GB POSTs and OOM'ing the pod
+ * before token/HMAC validation can short-circuit them. Next.js App Router has
+ * no default body-size limit on raw route handlers (the `serverActions`
+ * `bodySizeLimit` config does NOT apply here).
+ */
+const MAX_WEBHOOK_BYTES = 1_048_576;
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
@@ -39,10 +49,21 @@ export async function POST(
   const startMs = Date.now();
   const { token } = await params;
 
+  // 0. Reject oversize bodies BEFORE any auth or buffering. Content-Length is
+  //    a fast pre-check; the rawBody.byteLength check below catches missing or
+  //    chunked-transfer cases.
+  const declaredLength = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_WEBHOOK_BYTES) {
+    return NextResponse.json({ ok: false }, { status: 413 });
+  }
+
   // 1. Capture the raw request bytes BEFORE any other body access.
   //    Next.js 16 App Router consumes the body stream exactly once; the HMAC
   //    verifier needs the canonical bytes (not parse-and-re-stringified JSON).
   const rawBody = Buffer.from(await req.arrayBuffer());
+  if (rawBody.byteLength > MAX_WEBHOOK_BYTES) {
+    return NextResponse.json({ ok: false }, { status: 413 });
+  }
 
   // 2. Resolve the WebhookConfig by token. Public endpoint, no user session,
   //    so we use raw prisma per `feedback_default_to_enhanced_db.md` (the

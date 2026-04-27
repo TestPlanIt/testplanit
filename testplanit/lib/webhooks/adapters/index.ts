@@ -4,11 +4,18 @@ import type { WebhookAdapter } from "./types";
 
 /**
  * Registry of inbound webhook adapters keyed by AdapterType.
- * Phase 1: only JIRA is implemented. GITHUB and AZURE_DEVOPS will slot in
- * during Phase 3 by adding entries here — no other code changes needed.
+ *
+ * Phase 1 ships JIRA only; GITHUB and AZURE_DEVOPS slot in during Phase 3.
+ *
+ * Exhaustive Record (LO-05): a future `AdapterType` enum value forces a
+ * compile-time decision here rather than a runtime "Unknown adapter" 501 at
+ * request time. `null` placeholders represent "enum value exists, adapter
+ * not yet implemented" — the receiver maps that to 501 (Not Implemented).
  */
-export const ADAPTER_REGISTRY: Partial<Record<AdapterType, WebhookAdapter>> = {
+export const ADAPTER_REGISTRY: Record<AdapterType, WebhookAdapter | null> = {
   JIRA: jiraAdapter,
+  GITHUB: null,
+  AZURE_DEVOPS: null,
 };
 
 /**

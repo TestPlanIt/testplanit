@@ -15,12 +15,29 @@
 const TOKEN_PREFIX = "whk_";
 const PREFIX_KEEP = 8; // hex chars retained after the prefix
 const REDACTED = "…[redacted]";
+const SAFE_CHARS_RE = /[^a-zA-Z0-9_\-]/g;
+const PREVIEW_MAX = 16;
 
-/** Redact a bare token string. Returns input unchanged if not a `whk_` token. */
+/**
+ * Redact a bare token string for safe console.* logging.
+ *
+ * Sanitizes any non-`[A-Za-z0-9_-]` characters before logging so an attacker
+ * who hits `/api/webhooks/<arbitrary>` with newlines or control chars can't
+ * inject fake log entries (ME-06 — log-injection prevention). For valid
+ * `whk_<hex>` tokens, retains the prefix plus the first 8 hex chars for
+ * log correlation; for any other input, returns a sanitized truncated
+ * preview so the receiver can log "no active config for token" without
+ * trusting the wire string verbatim.
+ */
 export function redactToken(input: string | null | undefined): string {
   if (!input) return "";
-  if (!input.startsWith(TOKEN_PREFIX)) return input;
-  const tail = input.slice(TOKEN_PREFIX.length);
+  const safe = input.replace(SAFE_CHARS_RE, "_");
+  if (!safe.startsWith(TOKEN_PREFIX)) {
+    return (
+      safe.slice(0, PREVIEW_MAX) + (safe.length > PREVIEW_MAX ? REDACTED : "")
+    );
+  }
+  const tail = safe.slice(TOKEN_PREFIX.length);
   if (tail.length <= PREFIX_KEEP) {
     return `${TOKEN_PREFIX}${REDACTED}`;
   }

@@ -35,15 +35,15 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     );
   });
 
-  it("ADAPTER_REGISTRY is a Partial<Record<AdapterType, WebhookAdapter>> exposing JIRA", () => {
-    // Compile-time + runtime check of registry shape.
-    const registry: Partial<Record<AdapterType, WebhookAdapter>> =
+  it("ADAPTER_REGISTRY is exhaustive — every AdapterType has a slot, JIRA is implemented, others are null placeholders (LO-05)", () => {
+    const registry: Record<AdapterType, WebhookAdapter | null> =
       ADAPTER_REGISTRY;
     expect(registry).toBeDefined();
     expect(registry.JIRA).toBeDefined();
     expect(registry.JIRA?.adapterType).toBe("JIRA");
-    // Phase 3 adapters are intentionally absent from the registry today.
-    expect(registry.GITHUB).toBeUndefined();
-    expect(registry.AZURE_DEVOPS).toBeUndefined();
+    // Phase 3 adapters are explicit null placeholders (not undefined) so a
+    // future AdapterType enum value forces a compile-time decision here.
+    expect(registry.GITHUB).toBeNull();
+    expect(registry.AZURE_DEVOPS).toBeNull();
   });
 });
