@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,6 +68,7 @@ interface TestResultDisplay {
 export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const t = useTranslations("projects.settings.integrations.webhooks");
   const tActions = useTranslations("common.actions");
+  const tCommon = useTranslations("common");
 
   const {
     data: webhook,
@@ -75,6 +86,8 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const [isRotating, setIsRotating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [rotateDialogOpen, setRotateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (isLoading) {
     return null;
@@ -98,9 +111,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }
   };
 
-  const handleRotate = async () => {
+  const performRotate = async () => {
     if (!webhook) return;
-    if (!window.confirm(t("rotateConfirm"))) return;
+    setRotateDialogOpen(false);
     setIsRotating(true);
     setTestResult(null);
     try {
@@ -116,9 +129,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }
   };
 
-  const handleDelete = async () => {
+  const performDelete = async () => {
     if (!webhook) return;
-    if (!window.confirm(t("deleteConfirm"))) return;
+    setDeleteDialogOpen(false);
     setIsDeleting(true);
     setRevealed(null);
     setTestResult(null);
@@ -335,7 +348,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               type="button"
               variant="outline"
               data-testid="webhook-rotate-button"
-              onClick={handleRotate}
+              onClick={() => setRotateDialogOpen(true)}
               disabled={isRotating}
             >
               {t("rotateSecret")}
@@ -344,7 +357,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               type="button"
               variant="destructive"
               data-testid="webhook-delete-button"
-              onClick={handleDelete}
+              onClick={() => setDeleteDialogOpen(true)}
               disabled={isDeleting}
             >
               {tActions("delete")}
@@ -354,6 +367,51 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
         {renderTestResult()}
       </CardContent>
+
+      <AlertDialog open={rotateDialogOpen} onOpenChange={setRotateDialogOpen}>
+        <AlertDialogContent data-testid="webhook-rotate-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("rotateConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("rotateConfirm")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="webhook-rotate-dialog-cancel">
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="webhook-rotate-dialog-confirm"
+              onClick={performRotate}
+            >
+              {t("rotateSecret")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent data-testid="webhook-delete-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirm")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="webhook-delete-dialog-cancel">
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="webhook-delete-dialog-confirm"
+              onClick={performDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {tActions("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

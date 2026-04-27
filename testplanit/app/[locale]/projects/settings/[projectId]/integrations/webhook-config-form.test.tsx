@@ -96,6 +96,57 @@ vi.mock("@/components/ui/switch", () => ({
   ),
 }));
 
+// AlertDialog stub: render the dialog tree only when open=true so JSDOM
+// doesn't have to handle Radix portals. AlertDialogAction and AlertDialogCancel
+// both close the dialog (call parent onOpenChange(false)) the way Radix does
+// in the real component — wired via context so a click anywhere inside the
+// stub tree resolves to the right onOpenChange.
+const AlertDialogTestContext = React.createContext<{
+  onOpenChange: (open: boolean) => void;
+}>({ onOpenChange: () => {} });
+
+vi.mock("@/components/ui/alert-dialog", () => ({
+  AlertDialog: ({ children, open, onOpenChange }: any) =>
+    open ? (
+      <AlertDialogTestContext.Provider value={{ onOpenChange }}>
+        <div>{children}</div>
+      </AlertDialogTestContext.Provider>
+    ) : null,
+  AlertDialogContent: ({ children, ...rest }: any) => <div {...rest}>{children}</div>,
+  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,
+  AlertDialogDescription: ({ children }: any) => <p>{children}</p>,
+  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
+  AlertDialogAction: ({ children, onClick, ...rest }: any) => {
+    const { onOpenChange } = React.useContext(AlertDialogTestContext);
+    return (
+      <button
+        onClick={(e) => {
+          onClick?.(e);
+          onOpenChange(false);
+        }}
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  },
+  AlertDialogCancel: ({ children, onClick, ...rest }: any) => {
+    const { onOpenChange } = React.useContext(AlertDialogTestContext);
+    return (
+      <button
+        onClick={(e) => {
+          onClick?.(e);
+          onOpenChange(false);
+        }}
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  },
+}));
+
 import { WebhookConfigForm } from "./webhook-config-form";
 
 const baseConfig = {
@@ -112,11 +163,8 @@ const baseConfig = {
 };
 
 describe("WebhookConfigForm", () => {
-  let confirmSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { origin: "https://app.example.test" },
@@ -258,8 +306,8 @@ describe("WebhookConfigForm", () => {
     });
   });
 
-  // Test 6: rotate confirms before invoking the server action
-  it("Test 6: rotate prompts confirm dialog before invoking server action", async () => {
+  // Test 6: rotate opens AlertDialog and only invokes server action on confirm
+  it("Test 6: rotate opens an AlertDialog; cancel does nothing, confirm invokes server action", async () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
@@ -272,16 +320,25 @@ describe("WebhookConfigForm", () => {
       secret: "rotated-secret",
     });
 
-    // First case: user cancels — server action NOT called.
-    confirmSpy.mockReturnValueOnce(false);
     render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-rotate-button"));
-    expect(confirmSpy).toHaveBeenCalled();
-    expect(mockCreateOrRotate).not.toHaveBeenCalled();
 
-    // Second case: user confirms — server action IS called and reveals new pair.
-    confirmSpy.mockReturnValueOnce(true);
+    // Dialog is hidden until the rotate button is clicked.
+    expect(screen.queryByTestId("webhook-rotate-dialog")).not.toBeInTheDocument();
+
+    // Open the dialog.
     fireEvent.click(screen.getByTestId("webhook-rotate-button"));
+    expect(screen.getByTestId("webhook-rotate-dialog")).toBeInTheDocument();
+
+    // Cancel branch: server action NOT called, dialog closes.
+    fireEvent.click(screen.getByTestId("webhook-rotate-dialog-cancel"));
+    expect(mockCreateOrRotate).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByTestId("webhook-rotate-dialog")).not.toBeInTheDocument();
+    });
+
+    // Re-open and confirm branch: server action called, secret revealed.
+    fireEvent.click(screen.getByTestId("webhook-rotate-button"));
+    fireEvent.click(screen.getByTestId("webhook-rotate-dialog-confirm"));
     await waitFor(() => {
       expect(mockCreateOrRotate).toHaveBeenCalledWith(42);
     });
@@ -292,8 +349,8 @@ describe("WebhookConfigForm", () => {
     });
   });
 
-  // Test 7: delete confirms before invoking server action
-  it("Test 7: delete prompts confirm dialog before invoking server action", async () => {
+  // Test 7: delete opens AlertDialog and only invokes server action on confirm
+  it("Test 7: delete opens an AlertDialog; cancel does nothing, confirm invokes server action", async () => {
     mockFindFirstWebhookConfig.mockReturnValue({
       data: { ...baseConfig },
       isLoading: false,
@@ -301,16 +358,22 @@ describe("WebhookConfigForm", () => {
     });
     mockDelete.mockResolvedValue({ success: true });
 
-    // Cancel branch
-    confirmSpy.mockReturnValueOnce(false);
     render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delete-button"));
-    expect(confirmSpy).toHaveBeenCalled();
-    expect(mockDelete).not.toHaveBeenCalled();
 
-    // Confirm branch
-    confirmSpy.mockReturnValueOnce(true);
+    // Open the dialog.
     fireEvent.click(screen.getByTestId("webhook-delete-button"));
+    expect(screen.getByTestId("webhook-delete-dialog")).toBeInTheDocument();
+
+    // Cancel branch.
+    fireEvent.click(screen.getByTestId("webhook-delete-dialog-cancel"));
+    expect(mockDelete).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByTestId("webhook-delete-dialog")).not.toBeInTheDocument();
+    });
+
+    // Confirm branch.
+    fireEvent.click(screen.getByTestId("webhook-delete-button"));
+    fireEvent.click(screen.getByTestId("webhook-delete-dialog-confirm"));
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith("cfg-1");
     });
