@@ -244,7 +244,9 @@ describe("WebhookOutboundForm", () => {
     expect(
       screen.getByTestId("webhook-outbound-name-input")
     ).toBeInTheDocument();
-    expect(screen.getByTestId("webhook-outbound-url-input")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-outbound-url-input")
+    ).toBeInTheDocument();
   });
 
   // Test 3: auto-detect badge updates as user types
@@ -367,7 +369,9 @@ describe("WebhookOutboundForm", () => {
       screen.getByTestId("webhook-outbound-rotate-dialog")
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("webhook-outbound-rotate-dialog-confirm"));
+    fireEvent.click(
+      screen.getByTestId("webhook-outbound-rotate-dialog-confirm")
+    );
 
     await waitFor(() => {
       expect(mockRotate).toHaveBeenCalledWith(baseHmacConfig.id);
@@ -392,7 +396,9 @@ describe("WebhookOutboundForm", () => {
       screen.getByTestId("webhook-outbound-delete-dialog")
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("webhook-outbound-delete-dialog-confirm"));
+    fireEvent.click(
+      screen.getByTestId("webhook-outbound-delete-dialog-confirm")
+    );
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith(baseSlackConfig.id);
@@ -530,7 +536,9 @@ describe("WebhookOutboundForm", () => {
       screen.getByTestId(`webhook-outbound-rotate-button-${baseHmacConfig.id}`)
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId(`webhook-outbound-secrets-section-${baseHmacConfig.id}`)
+      screen.getByTestId(
+        `webhook-outbound-secrets-section-${baseHmacConfig.id}`
+      )
     ).toBeInTheDocument();
   });
 });

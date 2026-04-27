@@ -154,7 +154,10 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
   const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
 
   const detectedAdapterKey = useMemo(
-    () => (isSlackWebhookUrl(createUrl) ? "outboundDetectedSlack" : "outboundDetectedHmac"),
+    () =>
+      isSlackWebhookUrl(createUrl)
+        ? "outboundDetectedSlack"
+        : "outboundDetectedHmac",
     [createUrl]
   );
 
@@ -402,7 +405,10 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
 
           {(
             [
-              { key: "testRunsAndSessions", label: "outboundSubsTestRunsAndSessions" },
+              {
+                key: "testRunsAndSessions",
+                label: "outboundSubsTestRunsAndSessions",
+              },
               { key: "issues", label: "outboundSubsIssues" },
               { key: "cases", label: "outboundSubsCases" },
             ] as const
@@ -698,7 +704,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       >
         <AlertDialogContent data-testid="webhook-outbound-rotate-dialog">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("outboundRotateConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("outboundRotateConfirmTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {t("outboundRotateConfirm")}
             </AlertDialogDescription>
@@ -725,7 +733,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       >
         <AlertDialogContent data-testid="webhook-outbound-delete-dialog">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("outboundDeleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("outboundDeleteConfirmTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {t("outboundDeleteConfirm")}
             </AlertDialogDescription>
@@ -753,7 +763,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       >
         <AlertDialogContent data-testid="webhook-outbound-retire-dialog">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("outboundRetireConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("outboundRetireConfirmTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {t("outboundRetireConfirm")}
             </AlertDialogDescription>
