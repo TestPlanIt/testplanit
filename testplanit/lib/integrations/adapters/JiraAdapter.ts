@@ -735,14 +735,14 @@ export class JiraAdapter extends BaseAdapter {
     for (const link of issuelinks) {
       const linkType = link?.type?.name;
       if (typeof linkType !== "string") continue;
-      if (link.outwardIssue) {
+      if (link.outwardIssue && link.outwardIssue.id != null) {
         refs.push({
           id: String(link.outwardIssue.id),
           key: link.outwardIssue.key,
           linkType,
           direction: "outward",
         });
-      } else if (link.inwardIssue) {
+      } else if (link.inwardIssue && link.inwardIssue.id != null) {
         refs.push({
           id: String(link.inwardIssue.id),
           key: link.inwardIssue.key,
