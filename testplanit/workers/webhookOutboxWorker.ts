@@ -53,8 +53,12 @@ export async function pollOnce(): Promise<number> {
             tenantId: process.env.TENANT_ID ?? undefined,
           },
           {
-            // Idempotent — re-enqueue same row produces no duplicate (BullMQ skips existing jobIds).
-            jobId: `${row.id}:${webhookConfigId}`,
+            // Idempotent — re-enqueue same row produces no duplicate (BullMQ
+            // skips existing jobIds). Separator is `--` rather than `:` because
+            // BullMQ rejects custom IDs containing colons (`Custom Id cannot
+            // contain :` thrown from Job.addJob; verified against
+            // node_modules/bullmq/src/classes/job.ts).
+            jobId: `${row.id}--${webhookConfigId}`,
           }
         );
       }
