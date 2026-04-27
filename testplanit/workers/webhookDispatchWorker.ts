@@ -14,6 +14,7 @@ import {
   type DispatchJobData,
 } from "../lib/webhooks/dispatch";
 import { retryDelayForAttempt } from "../lib/webhooks/retry-delay";
+import { retireExpiredSecrets } from "../lib/webhooks/secret-rotation";
 
 /**
  * v0.23.0 Phase 2 (OUT-10) — outbound webhook dispatch worker.
@@ -31,9 +32,22 @@ import { retryDelayForAttempt } from "../lib/webhooks/retry-delay";
  * 1-indexed attempt number per OUT-03.
  */
 
-const processor = async (job: Job<DispatchJobData>) => {
-  validateMultiTenantJobData(job.data);
-  const prisma = getPrismaClientForJob(job.data);
+const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
+  // Plan 02-06 / Task 6.3 — daily auto-retire cron job. The scheduler upserts
+  // a job named "retire-expired-secrets" onto this queue once per day per
+  // tenant; we short-circuit BEFORE multi-tenant validation because the cron
+  // job's data shape is just `{ tenantId? }` (no outboxEventId/webhookConfigId).
+  if (job.name === "retire-expired-secrets") {
+    const prisma = getPrismaClientForJob(job.data as { tenantId?: string });
+    const { retiredCount } = await retireExpiredSecrets(prisma);
+    console.log(
+      `[WebhookDispatchWorker] Retired ${retiredCount} expired WebhookConfigSecret rows`
+    );
+    return;
+  }
+
+  validateMultiTenantJobData(job.data as DispatchJobData);
+  const prisma = getPrismaClientForJob(job.data as DispatchJobData);
 
   // Blocker 2 — thread the current attempt number from BullMQ into the job data.
   // job.attemptsMade is the count of COMPLETED attempts (0 on first run, 1 before
@@ -41,7 +55,7 @@ const processor = async (job: Job<DispatchJobData>) => {
   // Verified against node_modules/bullmq/dist/cjs/classes/job.js:467-488.
   const currentAttempt = job.attemptsMade + 1;
   const jobDataWithAttempt: DispatchJobData = {
-    ...job.data,
+    ...(job.data as DispatchJobData),
     attempt: currentAttempt,
   };
 

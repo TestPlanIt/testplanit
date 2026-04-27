@@ -6,6 +6,7 @@ import { prisma } from "~/lib/prisma";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
+import { webhookEvents } from "~/lib/webhooks/events";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
@@ -908,4 +909,77 @@ export async function extendRetiringSecret(
     console.error("[webhook-config] extendRetiringSecret failed", err);
     return { success: false, error: "Failed to extend secret" };
   }
+}
+
+// =============================================================================
+// v0.23.0 Phase 2 / Task 6.3 — synthetic webhook.test emission
+// =============================================================================
+
+/**
+ * Plan 02-06 / Task 6.3 — fire a synthetic `webhook.test` event through the
+ * full outbound pipeline.
+ *
+ * Architecture: this action ONLY writes the outbox row. The poller picks it
+ * up async, the dispatch worker delivers it to the configured URL. The
+ * subscription bypass for `webhook.test` (so the test fires regardless of
+ * the admin's subscribedEvents preset) lives in `lib/webhooks/dispatch.ts`
+ * (Plan 02-04 Task 4.2 / Blocker 6) — NOT here. Plan 02-06 ships only the
+ * emit-side of the pipeline kick.
+ *
+ * The returned `eventId` is what the admin form polls against the
+ * WebhookDelivery table (via the existing receivedAt/outcome columns) to
+ * surface success/failure feedback in the UI.
+ */
+export async function sendTestOutboundWebhook(
+  configId: string
+): Promise<{ success: boolean; eventId?: string; error?: string }> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const config = await prisma.webhookConfig.findUnique({
+    where: { id: configId },
+    select: { projectId: true, direction: true },
+  });
+  if (!config) return { success: false, error: "Not found" };
+  if (config.direction !== "OUTBOUND") {
+    return { success: false, error: "Not an outbound webhook" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, config.projectId);
+  } catch {
+    return { success: false, error: "Failed to send test webhook" };
+  }
+  if (!authorized) return { success: false, error: "Forbidden" };
+
+  let eventId: string | null = null;
+  try {
+    await prisma.$transaction(async (tx) => {
+      const result = await webhookEvents.emit(
+        "webhook.test",
+        {
+          source: "TestPlanIt",
+          message: "Webhook pipeline is healthy",
+          configId,
+          dispatchedAt: new Date().toISOString(),
+        },
+        {
+          projectId: config.projectId,
+          tx,
+          actorUserId: session.user.id ?? null,
+        }
+      );
+      eventId = result?.eventId ?? null;
+    });
+  } catch (err) {
+    console.error(
+      "[webhook-config] sendTestOutboundWebhook emit failed",
+      err
+    );
+    return { success: false, error: "Failed to send test webhook" };
+  }
+  return { success: true, eventId: eventId ?? undefined };
 }
