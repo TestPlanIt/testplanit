@@ -118,11 +118,42 @@ describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
     summaryMock.mockClear();
   });
 
-  it("emits NOTHING when stateId did not change (D-09 lifecycle policy)", async () => {
+  it("emits NOTHING when neither stateId nor isCompleted changed", async () => {
     const tx = makeTx();
     const row = { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: false };
     await emitTestRunUpdateEvents(row, row, tx as never);
     expect(emitMock).not.toHaveBeenCalled();
+  });
+
+  it("emits ONLY test_run.completed when isCompleted flips false→true without a stateId change (project admin marked the run complete in place)", async () => {
+    const tx = makeTx();
+    await emitTestRunUpdateEvents(
+      { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: false },
+      { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: true },
+      tx as never
+    );
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    expect(emitMock.mock.calls[0][0]).toBe("test_run.completed");
+    expect(summaryMock).toHaveBeenCalledWith(1, { client: tx });
+  });
+
+  it("emits ONLY test_run.state_changed when stateId changed but isCompleted stayed true (DONE→DONE2)", async () => {
+    const tx = makeTx({
+      workflows: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" })
+          .mockResolvedValueOnce({ name: "Closed", workflowType: "DONE" }),
+      },
+    });
+    await emitTestRunUpdateEvents(
+      { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: true },
+      { id: 1, projectId: 7, name: "Run 1", stateId: 200, isCompleted: true },
+      tx as never
+    );
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    expect(emitMock.mock.calls[0][0]).toBe("test_run.state_changed");
+    expect(summaryMock).not.toHaveBeenCalled();
   });
 
   it("emits ONLY test_run.state_changed when stateId changed but to-state is not isCompleted", async () => {
@@ -175,27 +206,6 @@ describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
     expect(emitMock.mock.calls[1][1]).toMatchObject({ workflowType: "DONE" });
   });
 
-  it("does NOT emit test_run.completed when from-state was already isCompleted (DONE→DONE2)", async () => {
-    const tx = makeTx({
-      workflows: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" })
-          .mockResolvedValueOnce({ name: "Closed", workflowType: "DONE" }),
-      },
-    });
-    await emitTestRunUpdateEvents(
-      { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: true },
-      { id: 1, projectId: 7, name: "Run 1", stateId: 200, isCompleted: true },
-      tx as never
-    );
-    expect(emitMock).toHaveBeenCalledTimes(1);
-    expect(emitMock.mock.calls[0][0]).toBe("test_run.state_changed");
-    expect(emitMock.mock.calls[0][1]).toMatchObject({
-      isCompletedTransition: false,
-    });
-    expect(summaryMock).not.toHaveBeenCalled();
-  });
 });
 
 describe("emitTestRunResultAdded", () => {

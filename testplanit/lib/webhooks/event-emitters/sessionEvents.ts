@@ -64,53 +64,59 @@ export async function emitSessionUpdateEvents(
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
+
+  // D-10 — two INDEPENDENT lifecycle transitions on Sessions. Either,
+  // both, or neither can fire. isCompleted is the canonical "this
+  // session is done" signal — admins can mark a session completed
+  // without changing stateId, and conversely.
   const stateChanged = oldRow.stateId !== newRow.stateId;
-  if (!stateChanged) return;
+  const completedTransition =
+    oldRow.isCompleted !== true && newRow.isCompleted === true;
+  if (!stateChanged && !completedTransition) return;
 
-  const [fromState, toState] = await Promise.all([
-    oldRow.stateId != null
-      ? tx.workflows.findUnique({
-          where: { id: oldRow.stateId },
-          select: { name: true, workflowType: true },
-        })
-      : Promise.resolve(null),
-    newRow.stateId != null
-      ? tx.workflows.findUnique({
-          where: { id: newRow.stateId },
-          select: { name: true, workflowType: true },
-        })
-      : Promise.resolve(null),
-  ]);
-  const fromCompleted = fromState?.workflowType === "DONE";
-  const toCompleted = toState?.workflowType === "DONE";
-  const isCompletedTransition = toCompleted === true && fromCompleted === false;
+  if (stateChanged) {
+    const [fromState, toState] = await Promise.all([
+      oldRow.stateId != null
+        ? tx.workflows.findUnique({
+            where: { id: oldRow.stateId },
+            select: { name: true, workflowType: true },
+          })
+        : Promise.resolve(null),
+      newRow.stateId != null
+        ? tx.workflows.findUnique({
+            where: { id: newRow.stateId },
+            select: { name: true, workflowType: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
-  await webhookEvents.emit(
-    "session.state_changed",
-    {
-      sessionId: newRow.id,
-      sessionName: newRow.name,
-      projectId: newRow.projectId,
-      from: {
-        stateId: oldRow.stateId,
-        stateName: fromState?.name ?? null,
-        isCompleted: fromCompleted,
+    await webhookEvents.emit(
+      "session.state_changed",
+      {
+        sessionId: newRow.id,
+        sessionName: newRow.name,
+        projectId: newRow.projectId,
+        from: {
+          stateId: oldRow.stateId,
+          stateName: fromState?.name ?? null,
+          isCompleted: oldRow.isCompleted === true,
+        },
+        to: {
+          stateId: newRow.stateId,
+          stateName: toState?.name ?? null,
+          isCompleted: newRow.isCompleted === true,
+        },
+        isCompletedTransition: completedTransition,
       },
-      to: {
-        stateId: newRow.stateId,
-        stateName: toState?.name ?? null,
-        isCompleted: toCompleted,
-      },
-      isCompletedTransition,
-    },
-    {
-      projectId: opts.projectId ?? newRow.projectId,
-      tx,
-      actorUserId: opts.actorUserId,
-    }
-  );
+      {
+        projectId: opts.projectId ?? newRow.projectId,
+        tx,
+        actorUserId: opts.actorUserId,
+      }
+    );
+  }
 
-  if (isCompletedTransition) {
+  if (completedTransition) {
     // session-summary asymmetry: there's no getSessionSummary equivalent in
     // the codebase yet, so we emit a minimal payload. A Phase 2+ follow-up
     // can extract a service module analogous to lib/services/testRunSummary.

@@ -19,6 +19,8 @@ export interface TestRunRow {
   projectId: number;
   name: string;
   stateId: number | null;
+  /** Source of truth for "is this run done" — flipping this triggers
+   *  test_run.completed regardless of whether stateId changed. */
   isCompleted?: boolean;
 }
 
@@ -67,54 +69,64 @@ export async function emitTestRunUpdateEvents(
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
+
+  // D-09 — two INDEPENDENT lifecycle transitions on TestRuns. Either, both,
+  // or neither can fire on a given update:
+  //   - state_changed: stateId changed
+  //   - completed:     isCompleted flipped false → true
+  // isCompleted is the canonical "this run is done" signal on TestRuns —
+  // a project admin can mark a run completed without changing its state,
+  // and conversely change state without marking completed (e.g. moving
+  // between IN_PROGRESS workflows). The Workflows.workflowType is for
+  // workflow categorization, not the source of truth for completion.
   const stateChanged = oldRow.stateId !== newRow.stateId;
-  if (!stateChanged) return; // D-09 lifecycle policy: no-op when state unchanged.
+  const completedTransition =
+    oldRow.isCompleted !== true && newRow.isCompleted === true;
+  if (!stateChanged && !completedTransition) return;
 
-  const [fromState, toState] = await Promise.all([
-    oldRow.stateId != null
-      ? tx.workflows.findUnique({
-          where: { id: oldRow.stateId },
-          select: { name: true, workflowType: true },
-        })
-      : Promise.resolve(null),
-    newRow.stateId != null
-      ? tx.workflows.findUnique({
-          where: { id: newRow.stateId },
-          select: { name: true, workflowType: true },
-        })
-      : Promise.resolve(null),
-  ]);
+  if (stateChanged) {
+    const [fromState, toState] = await Promise.all([
+      oldRow.stateId != null
+        ? tx.workflows.findUnique({
+            where: { id: oldRow.stateId },
+            select: { name: true, workflowType: true },
+          })
+        : Promise.resolve(null),
+      newRow.stateId != null
+        ? tx.workflows.findUnique({
+            where: { id: newRow.stateId },
+            select: { name: true, workflowType: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
-  const fromCompleted = fromState?.workflowType === "DONE";
-  const toCompleted = toState?.workflowType === "DONE";
-  const isCompletedTransition = toCompleted === true && fromCompleted === false;
-
-  await webhookEvents.emit(
-    "test_run.state_changed",
-    {
-      runId: newRow.id,
-      runName: newRow.name,
-      projectId: newRow.projectId,
-      from: {
-        stateId: oldRow.stateId,
-        stateName: fromState?.name ?? null,
-        isCompleted: fromCompleted,
+    await webhookEvents.emit(
+      "test_run.state_changed",
+      {
+        runId: newRow.id,
+        runName: newRow.name,
+        projectId: newRow.projectId,
+        from: {
+          stateId: oldRow.stateId,
+          stateName: fromState?.name ?? null,
+          isCompleted: oldRow.isCompleted === true,
+        },
+        to: {
+          stateId: newRow.stateId,
+          stateName: toState?.name ?? null,
+          isCompleted: newRow.isCompleted === true,
+        },
+        isCompletedTransition: completedTransition,
       },
-      to: {
-        stateId: newRow.stateId,
-        stateName: toState?.name ?? null,
-        isCompleted: toCompleted,
-      },
-      isCompletedTransition,
-    },
-    {
-      projectId: opts.projectId ?? newRow.projectId,
-      tx,
-      actorUserId: opts.actorUserId,
-    }
-  );
+      {
+        projectId: opts.projectId ?? newRow.projectId,
+        tx,
+        actorUserId: opts.actorUserId,
+      }
+    );
+  }
 
-  if (isCompletedTransition) {
+  if (completedTransition) {
     // D-15 — payload is the full TestRunSummaryData shape used by the
     // in-app summary UI, enriched with run identity + deep-link so Slack
     // (and any other consumer) can render a self-contained message

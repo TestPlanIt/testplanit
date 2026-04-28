@@ -95,11 +95,22 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
     emitMock.mockClear();
   });
 
-  it("emits NOTHING when stateId did not change", async () => {
+  it("emits NOTHING when neither stateId nor isCompleted changed", async () => {
     const tx = makeTx();
     const row = { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false };
     await emitSessionUpdateEvents(row, row, tx as never);
     expect(emitMock).not.toHaveBeenCalled();
+  });
+
+  it("emits ONLY session.completed when isCompleted flips false→true without a stateId change (admin marked complete in place)", async () => {
+    const tx = makeTx();
+    await emitSessionUpdateEvents(
+      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false },
+      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: true },
+      tx as never
+    );
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    expect(emitMock.mock.calls[0][0]).toBe("session.completed");
   });
 
   it("emits ONLY session.state_changed when stateId changed but to-state is not isCompleted", async () => {
