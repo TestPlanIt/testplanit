@@ -1,8 +1,15 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
+import {
+  buildBody,
+  projectNameOf,
+  titleAndProject,
+  url,
+} from "./_shared";
 
 interface CaseCreatedData {
   id: number;
   title: string;
+  projectId: number;
   description?: string | null;
 }
 
@@ -15,12 +22,12 @@ function truncate(s: string, n: number): string {
 /**
  * OUT-17 — `case.created` payload ships the full case structure on the
  * generic-HMAC adapter; Slack only renders a summary block.
+ * Informational event — no color bar.
  */
 export function formatCaseCreatedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as CaseCreatedData;
-  const text = `Case created: ${data.title}`;
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -29,14 +36,14 @@ export function formatCaseCreatedBlocks(
     },
     {
       type: "section",
-      fields: [
-        { type: "mrkdwn", text: `*Title:*\n${data.title}` },
-        { type: "mrkdwn", text: `*Project:*\n${envelope.projectName}` },
-        {
-          type: "mrkdwn",
-          text: `*Actor:*\n${envelope.actorUserId ?? "system"}`,
-        },
-      ],
+      text: {
+        type: "mrkdwn",
+        text: titleAndProject(
+          data.title,
+          projectNameOf(envelope),
+          url.case(data.projectId, data.id)
+        ),
+      },
     },
   ];
 
@@ -45,23 +52,13 @@ export function formatCaseCreatedBlocks(
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Description:*\n${truncate(data.description, DESCRIPTION_MAX_LEN)}`,
+        text: truncate(data.description, DESCRIPTION_MAX_LEN),
       },
     });
   }
 
-  blocks.push({
-    type: "context",
-    elements: [
-      {
-        type: "mrkdwn",
-        text: `eventId: \`${envelope.eventId}\` · ${envelope.eventTimestamp}`,
-      },
-    ],
+  return buildBody({
+    text: `Case created: ${data.title}`,
+    blocks,
   });
-
-  return {
-    body: JSON.stringify({ text, blocks }),
-    contentType: "application/json",
-  };
 }

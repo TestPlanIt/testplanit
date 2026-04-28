@@ -1,8 +1,10 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
+import { buildBody, projectNameOf } from "./_shared";
 
 interface IssueUpdatedData {
   id: number;
   title: string;
+  externalUrl?: string | null;
   diff?: {
     changedFields: string[];
     before: Record<string, unknown>;
@@ -10,21 +12,23 @@ interface IssueUpdatedData {
   };
 }
 
-const SLACK_MAX_DIFF_ROWS = 8;
-const VALUE_MAX_LEN = 80;
+const SLACK_MAX_DIFF_ROWS = 6;
+const VALUE_MAX_LEN = 60;
 
 function truncate(s: string, n: number): string {
   return s.length <= n ? s : `${s.slice(0, n - 1)}…`;
 }
 
-function valueOrDash(v: unknown): string {
+function valueDisplay(v: unknown): string {
   if (v === undefined || v === null) return "—";
+  if (typeof v === "string") return truncate(v, VALUE_MAX_LEN);
   return truncate(JSON.stringify(v), VALUE_MAX_LEN);
 }
 
 /**
- * OUT-18 — render `data.diff.changedFields` as "before → after" rows.
- * Falls back to a generic "issue updated" block when no diff is present.
+ * OUT-18 — render `data.diff.changedFields` as compact "field: before →
+ * after" rows, one per visual line. Informational event — no color bar.
+ * Caps at 6 rows + "and N more" footer when overflow.
  */
 export function formatIssueUpdatedBlocks(
   envelope: OutboundEnvelope
@@ -33,11 +37,9 @@ export function formatIssueUpdatedBlocks(
   const changed = data.diff?.changedFields ?? [];
   const before = data.diff?.before ?? {};
   const after = data.diff?.after ?? {};
-
-  const text =
-    changed.length > 0
-      ? `Issue "${data.title}" updated (${changed.join(", ")})`
-      : `Issue "${data.title}" updated`;
+  const titleLink = data.externalUrl
+    ? `*<${data.externalUrl}|${data.title}>*`
+    : `*${data.title}*`;
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -46,47 +48,34 @@ export function formatIssueUpdatedBlocks(
     },
     {
       type: "section",
-      fields: [
-        { type: "mrkdwn", text: `*Title:*\n${data.title}` },
-        { type: "mrkdwn", text: `*Project:*\n${envelope.projectName}` },
-      ],
+      text: {
+        type: "mrkdwn",
+        text: `${titleLink}\nin ${projectNameOf(envelope)}`,
+      },
     },
   ];
 
-  for (const field of changed.slice(0, SLACK_MAX_DIFF_ROWS)) {
+  if (changed.length > 0) {
+    const rows = changed.slice(0, SLACK_MAX_DIFF_ROWS).map((field) => {
+      const beforeVal = valueDisplay(before[field]);
+      const afterVal = valueDisplay(after[field]);
+      return `*${field}:* \`${beforeVal}\` → \`${afterVal}\``;
+    });
+    if (changed.length > SLACK_MAX_DIFF_ROWS) {
+      rows.push(`_…and ${changed.length - SLACK_MAX_DIFF_ROWS} more changes_`);
+    }
+    blocks.push({ type: "divider" });
     blocks.push({
       type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*${field}:*\n\`${valueOrDash(before[field])}\` → \`${valueOrDash(after[field])}\``,
-      },
+      text: { type: "mrkdwn", text: rows.join("\n") },
     });
   }
 
-  if (changed.length > SLACK_MAX_DIFF_ROWS) {
-    blocks.push({
-      type: "context",
-      elements: [
-        {
-          type: "mrkdwn",
-          text: `… and ${changed.length - SLACK_MAX_DIFF_ROWS} more changes`,
-        },
-      ],
-    });
-  }
-
-  blocks.push({
-    type: "context",
-    elements: [
-      {
-        type: "mrkdwn",
-        text: `eventId: \`${envelope.eventId}\` · ${envelope.eventTimestamp}`,
-      },
-    ],
+  return buildBody({
+    text:
+      changed.length > 0
+        ? `Issue updated: ${data.title} (${changed.join(", ")})`
+        : `Issue updated: ${data.title}`,
+    blocks,
   });
-
-  return {
-    body: JSON.stringify({ text, blocks }),
-    contentType: "application/json",
-  };
 }

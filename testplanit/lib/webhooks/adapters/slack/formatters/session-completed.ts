@@ -1,33 +1,48 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
+import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
+import {
+  buildBody,
+  colorForOutcome,
+  emojiForStatus,
+  projectNameOf,
+  titleAndProject,
+  url,
+} from "./_shared";
 
+/**
+ * Session.completed payload mirrors test_run.completed where data exists.
+ * The Phase 2 emitter ships a minimal payload (no getSessionSummary
+ * equivalent yet — flagged in 02-CONTEXT for follow-up). statusCounts
+ * may be absent; we render gracefully in that case.
+ */
 interface SessionCompletedData {
   sessionId: number;
-  sessionTitle: string;
+  sessionName?: string;
+  sessionTitle?: string; // legacy field name from earlier emitter draft
+  projectId: number;
   totalCases?: number;
-  completionRate?: number;
   statusCounts?: Array<{
     statusId: number | null;
     statusName: string;
     colorValue: string;
     count: number;
     isCompleted?: boolean;
+    isSuccess?: boolean;
+    isFailure?: boolean;
   }>;
 }
-
-const SLACK_MAX_FIELDS = 8;
 
 export function formatSessionCompletedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as SessionCompletedData;
-  const completionPct = Math.round((data.completionRate ?? 0) * 100);
-  const text = `Session "${data.sessionTitle}" completed${data.totalCases != null ? ` (${data.totalCases} cases)` : ""}`;
-
+  const sessionTitle = data.sessionName ?? data.sessionTitle ?? "(unnamed session)";
+  const totalCases = data.totalCases ?? 0;
   const statusCounts = data.statusCounts ?? [];
-  const statusFields = statusCounts.slice(0, SLACK_MAX_FIELDS).map((sc) => ({
-    type: "mrkdwn" as const,
-    text: `*${sc.statusName}:*\n${sc.count}`,
-  }));
+  const { failed, pending, completionPct } = aggregateRunCounts({
+    totalCases,
+    statusCounts,
+  });
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -36,34 +51,44 @@ export function formatSessionCompletedBlocks(
     },
     {
       type: "section",
-      fields: [
-        { type: "mrkdwn", text: `*Session:*\n${data.sessionTitle}` },
-        { type: "mrkdwn", text: `*Project:*\n${envelope.projectName}` },
-        {
-          type: "mrkdwn",
-          text: `*Cases:*\n${data.totalCases ?? "—"}`,
-        },
-        { type: "mrkdwn", text: `*Completion:*\n${completionPct}%` },
-      ],
+      text: {
+        type: "mrkdwn",
+        text: titleAndProject(
+          sessionTitle,
+          projectNameOf(envelope),
+          url.session(data.projectId, data.sessionId)
+        ),
+      },
     },
   ];
 
-  if (statusFields.length > 0) {
-    blocks.push({ type: "section", fields: statusFields });
+  // Summary line — only when totalCases is present and meaningful.
+  if (totalCases > 0) {
+    const caseLabel = totalCases === 1 ? "case" : "cases";
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*${completionPct}% complete* · ${totalCases} ${caseLabel}`,
+      },
+    });
   }
 
-  blocks.push({
-    type: "context",
-    elements: [
-      {
-        type: "mrkdwn",
-        text: `eventId: \`${envelope.eventId}\` · ${envelope.eventTimestamp}`,
-      },
-    ],
-  });
+  // Status breakdown — same per-row pattern as test_run.completed.
+  const filledRows = statusCounts.filter((sc) => sc.count > 0);
+  if (filledRows.length > 0) {
+    const statusLines = filledRows
+      .slice(0, 10)
+      .map((sc) => `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`)
+      .join("\n");
+    blocks.push({ type: "divider" });
+    blocks.push({ type: "section", text: { type: "mrkdwn", text: statusLines } });
+  }
 
-  return {
-    body: JSON.stringify({ text, blocks }),
-    contentType: "application/json",
-  };
+  return buildBody({
+    text: `Session completed: ${sessionTitle}`,
+    color: colorForOutcome({ failed, pending, completionPct }),
+    blocks,
+  });
 }
+
