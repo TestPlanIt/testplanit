@@ -44,6 +44,7 @@
         ],
         "overrides": {
             "csstype": "^3.2.0",
+            "postcss": "^8.5.10",
             "@csstools/css-syntax-patches-for-csstree": "^1.0.20",
             "form-data": "^4.0.4",
             "validator": "^13.15.22",
