@@ -3,17 +3,19 @@
  * test-case-generation endpoints.
  */
 
+import type {
+  IssueAdapter,
+  IssueComment,
+  LinkedIssueRef,
+} from "~/lib/integrations/adapters/IssueAdapter";
+
 export interface IssueData {
   key: string;
   title: string;
   description?: string;
   status: string;
   priority?: string;
-  comments?: Array<{
-    author: string;
-    body: string;
-    created: string;
-  }>;
+  comments?: IssueComment[];
 }
 
 export interface TemplateData {
@@ -40,6 +42,18 @@ export interface GenerationContext {
     }>;
   }>;
   folderContext: number;
+  linkedIssues?: LinkedIssueContext[];
+}
+
+/**
+ * One linked issue's title + body + comments, suitable for slotting into
+ * the LLM prompt's RELATED LINKED ISSUES section.
+ */
+export interface LinkedIssueContext {
+  ref: LinkedIssueRef;
+  title: string;
+  body?: string;
+  comments: IssueComment[];
 }
 
 export interface GeneratedTestCase {
@@ -247,6 +261,181 @@ export async function fetchHierarchyContext(
   }
 
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// Server-side context: fetch linked issues (refs + bodies + comments)
+// ---------------------------------------------------------------------------
+
+/** Per-issue char count -> token estimate (consistent with fetchHierarchyContext). */
+function estimateLinkedIssueTokens(c: LinkedIssueContext): number {
+  let chars = c.title.length + (c.body?.length ?? 0);
+  for (const cmt of c.comments) {
+    chars += cmt.body.length;
+  }
+  return Math.ceil(chars / 4);
+}
+
+function sumLinkedTokens(items: LinkedIssueContext[]): number {
+  let total = 0;
+  for (const item of items) {
+    total += estimateLinkedIssueTokens(item);
+  }
+  return total;
+}
+
+/**
+ * Fetch linked-issue context (title + body + comments per ref) within a
+ * token budget. Mirrors `fetchHierarchyContext` — same char/4 token heuristic,
+ * same accumulator style.
+ *
+ * Drop policy (tiers 2 + 3 of CONTEXT D-03; tier 1, 4, 5 owned by the route):
+ *   - Tier 2: when over budget AND any included context still has comments,
+ *     drop ONE comment from the linked issue with the largest comment count
+ *     (tied counts -> the issue whose largest comment is longest).
+ *   - Tier 3: when ALL included contexts have empty comments, drop the LAST
+ *     linked-issue context in array order (tracker iteration order — last-
+ *     returned first per D-04). Walk the tail backwards, one issue per pass.
+ *
+ * Fail-soft (Phase 1 D-06/D-07):
+ *   - If `getLinkedIssues` is missing OR throws, returns `{ included: [], dropped: [], tokensUsed: 0 }`.
+ *   - If a per-ref `getIssue` rejects, the body falls back to `undefined` and
+ *     the title falls back to `ref.key ?? ref.id` (still useful in the prompt).
+ *   - If a per-ref `getIssueComments` rejects, that issue's comments fall back to `[]`.
+ *   - The whole helper never throws.
+ *
+ * `tokensUsed` is the accumulator across all `included` items
+ * (`ceil((title + body + comments-bodies-concat) / 4)`). Callers use it to
+ * compute downstream budgets without recomputing.
+ */
+export async function fetchLinkedIssuesContext(
+  adapter: IssueAdapter,
+  sourceIssueKey: string,
+  tokenBudget: number
+): Promise<{
+  included: LinkedIssueContext[];
+  dropped: LinkedIssueRef[];
+  tokensUsed: number;
+}> {
+  if (!adapter.getLinkedIssues) {
+    return { included: [], dropped: [], tokensUsed: 0 };
+  }
+
+  let refs: LinkedIssueRef[];
+  try {
+    refs = await adapter.getLinkedIssues(sourceIssueKey);
+  } catch {
+    return { included: [], dropped: [], tokensUsed: 0 };
+  }
+
+  if (!Array.isArray(refs) || refs.length === 0) {
+    return { included: [], dropped: [], tokensUsed: 0 };
+  }
+
+  // Fetch issue + comments for every ref in parallel, preserving array order.
+  const issuePromises = refs.map((ref) =>
+    adapter.getIssue
+      ? adapter.getIssue(ref.id).then(
+          (i) => i,
+          () => null
+        )
+      : Promise.resolve(null)
+  );
+  const commentsPromises = refs.map((ref) =>
+    adapter.getIssueComments
+      ? adapter.getIssueComments(ref.id).then(
+          (c) => c,
+          () => [] as IssueComment[]
+        )
+      : Promise.resolve([] as IssueComment[])
+  );
+
+  let issues: Array<Awaited<
+    ReturnType<NonNullable<IssueAdapter["getIssue"]>>
+  > | null>;
+  let commentLists: IssueComment[][];
+  try {
+    issues = await Promise.all(issuePromises);
+    commentLists = await Promise.all(commentsPromises);
+  } catch {
+    // Should not happen — per-ref handlers swallow rejections — but be defensive.
+    return { included: [], dropped: [], tokensUsed: 0 };
+  }
+
+  const included: LinkedIssueContext[] = refs.map((ref, i) => {
+    const issue = issues[i];
+    return {
+      ref,
+      title: issue?.title ?? ref.key ?? ref.id,
+      body: issue?.description,
+      comments: commentLists[i] ?? [],
+    };
+  });
+
+  const dropped: LinkedIssueRef[] = [];
+
+  // Apply drop policy until under budget.
+  // Bound the loop conservatively: at worst we drop every comment + every issue.
+  let totalSafetyIterations = 0;
+  let initialCommentCount = 0;
+  for (const item of included) {
+    initialCommentCount += item.comments.length;
+  }
+  const maxIterations = initialCommentCount + included.length + 1;
+
+  while (
+    sumLinkedTokens(included) > tokenBudget &&
+    included.length > 0 &&
+    totalSafetyIterations < maxIterations
+  ) {
+    totalSafetyIterations++;
+
+    // Tier 2: any included issue still has comments -> drop one from the
+    // issue with the largest comment count (tied -> longest comment among ties).
+    const withComments = included.filter((c) => c.comments.length > 0);
+    if (withComments.length > 0) {
+      let target = withComments[0];
+      for (const candidate of withComments) {
+        if (candidate.comments.length > target.comments.length) {
+          target = candidate;
+        } else if (candidate.comments.length === target.comments.length) {
+          // Tie-break: prefer the candidate whose largest comment is longer.
+          const targetMax = Math.max(
+            ...target.comments.map((cmt) => cmt.body.length)
+          );
+          const candidateMax = Math.max(
+            ...candidate.comments.map((cmt) => cmt.body.length)
+          );
+          if (candidateMax > targetMax) {
+            target = candidate;
+          }
+        }
+      }
+      // Within target, drop the longest comment first.
+      let longestIdx = 0;
+      for (let i = 1; i < target.comments.length; i++) {
+        if (
+          target.comments[i].body.length >
+          target.comments[longestIdx].body.length
+        ) {
+          longestIdx = i;
+        }
+      }
+      target.comments.splice(longestIdx, 1);
+      continue;
+    }
+
+    // Tier 3: all comments exhausted -> drop the LAST linked-issue context
+    // (tracker iteration order — last-returned first per D-04).
+    const removed = included.pop();
+    if (removed) {
+      dropped.push(removed.ref);
+    } else {
+      break;
+    }
+  }
+
+  return { included, dropped, tokensUsed: sumLinkedTokens(included) };
 }
 
 // ---------------------------------------------------------------------------
@@ -472,6 +661,23 @@ export function buildUserPrompt(
     });
   }
 
+  let linkedIssuesSection = "";
+  if (context.linkedIssues && context.linkedIssues.length > 0) {
+    linkedIssuesSection = `\n\nRELATED LINKED ISSUES:`;
+    context.linkedIssues.forEach((li, i) => {
+      const idLabel = li.ref.key ?? li.ref.id;
+      linkedIssuesSection += `\n${i + 1}. ${idLabel} (${li.ref.linkType}, ${li.ref.direction}): ${li.title}`;
+      if (li.body) {
+        linkedIssuesSection += `\n   Body: ${li.body}`;
+      }
+      if (li.comments.length > 0) {
+        li.comments.forEach((c, ci) => {
+          linkedIssuesSection += `\n   Comment ${ci + 1} (${c.author}): ${c.body}`;
+        });
+      }
+    });
+  }
+
   let userNotesSection = "";
   if (context.userNotes) {
     userNotesSection = `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
@@ -512,6 +718,7 @@ export function buildUserPrompt(
         issue.priority ? ` | PRIORITY: ${issue.priority}` : ""
       )
       .replace("{{COMMENTS_SECTION}}", commentsSection)
+      .replace("{{LINKED_ISSUES_SECTION}}", linkedIssuesSection)
       .replace("{{USER_NOTES_SECTION}}", userNotesSection)
       .replace("{{EXISTING_CASES_SECTION}}", existingCasesSection);
   }
@@ -524,6 +731,7 @@ ${issue.description || "No description provided"}
 STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
 
   prompt += commentsSection;
+  prompt += linkedIssuesSection;
   prompt += userNotesSection;
   prompt += existingCasesSection;
 
