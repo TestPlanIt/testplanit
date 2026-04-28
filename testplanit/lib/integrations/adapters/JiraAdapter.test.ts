@@ -921,7 +921,37 @@ describe("JiraAdapter", () => {
       expect(result[0].author).toBe("bob@example.com");
     });
 
-    it("should fall back to 'Unknown' when both displayName and emailAddress are missing", async () => {
+    it("should fall back to author.accountId when displayName and emailAddress are missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: "5",
+                author: { accountId: "557058:abc123-anonymized" },
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Hola" }],
+                    },
+                  ],
+                },
+                created: "2026-01-05T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("557058:abc123-anonymized");
+    });
+
+    it("should fall back to 'Unknown' when displayName, emailAddress, and accountId are all missing", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>

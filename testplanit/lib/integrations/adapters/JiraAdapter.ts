@@ -813,7 +813,11 @@ export class JiraAdapter extends BaseAdapter {
       if (!c) continue;
       out.push({
         id: c.id != null ? String(c.id) : undefined,
-        author: c.author?.displayName ?? c.author?.emailAddress ?? "Unknown",
+        author:
+          c.author?.displayName ??
+          c.author?.emailAddress ??
+          c.author?.accountId ??
+          "Unknown",
         body: this.extractDescription(c.body) ?? "",
         created: c.created ?? "",
       });
