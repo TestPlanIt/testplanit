@@ -3,6 +3,7 @@ import {
   AuthenticationData,
   CreateIssueData,
   IssueAdapterCapabilities,
+  IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
@@ -39,7 +40,7 @@ export class GitHubAdapter extends BaseAdapter {
       customFields: false, // GitHub doesn't have custom fields like Jira
       attachments: false, // GitHub doesn't support direct attachments on issues
       linkedIssues: true,
-      comments: false, // flipped to true in Plan 02-03 when getIssueComments() is implemented
+      comments: true,
     };
   }
 
@@ -186,6 +187,24 @@ export class GitHubAdapter extends BaseAdapter {
     }
 
     return refs;
+  }
+
+  async getIssueComments(issueId: string): Promise<IssueComment[]> {
+    const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
+    try {
+      const response = await this.makeRequest<any>(
+        `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`
+      );
+      return this.mapGitHubComments(response);
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[GitHubAdapter] getIssueComments failed for ${issueId}:`,
+        error
+      );
+      return [];
+    }
   }
 
   async searchIssues(options: IssueSearchOptions): Promise<{
@@ -405,6 +424,21 @@ export class GitHubAdapter extends BaseAdapter {
       });
     }
     return refs;
+  }
+
+  private mapGitHubComments(response: any): IssueComment[] {
+    if (!Array.isArray(response)) return [];
+    const out: IssueComment[] = [];
+    for (const c of response) {
+      if (!c) continue;
+      out.push({
+        id: c.id != null ? String(c.id) : undefined,
+        author: c.user?.login || "Unknown",
+        body: c.body ?? "",
+        created: c.created_at ?? "",
+      });
+    }
+    return out;
   }
 
   private mapGitHubIssue(githubIssue: any): IssueData {
