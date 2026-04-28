@@ -44,6 +44,7 @@ describe("SimpleUrlAdapter", () => {
         customFields: false,
         attachments: false,
         linkedIssues: false,
+        comments: false,
       });
     });
   });

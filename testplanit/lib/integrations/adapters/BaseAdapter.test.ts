@@ -22,6 +22,7 @@ class TestAdapter extends BaseAdapter {
       customFields: false,
       attachments: false,
       linkedIssues: false,
+      comments: false,
     };
   }
 

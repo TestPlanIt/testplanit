@@ -64,6 +64,7 @@ describe("GitHubAdapter", () => {
         customFields: false,
         attachments: false,
         linkedIssues: true,
+        comments: false,
       });
     });
   });

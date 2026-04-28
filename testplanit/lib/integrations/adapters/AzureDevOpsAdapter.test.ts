@@ -67,6 +67,7 @@ describe("AzureDevOpsAdapter", () => {
         customFields: true,
         attachments: true,
         linkedIssues: true,
+        comments: false,
       });
     });
   });

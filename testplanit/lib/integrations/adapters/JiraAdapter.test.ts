@@ -68,6 +68,7 @@ describe("JiraAdapter", () => {
         customFields: true,
         attachments: true,
         linkedIssues: true,
+        comments: false,
       });
     });
   });
