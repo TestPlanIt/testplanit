@@ -64,7 +64,7 @@ describe("GitHubAdapter", () => {
         customFields: false,
         attachments: false,
         linkedIssues: true,
-        comments: false,
+        comments: true,
       });
     });
   });
@@ -699,6 +699,233 @@ describe("GitHubAdapter", () => {
       expect(calledUrls.some((u) => u.includes("/issues/abc/sub_issues"))).toBe(
         false
       );
+    });
+  });
+
+  describe("getIssueComments", () => {
+    const mockGitHubCommentsResponse = [
+      {
+        id: 1,
+        body: "Looks good",
+        user: { login: "alice" },
+        created_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: 2,
+        body: "Ship it",
+        user: { login: "bob" },
+        created_at: "2026-01-02T00:00:00Z",
+      },
+    ];
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should request /repos/{owner}/{repo}/issues/{n}/comments using configured owner/repo for a numeric issueId", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("42");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/repos/testowner/testrepo/issues/42/comments"
+      );
+    });
+
+    it("should request /repos/{owner}/{repo}/issues/{n}/comments using owner/repo override for owner/repo#n form", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getIssueComments!("acme/widgets#42");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/repos/acme/widgets/issues/42/comments");
+    });
+
+    it("should map all comments to IssueComment[] on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubCommentsResponse),
+      });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([
+        {
+          id: "1",
+          author: "alice",
+          body: "Looks good",
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          author: "bob",
+          body: "Ship it",
+          created: "2026-01-02T00:00:00Z",
+        },
+      ]);
+    });
+
+    it("should fall back to 'Unknown' when user is missing or login is falsy", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            {
+              id: 10,
+              body: "no user",
+              created_at: "2026-01-03T00:00:00Z",
+            },
+            {
+              id: 11,
+              body: "blank login",
+              user: { login: "" },
+              created_at: "2026-01-04T00:00:00Z",
+            },
+          ]),
+      });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toHaveLength(2);
+      expect(result[0].author).toBe("Unknown");
+      expect(result[1].author).toBe("Unknown");
+    });
+
+    it("should return [] when response is empty array or non-array (e.g., null)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      const result1 = await adapter.getIssueComments!("42");
+      expect(result1).toEqual([]);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(null),
+      });
+
+      const result2 = await adapter.getIssueComments!("42");
+      expect(result2).toEqual([]);
+    });
+
+    it("should skip malformed entries and keep valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            null,
+            {
+              id: 7,
+              body: "valid",
+              user: { login: "carol" },
+              created_at: "2026-01-05T00:00:00Z",
+            },
+          ]),
+      });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "7",
+        author: "carol",
+        body: "valid",
+        created: "2026-01-05T00:00:00Z",
+      });
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      errorSpy.mockRestore();
     });
   });
 
