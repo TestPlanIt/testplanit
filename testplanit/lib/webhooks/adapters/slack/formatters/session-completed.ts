@@ -1,8 +1,10 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
-import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
+import { toHumanReadable } from "~/utils/duration";
 import {
   buildBody,
-  colorForOutcome,
+  COLOR_GREEN,
+  COLOR_RED,
+  COLOR_YELLOW,
   emojiForStatus,
   projectNameOf,
   titleAndProject,
@@ -10,21 +12,24 @@ import {
 } from "./_shared";
 
 /**
- * Session.completed payload mirrors test_run.completed where data exists.
- * The Phase 2 emitter ships a minimal payload (no getSessionSummary
- * equivalent yet — flagged in 02-CONTEXT for follow-up). statusCounts
- * may be absent; we render gracefully in that case.
+ * Session.completed payload — mirrors what `SessionResultsSummary` renders
+ * in-app: results (NOT cases), per-result status counts, total elapsed.
+ * Sessions don't have a completion percent (exploratory testing has no
+ * fixed "done at N cases" target), so we don't render one.
  */
 interface SessionCompletedData {
   sessionId: number;
+  sessionTitle?: string;
+  /** Legacy field kept for back-compat with older payloads. */
   sessionName?: string;
-  sessionTitle?: string; // legacy field name from earlier emitter draft
   projectId: number;
-  totalCases?: number;
+  totalResults?: number;
+  /** Sum of result.elapsed in SECONDS. */
+  totalElapsed?: number | null;
   statusCounts?: Array<{
     statusId: number | null;
     statusName: string;
-    colorValue: string;
+    colorValue?: string | null;
     count: number;
     isCompleted?: boolean;
     isSuccess?: boolean;
@@ -32,17 +37,46 @@ interface SessionCompletedData {
   }>;
 }
 
+/**
+ * Color rule for a session: any failure → red; all-passed → green; mixed
+ * with non-pass non-fail → yellow. Computed from result statuses.
+ */
+function colorForSession(statusCounts: SessionCompletedData["statusCounts"] = []): string {
+  let hasFailure = false;
+  let hasNonPass = false;
+  for (const sc of statusCounts) {
+    if (sc.count <= 0) continue;
+    if (sc.isFailure) hasFailure = true;
+    else if (!sc.isSuccess) hasNonPass = true;
+  }
+  if (hasFailure) return COLOR_RED;
+  if (hasNonPass) return COLOR_YELLOW;
+  return COLOR_GREEN;
+}
+
 export function formatSessionCompletedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as SessionCompletedData;
-  const sessionTitle = data.sessionName ?? data.sessionTitle ?? "(unnamed session)";
-  const totalCases = data.totalCases ?? 0;
-  const statusCounts = data.statusCounts ?? [];
-  const { failed, pending, completionPct } = aggregateRunCounts({
-    totalCases,
-    statusCounts,
-  });
+  const sessionTitle =
+    data.sessionTitle ?? data.sessionName ?? "(unnamed session)";
+  const totalResults = data.totalResults ?? 0;
+  const elapsedSeconds = data.totalElapsed ?? 0;
+  const elapsedDisplay =
+    elapsedSeconds > 0
+      ? toHumanReadable(elapsedSeconds, { isSeconds: true })
+      : null;
+  const statusCounts = (data.statusCounts ?? []).filter((sc) => sc.count > 0);
+
+  // Summary line: "N results · 12 minutes". When the session has zero
+  // recorded results we still emit the header + title and skip the
+  // summary line entirely.
+  const summaryParts: string[] = [];
+  if (totalResults > 0) {
+    summaryParts.push(`${totalResults} ${totalResults === 1 ? "result" : "results"}`);
+  }
+  if (elapsedDisplay) summaryParts.push(elapsedDisplay);
+  const summaryLine = summaryParts.length > 0 ? summaryParts.join(" · ") : null;
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -62,22 +96,16 @@ export function formatSessionCompletedBlocks(
     },
   ];
 
-  // Summary line — only when totalCases is present and meaningful.
-  if (totalCases > 0) {
-    const caseLabel = totalCases === 1 ? "case" : "cases";
+  if (summaryLine) {
     blocks.push({
       type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*${completionPct}% complete* · ${totalCases} ${caseLabel}`,
-      },
+      text: { type: "mrkdwn", text: summaryLine },
     });
   }
 
   // Status breakdown — same per-row pattern as test_run.completed.
-  const filledRows = statusCounts.filter((sc) => sc.count > 0);
-  if (filledRows.length > 0) {
-    const statusLines = filledRows
+  if (statusCounts.length > 0) {
+    const statusLines = statusCounts
       .slice(0, 10)
       .map((sc) => `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`)
       .join("\n");
@@ -87,8 +115,7 @@ export function formatSessionCompletedBlocks(
 
   return buildBody({
     text: `Session completed: ${sessionTitle}`,
-    color: colorForOutcome({ failed, pending, completionPct }),
+    color: colorForSession(statusCounts),
     blocks,
   });
 }
-

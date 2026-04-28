@@ -48,7 +48,7 @@ export async function emitTestRunCreated(
     "test_run.created",
     {
       runId: row.id,
-      runName: row.name,
+      runTitle: row.name,
       projectId: row.projectId,
       stateId: row.stateId,
       stateName,
@@ -112,7 +112,7 @@ export async function emitTestRunUpdateEvents(
       "test_run.state_changed",
       {
         runId: newRow.id,
-        runName: newRow.name,
+        runTitle: newRow.name,
         projectId: newRow.projectId,
         from: {
           stateId: oldRow.stateId,
@@ -211,7 +211,7 @@ export async function emitTestRunResultAdded(
     "test_run.result_added",
     {
       runId: run.id,
-      runName: run.name,
+      runTitle: run.name,
       caseId: testRunCase?.repositoryCase?.id ?? null,
       caseName: testRunCase?.repositoryCase?.name ?? null,
       resultId: row.id,
@@ -249,7 +249,7 @@ export async function emitTestRunDuplicated(
     {
       newRunId: newRun.id,
       sourceRunId,
-      runName: newRun.name,
+      runTitle: newRun.name,
       projectId: newRun.projectId,
     },
     {

@@ -117,19 +117,74 @@ export async function emitSessionUpdateEvents(
   }
 
   if (completedTransition) {
-    // session-summary asymmetry: there's no getSessionSummary equivalent in
-    // the codebase yet, so we emit a minimal payload. A Phase 2+ follow-up
-    // can extract a service module analogous to lib/services/testRunSummary.
-    const totalCases = await tx.sessionResults.count({
+    // Session payload mirrors what SessionResultsSummary.tsx renders:
+    // results (NOT cases), per-result statuses, total elapsed time.
+    // Sessions don't have a "completion %" — exploratory testing ends
+    // when the tester decides it's done, not when N cases are checked off.
+    const results = await tx.sessionResults.findMany({
       where: { sessionId: newRow.id, isDeleted: false },
+      select: {
+        elapsed: true,
+        statusId: true,
+        status: {
+          select: {
+            id: true,
+            name: true,
+            isCompleted: true,
+            isSuccess: true,
+            isFailure: true,
+            color: { select: { value: true } },
+          },
+        },
+      },
     });
+
+    const totalResults = results.length;
+    const totalElapsed = results.reduce(
+      (sum, r) => sum + (r.elapsed ?? 0),
+      0
+    );
+
+    // Group by statusId for breakdown rendering.
+    const statusCountsMap = new Map<
+      number,
+      {
+        statusId: number;
+        statusName: string;
+        colorValue: string | null;
+        count: number;
+        isCompleted: boolean;
+        isSuccess: boolean;
+        isFailure: boolean;
+      }
+    >();
+    for (const r of results) {
+      const existing = statusCountsMap.get(r.statusId);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        statusCountsMap.set(r.statusId, {
+          statusId: r.statusId,
+          statusName: r.status?.name ?? "Unknown",
+          colorValue: r.status?.color?.value ?? null,
+          count: 1,
+          isCompleted: r.status?.isCompleted ?? false,
+          isSuccess: r.status?.isSuccess ?? false,
+          isFailure: r.status?.isFailure ?? false,
+        });
+      }
+    }
+    const statusCounts = Array.from(statusCountsMap.values());
+
     await webhookEvents.emit(
       "session.completed",
       {
         sessionId: newRow.id,
-        sessionName: newRow.name,
+        sessionTitle: newRow.name,
         projectId: newRow.projectId,
-        totalCases,
+        totalResults,
+        totalElapsed, // seconds
+        statusCounts,
       },
       {
         projectId: opts.projectId ?? newRow.projectId,

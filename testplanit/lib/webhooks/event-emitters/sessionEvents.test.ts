@@ -34,6 +34,7 @@ interface TxStub {
   sessionResults: {
     count: ReturnType<typeof vi.fn>;
     findUnique: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
   };
   status: { findUnique: ReturnType<typeof vi.fn> };
 }
@@ -51,6 +52,7 @@ function makeTx(overrides: Partial<TxStub> = {}): TxStub {
     sessionResults: {
       count: vi.fn(async () => 0),
       findUnique: vi.fn(async () => null),
+      findMany: vi.fn(async () => []),
       ...(overrides.sessionResults ?? {}),
     },
     status: {
@@ -143,8 +145,34 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
           .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" }),
       },
       sessionResults: {
-        count: vi.fn(async () => 4),
+        count: vi.fn(),
         findUnique: vi.fn(),
+        findMany: vi.fn(async () => [
+          {
+            elapsed: 60,
+            statusId: 5,
+            status: {
+              id: 5,
+              name: "Passed",
+              isCompleted: true,
+              isSuccess: true,
+              isFailure: false,
+              color: { value: "#0f0" },
+            },
+          },
+          {
+            elapsed: 30,
+            statusId: 6,
+            status: {
+              id: 6,
+              name: "Failed",
+              isCompleted: true,
+              isSuccess: false,
+              isFailure: true,
+              color: { value: "#f00" },
+            },
+          },
+        ]),
       },
     });
     await emitSessionUpdateEvents(
@@ -157,10 +185,16 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
     expect(emitMock.mock.calls[1][0]).toBe("session.completed");
     expect(emitMock.mock.calls[1][1]).toMatchObject({
       sessionId: 1,
-      sessionName: "Session 1",
+      sessionTitle: "Session 1",
       projectId: 7,
-      totalCases: 4,
+      totalResults: 2,
+      totalElapsed: 90,
     });
+    // statusCounts grouped by statusId
+    const completedPayload = emitMock.mock.calls[1][1] as {
+      statusCounts: Array<{ statusId: number; count: number }>;
+    };
+    expect(completedPayload.statusCounts).toHaveLength(2);
   });
 });
 

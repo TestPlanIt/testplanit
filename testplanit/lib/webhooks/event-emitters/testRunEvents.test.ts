@@ -101,7 +101,7 @@ describe("emitTestRunCreated", () => {
     expect(eventName).toBe("test_run.created");
     expect(payload).toMatchObject({
       runId: 1,
-      runName: "Run 1",
+      runTitle: "Run 1",
       projectId: 7,
       stateId: 100,
       stateName: "Open",
@@ -245,7 +245,7 @@ describe("emitTestRunResultAdded", () => {
     expect(eventName).toBe("test_run.result_added");
     expect(payload).toMatchObject({
       runId: 1,
-      runName: "Run 1",
+      runTitle: "Run 1",
       caseId: 11,
       caseName: "Case 11",
       resultId: 99,
@@ -290,7 +290,7 @@ describe("emitTestRunDuplicated", () => {
     expect(payload).toMatchObject({
       newRunId: 2,
       sourceRunId: 1,
-      runName: "Copy of Run 1",
+      runTitle: "Copy of Run 1",
       projectId: 7,
     });
     expect(opts.tx).toBe(tx);
