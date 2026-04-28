@@ -1,3 +1,9 @@
+## [0.22.19](https://github.com/TestPlanIt/testplanit/compare/v0.22.18...v0.22.19) (2026-04-28)
+
+### Bug Fixes
+
+* workflow type translations + linked projects on integration card ([#252](https://github.com/TestPlanIt/testplanit/issues/252)) ([66b5923](https://github.com/TestPlanIt/testplanit/commit/66b5923489727ae2592930d6d2b8e5cfde63e5b2))
+
 ## [0.22.18](https://github.com/TestPlanIt/testplanit/compare/v0.22.17...v0.22.18) (2026-04-26)
 
 ### Bug Fixes
