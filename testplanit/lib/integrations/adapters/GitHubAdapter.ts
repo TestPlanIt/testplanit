@@ -155,7 +155,18 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
-    const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
+    let owner: string;
+    let repo: string;
+    let issueNumber: string;
+    try {
+      ({ owner, repo, issueNumber } = this.parseIssueRef(issueId));
+    } catch (error) {
+      console.warn(
+        `[GitHubAdapter] getLinkedIssues failed for ${issueId}:`,
+        error
+      );
+      return [];
+    }
 
     const [subIssuesResult, timelineResult] = await Promise.allSettled([
       this.fetchSubIssues(owner, repo, issueNumber),
@@ -190,8 +201,8 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
-    const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
     try {
+      const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
       const response = await this.makeRequest<any>(
         `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`
       );

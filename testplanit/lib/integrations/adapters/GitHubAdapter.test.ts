@@ -681,24 +681,38 @@ describe("GitHubAdapter", () => {
       ).toBe(false);
     });
 
-    it("should throw on bare '#' input rather than building a malformed URL", async () => {
-      await expect(adapter.getLinkedIssues!("#")).rejects.toThrow(
-        "Invalid GitHub issue reference: #"
-      );
+    it("should fail soft on bare '#' input rather than building a malformed URL", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("#");
+
+      expect(result).toEqual([]);
       const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
       expect(calledUrls.some((u) => u.includes("/issues//sub_issues"))).toBe(
         false
       );
+      expect(warnSpy).toHaveBeenCalled();
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      warnSpy.mockRestore();
     });
 
-    it("should throw on '#abc' (non-numeric) input rather than building a malformed URL", async () => {
-      await expect(adapter.getLinkedIssues!("#abc")).rejects.toThrow(
-        "Invalid GitHub issue reference: #abc"
-      );
+    it("should fail soft on '#abc' (non-numeric) input rather than building a malformed URL", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("#abc");
+
+      expect(result).toEqual([]);
       const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
       expect(calledUrls.some((u) => u.includes("/issues/abc/sub_issues"))).toBe(
         false
       );
+      expect(warnSpy).toHaveBeenCalled();
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      warnSpy.mockRestore();
     });
   });
 
@@ -925,6 +939,40 @@ describe("GitHubAdapter", () => {
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("42");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on bare '#' input rather than building a malformed URL", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("#");
+
+      expect(result).toEqual([]);
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues//comments"))).toBe(
+        false
+      );
+      expect(errorSpy).toHaveBeenCalled();
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on '#abc' (non-numeric) input rather than building a malformed URL", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("#abc");
+
+      expect(result).toEqual([]);
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues/abc/comments"))).toBe(
+        false
+      );
+      expect(errorSpy).toHaveBeenCalled();
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
       errorSpy.mockRestore();
     });
   });
