@@ -25,7 +25,7 @@ const isLastWorkflowOfType = (
 
 export const getColumns = (
   workflows: ExtendedWorkflows[],
-  t: ReturnType<typeof useTranslations<"common">>,
+  tWorkflowTypes: ReturnType<typeof useTranslations<"enums.WorkflowType">>,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   handleToggleEnabled: (id: number, isEnabled: boolean) => void,
   handleToggleDefault: (
@@ -65,7 +65,7 @@ export const getColumns = (
     size: 100,
     cell: ({ row }) => (
       <div className="text-center">
-        {t(`types.${row.original.workflowType}` as any)}
+        {tWorkflowTypes(row.original.workflowType)}
       </div>
     ),
   },
