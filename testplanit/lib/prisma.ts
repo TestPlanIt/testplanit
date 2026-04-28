@@ -510,6 +510,45 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             return result;
           });
         },
+        async upsert({ args, query }: any) {
+          // Mirror the repositoryCases/testRuns/sessions upsert pattern:
+          // pre-fetch oldEntity so we can branch into create-vs-update emit.
+          // The Jira integration's /api/integrations/[id]/create-issue route
+          // uses upsert (so a re-link of an existing Jira ticket doesn't
+          // create a duplicate row) — without this hook, audit + emit were
+          // silently skipped.
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.issue.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncIssueToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync issue ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              if (oldEntity) {
+                await auditUpdate(
+                  "Issue",
+                  oldEntity,
+                  result,
+                  result.projectId
+                );
+                if (result.projectId !== undefined) {
+                  await emitIssueUpdated(oldEntity, result, tx);
+                }
+              } else {
+                await auditCreate("Issue", result, result.projectId);
+                if (result.projectId !== undefined) {
+                  await emitIssueCreated(result, tx);
+                }
+              }
+            }
+            return result;
+          });
+        },
         async delete({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
             const oldEntity = args.where
