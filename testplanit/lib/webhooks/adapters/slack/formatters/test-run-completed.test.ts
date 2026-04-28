@@ -39,6 +39,17 @@ const baseEnvelope: OutboundEnvelope = {
   },
 };
 
+/** Helper: pull blocks out of the attachment wrapper. */
+function getBlocks(envelope: OutboundEnvelope) {
+  const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
+  return parsed.attachments[0].blocks as Array<Record<string, any>>;
+}
+
+function getColor(envelope: OutboundEnvelope) {
+  const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
+  return parsed.attachments[0].color as string;
+}
+
 describe("formatTestRunCompletedBlocks", () => {
   it("returns body string + JSON content type", () => {
     const out = formatTestRunCompletedBlocks(baseEnvelope);
@@ -46,33 +57,157 @@ describe("formatTestRunCompletedBlocks", () => {
     expect(out.contentType).toBe("application/json");
   });
 
-  it("first block is a header with success emoji + 'Test run completed'", () => {
+  it("body wraps blocks inside attachments[0] (so Slack renders a left-edge color bar)", () => {
     const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
-    expect(parsed.blocks[0]).toMatchObject({
+    expect(parsed).toHaveProperty("text");
+    expect(parsed).toHaveProperty("attachments");
+    expect(Array.isArray(parsed.attachments)).toBe(true);
+    expect(parsed.attachments).toHaveLength(1);
+    expect(parsed.attachments[0]).toHaveProperty("color");
+    expect(parsed.attachments[0]).toHaveProperty("blocks");
+    expect(Array.isArray(parsed.attachments[0].blocks)).toBe(true);
+    // Top-level `blocks` MUST NOT exist — would cause Slack to render twice.
+    expect(parsed).not.toHaveProperty("blocks");
+  });
+
+  it("header is plain 'Test run completed' (no green checkmark — color bar carries the visual signal)", () => {
+    const blocks = getBlocks(baseEnvelope);
+    expect(blocks[0]).toMatchObject({
       type: "header",
-      text: {
-        type: "plain_text",
-        text: ":white_check_mark: Test run completed",
-        emoji: true,
-      },
+      text: { type: "plain_text", text: "Test run completed", emoji: false },
     });
+    // Regression: previously the header used :white_check_mark: which was
+    // misleading when the run had failures or pending cases.
+    expect(blocks[0].text.text).not.toContain(":white_check_mark:");
+  });
+
+  it("color = GREEN (#22c55e) when run is 100% complete with zero failures", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalCases: 5,
+        statusCounts: [
+          {
+            statusId: 1,
+            statusName: "Passed",
+            colorValue: "#0f0",
+            count: 5,
+            isCompleted: true,
+            isSuccess: true,
+          },
+        ],
+      },
+    };
+    expect(getColor(envelope)).toBe("#22c55e");
+  });
+
+  it("color = RED (#ef4444) when there is at least one failure (even if 100% complete)", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalCases: 24,
+        statusCounts: [
+          {
+            statusId: 1,
+            statusName: "Passed",
+            colorValue: "#0f0",
+            count: 22,
+            isCompleted: true,
+            isSuccess: true,
+          },
+          {
+            statusId: 2,
+            statusName: "Failed",
+            colorValue: "#f00",
+            count: 2,
+            isCompleted: true,
+            isFailure: true,
+          },
+        ],
+      },
+    };
+    expect(getColor(envelope)).toBe("#ef4444");
+  });
+
+  it("color = RED even when there are also pending cases (failure dominates)", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalCases: 10,
+        statusCounts: [
+          {
+            statusId: 1,
+            statusName: "Passed",
+            colorValue: "#0f0",
+            count: 4,
+            isCompleted: true,
+            isSuccess: true,
+          },
+          {
+            statusId: 2,
+            statusName: "Failed",
+            colorValue: "#f00",
+            count: 1,
+            isCompleted: true,
+            isFailure: true,
+          },
+          {
+            statusId: 3,
+            statusName: "Pending",
+            colorValue: "#aaa",
+            count: 5,
+          },
+        ],
+      },
+    };
+    expect(getColor(envelope)).toBe("#ef4444");
+  });
+
+  it("color = YELLOW (#eab308) when there are no failures but not 100% complete", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalCases: 20,
+        statusCounts: [
+          {
+            statusId: 1,
+            statusName: "Passed",
+            colorValue: "#0f0",
+            count: 6,
+            isCompleted: true,
+            isSuccess: true,
+          },
+          {
+            statusId: 3,
+            statusName: "Pending",
+            colorValue: "#aaa",
+            count: 14,
+          },
+        ],
+      },
+    };
+    expect(getColor(envelope)).toBe("#eab308");
   });
 
   it("run line uses bold + clickable link, project rendered as 'in <project>' below", () => {
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
-    expect(parsed.blocks[1].text.text).toBe(
+    const blocks = getBlocks(baseEnvelope);
+    expect(blocks[1].text.text).toBe(
       "*<http://localhost:3000/projects/runs/1/42|Smoke v3>*\nin Acme"
     );
   });
 
   it("summary line collapses completion + cases + elapsed (24 cases all completed → 100%)", () => {
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
-    expect(parsed.blocks[2].text.text).toBe(
+    const blocks = getBlocks(baseEnvelope);
+    expect(blocks[2].text.text).toBe(
       "*100% complete* · 24 cases · 10 minutes"
     );
   });
 
-  it("derives Passed/Failed/Pending counts via the shared aggregateRunCounts helper (not from custom logic in the formatter)", () => {
+  it("derives Passed/Failed/Pending counts via aggregateRunCounts (Skipped completed-but-neither bucket is hidden)", () => {
     const envelope: OutboundEnvelope = {
       ...baseEnvelope,
       data: {
@@ -121,25 +256,19 @@ describe("formatTestRunCompletedBlocks", () => {
             statusName: "Pending",
             colorValue: "#aaa",
             count: 21,
-            // isCompleted absent → counted as pending
           },
         ],
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    const rendered = JSON.stringify(parsed);
-    // Pending = 38 total - 12 completed (5+1+6) = 26 (Retest 3 + Blocked 2 + Pending 21)
+    const rendered = JSON.stringify(getBlocks(envelope));
     expect(rendered).toContain(":white_check_mark: *Passed:*\\n5");
     expect(rendered).toContain(":x: *Failed:*\\n1");
     expect(rendered).toContain(":hourglass_flowing_sand: *Pending:*\\n26");
-    // Skipped (completed, neither success nor failure) is intentionally NOT
-    // rendered as its own row — only the three canonical buckets are surfaced.
     expect(rendered).not.toContain("*Skipped:*");
-    // Completion: 12 / 38 = 31.6% → rounds to 32%
     expect(rendered).toContain("*32% complete*");
   });
 
-  it("omits a bucket entirely when its count is 0 (no 'Failed: 0' or 'Pending: 0')", () => {
+  it("omits a status bucket entirely when its count is 0 (no 'Failed: 0' or 'Pending: 0')", () => {
     const envelope: OutboundEnvelope = {
       ...baseEnvelope,
       data: {
@@ -157,21 +286,18 @@ describe("formatTestRunCompletedBlocks", () => {
         ],
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    const rendered = JSON.stringify(parsed);
+    const rendered = JSON.stringify(getBlocks(envelope));
     expect(rendered).toContain(":white_check_mark: *Passed:*");
     expect(rendered).not.toContain("*Failed:*");
     expect(rendered).not.toContain("*Pending:*");
   });
 
   it("status breakdown is preceded by a divider for visual separation", () => {
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
-    const blocks = parsed.blocks as Array<Record<string, unknown>>;
+    const blocks = getBlocks(baseEnvelope);
     const dividerIndex = blocks.findIndex((b) => b.type === "divider");
     expect(dividerIndex).toBeGreaterThan(0);
-    const fieldsAfter = blocks[dividerIndex + 1];
-    expect(fieldsAfter.type).toBe("section");
-    expect(Array.isArray(fieldsAfter.fields)).toBe(true);
+    expect(blocks[dividerIndex + 1].type).toBe("section");
+    expect(Array.isArray(blocks[dividerIndex + 1].fields)).toBe(true);
   });
 
   it("statusCounts = [] omits the divider AND the status fields section", () => {
@@ -183,8 +309,7 @@ describe("formatTestRunCompletedBlocks", () => {
         statusCounts: [],
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    const blocks = parsed.blocks as Array<Record<string, unknown>>;
+    const blocks = getBlocks(envelope);
     expect(blocks.find((b) => b.type === "divider")).toBeUndefined();
     for (const block of blocks) {
       if (Array.isArray(block.fields)) {
@@ -193,8 +318,7 @@ describe("formatTestRunCompletedBlocks", () => {
     }
   });
 
-  it("8000% regression guard — completion is derived from aggregateRunCounts, not multiplied", () => {
-    // 19 cases, 6 completed → 32% (the user's reported run)
+  it("8000% regression guard — completion derived from aggregateRunCounts", () => {
     const envelope: OutboundEnvelope = {
       ...baseEnvelope,
       data: {
@@ -220,16 +344,15 @@ describe("formatTestRunCompletedBlocks", () => {
         ],
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    const rendered = JSON.stringify(parsed);
+    const rendered = JSON.stringify(getBlocks(envelope));
     expect(rendered).toContain("32% complete");
     expect(rendered).not.toContain("3200%");
     expect(rendered).not.toContain("8000%");
   });
 
-  it("totalElapsed > 0 renders into the inline summary line via toHumanReadable", () => {
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
-    expect(parsed.blocks[2].text.text).toContain("10 minutes");
+  it("totalElapsed > 0 renders into the inline summary line", () => {
+    const blocks = getBlocks(baseEnvelope);
+    expect(blocks[2].text.text).toContain("10 minutes");
   });
 
   it("totalElapsed = 0 omits elapsed from the summary line entirely", () => {
@@ -240,9 +363,9 @@ describe("formatTestRunCompletedBlocks", () => {
         totalElapsed: 0,
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    expect(parsed.blocks[2].text.text).not.toContain("0 seconds");
-    expect(parsed.blocks[2].text.text).not.toContain("minutes");
+    const blocks = getBlocks(envelope);
+    expect(blocks[2].text.text).not.toContain("0 seconds");
+    expect(blocks[2].text.text).not.toContain("minutes");
   });
 
   it("missing runUrl falls back to plain bold runTitle (no broken <|...> link)", () => {
@@ -253,9 +376,9 @@ describe("formatTestRunCompletedBlocks", () => {
         runUrl: undefined,
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    expect(parsed.blocks[1].text.text).toBe("*Smoke v3*\nin Acme");
-    expect(parsed.blocks[1].text.text).not.toMatch(/<\|/);
+    const blocks = getBlocks(envelope);
+    expect(blocks[1].text.text).toBe("*Smoke v3*\nin Acme");
+    expect(blocks[1].text.text).not.toMatch(/<\|/);
   });
 
   it("singular 'case' for totalCases=1, plural 'cases' otherwise", () => {
@@ -276,14 +399,13 @@ describe("formatTestRunCompletedBlocks", () => {
         ],
       },
     };
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
-    expect(parsed.blocks[2].text.text).toContain("1 case");
-    expect(parsed.blocks[2].text.text).not.toContain("1 cases");
+    const blocks = getBlocks(envelope);
+    expect(blocks[2].text.text).toContain("1 case");
+    expect(blocks[2].text.text).not.toContain("1 cases");
   });
 
   it("footer context shows eventId in monospace + ISO timestamp; no 'eventId:' label", () => {
-    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
-    const blocks = parsed.blocks as Array<Record<string, unknown>>;
+    const blocks = getBlocks(baseEnvelope);
     const context = blocks[blocks.length - 1] as any;
     expect(context.type).toBe("context");
     expect(context.elements[0].text).toBe(

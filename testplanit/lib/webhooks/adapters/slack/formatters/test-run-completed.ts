@@ -27,10 +27,34 @@ interface TestRunCompletedData
 }
 
 /**
+ * Hex colors for the Slack attachment left-edge bar. Picked to read well
+ * on both light and dark Slack themes.
+ *   - GREEN  "#22c55e": run finished 100% with zero failures (all passed)
+ *   - RED    "#ef4444": at least one failure (regardless of completion)
+ *   - YELLOW "#eab308": no failures but not yet 100% complete (pending)
+ */
+const COLOR_GREEN = "#22c55e";
+const COLOR_RED = "#ef4444";
+const COLOR_YELLOW = "#eab308";
+
+function colorForOutcome(args: {
+  failed: number;
+  pending: number;
+  completionPct: number;
+}): string {
+  if (args.failed > 0) return COLOR_RED;
+  if (args.pending > 0 || args.completionPct < 100) return COLOR_YELLOW;
+  return COLOR_GREEN;
+}
+
+/**
  * D-17 — Slack formatter for `test_run.completed`. Produces both `text`
- * (single-line notification preview / legacy fallback) and `blocks` (Block
- * Kit rich rendering with hierarchy: header → run title → summary line →
- * divider → Passed/Failed/Pending breakdown → footer).
+ * (single-line notification preview / legacy fallback) and `attachments`
+ * with `blocks` inside (so the message gets a left-edge color bar that
+ * signals pass/fail/pending at a glance — green/red/yellow).
+ *
+ * Layout: header → run title + project → completion summary → divider →
+ * Passed/Failed/Pending breakdown → footer (eventId + timestamp).
  */
 export function formatTestRunCompletedBlocks(
   envelope: OutboundEnvelope
@@ -48,6 +72,7 @@ export function formatTestRunCompletedBlocks(
       : null;
 
   const text = `Test run "${data.runTitle}" completed (${completionPct}% complete, ${totalCases} cases)`;
+  const color = colorForOutcome({ failed, pending, completionPct });
 
   // Run-title line: bold, clickable when runUrl present, with project as
   // smaller secondary text on a second line ("in <project>").
@@ -70,8 +95,8 @@ export function formatTestRunCompletedBlocks(
       type: "header",
       text: {
         type: "plain_text",
-        text: ":white_check_mark: Test run completed",
-        emoji: true,
+        text: "Test run completed",
+        emoji: false,
       },
     },
     { type: "section", text: { type: "mrkdwn", text: runWithProject } },
@@ -118,8 +143,14 @@ export function formatTestRunCompletedBlocks(
     ],
   });
 
+  // Wrap in `attachments` (not top-level `blocks`) so Slack renders the
+  // colored left-edge bar. `text` is duplicated at the top level for the
+  // notification preview / legacy fallback.
   return {
-    body: JSON.stringify({ text, blocks }),
+    body: JSON.stringify({
+      text,
+      attachments: [{ color, blocks }],
+    }),
     contentType: "application/json",
   };
 }
