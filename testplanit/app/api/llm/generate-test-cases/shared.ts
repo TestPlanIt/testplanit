@@ -395,19 +395,26 @@ export async function fetchLinkedIssuesContext(
     const withComments = included.filter((c) => c.comments.length > 0);
     if (withComments.length > 0) {
       let target = withComments[0];
-      for (const candidate of withComments) {
+      let targetLongest = target.comments.reduce(
+        (m, cmt) => (cmt.body.length > m ? cmt.body.length : m),
+        0
+      );
+      for (let i = 1; i < withComments.length; i++) {
+        const candidate = withComments[i];
         if (candidate.comments.length > target.comments.length) {
           target = candidate;
+          targetLongest = candidate.comments.reduce(
+            (m, cmt) => (cmt.body.length > m ? cmt.body.length : m),
+            0
+          );
         } else if (candidate.comments.length === target.comments.length) {
-          // Tie-break: prefer the candidate whose largest comment is longer.
-          const targetMax = Math.max(
-            ...target.comments.map((cmt) => cmt.body.length)
+          const candidateLongest = candidate.comments.reduce(
+            (m, cmt) => (cmt.body.length > m ? cmt.body.length : m),
+            0
           );
-          const candidateMax = Math.max(
-            ...candidate.comments.map((cmt) => cmt.body.length)
-          );
-          if (candidateMax > targetMax) {
+          if (candidateLongest > targetLongest) {
             target = candidate;
+            targetLongest = candidateLongest;
           }
         }
       }

@@ -275,6 +275,54 @@ describe("fetchLinkedIssuesContext", () => {
     expect(result).toEqual({ included: [], dropped: [], tokensUsed: 0 });
   });
 
+  it("tie-break path with many same-count candidates — selects longest comment", async () => {
+    // Regression test for WR-04: many linked issues with the same comment
+    // count exercise the tie-break path repeatedly. Uses 50 refs so the
+    // O(N) inner reduce runs O(N^2) times in the outer drop loop.
+    //
+    // All refs have one comment of length 40 EXCEPT REF-25 which has one
+    // comment of length 80. With a tight budget that forces dropping one
+    // comment, the implementation should select REF-25 (longest) — and
+    // a buggy Math.max(...) spread would either still pick REF-25 (correct)
+    // or RangeError on huge arrays (not tested here).
+    const refCount = 50;
+    const refs: LinkedIssueRef[] = Array.from({ length: refCount }, (_, i) => ({
+      id: `R-${i}`,
+      key: `R-${i}`,
+      linkType: "blocks" as const,
+      direction: "outward" as const,
+    }));
+    const issues: Record<string, Partial<IssueData>> = {};
+    const comments: Record<string, IssueComment[]> = {};
+    for (let i = 0; i < refCount; i++) {
+      issues[`R-${i}`] = { title: "T", description: "b".repeat(20) };
+      comments[`R-${i}`] = [
+        {
+          author: "u",
+          body: i === 25 ? "x".repeat(80) : "x".repeat(40),
+          created: "",
+        },
+      ];
+    }
+    const adapter = makeMockAdapter({ linked: refs, issues, comments });
+
+    // Per-issue base = title(1) + body(20) = 21 chars; with one comment of
+    // 40 chars total = 61 chars -> ceil(61/4) = 16 tokens. R-25 = 21 + 80 =
+    // 101 chars -> 26 tokens. Total 49*16 + 26 = 810. Budget 800 forces one
+    // comment drop; tie-break should pick R-25 (longest comment).
+    const result = await fetchLinkedIssuesContext(adapter, "PROJ-1", 800);
+
+    expect(result.included).toHaveLength(refCount);
+    expect(result.dropped).toHaveLength(0);
+    const r25 = result.included.find((c) => c.ref.id === "R-25");
+    expect(r25).toBeDefined();
+    expect(r25!.comments.length).toBe(0); // tie-break dropped from longest
+    const droppedFromOthers = result.included.filter(
+      (c) => c.ref.id !== "R-25" && c.comments.length === 0
+    );
+    expect(droppedFromOthers).toHaveLength(0);
+  });
+
   it("per-linked-ref fail-soft when getIssue throws but getIssueComments succeeds", async () => {
     const refs: LinkedIssueRef[] = [
       { id: "PROJ-2", key: "PROJ-2", linkType: "blocks", direction: "outward" },
