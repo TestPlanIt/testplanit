@@ -12,6 +12,7 @@ export interface IssueAdapterCapabilities {
   customFields: boolean;
   attachments: boolean;
   linkedIssues: boolean;
+  comments: boolean;
 }
 
 export interface IssueSearchOptions {
@@ -103,6 +104,13 @@ export interface LinkedIssueRef {
   direction: "outward" | "inward";
 }
 
+export interface IssueComment {
+  id?: string;
+  author: string;
+  body: string;
+  created: string;
+}
+
 export interface FieldMapping {
   sourceField: string;
   targetField: string;
@@ -169,6 +177,12 @@ export interface IssueAdapter {
    * `linkedIssues: false` in their capabilities.
    */
   getLinkedIssues?(issueId: string): Promise<LinkedIssueRef[]>;
+
+  /**
+   * Get all comments on an issue. Adapters that do not expose comments
+   * omit this method and declare `comments: false` in their capabilities.
+   */
+  getIssueComments?(issueId: string): Promise<IssueComment[]>;
 
   /**
    * Register a webhook for receiving updates
