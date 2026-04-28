@@ -1,3 +1,13 @@
+## [0.22.20](https://github.com/TestPlanIt/testplanit/compare/v0.22.19...v0.22.20) (2026-04-28)
+
+### Bug Fixes
+
+* **deps:** bump postcss to 8.5.10 to address XSS advisory ([#253](https://github.com/TestPlanIt/testplanit/issues/253)) ([0be5e13](https://github.com/TestPlanIt/testplanit/commit/0be5e13c1c2a595304f7b9539d78b4955206459e))
+
+### Enhancements
+
+* smooth out jira issue create-and-link flow ([#256](https://github.com/TestPlanIt/testplanit/issues/256)) ([7dfdb6a](https://github.com/TestPlanIt/testplanit/commit/7dfdb6a97a0808cefb2348526dce49d7fadc3494))
+
 ## [0.22.19](https://github.com/TestPlanIt/testplanit/compare/v0.22.18...v0.22.19) (2026-04-28)
 
 ### Bug Fixes
