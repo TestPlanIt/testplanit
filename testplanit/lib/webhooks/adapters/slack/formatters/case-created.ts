@@ -8,9 +8,13 @@ import {
 
 interface CaseCreatedData {
   id: number;
-  title: string;
+  title?: string;
+  /** Emitter ships `name`; older drafts used `title`. Accept both. */
+  name?: string;
   projectId: number;
   description?: string | null;
+  stateName?: string | null;
+  stateColor?: string | null;
 }
 
 const DESCRIPTION_MAX_LEN = 280;
@@ -28,6 +32,7 @@ export function formatCaseCreatedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as CaseCreatedData;
+  const title = data.title ?? data.name ?? "(unnamed case)";
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -39,13 +44,20 @@ export function formatCaseCreatedBlocks(
       text: {
         type: "mrkdwn",
         text: titleAndProject(
-          data.title,
+          title,
           projectNameOf(envelope),
           url.case(data.projectId, data.id)
         ),
       },
     },
   ];
+
+  if (data.stateName) {
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: `*State:* ${data.stateName}` },
+    });
+  }
 
   if (data.description) {
     blocks.push({
@@ -58,7 +70,9 @@ export function formatCaseCreatedBlocks(
   }
 
   return buildBody({
-    text: `Case created: ${data.title}`,
+    text: `Case created: ${title}`,
+    // Color bar = the case's workflow state color when present.
+    color: data.stateColor ?? undefined,
     blocks,
   });
 }

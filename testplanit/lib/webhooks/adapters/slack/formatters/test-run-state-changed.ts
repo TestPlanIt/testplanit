@@ -10,8 +10,18 @@ interface TestRunStateChangedData {
   runId: number;
   runTitle: string;
   projectId: number;
-  from: { stateId: number | null; stateName: string | null; isCompleted: boolean };
-  to: { stateId: number | null; stateName: string | null; isCompleted: boolean };
+  from: {
+    stateId: number | null;
+    stateName: string | null;
+    stateColor?: string | null;
+    isCompleted: boolean;
+  };
+  to: {
+    stateId: number | null;
+    stateName: string | null;
+    stateColor?: string | null;
+    isCompleted: boolean;
+  };
   isCompletedTransition: boolean;
 }
 
@@ -30,6 +40,10 @@ export function formatTestRunStateChangedBlocks(
 
   return buildBody({
     text: `Test run state changed: ${data.runTitle}`,
+    // Color bar = the workflow color of the state being transitioned TO.
+    // Falls through to no-bar when color is absent (e.g. legacy events
+    // without this field).
+    color: data.to?.stateColor ?? undefined,
     blocks: [
       {
         type: "header",

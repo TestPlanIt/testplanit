@@ -82,7 +82,7 @@ export function formatTestRunCompletedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as TestRunCompletedData;
-  const { totalCases, passed, failed, pending, completionPct } =
+  const { totalCases, failed, pending, completionPct } =
     aggregateRunCounts({
       totalCases: data.totalCases,
       statusCounts: data.statusCounts ?? [],

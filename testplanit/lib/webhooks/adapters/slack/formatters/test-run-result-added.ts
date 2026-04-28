@@ -19,6 +19,7 @@ interface TestRunResultAddedData {
   resultId: number;
   statusId: number | null;
   statusName: string | null;
+  statusColor?: string | null;
   isCompleted?: boolean;
   isSuccess?: boolean;
   isFailure?: boolean;
@@ -40,11 +41,17 @@ export function formatTestRunResultAddedBlocks(
   const attemptSuffix =
     data.attempt && data.attempt > 1 ? ` (attempt ${data.attempt})` : "";
 
-  const color = data.isSuccess
-    ? COLOR_GREEN
-    : data.isFailure
-      ? COLOR_RED
-      : COLOR_YELLOW;
+  // Color bar = the result Status's own color when present (admin can
+  // tune it per project), else fall back to the canonical green/red/
+  // yellow rule using the schema flags so the bar still signals
+  // pass/fail meaningfully.
+  const color =
+    data.statusColor ??
+    (data.isSuccess
+      ? COLOR_GREEN
+      : data.isFailure
+        ? COLOR_RED
+        : COLOR_YELLOW);
 
   return buildBody({
     text: `Result: ${statusName} — ${caseName}`,
