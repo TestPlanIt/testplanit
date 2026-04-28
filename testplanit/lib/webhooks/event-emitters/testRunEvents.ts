@@ -212,6 +212,7 @@ export async function emitTestRunResultAdded(
     {
       runId: run.id,
       runTitle: run.name,
+      projectId: run.projectId,
       caseId: testRunCase?.repositoryCase?.id ?? null,
       caseName: testRunCase?.repositoryCase?.name ?? null,
       resultId: row.id,
