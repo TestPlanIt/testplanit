@@ -272,9 +272,10 @@ export class AzureDevOpsAdapter extends BaseAdapter {
 
   async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
     try {
+      const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
         this.buildUrl(
-          `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}&$expand=relations`
+          `/_apis/wit/workitems/${encodedId}?api-version=${this.apiVersion}&$expand=relations`
         )
       );
       return this.mapWorkItemRelations(response);
@@ -291,9 +292,10 @@ export class AzureDevOpsAdapter extends BaseAdapter {
 
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
+      const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
         this.buildUrl(
-          `/_apis/wit/workitems/${issueId}/comments?api-version=${this.apiVersion}-preview`
+          `/_apis/wit/workitems/${encodedId}/comments?api-version=${this.apiVersion}-preview`
         )
       );
       return this.mapAzureDevOpsComments(response);

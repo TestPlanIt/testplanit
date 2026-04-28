@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
   if (!issueKey) {
     return Response.json({ error: "Missing issueKey" }, { status: 400 });
   }
+  if (issueKey.length > 200 || /[?#&\s]/.test(issueKey)) {
+    return Response.json({ error: "Invalid issueKey format" }, { status: 400 });
+  }
   const projectId = parseInt(projectIdParam, 10);
 
   const db = await getEnhancedDb(session);

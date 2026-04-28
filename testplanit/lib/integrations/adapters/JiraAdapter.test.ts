@@ -786,6 +786,20 @@ describe("JiraAdapter", () => {
       );
       expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1");
     });
+
+    it("should encode issueId path-injection chars (?, /, &) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssueWithLinks),
+      });
+
+      await adapter.getLinkedIssues!("PROJ-1?fields=*all");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1%3Ffields%3D*all?");
+      expect(calledUrl).not.toContain("/rest/api/3/issue/PROJ-1?fields=*all?");
+    });
   });
 
   describe("getIssueComments", () => {
@@ -1059,6 +1073,36 @@ describe("JiraAdapter", () => {
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("PROJ-1");
       errorSpy.mockRestore();
+    });
+
+    it("should encode issueId path-injection chars (?, /, &) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("PROJ-1?fields=*all");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/rest/api/3/issue/PROJ-1%3Ffields%3D*all/comment"
+      );
+      expect(calledUrl).not.toContain("/rest/api/3/issue/PROJ-1?fields=*all/");
+    });
+
+    it("should encode traversal chars (../) in issueId path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("PROJ-1/../");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("PROJ-1%2F..%2F/comment");
+      expect(calledUrl).not.toContain("PROJ-1/../comment");
     });
   });
 

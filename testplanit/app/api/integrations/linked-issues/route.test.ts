@@ -96,6 +96,31 @@ describe("GET /api/integrations/linked-issues", () => {
     expect(String(data.error)).toMatch(/projectId/i);
   });
 
+  it("returns 400 when issueKey contains query/fragment chars", async () => {
+    (getServerSession as any).mockResolvedValue(mockSession);
+
+    const response = await GET(
+      buildRequest("projectId=42&issueKey=PROJ-1%3Ffields%3D*all")
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(String(data.error)).toMatch(/issueKey/i);
+  });
+
+  it("returns 400 when issueKey is suspiciously long", async () => {
+    (getServerSession as any).mockResolvedValue(mockSession);
+
+    const longKey = "A".repeat(201);
+    const response = await GET(
+      buildRequest(`projectId=42&issueKey=${longKey}`)
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(String(data.error)).toMatch(/issueKey/i);
+  });
+
   it("returns 404 when no active issue integration exists for the project", async () => {
     (getServerSession as any).mockResolvedValue(mockSession);
     mockDb.projectIntegration.findFirst.mockResolvedValue(null);

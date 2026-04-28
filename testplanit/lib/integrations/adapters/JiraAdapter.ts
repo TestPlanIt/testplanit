@@ -521,8 +521,9 @@ export class JiraAdapter extends BaseAdapter {
       const params = new URLSearchParams({
         fields: "issuelinks,parent,subtasks,customfield_10014",
       });
+      const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${issueId}?${params.toString()}`)
+        this.buildUrl(`/rest/api/3/issue/${encodedId}?${params.toString()}`)
       );
       return this.mapLinkedIssues(response);
     } catch (error) {
@@ -538,8 +539,9 @@ export class JiraAdapter extends BaseAdapter {
 
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
+      const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${issueId}/comment`)
+        this.buildUrl(`/rest/api/3/issue/${encodedId}/comment`)
       );
       return this.mapJiraComments(response);
     } catch (error) {

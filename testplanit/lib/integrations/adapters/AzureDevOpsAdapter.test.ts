@@ -842,6 +842,24 @@ describe("AzureDevOpsAdapter", () => {
       expect(firstArg).toContain("123");
       errorSpy.mockRestore();
     });
+
+    it("should encode issueId path-injection chars (?, /, &) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItemWithRelations),
+      });
+
+      await adapter.getLinkedIssues!("123?api-version=evil");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/_apis/wit/workitems/123%3Fapi-version%3Devil?"
+      );
+      expect(calledUrl).not.toContain(
+        "/_apis/wit/workitems/123?api-version=evil?"
+      );
+    });
   });
 
   describe("getIssueComments", () => {
@@ -1068,6 +1086,37 @@ describe("AzureDevOpsAdapter", () => {
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("123");
       errorSpy.mockRestore();
+    });
+
+    it("should encode issueId path-injection chars (/) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("123/../456");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/_apis/wit/workitems/123%2F..%2F456/comments"
+      );
+      expect(calledUrl).not.toContain("/_apis/wit/workitems/123/../456/");
+    });
+
+    it("should encode query-injection chars (?, &) in issueId", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("123?evil=1");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/_apis/wit/workitems/123%3Fevil%3D1/comments"
+      );
     });
   });
 
