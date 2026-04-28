@@ -397,7 +397,13 @@ export class GitHubAdapter extends BaseAdapter {
     issueNumber: string
   ): Promise<LinkedIssueRef[]> {
     const response = await this.makeRequest<any[]>(
-      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
     );
     if (!Array.isArray(response)) return [];
     const refs: LinkedIssueRef[] = [];
@@ -419,7 +425,13 @@ export class GitHubAdapter extends BaseAdapter {
     issueNumber: string
   ): Promise<LinkedIssueRef[]> {
     const response = await this.makeRequest<any[]>(
-      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/timeline`
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/timeline`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
     );
     if (!Array.isArray(response)) return [];
     const refs: LinkedIssueRef[] = [];

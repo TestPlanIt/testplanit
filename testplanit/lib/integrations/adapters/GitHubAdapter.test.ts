@@ -483,6 +483,38 @@ describe("GitHubAdapter", () => {
       ).toBe(true);
     });
 
+    it("should send GitHub Accept and X-GitHub-Api-Version headers on both sub_issues and timeline fetches", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSubIssuesResponse),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+
+      await adapter.getLinkedIssues!("42");
+
+      const subIssuesCall = mockFetch.mock.calls.find((c) =>
+        (c[0] as string).includes("/sub_issues")
+      );
+      const timelineCall = mockFetch.mock.calls.find((c) =>
+        (c[0] as string).includes("/timeline")
+      );
+      expect(subIssuesCall).toBeDefined();
+      expect(timelineCall).toBeDefined();
+      const subHeaders = (subIssuesCall![1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      const timelineHeaders = (timelineCall![1] as RequestInit)
+        .headers as Record<string, string>;
+      expect(subHeaders["Accept"]).toBe("application/vnd.github+json");
+      expect(subHeaders["X-GitHub-Api-Version"]).toBe("2022-11-28");
+      expect(timelineHeaders["Accept"]).toBe("application/vnd.github+json");
+      expect(timelineHeaders["X-GitHub-Api-Version"]).toBe("2022-11-28");
+    });
+
     it("should return only sub_issues entries when timeline call fails with 503 and log at error level", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
