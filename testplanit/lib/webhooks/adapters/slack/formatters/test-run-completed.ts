@@ -8,8 +8,10 @@ import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 interface TestRunCompletedData {
   runId: number;
   runTitle: string;
+  /** Deep-link to the run in the TestPlanIt UI; rendered as a markdown link in Slack. */
+  runUrl?: string;
   totalCases: number;
-  /** 0..1 fraction; rendered as a percentage. */
+  /** 0..100 percentage (matches getTestRunSummary output and the in-app summary route). */
   completionRate: number;
   statusCounts?: Array<{
     statusId: number | null;
@@ -33,7 +35,7 @@ export function formatTestRunCompletedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as TestRunCompletedData;
-  const completionPct = Math.round((data.completionRate ?? 0) * 100);
+  const completionPct = Math.round(data.completionRate ?? 0);
   const text = `Test run "${data.runTitle}" completed (${completionPct}% complete, ${data.totalCases} cases)`;
 
   const statusCounts = data.statusCounts ?? [];
@@ -41,6 +43,12 @@ export function formatTestRunCompletedBlocks(
     type: "mrkdwn" as const,
     text: `*${sc.statusName}:*\n${sc.count}`,
   }));
+
+  // Slack mrkdwn link syntax: <url|text>. When runUrl is present, render
+  // the run title as a clickable link; otherwise plain text.
+  const runField = data.runUrl
+    ? `*Run:*\n<${data.runUrl}|${data.runTitle}>`
+    : `*Run:*\n${data.runTitle}`;
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -50,7 +58,7 @@ export function formatTestRunCompletedBlocks(
     {
       type: "section",
       fields: [
-        { type: "mrkdwn", text: `*Run:*\n${data.runTitle}` },
+        { type: "mrkdwn", text: runField },
         { type: "mrkdwn", text: `*Project:*\n${envelope.projectName}` },
         { type: "mrkdwn", text: `*Cases:*\n${data.totalCases}` },
         { type: "mrkdwn", text: `*Completion:*\n${completionPct}%` },

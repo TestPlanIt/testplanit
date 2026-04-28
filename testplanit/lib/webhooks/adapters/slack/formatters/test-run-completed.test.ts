@@ -13,8 +13,9 @@ const baseEnvelope: OutboundEnvelope = {
   data: {
     runId: 42,
     runTitle: "Smoke v3",
+    runUrl: "http://localhost:3000/en-US/projects/runs/1/42",
     totalCases: 24,
-    completionRate: 0.9583,
+    completionRate: 95.83,
     statusCounts: [
       {
         statusId: 1,
@@ -81,17 +82,55 @@ describe("formatTestRunCompletedBlocks", () => {
     }
   });
 
-  it("completionRate of 0.987 renders as '99%' (rounded)", () => {
+  it("completionRate of 98.7 renders as '99%' (rounded; service returns 0..100, formatter does not rescale)", () => {
     const envelope: OutboundEnvelope = {
       ...baseEnvelope,
       data: {
         ...(baseEnvelope.data as Record<string, unknown>),
-        completionRate: 0.987,
+        completionRate: 98.7,
       },
     };
     const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
     const rendered = JSON.stringify(parsed);
     expect(rendered).toContain("99%");
+    // Regression guard: 8000% would be the symptom of a double-multiplication.
+    expect(rendered).not.toContain("9870%");
+  });
+
+  it("completionRate of 80 renders as '80%' (regression guard against 8000% bug)", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        completionRate: 80,
+      },
+    };
+    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
+    const rendered = JSON.stringify(parsed);
+    expect(rendered).toContain("80%");
+    expect(rendered).not.toContain("8000%");
+  });
+
+  it("runUrl is rendered as a Slack mrkdwn link <url|runTitle> in the Run field", () => {
+    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
+    const rendered = JSON.stringify(parsed);
+    expect(rendered).toContain(
+      "<http://localhost:3000/en-US/projects/runs/1/42|Smoke v3>"
+    );
+  });
+
+  it("missing runUrl falls back to plain runTitle (no broken <|...> link)", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        runUrl: undefined,
+      },
+    };
+    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
+    const rendered = JSON.stringify(parsed);
+    expect(rendered).not.toMatch(/<\|/);
+    expect(rendered).toContain("*Run:*\\nSmoke v3");
   });
 
   it("statusCounts with 12 items truncates to 8 fields (Slack limit)", () => {

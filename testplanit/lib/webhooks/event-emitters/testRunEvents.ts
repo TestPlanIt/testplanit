@@ -116,12 +116,20 @@ export async function emitTestRunUpdateEvents(
 
   if (isCompletedTransition) {
     // D-15 — payload is the full TestRunSummaryData shape used by the
-    // in-app summary UI. Read inside the same tx so post-write state is
-    // consistent with what consumers will see.
+    // in-app summary UI, enriched with run identity + deep-link so Slack
+    // (and any other consumer) can render a self-contained message
+    // without an API round-trip.
     const summary = await getTestRunSummary(newRow.id, { client: tx });
+    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const runUrl = `${baseUrl}/en-US/projects/runs/${newRow.projectId}/${newRow.id}`;
     await webhookEvents.emit(
       "test_run.completed",
-      summary as unknown as Record<string, unknown>,
+      {
+        ...(summary as unknown as Record<string, unknown>),
+        runId: newRow.id,
+        runTitle: newRow.name,
+        runUrl,
+      },
       {
         projectId: opts.projectId ?? newRow.projectId,
         tx,
