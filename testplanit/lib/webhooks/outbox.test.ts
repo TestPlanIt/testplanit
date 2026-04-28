@@ -88,7 +88,7 @@ describe("fanoutToConfigs", () => {
     } as any;
 
     await fanoutToConfigs(
-      { projectId: 7, eventName: "test_run.completed" },
+      { projectId: 7, eventName: "test_run.completed", payload: {} },
       prismaMock
     );
 
@@ -109,7 +109,7 @@ describe("fanoutToConfigs", () => {
     } as any;
 
     await fanoutToConfigs(
-      { projectId: 7, eventName: "test_run.completed" },
+      { projectId: 7, eventName: "test_run.completed", payload: {} },
       prismaMock
     );
 
@@ -127,7 +127,7 @@ describe("fanoutToConfigs", () => {
     } as any;
 
     const result = await fanoutToConfigs(
-      { projectId: 7, eventName: "test_run.completed" },
+      { projectId: 7, eventName: "test_run.completed", payload: {} },
       prismaMock
     );
 
@@ -142,7 +142,7 @@ describe("fanoutToConfigs", () => {
     const sneaky = `evil'); DROP TABLE "WebhookConfig"; --`;
 
     await fanoutToConfigs(
-      { projectId: 7, eventName: sneaky },
+      { projectId: 7, eventName: sneaky, payload: {} },
       prismaMock
     );
 
@@ -156,5 +156,81 @@ describe("fanoutToConfigs", () => {
         c.subscribedEvents?.has !== undefined
     );
     expect(hasClause.subscribedEvents.has).toBe(sneaky);
+  });
+
+  it("9. webhook.test event with payload.configId targets that specific config (bypasses subscription matching)", async () => {
+    const findUniqueSpy = vi.fn().mockResolvedValue({
+      id: "c-target",
+      projectId: 7,
+      direction: "OUTBOUND",
+      isActive: true,
+    });
+    const findManySpy = vi.fn();
+    const prismaMock = {
+      webhookConfig: { findUnique: findUniqueSpy, findMany: findManySpy },
+    } as any;
+
+    const result = await fanoutToConfigs(
+      {
+        projectId: 7,
+        eventName: "webhook.test",
+        payload: { configId: "c-target", source: "TestPlanIt" },
+      },
+      prismaMock
+    );
+
+    expect(result).toEqual(["c-target"]);
+    expect(findUniqueSpy).toHaveBeenCalledWith({
+      where: { id: "c-target" },
+      select: { id: true, projectId: true, direction: true, isActive: true },
+    });
+    expect(findManySpy).not.toHaveBeenCalled();
+  });
+
+  it("10. webhook.test ignores cross-project / non-OUTBOUND / inactive targets", async () => {
+    const cases = [
+      { id: "c-x", projectId: 99, direction: "OUTBOUND", isActive: true }, // wrong project
+      { id: "c-x", projectId: 7, direction: "INBOUND", isActive: true }, // wrong direction
+      { id: "c-x", projectId: 7, direction: "OUTBOUND", isActive: false }, // inactive
+      null, // missing
+    ];
+    for (const config of cases) {
+      const prismaMock = {
+        webhookConfig: {
+          findUnique: vi.fn().mockResolvedValue(config),
+          findMany: vi.fn(),
+        },
+      } as any;
+      const result = await fanoutToConfigs(
+        {
+          projectId: 7,
+          eventName: "webhook.test",
+          payload: { configId: "c-x" },
+        },
+        prismaMock
+      );
+      expect(result).toEqual([]);
+    }
+  });
+
+  it("11. webhook.test with malformed/missing payload.configId returns empty", async () => {
+    const prismaMock = {
+      webhookConfig: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+      },
+    } as any;
+    for (const payload of [null, undefined, {}, { configId: 42 }, [], "string"]) {
+      const result = await fanoutToConfigs(
+        {
+          projectId: 7,
+          eventName: "webhook.test",
+          payload: payload as any,
+        },
+        prismaMock
+      );
+      expect(result).toEqual([]);
+    }
+    expect(prismaMock.webhookConfig.findUnique).not.toHaveBeenCalled();
   });
 });

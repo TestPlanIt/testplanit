@@ -69,20 +69,41 @@ export async function claimOutboxBatch(
  *   - subscribedEvents non-empty ⟶ exact-string match required
  *   - No wildcard support
  *
- * NOTE: The `webhook.test` synthetic event (Plan 02-06) is NOT special-cased
- * here. The poller never sees `webhook.test` rows because Plan 02-06's
- * sendTestOutboundWebhook server action emits the outbox row directly to
- * a SPECIFIC webhookConfigId (it knows which one — the admin clicked the
- * button on a specific config card). The bypass for "webhook.test ignores
- * subscriptions" lives in lib/webhooks/dispatch.ts (Task 4.2 / Blocker 6).
+ * Targeted dispatch for `webhook.test`: the synthetic test event from
+ * sendTestOutboundWebhook carries the originating `configId` in its
+ * payload. Bypass subscription matching and target exactly that config —
+ * the admin explicitly clicked "Send test event" on it.
  *
  * Prisma's `text[]` `has` operator generates SQL `'<value>' = ANY("subscribedEvents")`;
  * `isEmpty` generates `cardinality("subscribedEvents") = 0`.
  */
 export async function fanoutToConfigs(
-  row: Pick<ClaimedOutboxEvent, "projectId" | "eventName">,
+  row: Pick<ClaimedOutboxEvent, "projectId" | "eventName" | "payload">,
   prisma: PrismaClient | Prisma.TransactionClient
 ): Promise<string[]> {
+  if (row.eventName === "webhook.test") {
+    const targetConfigId =
+      row.payload &&
+      typeof row.payload === "object" &&
+      !Array.isArray(row.payload)
+        ? (row.payload as { configId?: unknown }).configId
+        : undefined;
+    if (typeof targetConfigId !== "string") return [];
+    const config = await prisma.webhookConfig.findUnique({
+      where: { id: targetConfigId },
+      select: { id: true, projectId: true, direction: true, isActive: true },
+    });
+    if (
+      !config ||
+      config.projectId !== row.projectId ||
+      config.direction !== "OUTBOUND" ||
+      !config.isActive
+    ) {
+      return [];
+    }
+    return [config.id];
+  }
+
   const configs = await prisma.webhookConfig.findMany({
     where: {
       projectId: row.projectId,
