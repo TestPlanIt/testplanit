@@ -20,7 +20,7 @@ import { useFindManyIssue } from "@/lib/hooks/issue";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { AlertCircle, ExternalLink, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { CreateIssueDialog } from "./create-issue-dialog";
@@ -123,6 +123,11 @@ export function SearchIssuesDialog({
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
+  // Tracks the key of a just-created issue we're polling for. While set, the
+  // debounce-triggered search effect skips firing for that key so it can't race
+  // with and overwrite the polling loop's results.
+  const pollingForKeyRef = useRef<string | null>(null);
+
   // Fetch project integrations
   const { data: projectIntegrations } = useFindManyProjectIntegration({
     where: {
@@ -205,14 +210,22 @@ export function SearchIssuesDialog({
   // Trigger external search when searchExternal changes or query changes
   useEffect(() => {
     if (searchExternal && debouncedSearchQuery.length > 0) {
+      // Polling loop owns this key — skip to avoid overwriting its results
+      if (pollingForKeyRef.current === debouncedSearchQuery) return;
       void searchExternalIssues();
     }
   }, [searchExternal, debouncedSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const searchExternalIssues = async () => {
-    if (!activeIntegration) return;
+  const searchExternalIssues = async (
+    queryOverride?: string,
+    options?: { manageLoadingState?: boolean }
+  ): Promise<ExternalIssue[] | null> => {
+    if (!activeIntegration) return null;
 
-    setIsSearching(true);
+    const query = queryOverride ?? debouncedSearchQuery;
+    const manageLoadingState = options?.manageLoadingState ?? true;
+
+    if (manageLoadingState) setIsSearching(true);
     setAuthError(null);
     setSearchFailures([]);
 
@@ -229,7 +242,7 @@ export function SearchIssuesDialog({
           integrationConfig.externalProjectKey ||
           "";
 
-        const searchParams = new URLSearchParams({ q: debouncedSearchQuery });
+        const searchParams = new URLSearchParams({ q: query });
         if (externalProjectId) {
           searchParams.set("projectId", externalProjectId);
         }
@@ -242,7 +255,7 @@ export function SearchIssuesDialog({
           const errorData = await response.json();
           setAuthError(errorData.authUrl || "Authentication required");
           setExternalIssues([]);
-          return;
+          return null;
         }
 
         if (!response.ok) {
@@ -270,14 +283,14 @@ export function SearchIssuesDialog({
           isExternal: true,
         }));
         setExternalIssues(formattedIssues);
-        return;
+        return formattedIssues;
       }
 
       // Fan-out search: call search API once per IntegrationProject (per D-04)
       const searchPromises = projectsToSearch.map(async (ip) => {
         try {
           const searchParams = new URLSearchParams({
-            q: debouncedSearchQuery,
+            q: query,
             projectId: ip.externalProjectId,
           });
 
@@ -355,10 +368,43 @@ export function SearchIssuesDialog({
 
       setExternalIssues(allIssues);
       setSearchFailures(failures);
+      return allIssues;
     } catch (error) {
       console.error("Failed to search external issues:", error);
       setExternalIssues([]);
+      return null;
     } finally {
+      if (manageLoadingState) setIsSearching(false);
+    }
+  };
+
+  // Jira's JQL search index is eventually consistent — a just-created issue
+  // may take a few seconds to appear. Re-fire the search until the new key
+  // shows up or we give up. Keep isSearching true throughout so the user sees
+  // a continuous spinner instead of a flickering "No results" state.
+  const pollForCreatedIssue = async (key: string) => {
+    const delaysMs = [0, 800, 1200, 1600, 2000];
+    pollingForKeyRef.current = key;
+    setIsSearching(true);
+    try {
+      for (const delay of delaysMs) {
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        // User changed the query mid-poll — abandon
+        if (pollingForKeyRef.current !== key) return;
+        const results = await searchExternalIssues(key, {
+          manageLoadingState: false,
+        });
+        if (results === null) return;
+        if (results.some((i) => i.key === key || i.externalKey === key)) {
+          return;
+        }
+      }
+    } finally {
+      if (pollingForKeyRef.current === key) {
+        pollingForKeyRef.current = null;
+      }
       setIsSearching(false);
     }
   };
@@ -482,7 +528,10 @@ export function SearchIssuesDialog({
               <Input
                 placeholder={t("issues.searchPlaceholder")}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  pollingForKeyRef.current = null;
+                  setSearchQuery(e.target.value);
+                }}
                 className="pl-10"
               />
             </div>
@@ -761,6 +810,7 @@ export function SearchIssuesDialog({
               // This will trigger the search and show the new issue
               if (createdIssue.key) {
                 setSearchQuery(createdIssue.key);
+                void pollForCreatedIssue(createdIssue.key);
               }
             }}
           />
@@ -778,10 +828,18 @@ export function SearchIssuesDialog({
 
               // Set the search query to the newly created issue key or title
               // This will trigger the search and show the new issue
-              if (createdIssue.key || createdIssue.externalKey) {
-                setSearchQuery(createdIssue.key || createdIssue.externalKey);
-              } else if (createdIssue.title || createdIssue.name) {
-                setSearchQuery(createdIssue.title || createdIssue.name);
+              const searchKey =
+                createdIssue.key ||
+                createdIssue.externalKey ||
+                createdIssue.title ||
+                createdIssue.name;
+              if (searchKey) {
+                setSearchQuery(searchKey);
+                if (createdIssue.key || createdIssue.externalKey) {
+                  void pollForCreatedIssue(
+                    createdIssue.key || createdIssue.externalKey
+                  );
+                }
               }
             }}
           />

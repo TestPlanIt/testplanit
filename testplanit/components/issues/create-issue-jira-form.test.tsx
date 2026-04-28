@@ -240,8 +240,9 @@ describe("CreateIssueJiraForm", () => {
     });
   });
 
-  it("shows exactly the linked projects (no unlinked projects in the selector)", async () => {
-    // Only one linked project
+  it("hides the project selector when only one linked project is available", async () => {
+    // Only one linked project — selector should be skipped and the project
+    // auto-used silently
     mockUseFindManyIntegrationProject.mockReturnValue({
       data: [
         makeIntegrationProject("ip-1", "ABT", "Allego Bug Tracking", true),
@@ -252,9 +253,12 @@ describe("CreateIssueJiraForm", () => {
     render(<CreateIssueJiraForm {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.queryByTestId("select-item-ABT")).toBeTruthy();
-      // LIV not linked — should not appear
-      expect(screen.queryByTestId("select-item-LIV")).toBeNull();
+      // Selector is not rendered
+      expect(screen.queryByTestId("select-item-ABT")).toBeNull();
+      // Form still auto-selects ABT — verified by issue-types fetch URL
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("projectKey=ABT")
+      );
     });
   });
 

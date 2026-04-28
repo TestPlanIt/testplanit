@@ -85,6 +85,7 @@ export function CreateIssueJiraForm({
   const [isLoading, setIsLoading] = useState(false);
   const [fields, setFields] = useState<JiraField[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
+  const [issueTypesLoading, setIssueTypesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issueTypes, setIssueTypes] = useState<
     Array<{ id: string; name: string }>
@@ -214,6 +215,7 @@ export function CreateIssueJiraForm({
     const fetchIssueTypes = async () => {
       if (!open || !selectedProjectKey) return;
 
+      setIssueTypesLoading(true);
       try {
         const response = await fetch(
           `/api/integrations/${integrationId}/issue-types?projectKey=${selectedProjectKey}`
@@ -239,6 +241,8 @@ export function CreateIssueJiraForm({
         }
       } catch (error) {
         console.error("Failed to fetch issue types:", error);
+      } finally {
+        setIssueTypesLoading(false);
       }
     };
 
@@ -476,7 +480,7 @@ export function CreateIssueJiraForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("issues.createIssueInJira")}</DialogTitle>
           <DialogDescription>
@@ -492,14 +496,19 @@ export function CreateIssueJiraForm({
               {t("issues.integrationNotConfiguredDescription")}
             </AlertDescription>
           </Alert>
-        ) : fieldsLoading || projectsLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
         ) : error ? (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        ) : projectsLoading ||
+          issueTypesLoading ||
+          fieldsLoading ||
+          // Cover render gaps between the chained projects → issue-types → fields
+          // effects so the spinner stays continuous until the form is ready.
+          (projects.length > 0 && fields.length === 0) ? (
+          <div className="flex justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
         ) : (
           <Form {...form}>
             <form
@@ -511,8 +520,9 @@ export function CreateIssueJiraForm({
               className="space-y-4"
               autoComplete="off"
             >
-              {/* Project Selector */}
-              {projects.length > 0 && (
+              {/* Project Selector — hide when only one project is available
+                  since selection is automatic */}
+              {projects.length > 1 && (
                 <FormItem>
                   <FormLabel className="inline-flex items-center gap-0.5">
                     {t("issues.externalProject")}
