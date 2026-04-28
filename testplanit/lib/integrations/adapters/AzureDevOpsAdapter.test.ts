@@ -67,7 +67,7 @@ describe("AzureDevOpsAdapter", () => {
         customFields: true,
         attachments: true,
         linkedIssues: true,
-        comments: false,
+        comments: true,
       });
     });
   });
@@ -839,6 +839,233 @@ describe("AzureDevOpsAdapter", () => {
       const firstArg = errorSpy.mock.calls[0][0];
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+  });
+
+  describe("getIssueComments", () => {
+    const mockAdoCommentsResponse = {
+      count: 2,
+      comments: [
+        {
+          id: 10,
+          text: "Reviewed",
+          createdBy: { displayName: "Alice" },
+          createdDate: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: 11,
+          text: "LGTM",
+          createdBy: { displayName: "Bob" },
+          createdDate: "2026-01-02T00:00:00Z",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should request /_apis/wit/workitems/{id}/comments with -preview api-version suffix", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("123");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/_apis/wit/workitems/123/comments");
+      expect(calledUrl).toContain("api-version=");
+      expect(calledUrl).toContain("-preview");
+    });
+
+    it("should map all comments to IssueComment[] on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([
+        {
+          id: "10",
+          author: "Alice",
+          body: "Reviewed",
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "11",
+          author: "Bob",
+          body: "LGTM",
+          created: "2026-01-02T00:00:00Z",
+        },
+      ]);
+    });
+
+    it("should fall back to 'Unknown' when createdBy is missing or displayName is absent", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            count: 2,
+            comments: [
+              {
+                id: 20,
+                text: "no createdBy",
+                createdDate: "2026-01-03T00:00:00Z",
+              },
+              {
+                id: 21,
+                text: "no displayName",
+                createdBy: {},
+                createdDate: "2026-01-04T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toHaveLength(2);
+      expect(result[0].author).toBe("Unknown");
+      expect(result[1].author).toBe("Unknown");
+    });
+
+    it("should return [] when response is empty object", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return [] when comments array is empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ count: 0, comments: [] }),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should skip malformed entries and keep valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            count: 2,
+            comments: [
+              null,
+              {
+                id: 30,
+                text: "valid",
+                createdBy: { displayName: "Carol" },
+                createdDate: "2026-01-05T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "30",
+        author: "Carol",
+        body: "valid",
+        created: "2026-01-05T00:00:00Z",
+      });
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("123");
       errorSpy.mockRestore();
     });
