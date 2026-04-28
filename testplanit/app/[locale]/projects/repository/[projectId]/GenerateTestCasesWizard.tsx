@@ -3822,7 +3822,7 @@ export function GenerateTestCasesWizard({
                                         <div>
                                           <Label className="text-xs font-medium text-muted-foreground mb-1">
                                             {t(
-                                              "generateTestCases.linkedIssuesPreview.heading"
+                                              "generateTestCases.linkedIssuesPreviewHeading"
                                             )}
                                           </Label>
                                           <div className="text-sm text-foreground space-y-1">

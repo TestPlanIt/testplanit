@@ -1757,7 +1757,7 @@
     },
     "templateNotAssignedWarning": "Ce cas de test utilise le modèle «{templateName}» qui n'est actuellement pas associé au projet «{projectName}». Vous devrez peut-être l'associer au projet ou modifier le cas de test pour utiliser un autre modèle.",
     "orphanedStepsWarning": "Ce cas de test comporte des étapes, mais le modèle actuel «{templateName}» ne contient pas le champ Étapes. Les étapes ne peuvent être modifiées que lorsque le cas de test dispose d'un modèle avec un champ Étapes.",
-    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
+    "orphanedFieldsWarning": "Ce cas de test comporte {count, plural, =1 {# valeur de champ} other {# valeurs de champ}} qui {count, plural, =1 {sont} other {sont}} non incluses dans le modèle actuel \"{templateName}\". {count, plural, =1 {Ce champ est} other {Ces champs sont}} affichés ci-dessous mais ne peuvent pas être modifiés tant qu'ils n'ont pas été ajoutés au modèle.",
     "title": "Référentiel de cas de test",
     "folders": "Dossiers",
     "showDescendants": "Afficher tous les descendants",
@@ -2331,9 +2331,7 @@
       },
       "linkedIssuesDroppedTitle": "Certains problèmes liés n'ont pas été inclus.",
       "linkedIssuesDropped": "{count, plural, =1 {# problème lié a été supprimé} other {# problèmes liés ont été supprimés}} en raison du budget de jetons : {keys}.",
-      "linkedIssuesPreview": {
-        "heading": "Problèmes connexes qui seront inclus"
-      }
+      "linkedIssuesPreviewHeading": "Problèmes connexes qui seront inclus"
     }
   },
   "tags": {
