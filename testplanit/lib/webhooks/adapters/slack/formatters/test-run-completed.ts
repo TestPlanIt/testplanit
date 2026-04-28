@@ -1,7 +1,7 @@
 import {
   aggregateRunCounts,
   type TestRunSummaryData,
-} from "~/lib/services/testRunSummary";
+} from "~/lib/services/testRunSummary-shared";
 import { toHumanReadable } from "~/utils/duration";
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 

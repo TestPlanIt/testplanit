@@ -24,7 +24,7 @@ import { useParams } from "next/navigation";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
-import { aggregateRunCounts } from "~/lib/services/testRunSummary";
+import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
