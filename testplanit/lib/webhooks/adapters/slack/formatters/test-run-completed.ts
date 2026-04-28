@@ -133,7 +133,7 @@ export function formatTestRunCompletedBlocks(
   const statusCounts = (data.statusCounts ?? []).filter((sc) => sc.count > 0);
   const statusFields = statusCounts.slice(0, 8).map((sc) => ({
     type: "mrkdwn" as const,
-    text: `${emojiForStatus(sc)} *${sc.statusName}:*\n${sc.count}`,
+    text: `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`,
   }));
 
   if (statusFields.length > 0) {

@@ -261,12 +261,12 @@ describe("formatTestRunCompletedBlocks", () => {
       },
     };
     const rendered = JSON.stringify(getBlocks(envelope));
-    expect(rendered).toContain(":white_check_mark: *Passed:*\\n5");
-    expect(rendered).toContain(":x: *Failed:*\\n1");
-    expect(rendered).toContain(":heavy_minus_sign: *Skipped:*\\n6");
-    expect(rendered).toContain(":hourglass_flowing_sand: *Retest:*\\n3");
-    expect(rendered).toContain(":hourglass_flowing_sand: *Blocked:*\\n2");
-    expect(rendered).toContain(":hourglass_flowing_sand: *Pending:*\\n21");
+    expect(rendered).toContain(":white_check_mark: *Passed:* 5");
+    expect(rendered).toContain(":x: *Failed:* 1");
+    expect(rendered).toContain(":heavy_minus_sign: *Skipped:* 6");
+    expect(rendered).toContain(":hourglass_flowing_sand: *Retest:* 3");
+    expect(rendered).toContain(":hourglass_flowing_sand: *Blocked:* 2");
+    expect(rendered).toContain(":hourglass_flowing_sand: *Pending:* 21");
     // completionPct still reflects isCompleted-based completion:
     // completed = 5 + 1 + 6 = 12 → 12/38 = 31.6% → 32%.
     expect(rendered).toContain("*32% complete*");
@@ -306,9 +306,9 @@ describe("formatTestRunCompletedBlocks", () => {
       },
     };
     const rendered = JSON.stringify(getBlocks(envelope));
-    expect(rendered).toContain(":white_check_mark: *Passed:*\\n2");
-    expect(rendered).toContain(":x: *Failed:*\\n1");
-    expect(rendered).toContain(":heavy_minus_sign: *Skipped:*\\n1");
+    expect(rendered).toContain(":white_check_mark: *Passed:* 2");
+    expect(rendered).toContain(":x: *Failed:* 1");
+    expect(rendered).toContain(":heavy_minus_sign: *Skipped:* 1");
     // Failure dominates → RED bar.
     expect(getColor(envelope)).toBe("#ef4444");
   });
