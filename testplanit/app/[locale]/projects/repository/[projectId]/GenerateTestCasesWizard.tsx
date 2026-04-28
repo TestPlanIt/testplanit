@@ -3826,9 +3826,9 @@ export function GenerateTestCasesWizard({
                                             )}
                                           </Label>
                                           <div className="text-sm text-foreground space-y-1">
-                                            {linkedIssueRefs.map((ref) => (
+                                            {linkedIssueRefs.map((ref, i) => (
                                               <div
-                                                key={ref.id}
+                                                key={`${ref.id}-${ref.linkType}-${ref.direction}-${i}`}
                                                 className="flex items-center gap-2"
                                               >
                                                 <Badge
