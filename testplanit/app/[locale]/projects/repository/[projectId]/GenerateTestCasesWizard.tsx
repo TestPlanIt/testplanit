@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,6 +111,7 @@ import {
 } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 import { sanitizeName } from "~/utils";
+import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
 
 interface ExternalIssue {
@@ -1241,6 +1242,8 @@ export function GenerateTestCasesWizard({
   const [userNotes, setUserNotes] = useState("");
   const [quantity, setQuantity] = useState<string>("several");
   const [autoGenerateTags, setAutoGenerateTags] = useState(true);
+  const [linkedIssueRefs, setLinkedIssueRefs] = useState<LinkedIssueRef[]>([]);
+  const [droppedLinkedIssues, setDroppedLinkedIssues] = useState<string[]>([]);
   const [generatedTestCases, setGeneratedTestCases] = useState<
     GeneratedTestCase[]
   >([]);
@@ -1317,6 +1320,34 @@ export function GenerateTestCasesWizard({
       void fetchRecentUrlJobs();
     }
   }, [open, sourceType, fetchRecentUrlJobs]);
+
+  useEffect(() => {
+    if (!selectedIssue || sourceType !== "issue") {
+      setLinkedIssueRefs([]);
+      return;
+    }
+    const issueKey =
+      selectedIssue.key ||
+      selectedIssue.externalKey ||
+      String(selectedIssue.id);
+    const ctrl = new AbortController();
+    fetch(
+      `/api/integrations/linked-issues?projectId=${projectId}&issueKey=${encodeURIComponent(issueKey)}`,
+      { signal: ctrl.signal }
+    )
+      .then((r) => (r.ok ? r.json() : { refs: [] }))
+      .then((data) => setLinkedIssueRefs(data.refs ?? []))
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          console.warn(
+            "[GenerateTestCasesWizard] linked-issue refs fetch failed:",
+            err
+          );
+          setLinkedIssueRefs([]);
+        }
+      });
+    return () => ctrl.abort();
+  }, [selectedIssue, sourceType, projectId]);
 
   const [isImporting, setIsImporting] = useState(false);
   const [showImportLoader, setShowImportLoader] = useState(false);
@@ -2467,6 +2498,7 @@ export function GenerateTestCasesWizard({
 
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
+    setDroppedLinkedIssues([]);
     setCurrentStep(WizardStep.REVIEW_GENERATED);
     // Cancel any in-flight generation
     abortControllerRef.current?.abort();
@@ -2477,15 +2509,12 @@ export function GenerateTestCasesWizard({
 
       let issueData;
       if (sourceType === "issue" && selectedIssue) {
-        // Get issue details including comments for better context
-        const issueDetails = await fetchIssueDetails(selectedIssue);
         issueData = {
           key: selectedIssue.key || selectedIssue.externalKey,
           title: selectedIssue.title,
-          description: issueDetails?.description || selectedIssue.description,
+          description: selectedIssue.description,
           status: selectedIssue.status || selectedIssue.externalStatus,
           priority: selectedIssue.priority,
-          comments: issueDetails?.comments || [],
         };
       } else if (sourceType === "document" && documentRequirements) {
         issueData = {
@@ -2530,6 +2559,22 @@ export function GenerateTestCasesWizard({
         quantity,
         autoGenerateTags,
       };
+
+      // [DEBUG-LLM-CONTEXT] v0.22.19 — temporary: log the issue+context payload sent to the LLM
+      // streaming endpoint so we can see what gets fed into the prompt today (pre-Phase 2).
+      // Remove this entire block before merging Phase 2.
+      console.log(
+        "[DEBUG-LLM-CONTEXT] wizard → /api/llm/generate-test-cases/stream",
+        {
+          sourceType,
+          issue: requestBody.issue,
+          context: requestBody.context,
+          templateName: requestBody.template.name,
+          fieldCount: requestBody.template.fields?.length,
+          quantity: requestBody.quantity,
+          autoGenerateTags: requestBody.autoGenerateTags,
+        }
+      );
 
       // Use SSE streaming endpoint for real-time feedback
       const response = await fetch("/api/llm/generate-test-cases/stream", {
@@ -2717,6 +2762,11 @@ export function GenerateTestCasesWizard({
               }
             } else if (data.type === "done") {
               streamDone = true;
+              if (Array.isArray(data.metadata?.droppedLinkedIssues)) {
+                setDroppedLinkedIssues(data.metadata.droppedLinkedIssues);
+              } else {
+                setDroppedLinkedIssues([]);
+              }
             } else if (data.type === "error") {
               streamError = data.message;
             }
@@ -3031,22 +3081,6 @@ export function GenerateTestCasesWizard({
   const handleDismissError = () => {
     setLlmError(null);
     setShowErrorDetails(false);
-  };
-
-  const fetchIssueDetails = async (issue: ExternalIssue) => {
-    if (!project?.projectIntegrations?.[0]) return null;
-
-    try {
-      const response = await fetch(
-        `/api/integrations/issue-details?projectId=${projectId}&issueKey=${encodeURIComponent(issue.key || issue.externalKey || String(issue.id))}`
-      );
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (error) {
-      console.error("Failed to fetch issue details:", error);
-    }
-    return null;
   };
 
   const importSelectedTestCases = async () => {
@@ -3795,6 +3829,35 @@ export function GenerateTestCasesWizard({
                                                 selectedIssue.description
                                               }
                                             />
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Linked issues that will be included in the LLM context */}
+                                      {linkedIssueRefs.length > 0 && (
+                                        <div>
+                                          <Label className="text-xs font-medium text-muted-foreground mb-1">
+                                            {t(
+                                              "generateTestCases.linkedIssuesPreview.heading"
+                                            )}
+                                          </Label>
+                                          <div className="text-sm text-foreground space-y-1">
+                                            {linkedIssueRefs.map((ref) => (
+                                              <div
+                                                key={ref.id}
+                                                className="flex items-center gap-2"
+                                              >
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-xs"
+                                                >
+                                                  {ref.key ?? ref.id}
+                                                </Badge>
+                                                <span className="text-muted-foreground">
+                                                  {ref.linkType}
+                                                </span>
+                                              </div>
+                                            ))}
                                           </div>
                                         </div>
                                       )}
@@ -4680,6 +4743,22 @@ export function GenerateTestCasesWizard({
                         <div
                           className={`space-y-4 transition-opacity duration-300 ${isGenerating ? "opacity-60" : "opacity-100"}`}
                         >
+                          {droppedLinkedIssues.length > 0 && (
+                            <Alert>
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertTitle>
+                                {t(
+                                  "generateTestCases.linkedIssuesDroppedTitle"
+                                )}
+                              </AlertTitle>
+                              <AlertDescription>
+                                {t("generateTestCases.linkedIssuesDropped", {
+                                  count: droppedLinkedIssues.length,
+                                  keys: droppedLinkedIssues.join(", "),
+                                })}
+                              </AlertDescription>
+                            </Alert>
+                          )}
                           {generatedTestCases
                             .filter(
                               (tc) =>
