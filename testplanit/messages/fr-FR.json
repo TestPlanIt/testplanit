@@ -2328,6 +2328,11 @@
         "warning": "Si vous continuez sans enregistrer, vos modifications seront perdues.",
         "saveAllAndImport": "Tout enregistrer et importer",
         "discardAndImport": "Annuler les modifications et importer"
+      },
+      "linkedIssuesDroppedTitle": "Certains problèmes liés n'ont pas été inclus.",
+      "linkedIssuesDropped": "{count, plural, =1 {# problème lié a été supprimé} other {# problèmes liés ont été supprimés}} en raison du budget de jetons : {keys}.",
+      "linkedIssuesPreview": {
+        "heading": "Problèmes connexes qui seront inclus"
       }
     }
   },

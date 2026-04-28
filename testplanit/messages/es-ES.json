@@ -2328,6 +2328,11 @@
         "warning": "Si continúa sin guardar, sus cambios se perderán.",
         "saveAllAndImport": "Guardar todo e importar",
         "discardAndImport": "Descartar ediciones e importar"
+      },
+      "linkedIssuesDroppedTitle": "Algunos temas relacionados no fueron incluidos.",
+      "linkedIssuesDropped": "{count, plural, =1 {# El problema vinculado fue descartado} other {# Los problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",
+      "linkedIssuesPreview": {
+        "heading": "Temas relacionados que se incluirán"
       }
     }
   },
