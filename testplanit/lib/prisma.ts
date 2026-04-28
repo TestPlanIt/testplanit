@@ -82,7 +82,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditCreate("RepositoryCases", result, result.projectId);
-              await emitCaseCreated(result, tx);
+              if (result.projectId !== undefined) {
+                await emitCaseCreated(result, tx);
+              }
             }
             return result;
           });
@@ -107,7 +109,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 result,
                 result.projectId
               );
-              await emitCaseUpdated(oldEntity, result, tx);
+              if (result.projectId !== undefined) {
+                await emitCaseUpdated(oldEntity, result, tx);
+              }
             }
             return result;
           });
@@ -132,10 +136,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                   result,
                   result.projectId
                 );
-                await emitCaseUpdated(oldEntity, result, tx);
+                if (result.projectId !== undefined) {
+                  await emitCaseUpdated(oldEntity, result, tx);
+                }
               } else {
                 await auditCreate("RepositoryCases", result, result.projectId);
-                await emitCaseCreated(result, tx);
+                if (result.projectId !== undefined) {
+                  await emitCaseCreated(result, tx);
+                }
               }
             }
             return result;
@@ -210,7 +218,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditCreate("TestRuns", result, result.projectId);
-              await emitTestRunCreated(result, tx);
+              if (result.projectId !== undefined) {
+                await emitTestRunCreated(result, tx);
+              }
             }
             return result;
           });
@@ -239,7 +249,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditUpdate("TestRuns", oldEntity, result, result.projectId);
-              await emitTestRunUpdateEvents(oldEntity, result, tx);
+              if (result.projectId !== undefined) {
+                await emitTestRunUpdateEvents(oldEntity, result, tx);
+              }
             }
             return result;
           });
@@ -296,7 +308,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditCreate("Sessions", result, result.projectId);
-              await emitSessionCreated(result, tx);
+              if (result.projectId !== undefined) {
+                await emitSessionCreated(result, tx);
+              }
             }
             return result;
           });
@@ -315,7 +329,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditUpdate("Sessions", oldEntity, result, result.projectId);
-              await emitSessionUpdateEvents(oldEntity, result, tx);
+              if (result.projectId !== undefined) {
+                await emitSessionUpdateEvents(oldEntity, result, tx);
+              }
             }
             return result;
           });
@@ -340,10 +356,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                   result,
                   result.projectId
                 );
-                await emitSessionUpdateEvents(oldEntity, result, tx);
+                if (result.projectId !== undefined) {
+                  await emitSessionUpdateEvents(oldEntity, result, tx);
+                }
               } else {
                 await auditCreate("Sessions", result, result.projectId);
-                await emitSessionCreated(result, tx);
+                if (result.projectId !== undefined) {
+                  await emitSessionCreated(result, tx);
+                }
               }
             }
             return result;
@@ -462,7 +482,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditCreate("Issue", result, result.projectId);
-              await emitIssueCreated(result, tx);
+              if (result.projectId !== undefined) {
+                await emitIssueCreated(result, tx);
+              }
             }
             return result;
           });
@@ -481,7 +503,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               await auditUpdate("Issue", oldEntity, result, result.projectId);
-              await emitIssueUpdated(oldEntity, result, tx);
+              if (result.projectId !== undefined) {
+                await emitIssueUpdated(oldEntity, result, tx);
+              }
             }
             return result;
           });
@@ -893,7 +917,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             const result = await query(args);
             if (result?.id) {
               await auditCreate("TestRunResult", result);
-              await emitTestRunResultAdded(result, tx);
+              if (result.testRunId !== undefined) {
+                await emitTestRunResultAdded(result, tx);
+              }
             }
             return result;
           });
@@ -927,7 +953,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
             const result = await query(args);
-            if (result?.id) {
+            if (result?.id && result.sessionId !== undefined) {
               await emitSessionResultAdded(result, tx);
             }
             return result;
