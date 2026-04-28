@@ -70,6 +70,7 @@ import {
   buildNumberIdMap,
   buildStringIdMap,
   buildTemplateFieldMaps,
+  createWorkflowResolver,
   resolveUserId,
   toBooleanValue,
   toDateValue,
@@ -2110,14 +2111,7 @@ const importSessions = async (
     select: { id: true },
   });
 
-  // Get a default workflow state for sessions
-  const defaultWorkflowState = await tx.workflows.findFirst({
-    where: {
-      scope: WorkflowScope.SESSIONS,
-      isDeleted: false,
-    },
-    select: { id: true },
-  });
+  const workflowResolver = createWorkflowResolver(tx, workflowIdMap);
 
   for (const row of sessionRows) {
     const record = row as Record<string, unknown>;
@@ -2155,11 +2149,17 @@ const importSessions = async (
       continue;
     }
 
-    // Resolve workflow state
-    let resolvedStateId = defaultWorkflowState?.id;
-    if (stateSourceId !== null && workflowIdMap.has(stateSourceId)) {
-      resolvedStateId = workflowIdMap.get(stateSourceId);
-    }
+    // Resolve workflow state — must match SESSIONS scope; fall back to
+    // project default for that scope when the user-mapped one doesn't.
+    const candidateStateId =
+      stateSourceId !== null
+        ? (workflowIdMap.get(stateSourceId) ?? null)
+        : null;
+    const resolvedStateId = await workflowResolver.resolve(
+      projectId,
+      WorkflowScope.SESSIONS,
+      candidateStateId
+    );
 
     if (!resolvedStateId) {
       logMessage(context, "Skipping session due to missing workflow state", {
@@ -3335,10 +3335,7 @@ const importRepositoryCases = async (
     select: { id: true },
   });
 
-  const defaultCaseWorkflow = await prisma.workflows.findFirst({
-    where: { scope: WorkflowScope.CASES, isDefault: true },
-    select: { id: true },
-  });
+  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
 
   const fallbackCreator = importJob.createdById;
 
@@ -3623,12 +3620,15 @@ const importRepositoryCases = async (
           }
 
           templateId = templateId ?? defaultTemplate?.id ?? null;
-          const workflowId =
-            (stateSourceId !== null
-              ? workflowIdMap.get(stateSourceId)
-              : null) ??
-            defaultCaseWorkflow?.id ??
-            null;
+          const candidateWorkflowId =
+            stateSourceId !== null
+              ? (workflowIdMap.get(stateSourceId) ?? null)
+              : null;
+          const workflowId = await workflowResolver.resolve(
+            projectId,
+            WorkflowScope.CASES,
+            candidateWorkflowId
+          );
 
           if (templateId == null || workflowId == null) {
             logMessage(
@@ -4214,6 +4214,8 @@ const importTestRuns = async (
   initializeEntityProgress(context, "testRuns", runRows.length);
   let processedSinceLastPersist = 0;
 
+  const workflowResolver = createWorkflowResolver(tx, workflowIdMap);
+
   for (const row of runRows) {
     const record = row as Record<string, unknown>;
     const sourceId = toNumberValue(record.id);
@@ -4235,10 +4237,15 @@ const importTestRuns = async (
     }
 
     const workflowSourceId = toNumberValue(record.state_id);
-    const stateId =
+    const candidateStateId =
       workflowSourceId !== null
         ? (workflowIdMap.get(workflowSourceId) ?? null)
         : null;
+    const stateId = await workflowResolver.resolve(
+      projectId,
+      WorkflowScope.RUNS,
+      candidateStateId
+    );
 
     if (!stateId) {
       logMessage(context, "Skipping test run due to missing workflow mapping", {
