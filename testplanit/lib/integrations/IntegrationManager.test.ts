@@ -420,6 +420,8 @@ describe("IntegrationManager", () => {
         webhooks: true,
         customFields: true,
         attachments: true,
+        linkedIssues: true,
+        comments: true,
       });
     });
 
