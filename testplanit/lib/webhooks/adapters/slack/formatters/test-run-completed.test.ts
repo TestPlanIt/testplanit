@@ -119,6 +119,41 @@ describe("formatTestRunCompletedBlocks", () => {
     );
   });
 
+  it("totalElapsed > 0 renders an 'Elapsed' field via toHumanReadable (matches in-app summary render)", () => {
+    // baseEnvelope has totalElapsed: 600 → 600 seconds = "10 minutes"
+    const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
+    const rendered = JSON.stringify(parsed);
+    expect(rendered).toContain("*Elapsed:*");
+    expect(rendered).toContain("10 minutes");
+  });
+
+  it("totalElapsed = 0 omits the Elapsed field entirely (no 'Elapsed: 0 seconds')", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalElapsed: 0,
+      },
+    };
+    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
+    const rendered = JSON.stringify(parsed);
+    expect(rendered).not.toContain("*Elapsed:*");
+    expect(rendered).not.toContain("0 seconds");
+  });
+
+  it("missing totalElapsed (undefined) omits the Elapsed field", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalElapsed: undefined,
+      },
+    };
+    const parsed = JSON.parse(formatTestRunCompletedBlocks(envelope).body);
+    const rendered = JSON.stringify(parsed);
+    expect(rendered).not.toContain("*Elapsed:*");
+  });
+
   it("missing runUrl falls back to plain runTitle (no broken <|...> link)", () => {
     const envelope: OutboundEnvelope = {
       ...baseEnvelope,

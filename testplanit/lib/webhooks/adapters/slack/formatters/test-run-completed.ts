@@ -1,3 +1,4 @@
+import { toHumanReadable } from "~/utils/duration";
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 
 /**
@@ -50,6 +51,26 @@ export function formatTestRunCompletedBlocks(
     ? `*Run:*\n<${data.runUrl}|${data.runTitle}>`
     : `*Run:*\n${data.runTitle}`;
 
+  // Elapsed mirrors the in-app summary's render: toHumanReadable with
+  // isSeconds=true (TestRunSummaryData.totalElapsed is in seconds). Skipped
+  // entirely when 0 or absent so we never emit "Elapsed: 0 seconds".
+  const elapsedSeconds = data.totalElapsed ?? 0;
+  const elapsedField =
+    elapsedSeconds > 0
+      ? {
+          type: "mrkdwn" as const,
+          text: `*Elapsed:*\n${toHumanReadable(elapsedSeconds, { isSeconds: true })}`,
+        }
+      : null;
+
+  const mainSectionFields: Array<{ type: "mrkdwn"; text: string }> = [
+    { type: "mrkdwn", text: runField },
+    { type: "mrkdwn", text: `*Project:*\n${envelope.projectName}` },
+    { type: "mrkdwn", text: `*Cases:*\n${data.totalCases}` },
+    { type: "mrkdwn", text: `*Completion:*\n${completionPct}%` },
+  ];
+  if (elapsedField) mainSectionFields.push(elapsedField);
+
   const blocks: Array<Record<string, unknown>> = [
     {
       type: "header",
@@ -57,12 +78,7 @@ export function formatTestRunCompletedBlocks(
     },
     {
       type: "section",
-      fields: [
-        { type: "mrkdwn", text: runField },
-        { type: "mrkdwn", text: `*Project:*\n${envelope.projectName}` },
-        { type: "mrkdwn", text: `*Cases:*\n${data.totalCases}` },
-        { type: "mrkdwn", text: `*Completion:*\n${completionPct}%` },
-      ],
+      fields: mainSectionFields,
     },
   ];
 
