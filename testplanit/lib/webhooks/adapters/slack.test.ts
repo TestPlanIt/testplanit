@@ -103,14 +103,16 @@ describe("slackAdapter", () => {
     expect(slackAdapter.sign).toBeUndefined();
   });
 
-  it("formats a known event into Block Kit JSON", () => {
+  it("formats a known event into Block Kit JSON (test_run.completed wraps blocks in attachments for the color bar)", () => {
     const out = slackAdapter.format(envelopeFor("test_run.completed"));
     expect(out.contentType).toBe("application/json");
-    const parsed = JSON.parse(out.body) as Record<string, unknown>;
+    const parsed = JSON.parse(out.body) as Record<string, any>;
     expect(parsed).toHaveProperty("text");
-    expect(parsed).toHaveProperty("blocks");
     expect(typeof parsed.text).toBe("string");
-    expect(Array.isArray(parsed.blocks)).toBe(true);
+    expect(Array.isArray(parsed.attachments)).toBe(true);
+    expect(parsed.attachments).toHaveLength(1);
+    expect(Array.isArray(parsed.attachments[0].blocks)).toBe(true);
+    expect(typeof parsed.attachments[0].color).toBe("string");
   });
 
   it("falls through to the generic formatter for unknown event names", () => {
@@ -127,17 +129,22 @@ describe("slackAdapter", () => {
   });
 
   // Smoke-test every registered formatter — catches a broken contract in any
-  // formatter without a dedicated test file.
+  // formatter without a dedicated test file. Formatters MAY put blocks at the
+  // top level OR inside an attachment (used by test_run.completed for the
+  // colored left-edge bar). Accept either shape.
   describe("smoke-test for every registered formatter", () => {
     for (const eventName of Object.keys(SLACK_FORMATTERS)) {
       it(`produces valid Block Kit for ${eventName}`, () => {
         const out = slackAdapter.format(envelopeFor(eventName));
         expect(out.contentType).toBe("application/json");
-        const parsed = JSON.parse(out.body) as Record<string, unknown>;
+        const parsed = JSON.parse(out.body) as Record<string, any>;
         expect(typeof parsed.text).toBe("string");
         expect((parsed.text as string).length).toBeGreaterThan(0);
-        expect(Array.isArray(parsed.blocks)).toBe(true);
-        expect((parsed.blocks as unknown[]).length).toBeGreaterThan(0);
+        const blocks = Array.isArray(parsed.blocks)
+          ? parsed.blocks
+          : parsed.attachments?.[0]?.blocks;
+        expect(Array.isArray(blocks)).toBe(true);
+        expect(blocks.length).toBeGreaterThan(0);
       });
     }
   });

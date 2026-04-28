@@ -80,18 +80,17 @@ export type TestRunSummaryData = {
 };
 
 /**
- * Aggregate `statusCounts` into the canonical run-summary buckets used by
- * the in-app TestRunCasesSummary component AND the test_run.completed
- * Slack formatter. Single source of truth so the component and the
- * webhook never disagree on what "Passed/Failed/Pending" mean.
+ * Aggregate `statusCounts` into the canonical run-summary metrics shared
+ * by the in-app TestRunCasesSummary component AND the test_run.completed
+ * Slack formatter. Provides totals; the formatters iterate `statusCounts`
+ * directly when rendering per-status rows.
  *
- * Bucket rules (mirror the schema's Status flags):
- *   - passed:  statusCounts where isSuccess === true (subset of completed)
- *   - failed:  statusCounts where isFailure === true (subset of completed)
- *   - completed: statusCounts where isCompleted === true (all "done" rows)
- *   - pending: totalCases - completed
- *               → catches everything not-yet-completed (untested, retest,
- *                 blocked, etc.) without per-name special-casing.
+ *   - passed:        sum where isSuccess === true (drives green/red logic)
+ *   - failed:        sum where isFailure === true (any > 0 → red bar)
+ *   - completed:     sum where isCompleted === true (drives completionPct)
+ *   - pending:       totalCases - completed (= cases not yet isCompleted;
+ *                    Skipped IS isCompleted so it does NOT count here)
+ *   - completionPct: round((completed / totalCases) * 100), capped 100
  */
 export interface RunSummaryAggregates {
   totalCases: number;

@@ -207,7 +207,7 @@ describe("formatTestRunCompletedBlocks", () => {
     );
   });
 
-  it("derives Passed/Failed/Pending counts via aggregateRunCounts (Skipped completed-but-neither bucket is hidden)", () => {
+  it("renders each status row individually with admin-defined names (matches in-app TestRunCasesSummary)", () => {
     const envelope: OutboundEnvelope = {
       ...baseEnvelope,
       data: {
@@ -263,9 +263,85 @@ describe("formatTestRunCompletedBlocks", () => {
     const rendered = JSON.stringify(getBlocks(envelope));
     expect(rendered).toContain(":white_check_mark: *Passed:*\\n5");
     expect(rendered).toContain(":x: *Failed:*\\n1");
-    expect(rendered).toContain(":hourglass_flowing_sand: *Pending:*\\n26");
-    expect(rendered).not.toContain("*Skipped:*");
+    expect(rendered).toContain(":heavy_minus_sign: *Skipped:*\\n6");
+    expect(rendered).toContain(":hourglass_flowing_sand: *Retest:*\\n3");
+    expect(rendered).toContain(":hourglass_flowing_sand: *Blocked:*\\n2");
+    expect(rendered).toContain(":hourglass_flowing_sand: *Pending:*\\n21");
+    // completionPct still reflects isCompleted-based completion:
+    // completed = 5 + 1 + 6 = 12 → 12/38 = 31.6% → 32%.
     expect(rendered).toContain("*32% complete*");
+  });
+
+  it("MS Test 4 shape — 2 Passed, 1 Failed, 1 Skipped (the user's reported example) renders all three statuses", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalCases: 4,
+        statusCounts: [
+          {
+            statusId: 2,
+            statusName: "Passed",
+            colorValue: "#2A843F",
+            count: 2,
+            isCompleted: true,
+            isSuccess: true,
+          },
+          {
+            statusId: 3,
+            statusName: "Failed",
+            colorValue: "#F44B25",
+            count: 1,
+            isCompleted: true,
+            isFailure: true,
+          },
+          {
+            statusId: 6,
+            statusName: "Skipped",
+            colorValue: "#786AC8",
+            count: 1,
+            isCompleted: true,
+          },
+        ],
+      },
+    };
+    const rendered = JSON.stringify(getBlocks(envelope));
+    expect(rendered).toContain(":white_check_mark: *Passed:*\\n2");
+    expect(rendered).toContain(":x: *Failed:*\\n1");
+    expect(rendered).toContain(":heavy_minus_sign: *Skipped:*\\n1");
+    // Failure dominates → RED bar.
+    expect(getColor(envelope)).toBe("#ef4444");
+  });
+
+  it("zero-count rows are filtered out (no 'Failed: 0' noise)", () => {
+    const envelope: OutboundEnvelope = {
+      ...baseEnvelope,
+      data: {
+        ...(baseEnvelope.data as Record<string, unknown>),
+        totalCases: 5,
+        statusCounts: [
+          {
+            statusId: 1,
+            statusName: "Passed",
+            colorValue: "#0f0",
+            count: 5,
+            isCompleted: true,
+            isSuccess: true,
+          },
+          {
+            statusId: 2,
+            statusName: "Failed",
+            colorValue: "#f00",
+            count: 0,
+            isCompleted: true,
+            isFailure: true,
+          },
+        ],
+      },
+    };
+    const rendered = JSON.stringify(getBlocks(envelope));
+    expect(rendered).toContain(":white_check_mark: *Passed:*");
+    expect(rendered).not.toContain("*Failed:*");
   });
 
   it("omits a status bucket entirely when its count is 0 (no 'Failed: 0' or 'Pending: 0')", () => {

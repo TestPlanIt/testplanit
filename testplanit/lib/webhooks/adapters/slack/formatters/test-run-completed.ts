@@ -48,6 +48,27 @@ function colorForOutcome(args: {
 }
 
 /**
+ * Pick a Slack `:emoji:` for a status row using the Status table flags.
+ * Matches the schema's semantics so admin-renamed statuses still get the
+ * right marker (e.g. a custom "All Good" status with isSuccess=true gets
+ * the green check; a "Skipped" with isCompleted=true but neither flag
+ * gets the neutral marker).
+ */
+function emojiForStatus(sc: {
+  isSuccess?: boolean;
+  isFailure?: boolean;
+  isCompleted?: boolean;
+}): string {
+  if (sc.isSuccess) return ":white_check_mark:";
+  if (sc.isFailure) return ":x:";
+  if (sc.isCompleted === false || sc.isCompleted === undefined) {
+    return ":hourglass_flowing_sand:";
+  }
+  // isCompleted=true but neither success nor failure (e.g. Skipped).
+  return ":heavy_minus_sign:";
+}
+
+/**
  * D-17 — Slack formatter for `test_run.completed`. Produces both `text`
  * (single-line notification preview / legacy fallback) and `attachments`
  * with `blocks` inside (so the message gets a left-edge color bar that
@@ -103,30 +124,17 @@ export function formatTestRunCompletedBlocks(
     { type: "section", text: { type: "mrkdwn", text: summaryLine } },
   ];
 
-  // Status breakdown — three canonical buckets straight from
-  // aggregateRunCounts. Skipped/blocked statuses (completed but neither
-  // success nor failure) intentionally do not get their own row — the
-  // demo target is "did the run pass?" not "exhaustive status taxonomy."
-  // A row is omitted when its count is 0 so we never show "Failed: 0".
-  const statusFields: Array<{ type: "mrkdwn"; text: string }> = [];
-  if (passed > 0) {
-    statusFields.push({
-      type: "mrkdwn",
-      text: `:white_check_mark: *Passed:*\n${passed}`,
-    });
-  }
-  if (failed > 0) {
-    statusFields.push({
-      type: "mrkdwn",
-      text: `:x: *Failed:*\n${failed}`,
-    });
-  }
-  if (pending > 0) {
-    statusFields.push({
-      type: "mrkdwn",
-      text: `:hourglass_flowing_sand: *Pending:*\n${pending}`,
-    });
-  }
+  // Status breakdown — render each statusCount as its own row (matches
+  // the in-app TestRunCasesSummary, which iterates statusCounts and
+  // shows admin-defined status names directly). Emoji is picked from the
+  // Status row's isSuccess / isFailure / isCompleted flags so we don't
+  // hardcode names. Cap at 8 rows for legibility (Slack's section.fields
+  // grid maxes at 10).
+  const statusCounts = (data.statusCounts ?? []).filter((sc) => sc.count > 0);
+  const statusFields = statusCounts.slice(0, 8).map((sc) => ({
+    type: "mrkdwn" as const,
+    text: `${emojiForStatus(sc)} *${sc.statusName}:*\n${sc.count}`,
+  }));
 
   if (statusFields.length > 0) {
     blocks.push({ type: "divider" });
