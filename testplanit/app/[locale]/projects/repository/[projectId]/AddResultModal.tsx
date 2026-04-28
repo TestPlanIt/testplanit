@@ -27,7 +27,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
 import React, { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -273,6 +273,7 @@ export function AddResultModal({
   const [selectedSharedItemIssues, setSelectedSharedItemIssues] = useState<
     Record<number, number[]>
   >({}); // For shared step items
+  const [animateBorder, setAnimateBorder] = useState(false);
 
   // Reset form state when modal opens/closes
   useEffect(() => {
@@ -281,6 +282,7 @@ export function AddResultModal({
       setSelectedMainIssues([]);
       setSelectedStepIssues({});
       setSelectedSharedItemIssues({});
+      setAnimateBorder(false);
     }
   }, [isOpen]);
 
@@ -437,6 +439,11 @@ export function AddResultModal({
     },
   });
 
+  const watchedStatusId = useWatch({
+    control: form.control,
+    name: "statusId",
+  });
+
   // Update form schema when template fields change
   useEffect(() => {
     if (templateFields && templateFields.length > 0) {
@@ -503,6 +510,7 @@ export function AddResultModal({
           projectId: projectId,
         },
       },
+      scope: "RUNS",
       workflowType: "IN_PROGRESS",
       isEnabled: true,
       isDeleted: false,
@@ -526,6 +534,7 @@ export function AddResultModal({
       shouldValidate: true,
       shouldDirty: true,
     });
+    setAnimateBorder(true);
 
     const selectedStatus = statuses?.find(
       (status) => status.id.toString() === statusId
@@ -1610,11 +1619,11 @@ export function AddResultModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-4xl transition-all duration-2000 border-8"
+        className={`max-w-4xl border-8 ${animateBorder ? "transition-[border-color] duration-2000" : ""}`}
         style={{
-          borderColor: form.watch("statusId")
-            ? statuses?.find((s) => s.id.toString() === form.watch("statusId"))
-                ?.color?.value
+          borderColor: watchedStatusId
+            ? statuses?.find((s) => s.id.toString() === watchedStatusId)?.color
+                ?.value
             : undefined,
           backgroundColor: "hsl(var(--background))",
         }}
@@ -1818,6 +1827,7 @@ export function AddResultModal({
                             selectedIssues={selectedSharedItemIssues}
                             setSelectedIssues={setSelectedSharedItemIssues}
                             issueMap={issueMap}
+                            onMainStatusChange={() => setAnimateBorder(true)}
                           />
                         </li>
                       );
@@ -1905,6 +1915,7 @@ export function AddResultModal({
                                           shouldValidate: true,
                                           shouldDirty: true,
                                         });
+                                        setAnimateBorder(true);
                                       }
                                     }}
                                     value={(field.value as string) || ""}
@@ -2083,6 +2094,7 @@ interface SharedStepGroupInputsProps {
     React.SetStateAction<Record<number, number[]>>
   >;
   issueMap: Map<number, { key: string; title: string; url?: string }>;
+  onMainStatusChange?: () => void;
 }
 
 const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
@@ -2096,6 +2108,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   selectedIssues,
   setSelectedIssues,
   issueMap: _issueMap,
+  onMainStatusChange,
 }): React.ReactNode => {
   // Explicitly set return type to React.ReactNode
   const t = useTranslations();
@@ -2226,6 +2239,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                               shouldValidate: true,
                               shouldDirty: true,
                             });
+                            onMainStatusChange?.();
                           }
                         }}
                         value={(field.value as string) || ""}

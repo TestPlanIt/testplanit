@@ -147,6 +147,7 @@ export function TestRunCaseDetails({
           projectId: projectId,
         },
       },
+      scope: "RUNS",
       workflowType: "IN_PROGRESS",
       isEnabled: true,
       isDeleted: false,

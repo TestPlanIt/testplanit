@@ -1,7 +1,13 @@
-import { JUnitResultType, Prisma, PrismaClient } from "@prisma/client";
+import {
+  JUnitResultType,
+  Prisma,
+  PrismaClient,
+  WorkflowScope,
+} from "@prisma/client";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import {
+  createWorkflowResolver,
   resolveUserId,
   toBooleanValue,
   toDateValue,
@@ -245,6 +251,8 @@ export const importAutomationCases = async (
   const automationCaseRows = datasetRows.get("automation_cases") ?? [];
   const globalFallbackTemplateId =
     Array.from(templateIdMap.values())[0] ?? null;
+
+  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
 
   summary.total = automationCaseRows.length;
 
@@ -493,9 +501,16 @@ export const importAutomationCases = async (
 
           const resolvedTemplateId = defaultTemplateId;
 
-          const defaultWorkflowId =
-            Array.from(workflowIdMap.values()).find((id) => id !== undefined) ||
-            1;
+          const defaultWorkflowId = await workflowResolver.resolve(
+            projectId,
+            WorkflowScope.CASES
+          );
+          if (!defaultWorkflowId) {
+            // No CASES-scope workflow assigned to this project; skip
+            processedAutomationCases += processedForGroup;
+            context.processedCount += processedForGroup;
+            continue;
+          }
           const normalizedClassName = className || null;
 
           // Match on full unique constraint (projectId, name, className, source)
@@ -743,8 +758,7 @@ export const importAutomationRuns = async (
     };
   }
 
-  const defaultWorkflowId =
-    Array.from(workflowIdMap.values()).find((id) => id !== undefined) || 1;
+  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
 
   for (let index = 0; index < automationRunRows.length; index += chunkSize) {
     const chunk = automationRunRows.slice(index, index + chunkSize);
@@ -767,6 +781,15 @@ export const importAutomationRuns = async (
 
           const projectId = projectIdMap.get(testmoProjectId);
           if (!projectId) {
+            continue;
+          }
+
+          const stateId = await workflowResolver.resolve(
+            projectId,
+            WorkflowScope.RUNS
+          );
+          if (!stateId) {
+            // No RUNS-scope workflow assigned to this project; skip
             continue;
           }
 
@@ -802,7 +825,7 @@ export const importAutomationRuns = async (
             data: {
               name,
               projectId,
-              stateId: defaultWorkflowId,
+              stateId,
               configId: configId || null,
               milestoneId: milestoneId || null,
               testRunType: "JUNIT",

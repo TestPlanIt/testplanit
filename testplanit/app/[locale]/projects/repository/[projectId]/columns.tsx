@@ -666,7 +666,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="w-[120px] h-8 bg-transparent hover:bg-muted justify-start"
+              className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start"
               disabled={isDisabled}
             >
               <div className="flex items-center space-x-1 whitespace-nowrap">

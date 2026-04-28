@@ -14,7 +14,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -457,6 +457,16 @@ export function EditResultModal({
       ),
     },
   });
+
+  const watchedStatusId = useWatch({
+    control: form.control,
+    name: "statusId",
+  });
+  const [animateBackground, setAnimateBackground] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setAnimateBackground(false);
+  }, [isOpen]);
 
   // Update the form reset effect
   useEffect(() => {
@@ -1339,16 +1349,17 @@ export function EditResultModal({
     // If this step is marked with a failure status, update the main status
     if (isFailureStatus(statusId)) {
       form.setValue("statusId", statusId);
+      setAnimateBackground(true);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-4xl transition-all duration-2000"
+        className={`max-w-4xl ${animateBackground ? "transition-[background-image] duration-2000" : ""}`}
         style={{
-          backgroundImage: form.watch("statusId")
-            ? `linear-gradient(${getSelectedStatusColorWithOpacity(form.watch("statusId") as number)}, ${getSelectedStatusColorWithOpacity(form.watch("statusId") as number)})`
+          backgroundImage: watchedStatusId
+            ? `linear-gradient(${getSelectedStatusColorWithOpacity(watchedStatusId as number)}, ${getSelectedStatusColorWithOpacity(watchedStatusId as number)})`
             : undefined,
           backgroundColor: "hsl(var(--background))",
         }}
@@ -1388,6 +1399,7 @@ export function EditResultModal({
                         key={`select-${field.value}`}
                         onValueChange={(val: string) => {
                           field.onChange(Number(val));
+                          setAnimateBackground(true);
                         }}
                         value={(field.value as number).toString()}
                       >

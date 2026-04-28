@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient, WorkflowScope } from "@prisma/client";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 
 export const toNumberValue = (value: unknown): number | null => {
@@ -141,6 +141,80 @@ export const resolveUserId = (
     }
   }
   return fallbackUserId;
+};
+
+export type WorkflowResolver = {
+  resolve: (
+    projectId: number,
+    scope: WorkflowScope,
+    candidateId?: number | null
+  ) => Promise<number | null>;
+};
+
+/**
+ * Creates a resolver that returns a scope-correct workflow id for a given
+ * (projectId, scope). Validates user-mapped candidate IDs against the expected
+ * scope and falls back to the project's default workflow for that scope when
+ * the mapping is wrong-scope, missing, or unknown.
+ */
+export const createWorkflowResolver = (
+  prisma: PrismaClient | Prisma.TransactionClient,
+  workflowIdMap: Map<number, number>
+): WorkflowResolver => {
+  const workflowScopeMap = new Map<number, WorkflowScope>();
+  let scopesLoaded = false;
+
+  const ensureScopesLoaded = async () => {
+    if (scopesLoaded) return;
+    const ids = Array.from(new Set(workflowIdMap.values()));
+    if (ids.length > 0) {
+      const rows = await prisma.workflows.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, scope: true },
+      });
+      for (const row of rows) {
+        workflowScopeMap.set(row.id, row.scope);
+      }
+    }
+    scopesLoaded = true;
+  };
+
+  const projectDefaultCache = new Map<string, number | null>();
+
+  const getProjectDefault = async (
+    projectId: number,
+    scope: WorkflowScope
+  ): Promise<number | null> => {
+    const key = `${projectId}:${scope}`;
+    if (projectDefaultCache.has(key)) {
+      return projectDefaultCache.get(key)!;
+    }
+    const workflow = await prisma.workflows.findFirst({
+      where: {
+        scope,
+        isDeleted: false,
+        isEnabled: true,
+        projects: { some: { projectId } },
+      },
+      orderBy: [{ isDefault: "desc" }, { order: "asc" }],
+      select: { id: true },
+    });
+    const id = workflow?.id ?? null;
+    projectDefaultCache.set(key, id);
+    return id;
+  };
+
+  return {
+    resolve: async (projectId, scope, candidateId) => {
+      if (candidateId != null) {
+        await ensureScopesLoaded();
+        if (workflowScopeMap.get(candidateId) === scope) {
+          return candidateId;
+        }
+      }
+      return getProjectDefault(projectId, scope);
+    },
+  };
 };
 
 export const toInputJsonValue = (value: unknown): Prisma.InputJsonValue => {

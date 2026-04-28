@@ -194,16 +194,6 @@ function TestRunFormControls({
         control={control}
         name="stateId"
         render={({ field }) => {
-          // Check if current value exists in workflows
-          const currentValueExists = workflows?.some(
-            (w) => w.id.toString() === field.value?.toString()
-          );
-
-          // If value doesn't exist and we have workflows, set to first workflow
-          if (!currentValueExists && workflows?.length) {
-            field.onChange(workflows[0].id);
-          }
-
           return (
             <FormItem>
               <FormLabel>{t("common.fields.state")}</FormLabel>
