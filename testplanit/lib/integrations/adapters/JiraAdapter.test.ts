@@ -68,7 +68,7 @@ describe("JiraAdapter", () => {
         customFields: true,
         attachments: true,
         linkedIssues: true,
-        comments: false,
+        comments: true,
       });
     });
   });
@@ -785,6 +785,280 @@ describe("JiraAdapter", () => {
         "fields=issuelinks,parent,subtasks,customfield_10014"
       );
       expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1");
+    });
+  });
+
+  describe("getIssueComments", () => {
+    const mockJiraCommentsResponse = {
+      comments: [
+        {
+          id: "1",
+          author: { displayName: "Alice" },
+          body: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Hello" }],
+              },
+            ],
+          },
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          author: { displayName: "Bob" },
+          body: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "World" }],
+              },
+            ],
+          },
+          created: "2026-01-02T00:00:00Z",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should request /rest/api/3/issue/{key}/comment", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("PROJ-1");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1/comment");
+    });
+
+    it("should map all comments to IssueComment[] on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([
+        {
+          id: "1",
+          author: "Alice",
+          body: "<p>Hello</p>",
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          author: "Bob",
+          body: "<p>World</p>",
+          created: "2026-01-02T00:00:00Z",
+        },
+      ]);
+    });
+
+    it("should fall back to author.emailAddress when displayName is missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: "3",
+                author: { emailAddress: "bob@example.com" },
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Hi" }],
+                    },
+                  ],
+                },
+                created: "2026-01-03T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("bob@example.com");
+    });
+
+    it("should fall back to 'Unknown' when both displayName and emailAddress are missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: "4",
+                author: {},
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Hey" }],
+                    },
+                  ],
+                },
+                created: "2026-01-04T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("Unknown");
+    });
+
+    it("should return [] when comments array is absent or empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result1 = await adapter.getIssueComments!("PROJ-1");
+      expect(result1).toEqual([]);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ comments: [] }),
+      });
+
+      const result2 = await adapter.getIssueComments!("PROJ-1");
+      expect(result2).toEqual([]);
+    });
+
+    it("should skip malformed entries and keep valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              null,
+              {
+                id: "5",
+                author: { displayName: "Carol" },
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Valid" }],
+                    },
+                  ],
+                },
+                created: "2026-01-05T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("Carol");
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0][0];
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      errorSpy.mockRestore();
     });
   });
 
