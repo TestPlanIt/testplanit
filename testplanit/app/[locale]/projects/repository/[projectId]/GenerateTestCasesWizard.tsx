@@ -2560,22 +2560,6 @@ export function GenerateTestCasesWizard({
         autoGenerateTags,
       };
 
-      // [DEBUG-LLM-CONTEXT] v0.22.19 — temporary: log the issue+context payload sent to the LLM
-      // streaming endpoint so we can see what gets fed into the prompt today (pre-Phase 2).
-      // Remove this entire block before merging Phase 2.
-      console.log(
-        "[DEBUG-LLM-CONTEXT] wizard → /api/llm/generate-test-cases/stream",
-        {
-          sourceType,
-          issue: requestBody.issue,
-          context: requestBody.context,
-          templateName: requestBody.template.name,
-          fieldCount: requestBody.template.fields?.length,
-          quantity: requestBody.quantity,
-          autoGenerateTags: requestBody.autoGenerateTags,
-        }
-      );
-
       // Use SSE streaming endpoint for real-time feedback
       const response = await fetch("/api/llm/generate-test-cases/stream", {
         method: "POST",

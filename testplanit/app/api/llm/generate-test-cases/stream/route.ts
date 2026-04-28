@@ -370,48 +370,6 @@ export async function POST(req: NextRequest) {
 
         send(controller, { type: "stage", stage: "calling_ai" });
 
-        // [DEBUG-LLM-CONTEXT] v0.22.19 — temporary: dump the fully-assembled prompt to /tmp so
-        // we can see today's context (pre-Phase 2 linked-issue expansion) without console truncation.
-        // Remove this entire block before merging Phase 2.
-        try {
-          const fs = await import("node:fs");
-          const ts = new Date().toISOString().replace(/[:.]/g, "-");
-          const safeKey = String(issue.key ?? "unknown").replace(
-            /[^a-zA-Z0-9_-]/g,
-            "_"
-          );
-          const dumpPath = `/tmp/llm-context-${safeKey}-${ts}.txt`;
-          const totalChars = systemPrompt.length + userPrompt.length;
-          fs.writeFileSync(
-            dumpPath,
-            [
-              `=== LLM CONTEXT DUMP ===`,
-              `Issue:           ${issue.key}`,
-              `Timestamp:       ${ts}`,
-              `Model resolved:  ${resolved.model ?? "(default)"}`,
-              `Feature:         ${llmFeature}`,
-              `systemPromptChars: ${systemPrompt.length}`,
-              `userPromptChars:   ${userPrompt.length}`,
-              `totalChars:        ${totalChars}`,
-              `estimatedTokens:   ${Math.ceil(totalChars / 4)}`,
-              `wasTruncated:      ${wasTruncated}`,
-              ``,
-              `=== SYSTEM PROMPT ===`,
-              systemPrompt,
-              ``,
-              `=== USER PROMPT ===`,
-              userPrompt,
-            ].join("\n"),
-            "utf-8"
-          );
-          console.log(
-            `[DEBUG-LLM-CONTEXT] ${issue.key} dumped → ${dumpPath} ` +
-              `(${totalChars} chars, ~${Math.ceil(totalChars / 4)} tokens, truncated=${wasTruncated})`
-          );
-        } catch (err) {
-          console.warn("[DEBUG-LLM-CONTEXT] dump failed:", err);
-        }
-
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
