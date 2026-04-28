@@ -263,7 +263,7 @@ describe("formatTestRunCompletedBlocks", () => {
     const rendered = JSON.stringify(getBlocks(envelope));
     expect(rendered).toContain(":white_check_mark: *Passed:* 5");
     expect(rendered).toContain(":x: *Failed:* 1");
-    expect(rendered).toContain(":heavy_minus_sign: *Skipped:* 6");
+    expect(rendered).toContain(":fast_forward: *Skipped:* 6");
     expect(rendered).toContain(":hourglass_flowing_sand: *Retest:* 3");
     expect(rendered).toContain(":hourglass_flowing_sand: *Blocked:* 2");
     expect(rendered).toContain(":hourglass_flowing_sand: *Pending:* 21");
@@ -308,7 +308,7 @@ describe("formatTestRunCompletedBlocks", () => {
     const rendered = JSON.stringify(getBlocks(envelope));
     expect(rendered).toContain(":white_check_mark: *Passed:* 2");
     expect(rendered).toContain(":x: *Failed:* 1");
-    expect(rendered).toContain(":heavy_minus_sign: *Skipped:* 1");
+    expect(rendered).toContain(":fast_forward: *Skipped:* 1");
     // Failure dominates → RED bar.
     expect(getColor(envelope)).toBe("#ef4444");
   });

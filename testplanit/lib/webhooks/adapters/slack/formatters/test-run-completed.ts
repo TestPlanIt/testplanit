@@ -64,8 +64,9 @@ function emojiForStatus(sc: {
   if (sc.isCompleted === false || sc.isCompleted === undefined) {
     return ":hourglass_flowing_sand:";
   }
-  // isCompleted=true but neither success nor failure (e.g. Skipped).
-  return ":heavy_minus_sign:";
+  // isCompleted=true but neither success nor failure (e.g. Skipped) —
+  // media-style "skip ahead" reads as intentional non-execution.
+  return ":fast_forward:";
 }
 
 /**
