@@ -6,11 +6,18 @@ import { prisma } from "@/lib/prisma";
 import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
+import type {
+  IssueAdapter,
+  IssueComment,
+  LinkedIssueRef,
+} from "~/lib/integrations/adapters/IssueAdapter";
 import { authOptions } from "~/server/auth";
 import {
   buildSystemPrompt,
   buildUserPrompt,
   fetchHierarchyContext,
+  fetchLinkedIssuesContext,
   type GenerationContext,
   type IssueData,
   type TemplateData,
@@ -153,6 +160,10 @@ export async function POST(req: NextRequest) {
                 },
               },
             },
+            projectIntegrations: {
+              where: { isActive: true },
+              include: { integration: true },
+            },
           },
         });
 
@@ -228,59 +239,125 @@ export async function POST(req: NextRequest) {
           Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
           systemPromptTokens;
 
-        // Build a base user prompt WITHOUT existing test cases to measure its size
-        const contextWithoutCases: GenerationContext = {
+        // Resolve the issue-tracking adapter (best-effort). Used for both
+        // source-issue comments (D-02 fix — wizard's path is broken) and
+        // linked-issue context fetching.
+        let adapter: IssueAdapter | null = null;
+        const activeProjectIntegration = project.projectIntegrations[0];
+        if (activeProjectIntegration && issue.key) {
+          try {
+            adapter = await IntegrationManager.getInstance().getAdapter(
+              String(activeProjectIntegration.integrationId)
+            );
+          } catch (err) {
+            console.warn(
+              `[stream/route] Failed to resolve issue-tracking adapter for project ${projectId}:`,
+              err
+            );
+            adapter = null;
+          }
+        }
+
+        // Source-issue comments come from the adapter server-side (D-02). Fail-soft:
+        // if the call rejects, comments stay []. The wizard-supplied comments (if any)
+        // are intentionally ignored — server is the source of truth.
+        let sourceComments: IssueComment[] = [];
+        if (adapter?.getIssueComments && issue.key) {
+          try {
+            sourceComments = await adapter.getIssueComments(issue.key);
+          } catch (err) {
+            console.warn(
+              `[stream/route] Failed to fetch source-issue comments for ${issue.key}:`,
+              err
+            );
+            sourceComments = [];
+          }
+        }
+        const issueWithComments: IssueData = {
+          ...issue,
+          comments: sourceComments,
+        };
+
+        // Build a base user prompt WITHOUT folder cases or linked issues to
+        // measure its baseline size.
+        const contextWithoutAdditive: GenerationContext = {
           ...context,
           existingTestCases: [],
+          linkedIssues: [],
         };
         const baseUserPrompt = buildUserPrompt(
-          issue,
-          contextWithoutCases,
+          issueWithComments,
+          contextWithoutAdditive,
           userPromptBase
         );
         const basePromptTokens = Math.ceil(baseUserPrompt.length / 4);
 
-        // Allocate remaining token budget to existing test case context
-        const contextTokenBudget = Math.max(
-          0,
-          contentBudget - basePromptTokens
-        );
+        // Whatever budget remains after the base prompt is split between
+        // linked issues (higher priority — drop after folder cases) and folder
+        // hierarchy cases (lowest priority — drop first per CONTEXT D-03).
+        const remainingBudget = Math.max(0, contentBudget - basePromptTokens);
 
-        // Fetch prioritised context from folder hierarchy (server-side)
+        // Linked-issue allocation runs FIRST. fetchLinkedIssuesContext owns
+        // tiers 2 + 3 of the D-03 drop chain (linked-cmts then linked-bodies,
+        // last-returned first per D-04).
+        const linkedResult: {
+          included: import("../shared").LinkedIssueContext[];
+          dropped: LinkedIssueRef[];
+          tokensUsed: number;
+        } =
+          remainingBudget > 0 && adapter?.getLinkedIssues && issue.key
+            ? await fetchLinkedIssuesContext(
+                adapter,
+                issue.key,
+                remainingBudget
+              )
+            : { included: [], dropped: [], tokensUsed: 0 };
+
+        // Folder cases get whatever budget linked issues didn't consume.
+        // Use linkedResult.tokensUsed directly — do NOT recompute char counts.
+        const hierarchyBudget = Math.max(
+          0,
+          remainingBudget - linkedResult.tokensUsed
+        );
         const hierarchyContext =
-          contextTokenBudget > 0
+          hierarchyBudget > 0
             ? await fetchHierarchyContext(
                 prisma,
                 projectId,
                 context.folderContext,
-                contextTokenBudget
+                hierarchyBudget
               )
             : [];
 
-        // Build the final context with server-fetched cases
+        // Build the final context with server-fetched cases + linked issues.
         const enrichedContext: GenerationContext = {
           ...context,
           existingTestCases: hierarchyContext,
+          linkedIssues: linkedResult.included,
         };
 
         let userPrompt = buildUserPrompt(
-          issue,
+          issueWithComments,
           enrichedContext,
           userPromptBase
         );
         let wasTruncated = false;
 
-        // If still over budget (large issue comments), truncate comments
+        // Tier 4 of D-03: source-issue comments — final-safety-net truncation.
+        // Tier 5 of D-03: source body never drops (CTX-02 hard rule).
+        // The loop below only modifies issueWithComments.comments — issue.description is untouched.
         let estimatedUserTokens = Math.ceil(userPrompt.length / 4);
         if (estimatedUserTokens > contentBudget) {
-          const truncatedIssue = { ...issue };
-          if (truncatedIssue.comments && truncatedIssue.comments.length > 0) {
-            let comments = [...truncatedIssue.comments];
+          if (
+            issueWithComments.comments &&
+            issueWithComments.comments.length > 0
+          ) {
+            let comments = [...issueWithComments.comments];
             while (comments.length > 0) {
               comments = comments.slice(0, -1);
-              truncatedIssue.comments = comments;
+              issueWithComments.comments = comments;
               userPrompt = buildUserPrompt(
-                truncatedIssue,
+                issueWithComments,
                 enrichedContext,
                 userPromptBase
               );
@@ -292,6 +369,48 @@ export async function POST(req: NextRequest) {
         }
 
         send(controller, { type: "stage", stage: "calling_ai" });
+
+        // [DEBUG-LLM-CONTEXT] v0.22.19 — temporary: dump the fully-assembled prompt to /tmp so
+        // we can see today's context (pre-Phase 2 linked-issue expansion) without console truncation.
+        // Remove this entire block before merging Phase 2.
+        try {
+          const fs = await import("node:fs");
+          const ts = new Date().toISOString().replace(/[:.]/g, "-");
+          const safeKey = String(issue.key ?? "unknown").replace(
+            /[^a-zA-Z0-9_-]/g,
+            "_"
+          );
+          const dumpPath = `/tmp/llm-context-${safeKey}-${ts}.txt`;
+          const totalChars = systemPrompt.length + userPrompt.length;
+          fs.writeFileSync(
+            dumpPath,
+            [
+              `=== LLM CONTEXT DUMP ===`,
+              `Issue:           ${issue.key}`,
+              `Timestamp:       ${ts}`,
+              `Model resolved:  ${resolved.model ?? "(default)"}`,
+              `Feature:         ${llmFeature}`,
+              `systemPromptChars: ${systemPrompt.length}`,
+              `userPromptChars:   ${userPrompt.length}`,
+              `totalChars:        ${totalChars}`,
+              `estimatedTokens:   ${Math.ceil(totalChars / 4)}`,
+              `wasTruncated:      ${wasTruncated}`,
+              ``,
+              `=== SYSTEM PROMPT ===`,
+              systemPrompt,
+              ``,
+              `=== USER PROMPT ===`,
+              userPrompt,
+            ].join("\n"),
+            "utf-8"
+          );
+          console.log(
+            `[DEBUG-LLM-CONTEXT] ${issue.key} dumped → ${dumpPath} ` +
+              `(${totalChars} chars, ~${Math.ceil(totalChars / 4)} tokens, truncated=${wasTruncated})`
+          );
+        } catch (err) {
+          console.warn("[DEBUG-LLM-CONTEXT] dump failed:", err);
+        }
 
         const llmRequest: LlmRequest = {
           messages: [
@@ -340,6 +459,8 @@ export async function POST(req: NextRequest) {
           metadata: {
             issueKey: issue.key,
             templateName: template.name,
+            linkedIssuesIncluded: linkedResult.included.length,
+            droppedLinkedIssues: linkedResult.dropped.map((r) => r.key ?? r.id),
           },
         });
       } catch (err) {
