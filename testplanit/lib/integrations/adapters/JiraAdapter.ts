@@ -48,6 +48,7 @@ export class JiraAdapter extends BaseAdapter {
       customFields: true,
       attachments: true,
       linkedIssues: true,
+      comments: false, // flipped to true in Plan 02-02 when getIssueComments() is implemented
     };
   }
 

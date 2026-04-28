@@ -36,6 +36,7 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       customFields: true,
       attachments: true,
       linkedIssues: true,
+      comments: false, // flipped to true in Plan 02-04 when getIssueComments() is implemented
     };
   }
 

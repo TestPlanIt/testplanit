@@ -39,6 +39,7 @@ export class GitHubAdapter extends BaseAdapter {
       customFields: false, // GitHub doesn't have custom fields like Jira
       attachments: false, // GitHub doesn't support direct attachments on issues
       linkedIssues: true,
+      comments: false, // flipped to true in Plan 02-03 when getIssueComments() is implemented
     };
   }
 

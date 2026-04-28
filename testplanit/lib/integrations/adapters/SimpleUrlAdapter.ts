@@ -28,6 +28,7 @@ export class SimpleUrlAdapter extends BaseAdapter {
       customFields: false, // No custom field support
       attachments: false, // No attachment support
       linkedIssues: false, // No tracker-style relationships in URL-only integrations
+      comments: false, // No comment fetching from URL-only integrations
     };
   }
 
