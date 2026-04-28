@@ -22,6 +22,8 @@ export type TestRunSummaryData = {
     colorValue: string;
     count: number;
     isCompleted?: boolean;
+    isSuccess?: boolean;
+    isFailure?: boolean;
   }>;
   completionRate: number;
   totalElapsed: number;
@@ -207,6 +209,8 @@ export async function getRegularRunSummary(
       colorValue: string;
       count: bigint;
       isCompleted: boolean | null;
+      isSuccess: boolean | null;
+      isFailure: boolean | null;
     }>
   >`
     SELECT
@@ -214,12 +218,14 @@ export async function getRegularRunSummary(
       COALESCE(s.name, 'Pending') as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
       COUNT(*) as count,
-      s."isCompleted"
+      s."isCompleted",
+      s."isSuccess",
+      s."isFailure"
     FROM "TestRunCases" trc
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
     WHERE trc."testRunId" = ${testRunId}
-    GROUP BY trc."statusId", s.name, c.value, s."isCompleted"
+    GROUP BY trc."statusId", s.name, c.value, s."isCompleted", s."isSuccess", s."isFailure"
     ORDER BY trc."statusId" ASC NULLS LAST
   `;
 
@@ -346,6 +352,8 @@ export async function getRegularRunSummary(
       colorValue: item.colorValue,
       count: Number(item.count),
       isCompleted: item.isCompleted ?? undefined,
+      isSuccess: item.isSuccess ?? undefined,
+      isFailure: item.isFailure ?? undefined,
     })),
     completionRate,
     totalElapsed,
@@ -375,6 +383,9 @@ export async function getJUnitRunSummary(
       colorValue: string | null;
       type: string | null;
       count: bigint;
+      isCompleted: boolean | null;
+      isSuccess: boolean | null;
+      isFailure: boolean | null;
     }>
   >`
     SELECT
@@ -382,13 +393,16 @@ export async function getJUnitRunSummary(
       s.name as "statusName",
       c.value as "colorValue",
       jtr.type,
-      COUNT(*) as count
+      COUNT(*) as count,
+      s."isCompleted",
+      s."isSuccess",
+      s."isFailure"
     FROM "JUnitTestResult" jtr
     JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
     LEFT JOIN "Status" s ON jtr."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
     WHERE jts."testRunId" = ${testRunId}
-    GROUP BY jtr."statusId", s.name, c.value, jtr.type
+    GROUP BY jtr."statusId", s.name, c.value, jtr.type, s."isCompleted", s."isSuccess", s."isFailure"
   `;
 
   const timeResult = await client.$queryRaw<
@@ -477,6 +491,15 @@ export async function getJUnitRunSummary(
               ? "rgb(161, 161, 170)"
               : "rgb(34, 197, 94)"),
         count: Number(agg.count),
+        // Status-table flags when joined; fall back to JUnit `type` for unmapped junit results.
+        isCompleted: agg.isCompleted ?? (agg.type != null),
+        isSuccess:
+          agg.isSuccess ?? (agg.type === "PASSED" ? true : undefined),
+        isFailure:
+          agg.isFailure ??
+          (agg.type === "FAILURE" || agg.type === "ERROR"
+            ? true
+            : undefined),
       });
     }
   });
