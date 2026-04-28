@@ -294,6 +294,53 @@ describe("BaseAdapter", () => {
         adapter.testMakeRequest("https://api.test.com/resource")
       ).rejects.toThrow("HTTP 404: Not Found");
     });
+
+    it("should give each retry attempt a fresh AbortController and timeout window", async () => {
+      // First attempt: never resolves until its signal aborts (simulates a hang
+      // long enough to hit requestTimeout). Second attempt: succeeds immediately.
+      let firstSignal: AbortSignal | null = null;
+      let secondSignal: AbortSignal | null = null;
+
+      mockFetch.mockImplementationOnce((_url: string, init: RequestInit) => {
+        firstSignal = init.signal as AbortSignal;
+        return new Promise((_resolve, reject) => {
+          (init.signal as AbortSignal).addEventListener("abort", () => {
+            const err = new Error("Aborted");
+            err.name = "AbortError";
+            reject(err);
+          });
+        });
+      });
+      mockFetch.mockImplementationOnce((_url: string, init: RequestInit) => {
+        secondSignal = init.signal as AbortSignal;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ data: "fresh-window-succeeded" }),
+        });
+      });
+
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const resultPromise = adapter.testMakeRequest(
+        "https://api.test.com/resource"
+      );
+      // Advance past first attempt's timeout (default requestTimeout is 30000ms)
+      await vi.advanceTimersByTimeAsync(30000);
+      // Advance through executeWithRetry's exponential backoff (1000 * 2^0 = 1000ms)
+      // plus the rate-limit window (~1000ms)
+      await vi.advanceTimersByTimeAsync(2500);
+
+      const result = await resultPromise;
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual({ data: "fresh-window-succeeded" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Each attempt must have its own AbortSignal — sharing the controller
+      // across retries would mean the second attempt sees an already-aborted
+      // signal and rejects immediately without retrying.
+      expect(firstSignal).not.toBe(secondSignal);
+      expect(firstSignal!.aborted).toBe(true);
+      expect(secondSignal!.aborted).toBe(false);
+    });
   });
 
   describe("makeRequest with different auth types", () => {

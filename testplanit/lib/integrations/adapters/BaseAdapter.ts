@@ -251,20 +251,23 @@ export abstract class BaseAdapter implements IssueAdapter {
         break;
     }
 
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
-
     try {
-      const response = await this.executeWithRetry(() =>
-        fetch(url, {
-          ...options,
-          headers,
-          signal: controller.signal,
-        })
-      );
-
-      clearTimeout(timeoutId);
+      const response = await this.executeWithRetry(async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          this.requestTimeout
+        );
+        try {
+          return await fetch(url, {
+            ...options,
+            headers,
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -273,8 +276,6 @@ export abstract class BaseAdapter implements IssueAdapter {
 
       return response.json();
     } catch (error: any) {
-      clearTimeout(timeoutId);
-
       // Provide a clear error message for timeout
       if (error.name === "AbortError") {
         throw new Error(
