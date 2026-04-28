@@ -807,6 +807,37 @@ export class SyncService {
         error
       );
     });
+
+    // Manually emit issue.updated for the same reason — the enhanced
+    // Prisma client bypasses the $extends middleware where the
+    // emitIssueUpdated hook normally fires. Refetch via the un-enhanced
+    // client to get the full post-update row, then emit through the
+    // extended client's $transaction (so we have a Prisma.TransactionClient
+    // for webhookEvents.emit). Best-effort: a failure here must not roll
+    // back the sync — wrap in try/catch.
+    try {
+      const updatedIssue = await defaultPrisma.issue.findUnique({
+        where: { id: existingIssue.id },
+      });
+      if (updatedIssue && updatedIssue.projectId != null) {
+        const { prisma: extendedPrisma } = await import("@/lib/prisma");
+        const { emitIssueUpdated } = await import(
+          "~/lib/webhooks/event-emitters/issueEvents"
+        );
+        await extendedPrisma.$transaction(async (tx) => {
+          await emitIssueUpdated(
+            existingIssue as any,
+            updatedIssue as any,
+            tx
+          );
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Failed to emit issue.updated webhook for issue ${existingIssue.id}:`,
+        error
+      );
+    }
   }
 }
 
