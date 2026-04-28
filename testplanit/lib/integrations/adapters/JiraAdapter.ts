@@ -3,6 +3,7 @@ import {
   AuthenticationData,
   CreateIssueData,
   IssueAdapterCapabilities,
+  IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
@@ -48,7 +49,7 @@ export class JiraAdapter extends BaseAdapter {
       customFields: true,
       attachments: true,
       linkedIssues: true,
-      comments: false, // flipped to true in Plan 02-02 when getIssueComments() is implemented
+      comments: true,
     };
   }
 
@@ -535,6 +536,23 @@ export class JiraAdapter extends BaseAdapter {
     }
   }
 
+  async getIssueComments(issueId: string): Promise<IssueComment[]> {
+    try {
+      const response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/api/3/issue/${issueId}/comment`)
+      );
+      return this.mapJiraComments(response);
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] getIssueComments failed for ${issueId}:`,
+        error
+      );
+      return [];
+    }
+  }
+
   async searchIssues(options: IssueSearchOptions): Promise<{
     issues: IssueData[];
     total: number;
@@ -784,6 +802,21 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     return refs;
+  }
+
+  private mapJiraComments(response: any): IssueComment[] {
+    const comments = Array.isArray(response?.comments) ? response.comments : [];
+    const out: IssueComment[] = [];
+    for (const c of comments) {
+      if (!c) continue;
+      out.push({
+        id: c.id != null ? String(c.id) : undefined,
+        author: c.author?.displayName ?? c.author?.emailAddress ?? "Unknown",
+        body: this.extractDescription(c.body) ?? "",
+        created: c.created ?? "",
+      });
+    }
+    return out;
   }
 
   private extractDescription(description: any): string | undefined {
