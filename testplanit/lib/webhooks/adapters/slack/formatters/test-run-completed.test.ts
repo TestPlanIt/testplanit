@@ -13,7 +13,7 @@ const baseEnvelope: OutboundEnvelope = {
   data: {
     runId: 42,
     runTitle: "Smoke v3",
-    runUrl: "http://localhost:3000/en-US/projects/runs/1/42",
+    runUrl: "http://localhost:3000/projects/runs/1/42",
     totalCases: 24,
     completionRate: 95.83,
     statusCounts: [
@@ -115,7 +115,7 @@ describe("formatTestRunCompletedBlocks", () => {
     const parsed = JSON.parse(formatTestRunCompletedBlocks(baseEnvelope).body);
     const rendered = JSON.stringify(parsed);
     expect(rendered).toContain(
-      "<http://localhost:3000/en-US/projects/runs/1/42|Smoke v3>"
+      "<http://localhost:3000/projects/runs/1/42|Smoke v3>"
     );
   });
 

@@ -121,7 +121,8 @@ export async function emitTestRunUpdateEvents(
     // without an API round-trip.
     const summary = await getTestRunSummary(newRow.id, { client: tx });
     const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-    const runUrl = `${baseUrl}/en-US/projects/runs/${newRow.projectId}/${newRow.id}`;
+    // Locale-less path; next-intl resolves the recipient's preferred locale at request time.
+    const runUrl = `${baseUrl}/projects/runs/${newRow.projectId}/${newRow.id}`;
     await webhookEvents.emit(
       "test_run.completed",
       {
