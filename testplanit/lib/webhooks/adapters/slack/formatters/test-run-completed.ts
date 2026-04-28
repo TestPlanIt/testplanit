@@ -92,7 +92,11 @@ export function formatTestRunCompletedBlocks(
       ? toHumanReadable(elapsedSeconds, { isSeconds: true })
       : null;
 
-  const text = `Test run "${data.runTitle}" completed (${completionPct}% complete, ${totalCases} cases)`;
+  // Top-level `text` is used for Slack notification previews (push/email/
+  // mobile/collapsed view) AND rendered as a one-line summary above the
+  // attachment in expanded view. Keep it short so it doesn't duplicate the
+  // attachment body — the run title is the most useful preview anchor.
+  const text = `Test run completed: ${data.runTitle}`;
   const color = colorForOutcome({ failed, pending, completionPct });
 
   // Run-title line: bold, clickable when runUrl present, with project as
@@ -124,21 +128,20 @@ export function formatTestRunCompletedBlocks(
     { type: "section", text: { type: "mrkdwn", text: summaryLine } },
   ];
 
-  // Status breakdown — render each statusCount as its own row (matches
-  // the in-app TestRunCasesSummary, which iterates statusCounts and
-  // shows admin-defined status names directly). Emoji is picked from the
-  // Status row's isSuccess / isFailure / isCompleted flags so we don't
-  // hardcode names. Cap at 8 rows for legibility (Slack's section.fields
-  // grid maxes at 10).
+  // Status breakdown — render each statusCount as its own line in a
+  // single section's text (NOT a section.fields grid: that 2-column
+  // grid wraps `*Label:* value` onto two visual lines in narrow
+  // columns, which is exactly what we don't want). One line per status,
+  // emoji from Status table flags so we don't hardcode names. Cap at
+  // 10 rows for legibility.
   const statusCounts = (data.statusCounts ?? []).filter((sc) => sc.count > 0);
-  const statusFields = statusCounts.slice(0, 8).map((sc) => ({
-    type: "mrkdwn" as const,
-    text: `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`,
-  }));
-
-  if (statusFields.length > 0) {
+  if (statusCounts.length > 0) {
+    const statusLines = statusCounts
+      .slice(0, 10)
+      .map((sc) => `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`)
+      .join("\n");
     blocks.push({ type: "divider" });
-    blocks.push({ type: "section", fields: statusFields });
+    blocks.push({ type: "section", text: { type: "mrkdwn", text: statusLines } });
   }
 
   blocks.push({

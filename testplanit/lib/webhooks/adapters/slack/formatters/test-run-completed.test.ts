@@ -368,12 +368,18 @@ describe("formatTestRunCompletedBlocks", () => {
     expect(rendered).not.toContain("*Pending:*");
   });
 
-  it("status breakdown is preceded by a divider for visual separation", () => {
+  it("status breakdown is a single mrkdwn section (newline-joined rows, NOT a 2-col fields grid that would wrap)", () => {
     const blocks = getBlocks(baseEnvelope);
     const dividerIndex = blocks.findIndex((b) => b.type === "divider");
     expect(dividerIndex).toBeGreaterThan(0);
-    expect(blocks[dividerIndex + 1].type).toBe("section");
-    expect(Array.isArray(blocks[dividerIndex + 1].fields)).toBe(true);
+    const statusSection = blocks[dividerIndex + 1];
+    expect(statusSection.type).toBe("section");
+    expect(statusSection.text?.type).toBe("mrkdwn");
+    expect(typeof statusSection.text?.text).toBe("string");
+    // No `fields` array — that's what was wrapping counts onto two lines.
+    expect(statusSection.fields).toBeUndefined();
+    // Each row is on its own line, with count inline next to the label.
+    expect(statusSection.text.text).toContain("\n");
   });
 
   it("statusCounts = [] omits the divider AND the status fields section", () => {
