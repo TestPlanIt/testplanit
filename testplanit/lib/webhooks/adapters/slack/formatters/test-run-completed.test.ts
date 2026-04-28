@@ -486,12 +486,12 @@ describe("formatTestRunCompletedBlocks", () => {
     expect(blocks[2].text.text).not.toContain("1 cases");
   });
 
-  it("footer context shows eventId in monospace + ISO timestamp; no 'eventId:' label", () => {
+  it("does NOT include a context footer (eventId/timestamp are noise for end users; trace data lives in the WebhookDelivery row)", () => {
     const blocks = getBlocks(baseEnvelope);
-    const context = blocks[blocks.length - 1] as any;
-    expect(context.type).toBe("context");
-    expect(context.elements[0].text).toBe(
-      "`evt_00000000-0000-4000-8000-000000000000` · 2026-04-27T12:00:00.000Z"
-    );
+    expect(blocks.find((b) => b.type === "context")).toBeUndefined();
+    const rendered = JSON.stringify(blocks);
+    expect(rendered).not.toContain("evt_");
+    expect(rendered).not.toContain(baseEnvelope.eventId);
+    expect(rendered).not.toContain(baseEnvelope.eventTimestamp);
   });
 });

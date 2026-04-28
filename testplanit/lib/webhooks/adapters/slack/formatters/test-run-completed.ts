@@ -145,16 +145,6 @@ export function formatTestRunCompletedBlocks(
     blocks.push({ type: "section", text: { type: "mrkdwn", text: statusLines } });
   }
 
-  blocks.push({
-    type: "context",
-    elements: [
-      {
-        type: "mrkdwn",
-        text: `\`${envelope.eventId}\` · ${envelope.eventTimestamp}`,
-      },
-    ],
-  });
-
   // Wrap in `attachments` (not top-level `blocks`) so Slack renders the
   // colored left-edge bar. `text` is duplicated at the top level for the
   // notification preview / legacy fallback.
