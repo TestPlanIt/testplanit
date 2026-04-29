@@ -13,6 +13,7 @@ import {
   dispatchWebhook,
   type DispatchJobData,
 } from "../lib/webhooks/dispatch";
+import { transition as transitionHealth } from "../lib/webhooks/health";
 import { retryDelayForAttempt } from "../lib/webhooks/retry-delay";
 import { retireExpiredSecrets } from "../lib/webhooks/secret-rotation";
 
@@ -77,6 +78,60 @@ const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
   }
 };
 
+/**
+ * Plan 04-05 / Task 5.3 — BullMQ worker hooks bridging dispatch outcomes
+ * into the health state machine (lib/webhooks/health.ts).
+ *
+ * Locked seam (CONTEXT D-10):
+ *  - on('completed') → transition(configId, 'success'). Counter resets to 0;
+ *    DEGRADED/DISABLED auto-recover to HEALTHY.
+ *  - on('failed') is fired by BullMQ on EVERY attempt failure (including
+ *    retries). The counter is event-level, NOT attempt-level: only
+ *    transitionHealth on terminal failure (job.attemptsMade + 1 >= maxAttempts).
+ *    Phase 2 D-21 sets attempts=7; transient retries don't tick the counter.
+ *
+ * Both handlers are exported so they're directly testable without spinning
+ * up a real BullMQ Worker against valkey.
+ */
+export async function handleCompleted(job: Job): Promise<void> {
+  const webhookConfigId = (job?.data as { webhookConfigId?: string } | null)
+    ?.webhookConfigId;
+  if (!webhookConfigId) return;
+  try {
+    await transitionHealth(webhookConfigId, "success");
+  } catch (err) {
+    console.error(
+      `[WebhookDispatchWorker] health transition (success) failed for config ${webhookConfigId}:`,
+      err
+    );
+  }
+}
+
+export async function handleFailed(
+  job: Job | undefined,
+  err: Error
+): Promise<void> {
+  if (!job) return;
+  const webhookConfigId = (job.data as { webhookConfigId?: string } | null)
+    ?.webhookConfigId;
+  if (!webhookConfigId) return;
+  const maxAttempts = job.opts?.attempts ?? 1;
+  const isTerminal = job.attemptsMade + 1 >= maxAttempts;
+  console.error(
+    `[WebhookDispatchWorker] Job ${job.id} failed (attempts=${job.attemptsMade}, terminal=${isTerminal}):`,
+    err
+  );
+  if (!isTerminal) return;
+  try {
+    await transitionHealth(webhookConfigId, "failure");
+  } catch (transitionErr) {
+    console.error(
+      `[WebhookDispatchWorker] health transition (failure) failed for config ${webhookConfigId}:`,
+      transitionErr
+    );
+  }
+}
+
 let worker: Worker | null = null;
 
 const startWorker = async () => {
@@ -86,27 +141,37 @@ const startWorker = async () => {
     console.log("[WebhookDispatchWorker] Starting in SINGLE-TENANT mode");
   }
   if (valkeyConnection) {
-    worker = new Worker(WEBHOOK_DISPATCH_QUEUE_NAME, withTenantContext(processor), {
-      connection: valkeyConnection as any,
-      concurrency: parseInt(process.env.WEBHOOK_DISPATCH_CONCURRENCY || "5", 10),
-      // OUT-01 retry curve — strategy MUST live on Worker.settings (Pitfall 6).
-      // BullMQ 5.x signature: (attemptsMade, type?, err?, job?) => number | Promise<number>.
-      // The `attemptsMade` here is `job.attemptsMade + 1` per BullMQ source (the
-      // 1-indexed "next attempt about to start"). Plan 02-02's retryDelayForAttempt
-      // is also 1-indexed — direct passthrough works.
-      settings: {
-        backoffStrategy: (attemptsMade: number) =>
-          retryDelayForAttempt(attemptsMade),
-      },
-    });
-    worker.on("completed", (_job) => {
-      // silent — audit is the canonical record
+    worker = new Worker(
+      WEBHOOK_DISPATCH_QUEUE_NAME,
+      withTenantContext(processor),
+      {
+        connection: valkeyConnection as any,
+        concurrency: parseInt(
+          process.env.WEBHOOK_DISPATCH_CONCURRENCY || "5",
+          10
+        ),
+        // OUT-01 retry curve — strategy MUST live on Worker.settings (Pitfall 6).
+        // BullMQ 5.x signature: (attemptsMade, type?, err?, job?) => number | Promise<number>.
+        // The `attemptsMade` here is `job.attemptsMade + 1` per BullMQ source (the
+        // 1-indexed "next attempt about to start"). Plan 02-02's retryDelayForAttempt
+        // is also 1-indexed — direct passthrough works.
+        settings: {
+          backoffStrategy: (attemptsMade: number) =>
+            retryDelayForAttempt(attemptsMade),
+        },
+      }
+    );
+    worker.on("completed", (job) => {
+      // Plan 04-05 / Task 5.3 — handleCompleted writes lastSuccessAt +
+      // resets consecutiveFailureCount + flips DEGRADED/DISABLED → HEALTHY
+      // via lib/webhooks/health.transition.
+      void handleCompleted(job);
     });
     worker.on("failed", (job, err) => {
-      console.error(
-        `[WebhookDispatchWorker] Job ${job?.id} failed (attempts=${job?.attemptsMade}):`,
-        err
-      );
+      // Plan 04-05 / Task 5.3 — handleFailed is no-op for non-terminal
+      // failures (CONTEXT D-10 event-level counter); on terminal failure
+      // it bumps consecutiveFailureCount and may flip DEGRADED → DISABLED.
+      void handleFailed(job, err);
     });
     worker.on("error", (err) => {
       console.error("[WebhookDispatchWorker] Worker error:", err);
