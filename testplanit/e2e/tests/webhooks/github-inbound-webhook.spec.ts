@@ -72,7 +72,9 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
     expect(tokenMatch).not.toBeNull();
     configToken = tokenMatch![1];
     plainSecret = await githubCard.getByTestId("webhook-secret").innerText();
-    expect(plainSecret).toMatch(/^[0-9a-f]{64}$/);
+    // generateSecret() returns randomBytes(48).toString("base64url") — 64
+    // base64url chars (alphabet [A-Za-z0-9_-]).
+    expect(plainSecret).toMatch(/^[A-Za-z0-9_-]{60,80}$/);
 
     // Dedup invariant: identical synthetic payloads dedup on the second send.
     await githubCard.getByTestId("webhook-send-test-button").click();
