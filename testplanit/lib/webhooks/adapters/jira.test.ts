@@ -190,3 +190,46 @@ describe("jiraAdapter", () => {
     expect(result.valid).toBe(true);
   });
 });
+
+describe("jiraAdapter — Phase 3 widened interface", () => {
+  it("extractLinkedIssueRef: returns { externalKey, externalSystem: 'JIRA' } for canonical payload", () => {
+    const payload = { issue: { key: "DEMO-42" } };
+    expect(jiraAdapter.extractLinkedIssueRef(payload)).toEqual({
+      externalKey: "DEMO-42",
+      externalSystem: "JIRA",
+    });
+  });
+
+  it("extractLinkedIssueRef: returns null when payload.issue is missing", () => {
+    const payload = { webhookEvent: "jira:issue_updated" };
+    expect(jiraAdapter.extractLinkedIssueRef(payload)).toBeNull();
+  });
+
+  it("extractLinkedIssueRef: returns null when payload.issue.key is not a string", () => {
+    const payload = { issue: { key: 12345 } };
+    expect(jiraAdapter.extractLinkedIssueRef(payload)).toBeNull();
+  });
+
+  it("extractExternalStatus: returns the status name for a jira:issue_updated event", () => {
+    const payload = {
+      issue: { fields: { status: { name: "In Progress" } } },
+    };
+    expect(
+      jiraAdapter.extractExternalStatus(payload, "jira:issue_updated"),
+    ).toBe("In Progress");
+  });
+
+  it("extractExternalStatus: returns null for a non-issue_updated event", () => {
+    const payload = {
+      issue: { fields: { status: { name: "In Progress" } } },
+    };
+    expect(jiraAdapter.extractExternalStatus(payload, "jira:other")).toBeNull();
+  });
+
+  it("extractExternalStatus: returns null when payload.issue.fields.status.name is missing", () => {
+    const payload = { issue: { fields: {} } };
+    expect(
+      jiraAdapter.extractExternalStatus(payload, "jira:issue_updated"),
+    ).toBeNull();
+  });
+});
