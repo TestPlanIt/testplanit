@@ -86,14 +86,12 @@ export async function GET(req: NextRequest) {
   }
   const userId = session.user.id;
 
-  // ---- tenant gate (CR-01 / Architectural Directive 1) ----
-  const tenantId = getCurrentTenantId();
-  if (!tenantId) {
-    return NextResponse.json(
-      { error: "Tenant context not configured" },
-      { status: 500 }
-    );
-  }
+  // ---- tenant resolution (CR-01 / Architectural Directive 1) ----
+  // Single-tenant deployments leave INSTANCE_TENANT_ID unset; fall back to
+  // "default" so channel keys remain tenant-scoped without requiring extra
+  // configuration. Multi-tenant deployments set INSTANCE_TENANT_ID per
+  // instance and isolation works as designed.
+  const tenantId = getCurrentTenantId() ?? "default";
 
   // ---- per-tenant cap (LIM-02 / D-18) — circuit breaker, no IORedis subscribe ----
   const tenantCount = tenantCounts.get(tenantId) ?? 0;

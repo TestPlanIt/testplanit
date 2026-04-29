@@ -99,34 +99,36 @@ const processor = async (job: Job) => {
         // Failures are swallowed: SSE is a wake-up signal, the row is the source of truth.
         // Per CR-01 / Architectural Directive 1: tenantId comes from server-resolved job
         // payload (populated upstream via getCurrentTenantId), never client input.
-        if (createData.tenantId) {
-          try {
-            const channel =
-              createData.type === "SYSTEM_ANNOUNCEMENT"
-                ? tenantBroadcastChannel(createData.tenantId)
-                : userChannel(createData.tenantId, createData.userId);
-            const payload = JSON.stringify({
-              id: notification.id,
-              event: "notification",
-            });
-            await valkeyConnection?.publish(channel, payload);
-          } catch (publishErr) {
-            console.warn(
-              `[notificationWorker] SSE publish failed for notification ${notification.id}`,
-              {
-                notificationId: notification.id,
-                tenantId: createData.tenantId,
-                userId: createData.userId,
-                error:
-                  publishErr instanceof Error
-                    ? publishErr.message
-                    : String(publishErr),
-              }
-            );
-          }
-        } else {
+        // Single-tenant deployments leave tenantId unset; fall back to "default" so the
+        // channel key matches what the SSE route subscribes to.
+        const publishTenantId = createData.tenantId ?? "default";
+        try {
+          const channel =
+            createData.type === "SYSTEM_ANNOUNCEMENT"
+              ? tenantBroadcastChannel(publishTenantId)
+              : userChannel(publishTenantId, createData.userId);
+          const payload = JSON.stringify({
+            id: notification.id,
+            event: "notification",
+          });
+          await valkeyConnection?.publish(channel, payload);
+        } catch (publishErr) {
+          console.warn(
+            `[notificationWorker] SSE publish failed for notification ${notification.id}`,
+            {
+              notificationId: notification.id,
+              tenantId: publishTenantId,
+              userId: createData.userId,
+              error:
+                publishErr instanceof Error
+                  ? publishErr.message
+                  : String(publishErr),
+            }
+          );
+        }
+        if (!createData.tenantId) {
           console.debug(
-            `[notificationWorker] Skipping SSE publish for notification ${notification.id}: no tenantId on job payload`
+            `[notificationWorker] Used fallback tenantId 'default' for notification ${notification.id} (single-tenant deployment)`
           );
         }
 
