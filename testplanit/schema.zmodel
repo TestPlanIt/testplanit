@@ -3545,6 +3545,7 @@ model WebhookDelivery {
     direction       WebhookDirection
     adapterType     AdapterType
     eventType       String?          // e.g. "jira:issue_updated"; nullable because adapter may fail before parsing
+    eventId         String?          // OUT-05 / DEL-01 — outbox event UUID for outbound; NULL for inbound (Phase 1 inbound has no eventId)
     statusCode      Int?             // HTTP response code (nullable — set after delivery resolves)
     latencyMs       Int?             // wall-clock receive→respond duration (nullable — set on finalize)
     payloadDigest   String           // sha256 hex digest of the raw request body — for correlation/admin search, NOT for uniqueness
@@ -3557,6 +3558,7 @@ model WebhookDelivery {
 
     // Indexes only — no unique constraint per BLOCKER #1 / D-03 REVISED
     @@index([webhookConfigId, receivedAt])
+    @@index([webhookConfigId, eventId])
     @@index([direction, receivedAt])
     @@index([payloadDigest])
     @@index([replayedFromDeliveryId])
@@ -3660,7 +3662,7 @@ model WebhookOutboxEvent {
     projectId       Int
     project         Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
     eventName       String      // e.g. "test_run.completed", "issue.created" (D-09..D-13 catalog)
-    eventId         String      // UUID v4 generated at emit time (OUT-05); stable across retries; lands on every WebhookDelivery row
+    eventId         String      @unique  // UUID v4 generated at emit time (OUT-05); stable across retries; lands on every WebhookDelivery row
     eventTimestamp  DateTime    @default(now()) @db.Timestamptz(6) // ISO-8601 envelope eventTimestamp (OUT-20)
     actorUserId     String?     // null when actor is the system (e.g. backfill, cron); resolved from auditContext at emit time (D-01)
     payload         Json        // event-specific data; full envelope is built at dispatch time (D-14)
