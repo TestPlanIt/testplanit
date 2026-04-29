@@ -3488,6 +3488,10 @@ model WebhookConfig {
     url             String?                              // OUTBOUND destination URL (e.g. https://hooks.slack.com/services/...). Phase 1 INBOUND leaves NULL — receiver derives URL from token.
     name            String?                              // D-28: admin-facing label for OUTBOUND configs (e.g. "Engineering Slack"). Phase 1 INBOUND leaves NULL.
     lastReceivedAt  DateTime?           @db.Timestamptz(6)
+    lastDispatchedAt        DateTime?           @db.Timestamptz(6)  // DEL-08 — set by dispatch.ts at attempt entry (Plan 04-05)
+    lastSuccessAt           DateTime?           @db.Timestamptz(6)  // DEL-08 — set by dispatch.ts on 2xx (Plan 04-05)
+    lastFailureAt           DateTime?           @db.Timestamptz(6)  // DEL-08 — set by dispatch.ts on non-2xx/timeout/error (Plan 04-05)
+    consecutiveFailureCount Int                 @default(0)         // D-12, D-19 — counter updated by lib/webhooks/health.ts (Plan 04-02)
     createdAt       DateTime            @default(now()) @db.Timestamptz(6)
     updatedAt       DateTime            @updatedAt
     deliveries      WebhookDelivery[]
