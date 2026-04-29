@@ -155,7 +155,7 @@ See [CUSTOM_DOMAIN_SETUP.md](https://github.com/testplanit/testplanit/blob/main/
 ## Technical Details
 
 - **Platform**: Atlassian Forge (Custom UI)
-- **Runtime**: Node.js 20.x
+- **Runtime**: Node.js 24.x
 - **Frontend**: React 18 with Tailwind CSS
 - **Backend**: Forge Resolver functions
 - **Storage**: Forge Storage API (per-installation key-value store)

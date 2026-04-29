@@ -38,7 +38,7 @@ forge-app/
 
 ### Prerequisites
 
-- Node.js 20.x
+- Node.js 24.x
 - [Forge CLI](https://developer.atlassian.com/platform/forge/getting-started/)
 - Access to an Atlassian account with a Jira Cloud instance
 
