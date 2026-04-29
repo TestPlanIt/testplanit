@@ -1090,9 +1090,11 @@ const AssigneeCell = React.memo(function AssigneeCell({
 const LastTestResultCell = React.memo(function LastTestResultCell({
   lastTestResult,
   projectId,
+  caseId,
 }: {
   lastTestResult: ExtendedCases["lastTestResult"];
   projectId: number;
+  caseId: number;
 }) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -1111,12 +1113,15 @@ const LastTestResultCell = React.memo(function LastTestResultCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 cursor-default">
+          <Link
+            href={`/projects/repository/${projectId}/${caseId}#result-history`}
+            className="flex items-center gap-2 hover:underline"
+          >
             <StatusDotDisplay
               name={lastTestResult.status.name}
               color={lastTestResult.status.color?.value}
             />
-          </div>
+          </Link>
         </TooltipTrigger>
         <TooltipPrimitive.Portal>
           <TooltipContent side="top" className="max-w-xs">
@@ -1794,6 +1799,7 @@ export const getColumns = (
               <LastTestResultCell
                 lastTestResult={row.original.lastTestResult}
                 projectId={row.original.projectId}
+                caseId={row.original.id}
               />
             ),
           },

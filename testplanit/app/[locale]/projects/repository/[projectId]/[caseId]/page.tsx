@@ -2366,7 +2366,7 @@ export default function TestCaseDetails() {
               </div>
             )}
             {!isEditMode && !isSubmitting && (
-              <div className="mt-6">
+              <div id="result-history" className="mt-6 scroll-mt-4">
                 <TestResultHistory caseId={testcase.id} session={session} />
               </div>
             )}
