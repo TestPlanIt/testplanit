@@ -474,12 +474,55 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     );
   }
 
-  function renderRevealedBox(rev: RevealedSecret) {
+  function renderSetupSteps(adapterType: InboundAdapterType) {
+    const stepKeys: Record<InboundAdapterType, string[]> = {
+      JIRA: [
+        "setupStepsJiraStep1",
+        "setupStepsJiraStep2",
+        "setupStepsJiraStep3",
+        "setupStepsJiraStep4",
+      ],
+      GITHUB: [
+        "setupStepsGithubStep1",
+        "setupStepsGithubStep2",
+        "setupStepsGithubStep3",
+        "setupStepsGithubStep4",
+        "setupStepsGithubStep5",
+      ],
+      AZURE_DEVOPS: [
+        "setupStepsAdoStep1",
+        "setupStepsAdoStep2",
+        "setupStepsAdoStep3",
+        "setupStepsAdoStep4",
+        "setupStepsAdoStep5",
+      ],
+    };
+    return (
+      <div
+        className="space-y-1"
+        data-testid={`webhook-inbound-setup-steps-${adapterType.toLowerCase().replace("_", "-")}`}
+      >
+        <div className="text-xs font-medium">{t("setupStepsTitle")}</div>
+        <ol className="list-decimal space-y-1 pl-5 text-xs text-muted-foreground">
+          {stepKeys[adapterType].map((k) => (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <li key={k}>{t(k as any)}</li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+
+  function renderRevealedBox(
+    rev: RevealedSecret,
+    adapterType: InboundAdapterType
+  ) {
     return (
       <div
         className="space-y-3 rounded-md border border-primary/40 bg-muted/30 p-3"
         data-testid="webhook-inbound-revealed-box"
       >
+        {renderSetupSteps(adapterType)}
         <div className="space-y-1">
           <div className="text-xs font-medium text-muted-foreground">
             {t("url")}
@@ -595,7 +638,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </p>
           )}
 
-          {isRevealedHere && revealed && renderRevealedBox(revealed)}
+          {isRevealedHere &&
+            revealed &&
+            renderRevealedBox(revealed, config.adapterType)}
 
           {!isRevealedHere && (
             <div className="space-y-2">
