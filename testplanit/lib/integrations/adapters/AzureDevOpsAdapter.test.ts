@@ -66,6 +66,8 @@ describe("AzureDevOpsAdapter", () => {
         webhooks: true,
         customFields: true,
         attachments: true,
+        linkedIssues: true,
+        comments: true,
       });
     });
   });
@@ -533,6 +535,588 @@ describe("AzureDevOpsAdapter", () => {
       const result = await adapter.getIssue("123");
 
       expect(result.assignee).toBeUndefined();
+    });
+  });
+
+  describe("getLinkedIssues", () => {
+    const mockWorkItemWithRelations = {
+      id: 123,
+      fields: { "System.Title": "Source" },
+      relations: [
+        {
+          rel: "System.LinkTypes.Related",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/200",
+          attributes: { name: "Related" },
+        },
+        {
+          rel: "System.LinkTypes.Hierarchy-Forward",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/201",
+          attributes: { name: "Child" },
+        },
+        {
+          rel: "System.LinkTypes.Hierarchy-Reverse",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/202",
+          attributes: { name: "Parent" },
+        },
+        {
+          rel: "System.LinkTypes.Successor",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/203",
+        },
+        {
+          rel: "System.LinkTypes.Predecessor",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/204",
+        },
+        {
+          rel: "System.LinkTypes.Tested-By",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/205",
+        },
+        {
+          rel: "System.LinkTypes.Affects-Forward",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/206",
+        },
+        {
+          rel: "System.LinkTypes.Duplicate-Reverse",
+          url: "https://dev.azure.com/org/proj/_apis/wit/workItems/207",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should map every System.LinkTypes.* relation with correct direction semantics", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItemWithRelations),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toHaveLength(8);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          {
+            id: "200",
+            key: "200",
+            linkType: "Related",
+            direction: "outward",
+          },
+          {
+            id: "201",
+            key: "201",
+            linkType: "Hierarchy-Forward",
+            direction: "outward",
+          },
+          {
+            id: "202",
+            key: "202",
+            linkType: "Hierarchy-Reverse",
+            direction: "inward",
+          },
+          {
+            id: "203",
+            key: "203",
+            linkType: "Successor",
+            direction: "outward",
+          },
+          {
+            id: "204",
+            key: "204",
+            linkType: "Predecessor",
+            direction: "outward",
+          },
+          {
+            id: "205",
+            key: "205",
+            linkType: "Tested-By",
+            direction: "outward",
+          },
+          {
+            id: "206",
+            key: "206",
+            linkType: "Affects-Forward",
+            direction: "outward",
+          },
+          {
+            id: "207",
+            key: "207",
+            linkType: "Duplicate-Reverse",
+            direction: "inward",
+          },
+        ])
+      );
+    });
+
+    it("should filter out ArtifactLink and AttachedFile relations", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+            relations: [
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/300",
+              },
+              {
+                rel: "System.LinkTypes.Successor",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/301",
+              },
+              { rel: "ArtifactLink", url: "vstfs:///Git/Commit/abc" },
+              {
+                rel: "AttachedFile",
+                url: "https://dev.azure.com/org/proj/_apis/wit/attachments/x",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toHaveLength(2);
+      expect(result.every((r) => r.linkType !== "ArtifactLink")).toBe(true);
+      expect(result.every((r) => r.linkType !== "AttachedFile")).toBe(true);
+    });
+
+    it("should return [] when relations field is missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return [] when relations array is empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+            relations: [],
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should call the work-item endpoint with $expand=relations", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItemWithRelations),
+      });
+
+      await adapter.getLinkedIssues!("123");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      const decodedUrl = decodeURIComponent(calledUrl);
+      expect(decodedUrl).toContain("$expand=relations");
+      expect(decodedUrl).not.toContain("$expand=all");
+      expect(calledUrl).toContain("/_apis/wit/workitems/123");
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 500 by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve("Internal Server Error"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+
+    it("should silently drop malformed relation entries while keeping valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 123,
+            fields: { "System.Title": "Source" },
+            relations: [
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/workItems/400",
+              },
+              { rel: "System.LinkTypes.Related" },
+              {
+                rel: "System.LinkTypes.Related",
+                url: "https://dev.azure.com/org/proj/_apis/wit/attachments/abc",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "400",
+        key: "400",
+        linkType: "Related",
+        direction: "outward",
+      });
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+
+    it("should encode issueId path-injection chars (?, /, &) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItemWithRelations),
+      });
+
+      await adapter.getLinkedIssues!("123?api-version=evil");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/_apis/wit/workitems/123%3Fapi-version%3Devil?"
+      );
+      expect(calledUrl).not.toContain(
+        "/_apis/wit/workitems/123?api-version=evil?"
+      );
+    });
+  });
+
+  describe("getIssueComments", () => {
+    const mockAdoCommentsResponse = {
+      count: 2,
+      comments: [
+        {
+          id: 10,
+          text: "Reviewed",
+          createdBy: { displayName: "Alice" },
+          createdDate: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: 11,
+          text: "LGTM",
+          createdBy: { displayName: "Bob" },
+          createdDate: "2026-01-02T00:00:00Z",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should request /_apis/wit/workitems/{id}/comments with -preview api-version suffix", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("123");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/_apis/wit/workitems/123/comments");
+      expect(calledUrl).toContain("api-version=");
+      expect(calledUrl).toContain("-preview");
+    });
+
+    it("should map all comments to IssueComment[] on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([
+        {
+          id: "10",
+          author: "Alice",
+          body: "Reviewed",
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "11",
+          author: "Bob",
+          body: "LGTM",
+          created: "2026-01-02T00:00:00Z",
+        },
+      ]);
+    });
+
+    it("should fall back to 'Unknown' when createdBy is missing or displayName is absent", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            count: 2,
+            comments: [
+              {
+                id: 20,
+                text: "no createdBy",
+                createdDate: "2026-01-03T00:00:00Z",
+              },
+              {
+                id: 21,
+                text: "no displayName",
+                createdBy: {},
+                createdDate: "2026-01-04T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toHaveLength(2);
+      expect(result[0].author).toBe("Unknown");
+      expect(result[1].author).toBe("Unknown");
+    });
+
+    it("should return [] when response is empty object", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return [] when comments array is empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ count: 0, comments: [] }),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should skip malformed entries and keep valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            count: 2,
+            comments: [
+              null,
+              {
+                id: 30,
+                text: "valid",
+                createdBy: { displayName: "Carol" },
+                createdDate: "2026-01-05T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "30",
+        author: "Carol",
+        body: "valid",
+        created: "2026-01-05T00:00:00Z",
+      });
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("123");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[AzureDevOpsAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("123");
+      errorSpy.mockRestore();
+    });
+
+    it("should encode issueId path-injection chars (/) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("123/../456");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/_apis/wit/workitems/123%2F..%2F456/comments"
+      );
+      expect(calledUrl).not.toContain("/_apis/wit/workitems/123/../456/");
+    });
+
+    it("should encode query-injection chars (?, &) in issueId", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockAdoCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("123?evil=1");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/_apis/wit/workitems/123%3Fevil%3D1/comments"
+      );
     });
   });
 

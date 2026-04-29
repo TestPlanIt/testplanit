@@ -25,9 +25,15 @@ Choose your test generation source:
 
 **From Issue:**
 
-- Select an existing issue from your integrated tracking system
-- Issues are automatically fetched with full context including descriptions and comments
-- Supports Jira, GitHub Issues, Azure DevOps work items
+- Select an existing issue from your integrated tracking system. Supports Jira, GitHub Issues, and Azure DevOps work items.
+- The selected issue's title, description, and comment thread are included in the LLM context.
+- Issues directly linked to your selected issue (one hop) are also included automatically — for example, the Stories under an Epic, or the issues an issue blocks / is-blocked-by. Each linked issue contributes its own title, description, and comments to the context.
+- A "Linked issues that will be included" section appears in the issue preview after selection, listing each linked issue's key and link type so you can preview what context the AI will see before generating.
+- Linked-issue traversal is capped at one hop. Issues linked to your linked issues are not followed.
+- "Linked" means whatever the tracker reports as a linked relationship:
+  - **Jira**: `issuelinks` (blocks/blocked-by, relates-to, duplicates, custom Jira link types), parent/subtask hierarchy, and the Epic-Link custom field
+  - **GitHub**: native sub-issues and timeline cross-references (mentions in other issues or pull requests that link both ways)
+  - **Azure DevOps**: every `System.LinkTypes.*` relationship the work item reports — Related, Hierarchy-Forward/Reverse (parent/child), Successor, Predecessor, Affects-Forward/Reverse, Tested-By/Tests, Duplicate-Forward/Reverse
 
 **From Document:**
 
@@ -98,6 +104,10 @@ Choose your test generation source:
 - Bulk select/deselect options available
 - Edit any test case inline before importing (click the Edit button)
 - Tags can be added or removed interactively during editing using tag badges with add/remove controls
+
+**Linked-issue context notice:**
+
+- If linked-issue content had to be dropped to fit the LLM's token budget, an alert appears above the generated test cases listing which linked issues were excluded (by their tracker-native key — e.g., `PROJ-123` for Jira, `#456` for GitHub, the work item ID for ADO). The source issue itself is always included in full; only linked-issue content can be trimmed for budget. When everything fits, no notice is shown.
 
 **For URL-based generation with multiple pages:**
 
@@ -173,7 +183,9 @@ The AI considers:
 - **Existing Test Cases**: Avoids duplication of current test scenarios in the folder
 - **Project Domain**: Understands your application type and testing needs
 - **Template Structure**: Adapts content to fit your specific template fields
-- **Issue History**: Incorporates comments and updates from linked issues
+- **Source Issue Comments**: The full comment thread on the selected issue is included alongside its title and description.
+- **Linked Issues (1 hop)**: When the selected issue has linked issues in the same tracker, each linked issue's title, description, and comments are also included. Hierarchical relationships (Epic→Stories, parent→subtasks), bidirectional links (blocks/blocked-by, relates-to, duplicates), and tracker-specific link types are all followed. Linked-issue traversal does not recurse — issues linked to your linked issues are not followed.
+- **Token Budget**: When the assembled context would exceed the LLM's token budget, linked-issue content is trimmed first (preserving the source issue's full body and comments), and the dropped linked issues are surfaced in an alert on the generated-cases surface.
 
 ### Field Selection Optimization
 

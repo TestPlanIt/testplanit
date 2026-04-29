@@ -167,6 +167,11 @@ export abstract class BaseAdapter implements IssueAdapter {
       } catch (error) {
         lastError = error as Error;
 
+        const status = this.parseStatusFromError(lastError);
+        if (status !== null && status >= 400 && status < 500) {
+          throw lastError;
+        }
+
         if (i < retries) {
           const delay = this.retryDelay * Math.pow(2, i); // Exponential backoff
           console.warn(`Request failed, retrying in ${delay}ms...`, error);
@@ -176,6 +181,20 @@ export abstract class BaseAdapter implements IssueAdapter {
     }
 
     throw lastError || new Error("Operation failed after retries");
+  }
+
+  /**
+   * Parse the HTTP status from a makeRequest() error.
+   * makeRequest throws `new Error('HTTP ${status}: ${errorText}')` on non-2xx,
+   * so a regex pulls the status back out for fail-soft log-level routing.
+   * Returns null for non-HTTP errors (network, abort, malformed message).
+   */
+  protected parseStatusFromError(error: unknown): number | null {
+    if (error instanceof Error) {
+      const match = error.message.match(/^HTTP (\d+):/);
+      if (match) return parseInt(match[1], 10);
+    }
+    return null;
   }
 
   /**
@@ -232,20 +251,23 @@ export abstract class BaseAdapter implements IssueAdapter {
         break;
     }
 
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
-
     try {
-      const response = await this.executeWithRetry(() =>
-        fetch(url, {
-          ...options,
-          headers,
-          signal: controller.signal,
-        })
-      );
-
-      clearTimeout(timeoutId);
+      const response = await this.executeWithRetry(async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          this.requestTimeout
+        );
+        try {
+          return await fetch(url, {
+            ...options,
+            headers,
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -254,8 +276,6 @@ export abstract class BaseAdapter implements IssueAdapter {
 
       return response.json();
     } catch (error: any) {
-      clearTimeout(timeoutId);
-
       // Provide a clear error message for timeout
       if (error.name === "AbortError") {
         throw new Error(

@@ -3,8 +3,10 @@ import {
   AuthenticationData,
   CreateIssueData,
   IssueAdapterCapabilities,
+  IssueComment,
   IssueData,
   IssueSearchOptions,
+  LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
 
@@ -37,6 +39,8 @@ export class GitHubAdapter extends BaseAdapter {
       webhooks: true,
       customFields: false, // GitHub doesn't have custom fields like Jira
       attachments: false, // GitHub doesn't support direct attachments on issues
+      linkedIssues: true,
+      comments: true,
     };
   }
 
@@ -141,33 +145,81 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
-    // For GitHub, issueId could be just a number (e.g., "123") or include repo context (e.g., "owner/repo#123")
-    let owner = this.owner;
-    let repo = this.repo;
-    let issueNumber = issueId;
-
-    // Check if issueId includes repo context (format: "owner/repo#123")
-    const repoIssueMatch = issueId.match(/^([^/]+)\/([^#]+)#(\d+)$/);
-    if (repoIssueMatch) {
-      owner = repoIssueMatch[1];
-      repo = repoIssueMatch[2];
-      issueNumber = repoIssueMatch[3];
-    } else if (issueId.startsWith("#")) {
-      // Just a number with # prefix
-      issueNumber = issueId.substring(1);
-    }
-
-    if (!owner || !repo) {
-      throw new Error(
-        "GitHub repository not configured. Cannot fetch issue without owner/repo context."
-      );
-    }
+    const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
 
     const response = await this.makeRequest<any>(
       `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}`
     );
 
     return this.mapGitHubIssue(response);
+  }
+
+  async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
+    let owner: string;
+    let repo: string;
+    let issueNumber: string;
+    try {
+      ({ owner, repo, issueNumber } = this.parseIssueRef(issueId));
+    } catch (error) {
+      console.warn(
+        `[GitHubAdapter] getLinkedIssues failed for %s:`,
+        issueId,
+        error
+      );
+      return [];
+    }
+
+    const [subIssuesResult, timelineResult] = await Promise.allSettled([
+      this.fetchSubIssues(owner, repo, issueNumber),
+      this.fetchCrossReferences(owner, repo, issueNumber),
+    ]);
+
+    const refs: LinkedIssueRef[] = [];
+
+    if (subIssuesResult.status === "fulfilled") {
+      refs.push(...subIssuesResult.value);
+    } else {
+      const status = this.parseStatusFromError(subIssuesResult.reason);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[GitHubAdapter] sub_issues failed for %s:`,
+        issueId,
+        subIssuesResult.reason
+      );
+    }
+
+    if (timelineResult.status === "fulfilled") {
+      refs.push(...timelineResult.value);
+    } else {
+      const status = this.parseStatusFromError(timelineResult.reason);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[GitHubAdapter] timeline failed for %s:`,
+        issueId,
+        timelineResult.reason
+      );
+    }
+
+    return refs;
+  }
+
+  async getIssueComments(issueId: string): Promise<IssueComment[]> {
+    try {
+      const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
+      const response = await this.makeRequest<any>(
+        `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`
+      );
+      return this.mapGitHubComments(response);
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[GitHubAdapter] getIssueComments failed for %s:`,
+        issueId,
+        error
+      );
+      return [];
+    }
   }
 
   async searchIssues(options: IssueSearchOptions): Promise<{
@@ -310,6 +362,110 @@ export class GitHubAdapter extends BaseAdapter {
       return "closed";
     }
     return "open";
+  }
+
+  private parseIssueRef(issueId: string): {
+    owner: string;
+    repo: string;
+    issueNumber: string;
+  } {
+    let owner = this.owner;
+    let repo = this.repo;
+    let issueNumber = issueId;
+
+    // Check if issueId includes repo context (format: "owner/repo#123")
+    const repoIssueMatch = issueId.match(/^([^/]+)\/([^/#]+)#(\d+)$/);
+    if (repoIssueMatch) {
+      owner = repoIssueMatch[1];
+      repo = repoIssueMatch[2];
+      issueNumber = repoIssueMatch[3];
+    } else if (issueId.startsWith("#")) {
+      // Just a number with # prefix
+      issueNumber = issueId.substring(1);
+      if (!issueNumber || !/^\d+$/.test(issueNumber)) {
+        throw new Error(`Invalid GitHub issue reference: ${issueId}`);
+      }
+    }
+
+    if (!owner || !repo) {
+      throw new Error(
+        "GitHub repository not configured. Cannot fetch issue without owner/repo context."
+      );
+    }
+    return { owner, repo, issueNumber };
+  }
+
+  private async fetchSubIssues(
+    owner: string,
+    repo: string,
+    issueNumber: string
+  ): Promise<LinkedIssueRef[]> {
+    const response = await this.makeRequest<any[]>(
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+    if (!Array.isArray(response)) return [];
+    const refs: LinkedIssueRef[] = [];
+    for (const sub of response) {
+      if (!sub || sub.id == null) continue;
+      refs.push({
+        id: String(sub.id),
+        key: sub.number != null ? `#${sub.number}` : undefined,
+        linkType: "sub_issue",
+        direction: "outward",
+      });
+    }
+    return refs;
+  }
+
+  private async fetchCrossReferences(
+    owner: string,
+    repo: string,
+    issueNumber: string
+  ): Promise<LinkedIssueRef[]> {
+    const response = await this.makeRequest<any[]>(
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/timeline`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+    if (!Array.isArray(response)) return [];
+    const refs: LinkedIssueRef[] = [];
+    for (const event of response) {
+      if (event?.event !== "cross-referenced") continue;
+      const ref = event?.source?.issue;
+      if (!ref || ref.id == null) continue;
+      refs.push({
+        id: String(ref.id),
+        key: ref.number != null ? `#${ref.number}` : undefined,
+        linkType: "cross_referenced",
+        direction: "inward",
+      });
+    }
+    return refs;
+  }
+
+  private mapGitHubComments(response: any): IssueComment[] {
+    if (!Array.isArray(response)) return [];
+    const out: IssueComment[] = [];
+    for (const c of response) {
+      if (!c) continue;
+      out.push({
+        id: c.id != null ? String(c.id) : undefined,
+        author: c.user?.login || "Unknown",
+        body: c.body ?? "",
+        created: c.created_at ?? "",
+      });
+    }
+    return out;
   }
 
   private mapGitHubIssue(githubIssue: any): IssueData {

@@ -2328,7 +2328,10 @@
         "warning": "Si continúa sin guardar, sus cambios se perderán.",
         "saveAllAndImport": "Guardar todo e importar",
         "discardAndImport": "Descartar ediciones e importar"
-      }
+      },
+      "linkedIssuesDroppedTitle": "Algunos temas relacionados no fueron incluidos.",
+      "linkedIssuesDropped": "{count, plural, =1 {# El problema vinculado fue descartado} other {# Los problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",
+      "linkedIssuesPreviewHeading": "Temas relacionados que se incluirán"
     }
   },
   "tags": {
@@ -2386,7 +2389,7 @@
       "success": {
         "title": "Prueba de ejecución añadida correctamente",
         "description": "La ejecución de la prueba ha sido añadida al proyecto",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for '{name}'"
+        "descriptionMultiple": "{count, plural, one {# la ejecución de prueba tiene} other {# las ejecuciones de prueba tienen}} se ha creado para '{name}'"
       },
       "estimates": {
         "manual": "Tiempo manual estimado",

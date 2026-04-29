@@ -2328,7 +2328,10 @@
         "warning": "If you proceed without saving, your changes will be lost.",
         "saveAllAndImport": "Save All & Import",
         "discardAndImport": "Discard Edits & Import"
-      }
+      },
+      "linkedIssuesDroppedTitle": "Some linked issues were not included",
+      "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",
+      "linkedIssuesPreviewHeading": "Linked issues that will be included"
     }
   },
   "tags": {

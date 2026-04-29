@@ -970,6 +970,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, webhookConfigs: {
+                    name: "webhookConfigs",
+                    type: "WebhookConfig",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
                 }, projectLlmIntegrations: {
                     name: "projectLlmIntegrations",
                     type: "ProjectLlmIntegration",
@@ -6686,6 +6692,179 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        webhookConfig: {
+            name: 'WebhookConfig', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'webhookConfigs',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                }, adapterType: {
+                    name: "adapterType",
+                    type: "AdapterType",
+                }, direction: {
+                    name: "direction",
+                    type: "WebhookDirection",
+                }, token: {
+                    name: "token",
+                    type: "String",
+                }, secret: {
+                    name: "secret",
+                    type: "String",
+                }, isActive: {
+                    name: "isActive",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, lastReceivedAt: {
+                    name: "lastReceivedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, deliveries: {
+                    name: "deliveries",
+                    type: "WebhookDelivery",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'webhookConfig',
+                }, eventDedups: {
+                    name: "eventDedups",
+                    type: "WebhookEventDedup",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'webhookConfig',
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, token: {
+                    name: "token",
+                    fields: ["token"]
+                }, projectId_adapterType_direction: {
+                    name: "projectId_adapterType_direction",
+                    fields: ["projectId", "adapterType", "direction"]
+                },
+            },
+        },
+        webhookDelivery: {
+            name: 'WebhookDelivery', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, webhookConfigId: {
+                    name: "webhookConfigId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'webhookConfig',
+                }, webhookConfig: {
+                    name: "webhookConfig",
+                    type: "WebhookConfig",
+                    isDataModel: true,
+                    backLink: 'deliveries',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "webhookConfigId" },
+                }, direction: {
+                    name: "direction",
+                    type: "WebhookDirection",
+                }, adapterType: {
+                    name: "adapterType",
+                    type: "AdapterType",
+                }, eventType: {
+                    name: "eventType",
+                    type: "String",
+                    isOptional: true,
+                }, statusCode: {
+                    name: "statusCode",
+                    type: "Int",
+                    isOptional: true,
+                }, latencyMs: {
+                    name: "latencyMs",
+                    type: "Int",
+                    isOptional: true,
+                }, payloadDigest: {
+                    name: "payloadDigest",
+                    type: "String",
+                }, error: {
+                    name: "error",
+                    type: "String",
+                    isOptional: true,
+                }, attempt: {
+                    name: "attempt",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 1 }] }],
+                }, receivedAt: {
+                    name: "receivedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                },
+            },
+        },
+        webhookEventDedup: {
+            name: 'WebhookEventDedup', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, webhookConfigId: {
+                    name: "webhookConfigId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'webhookConfig',
+                }, webhookConfig: {
+                    name: "webhookConfig",
+                    type: "WebhookConfig",
+                    isDataModel: true,
+                    backLink: 'eventDedups',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "webhookConfigId" },
+                }, payloadDigest: {
+                    name: "payloadDigest",
+                    type: "String",
+                }, processedAt: {
+                    name: "processedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, webhookConfigId_payloadDigest: {
+                    name: "webhookConfigId_payloadDigest",
+                    fields: ["webhookConfigId", "payloadDigest"]
+                },
+            },
+        },
         llmProviderConfig: {
             name: 'LlmProviderConfig', fields: {
                 id: {
@@ -8195,7 +8374,7 @@ const metadata: ModelMeta = {
         user: ['Account', 'PasswordHistory', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
@@ -8224,6 +8403,7 @@ const metadata: ModelMeta = {
         sharedStepGroup: ['SharedStepItem'],
         shareLink: ['ShareLinkAccessLog'],
         projectIntegration: ['IntegrationProject'],
+        webhookConfig: ['WebhookDelivery', 'WebhookEventDedup'],
         promptConfig: ['PromptConfigPrompt'],
         ssoProvider: ['SamlConfiguration'],
         testmoImportJob: ['TestmoImportDataset'],
