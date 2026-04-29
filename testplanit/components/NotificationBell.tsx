@@ -209,6 +209,28 @@ export function NotificationBell() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [session?.user?.id, refetch]);
 
+  // SSE wake-up: open EventSource when authenticated; refetch on each event.
+  // Read path remains useFindManyNotification → getEnhancedDb (Architectural Directive 2 / ISO-02).
+  // The existing refetchInterval stays in place this wave (defense in depth — D-23).
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (typeof window === "undefined" || typeof EventSource === "undefined") {
+      return;
+    }
+    const eventSource = new EventSource("/api/notifications/stream");
+    eventSource.onmessage = () => {
+      void refetch();
+    };
+    eventSource.onerror = (err) => {
+      // EventSource auto-reconnects on transport drop. Log to console only —
+      // a user-visible toast would be noisy on transient blips. (CR / D-22 + PATTERNS §6 decision.)
+      console.warn("[NotificationBell] SSE transport error", err);
+    };
+    return () => {
+      eventSource.close();
+    };
+  }, [session?.user?.id, refetch]);
+
   // Check for URL parameter to open notifications
   useEffect(() => {
     if (searchParams.get("openNotifications") === "true") {
