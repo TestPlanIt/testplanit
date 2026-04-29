@@ -8,7 +8,7 @@ import { prisma } from "~/lib/prisma";
 import { getAdapter } from "~/lib/webhooks/adapters";
 import type { VerifyResult } from "~/lib/webhooks/adapters/types";
 import { redactToken } from "~/lib/webhooks/redaction";
-import { applyJiraIssueUpdate } from "~/lib/webhooks/services/applyJiraIssueUpdate";
+import { applyInboundIssueUpdate } from "~/lib/webhooks/services/applyInboundIssueUpdate";
 import { decrypt } from "~/utils/encryption";
 
 /**
@@ -35,13 +35,16 @@ import { decrypt } from "~/utils/encryption";
  */
 /**
  * Maximum body size accepted by the receiver. Real Jira webhook payloads cap
- * around 50 KiB; 1 MiB gives a generous safety margin while preventing
+ * around 50 KiB; GitHub caps inbound deliveries at 25 MiB, ADO at ~25 KiB. The
+ * 5 MB ceiling (Phase 3 P-05 / D-12 / WBHK-11 — raised from 1 MiB) gives
+ * comfortable headroom over Jira/ADO with a generous-but-bounded safety margin
+ * for GitHub `issues` events on long-bodied issues, while preventing
  * unauthenticated callers from buffering multi-GB POSTs and OOM'ing the pod
  * before token/HMAC validation can short-circuit them. Next.js App Router has
  * no default body-size limit on raw route handlers (the `serverActions`
  * `bodySizeLimit` config does NOT apply here).
  */
-const MAX_WEBHOOK_BYTES = 1_048_576;
+const MAX_WEBHOOK_BYTES = 5_242_880;
 
 /**
  * The webhook receiver runs without a user session — `__system__` is the
@@ -49,7 +52,7 @@ const MAX_WEBHOOK_BYTES = 1_048_576;
  * frame with ipAddress (sender's address — useful for forensics and rate-
  * limiting investigations), userAgent (typically "JIRA Webhooks"), and a
  * per-request requestId. The downstream `captureAuditEvent` call inside
- * `applyJiraIssueUpdate` picks these up automatically.
+ * `applyInboundIssueUpdate` picks these up automatically.
  */
 async function handleWebhookReceive(
   req: NextRequest,
@@ -126,13 +129,15 @@ async function handleWebhookReceive(
   }
 
   // 4. Resolve the adapter via the registry — Architectural Directive 1.
+  //    Phase 3 P-05: JIRA + GITHUB + AZURE_DEVOPS are all wired. SLACK +
+  //    GENERIC_HMAC remain OUTBOUND-only and throw if encountered here.
   let adapter;
   try {
     adapter = getAdapter(webhookConfig.adapterType);
   } catch (err) {
-    // Unknown / not-yet-implemented adapter (GITHUB, AZURE_DEVOPS — Phase 3).
-    // Return 501 (ME-04) so the sender (Jira/GitHub/ADO) does NOT retry —
-    // a missing adapter is a config mismatch, not a transient server fault.
+    // OUTBOUND-only adapter on an INBOUND config (admin form prevents this in
+    // practice) or unknown adapter type. Return 501 (ME-04) so the sender does
+    // NOT retry — a missing adapter is a config mismatch, not a transient fault.
     console.error(
       "[webhooks] no adapter registered for token",
       redactToken(token),
@@ -143,7 +148,8 @@ async function handleWebhookReceive(
     return NextResponse.json({ ok: false }, { status: 501 });
   }
 
-  // 5. HMAC verification (D-12 / WBHK-02). Pure function, no I/O.
+  // 5. Adapter-specific authentication: HMAC for JIRA/GITHUB, HTTP Basic Auth
+  //    for AZURE_DEVOPS (D-08). Pure function, no I/O.
   const verify: VerifyResult = adapter.verify(
     rawBody,
     req.headers,
@@ -159,8 +165,9 @@ async function handleWebhookReceive(
     // HI-03: map VerifyFail.reason to the right HTTP status so senders
     // (Jira / GitHub / ADO) take the right retry posture.
     //   - missing- / malformed- / signature-mismatch → 401 (genuine auth fail)
+    //   - missing-auth / auth-mismatch (ADO Basic Auth — D-11) → 401
     //   - unparseable-body → 400 (client bug; do not retry)
-    //   - missing-required-field → 200 (HMAC succeeded but the event is
+    //   - missing-required-field → 200 (auth succeeded but the event is
     //     non-actionable, e.g., jira:issue_deleted without a status field;
     //     200 prevents retry storms but we DO NOT write a delivery row
     //     because we have no parsed payload — a follow-up could log a
@@ -185,9 +192,17 @@ async function handleWebhookReceive(
 
   // 7. Delegate to the domain service for all DB writes + audit emission.
   //    The service maps to one of the closed-set DeliveryOutcomes.
-  const result = await applyJiraIssueUpdate({
+  //    Phase 3 P-05: pass adapterType (sourced from the verified WebhookConfig
+  //    row — T-03-22 mitigation, NOT body-controlled) and eventType (from the
+  //    parsed payload). Per RESEARCH.md Q2 RESOLVED, the service itself looks
+  //    up the adapter and runs the linked-ref + external-status extractors —
+  //    the receiver shell stays adapter-agnostic and does NOT call extractors
+  //    directly.
+  const result = await applyInboundIssueUpdate({
     webhookConfigId: webhookConfig.id,
     projectId: webhookConfig.projectId,
+    adapterType: webhookConfig.adapterType,
+    eventType: verify.payload.eventType,
     payload: verify.payload,
     payloadDigest,
     receivedAt,
@@ -205,7 +220,9 @@ async function handleWebhookReceive(
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 
-  // 200 for updated / no-link / duplicate / synthetic — Jira does not retry 2xx.
+  // 200 for updated / no-link / no_handler / duplicate / synthetic — senders
+  // (Jira / GitHub / ADO) do not retry 2xx. Only outcome === "error" maps to
+  // HTTP 500 (handled above); every other outcome falls through to 200.
   return NextResponse.json(
     { ok: true, outcome: result.outcome },
     { status: 200 }
