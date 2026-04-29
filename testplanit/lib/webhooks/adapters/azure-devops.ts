@@ -119,12 +119,14 @@ export const azureDevopsAdapter: WebhookAdapter = {
       issueKey,
       externalStatus,
       synthetic,
+      data: parsed,
     };
     return { valid: true, payload };
   },
 
   extractLinkedIssueRef(payload) {
-    const p = payload as AdoWorkItemPayload;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as AdoWorkItemPayload;
     const id = p.resource?.id;
     if (typeof id !== "number") return null;
     return {
@@ -135,7 +137,8 @@ export const azureDevopsAdapter: WebhookAdapter = {
 
   extractExternalStatus(payload, eventType) {
     if (eventType !== "workitem.updated") return null;
-    const p = payload as AdoWorkItemPayload;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as AdoWorkItemPayload;
     const state = p.resource?.fields?.["System.State"];
     return typeof state === "string" ? state : null;
   },

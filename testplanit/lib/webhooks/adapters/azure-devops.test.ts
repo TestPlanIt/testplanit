@@ -337,4 +337,31 @@ describe("azureDevopsAdapter", () => {
       ).toBeNull();
     });
   });
+
+  // Regression: verify() returns a denormalized ParsedWebhookPayload; extractors
+  // must read raw fields via `payload.data`. End-to-end seam test (no mocks).
+  describe("INTEGRATION: real verify→extractors path", () => {
+    it("real verify() output flows through real extractors with non-null linkedRef + externalStatus", () => {
+      const body = bodyOf(CANONICAL_PAYLOAD);
+      const headers = headersOf({
+        authorization: basicAuthHeader("tpi", "s3cret"),
+      });
+
+      const result = azureDevopsAdapter.verify(body, headers, ADO_SECRET);
+      expect(result.valid).toBe(true);
+      if (!result.valid) return;
+
+      const linkedRef = azureDevopsAdapter.extractLinkedIssueRef(result.payload);
+      expect(linkedRef).toEqual({
+        externalKey: "297",
+        externalSystem: "AZURE_DEVOPS",
+      });
+
+      const status = azureDevopsAdapter.extractExternalStatus(
+        result.payload,
+        result.payload.eventType,
+      );
+      expect(status).toBe("Closed");
+    });
+  });
 });

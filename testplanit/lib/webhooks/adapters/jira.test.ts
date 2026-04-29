@@ -109,7 +109,7 @@ describe("jiraAdapter", () => {
     const sig = signBody(body, SECRET);
     const headers = new Headers({ "x-hub-signature-256": sig });
     const result = jiraAdapter.verify(body, headers, SECRET);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       valid: true,
       payload: {
         eventType: "jira:issue_updated",
@@ -231,5 +231,39 @@ describe("jiraAdapter — Phase 3 widened interface", () => {
     expect(
       jiraAdapter.extractExternalStatus(payload, "jira:issue_updated"),
     ).toBeNull();
+  });
+
+  // Regression: verify() returns a denormalized ParsedWebhookPayload, but
+  // extractors must read from the raw payload via `payload.data`. This test
+  // exercises the production seam end-to-end (no mocks) so a future change
+  // that drops `data` from verify() output fails fast.
+  it("INTEGRATION: real verify() output flows through real extractors with non-null linkedRef + externalStatus", () => {
+    const SECRET = "integration-secret";
+    const rawPayload = {
+      webhookEvent: "jira:issue_updated",
+      issue: {
+        key: "DEMO-7",
+        fields: { status: { name: "In Review" } },
+      },
+    };
+    const body = bodyOf(rawPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const linkedRef = jiraAdapter.extractLinkedIssueRef(result.payload);
+    expect(linkedRef).toEqual({
+      externalKey: "DEMO-7",
+      externalSystem: "JIRA",
+    });
+
+    const status = jiraAdapter.extractExternalStatus(
+      result.payload,
+      result.payload.eventType,
+    );
+    expect(status).toBe("In Review");
   });
 });

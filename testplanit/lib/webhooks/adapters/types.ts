@@ -10,6 +10,15 @@ export interface ParsedWebhookPayload {
   externalStatus: string;
   /** True for self-test pings (D-20); receiver short-circuits AFTER dedup INSERT but BEFORE Issue lookup (per BLOCKER #5 in plan 01-03). */
   synthetic: boolean;
+  /**
+   * Raw parsed JSON body — adapter-specific shape. Carried through so Phase 3
+   * `extractLinkedIssueRef` and `extractExternalStatus` can read original payload
+   * fields (e.g. Jira `issue.fields.status.name`, GitHub `repository.full_name`,
+   * ADO `resource.fields["System.State"]`) without depending on `verify()`'s
+   * denormalized flat fields. Optional for back-compat with tests that
+   * construct `ParsedWebhookPayload` mocks; production `verify()` always sets it.
+   */
+  data?: unknown;
 }
 
 /** Verifier success branch. */

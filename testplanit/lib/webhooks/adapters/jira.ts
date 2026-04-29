@@ -76,6 +76,8 @@ function buildPayload(p: JiraWebhookPayload): ParsedWebhookPayload | null {
     // receiver to learn "this came from the self-loop" without trusting
     // attacker-supplied JSON.
     synthetic: issueKey === SYNTHETIC_ISSUE_KEY,
+    // Raw parsed body for Phase 3 extractors that read original Jira shape.
+    data: p,
   };
 }
 
@@ -110,7 +112,8 @@ export const jiraAdapter: WebhookAdapter = {
   },
 
   extractLinkedIssueRef(payload) {
-    const p = payload as { issue?: { key?: unknown } };
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as { issue?: { key?: unknown } };
     const key = p.issue?.key;
     if (typeof key !== "string" || key.length === 0) return null;
     return { externalKey: key, externalSystem: "JIRA" satisfies AdapterType };
@@ -118,7 +121,8 @@ export const jiraAdapter: WebhookAdapter = {
 
   extractExternalStatus(payload, eventType) {
     if (eventType !== "jira:issue_updated") return null;
-    const p = payload as {
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as {
       issue?: { fields?: { status?: { name?: unknown } } };
     };
     const name = p.issue?.fields?.status?.name;

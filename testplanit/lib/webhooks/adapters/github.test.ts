@@ -345,4 +345,31 @@ describe("githubAdapter — extractExternalStatus", () => {
     };
     expect(githubAdapter.extractExternalStatus(badState, "issues")).toBeNull();
   });
+
+  // Regression: verify() returns a denormalized ParsedWebhookPayload; extractors
+  // must read raw fields via `payload.data`. End-to-end seam test (no mocks).
+  it("INTEGRATION: real verify() output flows through real extractors with non-null linkedRef + externalStatus", () => {
+    const body = bodyOf(CANONICAL_PAYLOAD);
+    const sig = signBody(body, SECRET);
+    const headers = headersOf({
+      "x-hub-signature-256": sig,
+      "x-github-event": "issues",
+    });
+
+    const result = githubAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const linkedRef = githubAdapter.extractLinkedIssueRef(result.payload);
+    expect(linkedRef).toEqual({
+      externalKey: "octocat/Hello-World#42",
+      externalSystem: "GITHUB",
+    });
+
+    const status = githubAdapter.extractExternalStatus(
+      result.payload,
+      result.payload.eventType,
+    );
+    expect(status).toBe("closed");
+  });
 });

@@ -87,12 +87,14 @@ export const githubAdapter: WebhookAdapter = {
       issueKey,
       externalStatus,
       synthetic,
+      data: parsed,
     };
     return { valid: true, payload };
   },
 
   extractLinkedIssueRef(payload) {
-    const p = payload as GithubIssuesPayload;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as GithubIssuesPayload;
     const repo = p.repository?.full_name;
     const num = p.issue?.number;
     if (typeof repo !== "string" || typeof num !== "number") return null;
@@ -104,7 +106,8 @@ export const githubAdapter: WebhookAdapter = {
 
   extractExternalStatus(payload, eventType) {
     if (eventType !== "issues") return null;
-    const p = payload as GithubIssuesPayload;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as GithubIssuesPayload;
     const state = p.issue?.state;
     return typeof state === "string" ? state : null;
   },
