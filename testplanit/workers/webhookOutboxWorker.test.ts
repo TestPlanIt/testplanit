@@ -96,7 +96,7 @@ describe("webhookOutboxWorker.pollOnce", () => {
     });
   });
 
-  it("5. queue.add is called with deterministic jobId: ${row.id}:${webhookConfigId} (idempotency lock)", async () => {
+  it("5. queue.add is called with deterministic jobId: ${row.id}--${webhookConfigId} (idempotency lock; `--` separator because BullMQ rejects `:` in custom jobIds)", async () => {
     mockClaim.mockResolvedValue([sampleRow]);
     mockFanout.mockResolvedValue(["c1", "c2"]);
     const addSpy = vi.fn();
@@ -105,9 +105,9 @@ describe("webhookOutboxWorker.pollOnce", () => {
     await pollOnce();
 
     const firstOpts = addSpy.mock.calls[0][2];
-    expect(firstOpts.jobId).toBe("outbox-1:c1");
+    expect(firstOpts.jobId).toBe("outbox-1--c1");
     const secondOpts = addSpy.mock.calls[1][2];
-    expect(secondOpts.jobId).toBe("outbox-1:c2");
+    expect(secondOpts.jobId).toBe("outbox-1--c2");
   });
 
   it("6. when getWebhookDispatchQueue() returns null: logs error, returns claimed count, does NOT call queue.add", async () => {
