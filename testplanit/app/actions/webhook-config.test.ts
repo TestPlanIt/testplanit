@@ -68,7 +68,9 @@ const originalFetch = globalThis.fetch;
 let fetchSpy: ReturnType<typeof vi.fn>;
 
 import {
+  createOrRotateInboundWebhook,
   createOrRotateJiraWebhook,
+  deleteInboundWebhook,
   deleteJiraWebhook,
   sendTestWebhook,
 } from "./webhook-config";
@@ -260,6 +262,253 @@ describe("webhook-config server actions", () => {
       const result = await deleteJiraWebhook("cfg-1");
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // Phase 3 / Plan 03-06 / Task 6.1 — generalize createOrRotate + delete
+  // for all 3 inbound adapters (JIRA / GITHUB / AZURE_DEVOPS).
+  // =========================================================================
+
+  describe("createOrRotateInboundWebhook (Phase 3)", () => {
+    it("creates a GITHUB config when no row exists; mints HMAC secret + adapterType=GITHUB", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-gh-1" });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "GITHUB",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-gh-1");
+      // Server-minted HMAC secret returned plaintext, NOT encrypted blob.
+      expect(result.secret).toBeTruthy();
+      expect(result.secret!.startsWith("enc:")).toBe(false);
+      // Lookup filters by GITHUB (not hardcoded JIRA).
+      expect(mockWebhookConfigFindFirst).toHaveBeenCalledWith({
+        where: { projectId: 42, adapterType: "GITHUB", direction: "INBOUND" },
+        select: { id: true },
+      });
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          projectId: 42,
+          adapterType: "GITHUB",
+          direction: "INBOUND",
+          isActive: true,
+          token: expect.stringMatching(/^whk_[0-9a-f]{64}$/),
+          secret: `enc:${result.secret}`,
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("creates an AZURE_DEVOPS config with JSON-encoded {username, password} secret (D-09)", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-ado-1" });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "AZURE_DEVOPS",
+        secretInput: {
+          kind: "AZURE_DEVOPS",
+          username: "tpi",
+          password: "s3cret",
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-ado-1");
+      // ADO does NOT return a server-minted secret; admin already typed it.
+      expect(result.secret).toBeUndefined();
+
+      // Encryption helper invoked with the JSON-encoded credential blob (D-09).
+      const expectedJson = JSON.stringify({ username: "tpi", password: "s3cret" });
+      expect(mockEncrypt).toHaveBeenCalledWith(expectedJson);
+
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          projectId: 42,
+          adapterType: "AZURE_DEVOPS",
+          direction: "INBOUND",
+          isActive: true,
+          token: expect.stringMatching(/^whk_[0-9a-f]{64}$/),
+          secret: `enc:${expectedJson}`,
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("returns friendly error when AZURE_DEVOPS missing secretInput", async () => {
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "AZURE_DEVOPS",
+        // secretInput intentionally omitted
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to save webhook configuration",
+      });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("returns friendly error when AZURE_DEVOPS secretInput has empty username", async () => {
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "AZURE_DEVOPS",
+        secretInput: {
+          kind: "AZURE_DEVOPS",
+          username: "",
+          password: "s3cret",
+        },
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to save webhook configuration",
+      });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("Q8 RESOLVED: encrypt(JSON.stringify({username,password})) round-trips via decrypt+JSON.parse", async () => {
+      // Verifies Phase 1's encryption helper handles arbitrary string content
+      // (mirrors Phase 2's Slack-URL-as-credential precedent). Mock encrypt
+      // to a passthrough so we can assert decrypt+parse recovers structural
+      // equality of the credentials object.
+      mockEncrypt.mockImplementationOnce(async (s: string) => `enc:${s}`);
+      mockDecrypt.mockImplementationOnce(async (s: string) => s.slice(4));
+
+      const creds = { username: "tpi-user", password: "p@ss:word" };
+      const enc = await mockEncrypt(JSON.stringify(creds));
+      const dec = await mockDecrypt(enc);
+      const parsed = JSON.parse(dec);
+
+      expect(parsed).toEqual(creds);
+    });
+
+    it("Phase 1 alias createOrRotateJiraWebhook still routes through the new function", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-jira-via-alias" });
+
+      const result = await createOrRotateJiraWebhook(42);
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-jira-via-alias");
+      // The lookup filtered by JIRA, not GITHUB or ADO.
+      expect(mockWebhookConfigFindFirst).toHaveBeenCalledWith({
+        where: { projectId: 42, adapterType: "JIRA", direction: "INBOUND" },
+        select: { id: true },
+      });
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          projectId: 42,
+          adapterType: "JIRA",
+          direction: "INBOUND",
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("rotate path: GITHUB existing row → update (D-07 hard cutover, fresh token+secret)", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue({ id: "cfg-gh-exist" });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-gh-exist" });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "GITHUB",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-gh-exist");
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-gh-exist" },
+        data: expect.objectContaining({
+          token: expect.stringMatching(/^whk_[0-9a-f]{64}$/),
+          secret: expect.stringMatching(/^enc:/),
+          isActive: true,
+        }),
+        select: { id: true },
+      });
+    });
+  });
+
+  describe("deleteInboundWebhook (Phase 3)", () => {
+    it("happy path: tenant-scopes by projectId + direction=INBOUND", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+      });
+      mockWebhookConfigDelete.mockResolvedValue({ id: "cfg-1" });
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-1",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigDelete).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+      });
+    });
+
+    it("returns Not found when projectId mismatch (cross-tenant attempt)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 99, // different from input projectId
+        direction: "INBOUND",
+      });
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-other-tenant",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: false, error: "Not found" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+
+    it("returns Not found when direction is OUTBOUND (refuse to delete outbound via inbound action)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "OUTBOUND",
+      });
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-out",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: false, error: "Not found" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+
+    it("returns Unauthorized when session missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-1",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
+      expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
+    });
+
+    it("returns Forbidden when canManageWebhookConfig denies", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+      });
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-1",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
       expect(mockWebhookConfigDelete).not.toHaveBeenCalled();
     });
   });
