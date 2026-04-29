@@ -40,6 +40,31 @@ const SYNTHETIC_PAYLOAD = JSON.stringify({
   },
 });
 
+/**
+ * Phase 3 SC#5 demo lock — byte-identical synthetic payloads per adapter.
+ *
+ * Each constant is `JSON.stringify`'d ONCE at module load and reused across
+ * all `sendTestWebhook` calls, so two consecutive clicks produce byte-
+ * identical request bodies → byte-identical `payloadDigest` → second click
+ * deterministically returns `outcome='duplicate'` from the receiver. Same
+ * invariant Phase 1 established for the JIRA `SYNTHETIC_PAYLOAD` above.
+ *
+ * HI-02 sentinel binding: each payload uses values an external caller
+ * cannot legitimately produce (GitHub: `__synthetic__/__synthetic__` repo
+ * + issue.number === 0; ADO: resource.id === 0). The receiver-side adapter
+ * detects the sentinel and short-circuits to the `synthetic` outcome.
+ */
+const SYNTHETIC_GITHUB_PAYLOAD = JSON.stringify({
+  action: "opened",
+  issue: { number: 0, state: "open", title: "Synthetic test" },
+  repository: { full_name: "__synthetic__/__synthetic__" },
+});
+
+const SYNTHETIC_ADO_PAYLOAD = JSON.stringify({
+  eventType: "workitem.updated",
+  resource: { id: 0, fields: { "System.State": "Synthetic" } },
+});
+
 function generateToken(): string {
   // 32 random bytes → 64 hex chars; "whk_" prefix per D-05.
   return `whk_${randomBytes(32).toString("hex")}`;
@@ -439,12 +464,22 @@ export interface SendTestWebhookResult {
  * auto-generated hooks / server actions over creating new API endpoints").
  *
  * The browser NEVER sees the secret. The server decrypts in memory, signs the
- * SYNTHETIC_PAYLOAD literal, posts to its own `/api/webhooks/{token}`, and
- * returns ONLY `{ ok, statusCode, outcome }` to the caller.
+ * adapter-appropriate synthetic payload, posts to its own
+ * `/api/webhooks/{token}`, and returns ONLY `{ ok, statusCode, outcome }` to
+ * the caller.
  *
- * BLOCKER #5: SYNTHETIC_PAYLOAD is byte-identical across clicks, so two
- * consecutive calls produce: first → outcome='synthetic'; second →
- * outcome='duplicate'. SC#5 demo lock.
+ * Plan 03-06 / D-19 — branches by `config.adapterType`:
+ *   - JIRA: HMAC-SHA256 over SYNTHETIC_PAYLOAD; `x-hub-signature-256` header.
+ *   - GITHUB: HMAC-SHA256 over SYNTHETIC_GITHUB_PAYLOAD; `x-hub-signature-256`
+ *     + `x-github-event: issues` headers.
+ *   - AZURE_DEVOPS: Basic Auth from JSON-decoded {username, password};
+ *     `authorization: Basic <base64>` header; SYNTHETIC_ADO_PAYLOAD body.
+ *
+ * SC#5 demo lock invariant: each adapter's synthetic payload is a module-level
+ * `const` (declared once, JSON.stringify'd once). Two consecutive calls
+ * produce byte-identical request bodies → byte-identical `payloadDigest` →
+ * second call deterministically returns `outcome='duplicate'` from the
+ * receiver's dedup INSERT.
  */
 export async function sendTestWebhook(
   configId: string
@@ -457,11 +492,21 @@ export async function sendTestWebhook(
   // CR-02: read via raw prisma (the schema's @@allow('read', ...) clause is
   // bypassed here, but we authorize through `canManageWebhookConfig` below
   // before exposing anything sensitive).
-  let config: { token: string; secret: string; projectId: number } | null;
+  let config: {
+    token: string;
+    secret: string;
+    projectId: number;
+    adapterType: AdapterType;
+  } | null;
   try {
     config = await prisma.webhookConfig.findUnique({
       where: { id: configId },
-      select: { token: true, secret: true, projectId: true },
+      select: {
+        token: true,
+        secret: true,
+        projectId: true,
+        adapterType: true,
+      },
     });
   } catch (err) {
     console.error("[webhook-config] findUnique failed (sendTest)", err);
@@ -501,22 +546,93 @@ export async function sendTestWebhook(
     };
   }
 
-  const sig =
-    "sha256=" +
-    createHmac("sha256", plainSecret).update(SYNTHETIC_PAYLOAD).digest("hex");
-
   const origin = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   const target = `${origin}/api/webhooks/${config.token}`;
 
-  try {
-    const upstream = await fetch(target, {
+  // Build adapter-specific request init (headers + body) before the
+  // network fetch. Each adapter's synthetic payload is a module-level const,
+  // so two clicks produce byte-identical bytes (SC#5 demo lock invariant).
+  let requestInit: RequestInit;
+  if (config.adapterType === "JIRA") {
+    const sig =
+      "sha256=" +
+      createHmac("sha256", plainSecret)
+        .update(SYNTHETIC_PAYLOAD)
+        .digest("hex");
+    requestInit = {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-hub-signature-256": sig,
       },
       body: SYNTHETIC_PAYLOAD,
-    });
+    };
+  } else if (config.adapterType === "GITHUB") {
+    const sig =
+      "sha256=" +
+      createHmac("sha256", plainSecret)
+        .update(SYNTHETIC_GITHUB_PAYLOAD)
+        .digest("hex");
+    requestInit = {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-hub-signature-256": sig,
+        "x-github-event": "issues",
+      },
+      body: SYNTHETIC_GITHUB_PAYLOAD,
+    };
+  } else if (config.adapterType === "AZURE_DEVOPS") {
+    // D-09: secret is JSON-encoded {username, password} for ADO. Decoded
+    // creds drive the Basic-Auth header on the synthetic request.
+    let creds: { username: string; password: string };
+    try {
+      const parsed = JSON.parse(plainSecret) as unknown;
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        typeof (parsed as { username?: unknown }).username !== "string" ||
+        typeof (parsed as { password?: unknown }).password !== "string"
+      ) {
+        throw new Error("ADO credential JSON missing username/password");
+      }
+      creds = parsed as { username: string; password: string };
+    } catch (err) {
+      console.error(
+        "[webhook-config] ADO credentials parse failed (sendTest)",
+        err
+      );
+      return {
+        ok: false,
+        statusCode: 0,
+        error: "Send-test failed: stored credentials are malformed",
+      };
+    }
+    const auth =
+      "Basic " +
+      Buffer.from(`${creds.username}:${creds.password}`, "utf8").toString(
+        "base64"
+      );
+    requestInit = {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: auth,
+      },
+      body: SYNTHETIC_ADO_PAYLOAD,
+    };
+  } else {
+    // SLACK / GENERIC_HMAC are OUTBOUND-only adapters; reaching this code
+    // path indicates a corrupted INBOUND row. Defensive guard.
+    return {
+      ok: false,
+      statusCode: 0,
+      error: "Send-test not supported for this adapter type",
+    };
+  }
+
+  try {
+    const upstream = await fetch(target, requestInit);
     const upstreamBody = (await upstream.json().catch(() => ({}))) as {
       outcome?: SendTestWebhookResult["outcome"];
     };
