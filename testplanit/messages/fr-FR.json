@@ -232,6 +232,7 @@
       "description_placeholder": "Ajouter une description...",
       "testCases": "Cas de test",
       "sessions": "Séances",
+      "sharedSteps": "Étapes partagées",
       "email": "E-mail",
       "password": "Mot de passe",
       "confirmPassword": "Confirmez le mot de passe",
