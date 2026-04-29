@@ -4344,6 +4344,10 @@ enum AuditAction {
     WEBHOOK_RECEIVED
     // v0.23.0 Phase 2 — outbound webhook dispatch
     WEBHOOK_DISPATCHED
+    // v0.23.0 Phase 4 — delivery tracking + admin UI
+    WEBHOOK_REPLAYED
+    WEBHOOK_HEALTH_CHANGED
+    WEBHOOK_RETENTION_PURGED
 }
 
 model AuditLog {
