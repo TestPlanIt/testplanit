@@ -12,6 +12,19 @@ vi.mock("../lib/webhooks/dispatch", () => ({
   dispatchWebhook: vi.fn(),
 }));
 
+// Plan 04-05 / Task 5.3 — health state machine seam invoked from BullMQ
+// worker hooks. The dispatcher does NOT increment the failure counter
+// (locked seam); the worker is responsible for calling health.transition()
+// on completed (success) and on terminal failure (per CONTEXT D-10).
+const mockHealthTransition = vi.fn().mockResolvedValue({
+  from: "HEALTHY",
+  to: "HEALTHY",
+  counter: 0,
+});
+vi.mock("../lib/webhooks/health", () => ({
+  transition: (...args: unknown[]) => mockHealthTransition(...args),
+}));
+
 // Phase 2 / Plan 02-06 — daily auto-retire helper invoked when the cron
 // schedules a job named "retire-expired-secrets" onto this worker's queue.
 const mockRetireExpiredSecrets = vi.fn();
@@ -34,12 +47,18 @@ import {
 } from "../lib/multiTenantPrisma";
 import { dispatchWebhook } from "../lib/webhooks/dispatch";
 
-import { processor } from "./webhookDispatchWorker";
+import {
+  handleCompleted,
+  handleFailed,
+  processor,
+} from "./webhookDispatchWorker";
 
-const mockedValidate =
-  validateMultiTenantJobData as unknown as ReturnType<typeof vi.fn>;
-const mockedGetPrisma =
-  getPrismaClientForJob as unknown as ReturnType<typeof vi.fn>;
+const mockedValidate = validateMultiTenantJobData as unknown as ReturnType<
+  typeof vi.fn
+>;
+const mockedGetPrisma = getPrismaClientForJob as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockedDispatch = dispatchWebhook as unknown as ReturnType<typeof vi.fn>;
 
 /**
@@ -47,7 +66,12 @@ const mockedDispatch = dispatchWebhook as unknown as ReturnType<typeof vi.fn>;
  */
 function buildJob(opts: {
   attemptsMade: number;
-  data: { outboxEventId: string; webhookConfigId: string; attempt: number; tenantId?: string | null };
+  data: {
+    outboxEventId: string;
+    webhookConfigId: string;
+    attempt: number;
+    tenantId?: string | null;
+  };
   id?: string;
 }) {
   return {
@@ -246,5 +270,96 @@ describe("webhookDispatchWorker.processor", () => {
     expect(mockedGetPrisma).toHaveBeenCalledWith({ tenantId: "tenant-A" });
     const [calledPrisma] = mockRetireExpiredSecrets.mock.calls[0];
     expect(calledPrisma).toEqual({ __mock: "prisma" });
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Plan 04-05 / Task 5.3 — BullMQ worker hook → health.transition() seam
+//
+// The dispatcher writes per-attempt timestamps + DISABLED gate stub rows but
+// does NOT touch the failure counter. The worker hook is the event-level
+// seam: on('completed') always calls transition(success); on('failed') calls
+// transition(failure) ONLY when BullMQ has exhausted all retries (terminal
+// failure: job.attemptsMade + 1 >= job.opts.attempts). Per CONTEXT D-10 the
+// 10-distinct-event auto-disable threshold (DEL-06) only fires on terminal
+// failure — transient retries don't tick the counter.
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("webhookDispatchWorker — health hooks (Plan 04-05 / Task 5.3)", () => {
+  beforeEach(() => {
+    mockHealthTransition.mockClear();
+  });
+
+  it("H1. on('failed') terminal — attemptsMade=6 + maxAttempts=7 → calls health.transition(configId, 'failure')", async () => {
+    const job = {
+      id: "job-fail-terminal",
+      attemptsMade: 6, // 7th attempt just finished (1-indexed: this was the 7th)
+      data: {
+        outboxEventId: "ev1",
+        webhookConfigId: "cfg-terminal",
+        attempt: 7,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleFailed(job, new Error("upstream 500"));
+
+    expect(mockHealthTransition).toHaveBeenCalledTimes(1);
+    expect(mockHealthTransition).toHaveBeenCalledWith(
+      "cfg-terminal",
+      "failure"
+    );
+  });
+
+  it("H2. on('failed') non-terminal — attemptsMade=3 + maxAttempts=7 → does NOT call health.transition (retry pending; CONTEXT D-10 event-level only)", async () => {
+    const job = {
+      id: "job-fail-retry",
+      attemptsMade: 3,
+      data: {
+        outboxEventId: "ev1",
+        webhookConfigId: "cfg-retry",
+        attempt: 4,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleFailed(job, new Error("transient 503"));
+
+    expect(mockHealthTransition).not.toHaveBeenCalled();
+  });
+
+  it("H3. on('completed') — calls health.transition(configId, 'success')", async () => {
+    const job = {
+      id: "job-completed",
+      attemptsMade: 0,
+      data: {
+        outboxEventId: "ev1",
+        webhookConfigId: "cfg-success",
+        attempt: 1,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleCompleted(job);
+
+    expect(mockHealthTransition).toHaveBeenCalledTimes(1);
+    expect(mockHealthTransition).toHaveBeenCalledWith("cfg-success", "success");
+  });
+
+  it("H4. on('failed') terminal but webhookConfigId missing — defensive skip; no transition call", async () => {
+    const job = {
+      id: "job-missing-config",
+      attemptsMade: 6,
+      data: {
+        // webhookConfigId deliberately absent — defensive guard
+        outboxEventId: "ev1",
+        attempt: 7,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleFailed(job, new Error("terminal but malformed jobData"));
+
+    expect(mockHealthTransition).not.toHaveBeenCalled();
   });
 });
