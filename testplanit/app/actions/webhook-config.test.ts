@@ -623,6 +623,7 @@ describe("webhook-config server actions", () => {
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
         projectId: 42,
+        adapterType: "JIRA",
       });
       fetchSpy.mockResolvedValue({
         ok: true,
@@ -660,6 +661,7 @@ describe("webhook-config server actions", () => {
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
         projectId: 42,
+        adapterType: "JIRA",
       });
 
       fetchSpy
@@ -705,6 +707,7 @@ describe("webhook-config server actions", () => {
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
         projectId: 42,
+        adapterType: "JIRA",
       });
       fetchSpy.mockResolvedValue({
         ok: true,
@@ -731,6 +734,7 @@ describe("webhook-config server actions", () => {
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
         projectId: 42,
+        adapterType: "JIRA",
       });
       fetchSpy.mockRejectedValue(new Error("ECONNREFUSED"));
 
@@ -739,6 +743,226 @@ describe("webhook-config server actions", () => {
       expect(result.ok).toBe(false);
       expect(result.statusCode).toBe(0);
       expect(result.error).toContain("ECONNREFUSED");
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Phase 3 / Plan 03-06 / Task 6.2 — adapter-aware sendTestWebhook
+    // (GitHub HMAC + ADO Basic Auth) with module-level synthetic payloads.
+    // ─────────────────────────────────────────────────────────────────────
+
+    // The module-level constants from webhook-config.ts (copies here for
+    // byte-identity assertion). If the source ever drifts, these tests fail
+    // BEFORE the SC#5 demo runs — same guard as Phase 1's EXPECTED_SYNTHETIC_PAYLOAD.
+    const EXPECTED_GITHUB_PAYLOAD = JSON.stringify({
+      action: "opened",
+      issue: { number: 0, state: "open", title: "Synthetic test" },
+      repository: { full_name: "__synthetic__/__synthetic__" },
+    });
+    const EXPECTED_ADO_PAYLOAD = JSON.stringify({
+      eventType: "workitem.updated",
+      resource: { id: 0, fields: { "System.State": "Synthetic" } },
+    });
+
+    it("Test 11 (GITHUB): posts X-Hub-Signature-256 + X-GitHub-Event: issues with synthetic GithubIssuesPayload", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "GITHUB",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      const result = await sendTestWebhook("cfg-gh");
+
+      expect(result).toEqual({
+        ok: true,
+        statusCode: 200,
+        outcome: "synthetic",
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchSpy.mock.calls[0];
+      expect(url).toBe(
+        `https://app.example.test/api/webhooks/${FIXTURE_TOKEN}`
+      );
+
+      // Body bytes EQUAL the literal GitHub synthetic payload.
+      expect(init.body).toBe(EXPECTED_GITHUB_PAYLOAD);
+
+      const expectedSig =
+        "sha256=" +
+        createHmac("sha256", FIXTURE_SECRET_PLAIN)
+          .update(EXPECTED_GITHUB_PAYLOAD)
+          .digest("hex");
+
+      expect(init.method).toBe("POST");
+      expect(init.headers).toMatchObject({
+        "content-type": "application/json",
+        "x-hub-signature-256": expectedSig,
+        "x-github-event": "issues",
+      });
+
+      // HI-02 sentinel binding: __synthetic__/__synthetic__ + issue.number === 0
+      const parsed = JSON.parse(init.body);
+      expect(parsed.repository.full_name).toBe("__synthetic__/__synthetic__");
+      expect(parsed.issue.number).toBe(0);
+    });
+
+    it("Test 12 (GITHUB SC#5 dedup invariant): two consecutive calls produce BYTE-IDENTICAL bodies", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "GITHUB",
+      });
+      fetchSpy
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ outcome: "synthetic" }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ outcome: "duplicate" }),
+        });
+
+      const r1 = await sendTestWebhook("cfg-gh");
+      const r2 = await sendTestWebhook("cfg-gh");
+
+      expect(r1.outcome).toBe("synthetic");
+      expect(r2.outcome).toBe("duplicate");
+
+      const body1 = fetchSpy.mock.calls[0][1].body as string;
+      const body2 = fetchSpy.mock.calls[1][1].body as string;
+      // SC#5 invariant: byte-identity → identical payloadDigest → dedup hits
+      // duplicate path on the second call. Module-level const guarantees this.
+      expect(body1).toBe(body2);
+      expect(body1).toBe(EXPECTED_GITHUB_PAYLOAD);
+
+      // Signature is identical too (HMAC over identical bytes + secret).
+      const sig1 = (
+        fetchSpy.mock.calls[0][1].headers as Record<string, string>
+      )["x-hub-signature-256"];
+      const sig2 = (
+        fetchSpy.mock.calls[1][1].headers as Record<string, string>
+      )["x-hub-signature-256"];
+      expect(sig1).toBe(sig2);
+    });
+
+    it("Test 13 (AZURE_DEVOPS): posts Authorization: Basic <base64> with synthetic workitem.updated payload", async () => {
+      // ADO secret is JSON-encoded {username, password} per D-09.
+      const adoCreds = JSON.stringify({ username: "tpi", password: "s3cret" });
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: `enc:${adoCreds}`,
+        projectId: 42,
+        adapterType: "AZURE_DEVOPS",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      const result = await sendTestWebhook("cfg-ado");
+
+      expect(result).toEqual({
+        ok: true,
+        statusCode: 200,
+        outcome: "synthetic",
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchSpy.mock.calls[0];
+      expect(url).toBe(
+        `https://app.example.test/api/webhooks/${FIXTURE_TOKEN}`
+      );
+
+      // Body bytes EQUAL the literal ADO synthetic payload.
+      expect(init.body).toBe(EXPECTED_ADO_PAYLOAD);
+
+      // base64("tpi:s3cret") === "dHBpOnMzY3JldA=="
+      expect(init.method).toBe("POST");
+      expect(init.headers).toMatchObject({
+        "content-type": "application/json",
+        authorization: "Basic dHBpOnMzY3JldA==",
+      });
+
+      // HI-02 sentinel binding: resource.id === 0 (real ADO IDs are ≥ 1)
+      const parsed = JSON.parse(init.body);
+      expect(parsed.resource.id).toBe(0);
+      expect(parsed.eventType).toBe("workitem.updated");
+    });
+
+    it("Test 14 (AZURE_DEVOPS malformed secret): returns friendly error when stored credentials are not valid JSON", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: "enc:not-json{[",
+        projectId: 42,
+        adapterType: "AZURE_DEVOPS",
+      });
+
+      const result = await sendTestWebhook("cfg-ado-bad");
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe(
+        "Send-test failed: stored credentials are malformed"
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("Test 15 (AZURE_DEVOPS SC#5 dedup invariant): two consecutive calls produce BYTE-IDENTICAL bodies", async () => {
+      const adoCreds = JSON.stringify({ username: "tpi", password: "s3cret" });
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: `enc:${adoCreds}`,
+        projectId: 42,
+        adapterType: "AZURE_DEVOPS",
+      });
+      fetchSpy
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ outcome: "synthetic" }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ outcome: "duplicate" }),
+        });
+
+      const r1 = await sendTestWebhook("cfg-ado");
+      const r2 = await sendTestWebhook("cfg-ado");
+
+      expect(r1.outcome).toBe("synthetic");
+      expect(r2.outcome).toBe("duplicate");
+
+      const body1 = fetchSpy.mock.calls[0][1].body as string;
+      const body2 = fetchSpy.mock.calls[1][1].body as string;
+      expect(body1).toBe(body2);
+      expect(body1).toBe(EXPECTED_ADO_PAYLOAD);
+    });
+
+    it("Test 16 (unknown adapterType): returns friendly error and does NOT POST", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        // SLACK / GENERIC_HMAC are OUTBOUND-only adapters; reaching this
+        // code path indicates a corrupted INBOUND row (defensive guard).
+        adapterType: "SLACK",
+      });
+
+      const result = await sendTestWebhook("cfg-bad");
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe("Send-test not supported for this adapter type");
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
 
