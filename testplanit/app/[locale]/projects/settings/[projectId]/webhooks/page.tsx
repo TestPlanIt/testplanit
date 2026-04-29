@@ -17,6 +17,7 @@ import { usePathname, useRouter } from "~/lib/navigation";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useFindFirstProjects } from "~/lib/hooks";
 import { WebhookConfigForm } from "./webhook-config-form";
+import { WebhookDeliveriesTab } from "./webhook-deliveries-tab";
 import { WebhookOutboundForm } from "./webhook-outbound-form";
 
 /**
@@ -57,7 +58,12 @@ export default function ProjectWebhooksPage() {
   const router = useRouter();
   const pathname = usePathname();
   const tabFromUrl = searchParams?.get("tab");
-  const activeTab = tabFromUrl === "outbound" ? "outbound" : "inbound";
+  const activeTab =
+    tabFromUrl === "outbound"
+      ? "outbound"
+      : tabFromUrl === "deliveries"
+        ? "deliveries"
+        : "inbound";
   const handleTabChange = (value: string) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", value);
@@ -136,16 +142,23 @@ export default function ProjectWebhooksPage() {
               <TabsTrigger
                 value="inbound"
                 data-testid="webhooks-tab-inbound"
-                className="w-1/2"
+                className="w-1/3"
               >
                 {t("inboundTab")}
               </TabsTrigger>
               <TabsTrigger
                 value="outbound"
                 data-testid="webhooks-tab-outbound"
-                className="w-1/2"
+                className="w-1/3"
               >
                 {t("outboundTab")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="deliveries"
+                data-testid="webhooks-tab-deliveries"
+                className="w-1/3"
+              >
+                {t("deliveriesTab")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="inbound">
@@ -153,6 +166,9 @@ export default function ProjectWebhooksPage() {
             </TabsContent>
             <TabsContent value="outbound">
               <WebhookOutboundForm projectId={projectId} />
+            </TabsContent>
+            <TabsContent value="deliveries">
+              <WebhookDeliveriesTab projectId={projectId} />
             </TabsContent>
           </Tabs>
         </CardContent>
