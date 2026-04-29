@@ -1,5 +1,7 @@
 import type { AdapterType } from "@prisma/client";
+import { azureDevopsAdapter } from "./azure-devops";
 import { genericHmacAdapter } from "./generic-hmac";
+import { githubAdapter } from "./github";
 import { jiraAdapter } from "./jira";
 import { slackAdapter } from "./slack";
 import type { OutboundWebhookAdapter, WebhookAdapter } from "./types";
@@ -7,7 +9,7 @@ import type { OutboundWebhookAdapter, WebhookAdapter } from "./types";
 /**
  * Registry of INBOUND webhook adapters keyed by AdapterType.
  *
- * Phase 1 ships JIRA only; GITHUB and AZURE_DEVOPS slot in during Phase 3.
+ * Phase 3 P-05 fills in GITHUB + AZURE_DEVOPS (Phase 1 shipped JIRA only).
  *
  * Phase 2 added SLACK and GENERIC_HMAC values to the AdapterType enum but
  * they are OUTBOUND-only — outbound dispatch lives in
@@ -24,25 +26,19 @@ import type { OutboundWebhookAdapter, WebhookAdapter } from "./types";
  */
 export const ADAPTER_REGISTRY: Record<AdapterType, WebhookAdapter | null> = {
   JIRA: jiraAdapter,
-  GITHUB: null,
-  AZURE_DEVOPS: null,
+  GITHUB: githubAdapter,
+  AZURE_DEVOPS: azureDevopsAdapter,
   SLACK: null,
   GENERIC_HMAC: null,
 };
 
 /**
- * Look up the inbound adapter for a given AdapterType. Throws if unknown,
- * not yet implemented, or outbound-only — the receiver catches and returns
- * 501/500.
+ * Look up the inbound adapter for a given AdapterType. Throws if unknown
+ * or outbound-only — the receiver catches and returns 501/500.
  */
 export function getAdapter(adapterType: AdapterType): WebhookAdapter {
   const adapter = ADAPTER_REGISTRY[adapterType];
   if (!adapter) {
-    if (adapterType === "GITHUB" || adapterType === "AZURE_DEVOPS") {
-      throw new Error(
-        `Adapter not implemented for adapterType=${adapterType} (deferred to Phase 3)`
-      );
-    }
     if (adapterType === "SLACK" || adapterType === "GENERIC_HMAC") {
       throw new Error(
         `Adapter ${adapterType} is OUTBOUND-only — call getOutboundAdapter() instead`
