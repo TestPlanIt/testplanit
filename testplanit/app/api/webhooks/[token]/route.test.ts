@@ -6,18 +6,20 @@ import type { VerifyResult } from "~/lib/webhooks/adapters/types";
  * Hoisted mocks for the receiver route's collaborators.
  *
  * Mirrors the project-standard pattern (`vi.hoisted`) used in
- * `lib/services/auditLog.test.ts` and `lib/webhooks/services/applyJiraIssueUpdate.test.ts`.
+ * `lib/services/auditLog.test.ts` and `lib/webhooks/services/applyInboundIssueUpdate.test.ts`.
  *
  * Each test mutates the per-call return values:
  *   - prisma.webhookConfig.findUnique → controls 404 vs valid-config
  *   - getAdapter().verify              → controls 401 vs success
- *   - applyJiraIssueUpdate              → controls 200 outcome / 500 error
+ *   - applyInboundIssueUpdate          → controls 200 outcome / 500 error
  *   - decrypt                           → returns the plaintext secret
  */
 const mocks = vi.hoisted(() => {
   const adapter = {
     adapterType: "JIRA" as const,
     verify: vi.fn(),
+    extractLinkedIssueRef: vi.fn(),
+    extractExternalStatus: vi.fn(),
   };
   return {
     prisma: {
@@ -27,7 +29,7 @@ const mocks = vi.hoisted(() => {
     },
     getAdapter: vi.fn(() => adapter),
     adapter,
-    applyJiraIssueUpdate: vi.fn(),
+    applyInboundIssueUpdate: vi.fn(),
     decrypt: vi.fn(async (input: string) => input.replace(/^enc:/, "")),
   };
 });
@@ -40,8 +42,8 @@ vi.mock("~/lib/webhooks/adapters", () => ({
   getAdapter: mocks.getAdapter,
 }));
 
-vi.mock("~/lib/webhooks/services/applyJiraIssueUpdate", () => ({
-  applyJiraIssueUpdate: mocks.applyJiraIssueUpdate,
+vi.mock("~/lib/webhooks/services/applyInboundIssueUpdate", () => ({
+  applyInboundIssueUpdate: mocks.applyInboundIssueUpdate,
 }));
 
 vi.mock("~/utils/encryption", () => ({
@@ -102,7 +104,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ ok: false });
     expect(mocks.adapter.verify).not.toHaveBeenCalled();
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 2 — returns 404 (same body) when the config exists but is inactive", async () => {
@@ -117,7 +119,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ ok: false });
     expect(mocks.adapter.verify).not.toHaveBeenCalled();
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 3 — returns 401 with no DB writes on missing-signature (WBHK-02)", async () => {
@@ -132,7 +134,7 @@ describe("POST /api/webhooks/[token]", () => {
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ ok: false });
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 4 — returns 401 on signature-mismatch", async () => {
@@ -147,7 +149,7 @@ describe("POST /api/webhooks/[token]", () => {
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ ok: false });
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 5 — returns 401 on malformed-signature", async () => {
@@ -162,7 +164,7 @@ describe("POST /api/webhooks/[token]", () => {
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ ok: false });
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 5b (HI-03) — returns 400 on unparseable-body (client bug, not auth)", async () => {
@@ -179,7 +181,7 @@ describe("POST /api/webhooks/[token]", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ ok: false });
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 5c (HI-03) — returns 200 on missing-required-field (HMAC valid, event non-actionable)", async () => {
@@ -197,7 +199,7 @@ describe("POST /api/webhooks/[token]", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: false });
-    expect(mocks.applyJiraIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
   it("Test 6 — happy path: verifies, computes payloadDigest, returns 200 (WBHK-01/04/07)", async () => {
@@ -206,7 +208,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "updated",
       deliveryId: "del-1",
       issueId: 7,
@@ -219,14 +221,23 @@ describe("POST /api/webhooks/[token]", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, outcome: "updated" });
 
-    expect(mocks.applyJiraIssueUpdate).toHaveBeenCalledTimes(1);
-    const call = mocks.applyJiraIssueUpdate.mock.calls[0]?.[0];
+    expect(mocks.applyInboundIssueUpdate).toHaveBeenCalledTimes(1);
+    const call = mocks.applyInboundIssueUpdate.mock.calls[0]?.[0];
+    // P-05 service-call-shape change: receiver passes adapterType (from
+    // verified WebhookConfig — T-03-22 mitigation, NOT body-controlled) +
+    // eventType (from verify.payload) so the service can call extractors
+    // itself per RESEARCH.md Q2 RESOLVED. Receiver MUST NOT pass linkedRef
+    // or externalStatus — extractor delegation lives in the service.
     expect(call).toMatchObject({
       webhookConfigId: "cfg-id-1",
       projectId: 42,
+      adapterType: "JIRA",
+      eventType: "jira:issue_updated",
       payload: VALID_PAYLOAD,
       statusCode: 200,
     });
+    expect(call.linkedRef).toBeUndefined();
+    expect(call.externalStatus).toBeUndefined();
     // sha256("...") of the same body must be deterministic
     const { createHash } = await import("node:crypto");
     expect(call.payloadDigest).toBe(
@@ -241,7 +252,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "no-link",
       deliveryId: "del-2",
       reason: "no-link",
@@ -260,7 +271,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "duplicate",
       deliveryId: "del-3",
       reason: "duplicate",
@@ -279,7 +290,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: { ...VALID_PAYLOAD, synthetic: true },
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "synthetic",
       deliveryId: "del-4",
       reason: "synthetic",
@@ -292,13 +303,32 @@ describe("POST /api/webhooks/[token]", () => {
     expect(await res.json()).toEqual({ ok: true, outcome: "synthetic" });
   });
 
+  it("Test 9b — no_handler outcome returns 200 (D-15 / Phase 3 P-05 — eventType not handled by adapter)", async () => {
+    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload: VALID_PAYLOAD,
+    } satisfies VerifyResult);
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
+      outcome: "no_handler",
+      deliveryId: "del-5",
+      reason: "no_handler",
+    });
+    const { req, params } = makeRequest("{}", FULL_TOKEN);
+
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, outcome: "no_handler" });
+  });
+
   it("Test 10 — service error returns 500 with no leak in body", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "error",
       reason: "kaboom",
     });
@@ -316,7 +346,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "updated",
       deliveryId: "del-1",
       issueId: 7,
@@ -365,7 +395,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "updated",
       deliveryId: "del-1",
       issueId: 7,
@@ -374,7 +404,7 @@ describe("POST /api/webhooks/[token]", () => {
 
     await POST(req, { params });
 
-    const call = mocks.applyJiraIssueUpdate.mock.calls[0]?.[0];
+    const call = mocks.applyInboundIssueUpdate.mock.calls[0]?.[0];
     expect(call.latencyMs).toBeGreaterThanOrEqual(0);
     expect(call.latencyMs).toBeLessThan(5000);
   });
@@ -389,7 +419,7 @@ describe("POST /api/webhooks/[token]", () => {
       valid: true,
       payload: VALID_PAYLOAD,
     } satisfies VerifyResult);
-    mocks.applyJiraIssueUpdate.mockResolvedValueOnce({
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
       outcome: "updated",
       deliveryId: "del-1",
       issueId: 7,
@@ -420,5 +450,77 @@ describe("POST /api/webhooks/[token]", () => {
     expect(r404.status).toBe(404);
     expect(r401.status).toBe(401);
     expect(await r404.json()).toEqual(await r401.json());
+  });
+});
+
+/**
+ * Phase 3 P-05 / D-12 / WBHK-11 — body cap raised from 1 MiB to 5 MB.
+ *
+ * Two enforcement points in the receiver: a Content-Length pre-check (fast,
+ * before any buffering) and a post-buffer Buffer.byteLength check (catches
+ * missing or chunked-transfer-encoded payloads where Content-Length lies).
+ * Both fire at the same constant. T-03-04 / T-03-21 mitigations.
+ *
+ * The over-cap test verifies the route rejects bodies > 5_242_880 bytes with
+ * HTTP 413 and the service is never invoked. The at-cap test verifies the
+ * boundary is INCLUSIVE — a body of EXACTLY 5_242_880 bytes flows through
+ * the body-cap gates and reaches verify() (mocked here so the test is
+ * isolated from real signature math).
+ */
+describe("MAX_WEBHOOK_BYTES (Phase 3 P-05 / D-12 / WBHK-11 — 5 MB cap)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.decrypt.mockImplementation(async (input: string) =>
+      input.replace(/^enc:/, "")
+    );
+    mocks.getAdapter.mockReturnValue(mocks.adapter);
+  });
+
+  it("rejects bodies > 5_242_880 with HTTP 413 (over-cap branch); service is NOT called", async () => {
+    // Construct a body one byte over the cap. The Content-Length pre-check
+    // catches this BEFORE any DB or adapter work fires.
+    const oversize = "x".repeat(5_242_881);
+    const { req, params } = makeRequest(oversize, FULL_TOKEN);
+
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ ok: false });
+
+    // Body cap fires BEFORE DB lookup, adapter verify, and service dispatch.
+    expect(mocks.prisma.webhookConfig.findUnique).not.toHaveBeenCalled();
+    expect(mocks.adapter.verify).not.toHaveBeenCalled();
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
+  });
+
+  it("at-cap (== 5_242_880 bytes) flows through body-cap gates to verify (does NOT 413)", async () => {
+    // Wire downstream mocks so the at-cap request can flow past verify into
+    // the service without doing real signature math. The test asserts the
+    // body-cap gate is INCLUSIVE at the 5_242_880 boundary — exactly cap is
+    // accepted; cap+1 is rejected (covered by the over-cap test above).
+    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload: VALID_PAYLOAD,
+    } satisfies VerifyResult);
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
+      outcome: "updated",
+      deliveryId: "del-at-cap",
+      issueId: 7,
+    });
+
+    const atCap = "x".repeat(5_242_880);
+    const { req, params } = makeRequest(atCap, FULL_TOKEN);
+
+    const res = await POST(req, { params });
+
+    // Must NOT 413 at the boundary.
+    expect(res.status).not.toBe(413);
+    // verify() must have been reached (proves body-cap did not short-circuit).
+    expect(mocks.adapter.verify).toHaveBeenCalledTimes(1);
+    // 5 MB body actually flowed into verify.
+    const [rawBuf] = mocks.adapter.verify.mock.calls[0]!;
+    expect(Buffer.isBuffer(rawBuf)).toBe(true);
+    expect((rawBuf as Buffer).byteLength).toBe(5_242_880);
   });
 });
