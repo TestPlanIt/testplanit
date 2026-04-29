@@ -1,3 +1,9 @@
+## [0.22.21](https://github.com/TestPlanIt/testplanit/compare/v0.22.20...v0.22.21) (2026-04-29)
+
+### Enhancements
+
+* **llms:** Enhance/generate context from issue linked ([#257](https://github.com/TestPlanIt/testplanit/issues/257)) ([c3e796a](https://github.com/TestPlanIt/testplanit/commit/c3e796ac799496b5440b39e23ac4d3fbbebb7857)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1) [owner/repo#number](https://github.com/owner/repo/issues/number) [#42](https://github.com/TestPlanIt/testplanit/issues/42) [acme/foo/bar#42](https://github.com/acme/foo/bar/issues/42) [owner/repo#number](https://github.com/owner/repo/issues/number)
+
 ## [0.22.20](https://github.com/TestPlanIt/testplanit/compare/v0.22.19...v0.22.20) (2026-04-28)
 
 ### Bug Fixes
