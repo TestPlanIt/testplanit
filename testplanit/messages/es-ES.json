@@ -1135,7 +1135,7 @@
       },
       "webhooks": {
         "title": "Webhook entrante de Jira",
-        "description": "Reciba actualizaciones de incidencias en tiempo real desde Jira y aplíquelas a las incidencias vinculadas de TestPlanIt. En una futura versión se añadirán webhooks salientes (Slack, URL personalizadas) y adaptadores entrantes adicionales.",
+        "description": "Configure webhooks entrantes para Jira, GitHub y Azure DevOps para mantener sincronizados los problemas vinculados.",
         "noConfig": "No se ha configurado ningún webhook.",
         "createButton": "Configurar el webhook de Jira",
         "url": "URL del webhook",
@@ -1218,7 +1218,28 @@
         "outboundDeleteError": "No se pudo eliminar el webhook.",
         "outboundSecretCopy": "Copia secreta",
         "outboundSecretShownOnce": "Guarda este secreto ahora; no se podrá revelar de nuevo.",
-        "outboundSecretDone": "Hecho"
+        "outboundSecretDone": "Hecho",
+        "inboundAddButton": "Agregar webhook entrante",
+        "inboundChooserTitle": "Seleccione el adaptador",
+        "inboundChooserDescription": "Seleccione el sistema de seguimiento de incidencias que enviará webhooks a TestPlanIt. Cada proyecto puede tener un webhook entrante de Jira, uno de GitHub y uno de Azure DevOps.",
+        "inboundChooserJira": "Jira",
+        "inboundChooserGithub": "GitHub",
+        "inboundChooserAdo": "Azure DevOps",
+        "inboundChooserAlreadyConfigured": "Ya configurado",
+        "inboundChooserSubmit": "Continuar",
+        "inboundChooserCancel": "Cancelar",
+        "inboundEmpty": "No hay webhooks entrantes configurados. Añada uno para recibir actualizaciones de incidencias de Jira, GitHub o Azure DevOps.",
+        "inboundJiraTitle": "Webhook entrante de Jira",
+        "inboundGithubTitle": "Webhook entrante de GitHub",
+        "inboundGithubScopeHint": "La fase 3 solo admite eventos de tipo `issues`. Los eventos de solicitud de extracción y comentarios de incidencias se aceptan sin ninguna acción (HTTP 200) y podrían habilitarse en una versión futura.",
+        "inboundAdoTitle": "Webhook entrante de Azure DevOps",
+        "inboundAdoScopeHint": "La fase 3 solo admite eventos `workitem.updated`. Los eventos de compilación y lanzamiento se aceptan sin realizar ninguna acción.",
+        "inboundAdoUsername": "Nombre de usuario",
+        "inboundAdoPassword": "Contraseña",
+        "inboundAdoUsernamePlaceholder": "cuenta de servicio",
+        "inboundAdoUsernameHelp": "Configurado en el lado del enlace de servicio de Azure DevOps. TestPlanIt lo verifica mediante autenticación básica HTTP.",
+        "inboundAdoPasswordHelp": "Almacenado cifrado en reposo. Guarde también este valor en el lado del gancho del servicio de Azure DevOps.",
+        "inboundAdoResourceDetailsHint": "Al configurar el enlace de servicio de Azure DevOps, establezca 'Detalles del recurso a enviar' = 'Todos' para que System.State se incluya en la carga útil."
       },
       "aiModels": {
         "description": "Configurar modelos IA para generar y analizar casos de prueba inteligentes",
@@ -2474,7 +2495,7 @@
       "success": {
         "title": "Prueba de ejecución añadida correctamente",
         "description": "La ejecución de la prueba ha sido añadida al proyecto",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for '{name}'"
+        "descriptionMultiple": "{count, plural, one {# la ejecución de prueba tiene} other {# las ejecuciones de prueba tienen}} se ha creado para '{name}'"
       },
       "estimates": {
         "manual": "Tiempo manual estimado",
