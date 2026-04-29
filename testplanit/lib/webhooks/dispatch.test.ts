@@ -8,13 +8,17 @@ vi.mock("~/lib/services/auditLog", () => ({
 }));
 
 vi.mock("~/utils/encryption", () => ({
-  decrypt: vi.fn().mockImplementation(async (cipher: string) => `decrypted:${cipher}`),
+  decrypt: vi
+    .fn()
+    .mockImplementation(async (cipher: string) => `decrypted:${cipher}`),
 }));
 
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { decrypt } from "~/utils/encryption";
 
-const mockedCaptureAudit = captureAuditEvent as unknown as ReturnType<typeof vi.fn>;
+const mockedCaptureAudit = captureAuditEvent as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockedDecrypt = decrypt as unknown as ReturnType<typeof vi.fn>;
 
 /**
@@ -257,7 +261,9 @@ describe("dispatchWebhook", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
-    expect(headers["X-TestPlanIt-Signature"]).toMatch(/^t=\d{10},v1=[0-9a-f]{64}$/);
+    expect(headers["X-TestPlanIt-Signature"]).toMatch(
+      /^t=\d{10},v1=[0-9a-f]{64}$/
+    );
     // Decrypt called once for the active secret.
     expect(mockedDecrypt).toHaveBeenCalledTimes(1);
     expect(mockedDecrypt).toHaveBeenCalledWith("ciphered-active");
@@ -429,15 +435,18 @@ describe("dispatchWebhook", () => {
     globalThis.fetch = fetchSpy as any;
     const prismaMock = buildPrismaMock({
       outboxEvent: baseOutboxEvent,
-      config: baseConfig({ adapterType: "GENERIC_HMAC", secrets: [
-        {
-          id: "s-1",
-          secret: "ciphered-active",
-          activatedAt: new Date(),
-          retiredAt: null,
-          autoRetireAt: null,
-        },
-      ] }),
+      config: baseConfig({
+        adapterType: "GENERIC_HMAC",
+        secrets: [
+          {
+            id: "s-1",
+            secret: "ciphered-active",
+            activatedAt: new Date(),
+            retiredAt: null,
+            autoRetireAt: null,
+          },
+        ],
+      }),
     });
 
     await dispatchWebhook(baseJobData, prismaMock);
@@ -766,4 +775,3 @@ describe("dispatchWebhook — replay + eventId threading (Plan 04-05 / ADMIN-02 
     expect(createCall.data.eventId).toBe("evt_500");
   });
 });
-

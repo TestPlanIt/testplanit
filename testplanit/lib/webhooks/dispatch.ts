@@ -51,6 +51,11 @@ export interface DispatchJobData {
   // withTenantContext shape (lib/tenantContext.ts) — both expect
   // `tenantId?: string`. Single-tenant deployments simply omit this.
   tenantId?: string;
+  // Plan 04-05 / ADMIN-02 — when this dispatch is a replay of an older
+  // WebhookDelivery row, the replay service (lib/webhooks/replay.ts) sets
+  // this to the original delivery's id. Threaded onto the new
+  // WebhookDelivery row so admins can chain replay history in the UI.
+  replayedFromDeliveryId?: string | null;
 }
 
 export type DispatchOutcome =
@@ -101,6 +106,52 @@ export async function dispatchWebhook(
     // inactive rather than crash.
     return { outcome: "skipped_inactive" };
   }
+  // Plan 04-05 / DEL-05 — DISABLED gate. When the health state machine has
+  // auto-disabled the endpoint (DEL-06: 10 consecutive event-level
+  // failures) we MUST NOT fire the HTTP request, but we still write a
+  // delivery row with error="endpoint_disabled" + emit a WEBHOOK_DISPATCHED
+  // failure audit so the admin's Deliveries tab surfaces the rejection
+  // (D-16: rejection reasons inline on the new row, no parallel error
+  // model). Replay-against-disabled paths land here too — jobData.
+  // replayedFromDeliveryId still threads onto the stub row so the chain is
+  // visible (Test R3).
+  if (config.endpointHealth === "DISABLED") {
+    const stubDigest = createHash("sha256")
+      .update(JSON.stringify(outboxEvent.payload))
+      .digest("hex");
+    const delivery = await prisma.webhookDelivery.create({
+      data: {
+        webhookConfigId: config.id,
+        direction: "OUTBOUND",
+        adapterType: config.adapterType,
+        eventType: outboxEvent.eventName,
+        eventId: outboxEvent.eventId,
+        statusCode: null,
+        latencyMs: 0,
+        payloadDigest: stubDigest,
+        error: "endpoint_disabled",
+        attempt: jobData.attempt,
+        replayedFromDeliveryId: jobData.replayedFromDeliveryId ?? null,
+      },
+    });
+    await emitAudit({
+      deliveryId: delivery.id,
+      projectId: config.projectId,
+      configId: config.id,
+      eventId: outboxEvent.eventId,
+      eventName: outboxEvent.eventName,
+      attempt: jobData.attempt,
+      statusCode: null,
+      outcome: "failure",
+      error: "endpoint_disabled",
+    });
+    return {
+      outcome: "failure",
+      statusCode: null,
+      error: "endpoint_disabled",
+      deliveryId: delivery.id,
+    };
+  }
   // Subscription gate (Blocker 6 — webhook.test bypasses the gate so admin
   // diagnostics always reach the destination regardless of subscription state).
   if (
@@ -123,7 +174,9 @@ export async function dispatchWebhook(
   };
 
   // 3. Pick adapter, format body.
-  const adapter: OutboundWebhookAdapter = getOutboundAdapter(config.adapterType);
+  const adapter: OutboundWebhookAdapter = getOutboundAdapter(
+    config.adapterType
+  );
   const formatted = adapter.format(envelope);
   const body = formatted.body;
   const payloadDigest = createHash("sha256").update(body).digest("hex");
@@ -145,11 +198,13 @@ export async function dispatchWebhook(
           direction: "OUTBOUND",
           adapterType: config.adapterType,
           eventType: outboxEvent.eventName,
+          eventId: outboxEvent.eventId,
           statusCode: null,
           latencyMs: 0,
           payloadDigest,
           error: "NO_ACTIVE_SECRET",
           attempt: jobData.attempt,
+          replayedFromDeliveryId: jobData.replayedFromDeliveryId ?? null,
         },
       });
       await emitAudit({
@@ -203,22 +258,51 @@ export async function dispatchWebhook(
   }
   const latencyMs = Date.now() - startedAt;
 
-  // 6. Write delivery row.
+  // 6. Write delivery row. Plan 04-05 / DEL-01 — eventId is stamped on
+  // every outbound delivery row so admins can group by event in the
+  // Deliveries tab and Plan 04-03's outbound replay path can find the
+  // source outbox row by `delivery.eventId`. Plan 04-05 / ADMIN-02 —
+  // replayedFromDeliveryId threads from BullMQ job data when this dispatch
+  // is itself a replay (lib/webhooks/replay.ts enqueues the field).
   const delivery = await prisma.webhookDelivery.create({
     data: {
       webhookConfigId: config.id,
       direction: "OUTBOUND",
       adapterType: config.adapterType,
       eventType: outboxEvent.eventName,
+      eventId: outboxEvent.eventId,
       statusCode,
       latencyMs,
       payloadDigest,
       error: errorSentinel,
       attempt: jobData.attempt,
+      replayedFromDeliveryId: jobData.replayedFromDeliveryId ?? null,
     },
   });
 
-  // 7. Audit on every attempt (D-25).
+  // 7. Per-attempt timestamps (Plan 04-05 / DEL-08). One bundled UPDATE
+  // per attempt: lastDispatchedAt always; lastSuccessAt on 2xx;
+  // lastFailureAt on non-2xx / network error. The dispatcher writes
+  // ONLY these timestamps on WebhookConfig — the health-state seam
+  // (failure-counter + endpointHealth flip) is owned by the BullMQ
+  // worker hook (workers/webhookDispatchWorker.ts) which calls
+  // health.transition() on terminal `failed` / `completed`. CONTEXT
+  // D-10 locks the event-level (not per-attempt) counter contract.
+  const now = new Date();
+  const timestampUpdate: Prisma.WebhookConfigUncheckedUpdateInput = {
+    lastDispatchedAt: now,
+  };
+  if (errorSentinel === null) {
+    timestampUpdate.lastSuccessAt = now;
+  } else {
+    timestampUpdate.lastFailureAt = now;
+  }
+  await prisma.webhookConfig.update({
+    where: { id: config.id },
+    data: timestampUpdate,
+  });
+
+  // 8. Audit on every attempt (D-25).
   await emitAudit({
     deliveryId: delivery.id,
     projectId: config.projectId,
@@ -230,7 +314,7 @@ export async function dispatchWebhook(
     outcome: errorSentinel ? "failure" : "success",
   });
 
-  // 8. Throw on failure so BullMQ retries.
+  // 9. Throw on failure so BullMQ retries.
   if (errorSentinel !== null) {
     const err = new Error(errorSentinel);
     (err as Error & { deliveryId?: string }).deliveryId = delivery.id;
@@ -257,7 +341,10 @@ function mapFetchError(err: unknown): string {
     const code = cause?.code;
     if (code === "ECONNREFUSED") return "CONNECTION_REFUSED";
     if (code === "ENOTFOUND") return "DNS_FAILURE";
-    if (typeof code === "string" && (code === "EPROTO" || code.startsWith("ERR_TLS_"))) {
+    if (
+      typeof code === "string" &&
+      (code === "EPROTO" || code.startsWith("ERR_TLS_"))
+    ) {
       return "TLS_ERROR";
     }
     return truncate(err.message, MAX_ERROR_LEN);
@@ -274,20 +361,28 @@ async function emitAudit(args: {
   attempt: number;
   statusCode: number | null;
   outcome: "success" | "failure";
+  // Plan 04-05 / DEL-05 — optional error sentinel surfaced in audit
+  // metadata. Currently used for the DISABLED gate ("endpoint_disabled");
+  // future error-flavored audit metadata can flow through this same field.
+  error?: string;
 }): Promise<void> {
+  const metadata: Record<string, unknown> = {
+    webhookConfigId: args.configId,
+    eventId: args.eventId,
+    eventName: args.eventName,
+    attempt: args.attempt,
+    statusCode: args.statusCode,
+    outcome: args.outcome,
+  };
+  if (args.error !== undefined) {
+    metadata.error = args.error;
+  }
   await captureAuditEvent({
     action: "WEBHOOK_DISPATCHED",
     entityType: "WebhookDelivery",
     entityId: args.deliveryId,
     projectId: args.projectId,
     userId: SYSTEM_ACTOR_ID,
-    metadata: {
-      webhookConfigId: args.configId,
-      eventId: args.eventId,
-      eventName: args.eventName,
-      attempt: args.attempt,
-      statusCode: args.statusCode,
-      outcome: args.outcome,
-    },
+    metadata,
   });
 }
