@@ -206,7 +206,24 @@ import { WebhookConfigForm } from "./webhook-config-form";
 
 // ─── Fixtures ───────────────────────────────────────────────────────────
 
-const jiraConfig = {
+interface ConfigFixture {
+  id: string;
+  projectId: number;
+  adapterType: string;
+  direction: string;
+  token: string;
+  isActive: boolean;
+  lastReceivedAt: Date | null;
+  endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
+  consecutiveFailureCount: number;
+  lastDispatchedAt: Date | null;
+  lastSuccessAt: Date | null;
+  lastFailureAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const jiraConfig: ConfigFixture = {
   id: "cfg-jira",
   projectId: 42,
   adapterType: "JIRA",
@@ -223,7 +240,7 @@ const jiraConfig = {
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
 
-const degradedJiraConfig = {
+const degradedJiraConfig: ConfigFixture = {
   ...jiraConfig,
   endpointHealth: "DEGRADED",
   consecutiveFailureCount: 7,
@@ -232,7 +249,7 @@ const degradedJiraConfig = {
   lastFailureAt: new Date("2026-04-29T12:00:00Z"),
 };
 
-const disabledJiraConfig = {
+const disabledJiraConfig: ConfigFixture = {
   ...jiraConfig,
   endpointHealth: "DISABLED",
   consecutiveFailureCount: 10,
@@ -241,14 +258,14 @@ const disabledJiraConfig = {
   lastFailureAt: new Date("2026-04-29T13:00:00Z"),
 };
 
-const richJiraConfig = {
+const richJiraConfig: ConfigFixture = {
   ...jiraConfig,
   lastDispatchedAt: new Date("2026-04-29T10:00:00Z"),
   lastSuccessAt: new Date("2026-04-29T10:00:00Z"),
   lastFailureAt: new Date("2026-04-25T08:00:00Z"),
 };
 
-const githubConfig = {
+const githubConfig: ConfigFixture = {
   id: "cfg-github",
   projectId: 42,
   adapterType: "GITHUB",
@@ -265,7 +282,7 @@ const githubConfig = {
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
 
-const adoConfig = {
+const adoConfig: ConfigFixture = {
   id: "cfg-ado",
   projectId: 42,
   adapterType: "AZURE_DEVOPS",
@@ -282,7 +299,7 @@ const adoConfig = {
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
 
-function setConfigs(configs: (typeof jiraConfig)[]) {
+function setConfigs(configs: ConfigFixture[]) {
   mockFindManyWebhookConfig.mockReturnValue({
     data: configs,
     isLoading: false,
