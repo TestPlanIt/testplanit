@@ -328,7 +328,7 @@ export function useSuspenseCountWebhookConfig<TArgs extends Prisma.WebhookConfig
 }
 import type { AdapterType, WebhookDirection, EndpointHealth } from '@prisma/client';
 
-export function useCheckWebhookConfig<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; projectId?: number; adapterType?: AdapterType; direction?: WebhookDirection; token?: string; secret?: string; isActive?: boolean; subscribedEvents?: string; endpointHealth?: EndpointHealth; url?: string; name?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckWebhookConfig<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; projectId?: number; adapterType?: AdapterType; direction?: WebhookDirection; token?: string; secret?: string; isActive?: boolean; subscribedEvents?: string; endpointHealth?: EndpointHealth; url?: string; name?: string; consecutiveFailureCount?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('WebhookConfig', `${endpoint}/webhookConfig/check`, args, options, fetch);
 }

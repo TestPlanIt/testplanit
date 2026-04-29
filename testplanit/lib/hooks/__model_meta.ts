@@ -6755,6 +6755,22 @@ const metadata: ModelMeta = {
                     name: "lastReceivedAt",
                     type: "DateTime",
                     isOptional: true,
+                }, lastDispatchedAt: {
+                    name: "lastDispatchedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastSuccessAt: {
+                    name: "lastSuccessAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastFailureAt: {
+                    name: "lastFailureAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, consecutiveFailureCount: {
+                    name: "consecutiveFailureCount",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",
@@ -6825,6 +6841,10 @@ const metadata: ModelMeta = {
                     name: "eventType",
                     type: "String",
                     isOptional: true,
+                }, eventId: {
+                    name: "eventId",
+                    type: "String",
+                    isOptional: true,
                 }, statusCode: {
                     name: "statusCode",
                     type: "Int",
@@ -6844,6 +6864,27 @@ const metadata: ModelMeta = {
                     name: "attempt",
                     type: "Int",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 1 }] }],
+                }, replayedFromDeliveryId: {
+                    name: "replayedFromDeliveryId",
+                    type: "String",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'replayedFrom',
+                }, replayedFrom: {
+                    name: "replayedFrom",
+                    type: "WebhookDelivery",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'replays',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "replayedFromDeliveryId" },
+                }, replays: {
+                    name: "replays",
+                    type: "WebhookDelivery",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'replayedFrom',
                 }, receivedAt: {
                     name: "receivedAt",
                     type: "DateTime",
@@ -6991,6 +7032,9 @@ const metadata: ModelMeta = {
                 id: {
                     name: "id",
                     fields: ["id"]
+                }, eventId: {
+                    name: "eventId",
+                    fields: ["eventId"]
                 },
             },
         },
