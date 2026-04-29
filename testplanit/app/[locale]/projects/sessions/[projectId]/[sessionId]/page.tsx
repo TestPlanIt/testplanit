@@ -1655,7 +1655,7 @@ export default function SessionPage() {
               {!isEditMode && (
                 <div className="mr-2">
                   <Link href={`/projects/sessions/${projectId}`}>
-                    <Button variant="outline" size="icon">
+                    <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                   </Link>

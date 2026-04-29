@@ -514,10 +514,14 @@ const BasicInfoDialog = React.memo(
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button onClick={handleNextStep} data-testid="run-next-button">
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                data-testid="run-next-button"
+              >
                 {tCommon("actions.next")}
               </Button>
             </DialogFooter>

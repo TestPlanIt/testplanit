@@ -1754,7 +1754,12 @@ export default function TestCaseDetails() {
                       <Link
                         href={`/projects/repository/${projectId}?node=${testcase.folder?.id}`}
                       >
-                        <Button variant="outline" size="icon" className="mr-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="mr-2"
+                        >
                           <ArrowLeft className="h-4 w-4" />
                         </Button>
                       </Link>
