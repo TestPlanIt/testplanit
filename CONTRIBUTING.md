@@ -88,7 +88,7 @@ Look for issues labeled:
 
 ### System Requirements
 
-- Node.js 18+ and npm 9+
+- Node.js 24+ and npm 9+
 - Git 2.30+
 - PostgreSQL 14+ (for backend development)
 - Docker (optional, for containerized development)

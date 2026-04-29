@@ -24,7 +24,7 @@ TestPlanIt requires:
 
 - **RAM** 8GB to build/run the whole stack. 16GB recommended
 - **Disk** 25GB+ space for data and file attachments
-- **Node.js** 20 or later
+- **Node.js** 24 or later
 - **PostgreSQL** 14 or later
 - **Redis/Valkey** for background job processing
 - **Elasticsearch** for advanced search

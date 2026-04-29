@@ -10,7 +10,7 @@ This guide explains how to set up TestPlanIt for local development manually, wit
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) v20.9.0 minimum (v24.x LTS recommended)
+- [Node.js](https://nodejs.org/) v24.x LTS
 - [pnpm](https://pnpm.io/) (version 10+ recommended)
 - Git
 
