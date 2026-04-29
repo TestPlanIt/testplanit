@@ -708,7 +708,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("PROJ-1");
@@ -728,7 +728,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("PROJ-1");
@@ -748,7 +748,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("PROJ-1");
@@ -763,7 +763,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("PROJ-1");
@@ -1043,7 +1043,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("PROJ-1");
@@ -1063,7 +1063,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("PROJ-1");
@@ -1083,7 +1083,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("PROJ-1");
@@ -1098,7 +1098,7 @@ describe("JiraAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[JiraAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("PROJ-1");

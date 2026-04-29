@@ -533,7 +533,7 @@ describe("GitHubAdapter", () => {
       expect(result).toHaveLength(2);
       expect(result.every((r) => r.linkType === "sub_issue")).toBe(true);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("timeline");
       errorSpy.mockRestore();
@@ -558,7 +558,7 @@ describe("GitHubAdapter", () => {
       expect(result[0].linkType).toBe("cross_referenced");
       expect(result[0].direction).toBe("inward");
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("sub_issues");
       warnSpy.mockRestore();
@@ -599,7 +599,7 @@ describe("GitHubAdapter", () => {
       expect(result).toHaveLength(1);
       expect(result[0].linkType).toBe("cross_referenced");
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("sub_issues");
       errorSpy.mockRestore();
@@ -724,7 +724,7 @@ describe("GitHubAdapter", () => {
         false
       );
       expect(warnSpy).toHaveBeenCalled();
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       warnSpy.mockRestore();
@@ -741,7 +741,7 @@ describe("GitHubAdapter", () => {
         false
       );
       expect(warnSpy).toHaveBeenCalled();
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       warnSpy.mockRestore();
@@ -912,7 +912,7 @@ describe("GitHubAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("42");
@@ -932,7 +932,7 @@ describe("GitHubAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("42");
@@ -952,7 +952,7 @@ describe("GitHubAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("42");
@@ -967,7 +967,7 @@ describe("GitHubAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("42");
@@ -985,7 +985,7 @@ describe("GitHubAdapter", () => {
         false
       );
       expect(errorSpy).toHaveBeenCalled();
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       errorSpy.mockRestore();
@@ -1002,7 +1002,7 @@ describe("GitHubAdapter", () => {
         false
       );
       expect(errorSpy).toHaveBeenCalled();
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[GitHubAdapter]");
       expect(firstArg).toContain("getIssueComments");
       errorSpy.mockRestore();

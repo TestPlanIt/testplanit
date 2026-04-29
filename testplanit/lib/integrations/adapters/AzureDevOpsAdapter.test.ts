@@ -749,7 +749,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("123");
@@ -769,7 +769,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("123");
@@ -789,7 +789,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("123");
@@ -836,7 +836,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getLinkedIssues");
       expect(firstArg).toContain("123");
@@ -1026,7 +1026,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("123");
@@ -1046,7 +1046,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const firstArg = warnSpy.mock.calls[0][0];
+      const firstArg = warnSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("123");
@@ -1066,7 +1066,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("123");
@@ -1081,7 +1081,7 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result).toEqual([]);
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      const firstArg = errorSpy.mock.calls[0][0];
+      const firstArg = errorSpy.mock.calls[0].join(" ");
       expect(firstArg).toContain("[AzureDevOpsAdapter]");
       expect(firstArg).toContain("getIssueComments");
       expect(firstArg).toContain("123");

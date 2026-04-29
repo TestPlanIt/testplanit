@@ -530,7 +530,8 @@ export class JiraAdapter extends BaseAdapter {
       const status = this.parseStatusFromError(error);
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
-        `[JiraAdapter] getLinkedIssues failed for ${issueId}:`,
+        `[JiraAdapter] getLinkedIssues failed for %s:`,
+        issueId,
         error
       );
       return [];
@@ -548,7 +549,8 @@ export class JiraAdapter extends BaseAdapter {
       const status = this.parseStatusFromError(error);
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
-        `[JiraAdapter] getIssueComments failed for ${issueId}:`,
+        `[JiraAdapter] getIssueComments failed for %s:`,
+        issueId,
         error
       );
       return [];

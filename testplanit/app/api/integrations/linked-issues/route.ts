@@ -56,7 +56,9 @@ export async function GET(request: NextRequest) {
       refs = await adapter.getLinkedIssues(issueKey);
     } catch (err) {
       console.warn(
-        `[linked-issues route] adapter.getLinkedIssues threw for project ${projectId} key ${issueKey}:`,
+        `[linked-issues route] adapter.getLinkedIssues threw for project %s key %s:`,
+        projectId,
+        issueKey,
         err
       );
       refs = [];

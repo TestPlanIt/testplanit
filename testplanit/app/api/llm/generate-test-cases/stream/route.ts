@@ -251,7 +251,8 @@ export async function POST(req: NextRequest) {
             );
           } catch (err) {
             console.warn(
-              `[stream/route] Failed to resolve issue-tracking adapter for project ${projectId}:`,
+              `[stream/route] Failed to resolve issue-tracking adapter for project %s:`,
+              projectId,
               err
             );
             adapter = null;
@@ -267,7 +268,8 @@ export async function POST(req: NextRequest) {
             sourceComments = await adapter.getIssueComments(issue.key);
           } catch (err) {
             console.warn(
-              `[stream/route] Failed to fetch source-issue comments for ${issue.key}:`,
+              `[stream/route] Failed to fetch source-issue comments for %s:`,
+              issue.key,
               err
             );
             sourceComments = [];

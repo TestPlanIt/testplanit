@@ -162,7 +162,8 @@ export class GitHubAdapter extends BaseAdapter {
       ({ owner, repo, issueNumber } = this.parseIssueRef(issueId));
     } catch (error) {
       console.warn(
-        `[GitHubAdapter] getLinkedIssues failed for ${issueId}:`,
+        `[GitHubAdapter] getLinkedIssues failed for %s:`,
+        issueId,
         error
       );
       return [];
@@ -181,7 +182,8 @@ export class GitHubAdapter extends BaseAdapter {
       const status = this.parseStatusFromError(subIssuesResult.reason);
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
-        `[GitHubAdapter] sub_issues failed for ${issueId}:`,
+        `[GitHubAdapter] sub_issues failed for %s:`,
+        issueId,
         subIssuesResult.reason
       );
     }
@@ -192,7 +194,8 @@ export class GitHubAdapter extends BaseAdapter {
       const status = this.parseStatusFromError(timelineResult.reason);
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
-        `[GitHubAdapter] timeline failed for ${issueId}:`,
+        `[GitHubAdapter] timeline failed for %s:`,
+        issueId,
         timelineResult.reason
       );
     }
@@ -211,7 +214,8 @@ export class GitHubAdapter extends BaseAdapter {
       const status = this.parseStatusFromError(error);
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
-        `[GitHubAdapter] getIssueComments failed for ${issueId}:`,
+        `[GitHubAdapter] getIssueComments failed for %s:`,
+        issueId,
         error
       );
       return [];
