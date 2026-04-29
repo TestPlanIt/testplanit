@@ -267,5 +267,20 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "webhook-retention-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/webhookRetentionWorker.ts"
+        : "dist/workers/webhookRetentionWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "256M",
+      node_args: "--max-old-space-size=192",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };
