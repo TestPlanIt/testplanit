@@ -473,12 +473,44 @@ describe("LastTestResultCell via getColumns", () => {
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
 
-      // Should show the date but not a test run link
+      // Should show the date but no link to a test run page
       const testedOnElements = await screen.findAllByText(
         /\[t\]repository\.columns\.testedOn/
       );
       expect(testedOnElements.length).toBeGreaterThan(0);
-      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+
+      // The cell itself wraps in a link to the case history; that's expected.
+      // What must NOT be present is a link to a test run page.
+      const links = screen.queryAllByRole("link");
+      expect(
+        links.find((l) => l.getAttribute("href")?.includes("/projects/runs/"))
+      ).toBeUndefined();
+    });
+
+    it("should wrap the cell in a link to the case result history", () => {
+      const column = getLastResultColumn();
+      const mockRow = {
+        original: {
+          id: 42,
+          projectId: 7,
+          lastTestResult: {
+            status: {
+              id: 1,
+              name: "Passed",
+              color: { value: "#00FF00" },
+            },
+            executedAt: new Date("2025-12-25T10:30:00Z"),
+          },
+        } as ExtendedCases,
+      };
+
+      renderCell(column, mockRow);
+
+      const cellLink = screen.getByRole("link");
+      expect(cellLink).toHaveAttribute(
+        "href",
+        "/projects/repository/7/42#result-history"
+      );
     });
 
     it("should have link to test run in tooltip", async () => {
@@ -509,10 +541,13 @@ describe("LastTestResultCell via getColumns", () => {
       const testRunElements = await screen.findAllByText("Sprint 10 Test Run");
       expect(testRunElements.length).toBeGreaterThan(0);
 
-      // Should have links to the test run
+      // Two links rendered: the cell wrapper (case history) + the test run name
+      // inside the tooltip. Find the test run one specifically.
       const links = screen.getAllByRole("link");
-      expect(links.length).toBeGreaterThan(0);
-      expect(links[0]).toHaveAttribute("href", "/projects/runs/1/5");
+      const testRunLink = links.find(
+        (l) => l.getAttribute("href") === "/projects/runs/1/5"
+      );
+      expect(testRunLink).toBeDefined();
     });
   });
 });
