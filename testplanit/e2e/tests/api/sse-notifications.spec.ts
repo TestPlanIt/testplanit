@@ -154,7 +154,12 @@ test.describe("SSE Notifications Stream", () => {
         .getByTestId("notification-title-input")
         .fill(announcementTitle);
 
-      const editor = page.getByTestId("notification-message-editor");
+      // TipTapEditor's data-testid prop is silently dropped. Existing repo
+      // patterns (see e2e/tests/repository/.../documentation.spec.ts) target
+      // the contenteditable via `.ProseMirror` directly. This page has one
+      // editor on it, so `.first()` is unambiguous.
+      const editor = page.locator(".ProseMirror").first();
+      await expect(editor).toBeVisible({ timeout: 10000 });
       await editor.click();
       await page.keyboard.type("E2E SSE test message body");
 
