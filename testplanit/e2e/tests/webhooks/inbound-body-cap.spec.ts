@@ -21,18 +21,23 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Inbound webhook body cap (5 MB)", () => {
   let projectId: number;
-  let configToken: string;
-  let configId: string;
 
-  test.beforeAll(async ({ api, page, baseURL }) => {
+  test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Body Cap ${uniqueId}`);
+  });
 
+  test("rejects bodies > 5 MB with HTTP 413, no WebhookDelivery row written", async ({
+    page,
+    request,
+    baseURL,
+  }) => {
     // Provision a Jira config via the admin form. The body cap is route-
     // level so the choice of adapter is immaterial.
     await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
     await page.getByTestId("webhook-inbound-add-button").click();
     await page.getByTestId("webhook-inbound-chooser-jira").click();
     await page.getByTestId("webhook-inbound-chooser-submit").click();
+    await page.getByTestId("webhook-create-button").click();
 
     // Scope to the JIRA card after creation.
     const jiraCard = page.getByTestId("webhook-inbound-card-jira");
@@ -40,25 +45,23 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     const urlText = await jiraCard.getByTestId("webhook-url").innerText();
     const tokenMatch = urlText.match(/\/api\/webhooks\/(whk_[0-9a-f]+)/);
     expect(tokenMatch).not.toBeNull();
-    configToken = tokenMatch![1];
+    const configToken = tokenMatch![1];
 
-    const prisma = new PrismaClient();
-    try {
-      const config = await prisma.webhookConfig.findFirst({
-        where: { token: configToken, direction: "INBOUND" },
-        select: { id: true },
-      });
-      expect(config).not.toBeNull();
-      configId = config!.id;
-    } finally {
-      await prisma.$disconnect();
+    let configId: string;
+    {
+      const prisma = new PrismaClient();
+      try {
+        const config = await prisma.webhookConfig.findFirst({
+          where: { token: configToken, direction: "INBOUND" },
+          select: { id: true },
+        });
+        expect(config).not.toBeNull();
+        configId = config!.id;
+      } finally {
+        await prisma.$disconnect();
+      }
     }
-  });
 
-  test("rejects bodies > 5 MB with HTTP 413, no WebhookDelivery row written", async ({
-    request,
-    baseURL,
-  }) => {
     const oversizeBody = JSON.stringify({
       webhookEvent: "jira:issue_updated",
       issue: {
