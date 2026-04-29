@@ -249,6 +249,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                     >
                       <UserNameCell userId={user.id} hideLink={true} />
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveUser(user.id)}

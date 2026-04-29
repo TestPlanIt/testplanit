@@ -578,21 +578,42 @@ export function FacetedSearchFilters({
 
   // Get display info for entity type
   const getEntityTypeInfo = (entityType: SearchableEntityType) => {
-    const typeMap: Record<SearchableEntityType, { key: string; icon: any }> = {
+    const typeMap: Record<
+      SearchableEntityType,
+      { translationKey: string; icon: any }
+    > = {
       [SearchableEntityType.REPOSITORY_CASE]: {
-        key: "repositoryCase",
+        translationKey: "search.entityTypes.repositoryCase",
         icon: ListChecks,
       },
-      [SearchableEntityType.SHARED_STEP]: { key: "sharedStep", icon: Layers },
-      [SearchableEntityType.TEST_RUN]: { key: "testRun", icon: PlayCircle },
-      [SearchableEntityType.SESSION]: { key: "session", icon: Compass },
-      [SearchableEntityType.PROJECT]: { key: "project", icon: Boxes },
-      [SearchableEntityType.ISSUE]: { key: "issue", icon: Bug },
-      [SearchableEntityType.MILESTONE]: { key: "milestone", icon: Milestone },
+      [SearchableEntityType.SHARED_STEP]: {
+        translationKey: "common.fields.sharedSteps",
+        icon: Layers,
+      },
+      [SearchableEntityType.TEST_RUN]: {
+        translationKey: "common.fields.testRuns",
+        icon: PlayCircle,
+      },
+      [SearchableEntityType.SESSION]: {
+        translationKey: "common.fields.sessions",
+        icon: Compass,
+      },
+      [SearchableEntityType.PROJECT]: {
+        translationKey: "common.fields.projects",
+        icon: Boxes,
+      },
+      [SearchableEntityType.ISSUE]: {
+        translationKey: "common.fields.issues",
+        icon: Bug,
+      },
+      [SearchableEntityType.MILESTONE]: {
+        translationKey: "common.fields.milestones",
+        icon: Milestone,
+      },
     };
     const info = typeMap[entityType];
     return {
-      name: t(`search.entityTypes.${info.key}` as any),
+      name: t(info.translationKey as any),
       Icon: info.icon,
     };
   };

@@ -232,6 +232,7 @@
       "description_placeholder": "Add a description...",
       "testCases": "Test Cases",
       "sessions": "Sessions",
+      "sharedSteps": "Shared Steps",
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm Password",

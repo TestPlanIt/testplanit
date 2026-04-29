@@ -1989,6 +1989,7 @@ function ReportBuilderContent({
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   className="w-full justify-between"
@@ -2113,6 +2114,7 @@ function ReportBuilderContent({
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   className="w-full justify-between"
@@ -2160,6 +2162,7 @@ function ReportBuilderContent({
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   className="w-full justify-between"
@@ -2211,6 +2214,7 @@ function ReportBuilderContent({
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   className="w-full justify-between"
@@ -2295,6 +2299,7 @@ function ReportBuilderContent({
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   className="w-full justify-between"
@@ -2340,6 +2345,7 @@ function ReportBuilderContent({
 
                       {/* Run Report Button */}
                       <Button
+                        type="button"
                         onClick={handleRunReport}
                         disabled={loading}
                         className="w-full"
@@ -2567,6 +2573,7 @@ function ReportBuilderContent({
 
                       {/* Run Report Button */}
                       <Button
+                        type="button"
                         onClick={handleRunReport}
                         disabled={
                           loading ||
