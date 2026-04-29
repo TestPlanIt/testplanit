@@ -3550,12 +3550,16 @@ model WebhookDelivery {
     payloadDigest   String           // sha256 hex digest of the raw request body — for correlation/admin search, NOT for uniqueness
     error           String?          // structured reason: "duplicate", "no-link", "synthetic", null on success
     attempt         Int              @default(1) // Phase 1 always 1 for INBOUND; reserved for Phase 2+ outbound retries
+    replayedFromDeliveryId   String?
+    replayedFrom             WebhookDelivery?  @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
+    replays                  WebhookDelivery[] @relation("WebhookDeliveryReplay")
     receivedAt      DateTime         @default(now()) @db.Timestamptz(6)
 
     // Indexes only — no unique constraint per BLOCKER #1 / D-03 REVISED
     @@index([webhookConfigId, receivedAt])
     @@index([direction, receivedAt])
     @@index([payloadDigest])
+    @@index([replayedFromDeliveryId])
 
     // Audit-row-style posture: System Admin and Project Admin can read for the
     // admin delivery-history UI (Phase 4+). Writes are intentionally unallowed for
