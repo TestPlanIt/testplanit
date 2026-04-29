@@ -33,6 +33,13 @@ function buildPrismaMock(opts: {
     },
     webhookConfig: {
       findUnique: vi.fn().mockResolvedValue(opts.config),
+      // Plan 04-05: dispatch.ts updates lastDispatchedAt + lastSuccessAt | lastFailureAt
+      // per attempt (DEL-08). Tests assert on .mock.calls[*][0].data shape.
+      update: vi.fn().mockImplementation(async (args: any) => ({
+        id: opts.config?.id ?? "cfg-1",
+        ...opts.config,
+        ...args.data,
+      })),
     },
     webhookDelivery: {
       create: vi.fn().mockImplementation(async (args: any) => {
@@ -442,6 +449,321 @@ describe("dispatchWebhook", () => {
 
     const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.payloadDigest).toBe(expectedDigest);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Plan 04-05 — DISABLED gate (DEL-05) + per-attempt timestamps (DEL-08) +
+// replay/eventId threading (ADMIN-02 + DEL-01). The dispatcher now:
+//   1. Short-circuits on endpointHealth === "DISABLED" with a stub delivery
+//      row (error="endpoint_disabled") and no HTTP call.
+//   2. Updates lastDispatchedAt + lastSuccessAt | lastFailureAt on every
+//      attempt's WebhookConfig.update call. Does NOT touch
+//      consecutiveFailureCount — that's the worker hook's responsibility.
+//   3. Stamps WebhookOutboxEvent.eventId onto every WebhookDelivery row
+//      (success row, failure row, AND the DISABLED stub).
+//   4. Threads jobData.replayedFromDeliveryId from BullMQ job data into
+//      the WebhookDelivery row when present.
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("dispatchWebhook — endpoint_disabled gate (Plan 04-05 / DEL-05)", () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    mockedCaptureAudit.mockClear();
+    mockedDecrypt.mockClear();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("D1. DISABLED config skips HTTP and writes a stub delivery row with error='endpoint_disabled'", async () => {
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_abc" },
+      config: baseConfig({ endpointHealth: "DISABLED" }),
+    });
+
+    const outcome = await dispatchWebhook(
+      { ...baseJobData, attempt: 2 },
+      prismaMock
+    );
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    expect(createCall.data.error).toBe("endpoint_disabled");
+    expect(createCall.data.direction).toBe("OUTBOUND");
+    expect(createCall.data.statusCode).toBeNull();
+    expect(createCall.data.attempt).toBe(2);
+    expect(createCall.data.eventId).toBe("evt_abc");
+    expect(createCall.data.eventType).toBe("test_run.completed");
+
+    expect(mockedCaptureAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "WEBHOOK_DISPATCHED",
+        metadata: expect.objectContaining({
+          outcome: "failure",
+          error: "endpoint_disabled",
+          eventId: "evt_abc",
+        }),
+      })
+    );
+
+    expect(outcome).toMatchObject({
+      outcome: "failure",
+      statusCode: null,
+      error: "endpoint_disabled",
+    });
+  });
+
+  it("D2. HEALTHY config still fires the HTTP request (DISABLED gate does not block HEALTHY)", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig({ endpointHealth: "HEALTHY" }),
+    });
+
+    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+
+    expect(outcome.outcome).toBe("success");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("D3. DEGRADED config still fires the HTTP request (early warning, not a block)", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig({ endpointHealth: "DEGRADED" }),
+    });
+
+    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+
+    expect(outcome.outcome).toBe("success");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("D4. DISABLED gate runs AFTER isActive check — isActive=false short-circuits first with no delivery row", async () => {
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig({ isActive: false, endpointHealth: "DISABLED" }),
+    });
+
+    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+
+    // isActive=false short-circuits BEFORE the DISABLED gate, so NO delivery
+    // row written and NO endpoint_disabled audit emitted.
+    expect(outcome).toEqual({ outcome: "skipped_inactive" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("dispatchWebhook — per-attempt timestamps (Plan 04-05 / DEL-08)", () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    mockedCaptureAudit.mockClear();
+    mockedDecrypt.mockClear();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("T1. success path updates lastDispatchedAt AND lastSuccessAt; lastFailureAt NOT touched", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig(),
+    });
+
+    await dispatchWebhook(baseJobData, prismaMock);
+
+    expect(prismaMock.webhookConfig.update).toHaveBeenCalled();
+    // Aggregate the data fields across all update calls.
+    const allData: Record<string, unknown> = {};
+    for (const call of prismaMock.webhookConfig.update.mock.calls) {
+      Object.assign(allData, call[0].data);
+    }
+    expect(allData.lastDispatchedAt).toBeInstanceOf(Date);
+    expect(allData.lastSuccessAt).toBeInstanceOf(Date);
+    expect(allData).not.toHaveProperty("lastFailureAt");
+  });
+
+  it("T2. failure path (non-2xx) updates lastDispatchedAt AND lastFailureAt; lastSuccessAt NOT touched", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("oops", { status: 500 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig(),
+    });
+
+    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
+
+    expect(prismaMock.webhookConfig.update).toHaveBeenCalled();
+    const allData: Record<string, unknown> = {};
+    for (const call of prismaMock.webhookConfig.update.mock.calls) {
+      Object.assign(allData, call[0].data);
+    }
+    expect(allData.lastDispatchedAt).toBeInstanceOf(Date);
+    expect(allData.lastFailureAt).toBeInstanceOf(Date);
+    expect(allData).not.toHaveProperty("lastSuccessAt");
+  });
+
+  it("T3. dispatch.ts does NOT update consecutiveFailureCount (counter is the worker hook's responsibility — locked seam)", async () => {
+    // Run BOTH success and failure paths and assert no counter touch on either.
+    const fetchSuccess = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSuccess as any;
+    const prismaSuccess = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig(),
+    });
+    await dispatchWebhook(baseJobData, prismaSuccess);
+    for (const call of prismaSuccess.webhookConfig.update.mock.calls) {
+      expect(call[0].data).not.toHaveProperty("consecutiveFailureCount");
+    }
+
+    const fetchFail = vi
+      .fn()
+      .mockResolvedValue(new Response("oops", { status: 503 }));
+    globalThis.fetch = fetchFail as any;
+    const prismaFail = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig(),
+    });
+    await expect(dispatchWebhook(baseJobData, prismaFail)).rejects.toThrow();
+    for (const call of prismaFail.webhookConfig.update.mock.calls) {
+      expect(call[0].data).not.toHaveProperty("consecutiveFailureCount");
+    }
+  });
+});
+
+describe("dispatchWebhook — replay + eventId threading (Plan 04-05 / ADMIN-02 + DEL-01)", () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    mockedCaptureAudit.mockClear();
+    mockedDecrypt.mockClear();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("R1. jobData.replayedFromDeliveryId is persisted alongside eventId on the success delivery row", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_xyz" },
+      config: baseConfig(),
+    });
+
+    await dispatchWebhook(
+      { ...baseJobData, replayedFromDeliveryId: "orig_id_123" } as any,
+      prismaMock
+    );
+
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    expect(createCall.data.replayedFromDeliveryId).toBe("orig_id_123");
+    expect(createCall.data.eventId).toBe("evt_xyz");
+  });
+
+  it("R2. no replayedFromDeliveryId in jobData → field absent or null on row, eventId still threaded", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_normal" },
+      config: baseConfig(),
+    });
+
+    await dispatchWebhook(baseJobData, prismaMock);
+
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    // Either undefined (field absent) or null are acceptable for the
+    // not-a-replay path — both translate to NULL in Postgres.
+    expect(
+      createCall.data.replayedFromDeliveryId === undefined ||
+        createCall.data.replayedFromDeliveryId === null
+    ).toBe(true);
+    expect(createCall.data.eventId).toBe("evt_normal");
+  });
+
+  it("R3. replay against a DISABLED config writes the stub row with replayedFromDeliveryId AND eventId", async () => {
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_disabled" },
+      config: baseConfig({ endpointHealth: "DISABLED" }),
+    });
+
+    await dispatchWebhook(
+      { ...baseJobData, replayedFromDeliveryId: "orig_id" } as any,
+      prismaMock
+    );
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    expect(createCall.data.error).toBe("endpoint_disabled");
+    expect(createCall.data.replayedFromDeliveryId).toBe("orig_id");
+    expect(createCall.data.eventId).toBe("evt_disabled");
+  });
+
+  it("R4. eventId is stamped on the success delivery row (DEL-01 outbound correlation)", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_success" },
+      config: baseConfig(),
+    });
+
+    await dispatchWebhook(baseJobData, prismaMock);
+
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    expect(createCall.data.eventId).toBe("evt_success");
+  });
+
+  it("R5. eventId is stamped on the non-2xx failure delivery row (DEL-01)", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("server fire", { status: 500 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_500" },
+      config: baseConfig(),
+    });
+
+    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
+
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    expect(createCall.data.error).toMatch(/^500_/);
+    expect(createCall.data.eventId).toBe("evt_500");
   });
 });
 
