@@ -5,11 +5,17 @@ import { createHmac, randomBytes } from "node:crypto";
 import type { AdapterType } from "@prisma/client";
 
 import { prisma } from "~/lib/prisma";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { webhookEvents } from "~/lib/webhooks/events";
 import { redactToken } from "~/lib/webhooks/redaction";
+import {
+  BULK_REPLAY_HARD_CAP,
+  bulkReplayDeliveries,
+  replayDelivery,
+} from "~/lib/webhooks/replay";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
@@ -384,7 +390,10 @@ export async function deleteJiraWebhook(
     }
     projectId = cfg.projectId;
   } catch (err) {
-    console.error("[webhook-config] lookup failed (deleteJiraWebhook alias)", err);
+    console.error(
+      "[webhook-config] lookup failed (deleteJiraWebhook alias)",
+      err
+    );
     return { success: false, error: "Failed to delete webhook configuration" };
   }
 
@@ -556,9 +565,7 @@ export async function sendTestWebhook(
   if (config.adapterType === "JIRA") {
     const sig =
       "sha256=" +
-      createHmac("sha256", plainSecret)
-        .update(SYNTHETIC_PAYLOAD)
-        .digest("hex");
+      createHmac("sha256", plainSecret).update(SYNTHETIC_PAYLOAD).digest("hex");
     requestInit = {
       method: "POST",
       headers: {
@@ -730,10 +737,7 @@ export async function createOutboundWebhook(input: {
   try {
     authorized = await canManageWebhookConfig(session, input.projectId);
   } catch (err) {
-    console.error(
-      "[webhook-config] auth check failed (createOutbound)",
-      err
-    );
+    console.error("[webhook-config] auth check failed (createOutbound)", err);
     return { success: false, error: "Failed to save webhook configuration" };
   }
   if (!authorized) {
@@ -743,8 +747,7 @@ export async function createOutboundWebhook(input: {
   const adapterType: "SLACK" | "GENERIC_HMAC" = isSlackWebhookUrl(input.url)
     ? "SLACK"
     : "GENERIC_HMAC";
-  const subscribedEvents =
-    input.subscribedEvents ?? DEFAULT_OUTBOUND_PRESET;
+  const subscribedEvents = input.subscribedEvents ?? DEFAULT_OUTBOUND_PRESET;
   const token = generateToken();
 
   if (adapterType === "SLACK") {
@@ -787,10 +790,7 @@ export async function createOutboundWebhook(input: {
   try {
     encryptedSecret = await encrypt(plaintextSecret);
   } catch (err) {
-    console.error(
-      "[webhook-config] encrypt failed (createOutbound HMAC)",
-      err
-    );
+    console.error("[webhook-config] encrypt failed (createOutbound HMAC)", err);
     return { success: false, error: "Failed to save webhook configuration" };
   }
 
@@ -866,10 +866,7 @@ export async function deleteOutboundWebhook(
   try {
     authorized = await canManageWebhookConfig(session, config.projectId);
   } catch (err) {
-    console.error(
-      "[webhook-config] auth check failed (deleteOutbound)",
-      err
-    );
+    console.error("[webhook-config] auth check failed (deleteOutbound)", err);
     return { success: false, error: "Failed to delete webhook configuration" };
   }
   if (!authorized) return { success: false, error: "Forbidden" };
@@ -1224,11 +1221,331 @@ export async function sendTestOutboundWebhook(
       eventId = result?.eventId ?? null;
     });
   } catch (err) {
-    console.error(
-      "[webhook-config] sendTestOutboundWebhook emit failed",
-      err
-    );
+    console.error("[webhook-config] sendTestOutboundWebhook emit failed", err);
     return { success: false, error: "Failed to send test webhook" };
   }
   return { success: true, eventId: eventId ?? undefined };
+}
+
+// =============================================================================
+// v0.23.0 Phase 4 / Plan 04-06 — replay + bulk replay + re-enable + batch status
+// =============================================================================
+
+/**
+ * Plan 04-06 — single-row replay (ADMIN-02, amended outbound-only per D-17b).
+ *
+ * Auth-gates via `canManageWebhookConfig` BEFORE any service call. Inbound
+ * deliveries are rejected at the action boundary with a typed `reason`
+ * (`inbound_replay_not_supported`) so the admin UI (Plan 04-07) can render
+ * the inbound banner instead of a Replay button. Outbound delegates to
+ * `replayDelivery` (Plan 04-03) with `source: "single"`; the helper handles
+ * outbox lookup, queue enqueue, and the WEBHOOK_REPLAYED audit (D-23).
+ */
+export async function replayWebhookDelivery(
+  deliveryId: string
+): Promise<
+  | { ok: true; queueJobId?: string; replayDeliveryId?: string }
+  | { ok: false; error?: string; reason?: "inbound_replay_not_supported" }
+> {
+  const session = await getServerAuthSession();
+  if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+  let projectId: number;
+  let direction: "INBOUND" | "OUTBOUND";
+  try {
+    const delivery = await prisma.webhookDelivery.findUnique({
+      where: { id: deliveryId },
+      select: {
+        direction: true,
+        webhookConfig: { select: { projectId: true } },
+      },
+    });
+    if (!delivery?.webhookConfig) {
+      return { ok: false, error: "Not found" };
+    }
+    projectId = delivery.webhookConfig.projectId;
+    direction = delivery.direction;
+  } catch (err) {
+    console.error(
+      "[webhook-config] lookup failed (replayWebhookDelivery)",
+      err
+    );
+    return { ok: false, error: "Failed to replay delivery" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, projectId);
+  } catch (err) {
+    console.error(
+      "[webhook-config] auth check failed (replayWebhookDelivery)",
+      err
+    );
+    return { ok: false, error: "Failed to replay delivery" };
+  }
+  if (!authorized) return { ok: false, error: "Forbidden" };
+
+  // D-17a / D-17b: inbound replay is not supported in v0.23.0. The auth gate
+  // above ensures only project admins (who already see the direction in the
+  // deliveries list) can probe; rejection is surfaced via toast in the UI.
+  if (direction === "INBOUND") {
+    return { ok: false, reason: "inbound_replay_not_supported" };
+  }
+
+  try {
+    const result = await replayDelivery(deliveryId, {
+      actorUserId: session.user.id ?? "",
+      source: "single",
+    });
+    if (result.outcome === "queued") {
+      return { ok: true, queueJobId: result.queueJobId };
+    }
+    return { ok: false, error: result.reason };
+  } catch (err) {
+    console.error("[webhook-config] replayDelivery failed", err);
+    return { ok: false, error: "Failed to replay delivery" };
+  }
+}
+
+/**
+ * Plan 04-06 — bulk replay all failed OUTBOUND deliveries since a timestamp
+ * (ADMIN-03, amended outbound-only per D-17a).
+ *
+ * The SELECT pre-filters to `direction: "OUTBOUND"` so the 100-row hard cap
+ * (BULK_REPLAY_HARD_CAP, D-08) is computed against outbound-only count —
+ * inbound failures don't compete for the same 100 slots. Over-cap returns
+ * `exceeds_cap` BEFORE any enqueue (T-04-06-05 mitigation).
+ */
+export async function bulkReplayFailedDeliveries(input: {
+  webhookConfigId: string;
+  sinceTimestamp: string;
+  untilTimestamp?: string;
+}): Promise<
+  | { ok: true; batchId: string; enqueuedCount: number }
+  | { ok: false; error?: string; reason?: "exceeds_cap" }
+> {
+  const session = await getServerAuthSession();
+  if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+  let projectId: number;
+  try {
+    const config = await prisma.webhookConfig.findUnique({
+      where: { id: input.webhookConfigId },
+      select: { projectId: true },
+    });
+    if (!config) return { ok: false, error: "Not found" };
+    projectId = config.projectId;
+  } catch (err) {
+    console.error(
+      "[webhook-config] lookup failed (bulkReplayFailedDeliveries)",
+      err
+    );
+    return { ok: false, error: "Failed to bulk replay" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, projectId);
+  } catch (err) {
+    console.error(
+      "[webhook-config] auth check failed (bulkReplayFailedDeliveries)",
+      err
+    );
+    return { ok: false, error: "Failed to bulk replay" };
+  }
+  if (!authorized) return { ok: false, error: "Forbidden" };
+
+  const since = new Date(input.sinceTimestamp);
+  const receivedAt: { gte: Date; lte?: Date } = { gte: since };
+  if (input.untilTimestamp) {
+    receivedAt.lte = new Date(input.untilTimestamp);
+  }
+
+  try {
+    // D-17a outbound-only filter — hard cap applies against outbound count.
+    const failedDeliveries = await prisma.webhookDelivery.findMany({
+      where: {
+        webhookConfigId: input.webhookConfigId,
+        direction: "OUTBOUND",
+        error: { not: null },
+        receivedAt,
+      },
+      select: { id: true },
+      take: BULK_REPLAY_HARD_CAP + 1,
+    });
+
+    if (failedDeliveries.length > BULK_REPLAY_HARD_CAP) {
+      return { ok: false, reason: "exceeds_cap" };
+    }
+
+    const result = await bulkReplayDeliveries(
+      failedDeliveries.map((d) => d.id),
+      { actorUserId: session.user.id ?? "" }
+    );
+    if (
+      result.outcome === "queued" &&
+      result.batchId &&
+      result.enqueuedCount !== undefined
+    ) {
+      return {
+        ok: true,
+        batchId: result.batchId,
+        enqueuedCount: result.enqueuedCount,
+      };
+    }
+    return { ok: false, error: result.reason ?? "Failed to bulk replay" };
+  } catch (err) {
+    console.error("[webhook-config] bulkReplayFailedDeliveries failed", err);
+    return { ok: false, error: "Failed to bulk replay" };
+  }
+}
+
+/**
+ * Plan 04-06 — manual re-enable of a DISABLED webhook (ADMIN-07, D-14).
+ *
+ * Rejects when `endpointHealth !== "DISABLED"` — DEGRADED auto-clears on
+ * the next successful dispatch (D-15) and HEALTHY has nothing to re-enable.
+ * On re-enable, sets `endpointHealth = HEALTHY` + resets the failure counter
+ * to 0 in a single `update`, then emits `WEBHOOK_HEALTH_CHANGED` directly
+ * (NOT through `health.transition`) because the reason value differs:
+ * `manual_reenable` vs the auto-machine's `auto_threshold`. Audit metadata
+ * shape locked by D-24.
+ */
+export async function reEnableWebhookConfig(
+  webhookConfigId: string
+): Promise<{ ok: true } | { ok: false; error?: string }> {
+  const session = await getServerAuthSession();
+  if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+  let projectId: number;
+  let endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
+  try {
+    const config = await prisma.webhookConfig.findUnique({
+      where: { id: webhookConfigId },
+      select: { projectId: true, endpointHealth: true },
+    });
+    if (!config) return { ok: false, error: "Not found" };
+    projectId = config.projectId;
+    endpointHealth = config.endpointHealth;
+  } catch (err) {
+    console.error(
+      "[webhook-config] lookup failed (reEnableWebhookConfig)",
+      err
+    );
+    return { ok: false, error: "Failed to re-enable webhook" };
+  }
+
+  // T-04-06-06: only DISABLED is re-enable-able. DEGRADED auto-clears,
+  // HEALTHY has nothing to do. Reject before the auth probe so an attacker
+  // cannot use this action to discover health state of arbitrary configs.
+  if (endpointHealth !== "DISABLED") {
+    return { ok: false, error: "Not disabled" };
+  }
+
+  let authorized: boolean;
+  try {
+    authorized = await canManageWebhookConfig(session, projectId);
+  } catch (err) {
+    console.error(
+      "[webhook-config] auth check failed (reEnableWebhookConfig)",
+      err
+    );
+    return { ok: false, error: "Failed to re-enable webhook" };
+  }
+  if (!authorized) return { ok: false, error: "Forbidden" };
+
+  try {
+    await prisma.webhookConfig.update({
+      where: { id: webhookConfigId },
+      data: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
+    });
+  } catch (err) {
+    console.error("[webhook-config] reEnableWebhookConfig update failed", err);
+    return { ok: false, error: "Failed to re-enable webhook" };
+  }
+
+  // D-24: actor is the human admin (`actorUserId`), NOT `__system__`.
+  await captureAuditEvent({
+    action: "WEBHOOK_HEALTH_CHANGED",
+    entityType: "WebhookConfig",
+    entityId: webhookConfigId,
+    projectId,
+    userId: session.user.id ?? "",
+    metadata: {
+      webhookConfigId,
+      from: "DISABLED",
+      to: "HEALTHY",
+      reason: "manual_reenable",
+      consecutiveFailureCount: 0,
+    },
+  });
+
+  return { ok: true };
+}
+
+/**
+ * Plan 04-06 — progress polling for a bulk-replay batch (D-09).
+ *
+ * Strategy LOCKED (Warning 7 fix):
+ *   1. Find all WEBHOOK_REPLAYED audit rows whose metadata.batchId matches.
+ *   2. Pull `originalDeliveryId` out of each audit row's metadata → ids[].
+ *   3. Query WebhookDelivery rows whose `replayedFromDeliveryId` IS IN ids[].
+ *   4. Bucket by `error` field:
+ *      - error === null → succeeded (dispatch worker wrote a row, no error)
+ *      - error !== null → failed (worker wrote a row with an error reason)
+ *      - originalId not in any returned row → queued (worker hasn't run yet)
+ *
+ * Authorizes via `canManageWebhookConfig` using the projectId pulled from
+ * the first audit row (T-04-06-04 — cross-project batchId probes return
+ * Forbidden, not the count).
+ */
+export async function getReplayBatchStatus(
+  batchId: string
+): Promise<
+  | { ok: true; queued: number; succeeded: number; failed: number }
+  | { ok: false; error?: string }
+> {
+  const session = await getServerAuthSession();
+  if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+  try {
+    const auditRows = await prisma.auditLog.findMany({
+      where: {
+        action: "WEBHOOK_REPLAYED",
+        metadata: { path: ["batchId"], equals: batchId },
+      },
+      select: { metadata: true, projectId: true },
+    });
+
+    if (auditRows.length === 0) {
+      return { ok: true, queued: 0, succeeded: 0, failed: 0 };
+    }
+
+    const projectId = auditRows[0]?.projectId ?? null;
+    if (!projectId) return { ok: false, error: "Forbidden" };
+
+    const authorized = await canManageWebhookConfig(session, projectId);
+    if (!authorized) return { ok: false, error: "Forbidden" };
+
+    const originalIds: string[] = auditRows
+      .map(
+        (r) =>
+          (r.metadata as Record<string, unknown> | null)?.originalDeliveryId
+      )
+      .filter((x): x is string => typeof x === "string");
+
+    const replayRows = await prisma.webhookDelivery.findMany({
+      where: { replayedFromDeliveryId: { in: originalIds } },
+      select: { error: true, replayedFromDeliveryId: true },
+    });
+
+    const succeeded = replayRows.filter((r) => r.error === null).length;
+    const failed = replayRows.filter((r) => r.error !== null).length;
+    const queued = originalIds.length - replayRows.length;
+
+    return { ok: true, queued, succeeded, failed };
+  } catch (err) {
+    console.error("[webhook-config] getReplayBatchStatus failed", err);
+    return { ok: false, error: "Failed to fetch batch status" };
+  }
 }

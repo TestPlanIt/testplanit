@@ -32,13 +32,15 @@ vi.mock("~/lib/prisma", () => ({
     },
     webhookConfigSecret: {
       create: (...args: unknown[]) => mockWebhookConfigSecretCreate(...args),
-      findMany: (...args: unknown[]) => mockWebhookConfigSecretFindMany(...args),
+      findMany: (...args: unknown[]) =>
+        mockWebhookConfigSecretFindMany(...args),
       findUnique: (...args: unknown[]) =>
         mockWebhookConfigSecretFindUnique(...args),
       update: (...args: unknown[]) => mockWebhookConfigSecretUpdate(...args),
     },
     webhookDelivery: {
-      findUnique: (...args: unknown[]) => mockWebhookDeliveryFindUnique(...args),
+      findUnique: (...args: unknown[]) =>
+        mockWebhookDeliveryFindUnique(...args),
       findMany: (...args: unknown[]) => mockWebhookDeliveryFindMany(...args),
     },
     auditLog: {
@@ -363,7 +365,10 @@ describe("webhook-config server actions", () => {
       expect(result.secret).toBeUndefined();
 
       // Encryption helper invoked with the JSON-encoded credential blob (D-09).
-      const expectedJson = JSON.stringify({ username: "tpi", password: "s3cret" });
+      const expectedJson = JSON.stringify({
+        username: "tpi",
+        password: "s3cret",
+      });
       expect(mockEncrypt).toHaveBeenCalledWith(expectedJson);
 
       expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
@@ -1000,7 +1005,9 @@ describe("webhook-config server actions", () => {
       const result = await sendTestWebhook("cfg-bad");
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBe("Send-test not supported for this adapter type");
+      expect(result.error).toBe(
+        "Send-test not supported for this adapter type"
+      );
       expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
@@ -1232,9 +1239,7 @@ describe("webhook-config server actions", () => {
       });
 
       const callArg = mockWebhookConfigCreate.mock.calls[0][0];
-      expect(callArg.data.subscribedEvents).toEqual([
-        "test_run.state_changed",
-      ]);
+      expect(callArg.data.subscribedEvents).toEqual(["test_run.state_changed"]);
     });
   });
 
@@ -1341,8 +1346,7 @@ describe("webhook-config server actions", () => {
     function buildTxMock() {
       return {
         webhookConfigSecret: {
-          findMany: (args: any) =>
-            mockWebhookConfigSecretFindMany(args),
+          findMany: (args: any) => mockWebhookConfigSecretFindMany(args),
           create: (args: any) => mockWebhookConfigSecretCreate(args),
           update: (args: any) => mockWebhookConfigSecretUpdate(args),
         },
@@ -1399,12 +1403,8 @@ describe("webhook-config server actions", () => {
         direction: "OUTBOUND",
         adapterType: "GENERIC_HMAC",
       });
-      mockTransaction.mockImplementation(async (fn: any) =>
-        fn(buildTxMock())
-      );
-      mockWebhookConfigSecretFindMany.mockResolvedValue([
-        { id: "sec-old" },
-      ]);
+      mockTransaction.mockImplementation(async (fn: any) => fn(buildTxMock()));
+      mockWebhookConfigSecretFindMany.mockResolvedValue([{ id: "sec-old" }]);
       mockWebhookConfigSecretUpdate.mockResolvedValue({ id: "sec-old" });
       mockWebhookConfigSecretCreate.mockResolvedValue({ id: "sec-new" });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
@@ -1449,9 +1449,7 @@ describe("webhook-config server actions", () => {
         direction: "OUTBOUND",
         adapterType: "GENERIC_HMAC",
       });
-      mockTransaction.mockImplementation(async (fn: any) =>
-        fn(buildTxMock())
-      );
+      mockTransaction.mockImplementation(async (fn: any) => fn(buildTxMock()));
       mockWebhookConfigSecretFindMany.mockResolvedValue([]); // zero active
       mockWebhookConfigSecretCreate.mockResolvedValue({ id: "sec-new" });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
@@ -1470,9 +1468,7 @@ describe("webhook-config server actions", () => {
         direction: "OUTBOUND",
         adapterType: "GENERIC_HMAC",
       });
-      mockTransaction.mockImplementation(async (fn: any) =>
-        fn(buildTxMock())
-      );
+      mockTransaction.mockImplementation(async (fn: any) => fn(buildTxMock()));
       mockWebhookConfigSecretFindMany.mockResolvedValue([
         { id: "sec-a" },
         { id: "sec-b" },
@@ -1593,9 +1589,7 @@ describe("webhook-config server actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.newAutoRetireAt).toBeInstanceOf(Date);
-      const expected = new Date(
-        oldExpiry.getTime() + 7 * 24 * 60 * 60 * 1000
-      );
+      const expected = new Date(oldExpiry.getTime() + 7 * 24 * 60 * 60 * 1000);
       expect(result.newAutoRetireAt!.getTime()).toBe(expected.getTime());
 
       const call = mockWebhookConfigSecretUpdate.mock.calls[0][0];
@@ -2116,8 +2110,14 @@ describe("webhook-config server actions", () => {
 
     it("all-queued — 2 audit rows, no replay rows yet → queued:2 succeeded:0 failed:0", async () => {
       mockAuditLogFindMany.mockResolvedValue([
-        { metadata: { originalDeliveryId: "o1", batchId: "bat_q" }, projectId: 1 },
-        { metadata: { originalDeliveryId: "o2", batchId: "bat_q" }, projectId: 1 },
+        {
+          metadata: { originalDeliveryId: "o1", batchId: "bat_q" },
+          projectId: 1,
+        },
+        {
+          metadata: { originalDeliveryId: "o2", batchId: "bat_q" },
+          projectId: 1,
+        },
       ]);
       mockCanManageWebhookConfig.mockResolvedValue(true);
       mockWebhookDeliveryFindMany.mockResolvedValue([]);
@@ -2135,11 +2135,26 @@ describe("webhook-config server actions", () => {
 
     it("mixed-batch — 5 originals, 4 replay rows (2 success + 2 failed), 1 still queued — deterministic counts (Warning 7 lock)", async () => {
       mockAuditLogFindMany.mockResolvedValue([
-        { metadata: { originalDeliveryId: "o1", batchId: "bat_m" }, projectId: 1 },
-        { metadata: { originalDeliveryId: "o2", batchId: "bat_m" }, projectId: 1 },
-        { metadata: { originalDeliveryId: "o3", batchId: "bat_m" }, projectId: 1 },
-        { metadata: { originalDeliveryId: "o4", batchId: "bat_m" }, projectId: 1 },
-        { metadata: { originalDeliveryId: "o5", batchId: "bat_m" }, projectId: 1 },
+        {
+          metadata: { originalDeliveryId: "o1", batchId: "bat_m" },
+          projectId: 1,
+        },
+        {
+          metadata: { originalDeliveryId: "o2", batchId: "bat_m" },
+          projectId: 1,
+        },
+        {
+          metadata: { originalDeliveryId: "o3", batchId: "bat_m" },
+          projectId: 1,
+        },
+        {
+          metadata: { originalDeliveryId: "o4", batchId: "bat_m" },
+          projectId: 1,
+        },
+        {
+          metadata: { originalDeliveryId: "o5", batchId: "bat_m" },
+          projectId: 1,
+        },
       ]);
       mockCanManageWebhookConfig.mockResolvedValue(true);
       mockWebhookDeliveryFindMany.mockResolvedValue([
