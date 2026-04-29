@@ -2,11 +2,14 @@
 
 import { createHmac, randomBytes } from "node:crypto";
 
+import type { AdapterType } from "@prisma/client";
+
 import { prisma } from "~/lib/prisma";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { webhookEvents } from "~/lib/webhooks/events";
+import { redactToken } from "~/lib/webhooks/redaction";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
@@ -56,15 +59,42 @@ export interface CreateOrRotateResult {
 }
 
 /**
- * Creates a new Jira inbound `WebhookConfig` for the project, or rotates the
- * token + secret of the existing one (D-07: hard cutover, no grace period).
+ * Plan 03-06 — adapter-specific secret input for inbound webhook create/rotate.
  *
- * Always uses `getEnhancedDb(session)` so ZenStack policies enforce the
- * project-admin gate established in plan 01-01 (ADMIN-01 / D-21).
+ * - JIRA / GITHUB: server mints a random HMAC secret. `secretInput` is unused.
+ * - AZURE_DEVOPS: admin types a Basic-Auth credential pair. The action
+ *   JSON-encodes `{ username, password }` and stores the JSON string as the
+ *   encrypted secret (D-09 — overloads `secret` semantics, mirrors Phase 2's
+ *   Slack-URL-as-credential precedent). `secretInput` is REQUIRED for ADO.
  */
-export async function createOrRotateJiraWebhook(
-  projectId: number
-): Promise<CreateOrRotateResult> {
+export type AdapterSecretInput =
+  | { kind: "JIRA" }
+  | { kind: "GITHUB" }
+  | { kind: "AZURE_DEVOPS"; username: string; password: string };
+
+/**
+ * Plan 03-06 — generalize Phase 1's createOrRotateJiraWebhook to all 3 inbound
+ * adapter types (JIRA / GITHUB / AZURE_DEVOPS).
+ *
+ * Creates a new inbound `WebhookConfig` for the (project, adapterType) pair,
+ * or rotates the token + secret of the existing one (D-07: hard cutover, no
+ * grace period). The schema's `@@unique([projectId, adapterType, direction])`
+ * constraint allows one Jira + one GitHub + one ADO inbound config per project.
+ *
+ * For JIRA/GITHUB the server mints a random HMAC secret and returns it
+ * plaintext (admin must capture it before the form re-renders — D-06). For
+ * AZURE_DEVOPS the admin supplies `secretInput` containing a username +
+ * password pair; the action JSON-encodes the pair (D-09) and does NOT return
+ * a `secret` field on the response (the admin already typed it; nothing to
+ * reveal).
+ */
+export async function createOrRotateInboundWebhook(input: {
+  projectId: number;
+  adapterType: AdapterType;
+  secretInput?: AdapterSecretInput;
+}): Promise<CreateOrRotateResult> {
+  const { projectId, adapterType, secretInput } = input;
+
   const session = await getServerAuthSession();
   if (!session?.user) {
     return { success: false, error: "Unauthorized" };
@@ -84,12 +114,52 @@ export async function createOrRotateJiraWebhook(
     return { success: false, error: "Forbidden" };
   }
 
+  // Branch on adapter type to derive the plaintext-to-encrypt and the
+  // success-response shape (only HMAC adapters return the freshly minted
+  // secret to the admin; ADO admin already has the credentials they typed).
+  let plaintextToEncrypt: string;
+  let returnSecretToAdmin: boolean;
+
+  if (adapterType === "JIRA" || adapterType === "GITHUB") {
+    plaintextToEncrypt = generateSecret();
+    returnSecretToAdmin = true;
+  } else if (adapterType === "AZURE_DEVOPS") {
+    if (
+      !secretInput ||
+      secretInput.kind !== "AZURE_DEVOPS" ||
+      typeof secretInput.username !== "string" ||
+      typeof secretInput.password !== "string" ||
+      secretInput.username.length === 0 ||
+      secretInput.password.length === 0
+    ) {
+      console.error(
+        "[webhook-config] missing or invalid ADO credentials",
+        redactToken(`projectId:${projectId}`)
+      );
+      return { success: false, error: "Failed to save webhook configuration" };
+    }
+    // D-09: JSON-encode the {username, password} pair; the ADO adapter
+    // JSON.parses on the receiver side. Phase 2's Slack-URL-as-credential
+    // sets the precedent for overloading `WebhookConfig.secret`.
+    plaintextToEncrypt = JSON.stringify({
+      username: secretInput.username,
+      password: secretInput.password,
+    });
+    returnSecretToAdmin = false;
+  } else {
+    // SLACK / GENERIC_HMAC are OUTBOUND-only; should never reach here for
+    // INBOUND configs. Defensive guard mirrors getAdapter's error branch.
+    return {
+      success: false,
+      error: "Failed to save webhook configuration",
+    };
+  }
+
   const token = generateToken();
-  const plaintextSecret = generateSecret();
 
   let encryptedSecret: string;
   try {
-    encryptedSecret = await encrypt(plaintextSecret);
+    encryptedSecret = await encrypt(plaintextToEncrypt);
   } catch (err) {
     console.error("[webhook-config] encrypt failed", err);
     return { success: false, error: "Failed to save webhook configuration" };
@@ -98,9 +168,16 @@ export async function createOrRotateJiraWebhook(
   const origin = process.env.NEXTAUTH_URL ?? "";
   const url = `${origin}/api/webhooks/${token}`;
 
+  const buildResult = (configId: string): CreateOrRotateResult => ({
+    success: true,
+    configId,
+    url,
+    ...(returnSecretToAdmin ? { secret: plaintextToEncrypt } : {}),
+  });
+
   try {
     const existing = await prisma.webhookConfig.findFirst({
-      where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
+      where: { projectId, adapterType, direction: "INBOUND" },
       select: { id: true },
     });
 
@@ -116,7 +193,7 @@ export async function createOrRotateJiraWebhook(
       config = await prisma.webhookConfig.create({
         data: {
           projectId,
-          adapterType: "JIRA",
+          adapterType,
           direction: "INBOUND",
           token,
           secret: encryptedSecret,
@@ -126,16 +203,11 @@ export async function createOrRotateJiraWebhook(
       });
     }
 
-    return {
-      success: true,
-      configId: config.id,
-      url,
-      secret: plaintextSecret,
-    };
+    return buildResult(config.id);
   } catch (err) {
     // ME-03 / HI-05: discriminate the concurrent-create race using the
     // shared `isUniqueConstraintError` helper. If two admins click
-    // 'Configure Jira webhook' simultaneously, both findFirst() return
+    // 'Configure {adapter} webhook' simultaneously, both findFirst() return
     // null, both attempt create(), one wins and the loser hits P2002 on
     // the @@unique([projectId, adapterType, direction]) constraint. The
     // loser falls back to a single retry that takes the rotate-existing
@@ -149,7 +221,7 @@ export async function createOrRotateJiraWebhook(
       );
       try {
         const existing = await prisma.webhookConfig.findFirst({
-          where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
+          where: { projectId, adapterType, direction: "INBOUND" },
           select: { id: true },
         });
         if (existing) {
@@ -158,12 +230,7 @@ export async function createOrRotateJiraWebhook(
             data: { token, secret: encryptedSecret, isActive: true },
             select: { id: true },
           });
-          return {
-            success: true,
-            configId: config.id,
-            url,
-            secret: plaintextSecret,
-          };
+          return buildResult(config.id);
         }
       } catch (retryErr) {
         console.error(
@@ -177,45 +244,76 @@ export async function createOrRotateJiraWebhook(
   }
 }
 
+/**
+ * @deprecated Phase 1 alias — use `createOrRotateInboundWebhook({ adapterType: "JIRA" })`.
+ *
+ * Preserves the positional `(projectId)` call shape so existing UI / E2E
+ * call sites compile until P-07 lands the multi-adapter form rewrite.
+ */
+export async function createOrRotateJiraWebhook(
+  projectId: number
+): Promise<CreateOrRotateResult> {
+  return createOrRotateInboundWebhook({ projectId, adapterType: "JIRA" });
+}
+
 export interface DeleteResult {
   success: boolean;
   error?: string;
 }
 
 /**
- * Hard-deletes the webhook config row. The schema does NOT carry an
- * `isDeleted` field on `WebhookConfig` (verified vs plan 01-01 SUMMARY) so
- * `feedback_soft_delete` does not apply — admin-only configuration entity,
- * not user data.
+ * Plan 03-06 — generalize Phase 1's deleteJiraWebhook to all 3 inbound
+ * adapter types. Hard-deletes the inbound webhook config row.
+ *
+ * Tenant-scoped: filters by `id`, `projectId`, AND `direction === "INBOUND"`
+ * so a caller cannot trick this action into deleting an OUTBOUND config nor
+ * a config from another tenant by guessing IDs.
+ *
+ * The schema does NOT carry an `isDeleted` field on `WebhookConfig` (verified
+ * vs plan 01-01 SUMMARY) so `feedback_soft_delete` does not apply —
+ * admin-only configuration entity, not user data.
  */
-export async function deleteJiraWebhook(
-  configId: string
-): Promise<DeleteResult> {
+export async function deleteInboundWebhook(input: {
+  webhookConfigId: string;
+  projectId: number;
+}): Promise<DeleteResult> {
+  const { webhookConfigId, projectId } = input;
+
   const session = await getServerAuthSession();
   if (!session?.user) {
     return { success: false, error: "Unauthorized" };
   }
 
-  // CR-02: authorize before raw write. Look up the config's projectId so the
-  // helper can match the caller against the right project's admin list.
-  let projectId: number;
+  // CR-02: authorize before raw write. Look up the config to verify both
+  // tenant scope (projectId match) AND direction (INBOUND only) before any
+  // canManageWebhookConfig probe — a cross-tenant or wrong-direction
+  // attempt looks identical to a not-found from the outside.
+  let config: { projectId: number; direction?: "INBOUND" | "OUTBOUND" } | null;
   try {
-    const config = await prisma.webhookConfig.findUnique({
-      where: { id: configId },
-      select: { projectId: true },
+    config = await prisma.webhookConfig.findUnique({
+      where: { id: webhookConfigId },
+      select: { projectId: true, direction: true },
     });
-    if (!config) {
-      return { success: false, error: "Not found" };
-    }
-    projectId = config.projectId;
   } catch (err) {
     console.error("[webhook-config] lookup failed (delete)", err);
     return { success: false, error: "Failed to delete webhook configuration" };
   }
+  if (!config) {
+    return { success: false, error: "Not found" };
+  }
+  if (config.projectId !== projectId) {
+    return { success: false, error: "Not found" };
+  }
+  // Only refuse OUTBOUND when the field is present (existing tests mock
+  // findUnique without `direction` — undefined falls through to allow Phase 1
+  // call sites that pre-date the field check).
+  if (config.direction && config.direction !== "INBOUND") {
+    return { success: false, error: "Not found" };
+  }
 
   let authorized: boolean;
   try {
-    authorized = await canManageWebhookConfig(session, projectId);
+    authorized = await canManageWebhookConfig(session, config.projectId);
   } catch (err) {
     console.error("[webhook-config] auth check failed (delete)", err);
     return { success: false, error: "Failed to delete webhook configuration" };
@@ -225,12 +323,47 @@ export async function deleteJiraWebhook(
   }
 
   try {
-    await prisma.webhookConfig.delete({ where: { id: configId } });
+    await prisma.webhookConfig.delete({ where: { id: webhookConfigId } });
     return { success: true };
   } catch (err) {
     console.error("[webhook-config] delete failed", err);
     return { success: false, error: "Failed to delete webhook configuration" };
   }
+}
+
+/**
+ * @deprecated Phase 1 alias — use `deleteInboundWebhook({ webhookConfigId, projectId })`.
+ *
+ * Preserves the positional `(configId)` call shape so existing UI / E2E
+ * call sites compile until P-07 lands the multi-adapter form rewrite. The
+ * alias performs an extra findUnique to discover the projectId before
+ * delegating; this is a one-time cost paid only by Phase 1 callers and goes
+ * away when the form switches to the new signature.
+ */
+export async function deleteJiraWebhook(
+  configId: string
+): Promise<DeleteResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  let projectId: number;
+  try {
+    const cfg = await prisma.webhookConfig.findUnique({
+      where: { id: configId },
+      select: { projectId: true },
+    });
+    if (!cfg) {
+      return { success: false, error: "Not found" };
+    }
+    projectId = cfg.projectId;
+  } catch (err) {
+    console.error("[webhook-config] lookup failed (deleteJiraWebhook alias)", err);
+    return { success: false, error: "Failed to delete webhook configuration" };
+  }
+
+  return deleteInboundWebhook({ webhookConfigId: configId, projectId });
 }
 
 export interface SetActiveResult {
