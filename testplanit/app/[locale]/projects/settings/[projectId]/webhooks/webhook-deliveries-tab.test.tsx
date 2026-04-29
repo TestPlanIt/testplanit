@@ -1,10 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -49,11 +43,33 @@ vi.mock("sonner", () => ({
   },
 }));
 
-// next/navigation: searchParams + router.replace + pathname stubs.
+// next/navigation: searchParams + router.replace + pathname stubs. We also
+// stub `redirect`/`permanentRedirect` because `~/lib/navigation` calls
+// `createNavigation()` from next-intl which probes for these on import.
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mockSearchParams.current),
   usePathname: () => "/projects/settings/42/webhooks",
-  useRouter: () => ({ replace: (...args: any[]) => mockRouterReplace(...args) }),
+  useRouter: () => ({
+    replace: (...args: any[]) => mockRouterReplace(...args),
+  }),
+  redirect: () => undefined,
+  permanentRedirect: () => undefined,
+  notFound: () => undefined,
+  useParams: () => ({ projectId: "42" }),
+}));
+
+// Stub `~/lib/navigation` directly so we don't pull in next-intl's
+// createNavigation factory at module-load time.
+vi.mock("~/lib/navigation", () => ({
+  Link: ({ children }: any) => <>{children}</>,
+  redirect: () => undefined,
+  usePathname: () => "/projects/settings/42/webhooks",
+  useRouter: () => ({
+    replace: (...args: any[]) => mockRouterReplace(...args),
+    push: (...args: any[]) => mockRouterReplace(...args),
+  }),
+  locales: ["en-US"],
+  languageNames: {},
 }));
 
 // next-intl translation passthrough with placeholder interpolation.
@@ -145,26 +161,39 @@ vi.mock("@/components/ui/sheet", () => ({
   SheetClose: ({ children }: any) => <span>{children}</span>,
 }));
 
-// Select stub: render an HTML select that fires onValueChange.
-vi.mock("@/components/ui/select", () => ({
-  Select: ({ children, value, onValueChange, ...rest }: any) => {
+// Select stub: walk the JSX tree (pre-render) to extract SelectItem value
+// pairs and the SelectTrigger props (data-testid, className) so the rendered
+// <select> carries the testid. We can't rely on rendering SelectTrigger
+// because we want a single <select> element to host the testid for RTL.
+const { SelectTriggerSentinel, SelectItemSentinel } = vi.hoisted(() => ({
+  SelectTriggerSentinel: Symbol("SelectTrigger"),
+  SelectItemSentinel: Symbol("SelectItem"),
+}));
+
+vi.mock("@/components/ui/select", () => {
+  function Select({ children, value, onValueChange }: any) {
     const items: Array<{ value: string; label: React.ReactNode }> = [];
-    const collect = (nodes: React.ReactNode) => {
+    let triggerProps: Record<string, unknown> = {};
+    const walk = (nodes: React.ReactNode) => {
       React.Children.forEach(nodes, (child) => {
         if (!React.isValidElement(child)) return;
+        const elementType: any = (child as any).type;
         const props: any = (child as any).props ?? {};
-        if (props["data-select-item"]) {
+        if (elementType?.__sentinel === SelectTriggerSentinel) {
+          const { children: _c, ...rest } = props;
+          triggerProps = rest;
+        } else if (elementType?.__sentinel === SelectItemSentinel) {
           items.push({ value: props.value, label: props.children });
         }
-        if (props.children) collect(props.children);
+        if (props.children) walk(props.children);
       });
     };
-    collect(children);
+    walk(children);
     return (
       <select
         value={value ?? ""}
         onChange={(e) => onValueChange?.(e.target.value)}
-        {...rest}
+        {...triggerProps}
       >
         {items.map((it) => (
           <option key={it.value} value={it.value}>
@@ -173,18 +202,33 @@ vi.mock("@/components/ui/select", () => ({
         ))}
       </select>
     );
-  },
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectGroup: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children, ...rest }: any) => (
-    <span data-select-item value={value} {...rest}>
-      {children}
-    </span>
-  ),
-  SelectLabel: ({ children }: any) => <span>{children}</span>,
-  SelectTrigger: ({ children, ...rest }: any) => <span {...rest}>{children}</span>,
-  SelectValue: ({ children }: any) => <span>{children}</span>,
-}));
+  }
+  function SelectTrigger({ children, ...rest }: any) {
+    return (
+      <span {...rest} style={{ display: "none" }}>
+        {children}
+      </span>
+    );
+  }
+  (SelectTrigger as any).__sentinel = SelectTriggerSentinel;
+  function SelectItem({ value, children, ...rest }: any) {
+    return (
+      <span value={value} {...rest} style={{ display: "none" }}>
+        {children}
+      </span>
+    );
+  }
+  (SelectItem as any).__sentinel = SelectItemSentinel;
+  return {
+    Select,
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectGroup: ({ children }: any) => <>{children}</>,
+    SelectItem,
+    SelectLabel: ({ children }: any) => <span>{children}</span>,
+    SelectTrigger,
+    SelectValue: ({ children }: any) => <span>{children}</span>,
+  };
+});
 
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: any) => <div>{children}</div>,
@@ -339,9 +383,7 @@ describe("WebhookDeliveriesTab", () => {
   // body. We assert the deliveries tab can render in isolation.
   it("Test 1: renders the deliveries tab root testid in isolation", () => {
     render(<WebhookDeliveriesTab projectId={42} />);
-    expect(
-      screen.getByTestId("webhook-deliveries-tab")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("webhook-deliveries-tab")).toBeInTheDocument();
   });
 
   it("Test 2: renders empty state and reset button when no rows match", () => {
@@ -402,15 +444,15 @@ describe("WebhookDeliveriesTab", () => {
     expect(
       screen.getByTestId("webhook-drawer-status-code").textContent
     ).toContain("500");
-    expect(
-      screen.getByTestId("webhook-drawer-latency").textContent
-    ).toContain("1234");
+    expect(screen.getByTestId("webhook-drawer-latency").textContent).toContain(
+      "1234"
+    );
     expect(screen.getByTestId("webhook-drawer-error").textContent).toContain(
       "5xx upstream"
     );
-    expect(
-      screen.getByTestId("webhook-drawer-attempt").textContent
-    ).toContain("7");
+    expect(screen.getByTestId("webhook-drawer-attempt").textContent).toContain(
+      "7"
+    );
     expect(
       screen.getByTestId("webhook-drawer-received-at")
     ).toBeInTheDocument();
