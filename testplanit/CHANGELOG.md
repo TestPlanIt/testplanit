@@ -1,3 +1,9 @@
+## [0.22.22](https://github.com/TestPlanIt/testplanit/compare/v0.22.21...v0.22.22) (2026-04-29)
+
+### Bug Fixes
+
+* minor UI polish and form-submission bug sweep ([#260](https://github.com/TestPlanIt/testplanit/issues/260)) ([7da0162](https://github.com/TestPlanIt/testplanit/commit/7da016250f4fc700f441bbbf1f78296989fa3e84)), closes [#result-history](https://github.com/TestPlanIt/testplanit/issues/result-history)
+
 ## [0.22.21](https://github.com/TestPlanIt/testplanit/compare/v0.22.20...v0.22.21) (2026-04-29)
 
 ### Enhancements
