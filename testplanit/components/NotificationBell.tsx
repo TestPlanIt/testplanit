@@ -190,8 +190,6 @@ export function NotificationBell() {
     },
     {
       enabled: !!session?.user?.id,
-      refetchInterval: 5 * 60 * 1000, // 5-minute redundancy net while SSE rollout is verified (UI-02 / D-23). Wave 5 removes this line entirely.
-      refetchIntervalInBackground: true, // Continue polling when tab is not visible
     }
   );
 
@@ -211,7 +209,8 @@ export function NotificationBell() {
 
   // SSE wake-up: open EventSource when authenticated; refetch on each event.
   // Read path remains useFindManyNotification → getEnhancedDb (Architectural Directive 2 / ISO-02).
-  // The existing refetchInterval stays in place this wave (defense in depth — D-23).
+  // SSE is the sole update source — no polling fallback remains (UI-03 / D-23).
+  // Reconnect → server emits {event:"sync"} → onmessage → refetch catches anything missed.
   useEffect(() => {
     if (!session?.user?.id) return;
     if (typeof window === "undefined" || typeof EventSource === "undefined") {

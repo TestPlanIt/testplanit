@@ -174,6 +174,7 @@ describe("NotificationBell", () => {
   it("should query notifications for current user", () => {
     render(<NotificationBell />);
 
+    // Wave 5: SSE is the sole update source; no refetchInterval / refetchIntervalInBackground.
     expect(useFindManyNotification).toHaveBeenCalledWith(
       {
         where: {
@@ -187,10 +188,15 @@ describe("NotificationBell", () => {
       },
       {
         enabled: true,
-        refetchInterval: 5 * 60 * 1000,
-        refetchIntervalInBackground: true,
       }
     );
+
+    const lastCallOptions = vi
+      .mocked(useFindManyNotification)
+      .mock.calls.at(-1)?.[1] as Record<string, unknown> | undefined;
+    expect(lastCallOptions).toBeDefined();
+    expect(lastCallOptions).not.toHaveProperty("refetchInterval");
+    expect(lastCallOptions).not.toHaveProperty("refetchIntervalInBackground");
   });
 
   it("should not query notifications when no session", () => {
@@ -198,10 +204,9 @@ describe("NotificationBell", () => {
 
     render(<NotificationBell />);
 
+    // Wave 5: no refetchInterval / refetchIntervalInBackground — SSE is sole update source.
     expect(useFindManyNotification).toHaveBeenCalledWith(expect.any(Object), {
       enabled: false,
-      refetchInterval: 5 * 60 * 1000,
-      refetchIntervalInBackground: true,
     });
   });
 
