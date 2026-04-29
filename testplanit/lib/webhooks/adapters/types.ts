@@ -27,7 +27,9 @@ export interface VerifyFail {
     | "malformed-signature"
     | "signature-mismatch"
     | "unparseable-body"
-    | "missing-required-field";
+    | "missing-required-field"
+    | "missing-auth"
+    | "auth-mismatch";
 }
 
 export type VerifyResult = VerifyOk | VerifyFail;
@@ -39,6 +41,21 @@ export interface WebhookAdapter {
    * MUST NOT do I/O (no DB, no fetch, no fs). All I/O happens in the route handler.
    */
   verify(rawBody: Buffer, headers: Headers, secret: string): VerifyResult;
+  /**
+   * D-03 / WBHK-10 — extract the external system reference for the linked
+   * Issue lookup. Returns null when the payload has no extractable ref.
+   * NOTE: `externalSystem` is informational metadata carried in audit logs
+   * and is NOT used as a DB filter (Issue lookup uses externalKey + projectId).
+   */
+  extractLinkedIssueRef(payload: unknown): {
+    externalKey: string;
+    externalSystem: AdapterType;
+  } | null;
+  /**
+   * D-02 / WBHK-08 — extract the external status string from the payload.
+   * Returns null when the event doesn't carry status (routes to D-15 no_handler skip).
+   */
+  extractExternalStatus(payload: unknown, eventType: string): string | null;
 }
 
 // =============================================================================

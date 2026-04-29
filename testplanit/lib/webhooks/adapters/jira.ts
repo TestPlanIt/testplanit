@@ -108,4 +108,20 @@ export const jiraAdapter: WebhookAdapter = {
     }
     return { valid: true, payload };
   },
+
+  extractLinkedIssueRef(payload) {
+    const p = payload as { issue?: { key?: unknown } };
+    const key = p.issue?.key;
+    if (typeof key !== "string" || key.length === 0) return null;
+    return { externalKey: key, externalSystem: "JIRA" satisfies AdapterType };
+  },
+
+  extractExternalStatus(payload, eventType) {
+    if (eventType !== "jira:issue_updated") return null;
+    const p = payload as {
+      issue?: { fields?: { status?: { name?: unknown } } };
+    };
+    const name = p.issue?.fields?.status?.name;
+    return typeof name === "string" ? name : null;
+  },
 };
