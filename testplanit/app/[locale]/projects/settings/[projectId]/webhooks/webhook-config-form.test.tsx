@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -107,7 +113,9 @@ vi.mock("@/components/ui/input", () => ({
 }));
 
 vi.mock("@/components/ui/label", () => ({
-  Label: ({ children, htmlFor }: any) => <label htmlFor={htmlFor}>{children}</label>,
+  Label: ({ children, htmlFor }: any) => (
+    <label htmlFor={htmlFor}>{children}</label>
+  ),
 }));
 
 // Radix RadioGroup stubs: a controlled radiogroup. RadioGroup tracks `value`
@@ -231,7 +239,7 @@ const adoConfig = {
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
 
-function setConfigs(configs: typeof jiraConfig[]) {
+function setConfigs(configs: (typeof jiraConfig)[]) {
   mockFindManyWebhookConfig.mockReturnValue({
     data: configs,
     isLoading: false,
@@ -254,7 +262,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
   it("Test 1: renders empty state with inboundAddButton when no configs exist", () => {
     setConfigs([]);
     render(<WebhookConfigForm projectId={42} />);
-    expect(screen.getByTestId("webhook-inbound-add-button")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-add-button")
+    ).toBeInTheDocument();
     // Empty-state copy from the inboundEmpty key
     expect(screen.getByText("inboundEmpty")).toBeInTheDocument();
   });
@@ -289,24 +299,36 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     // Stable inner testids preserved from Phase 1
     expect(within(card).getByTestId("webhook-url")).toBeInTheDocument();
     expect(within(card).getByTestId("webhook-secret")).toBeInTheDocument();
-    expect(within(card).getByTestId("webhook-send-test-button")).toBeInTheDocument();
-    expect(within(card).getByTestId("webhook-rotate-button")).toBeInTheDocument();
-    expect(within(card).getByTestId("webhook-delete-button")).toBeInTheDocument();
+    expect(
+      within(card).getByTestId("webhook-send-test-button")
+    ).toBeInTheDocument();
+    expect(
+      within(card).getByTestId("webhook-rotate-button")
+    ).toBeInTheDocument();
+    expect(
+      within(card).getByTestId("webhook-delete-button")
+    ).toBeInTheDocument();
   });
 
   it("Test 5: renders Jira + GitHub cards when both configs exist; both per-card root testids present", () => {
     setConfigs([jiraConfig, githubConfig]);
     render(<WebhookConfigForm projectId={42} />);
     expect(screen.getByTestId("webhook-inbound-card-jira")).toBeInTheDocument();
-    expect(screen.getByTestId("webhook-inbound-card-github")).toBeInTheDocument();
-    expect(screen.queryByTestId("webhook-inbound-card-ado")).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-card-github")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("webhook-inbound-card-ado")
+    ).not.toBeInTheDocument();
   });
 
   it("Test 6: renders all 3 cards when JIRA + GITHUB + ADO configs exist", () => {
     setConfigs([jiraConfig, githubConfig, adoConfig]);
     render(<WebhookConfigForm projectId={42} />);
     expect(screen.getByTestId("webhook-inbound-card-jira")).toBeInTheDocument();
-    expect(screen.getByTestId("webhook-inbound-card-github")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-card-github")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("webhook-inbound-card-ado")).toBeInTheDocument();
   });
 
@@ -316,9 +338,15 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     setConfigs([]);
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    expect(screen.getByTestId("webhook-inbound-chooser-jira")).toBeInTheDocument();
-    expect(screen.getByTestId("webhook-inbound-chooser-github")).toBeInTheDocument();
-    expect(screen.getByTestId("webhook-inbound-chooser-ado")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-chooser-jira")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-chooser-github")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-chooser-ado")
+    ).toBeInTheDocument();
   });
 
   it("Test 8: chooser disables JIRA radio when JIRA config already exists", () => {
@@ -326,8 +354,12 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
     expect(screen.getByTestId("webhook-inbound-chooser-jira")).toBeDisabled();
-    expect(screen.getByTestId("webhook-inbound-chooser-github")).not.toBeDisabled();
-    expect(screen.getByTestId("webhook-inbound-chooser-ado")).not.toBeDisabled();
+    expect(
+      screen.getByTestId("webhook-inbound-chooser-github")
+    ).not.toBeDisabled();
+    expect(
+      screen.getByTestId("webhook-inbound-chooser-ado")
+    ).not.toBeDisabled();
   });
 
   it("Test 9: chooser shows ADO username + password inputs after submitting AZURE_DEVOPS selection", () => {
@@ -336,8 +368,12 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
     fireEvent.click(screen.getByTestId("webhook-inbound-chooser-ado"));
     fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
-    expect(screen.getByTestId("webhook-inbound-ado-username-input")).toBeInTheDocument();
-    expect(screen.getByTestId("webhook-inbound-ado-password-input")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-ado-username-input")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-inbound-ado-password-input")
+    ).toBeInTheDocument();
   });
 
   it("Test 10: ADO scope hint is visible on the ADO create form", () => {
@@ -473,9 +509,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
       expect(mockSendTest).toHaveBeenCalledWith("cfg-github");
     });
     await waitFor(() => {
-      expect(within(ghCard).getByTestId("webhook-test-result").textContent).toContain(
-        "duplicate"
-      );
+      expect(
+        within(ghCard).getByTestId("webhook-test-result").textContent
+      ).toContain("duplicate");
     });
   });
 
@@ -486,15 +522,21 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     render(<WebhookConfigForm projectId={42} />);
     const jiraCard = screen.getByTestId("webhook-inbound-card-jira");
     const ghCard = screen.getByTestId("webhook-inbound-card-github");
-    expect(within(jiraCard).getByTestId("webhook-rotate-button")).toBeInTheDocument();
-    expect(within(ghCard).getByTestId("webhook-rotate-button")).toBeInTheDocument();
+    expect(
+      within(jiraCard).getByTestId("webhook-rotate-button")
+    ).toBeInTheDocument();
+    expect(
+      within(ghCard).getByTestId("webhook-rotate-button")
+    ).toBeInTheDocument();
   });
 
   it("Test 18: rotate button is NOT rendered on the ADO card (paired credentials, no single secret to rotate)", () => {
     setConfigs([adoConfig]);
     render(<WebhookConfigForm projectId={42} />);
     const adoCard = screen.getByTestId("webhook-inbound-card-ado");
-    expect(within(adoCard).queryByTestId("webhook-rotate-button")).not.toBeInTheDocument();
+    expect(
+      within(adoCard).queryByTestId("webhook-rotate-button")
+    ).not.toBeInTheDocument();
   });
 
   // ─── Delete confirmation via shadcn AlertDialog ──────────────────────
@@ -580,9 +622,15 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     // Stable inner testids — the very ones Phase 1's E2E spec relies on
     expect(within(card).getByTestId("webhook-url")).toBeInTheDocument();
     expect(within(card).getByTestId("webhook-secret")).toBeInTheDocument();
-    expect(within(card).getByTestId("webhook-send-test-button")).toBeInTheDocument();
-    expect(within(card).getByTestId("webhook-rotate-button")).toBeInTheDocument();
-    expect(within(card).getByTestId("webhook-delete-button")).toBeInTheDocument();
+    expect(
+      within(card).getByTestId("webhook-send-test-button")
+    ).toBeInTheDocument();
+    expect(
+      within(card).getByTestId("webhook-rotate-button")
+    ).toBeInTheDocument();
+    expect(
+      within(card).getByTestId("webhook-delete-button")
+    ).toBeInTheDocument();
     // Secret is masked (not the full token)
     expect(within(card).getByTestId("webhook-secret").textContent).toBe(
       "secretMasked"

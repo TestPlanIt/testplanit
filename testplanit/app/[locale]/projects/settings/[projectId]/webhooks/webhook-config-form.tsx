@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -25,19 +29,34 @@ import { toast } from "sonner";
 
 import {
   type SendTestWebhookResult,
-  createOrRotateJiraWebhook,
-  deleteJiraWebhook,
+  createOrRotateInboundWebhook,
+  deleteInboundWebhook,
   sendTestWebhook,
   setWebhookActive,
 } from "~/app/actions/webhook-config";
-import { useFindFirstWebhookConfig } from "~/lib/hooks";
+import { useFindManyWebhookConfig } from "~/lib/hooks";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 
 interface WebhookConfigFormProps {
   projectId: number;
 }
 
+type InboundAdapterType = "JIRA" | "GITHUB" | "AZURE_DEVOPS";
+
+interface InboundConfig {
+  id: string;
+  projectId: number;
+  adapterType: InboundAdapterType;
+  direction: string;
+  token: string;
+  isActive: boolean;
+  lastReceivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface RevealedSecret {
+  configId: string;
   url: string;
   secret: string;
 }
@@ -49,38 +68,70 @@ interface TestResultDisplay {
   error?: string;
 }
 
+const ADAPTER_OPTIONS: ReadonlyArray<{
+  value: InboundAdapterType;
+  labelKey: "inboundChooserJira" | "inboundChooserGithub" | "inboundChooserAdo";
+  testid: string;
+}> = [
+  {
+    value: "JIRA",
+    labelKey: "inboundChooserJira",
+    testid: "webhook-inbound-chooser-jira",
+  },
+  {
+    value: "GITHUB",
+    labelKey: "inboundChooserGithub",
+    testid: "webhook-inbound-chooser-github",
+  },
+  {
+    value: "AZURE_DEVOPS",
+    labelKey: "inboundChooserAdo",
+    testid: "webhook-inbound-chooser-ado",
+  },
+];
+
+function adapterSlug(
+  adapterType: InboundAdapterType
+): "jira" | "github" | "ado" {
+  if (adapterType === "JIRA") return "jira";
+  if (adapterType === "GITHUB") return "github";
+  return "ado";
+}
+
+function adapterTitleKey(
+  adapterType: InboundAdapterType
+): "inboundJiraTitle" | "inboundGithubTitle" | "inboundAdoTitle" {
+  if (adapterType === "JIRA") return "inboundJiraTitle";
+  if (adapterType === "GITHUB") return "inboundGithubTitle";
+  return "inboundAdoTitle";
+}
+
 /**
- * Project admin form for configuring a Jira INBOUND webhook (D-18 / D-19 / D-20).
+ * Project admin form for INBOUND webhook configs (Phase 3 / D-16..D-21).
  *
- * Reads via the auto-generated `useFindFirstWebhookConfig` hook (ZenStack
- * policy enforces project-admin gate; non-admins see no row, so the form
- * stays in "no config" mode invisibly to them).
+ * Multi-card layout: one Card per `WebhookConfig` row where direction is
+ * INBOUND. Add-button opens an adapter chooser (Jira / GitHub / Azure DevOps);
+ * the schema's `@@unique([projectId, adapterType, direction])` constraint
+ * enforces one config per adapter per project, surfaced in the UI as
+ * "Already configured" disabled radio options.
  *
- * Writes — token mint, secret encryption, and the self-loop synthetic ping —
- * all run server-side via `~/app/actions/webhook-config` (WARNING #8). The
- * browser only ever holds the freshly-revealed `{ url, secret }` pair in
- * `useState`, never receives the secret again on subsequent loads.
+ * HI-01: the read `select` clause excludes the encrypted `secret` column —
+ * post-create / post-rotate plaintext only ever reaches the browser via the
+ * server-action return value, held in `revealed` state until dismissed.
  *
- * SC#5 demo lock surfaces naturally: the form just renders whatever
- * `outcome` the server action returns. With a byte-identical synthetic
- * payload, the receiver returns 'synthetic' on the first click and
- * 'duplicate' on the second.
+ * Per-card scoping uses `data-testid="webhook-inbound-card-{slug}"` on the
+ * Card root; inner action testids are stable across all cards
+ * (webhook-url, webhook-secret, webhook-send-test-button, webhook-test-result,
+ * webhook-rotate-button, webhook-delete-button) so Phase 1's E2E spec keeps
+ * passing without modification.
  */
 export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const t = useTranslations("projects.settings.webhooks");
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
 
-  // Explicit `select` excludes the encrypted `secret` field — the form never
-  // displays it, but auto-generated ZenStack hooks ship every scalar by
-  // default. Don't send encrypted secrets to the browser even if encrypted
-  // at rest (HI-01).
-  const {
-    data: webhook,
-    isLoading,
-    refetch,
-  } = useFindFirstWebhookConfig({
-    where: { projectId, adapterType: "JIRA", direction: "INBOUND" },
+  const { data, isLoading, refetch } = useFindManyWebhookConfig({
+    where: { projectId, direction: "INBOUND" },
     select: {
       id: true,
       projectId: true,
@@ -94,78 +145,140 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     },
   });
 
+  const configs = (data ?? []) as unknown as InboundConfig[];
+  const usedAdapters = new Set<InboundAdapterType>(
+    configs.map((c) => c.adapterType)
+  );
+  const allConfigured = ADAPTER_OPTIONS.every((opt) =>
+    usedAdapters.has(opt.value)
+  );
 
-  const [revealed, setRevealed] = useState<RevealedSecret | null>(null);
-  const [testResult, setTestResult] = useState<TestResultDisplay | null>(null);
+  // ─── Chooser + create form state ─────────────────────────────────────
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [chosenAdapter, setChosenAdapter] = useState<InboundAdapterType | null>(
+    null
+  );
+  const [adoUsername, setAdoUsername] = useState("");
+  const [adoPassword, setAdoPassword] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [isRotating, setIsRotating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSendingTest, setIsSendingTest] = useState(false);
-  const [rotateDialogOpen, setRotateDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [revealed, setRevealed] = useState<RevealedSecret | null>(null);
+
+  // ─── Per-card local state ────────────────────────────────────────────
+  const [rotateDialogConfigId, setRotateDialogConfigId] = useState<
+    string | null
+  >(null);
+  const [deleteDialogConfigId, setDeleteDialogConfigId] = useState<
+    string | null
+  >(null);
+  const [testResults, setTestResults] = useState<
+    Record<string, TestResultDisplay>
+  >({});
+  const [pendingTestConfigId, setPendingTestConfigId] = useState<string | null>(
+    null
+  );
 
   if (isLoading) {
     return null;
   }
 
-  // Non-admin members see no row from the policy-enforced read; render
-  // nothing so they don't see a form they can't use.
-  const handleCreate = async () => {
+  // ─── Handlers ────────────────────────────────────────────────────────
+
+  function resetCreateState() {
+    setChooserOpen(false);
+    setChosenAdapter(null);
+    setAdoUsername("");
+    setAdoPassword("");
+  }
+
+  async function handleCreate() {
+    if (!chosenAdapter) return;
     setIsCreating(true);
-    setTestResult(null);
     try {
-      const result = await createOrRotateJiraWebhook(projectId);
-      if (result.success && result.url && result.secret) {
-        setRevealed({ url: result.url, secret: result.secret });
-        await refetch();
-      } else {
+      const input: Parameters<typeof createOrRotateInboundWebhook>[0] =
+        chosenAdapter === "AZURE_DEVOPS"
+          ? {
+              projectId,
+              adapterType: "AZURE_DEVOPS",
+              secretInput: {
+                kind: "AZURE_DEVOPS",
+                username: adoUsername,
+                password: adoPassword,
+              },
+            }
+          : { projectId, adapterType: chosenAdapter };
+      const result = await createOrRotateInboundWebhook(input);
+      if (!result.success) {
         toast.error(result.error ?? t("saveError"));
+        return;
       }
+      // JIRA + GITHUB return a freshly minted secret to reveal once.
+      // ADO does not (admin already typed the credentials).
+      if (result.url && result.secret && result.configId) {
+        setRevealed({
+          configId: result.configId,
+          url: result.url,
+          secret: result.secret,
+        });
+      }
+      resetCreateState();
+      await refetch();
     } finally {
       setIsCreating(false);
     }
-  };
+  }
 
-  const performRotate = async () => {
-    if (!webhook) return;
-    setRotateDialogOpen(false);
-    setIsRotating(true);
-    setTestResult(null);
+  async function performRotate(config: InboundConfig) {
+    setRotateDialogConfigId(null);
     try {
-      const result = await createOrRotateJiraWebhook(projectId);
-      if (result.success && result.url && result.secret) {
-        setRevealed({ url: result.url, secret: result.secret });
-        await refetch();
-      } else {
-        toast.error(result.error ?? t("saveError"));
-      }
-    } finally {
-      setIsRotating(false);
-    }
-  };
-
-  const performDelete = async () => {
-    if (!webhook) return;
-    setDeleteDialogOpen(false);
-    setIsDeleting(true);
-    setRevealed(null);
-    setTestResult(null);
-    try {
-      const result = await deleteJiraWebhook(webhook.id);
+      const result = await createOrRotateInboundWebhook({
+        projectId,
+        adapterType: config.adapterType,
+      });
       if (!result.success) {
         toast.error(result.error ?? t("saveError"));
+        return;
       }
-    } finally {
-      setIsDeleting(false);
+      if (result.url && result.secret && result.configId) {
+        setRevealed({
+          configId: result.configId,
+          url: result.url,
+          secret: result.secret,
+        });
+      }
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("saveError"));
     }
-  };
+  }
 
-  const handleToggleActive = async (next: boolean) => {
-    if (!webhook) return;
+  async function performDelete(config: InboundConfig) {
+    setDeleteDialogConfigId(null);
     try {
-      // CR-02: schema denies all client writes on WebhookConfig; isActive
-      // toggles flow through the dedicated server action.
-      const result = await setWebhookActive(webhook.id, next);
+      const result = await deleteInboundWebhook({
+        webhookConfigId: config.id,
+        projectId,
+      });
+      if (!result.success) {
+        toast.error(result.error ?? t("saveError"));
+        return;
+      }
+      // Clear any revealed secret tied to this config
+      setRevealed((prev) => (prev?.configId === config.id ? null : prev));
+      setTestResults((prev) => {
+        const { [config.id]: _drop, ...rest } = prev;
+        return rest;
+      });
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("saveError"));
+    }
+  }
+
+  async function handleToggleActive(config: InboundConfig, next: boolean) {
+    try {
+      // POSITIONAL call site (Path 2 lock — matches Phase 1 server-action
+      // signature at app/actions/webhook-config.ts:405-408).
+      const result = await setWebhookActive(config.id, next);
       if (!result.success) {
         toast.error(result.error ?? t("saveError"));
         return;
@@ -174,44 +287,274 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveError"));
     }
-  };
+  }
 
-  const handleSendTest = async () => {
-    if (!webhook) return;
-    setIsSendingTest(true);
+  async function handleSendTest(config: InboundConfig) {
+    setPendingTestConfigId(config.id);
     try {
-      const result = await sendTestWebhook(webhook.id);
-      setTestResult({
-        ok: result.ok,
-        statusCode: result.statusCode,
-        outcome: result.outcome,
-        error: result.error,
-      });
+      const result = await sendTestWebhook(config.id);
+      setTestResults((prev) => ({
+        ...prev,
+        [config.id]: {
+          ok: result.ok,
+          statusCode: result.statusCode,
+          outcome: result.outcome,
+          error: result.error,
+        },
+      }));
     } finally {
-      setIsSendingTest(false);
+      setPendingTestConfigId(null);
     }
-  };
+  }
 
-  const copy = async (value: string, message: string) => {
+  async function copy(value: string, message: string) {
     try {
       await navigator.clipboard.writeText(value);
       toast.success(message);
     } catch {
-      // Clipboard access can fail in non-secure contexts; surface but don't crash.
       toast.error(t("saveError"));
     }
-  };
+  }
 
-  const renderTestResult = () => {
-    if (!testResult) return null;
-    const message = testResult.ok
+  // ─── Renderers ───────────────────────────────────────────────────────
+
+  function renderChooser() {
+    return (
+      <Card data-testid="webhook-inbound-chooser">
+        <CardHeader>
+          <CardTitle>{t("inboundChooserTitle")}</CardTitle>
+          <CardDescription>{t("inboundChooserDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup
+            value={chosenAdapter ?? undefined}
+            onValueChange={(v: string) =>
+              setChosenAdapter(v as InboundAdapterType)
+            }
+          >
+            {ADAPTER_OPTIONS.map((opt) => {
+              const used = usedAdapters.has(opt.value);
+              return (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <RadioGroupItem
+                    value={opt.value}
+                    disabled={used}
+                    data-testid={opt.testid}
+                  />
+                  <span>{t(opt.labelKey)}</span>
+                  {used && (
+                    <span className="text-xs text-muted-foreground">
+                      {t("inboundChooserAlreadyConfigured")}
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </RadioGroup>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              data-testid="webhook-inbound-chooser-submit"
+              onClick={() => {
+                // Submit advances from chooser to adapter-specific create form
+                if (!chosenAdapter) return;
+                setChooserOpen(false);
+              }}
+              disabled={!chosenAdapter}
+            >
+              {t("inboundChooserSubmit")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="webhook-inbound-chooser-cancel"
+              onClick={resetCreateState}
+            >
+              {t("inboundChooserCancel")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderCreateForm() {
+    if (!chosenAdapter) return null;
+    const titleKey = adapterTitleKey(chosenAdapter);
+    return (
+      <Card
+        data-testid={`webhook-inbound-create-form-${adapterSlug(chosenAdapter)}`}
+      >
+        <CardHeader>
+          <CardTitle>{t(titleKey)}</CardTitle>
+          <CardDescription>
+            <Badge>{chosenAdapter}</Badge>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {chosenAdapter === "GITHUB" && (
+            <p className="text-xs text-muted-foreground">
+              {t("inboundGithubScopeHint")}
+            </p>
+          )}
+
+          {chosenAdapter === "AZURE_DEVOPS" && (
+            <>
+              <p className="text-xs text-muted-foreground">
+                {t("inboundAdoScopeHint")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("inboundAdoResourceDetailsHint")}
+              </p>
+              <div className="space-y-1">
+                <Label htmlFor="webhook-inbound-ado-username-input">
+                  {t("inboundAdoUsername")}
+                </Label>
+                <Input
+                  id="webhook-inbound-ado-username-input"
+                  data-testid="webhook-inbound-ado-username-input"
+                  value={adoUsername}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAdoUsername(e.target.value)
+                  }
+                  placeholder={t("inboundAdoUsernamePlaceholder")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("inboundAdoUsernameHelp")}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="webhook-inbound-ado-password-input">
+                  {t("inboundAdoPassword")}
+                </Label>
+                <Input
+                  id="webhook-inbound-ado-password-input"
+                  data-testid="webhook-inbound-ado-password-input"
+                  type="password"
+                  value={adoPassword}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAdoPassword(e.target.value)
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("inboundAdoPasswordHelp")}
+                </p>
+              </div>
+            </>
+          )}
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              data-testid="webhook-create-button"
+              onClick={handleCreate}
+              disabled={
+                isCreating ||
+                (chosenAdapter === "AZURE_DEVOPS" &&
+                  (adoUsername.length === 0 || adoPassword.length === 0))
+              }
+            >
+              {t("createButton")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="webhook-inbound-create-cancel"
+              onClick={resetCreateState}
+            >
+              {t("inboundChooserCancel")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderRevealedBox(rev: RevealedSecret) {
+    return (
+      <div
+        className="space-y-3 rounded-md border border-primary/40 bg-muted/30 p-3"
+        data-testid="webhook-inbound-revealed-box"
+      >
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground">
+            {t("url")}
+          </div>
+          <div className="flex items-center gap-2">
+            <code
+              data-testid="webhook-url"
+              className="flex-1 break-all text-xs"
+            >
+              {rev.url}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => copy(rev.url, t("urlCopied"))}
+              aria-label={t("copyUrl")}
+            >
+              {tActions("copyLink")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">{t("urlHelp")}</p>
+        </div>
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground">
+            {t("secret")}
+          </div>
+          <div className="flex items-center gap-2">
+            <code
+              data-testid="webhook-secret"
+              className="flex-1 break-all text-xs"
+            >
+              {rev.secret}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => copy(rev.secret, t("secretCopied"))}
+              aria-label={t("copySecret")}
+            >
+              {tActions("copy")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-primary/20">
+          <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
+            {t("nextSteps")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="webhook-reveal-done-button"
+            onClick={() => setRevealed(null)}
+          >
+            {t("revealDone")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderTestResult(configId: string) {
+    const result = testResults[configId];
+    if (!result) return null;
+    const message = result.ok
       ? t("testSuccess", {
-          statusCode: testResult.statusCode,
-          outcome: testResult.outcome ?? "",
+          statusCode: result.statusCode,
+          outcome: result.outcome ?? "",
         })
       : t("testFailure", {
-          statusCode: testResult.statusCode,
-          error: testResult.error ?? "",
+          statusCode: result.statusCode,
+          error: result.error ?? "",
         });
     return (
       <div
@@ -221,176 +564,161 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         {message}
       </div>
     );
-  };
+  }
 
-  return (
-    <Card data-testid="webhook-config-form">
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {revealed && (
-          <div className="space-y-3 rounded-md border border-primary/40 bg-muted/30 p-3">
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">
-                {t("url")}
-              </div>
-              <div className="flex items-center gap-2">
+  function renderConfigCard(config: InboundConfig) {
+    const slug = adapterSlug(config.adapterType);
+    const isHmacAdapter =
+      config.adapterType === "JIRA" || config.adapterType === "GITHUB";
+    const titleKey = adapterTitleKey(config.adapterType);
+    const isRevealedHere = revealed?.configId === config.id;
+    const url = `${
+      typeof window !== "undefined" ? window.location.origin : ""
+    }/api/webhooks/${config.token}`;
+    return (
+      <Card key={config.id} data-testid={`webhook-inbound-card-${slug}`}>
+        <CardHeader>
+          <CardTitle>{t(titleKey)}</CardTitle>
+          <CardDescription>
+            <Badge>{config.adapterType}</Badge>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {config.adapterType === "GITHUB" && (
+            <p className="text-xs text-muted-foreground">
+              {t("inboundGithubScopeHint")}
+            </p>
+          )}
+          {config.adapterType === "AZURE_DEVOPS" && (
+            <p className="text-xs text-muted-foreground">
+              {t("inboundAdoScopeHint")}
+            </p>
+          )}
+
+          {isRevealedHere && revealed && renderRevealedBox(revealed)}
+
+          {!isRevealedHere && (
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t("url")}
+                </div>
                 <code
                   data-testid="webhook-url"
-                  className="flex-1 break-all text-xs"
+                  className="block break-all text-xs"
                 >
-                  {revealed.url}
+                  {redactWebhookUrl(url)}
                 </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copy(revealed.url, t("urlCopied"))}
-                  aria-label={t("copyUrl")}
-                >
-                  {tActions("copyLink")}
-                </Button>
               </div>
-              <p className="text-xs text-muted-foreground">{t("urlHelp")}</p>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">
-                {t("secret")}
-              </div>
-              <div className="flex items-center gap-2">
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t("secret")}
+                </div>
                 <code
                   data-testid="webhook-secret"
-                  className="flex-1 break-all text-xs"
+                  className="block text-xs text-muted-foreground"
                 >
-                  {revealed.secret}
+                  {t("secretMasked")}
                 </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copy(revealed.secret, t("secretCopied"))}
-                  aria-label={t("copySecret")}
-                >
-                  {tActions("copy")}
-                </Button>
               </div>
-              <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-primary/20">
-              <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
-                {t("nextSteps")}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                data-testid="webhook-reveal-done-button"
-                onClick={() => setRevealed(null)}
-              >
-                {t("revealDone")}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!webhook && !revealed && (
-          <div className="flex flex-col items-start gap-2">
-            <p className="text-sm text-muted-foreground">{t("noConfig")}</p>
-            <Button
-              type="button"
-              data-testid="webhook-create-button"
-              onClick={handleCreate}
-              disabled={isCreating}
-            >
-              {t("createButton")}
-            </Button>
-          </div>
-        )}
-
-        {webhook && !revealed && (
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">
-                {t("url")}
+              <div className="text-xs text-muted-foreground">
+                {config.lastReceivedAt
+                  ? t("lastReceived", {
+                      timestamp: new Date(config.lastReceivedAt).toISOString(),
+                    })
+                  : t("lastReceivedNever")}
               </div>
-              <code
-                data-testid="webhook-url"
-                className="block break-all text-xs"
-              >
-                {redactWebhookUrl(
-                  `${typeof window !== "undefined" ? window.location.origin : ""}/api/webhooks/${webhook.token}`
-                )}
-              </code>
             </div>
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">
-                {t("secret")}
-              </div>
-              <code
-                data-testid="webhook-secret"
-                className="block text-xs text-muted-foreground"
-              >
-                {t("secretMasked")}
-              </code>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {webhook.lastReceivedAt
-                ? t("lastReceived", {
-                    timestamp: new Date(webhook.lastReceivedAt).toISOString(),
-                  })
-                : t("lastReceivedNever")}
-            </div>
-          </div>
-        )}
+          )}
 
-        {webhook && (
           <div className="flex items-center gap-2">
             <Switch
-              checked={webhook.isActive}
-              onCheckedChange={handleToggleActive}
+              checked={config.isActive}
+              onCheckedChange={(next: boolean) =>
+                void handleToggleActive(config, next)
+              }
               aria-label={t("isActive")}
             />
             <span className="text-sm">{t("isActive")}</span>
           </div>
-        )}
 
-        {webhook && (
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               data-testid="webhook-send-test-button"
-              onClick={handleSendTest}
-              disabled={isSendingTest}
+              onClick={() => handleSendTest(config)}
+              disabled={pendingTestConfigId === config.id}
             >
               {t("sendTest")}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="webhook-rotate-button"
-              onClick={() => setRotateDialogOpen(true)}
-              disabled={isRotating}
-            >
-              {t("rotateSecret")}
-            </Button>
+            {isHmacAdapter && (
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="webhook-rotate-button"
+                onClick={() => setRotateDialogConfigId(config.id)}
+              >
+                {t("rotateSecret")}
+              </Button>
+            )}
             <Button
               type="button"
               variant="destructive"
               data-testid="webhook-delete-button"
-              onClick={() => setDeleteDialogOpen(true)}
-              disabled={isDeleting}
+              onClick={() => setDeleteDialogConfigId(config.id)}
             >
               {tActions("delete")}
             </Button>
           </div>
+
+          {renderTestResult(config.id)}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ─── Top-level layout ────────────────────────────────────────────────
+
+  const inCreateFlow = chooserOpen || chosenAdapter !== null;
+  const rotateConfig = configs.find((c) => c.id === rotateDialogConfigId);
+  const deleteConfig = configs.find((c) => c.id === deleteDialogConfigId);
+
+  return (
+    <div className="space-y-4" data-testid="webhook-config-form">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
+        {!inCreateFlow && !allConfigured && (
+          <Button
+            type="button"
+            data-testid="webhook-inbound-add-button"
+            onClick={() => {
+              setChooserOpen(true);
+              setChosenAdapter(null);
+            }}
+          >
+            {t("inboundAddButton")}
+          </Button>
         )}
+      </div>
 
-        {renderTestResult()}
-      </CardContent>
+      {chooserOpen && renderChooser()}
+      {!chooserOpen && chosenAdapter !== null && renderCreateForm()}
 
-      <AlertDialog open={rotateDialogOpen} onOpenChange={setRotateDialogOpen}>
+      {configs.length === 0 && !inCreateFlow ? (
+        <div
+          data-testid="webhook-inbound-empty"
+          className="rounded-md border p-6 text-center text-sm text-muted-foreground"
+        >
+          {t("inboundEmpty")}
+        </div>
+      ) : (
+        <div className="space-y-4">{configs.map(renderConfigCard)}</div>
+      )}
+
+      <AlertDialog
+        open={rotateDialogConfigId !== null}
+        onOpenChange={(open) => !open && setRotateDialogConfigId(null)}
+      >
         <AlertDialogContent data-testid="webhook-rotate-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("rotateConfirmTitle")}</AlertDialogTitle>
@@ -404,7 +732,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </AlertDialogCancel>
             <AlertDialogAction
               data-testid="webhook-rotate-dialog-confirm"
-              onClick={performRotate}
+              onClick={() => {
+                if (rotateConfig) void performRotate(rotateConfig);
+              }}
             >
               {t("rotateSecret")}
             </AlertDialogAction>
@@ -412,7 +742,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog
+        open={deleteDialogConfigId !== null}
+        onOpenChange={(open) => !open && setDeleteDialogConfigId(null)}
+      >
         <AlertDialogContent data-testid="webhook-delete-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
@@ -426,7 +759,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </AlertDialogCancel>
             <AlertDialogAction
               data-testid="webhook-delete-dialog-confirm"
-              onClick={performDelete}
+              onClick={() => {
+                if (deleteConfig) void performDelete(deleteConfig);
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {tActions("delete")}
@@ -434,6 +769,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
 }
