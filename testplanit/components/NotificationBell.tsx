@@ -190,7 +190,7 @@ export function NotificationBell() {
     },
     {
       enabled: !!session?.user?.id,
-      refetchInterval: isOpen ? 5000 : 30000, // Poll every 5 seconds when open, 30 seconds when closed
+      refetchInterval: 5 * 60 * 1000, // 5-minute redundancy net while SSE rollout is verified (UI-02 / D-23). Wave 5 removes this line entirely.
       refetchIntervalInBackground: true, // Continue polling when tab is not visible
     }
   );

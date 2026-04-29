@@ -187,7 +187,7 @@ describe("NotificationBell", () => {
       },
       {
         enabled: true,
-        refetchInterval: 30000,
+        refetchInterval: 5 * 60 * 1000,
         refetchIntervalInBackground: true,
       }
     );
@@ -200,7 +200,7 @@ describe("NotificationBell", () => {
 
     expect(useFindManyNotification).toHaveBeenCalledWith(expect.any(Object), {
       enabled: false,
-      refetchInterval: 30000,
+      refetchInterval: 5 * 60 * 1000,
       refetchIntervalInBackground: true,
     });
   });
