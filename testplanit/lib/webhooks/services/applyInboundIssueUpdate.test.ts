@@ -680,14 +680,23 @@ describe("applyInboundIssueUpdate", () => {
 
     expect(result.outcome).toBe("no_handler");
     expect(result.deliveryId).toBe("del_1");
-    // Delivery row written with error='no_handler'.
+    // Delivery row created (error finalized in subsequent update — consistent
+    // with the existing create-then-update pattern for all outcomes).
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         adapterType: "GITHUB",
         direction: "INBOUND",
         eventType: "push",
-        error: "no_handler",
       }),
+    });
+    // Delivery row finalized error='no_handler'.
+    expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del_1" },
+      data: {
+        statusCode: input.statusCode,
+        latencyMs: input.latencyMs,
+        error: "no_handler",
+      },
     });
     // No Issue lookup, no Issue mutation.
     expect(mocks.tx.issue.findFirst).not.toHaveBeenCalled();
@@ -728,14 +737,22 @@ describe("applyInboundIssueUpdate", () => {
     const result = await applyInboundIssueUpdate(input);
 
     expect(result.outcome).toBe("no-link");
-    // Delivery row written with error='no-link'.
+    // Delivery row created (error finalized in subsequent update).
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         adapterType: "GITHUB",
         direction: "INBOUND",
         eventType: "issues",
-        error: "no-link",
       }),
+    });
+    // Delivery row finalized error='no-link'.
+    expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del_1" },
+      data: {
+        statusCode: input.statusCode,
+        latencyMs: input.latencyMs,
+        error: "no-link",
+      },
     });
     // Issue lookup is NEVER called when adapter can't even produce a key.
     expect(mocks.tx.issue.findFirst).not.toHaveBeenCalled();
@@ -775,9 +792,9 @@ describe("applyInboundIssueUpdate", () => {
     });
     await applyInboundIssueUpdate(input);
 
-    const auditCall = mocks.captureAuditEvent.mock.calls[0]?.[0] as
-      | { metadata?: { adapterType?: AdapterType } }
-      | undefined;
+    const auditCall = (mocks.captureAuditEvent.mock.calls[0] as unknown as
+      | [{ metadata?: { adapterType?: AdapterType } }]
+      | undefined)?.[0];
     expect(auditCall?.metadata?.adapterType).toBe("GITHUB");
     // Sanity: ensure JIRA is NOT in the metadata for this GitHub call.
     expect(auditCall?.metadata?.adapterType).not.toBe("JIRA");
