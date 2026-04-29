@@ -17,6 +17,9 @@ const mockWebhookConfigSecretCreate = vi.fn();
 const mockWebhookConfigSecretFindMany = vi.fn();
 const mockWebhookConfigSecretFindUnique = vi.fn();
 const mockWebhookConfigSecretUpdate = vi.fn();
+const mockWebhookDeliveryFindUnique = vi.fn();
+const mockWebhookDeliveryFindMany = vi.fn();
+const mockAuditLogFindMany = vi.fn();
 const mockTransaction = vi.fn();
 vi.mock("~/lib/prisma", () => ({
   prisma: {
@@ -34,8 +37,35 @@ vi.mock("~/lib/prisma", () => ({
         mockWebhookConfigSecretFindUnique(...args),
       update: (...args: unknown[]) => mockWebhookConfigSecretUpdate(...args),
     },
+    webhookDelivery: {
+      findUnique: (...args: unknown[]) => mockWebhookDeliveryFindUnique(...args),
+      findMany: (...args: unknown[]) => mockWebhookDeliveryFindMany(...args),
+    },
+    auditLog: {
+      findMany: (...args: unknown[]) => mockAuditLogFindMany(...args),
+    },
     $transaction: (...args: unknown[]) => mockTransaction(...args),
   },
+}));
+
+// Plan 04-06 — replay service is mocked so server-action tests never spin up
+// BullMQ. The 4 new actions delegate to replayDelivery / bulkReplayDeliveries
+// (Plan 04-03) for the outbound enqueue side; the action's job is just the
+// auth gate, the inbound rejection, and the bulk SELECT-with-cap.
+const mockReplayDelivery = vi.fn();
+const mockBulkReplayDeliveries = vi.fn();
+vi.mock("~/lib/webhooks/replay", () => ({
+  replayDelivery: (...args: unknown[]) => mockReplayDelivery(...args),
+  bulkReplayDeliveries: (...args: unknown[]) =>
+    mockBulkReplayDeliveries(...args),
+  BULK_REPLAY_HARD_CAP: 100,
+}));
+
+// Plan 04-06 — captureAuditEvent is mocked so reEnableWebhookConfig's
+// WEBHOOK_HEALTH_CHANGED audit can be asserted by metadata shape.
+const mockCaptureAuditEvent = vi.fn();
+vi.mock("~/lib/services/auditLog", () => ({
+  captureAuditEvent: (...args: unknown[]) => mockCaptureAuditEvent(...args),
 }));
 
 // CR-02: server actions authorize via canManageWebhookConfig before raw writes.
@@ -108,6 +138,15 @@ describe("webhook-config server actions", () => {
     mockDecrypt.mockImplementation(async (s: string) =>
       s.startsWith("enc:") ? s.slice(4) : s
     );
+
+    // Plan 04-06 — sane defaults so the *.not.toHaveBeenCalled() assertions
+    // in early-exit tests remain meaningful.
+    mockReplayDelivery.mockReset();
+    mockBulkReplayDeliveries.mockReset();
+    mockCaptureAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockWebhookDeliveryFindUnique.mockReset();
+    mockWebhookDeliveryFindMany.mockReset();
+    mockAuditLogFindMany.mockReset();
 
     process.env.NEXTAUTH_URL = "https://app.example.test";
   });
@@ -1682,6 +1721,497 @@ describe("webhook-config server actions", () => {
         success: false,
         error: "Failed to send test webhook",
       });
+    });
+  });
+
+  // ===========================================================================
+  // v0.23.0 Phase 4 / Plan 04-06 — replay + bulk replay + re-enable + batch status
+  // ===========================================================================
+
+  describe("replayWebhookDelivery (Plan 04-06)", () => {
+    it("returns Unauthorized when session is missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { replayWebhookDelivery } = await import("./webhook-config");
+
+      const result = await replayWebhookDelivery("d1");
+
+      expect(result).toEqual({ ok: false, error: "Unauthorized" });
+      expect(mockReplayDelivery).not.toHaveBeenCalled();
+    });
+
+    it("returns Not found when delivery row does not exist", async () => {
+      mockWebhookDeliveryFindUnique.mockResolvedValue(null);
+      const { replayWebhookDelivery } = await import("./webhook-config");
+
+      const result = await replayWebhookDelivery("d-missing");
+
+      expect(result).toEqual({ ok: false, error: "Not found" });
+      expect(mockReplayDelivery).not.toHaveBeenCalled();
+    });
+
+    it("returns Forbidden when canManageWebhookConfig denies", async () => {
+      mockWebhookDeliveryFindUnique.mockResolvedValue({
+        direction: "OUTBOUND",
+        webhookConfig: { projectId: 99 },
+      });
+      mockCanManageWebhookConfig.mockResolvedValue(false);
+      const { replayWebhookDelivery } = await import("./webhook-config");
+
+      const result = await replayWebhookDelivery("d1");
+
+      expect(result).toEqual({ ok: false, error: "Forbidden" });
+      expect(mockReplayDelivery).not.toHaveBeenCalled();
+    });
+
+    it("rejects INBOUND deliveries with typed reason inbound_replay_not_supported (D-17a)", async () => {
+      mockWebhookDeliveryFindUnique.mockResolvedValue({
+        direction: "INBOUND",
+        webhookConfig: { projectId: 1 },
+      });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      const { replayWebhookDelivery } = await import("./webhook-config");
+
+      const result = await replayWebhookDelivery("d-inbound");
+
+      expect(result).toEqual({
+        ok: false,
+        reason: "inbound_replay_not_supported",
+      });
+      // Per D-17a: rejected at action boundary, no service call, no audit.
+      expect(mockReplayDelivery).not.toHaveBeenCalled();
+      expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
+    });
+
+    it("delegates OUTBOUND to replayDelivery with source:'single' and actorUserId from session", async () => {
+      mockWebhookDeliveryFindUnique.mockResolvedValue({
+        direction: "OUTBOUND",
+        webhookConfig: { projectId: 1 },
+      });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockReplayDelivery.mockResolvedValue({
+        outcome: "queued",
+        queueJobId: "q1",
+      });
+      const { replayWebhookDelivery } = await import("./webhook-config");
+
+      const result = await replayWebhookDelivery("d1");
+
+      expect(result).toEqual({ ok: true, queueJobId: "q1" });
+      expect(mockReplayDelivery).toHaveBeenCalledTimes(1);
+      const [deliveryId, opts] = mockReplayDelivery.mock.calls[0];
+      expect(deliveryId).toBe("d1");
+      expect(opts).toMatchObject({
+        actorUserId: "user-123",
+        source: "single",
+      });
+    });
+  });
+
+  describe("bulkReplayFailedDeliveries (Plan 04-06)", () => {
+    it("returns Unauthorized when session is missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+
+      const result = await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: "2026-04-22T00:00:00Z",
+      });
+
+      expect(result).toEqual({ ok: false, error: "Unauthorized" });
+      expect(mockWebhookDeliveryFindMany).not.toHaveBeenCalled();
+      expect(mockBulkReplayDeliveries).not.toHaveBeenCalled();
+    });
+
+    it("returns Forbidden when canManageWebhookConfig denies", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
+      mockCanManageWebhookConfig.mockResolvedValue(false);
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+
+      const result = await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: "2026-04-22T00:00:00Z",
+      });
+
+      expect(result).toEqual({ ok: false, error: "Forbidden" });
+      expect(mockBulkReplayDeliveries).not.toHaveBeenCalled();
+    });
+
+    it("filters to direction:OUTBOUND with error:not-null and take = BULK_REPLAY_HARD_CAP+1 (D-17a)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      const fortySeven = Array.from({ length: 47 }, (_, i) => ({
+        id: `d_${i}`,
+      }));
+      mockWebhookDeliveryFindMany.mockResolvedValue(fortySeven);
+      mockBulkReplayDeliveries.mockResolvedValue({
+        outcome: "queued",
+        batchId: "bat_xyz",
+        enqueuedCount: 47,
+        skippedInboundCount: 0,
+      });
+
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+      const since = "2026-04-22T00:00:00Z";
+
+      await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: since,
+      });
+
+      expect(mockWebhookDeliveryFindMany).toHaveBeenCalledTimes(1);
+      const [args] = mockWebhookDeliveryFindMany.mock.calls[0];
+      expect(args.where).toMatchObject({
+        webhookConfigId: "cfg_a",
+        direction: "OUTBOUND",
+        error: { not: null },
+      });
+      expect(args.where.receivedAt.gte).toEqual(new Date(since));
+      // 100-row hard cap → take 101 to detect over-cap.
+      expect(args.take).toBe(101);
+    });
+
+    it("returns exceeds_cap when over-cap and does not enqueue", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      const overCap = Array.from({ length: 101 }, (_, i) => ({
+        id: `d_${i}`,
+      }));
+      mockWebhookDeliveryFindMany.mockResolvedValue(overCap);
+
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+      const result = await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: "2026-04-22T00:00:00Z",
+      });
+
+      expect(result).toEqual({ ok: false, reason: "exceeds_cap" });
+      expect(mockBulkReplayDeliveries).not.toHaveBeenCalled();
+    });
+
+    it("at-or-under-cap delegates to bulkReplayDeliveries and returns enqueuedCount + batchId", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      const fortySeven = Array.from({ length: 47 }, (_, i) => ({
+        id: `d_${i}`,
+      }));
+      mockWebhookDeliveryFindMany.mockResolvedValue(fortySeven);
+      mockBulkReplayDeliveries.mockResolvedValue({
+        outcome: "queued",
+        batchId: "bat_xyz",
+        enqueuedCount: 47,
+        skippedInboundCount: 0,
+      });
+
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+      const result = await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: "2026-04-22T00:00:00Z",
+      });
+
+      expect(result).toEqual({
+        ok: true,
+        batchId: "bat_xyz",
+        enqueuedCount: 47,
+      });
+      expect(mockBulkReplayDeliveries).toHaveBeenCalledTimes(1);
+      const [ids, opts] = mockBulkReplayDeliveries.mock.calls[0];
+      expect(ids).toHaveLength(47);
+      expect(opts).toMatchObject({ actorUserId: "user-123" });
+    });
+
+    it("includes untilTimestamp in the where filter when provided", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockWebhookDeliveryFindMany.mockResolvedValue([]);
+      mockBulkReplayDeliveries.mockResolvedValue({
+        outcome: "queued",
+        batchId: "bat_xyz",
+        enqueuedCount: 0,
+        skippedInboundCount: 0,
+      });
+
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+      const since = "2026-04-22T00:00:00Z";
+      const until = "2026-04-29T23:59:59Z";
+
+      await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: since,
+        untilTimestamp: until,
+      });
+
+      const [args] = mockWebhookDeliveryFindMany.mock.calls[0];
+      expect(args.where.receivedAt.gte).toEqual(new Date(since));
+      expect(args.where.receivedAt.lte).toEqual(new Date(until));
+    });
+
+    it("inbound rows do not count toward cap — direction:OUTBOUND filter excludes them", async () => {
+      // 50 INBOUND failed + 60 OUTBOUND failed exist for the same configId,
+      // but the where filter is direction:OUTBOUND so findMany returns 60.
+      mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      const sixty = Array.from({ length: 60 }, (_, i) => ({ id: `o_${i}` }));
+      mockWebhookDeliveryFindMany.mockImplementation(async (args: unknown) => {
+        // Simulate the DB layer honoring the direction filter.
+        const a = args as { where: { direction?: string } };
+        if (a.where.direction === "OUTBOUND") return sixty;
+        return Array.from({ length: 110 }, (_, i) => ({ id: `x_${i}` }));
+      });
+      mockBulkReplayDeliveries.mockResolvedValue({
+        outcome: "queued",
+        batchId: "bat_xyz",
+        enqueuedCount: 60,
+        skippedInboundCount: 0,
+      });
+
+      const { bulkReplayFailedDeliveries } = await import("./webhook-config");
+      const result = await bulkReplayFailedDeliveries({
+        webhookConfigId: "cfg_a",
+        sinceTimestamp: "2026-04-22T00:00:00Z",
+      });
+
+      // 60 outbound is under cap; under-cap delegate path runs.
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.enqueuedCount).toBe(60);
+      }
+      const [args] = mockWebhookDeliveryFindMany.mock.calls[0];
+      // The action filtered to direction:"OUTBOUND" — the 50 inbound rows
+      // were never visible to the cap calculation.
+      expect(args.where.direction).toBe("OUTBOUND");
+    });
+  });
+
+  describe("reEnableWebhookConfig (Plan 04-06)", () => {
+    it("returns Unauthorized when session is missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { reEnableWebhookConfig } = await import("./webhook-config");
+
+      const result = await reEnableWebhookConfig("cfg_a");
+
+      expect(result).toEqual({ ok: false, error: "Unauthorized" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("returns Not found when config row missing", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue(null);
+      const { reEnableWebhookConfig } = await import("./webhook-config");
+
+      const result = await reEnableWebhookConfig("cfg_missing");
+
+      expect(result).toEqual({ ok: false, error: "Not found" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("rejects when config endpointHealth is not DISABLED (e.g., DEGRADED)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 1,
+        endpointHealth: "DEGRADED",
+      });
+      const { reEnableWebhookConfig } = await import("./webhook-config");
+
+      const result = await reEnableWebhookConfig("cfg_a");
+
+      expect(result).toEqual({ ok: false, error: "Not disabled" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+      expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
+    });
+
+    it("returns Forbidden when canManageWebhookConfig denies", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 99,
+        endpointHealth: "DISABLED",
+      });
+      mockCanManageWebhookConfig.mockResolvedValue(false);
+      const { reEnableWebhookConfig } = await import("./webhook-config");
+
+      const result = await reEnableWebhookConfig("cfg_a");
+
+      expect(result).toEqual({ ok: false, error: "Forbidden" });
+      expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
+    });
+
+    it("happy path: sets endpointHealth=HEALTHY + consecutiveFailureCount=0 and emits manual_reenable audit (D-24)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 1,
+        endpointHealth: "DISABLED",
+      });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockWebhookConfigUpdate.mockResolvedValue({});
+      const { reEnableWebhookConfig } = await import("./webhook-config");
+
+      const result = await reEnableWebhookConfig("cfg_a");
+
+      expect(result).toEqual({ ok: true });
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledTimes(1);
+      const [updateArgs] = mockWebhookConfigUpdate.mock.calls[0];
+      expect(updateArgs).toMatchObject({
+        where: { id: "cfg_a" },
+        data: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
+      });
+
+      expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(1);
+      const [auditArg] = mockCaptureAuditEvent.mock.calls[0];
+      expect(auditArg).toMatchObject({
+        action: "WEBHOOK_HEALTH_CHANGED",
+        entityType: "WebhookConfig",
+        entityId: "cfg_a",
+        projectId: 1,
+        userId: "user-123",
+        metadata: {
+          webhookConfigId: "cfg_a",
+          from: "DISABLED",
+          to: "HEALTHY",
+          reason: "manual_reenable",
+          consecutiveFailureCount: 0,
+        },
+      });
+    });
+
+    it("manual_reenable uses actorUserId from session, NOT __system__ (D-24)", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 1,
+        endpointHealth: "DISABLED",
+      });
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockWebhookConfigUpdate.mockResolvedValue({});
+      const { reEnableWebhookConfig } = await import("./webhook-config");
+
+      await reEnableWebhookConfig("cfg_a");
+
+      const [auditArg] = mockCaptureAuditEvent.mock.calls[0];
+      expect(auditArg.userId).toBe("user-123");
+      expect(auditArg.userId).not.toBe("__system__");
+      expect(auditArg.metadata.reason).toBe("manual_reenable");
+      expect(auditArg.metadata.reason).not.toBe("auto_threshold");
+    });
+  });
+
+  describe("getReplayBatchStatus (Plan 04-06)", () => {
+    it("returns Unauthorized when session is missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const { getReplayBatchStatus } = await import("./webhook-config");
+
+      const result = await getReplayBatchStatus("bat_x");
+
+      expect(result).toEqual({ ok: false, error: "Unauthorized" });
+      expect(mockAuditLogFindMany).not.toHaveBeenCalled();
+    });
+
+    it("returns zeros when batch not found (no audit rows match)", async () => {
+      mockAuditLogFindMany.mockResolvedValue([]);
+      const { getReplayBatchStatus } = await import("./webhook-config");
+
+      const result = await getReplayBatchStatus("bat_missing");
+
+      expect(result).toEqual({
+        ok: true,
+        queued: 0,
+        succeeded: 0,
+        failed: 0,
+      });
+      // No need to query WebhookDelivery if no audit rows found.
+      expect(mockWebhookDeliveryFindMany).not.toHaveBeenCalled();
+    });
+
+    it("all-queued — 2 audit rows, no replay rows yet → queued:2 succeeded:0 failed:0", async () => {
+      mockAuditLogFindMany.mockResolvedValue([
+        { metadata: { originalDeliveryId: "o1", batchId: "bat_q" }, projectId: 1 },
+        { metadata: { originalDeliveryId: "o2", batchId: "bat_q" }, projectId: 1 },
+      ]);
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockWebhookDeliveryFindMany.mockResolvedValue([]);
+      const { getReplayBatchStatus } = await import("./webhook-config");
+
+      const result = await getReplayBatchStatus("bat_q");
+
+      expect(result).toEqual({
+        ok: true,
+        queued: 2,
+        succeeded: 0,
+        failed: 0,
+      });
+    });
+
+    it("mixed-batch — 5 originals, 4 replay rows (2 success + 2 failed), 1 still queued — deterministic counts (Warning 7 lock)", async () => {
+      mockAuditLogFindMany.mockResolvedValue([
+        { metadata: { originalDeliveryId: "o1", batchId: "bat_m" }, projectId: 1 },
+        { metadata: { originalDeliveryId: "o2", batchId: "bat_m" }, projectId: 1 },
+        { metadata: { originalDeliveryId: "o3", batchId: "bat_m" }, projectId: 1 },
+        { metadata: { originalDeliveryId: "o4", batchId: "bat_m" }, projectId: 1 },
+        { metadata: { originalDeliveryId: "o5", batchId: "bat_m" }, projectId: 1 },
+      ]);
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockWebhookDeliveryFindMany.mockResolvedValue([
+        { error: null, replayedFromDeliveryId: "o1" },
+        { error: null, replayedFromDeliveryId: "o2" },
+        { error: "TIMEOUT", replayedFromDeliveryId: "o3" },
+        { error: "TIMEOUT", replayedFromDeliveryId: "o4" },
+        // o5 has no replay row yet → counted as queued.
+      ]);
+      const { getReplayBatchStatus } = await import("./webhook-config");
+
+      const result = await getReplayBatchStatus("bat_m");
+
+      expect(result).toEqual({
+        ok: true,
+        queued: 1,
+        succeeded: 2,
+        failed: 2,
+      });
+
+      // The lock: query is replayedFromDeliveryId IN originalIds.
+      const [args] = mockWebhookDeliveryFindMany.mock.calls[0];
+      expect(args.where.replayedFromDeliveryId).toBeDefined();
+      expect(args.where.replayedFromDeliveryId.in).toEqual([
+        "o1",
+        "o2",
+        "o3",
+        "o4",
+        "o5",
+      ]);
+    });
+
+    it("outbound-delivery-not-yet-written counts as queued — 5 audits, 3 success rows, 2 missing → queued:2 succeeded:3 failed:0", async () => {
+      mockAuditLogFindMany.mockResolvedValue(
+        ["o1", "o2", "o3", "o4", "o5"].map((id) => ({
+          metadata: { originalDeliveryId: id, batchId: "bat_p" },
+          projectId: 1,
+        }))
+      );
+      mockCanManageWebhookConfig.mockResolvedValue(true);
+      mockWebhookDeliveryFindMany.mockResolvedValue([
+        { error: null, replayedFromDeliveryId: "o1" },
+        { error: null, replayedFromDeliveryId: "o2" },
+        { error: null, replayedFromDeliveryId: "o3" },
+        // o4, o5 missing → queued
+      ]);
+      const { getReplayBatchStatus } = await import("./webhook-config");
+
+      const result = await getReplayBatchStatus("bat_p");
+
+      expect(result).toEqual({
+        ok: true,
+        queued: 2,
+        succeeded: 3,
+        failed: 0,
+      });
+    });
+
+    it("returns Forbidden when canManageWebhookConfig denies (auth via first audit row's projectId)", async () => {
+      mockAuditLogFindMany.mockResolvedValue([
+        {
+          metadata: { originalDeliveryId: "o1", batchId: "bat_x" },
+          projectId: 999,
+        },
+      ]);
+      mockCanManageWebhookConfig.mockResolvedValue(false);
+      const { getReplayBatchStatus } = await import("./webhook-config");
+
+      const result = await getReplayBatchStatus("bat_x");
+
+      expect(result).toEqual({ ok: false, error: "Forbidden" });
+      expect(mockWebhookDeliveryFindMany).not.toHaveBeenCalled();
     });
   });
 });
