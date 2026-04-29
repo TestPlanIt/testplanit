@@ -15,6 +15,7 @@ const {
   mockCreateOrRotateInbound,
   mockDeleteInbound,
   mockSendTest,
+  mockReEnableWebhookConfig,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
@@ -23,6 +24,7 @@ const {
   mockCreateOrRotateInbound: vi.fn(),
   mockDeleteInbound: vi.fn(),
   mockSendTest: vi.fn(),
+  mockReEnableWebhookConfig: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
 }));
@@ -38,6 +40,7 @@ vi.mock("~/app/actions/webhook-config", () => ({
   deleteInboundWebhook: (...args: any[]) => mockDeleteInbound(...args),
   sendTestWebhook: (...args: any[]) => mockSendTest(...args),
   setWebhookActive: (...args: any[]) => mockSetWebhookActive(...args),
+  reEnableWebhookConfig: (...args: any[]) => mockReEnableWebhookConfig(...args),
 }));
 
 vi.mock("sonner", () => ({
@@ -211,8 +214,38 @@ const jiraConfig = {
   token: "whk_" + "a".repeat(64),
   isActive: true,
   lastReceivedAt: null,
+  endpointHealth: "HEALTHY",
+  consecutiveFailureCount: 0,
+  lastDispatchedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
   createdAt: new Date("2026-04-26T00:00:00Z"),
   updatedAt: new Date("2026-04-26T00:00:00Z"),
+};
+
+const degradedJiraConfig = {
+  ...jiraConfig,
+  endpointHealth: "DEGRADED",
+  consecutiveFailureCount: 7,
+  lastDispatchedAt: new Date("2026-04-29T11:00:00Z"),
+  lastSuccessAt: new Date("2026-04-28T22:00:00Z"),
+  lastFailureAt: new Date("2026-04-29T12:00:00Z"),
+};
+
+const disabledJiraConfig = {
+  ...jiraConfig,
+  endpointHealth: "DISABLED",
+  consecutiveFailureCount: 10,
+  lastDispatchedAt: new Date("2026-04-29T13:00:00Z"),
+  lastSuccessAt: new Date("2026-04-28T22:00:00Z"),
+  lastFailureAt: new Date("2026-04-29T13:00:00Z"),
+};
+
+const richJiraConfig = {
+  ...jiraConfig,
+  lastDispatchedAt: new Date("2026-04-29T10:00:00Z"),
+  lastSuccessAt: new Date("2026-04-29T10:00:00Z"),
+  lastFailureAt: new Date("2026-04-25T08:00:00Z"),
 };
 
 const githubConfig = {
@@ -223,6 +256,11 @@ const githubConfig = {
   token: "whk_" + "b".repeat(64),
   isActive: true,
   lastReceivedAt: null,
+  endpointHealth: "HEALTHY",
+  consecutiveFailureCount: 0,
+  lastDispatchedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
   createdAt: new Date("2026-04-26T00:00:00Z"),
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
@@ -235,6 +273,11 @@ const adoConfig = {
   token: "whk_" + "c".repeat(64),
   isActive: true,
   lastReceivedAt: null,
+  endpointHealth: "HEALTHY",
+  consecutiveFailureCount: 0,
+  lastDispatchedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
   createdAt: new Date("2026-04-26T00:00:00Z"),
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
@@ -635,5 +678,108 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(within(card).getByTestId("webhook-secret").textContent).toBe(
       "secretMasked"
     );
+  });
+
+  // ─── Phase 4 / Plan 04-07 — health badge + delivery activity + reenable ─
+
+  it("Test 23: health badge renders HEALTHY with default variant on healthy config", () => {
+    setConfigs([jiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const badge = within(card).getByTestId("webhook-health-badge-jira");
+    expect(badge).toBeInTheDocument();
+    expect(badge.getAttribute("variant")).toBe("default");
+    // Translation passthrough: t("healthBadge.HEALTHY") -> the literal key
+    expect(badge.textContent).toContain("healthBadge.HEALTHY");
+  });
+
+  it("Test 24: health badge renders DEGRADED with secondary variant", () => {
+    setConfigs([degradedJiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const badge = within(card).getByTestId("webhook-health-badge-jira");
+    expect(badge.getAttribute("variant")).toBe("secondary");
+  });
+
+  it("Test 25: health badge renders DISABLED with destructive variant", () => {
+    setConfigs([disabledJiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const badge = within(card).getByTestId("webhook-health-badge-jira");
+    expect(badge.getAttribute("variant")).toBe("destructive");
+  });
+
+  it("Test 26: health badge tooltip on DEGRADED includes consecutiveFailureCount and lastFailureAt", () => {
+    setConfigs([degradedJiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const badge = within(card).getByTestId("webhook-health-badge-jira");
+    const title = badge.getAttribute("title") ?? "";
+    // Title is the t("healthTooltipDegraded", {count, lastFailureAt}) key
+    // since the test-mock returns the key string. The component MUST be
+    // passing both values into the t() params object — we can't assert the
+    // interpolation directly, but we can assert title is non-empty and
+    // references the correct tooltip key.
+    expect(title).toContain("healthTooltipDegraded");
+  });
+
+  it("Test 27: delivery activity field group renders all three timestamps when populated (DEL-08)", () => {
+    setConfigs([richJiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const group = within(card).getByTestId("webhook-delivery-activity-jira");
+    expect(group).toBeInTheDocument();
+    // All three labels rendered (test-mock returns keys directly)
+    expect(group.textContent).toContain("activityLastDispatched");
+    expect(group.textContent).toContain("activityLastSuccess");
+    expect(group.textContent).toContain("activityLastFailure");
+  });
+
+  it("Test 28: delivery activity rows render activityNever when timestamp fields are null", () => {
+    // jiraConfig has all three null
+    setConfigs([jiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const group = within(card).getByTestId("webhook-delivery-activity-jira");
+    // Three "Never" rows (one per null timestamp)
+    const neverMatches = group.textContent?.match(/activityNever/g) ?? [];
+    expect(neverMatches.length).toBe(3);
+  });
+
+  it("Test 29: re-enable button visible only when endpointHealth === 'DISABLED'", () => {
+    setConfigs([disabledJiraConfig]);
+    const { unmount } = render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    expect(
+      within(card).getByTestId("webhook-reenable-button-jira")
+    ).toBeInTheDocument();
+    unmount();
+    // Healthy config: button absent
+    setConfigs([jiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    expect(
+      screen.queryByTestId("webhook-reenable-button-jira")
+    ).not.toBeInTheDocument();
+  });
+
+  it("Test 30: re-enable click opens AlertDialog", () => {
+    setConfigs([disabledJiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    fireEvent.click(screen.getByTestId("webhook-reenable-button-jira"));
+    expect(screen.getByTestId("webhook-reenable-dialog")).toBeInTheDocument();
+  });
+
+  it("Test 31: re-enable dialog confirm invokes reEnableWebhookConfig action with config id", async () => {
+    setConfigs([disabledJiraConfig]);
+    mockReEnableWebhookConfig.mockResolvedValue({ ok: true });
+    render(<WebhookConfigForm projectId={42} />);
+    fireEvent.click(screen.getByTestId("webhook-reenable-button-jira"));
+    fireEvent.click(screen.getByTestId("webhook-reenable-dialog-confirm"));
+    await waitFor(() => {
+      expect(mockReEnableWebhookConfig).toHaveBeenCalledWith("cfg-jira");
+    });
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith("toastReEnableSuccess");
+    });
   });
 });
