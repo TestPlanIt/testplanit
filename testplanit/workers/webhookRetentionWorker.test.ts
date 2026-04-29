@@ -240,9 +240,7 @@ describe("workers/webhookRetentionWorker.purgeOnce", () => {
     // Capture cutoff Date binding from any of the $executeRaw template values.
     // Tagged-template invocation: args[0] = strings, args[1..] = interpolations.
     const firstCall = mockExecuteRaw.mock.calls[0];
-    const cutoffArg = firstCall.find(
-      (a: unknown) => a instanceof Date
-    ) as Date;
+    const cutoffArg = firstCall.find((a: unknown) => a instanceof Date) as Date;
     expect(cutoffArg).toBeInstanceOf(Date);
 
     const expectedNow = new Date("2026-04-29T03:00:00.000Z").getTime();
