@@ -401,4 +401,59 @@ describe("BaseLlmAdapter", () => {
       expect(adapter.getProviderName()).toBe("TestProvider");
     });
   });
+
+  describe("getUnsupportedParams", () => {
+    class CapabilityProbeAdapter extends TestAdapter {
+      // Expose protected reader for test inspection
+      readUnsupported(modelId: string): string[] {
+        return (this as any).getUnsupportedParams(modelId);
+      }
+    }
+
+    it("returns [] when settings is null", () => {
+      const a = new CapabilityProbeAdapter(createTestConfig());
+      expect(a.readUnsupported("gpt-4")).toEqual([]);
+    });
+
+    it("returns [] when settings has no modelCapabilities", () => {
+      const a = new CapabilityProbeAdapter(
+        createTestConfig({
+          config: {
+            ...createTestConfig().config,
+            settings: { something: "else" } as any,
+          },
+        })
+      );
+      expect(a.readUnsupported("gpt-4")).toEqual([]);
+    });
+
+    it("returns unsupportedParams for the matching model", () => {
+      const a = new CapabilityProbeAdapter(
+        createTestConfig({
+          config: {
+            ...createTestConfig().config,
+            settings: {
+              modelCapabilities: {
+                "claude-opus-4-7": {
+                  unsupportedParams: ["temperature"],
+                  probedAt: "2026-04-30T00:00:00.000Z",
+                },
+              },
+            } as any,
+          },
+        })
+      );
+      expect(a.readUnsupported("claude-opus-4-7")).toEqual(["temperature"]);
+      // Other models are unaffected
+      expect(a.readUnsupported("claude-3-5-sonnet-20241022")).toEqual([]);
+    });
+  });
+
+  describe("probeModelCapabilities (default)", () => {
+    it("returns empty unsupportedParams with a probedAt timestamp", async () => {
+      const result = await adapter.probeModelCapabilities("gpt-4");
+      expect(result.unsupportedParams).toEqual([]);
+      expect(result.probedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+    });
+  });
 });

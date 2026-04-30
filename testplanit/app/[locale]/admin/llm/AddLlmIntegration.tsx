@@ -209,6 +209,15 @@ export function AddLlmIntegration({
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
   const [accordionValue, setAccordionValue] = useState<string[]>(["provider"]);
+  // Captured from /api/admin/llm/test-credentials. When the admin runs Test
+  // Connection, the server probes the chosen model for parameter support
+  // (e.g. whether it accepts `temperature`) and returns the result. We hold
+  // it here so that the create call merges it into LlmProviderConfig.settings,
+  // letting future requests skip unsupported params on the first try.
+  const [probedCapabilities, setProbedCapabilities] = useState<Record<
+    string,
+    { unsupportedParams: string[]; probedAt: string }
+  > | null>(null);
 
   const { mutateAsync: createLlmIntegration } = useCreateLlmIntegration();
   const { mutateAsync: createLlmProviderConfig } = useCreateLlmProviderConfig();
@@ -250,6 +259,7 @@ export function AddLlmIntegration({
   const apiKey = form.watch("apiKey");
   const endpoint = form.watch("endpoint");
   const watchedModel = form.watch("defaultModel");
+  const watchedDeploymentName = form.watch("deploymentName");
   const sectionsWithErrors = new Set<string>();
   Object.keys(form.formState.errors).forEach((fieldName) => {
     const section = FIELD_TO_SECTION[fieldName];
@@ -343,6 +353,13 @@ export function AddLlmIntegration({
     }
   };
 
+  // Drop any captured probe data whenever a credential-affecting field
+  // changes — the prior probe was for different credentials/model and
+  // shouldn't be persisted on the next save.
+  useEffect(() => {
+    setProbedCapabilities(null);
+  }, [provider, apiKey, endpoint, watchedDeploymentName, watchedModel]);
+
   // Auto-fetch models when provider, API key, or endpoint changes
   useEffect(() => {
     // Don't fetch on initial render or if provider doesn't support dynamic models
@@ -388,6 +405,9 @@ export function AddLlmIntegration({
       const data = await response.json();
 
       if (data.success) {
+        if (data.modelCapabilities) {
+          setProbedCapabilities(data.modelCapabilities);
+        }
         toast.success(tIntegrations("testSuccess"), {
           description: t("connectionSuccessfulDescription"),
         });
@@ -420,6 +440,46 @@ export function AddLlmIntegration({
 
   const onSubmit = async (values: FormData) => {
     setLoading(true);
+
+    // Final-check: probe before creating so we always persist fresh
+    // model capabilities on the new integration. If the admin already ran
+    // Test Connection in this session and credentials/model haven't changed,
+    // probedCapabilities is still set and we skip the redundant call.
+    // Otherwise we hit the route here. A failed probe aborts the create.
+    let capabilitiesForSave = probedCapabilities;
+    if (!capabilitiesForSave) {
+      try {
+        const probeResp = await fetch("/api/admin/llm/test-credentials", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: values.provider,
+            apiKey: values.apiKey,
+            endpoint: values.endpoint,
+            deploymentName: values.deploymentName,
+            defaultModel: values.defaultModel,
+          }),
+        });
+        const probeData = await probeResp.json();
+        if (!probeData.success) {
+          toast.error(tIntegrations("testFailed"), {
+            description: probeData.error || t("failedToConnect"),
+          });
+          setLoading(false);
+          return;
+        }
+        if (probeData.modelCapabilities) {
+          capabilitiesForSave = probeData.modelCapabilities;
+          setProbedCapabilities(probeData.modelCapabilities);
+        }
+      } catch (probeError: any) {
+        toast.error(tIntegrations("testFailed"), {
+          description: probeError?.message ?? t("failedToConnect"),
+        });
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       // If setting as default, unset other defaults first
@@ -483,6 +543,12 @@ export function AddLlmIntegration({
             retryAttempts: 3,
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
+            // Persist model capabilities discovered during the pre-save probe
+            // (or earlier Test Connection) so the first real chat request
+            // skips unsupported params.
+            settings: capabilitiesForSave
+              ? { modelCapabilities: capabilitiesForSave }
+              : Prisma.JsonNull,
           },
         });
 

@@ -9,7 +9,9 @@ import type {
   LlmRequest,
   LlmResponse,
   LlmStreamResponse,
+  ModelCapabilities,
   RateLimitInfo,
+  SettingsWithCapabilities,
 } from "../types";
 
 /**
@@ -97,9 +99,42 @@ export abstract class BaseLlmAdapter {
   abstract testConnection(): Promise<boolean>;
 
   /**
+   * Probe a model to determine which optional request parameters it accepts.
+   *
+   * Called from the admin "Test Connection" flow during integration setup.
+   * Adapters can override this to send minimal probe requests against the
+   * target model and detect parameter-rejection errors. Results are persisted
+   * in `LlmProviderConfig.settings.modelCapabilities[modelId]` so that
+   * subsequent chat requests skip unsupported params on the first try.
+   *
+   * The default implementation returns an empty `unsupportedParams` array,
+   * which is the right answer for providers (OpenAI, Gemini, Ollama, Custom)
+   * that don't have known parameter deprecations today.
+   */
+  async probeModelCapabilities(modelId?: string): Promise<ModelCapabilities> {
+    void modelId;
+    return {
+      unsupportedParams: [],
+      probedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
    * Get the provider name
    */
   abstract getProviderName(): string;
+
+  /**
+   * Read the list of unsupported parameters for a given model from the
+   * persisted capabilities in `LlmProviderConfig.settings.modelCapabilities`.
+   * Adapters call this before adding optional params to a request so they
+   * can skip ones the model has been probed to reject.
+   */
+  protected getUnsupportedParams(modelId: string): string[] {
+    const settings = this.config.config
+      .settings as SettingsWithCapabilities | null;
+    return settings?.modelCapabilities?.[modelId]?.unsupportedParams ?? [];
+  }
 
   /**
    * Get default model for this provider

@@ -141,10 +141,34 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Probe the model for parameter support so future chat requests
+      // skip params the model rejects (e.g. temperature on Anthropic
+      // adaptive-thinking models). Failure to probe is non-fatal — connection
+      // already succeeded, and the runtime fallback in each adapter will
+      // catch any rejections on the first real request.
+      let modelCapabilities: Record<
+        string,
+        { unsupportedParams: string[]; probedAt: string }
+      > | null = null;
+      if (defaultModel) {
+        try {
+          const capabilities = await adapter.probeModelCapabilities(
+            defaultModel
+          );
+          modelCapabilities = { [defaultModel]: capabilities };
+        } catch (probeError) {
+          console.warn(
+            `Capability probe failed for ${provider}/${defaultModel}; continuing without persisted capabilities:`,
+            probeError
+          );
+        }
+      }
+
       // Returning success response
       return NextResponse.json({
         success: true,
         message: "Connection successful!",
+        modelCapabilities,
       });
     } catch (error) {
       console.error("Error testing credentials:", error);

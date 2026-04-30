@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Prisma } from "@prisma/client";
 import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -153,6 +154,15 @@ export function EditLlmIntegration({
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
+  // Captured from /api/admin/llm/test-credentials. When the admin runs Test
+  // Connection, the server probes the chosen model for parameter support
+  // (e.g. whether it accepts `temperature`) and returns the result. We hold
+  // it here so that the next save merges it into LlmProviderConfig.settings,
+  // letting future requests skip unsupported params on the first try.
+  const [probedCapabilities, setProbedCapabilities] = useState<Record<
+    string,
+    { unsupportedParams: string[]; probedAt: string }
+  > | null>(null);
 
   const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
   const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
@@ -199,6 +209,7 @@ export function EditLlmIntegration({
   const endpoint = form.watch("endpoint");
   const watchedBudget = form.watch("monthlyBudget");
   const watchedModel = form.watch("defaultModel");
+  const watchedDeploymentName = form.watch("deploymentName");
   const sectionsWithErrors = new Set<string>();
   Object.keys(form.formState.errors).forEach((fieldName) => {
     const section = FIELD_TO_SECTION[fieldName];
@@ -271,6 +282,13 @@ export function EditLlmIntegration({
       setFetchingModels(false);
     }
   };
+
+  // Drop any captured probe data whenever a credential-affecting field
+  // changes — the prior probe was for different credentials/model and
+  // shouldn't be persisted on the next save.
+  useEffect(() => {
+    setProbedCapabilities(null);
+  }, [provider, apiKey, endpoint, watchedDeploymentName, watchedModel]);
 
   // Auto-fetch models when provider, API key, or endpoint changes
   useEffect(() => {
@@ -352,6 +370,9 @@ export function EditLlmIntegration({
       const data = await response.json();
 
       if (data.success) {
+        if (data.modelCapabilities) {
+          setProbedCapabilities(data.modelCapabilities);
+        }
         toast.success(tIntegrations("testSuccess"), {
           description: tAdd("connectionSuccessfulDescription"),
         });
@@ -384,6 +405,48 @@ export function EditLlmIntegration({
 
   const onSubmit = async (values: FormData) => {
     setLoading(true);
+
+    // Final-check: probe before saving so we always persist fresh
+    // model capabilities. If the admin already ran Test Connection in this
+    // session and credentials/model haven't changed, probedCapabilities is
+    // still set and we skip the redundant call. Otherwise (no test, or test
+    // run but user changed a credential field afterwards) we hit the route
+    // here. A failed probe aborts the save.
+    let capabilitiesForSave = probedCapabilities;
+    if (!capabilitiesForSave) {
+      try {
+        const probeResp = await fetch("/api/admin/llm/test-credentials", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: values.provider,
+            apiKey: values.apiKey,
+            endpoint: values.endpoint,
+            deploymentName: values.deploymentName,
+            defaultModel: values.defaultModel,
+          }),
+        });
+        const probeData = await probeResp.json();
+        if (!probeData.success) {
+          toast.error(tIntegrations("testFailed"), {
+            description: probeData.error || tAdd("failedToConnect"),
+          });
+          setLoading(false);
+          return;
+        }
+        if (probeData.modelCapabilities) {
+          capabilitiesForSave = probeData.modelCapabilities;
+          setProbedCapabilities(probeData.modelCapabilities);
+        }
+      } catch (probeError: any) {
+        toast.error(tIntegrations("testFailed"), {
+          description:
+            probeError?.message ?? tAdd("failedToConnect"),
+        });
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       // If setting as default, unset other defaults first
@@ -430,6 +493,26 @@ export function EditLlmIntegration({
 
       // Update the LLM provider config
       if (integration.llmProviderConfig) {
+        // Merge any newly-probed model capabilities into the existing
+        // settings bag, preserving keys we don't own.
+        const existingSettings =
+          (integration.llmProviderConfig.settings as Record<
+            string,
+            unknown
+          > | null) ?? {};
+        const mergedSettings = capabilitiesForSave
+          ? {
+              ...existingSettings,
+              modelCapabilities: {
+                ...((existingSettings.modelCapabilities as Record<
+                  string,
+                  unknown
+                > | undefined) ?? {}),
+                ...capabilitiesForSave,
+              },
+            }
+          : existingSettings;
+
         await updateLlmProviderConfig({
           where: { id: integration.llmProviderConfig.id },
           data: {
@@ -445,6 +528,7 @@ export function EditLlmIntegration({
             timeout: values.timeout,
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
+            settings: mergedSettings as Prisma.InputJsonValue,
             // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
             alertThresholdsFired: {},
           },

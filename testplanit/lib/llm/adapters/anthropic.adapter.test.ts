@@ -498,4 +498,155 @@ describe("AnthropicAdapter", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("model capabilities — persisted via probe", () => {
+    it("skips temperature when settings.modelCapabilities marks it unsupported", async () => {
+      const config = createTestConfig({
+        config: {
+          ...createTestConfig().config,
+          settings: {
+            modelCapabilities: {
+              "claude-opus-4-7": {
+                unsupportedParams: ["temperature"],
+                probedAt: "2026-04-30T00:00:00.000Z",
+              },
+            },
+          },
+        },
+      });
+      const adapter = new AnthropicAdapter(config);
+
+      // Single response — no retry needed since temperature is omitted up-front
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "msg_x",
+          content: [{ type: "text", text: "Pre-probed response" }],
+          model: "claude-opus-4-7",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 5, output_tokens: 10 },
+        }),
+      });
+
+      await adapter.chat({
+        messages: [{ role: "user", content: "Hi" }],
+        model: "claude-opus-4-7",
+        userId: "user-123",
+        feature: "test",
+      });
+
+      // Exactly one HTTP call, no retry — and no temperature on the wire
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.temperature).toBeUndefined();
+    });
+
+    it("still sends temperature when stored unsupportedParams entry doesn't include it", async () => {
+      const config = createTestConfig({
+        config: {
+          ...createTestConfig().config,
+          settings: {
+            modelCapabilities: {
+              "claude-3-5-sonnet-20241022": {
+                unsupportedParams: [],
+                probedAt: "2026-04-30T00:00:00.000Z",
+              },
+            },
+          },
+        },
+      });
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "msg_x",
+          content: [{ type: "text", text: "ok" }],
+          model: "claude-3-5-sonnet-20241022",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 5, output_tokens: 5 },
+        }),
+      });
+
+      await adapter.chat({
+        messages: [{ role: "user", content: "Hi" }],
+        model: "claude-3-5-sonnet-20241022",
+        userId: "user-123",
+        feature: "test",
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.temperature).toBe(0.7);
+    });
+  });
+
+  describe("probeModelCapabilities", () => {
+    it("returns unsupportedParams=['temperature'] when probe hits the deprecation error", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: {
+            message: "`temperature` is deprecated for this model.",
+          },
+        }),
+      });
+
+      const result = await adapter.probeModelCapabilities("claude-opus-4-7");
+
+      expect(result.unsupportedParams).toEqual(["temperature"]);
+      expect(result.probedAt).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/
+      );
+
+      // Probe sent temperature so the error path was actually exercised
+      const probeBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(probeBody.temperature).toBe(1);
+      expect(probeBody.max_tokens).toBe(1);
+    });
+
+    it("returns empty unsupportedParams when the probe succeeds", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "msg_probe",
+          content: [{ type: "text", text: "pong" }],
+          model: "claude-3-5-sonnet-20241022",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 1, output_tokens: 1 },
+        }),
+      });
+
+      const result = await adapter.probeModelCapabilities(
+        "claude-3-5-sonnet-20241022"
+      );
+
+      expect(result.unsupportedParams).toEqual([]);
+    });
+
+    it("re-throws non-deprecation errors so the admin sees the real failure", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: { message: "Invalid API key" },
+        }),
+      });
+
+      await expect(
+        adapter.probeModelCapabilities("claude-3-5-sonnet-20241022")
+      ).rejects.toMatchObject({ code: "AUTHENTICATION_ERROR" });
+    });
+  });
 });
