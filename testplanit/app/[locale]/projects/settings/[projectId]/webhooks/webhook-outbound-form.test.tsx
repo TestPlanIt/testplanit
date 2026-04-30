@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,6 +19,7 @@ const {
   mockSendTest,
   mockSetActive,
   mockUpdateSubs,
+  mockReEnableWebhookConfig,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
@@ -25,6 +32,7 @@ const {
   mockSendTest: vi.fn(),
   mockSetActive: vi.fn(),
   mockUpdateSubs: vi.fn(),
+  mockReEnableWebhookConfig: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
 }));
@@ -43,6 +51,7 @@ vi.mock("~/app/actions/webhook-config", () => ({
   sendTestOutboundWebhook: (...args: any[]) => mockSendTest(...args),
   setWebhookActive: (...args: any[]) => mockSetActive(...args),
   updateOutboundSubscriptions: (...args: any[]) => mockUpdateSubs(...args),
+  reEnableWebhookConfig: (...args: any[]) => mockReEnableWebhookConfig(...args),
 }));
 
 vi.mock("sonner", () => ({
@@ -190,6 +199,10 @@ const baseSlackConfig = {
   isActive: true,
   subscribedEvents: ["test_run.completed", "issue.created"],
   endpointHealth: "HEALTHY",
+  consecutiveFailureCount: 0,
+  lastDispatchedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
   createdAt: new Date("2026-04-27T00:00:00Z"),
   updatedAt: new Date("2026-04-27T00:00:00Z"),
   secrets: [],
@@ -205,6 +218,10 @@ const baseHmacConfig = {
   isActive: true,
   subscribedEvents: ["test_run.completed"],
   endpointHealth: "HEALTHY",
+  consecutiveFailureCount: 0,
+  lastDispatchedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
   createdAt: new Date("2026-04-27T00:00:00Z"),
   updatedAt: new Date("2026-04-27T00:00:00Z"),
   secrets: [
@@ -215,6 +232,32 @@ const baseHmacConfig = {
       autoRetireAt: null,
     },
   ],
+};
+
+// Plan 04-07 follow-up — variants for badge / activity / re-enable tests.
+const degradedHmacConfig = {
+  ...baseHmacConfig,
+  endpointHealth: "DEGRADED",
+  consecutiveFailureCount: 7,
+  lastDispatchedAt: new Date("2026-04-29T11:00:00Z"),
+  lastSuccessAt: new Date("2026-04-28T22:00:00Z"),
+  lastFailureAt: new Date("2026-04-29T12:00:00Z"),
+};
+
+const disabledHmacConfig = {
+  ...baseHmacConfig,
+  endpointHealth: "DISABLED",
+  consecutiveFailureCount: 10,
+  lastDispatchedAt: new Date("2026-04-29T13:00:00Z"),
+  lastSuccessAt: new Date("2026-04-28T22:00:00Z"),
+  lastFailureAt: new Date("2026-04-29T13:00:00Z"),
+};
+
+const richHmacConfig = {
+  ...baseHmacConfig,
+  lastDispatchedAt: new Date("2026-04-29T10:00:00Z"),
+  lastSuccessAt: new Date("2026-04-29T10:00:00Z"),
+  lastFailureAt: new Date("2026-04-25T08:00:00Z"),
 };
 
 describe("WebhookOutboundForm", () => {
@@ -540,5 +583,132 @@ describe("WebhookOutboundForm", () => {
         `webhook-outbound-secrets-section-${baseHmacConfig.id}`
       )
     ).toBeInTheDocument();
+  });
+
+  // ─── Plan 04-07 follow-up — health badge + delivery activity + reenable ─
+
+  function setOutboundConfigs(configs: any[]) {
+    mockFindManyWebhookConfig.mockReturnValue({
+      data: configs,
+      isLoading: false,
+      refetch: vi.fn().mockResolvedValue({ data: configs }),
+    });
+  }
+
+  it("Test 15: health badge renders HEALTHY with default variant on healthy outbound config", () => {
+    setOutboundConfigs([baseHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    const card = screen.getByTestId(
+      `webhook-outbound-card-${baseHmacConfig.id}`
+    );
+    const badge = within(card).getByTestId(
+      `webhook-health-badge-${baseHmacConfig.id}`
+    );
+    expect(badge).toBeInTheDocument();
+    expect(badge.getAttribute("variant")).toBe("default");
+    // Translation passthrough — t("healthBadge.HEALTHY") -> the literal key
+    expect(badge.textContent).toContain("healthBadge.HEALTHY");
+  });
+
+  it("Test 16: health badge renders DEGRADED with secondary variant on outbound config", () => {
+    setOutboundConfigs([degradedHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    const card = screen.getByTestId(
+      `webhook-outbound-card-${degradedHmacConfig.id}`
+    );
+    const badge = within(card).getByTestId(
+      `webhook-health-badge-${degradedHmacConfig.id}`
+    );
+    expect(badge.getAttribute("variant")).toBe("secondary");
+  });
+
+  it("Test 17: health badge renders DISABLED with destructive variant on outbound config", () => {
+    setOutboundConfigs([disabledHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    const card = screen.getByTestId(
+      `webhook-outbound-card-${disabledHmacConfig.id}`
+    );
+    const badge = within(card).getByTestId(
+      `webhook-health-badge-${disabledHmacConfig.id}`
+    );
+    expect(badge.getAttribute("variant")).toBe("destructive");
+  });
+
+  it("Test 18: delivery activity field group renders all three timestamps when populated", () => {
+    setOutboundConfigs([richHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    const card = screen.getByTestId(
+      `webhook-outbound-card-${richHmacConfig.id}`
+    );
+    const group = within(card).getByTestId(
+      `webhook-delivery-activity-${richHmacConfig.id}`
+    );
+    expect(group).toBeInTheDocument();
+    // All three labels rendered (test-mock returns keys directly)
+    expect(group.textContent).toContain("activityLastDispatched");
+    expect(group.textContent).toContain("activityLastSuccess");
+    expect(group.textContent).toContain("activityLastFailure");
+  });
+
+  it("Test 19: delivery activity rows render activityNever when timestamp fields are null", () => {
+    // baseHmacConfig has all three null
+    setOutboundConfigs([baseHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    const card = screen.getByTestId(
+      `webhook-outbound-card-${baseHmacConfig.id}`
+    );
+    const group = within(card).getByTestId(
+      `webhook-delivery-activity-${baseHmacConfig.id}`
+    );
+    // Three "Never" rows (one per null timestamp)
+    const neverMatches = group.textContent?.match(/activityNever/g) ?? [];
+    expect(neverMatches.length).toBe(3);
+  });
+
+  it("Test 20: re-enable button visible only when endpointHealth === 'DISABLED'", () => {
+    setOutboundConfigs([disabledHmacConfig]);
+    const { unmount } = render(<WebhookOutboundForm projectId={42} />);
+    const card = screen.getByTestId(
+      `webhook-outbound-card-${disabledHmacConfig.id}`
+    );
+    expect(
+      within(card).getByTestId(
+        `webhook-reenable-button-${disabledHmacConfig.id}`
+      )
+    ).toBeInTheDocument();
+    unmount();
+    // Healthy config: button absent
+    setOutboundConfigs([baseHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    expect(
+      screen.queryByTestId(`webhook-reenable-button-${baseHmacConfig.id}`)
+    ).not.toBeInTheDocument();
+  });
+
+  it("Test 21: re-enable click opens AlertDialog", () => {
+    setOutboundConfigs([disabledHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    fireEvent.click(
+      screen.getByTestId(`webhook-reenable-button-${disabledHmacConfig.id}`)
+    );
+    expect(screen.getByTestId("webhook-reenable-dialog")).toBeInTheDocument();
+  });
+
+  it("Test 22: re-enable dialog confirm invokes reEnableWebhookConfig action with config id", async () => {
+    setOutboundConfigs([disabledHmacConfig]);
+    mockReEnableWebhookConfig.mockResolvedValue({ ok: true });
+    render(<WebhookOutboundForm projectId={42} />);
+    fireEvent.click(
+      screen.getByTestId(`webhook-reenable-button-${disabledHmacConfig.id}`)
+    );
+    fireEvent.click(screen.getByTestId("webhook-reenable-dialog-confirm"));
+    await waitFor(() => {
+      expect(mockReEnableWebhookConfig).toHaveBeenCalledWith(
+        disabledHmacConfig.id
+      );
+    });
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith("toastReEnableSuccess");
+    });
   });
 });
