@@ -131,25 +131,19 @@ Temperature: 0.7
 
 ### Endpoint URL Requirements
 
-For security reasons, custom endpoint URLs are validated to prevent Server-Side Request Forgery (SSRF) attacks:
+The **Endpoint URL** field is optional for every provider:
 
-**Standard Providers (OpenAI, Anthropic, Gemini):**
+- **Leave it blank** to use each provider's official URL (OpenAI, Anthropic, Gemini, Azure OpenAI defaults).
+- **Set it to an OpenAI-compatible proxy** (for example, [LiteLLM](https://github.com/BerriAI/litellm)) to route any provider through your own infrastructure. This works for `OPENAI`, `ANTHROPIC`, `AZURE_OPENAI`, `GEMINI`, `OLLAMA`, and `CUSTOM_LLM`.
+- **Required** for `OLLAMA` and `CUSTOM_LLM`, since they have no public default.
 
-- Only official provider URLs are accepted
-- OpenAI: `https://api.openai.com`
-- Anthropic: `https://api.anthropic.com`
-- Gemini: `https://generativelanguage.googleapis.com`
+For security, all custom URLs are validated to prevent Server-Side Request Forgery (SSRF) attacks. The following are **blocked**:
 
-**Self-Hosted Providers (Ollama, Azure OpenAI, Custom LLM):**
+- `localhost`, `127.0.0.1`, `0.0.0.0`, IPv6 loopback (`::1`)
+- Private IP ranges: `10.x.x.x`, `172.16–31.x.x`, `192.168.x.x`
+- Cloud metadata endpoints: `169.254.169.254`, `metadata.google.internal`, `*.internal`
 
-- Custom endpoint URLs are allowed but must use publicly accessible addresses
-- The following are **blocked** for security:
-  - `localhost`, `127.0.0.1`, `0.0.0.0`
-  - Private IP ranges: `10.x.x.x`, `172.16-31.x.x`, `192.168.x.x`
-  - Cloud metadata endpoints: `169.254.169.254`, `*.internal`
-  - IPv6 loopback addresses
-
-**Recommended:** Expose self-hosted services through a reverse proxy with proper authentication and a publicly accessible URL. This preserves SSRF protection while allowing TestPlanIt to reach your internal services securely.
+**Recommended:** Expose self-hosted services (Ollama, LiteLLM, etc.) through a reverse proxy with proper authentication and a publicly accessible URL. This preserves SSRF protection while allowing TestPlanIt to reach your internal services securely.
 
 As a convenience alternative, you can set the `ALLOWED_PRIVATE_HOSTS` environment variable to a comma-separated list of trusted hostnames. This bypasses SSRF protection for the listed addresses and applies to LLM provider endpoints, code repository connections, and URL-based test case generation.
 
@@ -161,6 +155,24 @@ ALLOWED_PRIVATE_HOSTS="localhost,192.168.1.100,ollama.internal"
 :::warning
 Only add hosts that you trust. `ALLOWED_PRIVATE_HOSTS` disables SSRF protection for every listed address across all features. A reverse proxy is the safer option for production environments.
 :::
+
+### Billing Period
+
+Each LLM integration tracks usage against an optional **Monthly Budget** (USD). By default, the spend window aligns with the calendar month — costs reset to zero on the 1st.
+
+If your provider invoices on a different cycle, set the **Billing Period Start Day** (1–31) on the Edit dialog to match. For example:
+
+- `1` — calendar month (default)
+- `15` — 15th-to-15th cycle (e.g., to match a provider invoice date)
+- `29`, `30`, `31` — automatically clamp to the last day of shorter months (e.g., February in non-leap years)
+
+The setting affects three behaviors:
+
+- **Spend aggregation** — the cost shown on the admin LLM page totals usage from the period start through today
+- **Budget alerts** — 80% / 90% / 100% threshold notifications reset on each new period
+- **Reset Spend** — the manual reset action on the Edit dialog clears usage from the current period start onward (older periods remain in the audit trail)
+
+Saving an integration with a changed `billingPeriodStartDay` clears any thresholds already fired so notifications can fire again under the new window.
 
 ### Project Assignment
 

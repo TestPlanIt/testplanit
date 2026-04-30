@@ -1579,6 +1579,9 @@
       "preferences": {
         "title": "Preferencias"
       },
+      "access": {
+        "title": "Acceso"
+      },
       "notifications": {
         "title": "Preferencias de notificación",
         "description": "Personaliza cómo recibes notificaciones",
@@ -4105,7 +4108,6 @@
         "apiKeyDescription": "Su clave API para la autenticación con el proveedor",
         "endpoint": "Endpoint URL",
         "endpointPlaceholder": "https://api.provider.com/v1",
-        "endpointDescription": "La URL base para las solicitudes de API. Para proveedores estándar (OpenAI, Anthropic, Gemini), solo se aceptan URL oficiales. Para proveedores alojados en servidores propios, las direcciones privadas/internas (localhost, 127.0.0.1, IP privadas) están bloqueadas por seguridad.",
         "endpointV1Hint": "Consejo: Si utiliza un proxy (por ejemplo, LiteLLM), intente agregar /v1 al final de la URL de su punto final.",
         "deploymentName": "Nombre de despliegue",
         "deploymentNamePlaceholder": "Introduce el nombre de implementación...",
@@ -4156,6 +4158,11 @@
           "nameUnique": "Ya existe una integración con este nombre",
           "defaultModelRequired": "Se requiere el modelo predeterminado"
         }
+      },
+      "sections": {
+        "provider": "Proveedor",
+        "costAndBudget": "Costo y presupuesto",
+        "advanced": "Avanzado"
       },
       "delete": {
         "title": "Eliminar Integración del Modelo AI",
@@ -4880,7 +4887,7 @@
       "name": "## Nombre de la integración\nUna etiqueta descriptiva para esta integración LLM.\n\n- Se utiliza para identificarla en listas y configuraciones\n- Ejemplo: \"OpenAI GPT-4o\" o \"Internal Ollama\"",
       "provider": "## Proveedor\nEl servicio LLM que potencia esta integración.\n\n- Determina el protocolo API y los modelos disponibles.\n- No se puede cambiar después de la creación.",
       "apiKey": "## Clave API\nSu clave de autenticación para la API del proveedor de LLM.\n\n- Obtenga esta clave desde la consola de desarrollador de su proveedor.\n- Se mantiene cifrada y nunca se muestra después de guardar.\n- No se requiere para Ollama (implementación local).",
-      "endpoint": "## Punto de conexión de API\nLa URL base para la API del proveedor de LLM.\n\n- Déjelo en blanco para OpenAI, Anthropic y Gemini; los valores predeterminados se utilizan automáticamente\n- Obligatorio para Ollama (por ejemplo, `http://localhost:11434`) y Azure OpenAI\n- Obligatorio para proveedores de LLM personalizados",
+      "endpoint": "## Punto final de la API\nLa URL base para la API del proveedor de LLM.\n\n- Dejar en blanco para OpenAI, Anthropic y Gemini: se utilizan automáticamente las URL oficiales.\n- Obligatorio para Ollama (por ejemplo, `http://localhost:11434`), Azure OpenAI y LLM personalizado.\n- Opcional para cualquier proveedor: apunta a un proxy compatible con OpenAI (por ejemplo, LiteLLM) introduciendo su URL.\n- Las **direcciones privadas/internas** (localhost, 127.0.0.1, IP privadas, metadatos en la nube) están bloqueadas a menos que se permitan explícitamente mediante la variable de entorno `ALLOWED_PRIVATE_HOSTS`.",
       "deploymentName": "## Nombre de implementación de Azure\nEl nombre de la implementación del modelo de Azure OpenAI.\n\n- Se encuentra en Azure OpenAI Studio en Implementaciones\n- Diferente del nombre del modelo, por ejemplo, `my-gpt4-deploy` se asigna a `gpt-4`\n- Solo se requiere para Azure OpenAI",
       "defaultModel": "## Modelo predeterminado\nEl modelo utilizado para las solicitudes de IA con esta integración.\n\n- Para OpenAI, Anthropic y Gemini, los modelos disponibles se obtienen automáticamente de su clave API\n- Asegúrese de que el modelo esté habilitado en su cuenta de proveedor\n- Ejemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
       "maxTokensPerRequest": "## Máximos tokens por solicitud\nEl **techo estricto** de tokens de salida para cualquier solicitud individual.\n\n- Las solicitudes que excedan este límite se **rechazarán con un error** antes de alcanzar el LLM\n- Establezca esto en la capacidad máxima real de tokens de salida de su modelo\n- Ejemplo: `16384` para GPT-4o, `8192` para Claude 3.5 Sonnet\n- Establecer esto demasiado bajo hace que las funciones de IA fallen o produzcan una salida truncada",
@@ -4889,6 +4896,7 @@
       "costPerInputToken": "## Costo por token de entrada (USD)\nEl costo en USD de cada token de entrada (solicitud) enviado al modelo.\n\n- Se utiliza para seguimiento de costos y alertas de presupuesto\n- Encuéntrelo en la página de precios de su proveedor\n- Ejemplo: `0.000005` = $5 por millón de tokens de entrada",
       "costPerOutputToken": "## Costo por token de salida (USD)\nEl costo en USD de cada token de salida (finalización) generado por el modelo.\n\n- Generalmente más alto que el costo del token de entrada\n- Se usa para seguimiento de costos y alertas de presupuesto\n- Ejemplo: `0.000015` = $15 por millón de tokens de salida",
       "monthlyBudget": "## Presupuesto mensual (USD)\nUn objetivo de gasto opcional para esta integración.\n\n- Establézcalo en `0` para deshabilitar el seguimiento del presupuesto\n- El presupuesto es **solo informativo**; no bloquea el uso de LLM\n- Recibirá notificaciones al 80 %, 90 % y 100 % del presupuesto\n- Los costos se calculan utilizando las tarifas por token anteriores",
+      "billingPeriodStartDay": "## Día de inicio del período de facturación\nEl día del mes (1–31) en que comienza su período de facturación.\n\n- El valor predeterminado `1` se alinea con el mes calendario.\n- Establezca en `15` para un ciclo del 15 al 15 (por ejemplo, para que coincida con la fecha de la factura de su proveedor).\n- Los valores `29–31` se ajustan automáticamente al último día de los meses más cortos (febrero en años no bisiestos, etc.).\n- Afecta la ventana de gastos del **Presupuesto mensual** y la acción **Restablecer gastos**.",
       "defaultTemperature": "## Temperatura predeterminada\nControla la aleatoriedad de las respuestas del modelo (0–2).\n\n- **0:** Determinista: salida idéntica para la misma entrada\n- **0.3:** Enfocado: recomendado para la generación de pruebas y la salida de código\n- **1+:** Creativo: respuestas más variadas\n- Las características individuales pueden anular esto en la configuración del indicador",
       "timeout": "## Tiempo de espera de solicitud (ms)\nCuánto tiempo se debe esperar una respuesta antes de cancelar la solicitud.\n\n- El valor está en milisegundos (por ejemplo, `30000` = 30 segundos)\n- Las solicitudes de transmisión (por ejemplo, vista previa de exportación de código) ignoran este tiempo de espera\n- Aumentar para modelos lentos o grandes\n- Rango: 5000 – 600 000 ms",
       "streamingEnabled": "## Habilitar transmisión\nTransmite la respuesta token por token en lugar de esperar la salida completa.\n\n- Obligatorio para la vista previa del código en tiempo real en el modo Exportar\n- Reduce la latencia percibida para respuestas largas\n- Recomendado para todos los proveedores compatibles",

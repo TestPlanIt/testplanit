@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,7 +36,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Prisma } from "@prisma/client";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -75,6 +81,7 @@ const createFormSchema = (t: any, existingNames: string[]) =>
     costPerInputToken: z.number().min(0),
     costPerOutputToken: z.number().min(0),
     monthlyBudget: z.number().min(0).optional(),
+    billingPeriodStartDay: z.number().int().min(1).max(31),
     defaultTemperature: z.number().min(0).max(2),
     defaultMaxTokens: z.number().min(1).max(1048576),
     timeout: z.number().min(5000).max(600000), // 5 seconds to 10 minutes
@@ -97,6 +104,28 @@ const PROVIDERS_WITH_DYNAMIC_MODELS = [
   "GEMINI",
   "OLLAMA",
 ];
+
+// Maps form field names to accordion section ids — used to auto-expand
+// the section containing a validation error on submit. Identity fields
+// (name, isDefault) live in the sticky always-open block above the
+// accordion, so they are not mapped here.
+const FIELD_TO_SECTION: Record<string, string> = {
+  provider: "provider",
+  apiKey: "provider",
+  endpoint: "provider",
+  deploymentName: "provider",
+  defaultModel: "provider",
+  maxTokensPerRequest: "provider",
+  maxRequestsPerMinute: "provider",
+  costPerInputToken: "cost-and-budget",
+  costPerOutputToken: "cost-and-budget",
+  monthlyBudget: "cost-and-budget",
+  billingPeriodStartDay: "cost-and-budget",
+  defaultTemperature: "advanced",
+  defaultMaxTokens: "advanced",
+  timeout: "advanced",
+  streamingEnabled: "advanced",
+};
 
 const providerDefaults: Record<string, Partial<FormData>> = {
   OPENAI: {
@@ -179,6 +208,7 @@ export function AddLlmIntegration({
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
+  const [accordionValue, setAccordionValue] = useState<string[]>(["provider"]);
 
   const { mutateAsync: createLlmIntegration } = useCreateLlmIntegration();
   const { mutateAsync: createLlmProviderConfig } = useCreateLlmProviderConfig();
@@ -207,6 +237,7 @@ export function AddLlmIntegration({
       costPerInputToken: 0.075,
       costPerOutputToken: 0.3,
       monthlyBudget: 0,
+      billingPeriodStartDay: 1,
       defaultTemperature: 0.7,
       defaultMaxTokens: 2048,
       timeout: 30000,
@@ -218,6 +249,23 @@ export function AddLlmIntegration({
   const provider = form.watch("provider");
   const apiKey = form.watch("apiKey");
   const endpoint = form.watch("endpoint");
+  const watchedModel = form.watch("defaultModel");
+  const sectionsWithErrors = new Set<string>();
+  Object.keys(form.formState.errors).forEach((fieldName) => {
+    const section = FIELD_TO_SECTION[fieldName];
+    if (section) sectionsWithErrors.add(section);
+  });
+  const providerLabel =
+    (
+      {
+        OPENAI: t("openai"),
+        ANTHROPIC: t("anthropic"),
+        AZURE_OPENAI: t("azureOpenai"),
+        GEMINI: t("gemini"),
+        OLLAMA: t("ollama"),
+        CUSTOM_LLM: t("customLlm"),
+      } as Record<string, string>
+    )[provider] ?? "";
 
   const fetchAvailableModels = useCallback(
     async (providerType: string, apiKey?: string, endpoint?: string) => {
@@ -428,6 +476,7 @@ export function AddLlmIntegration({
             costPerInputToken: values.costPerInputToken,
             costPerOutputToken: values.costPerOutputToken,
             monthlyBudget: values.monthlyBudget || 0,
+            billingPeriodStartDay: values.billingPeriodStartDay,
             defaultTemperature: values.defaultTemperature,
             defaultMaxTokens: values.defaultMaxTokens,
             timeout: values.timeout,
@@ -458,463 +507,585 @@ export function AddLlmIntegration({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl h-full overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tIntegrations("config.name")}
-                    <HelpPopover helpKey="llm.name" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t("integrationNamePlaceholder")}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="provider"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {tCommon("fields.provider")}
-                    <HelpPopover helpKey="llm.provider" />
-                  </FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      handleProviderChange(value);
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("selectProvider")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="OPENAI">{t("openai")}</SelectItem>
-                      <SelectItem value="ANTHROPIC">
-                        {t("anthropic")}
-                      </SelectItem>
-                      <SelectItem value="AZURE_OPENAI">
-                        {t("azureOpenai")}
-                      </SelectItem>
-                      <SelectItem value="GEMINI">{t("gemini")}</SelectItem>
-                      <SelectItem value="OLLAMA">{t("ollama")}</SelectItem>
-                      <SelectItem value="CUSTOM_LLM">
-                        {t("customLlm")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {provider !== "OLLAMA" && (
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              const sectionsToOpen = new Set(accordionValue);
+              Object.keys(errors).forEach((fieldName) => {
+                const section = FIELD_TO_SECTION[fieldName];
+                if (section) sectionsToOpen.add(section);
+              });
+              setAccordionValue(Array.from(sectionsToOpen));
+            })}
+            className="space-y-4 flex-1 flex flex-col px-1"
+          >
+            <div className="pb-4 border-b space-y-4">
               <FormField
                 control={form.control}
-                name="apiKey"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {tIntegrations("authType.api_key")}
-                      <HelpPopover helpKey="llm.apiKey" />
+                      {tIntegrations("config.name")}
+                      <HelpPopover helpKey="llm.name" />
                     </FormLabel>
                     <FormControl>
                       <Input
-                        type="password"
-                        placeholder={t("apiKeyPlaceholder")}
+                        placeholder={t("integrationNamePlaceholder")}
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>{t("apiKeyDescription")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
 
-            <FormField
-              control={form.control}
-              name="endpoint"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {t("endpoint")}
-                    <HelpPopover helpKey="llm.endpoint" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("endpointPlaceholder")} {...field} />
-                  </FormControl>
-                  <FormDescription>{t("endpointDescription")}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {provider === "AZURE_OPENAI" && (
               <FormField
                 control={form.control}
-                name="deploymentName"
+                name="isDefault"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("deploymentName")}
-                      <HelpPopover helpKey="llm.deploymentName" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t("deploymentNamePlaceholder")}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t("deploymentNameDescription")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="defaultModel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      {tLlm("defaultModel")}
-                      <HelpPopover helpKey="llm.defaultModel" />
-                    </span>
-                    {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
-                      fetchingModels && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          {t("fetchingModels")}
-                        </div>
-                      )}
-                  </FormLabel>
-                  <FormControl>
-                    {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
-                    availableModels.length > 0 ? (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("selectModel")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableModels.map((model) => (
-                            <SelectItem key={model} value={model}>
-                              {model}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        placeholder={t("defaultModelPlaceholder")}
-                        {...field}
-                      />
-                    )}
-                  </FormControl>
-                  {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
-                    modelsError && (
-                      <div className="text-sm text-destructive mt-1">
-                        {modelsError}
-                      </div>
-                    )}
-                  {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
-                    availableModels.length === 0 &&
-                    !fetchingModels &&
-                    !modelsError && (
-                      <FormDescription className="text-muted-foreground">
-                        {provider === "GEMINI"
-                          ? "Enter your API key and endpoint above. Models will be fetched automatically."
-                          : provider === "OPENAI" || provider === "ANTHROPIC"
-                            ? "Enter your API key above. We'll fetch the available models automatically."
-                            : "Models will be fetched automatically from your Ollama instance."}
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="flex items-center">
+                        {t("setAsDefault")}
+                        <HelpPopover helpKey="llm.isDefault" />
+                      </FormLabel>
+                      <FormDescription>
+                        {t("setAsDefaultDescription")}
                       </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Accordion
+              type="multiple"
+              value={accordionValue}
+              onValueChange={setAccordionValue}
+              className="w-full"
+            >
+              <AccordionItem value="provider">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-4 flex-1 min-w-0 mr-2">
+                    <span className="shrink-0 flex items-center gap-2">
+                      {sectionsWithErrors.has("provider") && (
+                        <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                      )}
+                      {tLlm("sections.provider")}
+                    </span>
+                    {providerLabel && (
+                      <span className="text-xs text-muted-foreground font-normal truncate ml-auto">
+                        {watchedModel
+                          ? `${providerLabel} / ${watchedModel}`
+                          : providerLabel}
+                      </span>
                     )}
-                  {!PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) && (
-                    <FormDescription>
-                      {t("defaultModelDescription")}
-                    </FormDescription>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 px-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="provider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {tCommon("fields.provider")}
+                            <HelpPopover helpKey="llm.provider" />
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              handleProviderChange(value);
+                            }}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={t("selectProvider")}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="OPENAI">
+                                {t("openai")}
+                              </SelectItem>
+                              <SelectItem value="ANTHROPIC">
+                                {t("anthropic")}
+                              </SelectItem>
+                              <SelectItem value="AZURE_OPENAI">
+                                {t("azureOpenai")}
+                              </SelectItem>
+                              <SelectItem value="GEMINI">
+                                {t("gemini")}
+                              </SelectItem>
+                              <SelectItem value="OLLAMA">
+                                {t("ollama")}
+                              </SelectItem>
+                              <SelectItem value="CUSTOM_LLM">
+                                {t("customLlm")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="endpoint"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("endpoint")}
+                            <HelpPopover helpKey="llm.endpoint" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={t("endpointPlaceholder")}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div
+                    className={`grid gap-4 ${provider === "OLLAMA" ? "grid-cols-1" : "grid-cols-2"}`}
+                  >
+                    {provider !== "OLLAMA" && (
+                      <FormField
+                        control={form.control}
+                        name="apiKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center">
+                              {tIntegrations("authType.api_key")}
+                              <HelpPopover helpKey="llm.apiKey" />
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder={t("apiKeyPlaceholder")}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              {t("apiKeyDescription")}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    <FormField
+                      control={form.control}
+                      name="defaultModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center justify-between">
+                            <span className="flex items-center">
+                              {tLlm("defaultModel")}
+                              <HelpPopover helpKey="llm.defaultModel" />
+                            </span>
+                            {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
+                              fetchingModels && (
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                  {t("fetchingModels")}
+                                </div>
+                              )}
+                          </FormLabel>
+                          <FormControl>
+                            {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
+                            availableModels.length > 0 ? (
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t("selectModel")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableModels.map((model) => (
+                                    <SelectItem key={model} value={model}>
+                                      {model}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                placeholder={t("defaultModelPlaceholder")}
+                                {...field}
+                              />
+                            )}
+                          </FormControl>
+                          {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
+                            modelsError && (
+                              <div className="text-sm text-destructive mt-1">
+                                {modelsError}
+                              </div>
+                            )}
+                          {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
+                            availableModels.length === 0 &&
+                            !fetchingModels &&
+                            !modelsError && (
+                              <FormDescription className="text-muted-foreground">
+                                {provider === "GEMINI"
+                                  ? "Enter your API key and endpoint. Models will be fetched automatically."
+                                  : provider === "OPENAI" ||
+                                      provider === "ANTHROPIC"
+                                    ? "Enter your API key. We'll fetch the available models automatically."
+                                    : "Models will be fetched automatically from your Ollama instance."}
+                              </FormDescription>
+                            )}
+                          {!PROVIDERS_WITH_DYNAMIC_MODELS.includes(
+                            provider
+                          ) && (
+                            <FormDescription>
+                              {t("defaultModelDescription")}
+                            </FormDescription>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {provider === "AZURE_OPENAI" && (
+                    <FormField
+                      control={form.control}
+                      name="deploymentName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("deploymentName")}
+                            <HelpPopover helpKey="llm.deploymentName" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={t("deploymentNamePlaceholder")}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {t("deploymentNameDescription")}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="maxTokensPerRequest"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("maxTokensPerRequest")}
-                      <HelpPopover helpKey="llm.maxTokensPerRequest" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="maxRequestsPerMinute"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("maxRequestsPerMinute")}
-                      <HelpPopover helpKey="llm.maxRequestsPerMinute" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="costPerInputToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("costPerInputToken")}
-                      <HelpPopover helpKey="llm.costPerInputToken" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.000001"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="costPerOutputToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("costPerOutputToken")}
-                      <HelpPopover helpKey="llm.costPerOutputToken" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.000001"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="monthlyBudget"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {t("monthlyBudget")}
-                    <HelpPopover helpKey="llm.monthlyBudget" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value))
-                      }
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="maxTokensPerRequest"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("maxTokensPerRequest")}
+                            <HelpPopover helpKey="llm.maxTokensPerRequest" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormDescription>
-                    {t("monthlyBudgetDescription")}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="defaultTemperature"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("defaultTemperature")}
-                      <HelpPopover helpKey="llm.defaultTemperature" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="2"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="defaultMaxTokens"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("defaultMaxTokens")}
-                      <HelpPopover helpKey="llm.defaultMaxTokens" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="timeout"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    {t("timeout")}
-                    <HelpPopover helpKey="llm.timeout" />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="5000"
-                      max="600000"
-                      step="1000"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    <FormField
+                      control={form.control}
+                      name="maxRequestsPerMinute"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("maxRequestsPerMinute")}
+                            <HelpPopover helpKey="llm.maxRequestsPerMinute" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormDescription>{t("timeoutDescription")}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="streamingEnabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel className="flex items-center">
-                      {t("streamingEnabled")}
-                      <HelpPopover helpKey="llm.streamingEnabled" />
-                    </FormLabel>
-                    <FormDescription>
-                      {t("streamingEnabledDescription")}
-                    </FormDescription>
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                </AccordionContent>
+              </AccordionItem>
 
-            <FormField
-              control={form.control}
-              name="isDefault"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel className="flex items-center">
-                      {t("setAsDefault")}
-                      <HelpPopover helpKey="llm.isDefault" />
-                    </FormLabel>
-                    <FormDescription>
-                      {t("setAsDefaultDescription")}
-                    </FormDescription>
+              <AccordionItem value="cost-and-budget">
+                <AccordionTrigger>
+                  <span className="flex items-center gap-2">
+                    {sectionsWithErrors.has("cost-and-budget") && (
+                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    )}
+                    {tLlm("sections.costAndBudget")}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 px-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="costPerInputToken"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("costPerInputToken")}
+                            <HelpPopover helpKey="llm.costPerInputToken" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.000001"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="costPerOutputToken"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("costPerOutputToken")}
+                            <HelpPopover helpKey="llm.costPerOutputToken" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.000001"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
 
-            <DialogFooter>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="monthlyBudget"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("monthlyBudget")}
+                            <HelpPopover helpKey="llm.monthlyBudget" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {t("monthlyBudgetDescription")}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="billingPeriodStartDay"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("billingPeriodStartDay")}
+                            <HelpPopover helpKey="llm.billingPeriodStartDay" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              step={1}
+                              placeholder={t(
+                                "billingPeriodStartDayPlaceholder"
+                              )}
+                              {...field}
+                              value={field.value ?? 1}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                field.onChange(isNaN(val) ? 1 : val);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="advanced">
+                <AccordionTrigger>
+                  <span className="flex items-center gap-2">
+                    {sectionsWithErrors.has("advanced") && (
+                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    )}
+                    {tLlm("sections.advanced")}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 px-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="defaultTemperature"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("defaultTemperature")}
+                            <HelpPopover helpKey="llm.defaultTemperature" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="2"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="defaultMaxTokens"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            {t("defaultMaxTokens")}
+                            <HelpPopover helpKey="llm.defaultMaxTokens" />
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="timeout"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          {t("timeout")}
+                          <HelpPopover helpKey="llm.timeout" />
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="5000"
+                            max="600000"
+                            step="1000"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t("timeoutDescription")}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="streamingEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel className="flex items-center">
+                            {t("streamingEnabled")}
+                            <HelpPopover helpKey="llm.streamingEnabled" />
+                          </FormLabel>
+                          <FormDescription>
+                            {t("streamingEnabledDescription")}
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            <DialogFooter className="mt-auto">
               <Button
                 type="button"
                 variant="outline"
@@ -926,7 +1097,7 @@ export function AddLlmIntegration({
                 }
               >
                 {testingConnection && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 )}
                 {tIntegrations("testConnection")}
               </Button>
@@ -934,7 +1105,7 @@ export function AddLlmIntegration({
                 {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {tCommon("actions.create")}
               </Button>
             </DialogFooter>

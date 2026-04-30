@@ -87,7 +87,7 @@ export function DeleteLlmIntegration({
             onClick={handleDelete}
             disabled={loading}
           >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {tGlobal("common.actions.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
