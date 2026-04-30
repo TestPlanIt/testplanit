@@ -440,8 +440,7 @@ export function EditLlmIntegration({
         }
       } catch (probeError: any) {
         toast.error(tIntegrations("testFailed"), {
-          description:
-            probeError?.message ?? tAdd("failedToConnect"),
+          description: probeError?.message ?? tAdd("failedToConnect"),
         });
         setLoading(false);
         return;
@@ -504,10 +503,9 @@ export function EditLlmIntegration({
           ? {
               ...existingSettings,
               modelCapabilities: {
-                ...((existingSettings.modelCapabilities as Record<
-                  string,
-                  unknown
-                > | undefined) ?? {}),
+                ...((existingSettings.modelCapabilities as
+                  | Record<string, unknown>
+                  | undefined) ?? {}),
                 ...capabilitiesForSave,
               },
             }

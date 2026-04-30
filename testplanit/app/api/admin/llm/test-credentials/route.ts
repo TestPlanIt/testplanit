@@ -152,9 +152,8 @@ export async function POST(request: NextRequest) {
       > | null = null;
       if (defaultModel) {
         try {
-          const capabilities = await adapter.probeModelCapabilities(
-            defaultModel
-          );
+          const capabilities =
+            await adapter.probeModelCapabilities(defaultModel);
           modelCapabilities = { [defaultModel]: capabilities };
         } catch (probeError) {
           console.warn(

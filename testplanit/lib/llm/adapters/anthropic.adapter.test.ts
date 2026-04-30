@@ -599,9 +599,7 @@ describe("AnthropicAdapter", () => {
       const result = await adapter.probeModelCapabilities("claude-opus-4-7");
 
       expect(result.unsupportedParams).toEqual(["temperature"]);
-      expect(result.probedAt).toMatch(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/
-      );
+      expect(result.probedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
 
       // Probe sent temperature so the error path was actually exercised
       const probeBody = JSON.parse(mockFetch.mock.calls[0][1].body);

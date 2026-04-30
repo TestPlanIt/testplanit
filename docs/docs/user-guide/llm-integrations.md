@@ -174,6 +174,34 @@ The setting affects three behaviors:
 
 Saving an integration with a changed `billingPeriodStartDay` clears any thresholds already fired so notifications can fire again under the new window.
 
+### Test Connection & Model Capability Probing
+
+Both the **Test Connection** button and the **Update / Create** action probe the configured model for parameter support before persisting. This avoids paying for a failed-and-retried request the first time an AI feature actually fires.
+
+**What gets probed.** TestPlanIt sends a 1-token request with `temperature: 1` to the configured model and watches for parameter-rejection errors. Today only the `temperature` parameter is probed — newer Anthropic adaptive-thinking models (e.g., Claude Opus 4.7) return a deprecation error rather than ignoring the field. The probe code is structured so additional parameters can be added later without changing the storage shape.
+
+**What gets stored.** The result lands in `LlmProviderConfig.settings.modelCapabilities` keyed by model id:
+
+```json
+{
+  "modelCapabilities": {
+    "claude-opus-4-7": {
+      "unsupportedParams": ["temperature"],
+      "probedAt": "2026-04-30T18:21:49.088Z"
+    }
+  }
+}
+```
+
+`unsupportedParams: []` means the model accepted everything — the probe still records this so the admin can see when the integration was last verified.
+
+**When the probe runs.**
+
+- **Clicking Test Connection** runs a probe and captures the result in the form. A success toast confirms the connection.
+- **Clicking Update / Create** runs the probe automatically if no successful test has been performed in this session, or if any credential-affecting field (provider, API key, endpoint, deployment name, default model) has been edited since the last test. A failed probe at this stage aborts the save and surfaces the same error toast as Test Connection — the admin can fix and retry without losing form state.
+
+**Runtime fallback.** Each adapter still carries an in-memory cache that catches and remembers parameter-rejection errors at chat-request time. If a model is updated by the provider after an integration is configured, the first chat request will hit the new error, retry without the rejected param, and remember it for the rest of the process — giving you correct behavior until the next Test Connection re-probes and persists the change.
+
 ### Project Assignment
 
 After creating an LLM integration:
@@ -203,7 +231,7 @@ Project admins can override which LLM integration is used for specific AI featur
 ### Source Badges
 
 | Badge | Color | Meaning |
-|-------|-------|---------|
+| ------- | ------- | --------- |
 | Project Override | Blue | A per-feature override is set on this project |
 | Disabled (Override) | Orange | The feature is explicitly disabled for this project via override |
 | Prompt Config | Gray | The prompt configuration has a per-prompt LLM assignment |
