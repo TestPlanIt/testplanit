@@ -1,3 +1,9 @@
+## [0.23.0](https://github.com/TestPlanIt/testplanit/compare/v0.22.22...v0.23.0) (2026-04-30)
+
+### Features
+
+* **notifications:** SSE transport replaces bell polling ([#264](https://github.com/TestPlanIt/testplanit/issues/264)) ([bcf9d9f](https://github.com/TestPlanIt/testplanit/commit/bcf9d9f35e49e1634b3f52511bbaeae60fc10c8e))
+
 ## [0.22.22](https://github.com/TestPlanIt/testplanit/compare/v0.22.21...v0.22.22) (2026-04-29)
 
 ### Bug Fixes
