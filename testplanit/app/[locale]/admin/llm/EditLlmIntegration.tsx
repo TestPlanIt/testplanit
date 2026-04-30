@@ -82,6 +82,7 @@ const createFormSchema = (
     costPerInputToken: z.number().min(0),
     costPerOutputToken: z.number().min(0),
     monthlyBudget: z.number().min(0).optional(),
+    billingPeriodStartDay: z.number().int().min(1).max(31),
     defaultTemperature: z.number().min(0).max(2),
     defaultMaxTokens: z.number().min(1).max(128000),
     timeout: z.number().min(5000).max(600000), // 5 seconds to 10 minutes
@@ -154,6 +155,7 @@ export function EditLlmIntegration({
       costPerInputToken: 0,
       costPerOutputToken: 0,
       monthlyBudget: 0,
+      billingPeriodStartDay: 1,
       defaultTemperature: 0.7,
       defaultMaxTokens: 1000,
       timeout: 30000,
@@ -267,6 +269,8 @@ export function EditLlmIntegration({
           Number(integration.llmProviderConfig?.costPerOutputToken) || 0,
         monthlyBudget:
           Number(integration.llmProviderConfig?.monthlyBudget) || 0,
+        billingPeriodStartDay:
+          integration.llmProviderConfig?.billingPeriodStartDay ?? 1,
         defaultTemperature:
           integration.llmProviderConfig?.defaultTemperature || 0.7,
         defaultMaxTokens:
@@ -389,6 +393,7 @@ export function EditLlmIntegration({
             costPerInputToken: values.costPerInputToken,
             costPerOutputToken: values.costPerOutputToken,
             monthlyBudget: values.monthlyBudget || 0,
+            billingPeriodStartDay: values.billingPeriodStartDay,
             defaultTemperature: values.defaultTemperature,
             defaultMaxTokens: values.defaultMaxTokens,
             timeout: values.timeout,
@@ -892,6 +897,37 @@ export function EditLlmIntegration({
                     </div>
                   );
                 })()}
+
+              <FormField
+                control={form.control}
+                name="billingPeriodStartDay"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {tAdd("billingPeriodStartDay")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={31}
+                        step={1}
+                        placeholder={tAdd("billingPeriodStartDayPlaceholder")}
+                        {...field}
+                        value={field.value ?? 1}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          field.onChange(isNaN(val) ? 1 : val);
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {tAdd("billingPeriodStartDayDescription")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
