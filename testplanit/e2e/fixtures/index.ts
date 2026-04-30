@@ -1,5 +1,25 @@
-import { expect, test as base } from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
 import { ApiHelper } from "./api.fixture";
+
+/**
+ * Stub the bell's SSE stream with HTTP 204 so EventSource stops reconnecting
+ * and `waitForLoadState("networkidle")` can fire. The NotificationBell mounts
+ * on every authenticated page and would otherwise keep one network request
+ * open indefinitely.
+ *
+ * The shared `page` fixture below auto-applies this. Tests that create their
+ * own contexts via `browser.newContext()` must call this helper on each
+ * manually-created page — fixture route handlers don't propagate to
+ * manually-created contexts.
+ *
+ * Tests that want real SSE behavior on the page (e.g. dedicated SSE coverage
+ * tests) should not call this and can `unroute` if needed.
+ */
+export async function stubBellSSE(page: Page): Promise<void> {
+  await page.route("**/api/notifications/stream", (route) =>
+    route.fulfill({ status: 204, body: "" })
+  );
+}
 
 /**
  * Extended test fixtures for TestPlanIt E2E tests
@@ -17,6 +37,14 @@ export interface TestFixtures {
  * Extended test with custom fixtures
  */
 export const test = base.extend<TestFixtures>({
+  // Auto-apply the SSE stub to the fixture's `page`. See stubBellSSE above
+  // for rationale. Manually-created contexts must call stubBellSSE themselves.
+  page: async ({ page }, use) => {
+    await stubBellSSE(page);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    await use(page);
+  },
+
   // Default project ID (can be overridden per test)
   projectId: 1,
 

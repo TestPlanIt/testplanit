@@ -1,4 +1,4 @@
-import { expect, test } from "../../../fixtures";
+import { expect, stubBellSSE, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
 /**
@@ -1330,6 +1330,8 @@ test.describe("Case Creation - Restricted Fields", () => {
     // Create a new browser context and authenticate as the regular user
     const userContext = await browser.newContext();
     const userPage = await userContext.newPage();
+    // Manually-created contexts don't inherit the shared fixture's SSE stub.
+    await stubBellSSE(userPage);
 
     try {
       // Login as regular user
