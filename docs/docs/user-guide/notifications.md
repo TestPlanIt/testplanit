@@ -43,7 +43,7 @@ The notification panel displays when you click the bell icon:
 
 - **Width**: Fixed at 400px for comfortable reading
 - **Height**: Scrollable area showing up to 20 most recent notifications
-- **Auto-refresh**: Updates every 5 seconds when open, every 30 seconds when closed
+- **Live updates**: New notifications appear within ~1 second via a server-pushed event stream — no polling
 - **Focus refresh**: Automatically refreshes when you return to the browser tab
 
 **Panel Header**:
@@ -109,18 +109,22 @@ When you have no notifications, the panel displays:
 
 **Automatic Updates**:
 
-- **Polling intervals**:
-  - 5 seconds when panel is open
-  - 30 seconds when panel is closed
-  - Continues even when browser tab is in background
-- **Window focus**: Refreshes immediately when you return to the tab
-- **URL parameter**: Can open notifications automatically with `?openNotifications=true`
+- **Server-pushed updates**: When you sign in, the bell opens a long-lived [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) connection to TestPlanIt. New notifications arrive within ~1 second of being created — no polling, no refresh required.
+- **Auto-reconnect**: If the connection drops (network blip, server restart, deploy), the browser automatically reconnects and re-syncs missed notifications.
+- **Window focus**: When you return to the tab, the panel refreshes immediately as a safety net for anything that might have been missed during a long sleep/suspend.
+- **URL parameter**: Can open notifications automatically with `?openNotifications=true`.
 
 **Badge Counter**:
 
 - Updates in real-time as notifications arrive
 - Shows unread count accurately
 - Caps display at "9+" for readability
+
+:::note Operator note
+
+For SSE to work behind a load balancer, the ingress / reverse proxy must allow long-lived streamed responses (no buffering, idle timeouts ≥ 1 hour). See [SSE Notifications](../sse-notifications.md) for nginx-ingress, Traefik, AWS LBC, and plain nginx configuration recipes plus the tuning environment variables.
+
+:::
 
 ### Notification Details by Type
 
@@ -281,20 +285,28 @@ EMAIL_FROM=noreply@example.com
    - Processes notification creation jobs
    - Determines user preferences
    - Queues email jobs when needed
+   - After creating each `Notification` row, publishes a small `{id, event}` wake-up payload to a tenant-scoped Valkey channel so live SSE subscribers refetch immediately
 
-2. **Email Worker** (`workers/emailWorker.ts`)
+2. **SSE Stream Route** (`app/api/notifications/stream/route.ts`)
+   - Serves the long-lived `text/event-stream` connection that the bell consumes
+   - Subscribes per-connection to the user's Valkey channel and the tenant broadcast channel
+   - Treats wake-up payloads as opaque "something changed" signals; the bell re-fetches through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read
+   - Enforces per-user (4) and per-tenant (1000, default) connection caps and a 25-second heartbeat for proxy-friendly liveness
+
+3. **Email Worker** (`workers/emailWorker.ts`)
    - Sends actual emails
    - Handles retries and failures
    - Processes both immediate and digest emails
 
-3. **Scheduler** (`scheduler.ts`)
+4. **Scheduler** (`scheduler.ts`)
    - Sets up cron jobs for daily digests
    - Runs at 8 AM daily
 
-4. **Queue System** (BullMQ + Valkey)
+5. **Queue System** (BullMQ + Valkey)
    - Ensures reliable delivery
    - Handles retries automatically
    - Prevents duplicate notifications
+   - The same Valkey is reused for the SSE pub/sub fan-out — channels are namespaced by tenant prefix, no separate Valkey deployment needed
 
 ### Flow Diagram
 
@@ -308,11 +320,16 @@ Event Occurs → Create Notification Job → Notification Worker
                    IN_APP Only         EMAIL_IMMEDIATE         EMAIL_DAILY
                         ↓                     ↓                     ↓
                  Store in DB          Queue Email Job      Store for Digest
-                                              ↓
-                                        Email Worker
-                                              ↓
-                                        Send Email
+                        ↓                     ↓
+              Publish to Valkey         Email Worker
+                  (wake-up)                   ↓
+                        ↓               Send Email
+              SSE Route relays
+                        ↓
+              Bell refetches → Badge updates
 ```
+
+For ingress / proxy configuration required to run SSE reliably behind a load balancer, see [SSE Notifications](../sse-notifications.md).
 
 ## Global Settings
 
@@ -348,6 +365,15 @@ Administrators can configure system-wide defaults:
 2. Ensure you haven't selected "None"
 3. Verify your email address is correct
 4. Check spam/junk folders
+
+### Bell does not update in real time
+
+If new notifications only appear after a manual page refresh, the SSE event stream is not reaching the browser. This is almost always an ingress / reverse-proxy configuration issue, not an application bug.
+
+1. In the browser DevTools Network tab, filter for `stream`. There should be one long-lived `/api/notifications/stream` request with status `200` and `Content-Type: text/event-stream`.
+2. If the request returns `401`, the user is not signed in (expected on the sign-in page).
+3. If the request closes after a few seconds, the proxy is buffering the response or applying a short idle timeout. See [SSE Notifications](../sse-notifications.md) for nginx-ingress, Traefik, AWS LBC, and plain nginx fixes.
+4. Server logs include a `sse.connections.active` JSON line every 30 seconds per tenant — if that line is missing, no connections are reaching the route.
 
 ### Emails Not Sending
 
@@ -385,7 +411,7 @@ Example template:
 <h2>{{title}}</h2>
 <p>Hi {{userName}},</p>
 <p>{{message}}</p>
-<a href="{{actionUrl}}" class="button">{{actionText}}</a>
+<a href='{{actionUrl}}' class='button'>{{actionText}}</a>
 ```
 
 ### Testing Notifications
