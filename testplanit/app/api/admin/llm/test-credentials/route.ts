@@ -157,7 +157,9 @@ export async function POST(request: NextRequest) {
           modelCapabilities = { [defaultModel]: capabilities };
         } catch (probeError) {
           console.warn(
-            `Capability probe failed for ${provider}/${defaultModel}; continuing without persisted capabilities:`,
+            "Capability probe failed for %s/%s; continuing without persisted capabilities:",
+            provider,
+            defaultModel,
             probeError
           );
         }
