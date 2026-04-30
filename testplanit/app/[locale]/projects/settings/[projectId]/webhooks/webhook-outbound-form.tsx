@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ import {
   createOutboundWebhook,
   deleteOutboundWebhook,
   extendRetiringSecret,
+  reEnableWebhookConfig,
   retireOutboundSecretNow,
   rotateOutboundSecret,
   sendTestOutboundWebhook,
@@ -75,6 +77,8 @@ const DEFAULT_PRESET: string[] = ["test_run.completed", "issue.created"];
  * clause INCLUDES `name` and `url` (Plan 02-01 columns; Blocker 4 fix), and
  * EXCLUDES the encrypted `secret` column (HI-01).
  */
+type EndpointHealth = "HEALTHY" | "DEGRADED" | "DISABLED";
+
 interface OutboundConfig {
   id: string;
   projectId: number;
@@ -84,7 +88,12 @@ interface OutboundConfig {
   url: string | null;
   isActive: boolean;
   subscribedEvents: string[];
-  endpointHealth: string | null;
+  // Plan 04-07 follow-up — health badge + Delivery activity surface.
+  endpointHealth: EndpointHealth;
+  consecutiveFailureCount: number;
+  lastDispatchedAt: Date | null;
+  lastSuccessAt: Date | null;
+  lastFailureAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   secrets?: Array<{
@@ -93,6 +102,15 @@ interface OutboundConfig {
     retiredAt: Date | null;
     autoRetireAt: Date | null;
   }>;
+}
+
+// D-13: shadcn Badge variant per endpoint health (mirrors inbound form helper).
+function healthBadgeVariant(
+  health: EndpointHealth
+): "default" | "secondary" | "destructive" {
+  if (health === "DEGRADED") return "secondary";
+  if (health === "DISABLED") return "destructive";
+  return "default";
 }
 
 /**
@@ -126,7 +144,12 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       url: true, // Blocker 4 — destination URL (Plan 02-01 column)
       isActive: true,
       subscribedEvents: true,
+      // Plan 04-07 follow-up — health badge + Delivery activity surface.
       endpointHealth: true,
+      consecutiveFailureCount: true,
+      lastDispatchedAt: true,
+      lastSuccessAt: true,
+      lastFailureAt: true,
       createdAt: true,
       updatedAt: true,
       // secret column intentionally excluded — HI-01
@@ -169,6 +192,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
     string | null
   >(null);
   const [retireDialogSecretId, setRetireDialogSecretId] = useState<
+    string | null
+  >(null);
+  const [reenableDialogConfigId, setReenableDialogConfigId] = useState<
     string | null
   >(null);
   const [postRotateSecret, setPostRotateSecret] = useState<string | null>(null);
@@ -284,6 +310,25 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       await refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveError"));
+    }
+  }
+
+  async function performReEnable(configId: string) {
+    setReenableDialogConfigId(null);
+    try {
+      const result = await reEnableWebhookConfig(configId);
+      if (!result.ok) {
+        toast.error(t("toastReEnableFailed", { error: result.error ?? "" }));
+        return;
+      }
+      toast.success(t("toastReEnableSuccess"));
+      await refetch();
+    } catch (err) {
+      toast.error(
+        t("toastReEnableFailed", {
+          error: err instanceof Error ? err.message : "",
+        })
+      );
     }
   }
 
@@ -517,6 +562,46 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
     </div>
   );
 
+  const renderActivityRow = (
+    labelKey:
+      | "activityLastDispatched"
+      | "activityLastSuccess"
+      | "activityLastFailure",
+    value: Date | null
+  ) => (
+    <div>
+      <span className="font-medium">{t(labelKey)}:</span>{" "}
+      <span>
+        {value
+          ? formatDistanceToNow(new Date(value), { addSuffix: true })
+          : t("activityNever")}
+      </span>
+    </div>
+  );
+
+  const renderHealthTooltip = (config: OutboundConfig): string => {
+    if (config.endpointHealth === "DEGRADED") {
+      return t("healthTooltipDegraded", {
+        count: config.consecutiveFailureCount,
+        lastFailureAt: config.lastFailureAt
+          ? new Date(config.lastFailureAt).toISOString()
+          : t("activityNever"),
+      });
+    }
+    if (config.endpointHealth === "DISABLED") {
+      return t("healthTooltipDisabled", {
+        lastFailureAt: config.lastFailureAt
+          ? new Date(config.lastFailureAt).toISOString()
+          : t("activityNever"),
+      });
+    }
+    return t("healthTooltipHealthy", {
+      lastSuccessAt: config.lastSuccessAt
+        ? new Date(config.lastSuccessAt).toISOString()
+        : t("activityNever"),
+    });
+  };
+
   const renderConfigCard = (config: OutboundConfig) => {
     const isSlack = config.adapterType === "SLACK";
     const activeSecret = config.secrets?.find(
@@ -526,6 +611,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       (s) => s.retiredAt === null && s.autoRetireAt !== null
     );
     const testResult = testResults[config.id];
+    const healthLabelKey: `healthBadge.${EndpointHealth}` = `healthBadge.${config.endpointHealth}`;
 
     return (
       <Card key={config.id} data-testid={`webhook-outbound-card-${config.id}`}>
@@ -534,7 +620,14 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             {config.name ?? t("outboundUnnamedConfig")}
           </CardTitle>
           <CardDescription>
-            <Badge>{config.adapterType}</Badge>
+            <Badge>{config.adapterType}</Badge>{" "}
+            <Badge
+              data-testid={`webhook-health-badge-${config.id}`}
+              variant={healthBadgeVariant(config.endpointHealth)}
+              title={renderHealthTooltip(config)}
+            >
+              {t(healthLabelKey)}
+            </Badge>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -675,6 +768,21 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             </div>
           )}
 
+          <div
+            data-testid={`webhook-delivery-activity-${config.id}`}
+            className="space-y-1 text-sm text-muted-foreground"
+          >
+            <div className="text-xs font-medium uppercase">
+              {t("activityLabel")}
+            </div>
+            {renderActivityRow(
+              "activityLastDispatched",
+              config.lastDispatchedAt
+            )}
+            {renderActivityRow("activityLastSuccess", config.lastSuccessAt)}
+            {renderActivityRow("activityLastFailure", config.lastFailureAt)}
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
@@ -683,6 +791,15 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             >
               {t("outboundSendTestButton")}
             </Button>
+            {config.endpointHealth === "DISABLED" && (
+              <Button
+                type="button"
+                data-testid={`webhook-reenable-button-${config.id}`}
+                onClick={() => setReenableDialogConfigId(config.id)}
+              >
+                {t("reEnable")}
+              </Button>
+            )}
             <Button
               type="button"
               variant="destructive"
@@ -830,6 +947,34 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
               }}
             >
               {t("outboundHmacRetireNowButton")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={reenableDialogConfigId !== null}
+        onOpenChange={(open) => !open && setReenableDialogConfigId(null)}
+      >
+        <AlertDialogContent data-testid="webhook-reenable-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("reEnableConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("reEnableConfirm")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="webhook-reenable-dialog-cancel">
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="webhook-reenable-dialog-confirm"
+              onClick={() => {
+                if (reenableDialogConfigId)
+                  void performReEnable(reenableDialogConfigId);
+              }}
+            >
+              {t("reEnable")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
