@@ -45,6 +45,7 @@ import {
   useUpdateLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 import { useDeleteManyLlmUsage } from "~/lib/hooks/llm-usage";
+import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 
 const createFormSchema = (
   t: any,
@@ -432,14 +433,14 @@ export function EditLlmIntegration({
 
     setResettingSpend(true);
     try {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+      const periodStartDay =
+        integration.llmProviderConfig?.billingPeriodStartDay ?? 1;
+      const periodStart = getBillingPeriodStart(periodStartDay);
 
       await deleteManyLlmUsage({
         where: {
           llmIntegrationId: integration.id,
-          createdAt: { gte: startOfMonth },
+          createdAt: { gte: periodStart },
         },
       });
 

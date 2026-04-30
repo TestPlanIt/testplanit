@@ -1,4 +1,8 @@
 import { NotificationType } from "@prisma/client";
+import {
+  getBillingPeriodKey,
+  getBillingPeriodStart,
+} from "../utils/billingPeriod";
 import { NotificationService } from "./notificationService";
 
 export const THRESHOLDS = [80, 90, 100] as const;
@@ -13,10 +17,12 @@ export interface BudgetCheckResult {
 /**
  * Pure budget check and alert business logic service.
  *
- * Checks whether an LLM provider's current month spend has crossed any
- * budget threshold (80%, 90%, 100%) and, if so, notifies all ADMIN users
- * exactly once per threshold per billing month through the existing
- * notification pipeline.
+ * Checks whether an LLM provider's current billing period spend has crossed
+ * any budget threshold (80%, 90%, 100%) and, if so, notifies all ADMIN users
+ * exactly once per threshold per billing period through the existing
+ * notification pipeline. The billing period start day is configurable per
+ * provider via `LlmProviderConfig.billingPeriodStartDay` (default 1 =
+ * calendar month).
  *
  * This service is intentionally BullMQ-unaware so that it can be tested
  * with mocked Prisma clients without queue infrastructure.
@@ -60,15 +66,14 @@ export class BudgetAlertService {
       return notChecked;
     }
 
-    // 2. Aggregate current month spend
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    // 2. Aggregate current billing period spend
+    const periodStartDay = config.billingPeriodStartDay ?? 1;
+    const periodStart = getBillingPeriodStart(periodStartDay);
 
     const result = await this.prisma.llmUsage.aggregate({
       where: {
         llmIntegrationId,
-        createdAt: { gte: startOfMonth },
+        createdAt: { gte: periodStart },
       },
       _sum: { totalCost: true },
     });
@@ -77,13 +82,13 @@ export class BudgetAlertService {
     const spendPercent = (currentSpend / budget) * 100;
 
     // 3. Determine which thresholds are crossed but not yet fired
-    const monthKey = `${startOfMonth.getFullYear()}-${String(startOfMonth.getMonth() + 1).padStart(2, "0")}`;
+    const periodKey = getBillingPeriodKey(periodStart);
     const fired =
       (config.alertThresholdsFired as Record<string, number[]>) ?? {};
-    const firedForMonth = fired[monthKey] ?? [];
+    const firedForPeriod = fired[periodKey] ?? [];
 
     const newlyCrossed = THRESHOLDS.filter(
-      (t) => spendPercent >= t && !firedForMonth.includes(t)
+      (t) => spendPercent >= t && !firedForPeriod.includes(t)
     );
 
     if (newlyCrossed.length === 0) {
@@ -96,7 +101,7 @@ export class BudgetAlertService {
     // 4. Atomically update alertThresholdsFired before sending notifications
     const updatedFired = {
       ...fired,
-      [monthKey]: [...firedForMonth, ...newlyCrossed],
+      [periodKey]: [...firedForPeriod, ...newlyCrossed],
     };
 
     await this.prisma.llmProviderConfig.update({
@@ -134,7 +139,7 @@ export class BudgetAlertService {
             currentSpend: currentSpend.toFixed(2),
             budgetLimit: budget.toFixed(2),
             threshold,
-            monthKey,
+            periodKey,
             link: "/admin/llm",
           },
           tenantId,
