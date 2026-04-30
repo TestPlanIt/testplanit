@@ -3576,6 +3576,11 @@ model LlmProviderConfig {
     costPerOutputToken   Decimal         @db.Decimal(10, 8)
     monthlyBudget        Decimal?        @db.Decimal(10, 2)
 
+    // Day of month (1-31) when the billing period starts. Defaults to 1
+    // for calendar-month behavior. Values >28 clamp to last day of short
+    // months (e.g., 31 -> Feb 28/29).
+    billingPeriodStartDay Int            @default(1)
+
     // Settings
     defaultTemperature   Float           @default(0.7)
     defaultMaxTokens     Int             @default(2048)
@@ -3587,8 +3592,10 @@ model LlmProviderConfig {
     // Ollama-specific settings (stored in settings Json)
     settings             Json?     // Contains baseUrl, keepAlive, numGpu, etc.
 
-    // Budget alert tracking - which thresholds have fired per billing month
-    // e.g., {"2026-03": [80, 90]} means 80% and 90% alerts fired for March 2026
+    // Budget alert tracking - which thresholds have fired per billing period.
+    // Key is the period-start ISO date `YYYY-MM-DD` (derived from
+    // `billingPeriodStartDay`); e.g., {"2026-03-15": [80, 90]} means 80% and
+    // 90% alerts fired for the period starting March 15 2026.
     alertThresholdsFired Json?
 
     createdAt            DateTime        @default(now()) @db.Timestamptz(6)

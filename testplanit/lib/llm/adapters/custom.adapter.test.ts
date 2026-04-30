@@ -45,6 +45,7 @@ const createTestConfig = (
     isDefault: false,
     settings: null,
     alertThresholdsFired: null,
+    billingPeriodStartDay: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

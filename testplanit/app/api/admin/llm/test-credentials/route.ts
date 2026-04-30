@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         streamingEnabled: true,
         isDefault: false,
         monthlyBudget: new Prisma.Decimal(0),
+        billingPeriodStartDay: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
         settings: {},

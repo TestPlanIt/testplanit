@@ -31,6 +31,7 @@ const createTestConfig = (
     costPerInputToken: new Prisma.Decimal("0.003"),
     costPerOutputToken: new Prisma.Decimal("0.015"),
     monthlyBudget: null,
+    billingPeriodStartDay: 1,
     defaultTemperature: 0.7,
     defaultMaxTokens: 1000,
     timeout: 30000,

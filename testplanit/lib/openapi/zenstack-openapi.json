@@ -2005,6 +2005,7 @@
           "costPerInputToken",
           "costPerOutputToken",
           "monthlyBudget",
+          "billingPeriodStartDay",
           "defaultTemperature",
           "defaultMaxTokens",
           "timeout",
@@ -9693,6 +9694,9 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "type": "integer"
+          },
           "defaultTemperature": {
             "type": "number"
           },
@@ -9744,6 +9748,7 @@
           "maxRequestsPerMinute",
           "costPerInputToken",
           "costPerOutputToken",
+          "billingPeriodStartDay",
           "defaultTemperature",
           "defaultMaxTokens",
           "timeout",
@@ -54892,6 +54897,16 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "defaultTemperature": {
             "oneOf": [
               {
@@ -55048,6 +55063,9 @@
                 "$ref": "#/components/schemas/SortOrderInput"
               }
             ]
+          },
+          "billingPeriodStartDay": {
+            "$ref": "#/components/schemas/SortOrder"
           },
           "defaultTemperature": {
             "$ref": "#/components/schemas/SortOrder"
@@ -55236,6 +55254,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -55497,6 +55525,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -90651,6 +90689,9 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "type": "integer"
+          },
           "defaultTemperature": {
             "type": "number"
           },
@@ -90809,6 +90850,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -90991,6 +91042,9 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "type": "integer"
+          },
           "defaultTemperature": {
             "type": "number"
           },
@@ -91146,6 +91200,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -359953,6 +360017,9 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "type": "integer"
+          },
           "defaultTemperature": {
             "type": "number"
           },
@@ -360068,6 +360135,9 @@
                 "type": "null"
               }
             ]
+          },
+          "billingPeriodStartDay": {
+            "type": "integer"
           },
           "defaultTemperature": {
             "type": "number"
@@ -361744,6 +361814,16 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "defaultTemperature": {
             "oneOf": [
               {
@@ -361959,6 +362039,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
               }
             ]
           },
@@ -524901,6 +524991,9 @@
           "monthlyBudget": {
             "type": "boolean"
           },
+          "billingPeriodStartDay": {
+            "type": "boolean"
+          },
           "defaultTemperature": {
             "type": "boolean"
           },
@@ -536575,6 +536668,9 @@
           "monthlyBudget": {
             "type": "boolean"
           },
+          "billingPeriodStartDay": {
+            "type": "boolean"
+          },
           "defaultTemperature": {
             "type": "boolean"
           },
@@ -536637,6 +536733,9 @@
           "monthlyBudget": {
             "type": "boolean"
           },
+          "billingPeriodStartDay": {
+            "type": "boolean"
+          },
           "defaultTemperature": {
             "type": "boolean"
           },
@@ -536676,6 +536775,9 @@
             "type": "boolean"
           },
           "monthlyBudget": {
+            "type": "boolean"
+          },
+          "billingPeriodStartDay": {
             "type": "boolean"
           },
           "defaultTemperature": {
@@ -536720,6 +536822,9 @@
             "type": "boolean"
           },
           "monthlyBudget": {
+            "type": "boolean"
+          },
+          "billingPeriodStartDay": {
             "type": "boolean"
           },
           "defaultTemperature": {
@@ -536776,6 +536881,9 @@
             "type": "boolean"
           },
           "monthlyBudget": {
+            "type": "boolean"
+          },
+          "billingPeriodStartDay": {
             "type": "boolean"
           },
           "defaultTemperature": {
@@ -553646,6 +553754,9 @@
               }
             ]
           },
+          "billingPeriodStartDay": {
+            "type": "integer"
+          },
           "defaultTemperature": {
             "type": "number"
           },
@@ -553747,6 +553858,7 @@
           "maxRequestsPerMinute",
           "costPerInputToken",
           "costPerOutputToken",
+          "billingPeriodStartDay",
           "defaultTemperature",
           "defaultMaxTokens",
           "timeout",
@@ -582366,6 +582478,9 @@
           "monthlyBudget": {
             "type": "integer"
           },
+          "billingPeriodStartDay": {
+            "type": "integer"
+          },
           "defaultTemperature": {
             "type": "integer"
           },
@@ -582411,6 +582526,7 @@
           "costPerInputToken",
           "costPerOutputToken",
           "monthlyBudget",
+          "billingPeriodStartDay",
           "defaultTemperature",
           "defaultMaxTokens",
           "timeout",
@@ -582513,6 +582629,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
               }
             ]
           },
@@ -582647,6 +582773,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -582791,6 +582927,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
@@ -582977,6 +583123,16 @@
               },
               {
                 "type": "null"
+              }
+            ]
+          },
+          "billingPeriodStartDay": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
               }
             ]
           },
