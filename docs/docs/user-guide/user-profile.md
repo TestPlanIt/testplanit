@@ -86,7 +86,7 @@ When viewing your own profile, you can view and edit these preferences:
 
 Shown only when viewing your own profile and the account has API access. Lets you create, view, and revoke personal access tokens used to authenticate against the TestPlanIt REST API.
 
-For details on token scopes and lifecycle, see [API Tokens](../api-tokens).
+For details on token scopes and lifecycle, see [API Tokens](../../api-tokens).
 
 ### Activity Statistics
 
