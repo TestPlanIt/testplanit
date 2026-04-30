@@ -1,3 +1,9 @@
+## [0.23.1](https://github.com/TestPlanIt/testplanit/compare/v0.23.0...v0.23.1) (2026-04-30)
+
+### Enhancements
+
+* **llm:** LLM custom billing period, admin UX redesign, and capability probing ([#265](https://github.com/TestPlanIt/testplanit/issues/265)) ([6c1ee8b](https://github.com/TestPlanIt/testplanit/commit/6c1ee8b9372d222eafafc81067f528ecbe6734e1))
+
 ## [0.23.0](https://github.com/TestPlanIt/testplanit/compare/v0.22.22...v0.23.0) (2026-04-30)
 
 ### Features
