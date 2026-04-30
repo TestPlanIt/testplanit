@@ -68,6 +68,11 @@ const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
     console.log(
       `[WebhookDispatchWorker] Job ${job.id} outcome: ${outcome.outcome}`
     );
+    // Return the outcome shape so worker.on('completed', (job, result) => ...)
+    // can distinguish a real HTTP 2xx success from a short-circuit (DISABLED
+    // gate, skipped_inactive, skipped_unsubscribed). Only real successes
+    // should reset endpointHealth via health.transition('success').
+    return outcome;
   } catch (err) {
     // Re-throw so BullMQ retries per OUT-01 schedule.
     console.warn(
@@ -93,10 +98,19 @@ const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
  * Both handlers are exported so they're directly testable without spinning
  * up a real BullMQ Worker against valkey.
  */
-export async function handleCompleted(job: Job): Promise<void> {
+export async function handleCompleted(
+  job: Job,
+  result?: { outcome?: string } | null
+): Promise<void> {
   const webhookConfigId = (job?.data as { webhookConfigId?: string } | null)
     ?.webhookConfigId;
   if (!webhookConfigId) return;
+  // Only ACTUAL HTTP successes reset endpointHealth. Short-circuit outcomes
+  // (DISABLED gate writing endpoint_disabled, skipped_inactive,
+  // skipped_unsubscribed) are NOT signals that the endpoint recovered —
+  // calling health.transition('success') on those would undo the auto-disable
+  // (DISABLED → HEALTHY) immediately after the gate kept us from firing.
+  if (result?.outcome !== "success") return;
   try {
     await transitionHealth(webhookConfigId, "success");
   } catch (err) {
@@ -161,11 +175,12 @@ const startWorker = async () => {
         },
       }
     );
-    worker.on("completed", (job) => {
+    worker.on("completed", (job, result) => {
       // Plan 04-05 / Task 5.3 — handleCompleted writes lastSuccessAt +
       // resets consecutiveFailureCount + flips DEGRADED/DISABLED → HEALTHY
-      // via lib/webhooks/health.transition.
-      void handleCompleted(job);
+      // via lib/webhooks/health.transition. Only fires for ACTUAL HTTP 2xx
+      // outcomes; DISABLED-gate / skipped short-circuits are no-op.
+      void handleCompleted(job, result as { outcome?: string } | null);
     });
     worker.on("failed", (job, err) => {
       // Plan 04-05 / Task 5.3 — handleFailed is no-op for non-terminal

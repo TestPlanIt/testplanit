@@ -142,7 +142,7 @@ describe("webhookDispatchWorker.processor", () => {
     await expect(processor(job)).rejects.toThrow("upstream 500");
   });
 
-  it("4. processor resolves silently on success outcome (no rethrow)", async () => {
+  it("4. processor returns the dispatch outcome on success (so worker.on('completed', (job, result) => ...) can distinguish real 2xx from short-circuit gates)", async () => {
     mockedDispatch.mockResolvedValue({
       outcome: "success",
       statusCode: 200,
@@ -153,7 +153,9 @@ describe("webhookDispatchWorker.processor", () => {
       data: { outboxEventId: "ev1", webhookConfigId: "c1", attempt: 1 },
     });
 
-    await expect(processor(job)).resolves.toBeUndefined();
+    await expect(processor(job)).resolves.toMatchObject({
+      outcome: "success",
+    });
   });
 
   it("5. processor is exported as a function", () => {
@@ -328,7 +330,7 @@ describe("webhookDispatchWorker — health hooks (Plan 04-05 / Task 5.3)", () =>
     expect(mockHealthTransition).not.toHaveBeenCalled();
   });
 
-  it("H3. on('completed') — calls health.transition(configId, 'success')", async () => {
+  it("H3. on('completed') with result.outcome='success' — calls health.transition(configId, 'success')", async () => {
     const job = {
       id: "job-completed",
       attemptsMade: 0,
@@ -340,10 +342,65 @@ describe("webhookDispatchWorker — health hooks (Plan 04-05 / Task 5.3)", () =>
       opts: { attempts: 7 },
     } as any;
 
-    await handleCompleted(job);
+    await handleCompleted(job, { outcome: "success" });
 
     expect(mockHealthTransition).toHaveBeenCalledTimes(1);
     expect(mockHealthTransition).toHaveBeenCalledWith("cfg-success", "success");
+  });
+
+  it("H3a. on('completed') with result.outcome='failure' (DISABLED gate) — does NOT call health.transition; otherwise the gate would be undone immediately", async () => {
+    const job = {
+      id: "job-disabled-gate",
+      attemptsMade: 0,
+      data: {
+        outboxEventId: "ev1",
+        webhookConfigId: "cfg-disabled",
+        attempt: 1,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleCompleted(job, {
+      outcome: "failure",
+      error: "endpoint_disabled",
+    } as any);
+
+    expect(mockHealthTransition).not.toHaveBeenCalled();
+  });
+
+  it("H3b. on('completed') with result.outcome='skipped_inactive' / 'skipped_unsubscribed' — does NOT call health.transition", async () => {
+    const job = {
+      id: "job-skipped",
+      attemptsMade: 0,
+      data: {
+        outboxEventId: "ev1",
+        webhookConfigId: "cfg-skipped",
+        attempt: 1,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleCompleted(job, { outcome: "skipped_inactive" });
+    await handleCompleted(job, { outcome: "skipped_unsubscribed" });
+
+    expect(mockHealthTransition).not.toHaveBeenCalled();
+  });
+
+  it("H3c. on('completed') with no result — does NOT call health.transition (defensive)", async () => {
+    const job = {
+      id: "job-no-result",
+      attemptsMade: 0,
+      data: {
+        outboxEventId: "ev1",
+        webhookConfigId: "cfg-no-result",
+        attempt: 1,
+      },
+      opts: { attempts: 7 },
+    } as any;
+
+    await handleCompleted(job);
+
+    expect(mockHealthTransition).not.toHaveBeenCalled();
   });
 
   it("H4. on('failed') terminal but webhookConfigId missing — defensive skip; no transition call", async () => {
