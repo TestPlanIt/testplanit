@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Loader2, Send, TestTube2, XCircle } from "lucide-react";
+import { CheckCircle, Activity, Loader2, Send, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -109,12 +109,12 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
     <>
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={() => setOpen(true)}
         className="px-2 py-1 h-auto"
         data-testid="llm-test-button"
       >
-        <TestTube2 className="h-4 w-4" />
+        <Activity className="h-4 w-4" />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

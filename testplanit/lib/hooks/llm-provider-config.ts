@@ -327,7 +327,7 @@ export function useSuspenseCountLlmProviderConfig<TArgs extends Prisma.LlmProvid
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('LlmProviderConfig', `${endpoint}/llmProviderConfig/count`, args, options, fetch);
 }
 
-export function useCheckLlmProviderConfig<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; llmIntegrationId?: number; defaultModel?: string; maxTokensPerRequest?: number; maxRequestsPerMinute?: number; maxRequestsPerDay?: number; defaultMaxTokens?: number; timeout?: number; retryAttempts?: number; streamingEnabled?: boolean; isDefault?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckLlmProviderConfig<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; llmIntegrationId?: number; defaultModel?: string; maxTokensPerRequest?: number; maxRequestsPerMinute?: number; maxRequestsPerDay?: number; billingPeriodStartDay?: number; defaultMaxTokens?: number; timeout?: number; retryAttempts?: number; streamingEnabled?: boolean; isDefault?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('LlmProviderConfig', `${endpoint}/llmProviderConfig/check`, args, options, fetch);
 }

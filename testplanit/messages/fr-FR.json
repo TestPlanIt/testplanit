@@ -1579,6 +1579,9 @@
       "preferences": {
         "title": "Préférences"
       },
+      "access": {
+        "title": "Accéder"
+      },
       "notifications": {
         "title": "Préférences de notification",
         "description": "Personnalisez la façon dont vous recevez les notifications",
@@ -4105,7 +4108,6 @@
         "apiKeyDescription": "Votre clé API pour l'authentification auprès du fournisseur",
         "endpoint": "URL du point de terminaison",
         "endpointPlaceholder": "https://api.provider.com/v1",
-        "endpointDescription": "L'URL de base pour les requêtes API. Pour les fournisseurs standards (OpenAI, Anthropic, Gemini), seules les URL officielles sont acceptées. Pour les fournisseurs auto-hébergés, les adresses privées/internes (localhost, 127.0.0.1, adresses IP privées) sont bloquées pour des raisons de sécurité.",
         "endpointV1Hint": "Conseil : Si vous utilisez un proxy (par exemple LiteLLM), essayez d’ajouter /v1 à la fin de l’URL de votre point de terminaison.",
         "deploymentName": "Nom du déploiement",
         "deploymentNamePlaceholder": "Saisissez le nom du déploiement...",
@@ -4119,6 +4121,9 @@
         "monthlyBudget": "Budget mensuel ($)",
         "monthlyBudgetPlaceholder": "100,00",
         "monthlyBudgetDescription": "Objectif de dépenses facultatif pour les notifications (n'empêche pas l'utilisation)",
+        "billingPeriodStartDay": "Jour de début de la période de facturation",
+        "billingPeriodStartDayPlaceholder": "1",
+        "billingPeriodStartDayDescription": "Jour du mois (1-31) où commence votre période de facturation. Les valeurs 29-31 utilisent le dernier jour des mois plus courts.",
         "defaultTemperature": "Température par défaut",
         "defaultMaxTokens": "Nombre maximal de jetons par défaut",
         "timeout": "Délai d'attente de la requête (ms)",
@@ -4153,6 +4158,11 @@
           "nameUnique": "Une intégration portant ce nom existe déjà.",
           "defaultModelRequired": "Le modèle par défaut est requis"
         }
+      },
+      "sections": {
+        "provider": "Fournisseur",
+        "costAndBudget": "Coût et budget",
+        "advanced": "Avancé"
       },
       "delete": {
         "title": "Supprimer l'intégration du modèle d'IA",
@@ -4877,7 +4887,7 @@
       "name": "## Nom de l'intégration\nÉtiquette descriptive pour cette intégration LLM.\n\n- Utilisée pour l'identifier dans les listes et les paramètres.\n- Exemple : « OpenAI GPT-4o » ou « Ollama interne ».",
       "provider": "## Fournisseur\nLe service LLM qui gère cette intégration.\n\n- Détermine le protocole API et les modèles disponibles.\n- Ne peut pas être modifié après sa création.",
       "apiKey": "## Clé API\nVotre clé d'authentification pour l'API du fournisseur LLM.\n\n- À obtenir depuis la console développeur de votre fournisseur.\n- Conservée chiffrée et jamais affichée après enregistrement.\n- Non requise pour Ollama (déploiement local).",
-      "endpoint": "## Point de terminaison de l'API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic et Gemini ; les valeurs par défaut sont utilisées automatiquement.\n- Requis pour Ollama (par exemple, `http://localhost:11434`) et Azure OpenAI.\n- Requis pour les fournisseurs LLM personnalisés.",
+      "endpoint": "## Point de terminaison API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic et Gemini — les URL officielles sont utilisées automatiquement.\n- Obligatoire pour Ollama (par exemple, `http://localhost:11434`), Azure OpenAI et LLM personnalisé.\n- Facultatif pour tout fournisseur — indiquez un proxy compatible OpenAI (par exemple, LiteLLM) en saisissant son URL.\n- **Les adresses privées/internes** (localhost, 127.0.0.1, adresses IP privées, métadonnées cloud) sont bloquées, sauf autorisation explicite via la variable d'environnement `ALLOWED_PRIVATE_HOSTS`.",
       "deploymentName": "## Nom du déploiement Azure\nLe nom de votre déploiement de modèle Azure OpenAI.\n\n- Disponible dans Azure OpenAI Studio, sous Déploiements.\n- Différent du nom du modèle ; par exemple, `my-gpt4-deploy` correspond à `gpt-4`.\n- Requis uniquement pour Azure OpenAI.",
       "defaultModel": "## Modèle par défaut\nLe modèle utilisé pour les requêtes d'IA avec cette intégration.\n\n- Pour OpenAI, Anthropic et Gemini : les modèles disponibles sont récupérés automatiquement à partir de votre clé API.\n- Assurez-vous que le modèle est activé dans votre compte fournisseur.\n- Exemple : `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
       "maxTokensPerRequest": "## Nombre maximal de jetons par requête\n**Limite maximale** du nombre de jetons de sortie pour une requête donnée.\n\n- Les requêtes dépassant cette limite sont **rejetées avec une erreur** avant d'atteindre le LLM.\n- Définissez cette valeur sur la capacité maximale réelle de jetons de sortie de votre modèle.\n- Exemple : `16384` pour GPT-4o, `8192` pour Claude 3.5 Sonnet.\n- Une valeur trop basse peut entraîner des dysfonctionnements des fonctionnalités d'IA ou produire une sortie tronquée.",
@@ -4886,6 +4896,7 @@
       "costPerInputToken": "## Coût par jeton d'entrée (USD)\nLe coût en USD de chaque jeton d'entrée (invite) envoyé au modèle.\n\n- Utilisé pour le suivi des coûts et les alertes budgétaires\n- Trouvez cette information sur la page de tarification de votre fournisseur\n- Exemple : `0,000005` = 5 $ par million de jetons d'entrée",
       "costPerOutputToken": "## Coût par jeton de sortie (USD)\nLe coût en USD de chaque jeton de sortie (achèvement) généré par le modèle.\n\n- Généralement supérieur au coût du jeton d'entrée\n- Utilisé pour le suivi des coûts et les alertes budgétaires\n- Exemple : `0,000015` = 15 $ par million de jetons de sortie",
       "monthlyBudget": "## Budget mensuel (USD)\nObjectif de dépenses facultatif pour cette intégration.\n\n- Définissez cette valeur sur `0` pour désactiver le suivi du budget.\n- Le budget est **uniquement informatif** ; il n'empêche pas l'utilisation de LLM.\n- Vous recevrez des notifications lorsque le budget sera atteint à 80 %, 90 % et 100 %.\n- Les coûts sont calculés à l'aide des tarifs par jeton ci-dessus.",
+      "billingPeriodStartDay": "## Jour de début de la période de facturation\nJour du mois (1 à 31) où commence votre période de facturation.\n\n- Par défaut, `1` correspond au mois calendaire.\n- Définissez sur `15` pour un cycle du 15 au 15 du mois (par exemple, pour correspondre à la date de facturation de votre fournisseur).\n- Les valeurs `29 à 31` s'ajustent automatiquement au dernier jour des mois plus courts (février les années non bissextiles, etc.).\n- Affecte la fenêtre de dépenses du **budget mensuel** et l'action **Réinitialiser les dépenses**.",
       "defaultTemperature": "## Température par défaut\nContrôle le caractère aléatoire des réponses du modèle (0–2).\n\n- **0 :** Déterministe — sortie identique pour une même entrée\n- **0,3 :** Ciblé — recommandé pour la génération de tests et la sortie de code\n- **1+ :** Créatif — réponses plus variées\n- Les fonctionnalités individuelles peuvent remplacer ce paramètre dans la configuration de l'invite",
       "timeout": "## Délai d'attente de la requête (ms)\nDurée d'attente d'une réponse avant l'annulation de la requête.\n\n- Valeur en millisecondes (ex. : `30000` = 30 secondes).\n- Les requêtes en flux continu (ex. : aperçu de l'exportation de code) ignorent ce délai.\n- Augmenter pour les modèles lents ou volumineux.\n- Plage : 5 000 – 600 000 ms",
       "streamingEnabled": "## Activer le streaming\nDiffuse la réponse jeton par jeton au lieu d'attendre la sortie complète.\n\n- Requis pour l'aperçu du code en temps réel dans la fenêtre modale d'exportation.\n- Réduit la latence perçue pour les réponses longues.\n- Recommandé pour tous les fournisseurs pris en charge.",

@@ -702,7 +702,7 @@ export function FacetedSearchFilters({
                 {t("search.filters.common")}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 max-w-[325px]">
+            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 max-w-[325px] px-1">
               {/* Projects */}
               {projects && projects.length > 0 && !projectId && (
                 <div className="space-y-2">
@@ -1286,7 +1286,7 @@ export function FacetedSearchFilters({
                 {t("search.filters.entitySpecific")}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 max-w-[325px]">
+            <AccordionContent className="space-y-4 overflow-x-hidden min-w-0 max-w-[325px] px-1">
               {/* Repository Case Filters */}
               {entityTypes.includes(SearchableEntityType.REPOSITORY_CASE) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">

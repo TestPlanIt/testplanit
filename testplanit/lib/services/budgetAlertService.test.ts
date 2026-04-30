@@ -41,6 +41,7 @@ function createConfig(overrides: Record<string, any> = {}) {
     id: 1,
     llmIntegrationId: 1,
     monthlyBudget: { toString: () => "100.00", toNumber: () => 100 },
+    billingPeriodStartDay: 1,
     alertThresholdsFired: null,
     llmIntegration: {
       name: "OpenAI GPT-4",
@@ -194,7 +195,7 @@ describe("BudgetAlertService", () => {
     it("skips already-fired threshold 80 when spend is 92%", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-03": [80] },
+          alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -209,7 +210,7 @@ describe("BudgetAlertService", () => {
     it("returns [] when all thresholds already fired for current month", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-03": [80, 90, 100] },
+          alertThresholdsFired: { "2026-03-01": [80, 90, 100] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -226,7 +227,7 @@ describe("BudgetAlertService", () => {
       // Previous month (February) had 80 and 90 fired
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-02": [80, 90] },
+          alertThresholdsFired: { "2026-02-01": [80, 90] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -255,8 +256,8 @@ describe("BudgetAlertService", () => {
     });
   });
 
-  describe("month boundary", () => {
-    it("uses correct month key format YYYY-MM", async () => {
+  describe("period boundary", () => {
+    it("uses period-start ISO date as key (YYYY-MM-DD)", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
@@ -264,22 +265,22 @@ describe("BudgetAlertService", () => {
 
       await service.checkAndAlert(1);
 
-      // Verify the update was called with month key "2026-03"
+      // Default billingPeriodStartDay=1 with system time 2026-03-15 -> "2026-03-01"
       expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             alertThresholdsFired: expect.objectContaining({
-              "2026-03": expect.any(Array),
+              "2026-03-01": expect.any(Array),
             }),
           }),
         })
       );
     });
 
-    it("preserves previous month entries in alertThresholdsFired", async () => {
+    it("preserves previous period entries in alertThresholdsFired", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-02": [80, 90] },
+          alertThresholdsFired: { "2026-02-01": [80, 90] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -288,13 +289,93 @@ describe("BudgetAlertService", () => {
 
       await service.checkAndAlert(1);
 
-      // Should preserve "2026-02" and add "2026-03"
+      // Should preserve "2026-02-01" and add "2026-03-01"
       expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             alertThresholdsFired: {
-              "2026-02": [80, 90],
-              "2026-03": [80],
+              "2026-02-01": [80, 90],
+              "2026-03-01": [80],
+            },
+          }),
+        })
+      );
+    });
+  });
+
+  describe("custom billing period (billingPeriodStartDay !== 1)", () => {
+    it("aggregates spend with gte=Apr 15 when billingPeriodStartDay=15 and now is Apr 20", async () => {
+      vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0)); // Apr 20 2026 local
+      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+        createConfig({
+          billingPeriodStartDay: 15,
+        })
+      );
+      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+        createAggregateResult(50)
+      );
+
+      await service.checkAndAlert(1);
+
+      const expectedPeriodStart = new Date(2026, 3, 15, 0, 0, 0, 0);
+      expect(mockPrisma.llmUsage.aggregate).toHaveBeenCalledWith({
+        where: {
+          llmIntegrationId: 1,
+          createdAt: { gte: expectedPeriodStart },
+        },
+        _sum: { totalCost: true },
+      });
+    });
+
+    it("uses period-start ISO date 2026-04-15 as key when billingPeriodStartDay=15 and now is Apr 20", async () => {
+      vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
+      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+        createConfig({
+          billingPeriodStartDay: 15,
+          alertThresholdsFired: { "2026-04-15": [80] },
+        })
+      );
+      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+        createAggregateResult(92)
+      );
+
+      const result = await service.checkAndAlert(1);
+
+      // 92% should newly cross 90 (80 already fired in 2026-04-15 period)
+      expect(result.thresholdsCrossed).toEqual([90]);
+      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            alertThresholdsFired: {
+              "2026-04-15": [80, 90],
+            },
+          }),
+        })
+      );
+    });
+
+    it("regression guard: thresholds fired in 2026-03-15 period do NOT block 2026-04-15 period", async () => {
+      vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
+      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+        createConfig({
+          billingPeriodStartDay: 15,
+          alertThresholdsFired: { "2026-03-15": [80, 90, 100] },
+        })
+      );
+      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+        createAggregateResult(85)
+      );
+
+      const result = await service.checkAndAlert(1);
+
+      // New period (2026-04-15) should fire 80 again even though prev period had it
+      expect(result.thresholdsCrossed).toEqual([80]);
+      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            alertThresholdsFired: {
+              "2026-03-15": [80, 90, 100],
+              "2026-04-15": [80],
             },
           }),
         })
@@ -412,7 +493,7 @@ describe("BudgetAlertService", () => {
     it("title at 90%: 'LLM Budget 90% Used'", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-03": [80] },
+          alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -431,7 +512,7 @@ describe("BudgetAlertService", () => {
     it("title at 100%: 'LLM Budget Exceeded'", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-03": [80, 90] },
+          alertThresholdsFired: { "2026-03-01": [80, 90] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -637,7 +718,7 @@ describe("BudgetAlertService", () => {
         where: { id: 1 },
         data: {
           alertThresholdsFired: {
-            "2026-03": [80, 90],
+            "2026-03-01": [80, 90],
           },
         },
       });
@@ -646,7 +727,7 @@ describe("BudgetAlertService", () => {
     it("merges newly crossed thresholds with already-fired thresholds", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
-          alertThresholdsFired: { "2026-03": [80] },
+          alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
@@ -659,7 +740,7 @@ describe("BudgetAlertService", () => {
         where: { id: 1 },
         data: {
           alertThresholdsFired: {
-            "2026-03": [80, 90, 100],
+            "2026-03-01": [80, 90, 100],
           },
         },
       });
@@ -702,7 +783,7 @@ describe("BudgetAlertService", () => {
   });
 
   describe("spend aggregation", () => {
-    it("queries llmUsage with correct filter for current month", async () => {
+    it("queries llmUsage with gte=billing period start when billingPeriodStartDay=1 (default)", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(50)
@@ -710,15 +791,13 @@ describe("BudgetAlertService", () => {
 
       await service.checkAndAlert(1);
 
-      // Build expected start-of-month the same way the service does (local time)
-      const expectedStartOfMonth = new Date();
-      expectedStartOfMonth.setDate(1);
-      expectedStartOfMonth.setHours(0, 0, 0, 0);
+      // Default billingPeriodStartDay=1 with system time 2026-03-15 -> Mar 1 00:00 local
+      const expectedPeriodStart = new Date(2026, 2, 1, 0, 0, 0, 0);
 
       expect(mockPrisma.llmUsage.aggregate).toHaveBeenCalledWith({
         where: {
           llmIntegrationId: 1,
-          createdAt: { gte: expectedStartOfMonth },
+          createdAt: { gte: expectedPeriodStart },
         },
         _sum: { totalCost: true },
       });

@@ -428,6 +428,15 @@ describe("GitHubAdapter", () => {
         json: () => Promise.resolve({ login: "testuser" }),
       });
       await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+      // Disable retry + rate-limit in this suite. We're testing the
+      // sub_issues / timeline routing inside getLinkedIssues, not the
+      // BaseAdapter retry loop. With retries enabled, a single rejected
+      // mock would be re-fetched and consume the next mock in the queue
+      // (e.g., the one intended for the parallel timeline call), leading
+      // to wrong-call mock attribution. Retry behavior is covered by the
+      // BaseAdapter tests separately.
+      (adapter as any).maxRetries = 0;
+      (adapter as any).rateLimitDelay = 0;
     });
 
     afterEach(() => {

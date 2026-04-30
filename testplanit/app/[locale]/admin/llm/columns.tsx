@@ -79,7 +79,7 @@ export const getColumns = (
             (isConnected ? (
               <CheckCircle className="h-4 w-4 text-success" />
             ) : (
-              <XCircle className="h-4 w-4 text-red-600" />
+              <XCircle className="h-4 w-4 text-destructive" />
             ))}
         </div>
       );
