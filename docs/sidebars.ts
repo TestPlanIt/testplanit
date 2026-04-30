@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
         'external-database-deployment', // Add external-database-deployment.md
         'background-processes', // Add background-processes.md
         'multi-tenant-workers', // Add multi-tenant-workers.md
+        'sse-notifications', // SSE notifications deployment & ingress configuration
       ],
     },
     'getting-started', // Corresponds to getting-started.md
