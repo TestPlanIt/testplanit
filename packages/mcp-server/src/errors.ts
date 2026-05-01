@@ -1,0 +1,81 @@
+import { TestPlanItHttpError } from "./http.js";
+
+/**
+ * MCP tool-result error envelope.
+ *
+ * The SDK accepts either a thrown exception (which it auto-converts) OR an
+ * explicit return value with `isError: true`. We use the explicit form so
+ * tool handlers control the agent-visible message verbatim — no SDK
+ * stack-trace leakage and no opaque "An error occurred" wrappers.
+ *
+ * Reference: 05-RESEARCH.md § Don't Hand-Roll row "Tool error formatting".
+ */
+export interface ToolErrorResult {
+  isError: true;
+  content: Array<{ type: "text"; text: string }>;
+}
+
+/**
+ * Friendly translations for every known errorCode emitted by
+ * `lib/api-token-auth.ts` (host side, post plan 05-01).
+ *
+ * The READ_ONLY_TOKEN message is the T-05-01 mitigation surface — it MUST
+ * name both the scope (`mode:read`) and the human concept (`read-only`) so
+ * agents can self-correct when a Phase 6+ write tool returns 403.
+ */
+const ERROR_CODE_MESSAGES: Record<string, string> = {
+  NO_TOKEN:
+    "No API token provided. Set TESTPLANIT_API_TOKEN in the environment.",
+  INVALID_FORMAT:
+    "API token format is invalid. Tokens must start with 'tpi_'.",
+  INVALID_TOKEN:
+    "API token is not recognized. Verify the token in your TestPlanIt profile.",
+  EXPIRED_TOKEN:
+    "API token has expired. Mint a new token in your TestPlanIt profile.",
+  INACTIVE_TOKEN:
+    "API token is inactive. Re-enable or replace it in your TestPlanIt profile.",
+  INACTIVE_USER:
+    "The user associated with this token is inactive. Contact a TestPlanIt admin.",
+  API_ACCESS_DISABLED:
+    "API access is disabled for this user. Contact a TestPlanIt admin.",
+  READ_ONLY_TOKEN:
+    "This token is read-only (mode:read scope). Create a new token without the mode:read scope to perform write operations.",
+};
+
+/**
+ * Translate any thrown error from a tool handler into the MCP tool-result
+ * error envelope. Three paths:
+ *
+ *  1. `TestPlanItHttpError` with a known `code`: friendly template, code
+ *     appended in parentheses for log-grep traceability.
+ *  2. `TestPlanItHttpError` with an unknown / missing code: generic
+ *     "Request failed: <message> (HTTP <status>)" fallback.
+ *  3. Any other `Error`: "Network or runtime error: <message>" fallback.
+ *  4. Non-Error throwable: "Unknown error".
+ *
+ * The friendly templates are fixed strings, NOT echoes of `err.message`,
+ * so a token-bearing message accidentally constructed upstream cannot leak
+ * the raw token through this layer (T-05-06 defense in depth).
+ */
+export function mapHttpErrorToToolResult(err: unknown): ToolErrorResult {
+  if (err instanceof TestPlanItHttpError) {
+    const code = err.code;
+    const friendly = code ? ERROR_CODE_MESSAGES[code] : undefined;
+    const text = friendly
+      ? `${friendly} (${code})`
+      : `Request failed: ${err.message} (HTTP ${err.statusCode ?? "unknown"})`;
+    return { isError: true, content: [{ type: "text", text }] };
+  }
+  if (err instanceof Error) {
+    return {
+      isError: true,
+      content: [
+        { type: "text", text: `Network or runtime error: ${err.message}` },
+      ],
+    };
+  }
+  return {
+    isError: true,
+    content: [{ type: "text", text: "Unknown error" }],
+  };
+}
