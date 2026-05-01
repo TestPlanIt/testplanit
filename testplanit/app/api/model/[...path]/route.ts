@@ -259,9 +259,12 @@ async function innerHandler(
     if (token) {
       const apiAuth = await authenticateApiTokenForMethod(req);
       if (!apiAuth.authenticated) {
+        // READ_ONLY_TOKEN is a permissions failure (token is valid; the
+        // operation is forbidden), not an authentication failure — map to 403.
+        const status = apiAuth.errorCode === "READ_ONLY_TOKEN" ? 403 : 401;
         return NextResponse.json(
           { error: apiAuth.error, code: apiAuth.errorCode },
-          { status: 401 }
+          { status }
         );
       }
       // Build auth context for AsyncLocalStorage

@@ -770,7 +770,10 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
     });
     const body = await res.json();
 
-    expect(res.status).toBe(401);
+    // 403 Forbidden — token is authenticated but lacks write permission. 401
+    // would be wrong (semantically "not authenticated") and the E2E spec
+    // catches the mismatch.
+    expect(res.status).toBe(403);
     expect(body.code).toBe("READ_ONLY_TOKEN");
     // The swap MUST have happened — bare authenticateApiToken not called.
     expect(authenticateApiToken).not.toHaveBeenCalled();
