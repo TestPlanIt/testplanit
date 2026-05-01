@@ -1,5 +1,6 @@
 "use client";
 
+import { DatasetTab } from "@/components/parameters/DatasetTab";
 import { ParametersTab } from "@/components/parameters/ParametersTab";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,12 @@ export interface ConfigureParametersSheetProps {
   onClose: () => void;
   caseId: number;
   projectId: number;
+  /**
+   * Optional callback wired by Plan 02-05 to open the multi-step CSV
+   * import wizard from the Dataset tab's "Import CSV" toolbar button.
+   * If omitted, the button renders but is a no-op until 02-05 lands.
+   */
+  onOpenImportWizard?: () => void;
 }
 
 export function ConfigureParametersSheet({
@@ -42,6 +49,7 @@ export function ConfigureParametersSheet({
   onClose,
   caseId,
   projectId,
+  onOpenImportWizard,
 }: ConfigureParametersSheetProps) {
   const t = useTranslations("parameters");
   const tCommon = useTranslations("common.actions");
@@ -131,12 +139,14 @@ export function ConfigureParametersSheet({
             </TabsContent>
 
             <TabsContent value="dataset" className="flex-1 overflow-auto m-0">
-              <div
-                className="p-6 text-sm text-muted-foreground"
-                data-testid="dataset-tab-placeholder"
-              >
-                {t("tabDataset")}
-              </div>
+              {datasetTabDisabled ? null : (
+                <DatasetTab
+                  caseId={caseId}
+                  projectId={projectId}
+                  parameters={parameters}
+                  onOpenImportWizard={onOpenImportWizard}
+                />
+              )}
             </TabsContent>
           </Tabs>
 
