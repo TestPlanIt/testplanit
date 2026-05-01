@@ -3595,6 +3595,57 @@ export class ApiHelper {
   }
 
   /**
+   * Set a user's system-level access level (NONE | USER | PROJECTADMIN | ADMIN).
+   *
+   * The signup endpoint's Zod schema only accepts NONE | USER | ADMIN
+   * (`app/api/auth/signup/route.ts`), so PROJECTADMIN cannot be minted at
+   * registration. The user-update PATCH endpoint accepts all four values
+   * (`app/api/users/[userId]/route.ts`), so the cross-tenant E2E specs use
+   * the two-step flow: signup as USER → PATCH access to PROJECTADMIN.
+   *
+   * Caller must hold an ADMIN session (the PATCH endpoint authorizes via
+   * `session.user.id === userId || session.user.access === 'ADMIN'`).
+   */
+  async setUserAccess(
+    userId: string,
+    access: "NONE" | "USER" | "PROJECTADMIN" | "ADMIN"
+  ): Promise<void> {
+    await this.updateUser({ userId, data: { access } });
+  }
+
+  /**
+   * Assign a user to a project as a member (creates a `ProjectAssignment` row).
+   *
+   * This is what `project.assignedUsers?[user == auth() && auth().access ==
+   * 'PROJECTADMIN']` in the WebhookConfig / WebhookDelivery read policies
+   * matches against — without this row, a PROJECTADMIN cannot read the
+   * project's webhook configs even if they have global PROJECTADMIN access.
+   *
+   * The schema's `ProjectAssignment.@@allow('all', auth().access == 'ADMIN')`
+   * lets the default ADMIN E2E session create assignment rows directly via
+   * the model RPC. There is no role concept on `ProjectAssignment` itself —
+   * the row simply records membership; the system-level `User.access` field
+   * is what differentiates PROJECTADMIN from USER for webhook authorization.
+   */
+  async assignUserToProject(userId: string, projectId: number): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/projectAssignment/create`,
+      {
+        data: {
+          data: { userId, projectId },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(
+        `Failed to assign user ${userId} to project ${projectId}: ${error}`
+      );
+    }
+  }
+
+  /**
    * Delete a user via API (soft delete)
    * Uses dedicated update API endpoint instead of ZenStack
    * (ZenStack 2.21+ has issues with nested update operations)
