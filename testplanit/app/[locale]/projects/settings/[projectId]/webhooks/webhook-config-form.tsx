@@ -67,7 +67,12 @@ interface InboundConfig {
 interface RevealedSecret {
   configId: string;
   url: string;
-  secret: string;
+  // ADO's create flow does NOT return a server-minted secret (admin typed
+  // the username + password themselves — D-09). The reveal box still
+  // renders so the admin can copy the FULL URL once before reload, but
+  // the secret field is suppressed when null. JIRA / GITHUB always carry
+  // a freshly minted plaintext secret here.
+  secret: string | null;
 }
 
 interface TestResultDisplay {
@@ -238,13 +243,18 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         toast.error(result.error ?? t("saveError"));
         return;
       }
-      // JIRA + GITHUB return a freshly minted secret to reveal once.
-      // ADO does not (admin already typed the credentials).
-      if (result.url && result.secret && result.configId) {
+      // M-05: the reveal box must render whenever the server returns a
+      // fresh URL + configId. JIRA + GITHUB additionally return a
+      // server-minted plaintext secret (HMAC); ADO returns no secret
+      // because the admin already typed the credentials, but the URL
+      // (with the full whk_<64-hex> token) MUST still be shown ONCE so
+      // the admin can paste it into the ADO Service Hook config before
+      // reload swaps in the redacted view.
+      if (result.url && result.configId) {
         setRevealed({
           configId: result.configId,
           url: result.url,
-          secret: result.secret,
+          secret: result.secret ?? null,
         });
       }
       resetCreateState();
@@ -592,29 +602,33 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           </div>
           <p className="text-xs text-muted-foreground">{t("urlHelp")}</p>
         </div>
-        <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">
-            {t("secret")}
+        {rev.secret !== null && (
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">
+              {t("secret")}
+            </div>
+            <div className="flex items-center gap-2">
+              <code
+                data-testid="webhook-secret"
+                className="flex-1 break-all text-xs"
+              >
+                {rev.secret}
+              </code>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  rev.secret && copy(rev.secret, t("secretCopied"))
+                }
+                aria-label={t("copySecret")}
+              >
+                {tActions("copy")}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <code
-              data-testid="webhook-secret"
-              className="flex-1 break-all text-xs"
-            >
-              {rev.secret}
-            </code>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => copy(rev.secret, t("secretCopied"))}
-              aria-label={t("copySecret")}
-            >
-              {tActions("copy")}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
-        </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-primary/20">
           <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
             {t("nextSteps")}

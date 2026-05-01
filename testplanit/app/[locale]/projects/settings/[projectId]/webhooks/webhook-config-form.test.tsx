@@ -498,6 +498,59 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
   });
 
+  it("Test 14a: ADO create flow reveals URL with no secret field when server returns {url, configId} without secret (M-05 — admin needs full URL once)", async () => {
+    setConfigs([]);
+    // ADO server action returns NO `secret` field — admin already typed
+    // the credentials, so there's nothing to reveal. The reveal box must
+    // still render so the admin can copy the FULL URL once before reload.
+    mockCreateOrRotateInbound.mockResolvedValue({
+      success: true,
+      // Match adoConfig.id so the post-create refetch surfaces a card
+      // whose id matches `revealed.configId` — the reveal box mounts
+      // inside the matching card, not as a free-floating element.
+      configId: "cfg-ado",
+      url: "https://app.example.test/api/webhooks/whk_ado_full_token_123",
+    });
+    render(<WebhookConfigForm projectId={42} />);
+    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
+    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-ado"));
+    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
+
+    fireEvent.change(screen.getByTestId("webhook-inbound-ado-username-input"), {
+      target: { value: "tpi" },
+    });
+    fireEvent.change(screen.getByTestId("webhook-inbound-ado-password-input"), {
+      target: { value: "s3cret" },
+    });
+
+    // Refetch the configs list AS IF the create succeeded — the UI keys
+    // its revealed-box rendering off the configured card matching by
+    // configId, so the card must exist post-create for the box to show.
+    setConfigs([adoConfig]);
+    fireEvent.click(screen.getByTestId("webhook-create-button"));
+
+    await waitFor(() => {
+      // Reveal box must be present
+      expect(
+        screen.getByTestId("webhook-inbound-revealed-box")
+      ).toBeInTheDocument();
+    });
+
+    // The full URL is shown in webhook-url
+    const url = screen.getByTestId("webhook-url");
+    expect(url.textContent).toContain(
+      "https://app.example.test/api/webhooks/whk_ado_full_token_123"
+    );
+
+    // The webhook-secret field MUST NOT render — server returned no secret.
+    expect(screen.queryByTestId("webhook-secret")).not.toBeInTheDocument();
+
+    // Done button still renders so admin can dismiss the reveal box.
+    expect(
+      screen.getByTestId("webhook-reveal-done-button")
+    ).toBeInTheDocument();
+  });
+
   it("Test 14: ADO create flow JSON-encodes credentials via createOrRotateInboundWebhook", async () => {
     setConfigs([]);
     mockCreateOrRotateInbound.mockResolvedValue({
