@@ -1,6 +1,24 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+// Per-file next-intl mock: returns concrete English copy for the keys
+// the component renders so tests assert on user-facing strings.
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string, params?: Record<string, unknown>) => {
+    const dictionary: Record<string, string> = {
+      configureButtonEmpty: "Configure parameters",
+      configureButtonSet: "Parameters ({count})",
+    };
+    let value = dictionary[key] ?? key;
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        value = value.replace(`{${k}}`, String(v));
+      });
+    }
+    return value;
+  },
+}));
+
 import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
 
 describe("ConfigureParametersButton", () => {

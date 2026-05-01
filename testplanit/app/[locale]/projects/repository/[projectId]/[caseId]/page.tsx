@@ -11,6 +11,8 @@ import {
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
+import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import TestResultHistory from "@/components/TestResultHistory";
@@ -89,6 +91,7 @@ import {
   useFindManySharedStepGroup,
   useFindManyTags,
   useFindManyTemplates,
+  useFindManyTestCaseParameter,
   useFindManyWorkflows,
   useFindUniqueProjects,
   useUpdateAttachments,
@@ -360,6 +363,18 @@ export default function TestCaseDetails() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteCaseOpen, setIsDeleteCaseOpen] = useState(false);
+  const [isParamSheetOpen, setIsParamSheetOpen] = useState(false);
+
+  const numericCaseId = Number(caseId);
+  const isValidCaseId = !isNaN(numericCaseId);
+  const { data: caseParameters = [] } = useFindManyTestCaseParameter(
+    {
+      where: { testCaseId: numericCaseId, isDeleted: false },
+      orderBy: { order: "asc" },
+    },
+    { enabled: isValidCaseId }
+  );
+  const parameterCount = caseParameters.length;
 
   const [, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [breadcrumbItems, setBreadcrumbItems] = useState<FolderNode[]>([]);
@@ -2023,6 +2038,11 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
+                  <ConfigureParametersButton
+                    parameterCount={parameterCount}
+                    canEdit={canAddEdit}
+                    onOpen={() => setIsParamSheetOpen(true)}
+                  />
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2379,6 +2399,14 @@ export default function TestCaseDetails() {
           onClose={() => setIsQuickScriptModalOpen(false)}
           selectedCaseIds={[Number(caseId)]}
           projectId={Number(projectId)}
+        />
+      )}
+      {isValidProjectId && isValidCaseId && (
+        <ConfigureParametersSheet
+          isOpen={isParamSheetOpen}
+          onClose={() => setIsParamSheetOpen(false)}
+          caseId={numericCaseId}
+          projectId={numericProjectId}
         />
       )}
     </FormProvider>
