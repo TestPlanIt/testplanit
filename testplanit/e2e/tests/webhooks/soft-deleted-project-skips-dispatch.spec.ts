@@ -60,22 +60,26 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
     configId = seededConfig.configId;
 
     // Seed a paired outbox event so the dispatcher has something to load.
+    // dispatchedAt is pre-set to now() so the production outbox poller (which
+    // claims rows WHERE dispatchedAt IS NULL FOR UPDATE SKIP LOCKED) does NOT
+    // race with this test's direct dispatchWebhook() calls. The test owns the
+    // row's lifecycle — no poller-driven duplicate dispatch can leak HTTP to
+    // the stub in the window before softDeleteProject() commits.
     const outbox = await prisma.webhookOutboxEvent.create({
       data: {
         projectId,
         eventName: "test_run.completed",
         eventId,
         payload: { runId: 1, runTitle: "L-05 soft-deleted run" },
-        // dispatchedAt left null — we're invoking dispatchWebhook directly
-        // rather than going through the outbox poller.
+        dispatchedAt: new Date(),
       },
       select: { id: true },
     });
     outboxEventId = outbox.id;
 
-    // Soft-delete the project AFTER the outbox row commits — this is the
-    // exact race the gate protects against (event committed pre-deletion;
-    // dispatch attempts post-deletion).
+    // Soft-delete the project. The dispatch.ts gate reads project.isDeleted
+    // fresh on every call, so subsequent dispatchWebhook() invocations will
+    // see the soft-delete state regardless of when the outbox row committed.
     await softDeleteProject(prisma, { projectId });
   });
 
