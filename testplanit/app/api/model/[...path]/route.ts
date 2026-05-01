@@ -4,7 +4,10 @@ import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
-import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
+import {
+  authenticateApiTokenForMethod,
+  extractBearerToken,
+} from "~/lib/api-token-auth";
 import {
   enrichFromApiAuth,
   withAuditContext,
@@ -254,7 +257,7 @@ async function innerHandler(
     // Check if there's a Bearer token
     const token = extractBearerToken(req);
     if (token) {
-      const apiAuth = await authenticateApiToken(req);
+      const apiAuth = await authenticateApiTokenForMethod(req);
       if (!apiAuth.authenticated) {
         return NextResponse.json(
           { error: apiAuth.error, code: apiAuth.errorCode },
