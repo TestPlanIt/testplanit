@@ -238,9 +238,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         errorCode: "INVALID_TOKEN",
       });
 
-      const response = await GET(
-        createMockRequest("Bearer tpi_invalid_token")
-      );
+      const response = await GET(createMockRequest("Bearer tpi_invalid_token"));
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -259,9 +257,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         errorCode: "EXPIRED_TOKEN",
       });
 
-      const response = await GET(
-        createMockRequest("Bearer tpi_expired_token")
-      );
+      const response = await GET(createMockRequest("Bearer tpi_expired_token"));
       const data = await response.json();
 
       expect(response.status).toBe(401);
