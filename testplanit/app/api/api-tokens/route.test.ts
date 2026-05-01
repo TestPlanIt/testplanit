@@ -164,6 +164,7 @@ describe("API Token Creation Endpoint", () => {
           tokenPrefix: mockGeneratedToken.prefix,
           userId: "user-123",
           expiresAt: null,
+          scopes: [],
         },
         select: {
           id: true,
@@ -172,6 +173,7 @@ describe("API Token Creation Endpoint", () => {
           createdAt: true,
           expiresAt: true,
           isActive: true,
+          scopes: true,
         },
       });
     });
