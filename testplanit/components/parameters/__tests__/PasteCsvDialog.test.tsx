@@ -209,7 +209,7 @@ describe("PasteCsvDialog", () => {
       )
     );
     fireEvent.change(screen.getByTestId("paste-csv-textarea"), {
-      target: { value: "username\nalice\n" },
+      target: { value: "username,amount\nalice,100\n" },
     });
     fireEvent.click(screen.getByTestId("paste-csv-parse-button"));
     await waitFor(() => {
@@ -240,7 +240,7 @@ describe("PasteCsvDialog", () => {
       )
     );
     fireEvent.change(screen.getByTestId("paste-csv-textarea"), {
-      target: { value: "username\nalice\n" },
+      target: { value: "username,amount\nalice,100\n" },
     });
     fireEvent.click(screen.getByTestId("paste-csv-parse-button"));
     await waitFor(() => {
