@@ -19,8 +19,13 @@ vi.mock("~/lib/api-tokens", () => ({
   generateApiToken: vi.fn(),
 }));
 
+vi.mock("~/lib/services/auditLog", () => ({
+  captureAuditEvent: vi.fn(),
+}));
+
 import { generateApiToken } from "~/lib/api-tokens";
 import { prisma } from "~/lib/prisma";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
 describe("API Token Creation Endpoint", () => {
@@ -360,5 +365,159 @@ describe("API Token Creation Endpoint", () => {
       expect(data.hash).toBeUndefined();
       expect(data.token).not.toBe(mockGeneratedToken.hash);
     });
+  });
+});
+
+describe("POST /api/api-tokens scopes", () => {
+  const mockSession = {
+    user: {
+      id: "u_creator",
+      name: "Token Creator",
+      email: "creator@example.com",
+    },
+  };
+
+  const mockGeneratedToken = {
+    plaintext: "tpi_test_plain",
+    hash: "hashvalue",
+    prefix: "tpi_test",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (getServerAuthSession as any).mockResolvedValue(mockSession);
+    (generateApiToken as any).mockReturnValue(mockGeneratedToken);
+    // Echo back what create was called with so the response can include scopes
+    (prisma.apiToken.create as any).mockImplementation(async (args: any) => ({
+      id: "token-id-scope",
+      name: args.data.name,
+      tokenPrefix: args.data.tokenPrefix,
+      createdAt: new Date("2026-05-01T00:00:00Z"),
+      expiresAt: args.data.expiresAt ?? null,
+      isActive: true,
+      scopes: args.data.scopes ?? [],
+    }));
+  });
+
+  const makePostRequest = (body: object): NextRequest => {
+    return {
+      json: async () => body,
+      headers: new Headers(),
+    } as NextRequest;
+  };
+
+  it("persists scopes: ['mode:read'] on create and returns it in response", async () => {
+    const request = makePostRequest({
+      name: "Read-Only Token",
+      scopes: ["mode:read"],
+    });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(prisma.apiToken.create).toHaveBeenCalledTimes(1);
+    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    expect(createArgs.data.scopes).toEqual(["mode:read"]);
+    expect(createArgs.select.scopes).toBe(true);
+    expect(data.scopes).toEqual(["mode:read"]);
+  });
+
+  it("persists both scopes when provided", async () => {
+    const request = makePostRequest({
+      name: "MCP Read Token",
+      scopes: ["mode:read", "client:mcp"],
+    });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    expect(createArgs.data.scopes).toEqual(["mode:read", "client:mcp"]);
+    expect(data.scopes).toEqual(["mode:read", "client:mcp"]);
+  });
+
+  it("defaults scopes to [] when field is omitted (TOK-06 backward compat)", async () => {
+    const request = makePostRequest({ name: "Legacy Token" });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    expect(createArgs.data.scopes).toEqual([]);
+    expect(data.scopes).toEqual([]);
+  });
+
+  it("persists empty scopes when explicitly []", async () => {
+    const request = makePostRequest({ name: "Empty Scopes", scopes: [] });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    expect(createArgs.data.scopes).toEqual([]);
+    expect(data.scopes).toEqual([]);
+  });
+
+  it("rejects unknown scope 'admin' with 400 before any DB write (T-05-01)", async () => {
+    const request = makePostRequest({
+      name: "Evil Token",
+      scopes: ["admin"],
+    });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(prisma.apiToken.create).not.toHaveBeenCalled();
+    expect(data.error).toBe("Invalid request");
+    expect(data.details).toBeDefined();
+    // The zod issue should mention the invalid scope value or the scopes path
+    const issuesJson = JSON.stringify(data.details);
+    expect(issuesJson).toMatch(/scopes/);
+  });
+
+  it("rejects case-mismatched scope 'MODE:READ' with 400 (T-05-01, case-sensitive enum)", async () => {
+    const request = makePostRequest({
+      name: "Case-Mismatch Token",
+      scopes: ["MODE:READ"],
+    });
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+    expect(prisma.apiToken.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects mixed valid+invalid scopes with 400, no DB write", async () => {
+    const request = makePostRequest({
+      name: "Mixed Token",
+      scopes: ["mode:read", "evil:scope"],
+    });
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+    expect(prisma.apiToken.create).not.toHaveBeenCalled();
+  });
+
+  it("includes scopes in audit metadata (T-05-03)", async () => {
+    const request = makePostRequest({
+      name: "Audited Token",
+      scopes: ["mode:read"],
+    });
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    const auditArgs = (captureAuditEvent as any).mock.calls[0][0];
+    expect(auditArgs.metadata).toBeDefined();
+    expect(auditArgs.metadata.scopes).toEqual(["mode:read"]);
+  });
+
+  it("includes empty scopes in audit metadata when omitted (TOK-06 regression)", async () => {
+    const request = makePostRequest({ name: "Plain Token" });
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    const auditArgs = (captureAuditEvent as any).mock.calls[0][0];
+    expect(auditArgs.metadata.scopes).toEqual([]);
   });
 });
