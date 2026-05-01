@@ -1666,6 +1666,12 @@
         "yourToken": "Votre jeton",
         "deleteTitle": "Supprimer le jeton API ?",
         "deleteDescription": "Cette action est irréversible. Les applications utilisant ce jeton ne pourront plus s'authentifier.",
+        "readOnlyLabel": "Lecture seule",
+        "readOnlyDescription": "À utiliser pour les agents d'IA qui doivent uniquement interroger des données, jamais les modifier.",
+        "agentTokenLabel": "Marquer comme jeton d'agent",
+        "agentTokenDescription": "Les entrées du journal d'audit sont balisées avec metadata.source : « mcp » afin que les administrateurs puissent attribuer les modifications effectuées par l'agent.",
+        "readOnlyBadge": "Lecture seule",
+        "agentTokenBadge": "Jeton d'agent",
         "errors": {
           "nameRequired": "Le nom du jeton est obligatoire."
         }
