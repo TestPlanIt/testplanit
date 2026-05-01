@@ -122,6 +122,13 @@ enum StepSequenceMatchStatus {
   DISMISSED
 }
 
+enum ParameterType {
+  STRING
+  INTEGER
+  BOOLEAN
+  SELECT
+}
+
 enum TestRunType {
   REGULAR
   JUNIT
@@ -380,6 +387,8 @@ model User {
   testRunCasesAssigned    TestRunCases[]
   testRunResults          TestRunResults[]
   editedTestRunResults    TestRunResults[]        @relation("TestRunResultEditor")
+  testRunCaseIterations   TestRunCaseIteration[]
+  createdDataSets         DataSet[]
   createdIssues           Issue[]                 @relation("IssueCreator")
   projectPermissions      UserProjectPermission[]
   junitTestSuites         JUnitTestSuite[]
@@ -523,6 +532,7 @@ model Projects {
   userPermissions             UserProjectPermission[]
   groupPermissions            GroupProjectPermission[]
   sharedStepGroups            SharedStepGroup[]
+  dataSets                    DataSet[]
   projectIntegrations         ProjectIntegration[]
   webhookConfigs              WebhookConfig[]
   projectLlmIntegrations      ProjectLlmIntegration[]
@@ -820,26 +830,27 @@ model ResultFieldAssignment {
 }
 
 model Status {
-  id                 Int                       @id() @default(autoincrement())
-  order              Int                       @default(autoincrement())
-  name               String
-  systemName         String                    @unique()
-  aliases            String?
-  colorId            Int
-  color              Color                     @relation(fields: [colorId], references: [id])
-  isDeleted          Boolean                   @default(false)
-  isEnabled          Boolean
-  isSuccess          Boolean
-  isFailure          Boolean
-  isCompleted        Boolean
-  scope              StatusScopeAssignment[]
-  projects           ProjectStatusAssignment[]
-  sessionResults     SessionResults[]
-  testRunCases       TestRunCases[]
-  testRunResults     TestRunResults[]
-  testRunStepResults TestRunStepResults[]
-  junitTestResults   JUnitTestResult[]
-  junitTestSteps     JUnitTestStep[]           @relation("JUnitTestStepStatus")
+  id                    Int                       @id() @default(autoincrement())
+  order                 Int                       @default(autoincrement())
+  name                  String
+  systemName            String                    @unique()
+  aliases               String?
+  colorId               Int
+  color                 Color                     @relation(fields: [colorId], references: [id])
+  isDeleted             Boolean                   @default(false)
+  isEnabled             Boolean
+  isSuccess             Boolean
+  isFailure             Boolean
+  isCompleted           Boolean
+  scope                 StatusScopeAssignment[]
+  projects              ProjectStatusAssignment[]
+  sessionResults        SessionResults[]
+  testRunCases          TestRunCases[]
+  testRunResults        TestRunResults[]
+  testRunStepResults    TestRunStepResults[]
+  testRunCaseIterations TestRunCaseIteration[]
+  junitTestResults      JUnitTestResult[]
+  junitTestSteps        JUnitTestStep[]           @relation("JUnitTestStepStatus")
 
   @@index([isDeleted, isEnabled])
   @@index([order])
@@ -1057,6 +1068,7 @@ model RepositoryCases {
   isArchived             Boolean                  @default(false)
   isDeleted              Boolean                  @default(false)
   currentVersion         Int                      @default(1)
+  hasParameters          Boolean                  @default(false)
   repositoryCaseVersions RepositoryCaseVersions[]
   caseFieldValues        CaseFieldValues[]
   resultFieldValues      ResultFieldValues[]
@@ -1075,6 +1087,8 @@ model RepositoryCases {
   duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
   stepSequenceMatchCases StepSequenceMatchCase[]
   comments               Comment[]
+  parameters             TestCaseParameter[]
+  ownedDataSets          DataSet[]                @relation("DataSetOwnerCase")
 
   @@unique([projectId, name, className, source])
   @@index([projectId, isDeleted, isArchived])
@@ -1083,6 +1097,7 @@ model RepositoryCases {
   @@index([stateId])
   @@index([automated])
   @@index([createdAt])
+  @@index([hasParameters])
 }
 
 model RepositoryCaseVersions {
@@ -1200,6 +1215,26 @@ model Steps {
 
   @@index([testCaseId])
   @@index([sharedStepGroupId])
+}
+
+model TestCaseParameter {
+  id                Int             @id() @default(autoincrement())
+  testCaseId        Int
+  testCase          RepositoryCases @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  type              ParameterType
+  defaultValue      Json?
+  order             Int             @default(0)
+  required          Boolean         @default(false)
+  sensitive         Boolean         @default(false)
+  allowedValuesJson Json?
+  lookupDataSetId   Int?
+  lookupDataSet     DataSet?        @relation("ParamLookupDataSet", fields: [lookupDataSetId], references: [id], onDelete: SetNull)
+  isDeleted         Boolean         @default(false)
+
+  @@unique([testCaseId, name])
+  @@index([testCaseId])
 }
 
 model Sessions {
@@ -1360,23 +1395,28 @@ model TestRuns {
 }
 
 model TestRunCases {
-  id               Int              @id() @default(autoincrement())
+  id               Int                         @id() @default(autoincrement())
   testRunId        Int
-  testRun          TestRuns         @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  testRun          TestRuns                    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   repositoryCaseId Int
-  repositoryCase   RepositoryCases  @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-  order            Int              @default(0)
+  repositoryCase   RepositoryCases             @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+  order            Int                         @default(0)
   statusId         Int?
-  status           Status?          @relation(fields: [statusId], references: [id])
+  status           Status?                     @relation(fields: [statusId], references: [id])
   assignedToId     String?
-  assignedTo       User?            @relation(fields: [assignedToId], references: [id])
-  isCompleted      Boolean          @default(false)
+  assignedTo       User?                       @relation(fields: [assignedToId], references: [id])
+  isCompleted      Boolean                     @default(false)
   notes            Json?
   startedAt        DateTime?
   completedAt      DateTime?
   elapsed          Int?
-  createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+  passedIterations Int                         @default(0)
+  failedIterations Int                         @default(0)
+  totalIterations  Int                         @default(0)
+  createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
   results          TestRunResults[]
+  iterations       TestRunCaseIteration[]
+  dataSetSnapshot  TestRunCaseDataSetSnapshot?
 
   @@unique([testRunId, repositoryCaseId])
   @@index([testRunId])
@@ -1387,28 +1427,30 @@ model TestRunCases {
 }
 
 model TestRunResults {
-  id                 Int                  @id() @default(autoincrement())
+  id                 Int                   @id() @default(autoincrement())
   testRunId          Int
-  testRun            TestRuns             @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  testRun            TestRuns              @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   testRunCaseId      Int
-  testRunCase        TestRunCases         @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
-  testRunCaseVersion Int                  @default(1)
+  testRunCase        TestRunCases          @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+  testRunCaseVersion Int                   @default(1)
   statusId           Int
-  status             Status               @relation(fields: [statusId], references: [id])
+  status             Status                @relation(fields: [statusId], references: [id])
   executedById       String
-  executedBy         User                 @relation(fields: [executedById], references: [id])
-  executedAt         DateTime             @default(now()) @db.Timestamptz(6)
+  executedBy         User                  @relation(fields: [executedById], references: [id])
+  executedAt         DateTime              @default(now()) @db.Timestamptz(6)
   editedById         String?
-  editedBy           User?                @relation("TestRunResultEditor", fields: [editedById], references: [id])
+  editedBy           User?                 @relation("TestRunResultEditor", fields: [editedById], references: [id])
   editedAt           DateTime?
   elapsed            Int?
   notes              Json?
   evidence           Json?
   attachments        Attachments[]
   resultFieldValues  ResultFieldValues[]
-  attempt            Int                  @default(1)
+  attempt            Int                   @default(1)
+  iterationId        Int?
+  iteration          TestRunCaseIteration? @relation(fields: [iterationId], references: [id], onDelete: SetNull)
   stepResults        TestRunStepResults[]
-  isDeleted          Boolean              @default(false)
+  isDeleted          Boolean               @default(false)
   issues             Issue[]
 
   @@index([testRunCaseId])
@@ -1416,6 +1458,7 @@ model TestRunResults {
   @@index([statusId])
   @@index([executedAt])
   @@index([testRunCaseId, executedAt(sort: Desc)])
+  @@index([iterationId])
 }
 
 model TestRunStepResults {
@@ -1438,6 +1481,50 @@ model TestRunStepResults {
 
   @@unique([testRunResultId, stepId, sharedStepItemId], map: "uq_tsr_res_step_shareditem")
   @@index([sharedStepItemId])
+}
+
+model TestRunCaseIteration {
+  id                Int                         @id() @default(autoincrement())
+  testRunCaseId     Int
+  testRunCase       TestRunCases                @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+  rowIndex          Int
+  label             String?
+  valuesJson        Json
+  statusId          Int?
+  status            Status?                     @relation(fields: [statusId], references: [id])
+  assignedToId      String?
+  assignedTo        User?                       @relation(fields: [assignedToId], references: [id])
+  isCompleted       Boolean                     @default(false)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  elapsed           Int?
+  notes             Json?
+  isDeleted         Boolean                     @default(false)
+  dataSetSnapshotId Int?
+  dataSetSnapshot   TestRunCaseDataSetSnapshot? @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
+  results           TestRunResults[]
+
+  @@unique([testRunCaseId, rowIndex])
+  @@index([testRunCaseId])
+  @@index([statusId])
+  @@index([assignedToId])
+}
+
+model TestRunCaseDataSetSnapshot {
+  id                Int                    @id() @default(autoincrement())
+  testRunCaseId     Int                    @unique()
+  testRunCase       TestRunCases           @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+  sourceDataSetId   Int?
+  sourceDataSet     DataSet?               @relation(fields: [sourceDataSetId], references: [id], onDelete: SetNull)
+  sourceDataSetName String
+  parametersJson    Json
+  rowsJson          Json
+  snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
+  isDeleted         Boolean                @default(false)
+  iterations        TestRunCaseIteration[]
+
+  @@index([testRunCaseId])
+  @@index([sourceDataSetId])
 }
 
 model Issue {
@@ -1593,12 +1680,13 @@ model UserIntegrationAuth {
 }
 
 model RolePermission {
-  roleId     Int
-  role       Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  area       ApplicationArea
-  canAddEdit Boolean         @default(false)
-  canDelete  Boolean         @default(false)
-  canClose   Boolean         @default(false)
+  roleId           Int
+  role             Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  area             ApplicationArea
+  canAddEdit       Boolean         @default(false)
+  canDelete        Boolean         @default(false)
+  canClose         Boolean         @default(false)
+  canReadSensitive Boolean         @default(false)
 
   @@id([roleId, area])
 }
@@ -1751,6 +1839,42 @@ model SharedStepItem {
   testRunStepResults TestRunStepResults[]
 
   @@index([sharedStepGroupId])
+}
+
+model DataSet {
+  id           Int                          @id() @default(autoincrement())
+  projectId    Int
+  project      Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ownerCaseId  Int?
+  ownerCase    RepositoryCases?             @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
+  name         String
+  description  String?
+  isShared     Boolean                      @default(false)
+  version      Int                          @default(1)
+  rows         DataSetRow[]
+  paramLookups TestCaseParameter[]          @relation("ParamLookupDataSet")
+  snapshots    TestRunCaseDataSetSnapshot[]
+  isDeleted    Boolean                      @default(false)
+  createdAt    DateTime                     @default(now()) @db.Timestamptz(6)
+  createdById  String
+  createdBy    User                         @relation(fields: [createdById], references: [id])
+
+  @@index([projectId])
+  @@index([ownerCaseId])
+  @@index([createdById])
+}
+
+model DataSetRow {
+  id         Int     @id() @default(autoincrement())
+  dataSetId  Int
+  dataSet    DataSet @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
+  rowIndex   Int     @default(0)
+  label      String?
+  valuesJson Json
+  isDeleted  Boolean @default(false)
+
+  @@unique([dataSetId, rowIndex])
+  @@index([dataSetId])
 }
 
 model Notification {

@@ -108,6 +108,8 @@ model User {
     testRunCasesAssigned    TestRunCases[]
     testRunResults          TestRunResults[]
     editedTestRunResults    TestRunResults[]        @relation("TestRunResultEditor")
+    testRunCaseIterations   TestRunCaseIteration[]
+    createdDataSets         DataSet[]
     createdIssues           Issue[]                 @relation("IssueCreator")
     projectPermissions      UserProjectPermission[]
     junitTestSuites         JUnitTestSuite[]
@@ -388,6 +390,7 @@ model Projects {
     userPermissions             UserProjectPermission[]
     groupPermissions            GroupProjectPermission[]
     sharedStepGroups            SharedStepGroup[]
+    dataSets                    DataSet[]
     projectIntegrations         ProjectIntegration[]
     webhookConfigs              WebhookConfig[]
     projectLlmIntegrations      ProjectLlmIntegration[]
@@ -883,26 +886,27 @@ model ResultFieldAssignment {
 }
 
 model Status {
-    id                 Int                       @id @default(autoincrement())
-    order              Int                       @default(autoincrement())
-    name               String                    @length(1)
-    systemName         String                    @unique @length(1)
-    aliases            String?
-    colorId            Int
-    color              Color                     @relation(fields: [colorId], references: [id])
-    isDeleted          Boolean                   @default(false)
-    isEnabled          Boolean
-    isSuccess          Boolean
-    isFailure          Boolean
-    isCompleted        Boolean
-    scope              StatusScopeAssignment[]
-    projects           ProjectStatusAssignment[]
-    sessionResults     SessionResults[]
-    testRunCases       TestRunCases[]
-    testRunResults     TestRunResults[]
-    testRunStepResults TestRunStepResults[]
-    junitTestResults   JUnitTestResult[]
-    junitTestSteps     JUnitTestStep[]           @relation("JUnitTestStepStatus")
+    id                    Int                       @id @default(autoincrement())
+    order                 Int                       @default(autoincrement())
+    name                  String                    @length(1)
+    systemName            String                    @unique @length(1)
+    aliases               String?
+    colorId               Int
+    color                 Color                     @relation(fields: [colorId], references: [id])
+    isDeleted             Boolean                   @default(false)
+    isEnabled             Boolean
+    isSuccess             Boolean
+    isFailure             Boolean
+    isCompleted           Boolean
+    scope                 StatusScopeAssignment[]
+    projects              ProjectStatusAssignment[]
+    sessionResults        SessionResults[]
+    testRunCases          TestRunCases[]
+    testRunResults        TestRunResults[]
+    testRunStepResults    TestRunStepResults[]
+    testRunCaseIterations TestRunCaseIteration[]
+    junitTestResults      JUnitTestResult[]
+    junitTestSteps        JUnitTestStep[]           @relation("JUnitTestStepStatus")
 
     @@index([isDeleted, isEnabled])
     @@index([order])
@@ -2363,25 +2367,25 @@ enum TestRunType {
 }
 
 model TestRunCases {
-    id               Int              @id @default(autoincrement())
+    id               Int                         @id @default(autoincrement())
     testRunId        Int
-    testRun          TestRuns         @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    testRun          TestRuns                    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
     repositoryCaseId Int
-    repositoryCase   RepositoryCases  @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-    order            Int              @default(0)
+    repositoryCase   RepositoryCases             @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    order            Int                         @default(0)
     statusId         Int?
-    status           Status?          @relation(fields: [statusId], references: [id])
+    status           Status?                     @relation(fields: [statusId], references: [id])
     assignedToId     String?
-    assignedTo       User?            @relation(fields: [assignedToId], references: [id])
-    isCompleted      Boolean          @default(false)
+    assignedTo       User?                       @relation(fields: [assignedToId], references: [id])
+    isCompleted      Boolean                     @default(false)
     notes            Json?
     startedAt        DateTime?
     completedAt      DateTime?
     elapsed          Int?
-    passedIterations Int              @default(0)
-    failedIterations Int              @default(0)
-    totalIterations  Int              @default(0)
-    createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+    passedIterations Int                         @default(0)
+    failedIterations Int                         @default(0)
+    totalIterations  Int                         @default(0)
+    createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
     results          TestRunResults[]
     iterations       TestRunCaseIteration[]
     dataSetSnapshot  TestRunCaseDataSetSnapshot?
@@ -2458,30 +2462,30 @@ model TestRunCases {
 }
 
 model TestRunResults {
-    id                 Int                  @id @default(autoincrement())
+    id                 Int                   @id @default(autoincrement())
     testRunId          Int
-    testRun            TestRuns             @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    testRun            TestRuns              @relation(fields: [testRunId], references: [id], onDelete: Cascade)
     testRunCaseId      Int
-    testRunCase        TestRunCases         @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
-    testRunCaseVersion Int                  @default(1)
+    testRunCase        TestRunCases          @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    testRunCaseVersion Int                   @default(1)
     statusId           Int
-    status             Status               @relation(fields: [statusId], references: [id])
+    status             Status                @relation(fields: [statusId], references: [id])
     executedById       String
-    executedBy         User                 @relation(fields: [executedById], references: [id])
-    executedAt         DateTime             @default(now()) @db.Timestamptz(6)
+    executedBy         User                  @relation(fields: [executedById], references: [id])
+    executedAt         DateTime              @default(now()) @db.Timestamptz(6)
     editedById         String?
-    editedBy           User?                @relation("TestRunResultEditor", fields: [editedById], references: [id])
+    editedBy           User?                 @relation("TestRunResultEditor", fields: [editedById], references: [id])
     editedAt           DateTime?
     elapsed            Int?
     notes              Json?
     evidence           Json?
     attachments        Attachments[]
     resultFieldValues  ResultFieldValues[]
-    attempt            Int                  @default(1)
+    attempt            Int                   @default(1)
     iterationId        Int?
     iteration          TestRunCaseIteration? @relation(fields: [iterationId], references: [id], onDelete: SetNull)
     stepResults        TestRunStepResults[]
-    isDeleted          Boolean              @default(false)
+    isDeleted          Boolean               @default(false)
     issues             Issue[]
 
     @@index([testRunCaseId])
@@ -2579,24 +2583,24 @@ model TestRunStepResults {
 }
 
 model TestRunCaseIteration {
-    id                Int                          @id @default(autoincrement())
+    id                Int                         @id @default(autoincrement())
     testRunCaseId     Int
-    testRunCase       TestRunCases                 @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    testRunCase       TestRunCases                @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
     rowIndex          Int
     label             String?
     valuesJson        Json
     statusId          Int?
-    status            Status?                      @relation(fields: [statusId], references: [id])
+    status            Status?                     @relation(fields: [statusId], references: [id])
     assignedToId      String?
-    assignedTo        User?                        @relation(fields: [assignedToId], references: [id])
-    isCompleted       Boolean                      @default(false)
+    assignedTo        User?                       @relation(fields: [assignedToId], references: [id])
+    isCompleted       Boolean                     @default(false)
     startedAt         DateTime?
     completedAt       DateTime?
     elapsed           Int?
     notes             Json?
-    isDeleted         Boolean                      @default(false)
+    isDeleted         Boolean                     @default(false)
     dataSetSnapshotId Int?
-    dataSetSnapshot   TestRunCaseDataSetSnapshot?  @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
+    dataSetSnapshot   TestRunCaseDataSetSnapshot? @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
     results           TestRunResults[]
 
     @@unique([testRunCaseId, rowIndex])
@@ -3435,22 +3439,22 @@ model SharedStepItem {
 }
 
 model DataSet {
-    id           Int                 @id @default(autoincrement())
+    id           Int                          @id @default(autoincrement())
     projectId    Int
-    project      Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project      Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
     ownerCaseId  Int?
-    ownerCase    RepositoryCases?    @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
-    name         String              @length(1)
+    ownerCase    RepositoryCases?             @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
+    name         String                       @length(1)
     description  String?
-    isShared     Boolean             @default(false)
-    version      Int                 @default(1)
+    isShared     Boolean                      @default(false)
+    version      Int                          @default(1)
     rows         DataSetRow[]
-    paramLookups TestCaseParameter[] @relation("ParamLookupDataSet")
+    paramLookups TestCaseParameter[]          @relation("ParamLookupDataSet")
     snapshots    TestRunCaseDataSetSnapshot[]
-    isDeleted    Boolean             @default(false)
-    createdAt    DateTime            @default(now()) @db.Timestamptz(6)
+    isDeleted    Boolean                      @default(false)
+    createdAt    DateTime                     @default(now()) @db.Timestamptz(6)
     createdById  String
-    createdBy    User                @relation(fields: [createdById], references: [id])
+    createdBy    User                         @relation(fields: [createdById], references: [id])
 
     @@index([projectId])
     @@index([ownerCaseId])
@@ -3495,13 +3499,13 @@ model DataSet {
 }
 
 model DataSetRow {
-    id         Int      @id @default(autoincrement())
+    id         Int     @id @default(autoincrement())
     dataSetId  Int
-    dataSet    DataSet  @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
-    rowIndex   Int      @default(0)
+    dataSet    DataSet @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
+    rowIndex   Int     @default(0)
     label      String?
     valuesJson Json
-    isDeleted  Boolean  @default(false)
+    isDeleted  Boolean @default(false)
 
     @@unique([dataSetId, rowIndex])
     @@index([dataSetId])
@@ -3786,19 +3790,19 @@ model IntegrationProject {
 // =============================================================================
 
 model WebhookConfig {
-    id              String              @id @default(cuid())
-    projectId       Int
-    project         Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    adapterType     AdapterType
-    direction       WebhookDirection
-    token           String              @unique // routing key, e.g. "whk_<32-byte-hex>"
-    secret          String              // HMAC verification secret, encrypted at rest by application code
-    isActive        Boolean             @default(true)
-    lastReceivedAt  DateTime?           @db.Timestamptz(6)
-    createdAt       DateTime            @default(now()) @db.Timestamptz(6)
-    updatedAt       DateTime            @updatedAt
-    deliveries      WebhookDelivery[]
-    eventDedups     WebhookEventDedup[]
+    id             String              @id @default(cuid())
+    projectId      Int
+    project        Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    adapterType    AdapterType
+    direction      WebhookDirection
+    token          String              @unique // routing key, e.g. "whk_<32-byte-hex>"
+    secret         String              // HMAC verification secret, encrypted at rest by application code
+    isActive       Boolean             @default(true)
+    lastReceivedAt DateTime?           @db.Timestamptz(6)
+    createdAt      DateTime            @default(now()) @db.Timestamptz(6)
+    updatedAt      DateTime            @updatedAt
+    deliveries     WebhookDelivery[]
+    eventDedups    WebhookEventDedup[]
 
     @@unique([projectId, adapterType, direction]) // one config per (project, adapter, direction)
     @@index([projectId])
@@ -3887,48 +3891,48 @@ model WebhookEventDedup {
 // LLM Integration Models
 
 model LlmProviderConfig {
-    id                   Int             @id @default(autoincrement())
-    llmIntegrationId     Int?            @unique  // Made optional for migration
-    llmIntegration       LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
+    id                    Int             @id @default(autoincrement())
+    llmIntegrationId      Int?            @unique  // Made optional for migration
+    llmIntegration        LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
 
     // Model configuration
-    defaultModel         String   // e.g., "gpt-4", "claude-3-opus", "llama2"
-    availableModels      Json     // Array of available models with their configs
+    defaultModel          String   // e.g., "gpt-4", "claude-3-opus", "llama2"
+    availableModels       Json     // Array of available models with their configs
 
     // Rate limiting
-    maxTokensPerRequest  Int             @default(4096)
-    maxRequestsPerMinute Int             @default(60)
-    maxRequestsPerDay    Int?      // Optional daily limit
+    maxTokensPerRequest   Int             @default(4096)
+    maxRequestsPerMinute  Int             @default(60)
+    maxRequestsPerDay     Int?      // Optional daily limit
 
     // Cost tracking (0 for Ollama since it's local)
-    costPerInputToken    Decimal         @db.Decimal(10, 8)
-    costPerOutputToken   Decimal         @db.Decimal(10, 8)
-    monthlyBudget        Decimal?        @db.Decimal(10, 2)
+    costPerInputToken     Decimal         @db.Decimal(10, 8)
+    costPerOutputToken    Decimal         @db.Decimal(10, 8)
+    monthlyBudget         Decimal?        @db.Decimal(10, 2)
 
     // Day of month (1-31) when the billing period starts. Defaults to 1
     // for calendar-month behavior. Values >28 clamp to last day of short
     // months (e.g., 31 -> Feb 28/29).
-    billingPeriodStartDay Int            @default(1)
+    billingPeriodStartDay Int             @default(1)
 
     // Settings
-    defaultTemperature   Float           @default(0.7)
-    defaultMaxTokens     Int             @default(2048)
-    timeout              Int             @default(30000) // milliseconds
-    retryAttempts        Int             @default(3)
-    streamingEnabled     Boolean         @default(false) // Ollama supports streaming
-    isDefault            Boolean         @default(false) // Whether this is the default LLM provider
+    defaultTemperature    Float           @default(0.7)
+    defaultMaxTokens      Int             @default(2048)
+    timeout               Int             @default(30000) // milliseconds
+    retryAttempts         Int             @default(3)
+    streamingEnabled      Boolean         @default(false) // Ollama supports streaming
+    isDefault             Boolean         @default(false) // Whether this is the default LLM provider
 
     // Ollama-specific settings (stored in settings Json)
-    settings             Json?     // Contains baseUrl, keepAlive, numGpu, etc.
+    settings              Json?     // Contains baseUrl, keepAlive, numGpu, etc.
 
     // Budget alert tracking - which thresholds have fired per billing period.
     // Key is the period-start ISO date `YYYY-MM-DD` (derived from
     // `billingPeriodStartDay`); e.g., {"2026-03-15": [80, 90]} means 80% and
     // 90% alerts fired for the period starting March 15 2026.
-    alertThresholdsFired Json?
+    alertThresholdsFired  Json?
 
-    createdAt            DateTime        @default(now()) @db.Timestamptz(6)
-    updatedAt            DateTime        @updatedAt
+    createdAt             DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt             DateTime        @updatedAt
 
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
