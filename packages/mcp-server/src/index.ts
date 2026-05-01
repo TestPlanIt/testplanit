@@ -1,8 +1,35 @@
 /**
  * @packageDocumentation
  * Model Context Protocol server for TestPlanIt.
- * See README.md for installation and usage.
+ *
+ * Library usage:
+ * ```ts
+ * import { runServer } from "@testplanit/mcp-server";
+ * await runServer();
+ * ```
+ *
+ * Bin usage:
+ * ```sh
+ * npx @testplanit/mcp-server
+ * ```
+ *
+ * Required env vars:
+ * - `TESTPLANIT_API_TOKEN` — API token from your TestPlanIt profile (must
+ *   start with `tpi_`).
+ * - `TESTPLANIT_API_URL` (optional) — defaults to the TestPlanIt SaaS URL
+ *   (`https://app.testplanit.com`).
  */
 
-// Re-exports landing in plan 05-06.
-export const PACKAGE_NAME = "@testplanit/mcp-server";
+export { runServer, defaultRunDeps } from "./cli.js";
+export { createServer } from "./server.js";
+export { parseEnv } from "./env.js";
+export {
+  validateToken,
+  redactToken,
+  TestPlanItHttpError,
+} from "./http.js";
+
+export type { ServerDeps } from "./server.js";
+export type { EnvConfig } from "./env.js";
+export type { WhoamiUser, ValidateResult } from "./http.js";
+export type { RunDeps } from "./cli.js";
