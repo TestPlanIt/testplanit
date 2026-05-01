@@ -243,7 +243,19 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
     ).toBeLessThan(FILTER_APPLY_BUDGET_MS);
 
     // 6. URL preserves the filter (D-32 — filter state lives in URL params
-    //    so reload is idempotent) — defence-in-depth.
-    expect(page.url()).toContain(`configIds=${outboundConfigId}`);
+    //    so reload is idempotent). Poll because router.replace inside
+    //    updateFilter is async with respect to the click that triggered
+    //    it, and the row-count poll above can settle before the URL
+    //    commits (this project has one config so post-filter row count
+    //    equals pre-filter row count). The param key is `configIds`
+    //    plural — matches updateFilter / parseFilterFromSearchParams in
+    //    webhook-deliveries-tab.tsx; a single selection is the bare id.
+    await expect
+      .poll(() => page.url(), {
+        message:
+          "Filter selection did not push configIds=<id> into the URL within budget — router.replace may have failed",
+        timeout: 5_000,
+      })
+      .toContain(`configIds=${outboundConfigId}`);
   });
 });

@@ -14,10 +14,14 @@ import {
  *
  * Workflow under test: the webhook admin surface — Inbound, Outbound, and
  * Deliveries tabs, plus the Add chooser, outbound create form, and the
- * Re-enable / Delete AlertDialog confirms — renders in Spanish when the URL
- * is prefixed with `/es-ES/...` (next-intl `localePrefix: "always"` so the
- * URL prefix wins over the NEXT_LOCALE cookie that the auth fixture sets to
- * en-US).
+ * Re-enable / Delete AlertDialog confirms — renders in Spanish when the
+ * NEXT_LOCALE cookie is set to `es-ES` and the URL is prefixed with
+ * `/es-ES/...`. The proxy.ts middleware reads NEXT_LOCALE FIRST and
+ * redirects URL prefixes that don't match the cookie's locale, so the auth
+ * fixture's en-US cookie would otherwise override the URL prefix and
+ * silently downgrade the page back to English. The cookie override is set
+ * per-test (not in storageState) so other specs in this directory keep
+ * their en-US default.
  *
  * This is a DETERMINISTIC i18n key-coverage smoke: it does NOT evaluate
  * translation quality, only that
@@ -172,11 +176,29 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
     page,
     baseURL,
   }) => {
+    // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
+    // does not redirect /es-ES/... back to /en-US/... before the page
+    // renders. The cookie is read first by the middleware (proxy.ts:380)
+    // and wins over the URL prefix.
+    await page.context().addCookies([
+      {
+        name: "NEXT_LOCALE",
+        value: "es-ES",
+        url: baseURL,
+      },
+    ]);
+
     // ─── 1. Inbound tab ──────────────────────────────────────────────
     await page.goto(`${baseURL}/es-ES/projects/settings/${projectId}/webhooks`);
     await expect(page.getByTestId("webhook-config-form")).toBeVisible({
       timeout: 15_000,
     });
+
+    // Defence-in-depth: confirm the locale actually flipped before
+    // asserting any translated copy. If this fails, the cookie override
+    // didn't take effect and every downstream toContainText would fail
+    // with a less informative "expected es-ES, got en-US" mismatch.
+    await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
 
     // Tab triggers carry Spanish labels (URL prefix wins over en-US cookie).
     await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(

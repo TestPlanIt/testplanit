@@ -13,9 +13,11 @@ import {
  * French locale i18n smoke (F-02).
  *
  * Sister of `webhooks-i18n-spanish-keys.spec.ts` — same surface, same
- * assertion shape, different locale. Driven against fr-FR via URL prefix
- * (next-intl `localePrefix: "always"`) so the auth fixture's en-US cookie
- * doesn't override the visited locale.
+ * assertion shape, different locale. Driven against fr-FR by overriding
+ * the auth fixture's NEXT_LOCALE=en-US cookie to `fr-FR` before the
+ * first navigation; proxy.ts reads the cookie first and would otherwise
+ * redirect /fr-FR/... back to /en-US/... See the Spanish sister spec
+ * for the full rationale.
  *
  * Why a separate spec rather than a parameterised pair: the two locales
  * have independent failure modes (a key can be missing in fr-FR while
@@ -136,11 +138,26 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
     page,
     baseURL,
   }) => {
+    // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
+    // does not redirect /fr-FR/... back to /en-US/... before the page
+    // renders. See the Spanish sister spec for the full rationale.
+    await page.context().addCookies([
+      {
+        name: "NEXT_LOCALE",
+        value: "fr-FR",
+        url: baseURL,
+      },
+    ]);
+
     // ─── 1. Inbound tab ──────────────────────────────────────────────
     await page.goto(`${baseURL}/fr-FR/projects/settings/${projectId}/webhooks`);
     await expect(page.getByTestId("webhook-config-form")).toBeVisible({
       timeout: 15_000,
     });
+
+    // Defence-in-depth: confirm the locale actually flipped before
+    // asserting any translated copy.
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr-FR");
 
     await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(
       fr.inboundTab
