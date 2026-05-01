@@ -116,7 +116,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
   describe("create dialog checkboxes", () => {
     it("renders both checkboxes when create dialog opens", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
 
@@ -135,7 +139,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
 
     it("toggles checkboxes independently", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
 
@@ -154,7 +162,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
 
     it("submits scopes: ['mode:read'] when only read-only is checked", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
       fireEvent.click(screen.getByLabelText("readOnlyLabel"));
@@ -168,7 +180,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
 
     it("submits scopes: ['client:mcp'] when only agent-token is checked", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
       fireEvent.click(screen.getByLabelText("agentTokenLabel"));
@@ -180,7 +196,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
 
     it("submits scopes in deterministic order [mode:read, client:mcp] when both checked", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
       // Click in REVERSE of build-up order to prove the build-up order is
@@ -195,7 +215,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
 
     it("submits scopes: [] when neither checkbox is checked", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
       await fillNameAndSubmit();
@@ -206,7 +230,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
 
     it("resets both checkboxes to unchecked when dialog is closed and reopened", async () => {
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       await openCreateDialog();
       fireEvent.click(screen.getByLabelText("readOnlyLabel"));
@@ -238,7 +266,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
         refetch: vi.fn(),
       });
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       const row = screen.getByText("Read Token").closest("tr")!;
       expect(within(row).getByText("readOnlyBadge")).toBeDefined();
@@ -253,7 +285,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
         refetch: vi.fn(),
       });
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       const row = screen.getByText("Agent Token").closest("tr")!;
       expect(within(row).getByText("agentTokenBadge")).toBeDefined();
@@ -272,7 +308,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
         refetch: vi.fn(),
       });
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       const row = screen.getByText("Both Token").closest("tr")!;
       expect(within(row).getByText("readOnlyBadge")).toBeDefined();
@@ -285,7 +325,11 @@ describe("ApiTokenSettings — read-only and agent-token UI", () => {
         refetch: vi.fn(),
       });
       render(
-        <ApiTokenSettings userId="user-123" isOwnProfile={true} isAdmin={false} />
+        <ApiTokenSettings
+          userId="user-123"
+          isOwnProfile={true}
+          isAdmin={false}
+        />
       );
       const row = screen.getByText("Empty Token").closest("tr")!;
       expect(within(row).queryByText("readOnlyBadge")).toBeNull();
