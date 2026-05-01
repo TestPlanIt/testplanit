@@ -45,7 +45,9 @@ const baseHandlers = {
   onMoveDown: vi.fn(),
 };
 
-const mkParam = (overrides: Partial<any> = {}) => ({
+import type { DatasetCellParameter } from "@/components/parameters/DatasetCell";
+
+const mkParam = (overrides: Partial<DatasetCellParameter> = {}): DatasetCellParameter => ({
   name: "username",
   type: "STRING",
   sensitive: false,
