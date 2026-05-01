@@ -10,7 +10,7 @@ export interface WhoamiDeps {
 
 /**
  * Register the `whoami` MCP tool — the production replacement for plan
- * 05-06's `__server_info` smoke tool.
+ * 05-06's smoke tool.
  *
  * The tool re-fetches `GET /api/auth/whoami` on every invocation (NOT
  * cached from the bootstrap probe) so scope changes — particularly the
@@ -55,9 +55,15 @@ export function registerWhoami(server: McpServer, deps: WhoamiDeps): void {
             code: probe.code,
           });
         }
+        // The MCP SDK's tool-result `structuredContent` is typed as
+        // `Record<string, unknown>`. WhoamiUser is locked at plan 05-06 and
+        // does not carry an index signature, so we widen here at the
+        // boundary — the runtime shape is unchanged, the cast only
+        // satisfies TS's structural compatibility check against the SDK's
+        // CallToolResult contract.
         return {
           content: [{ type: "text", text: JSON.stringify(probe.user) }],
-          structuredContent: probe.user,
+          structuredContent: { ...probe.user } as Record<string, unknown>,
         };
       } catch (err) {
         return mapHttpErrorToToolResult(err);

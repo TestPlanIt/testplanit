@@ -13,6 +13,10 @@ import { TestPlanItHttpError } from "./http.js";
 export interface ToolErrorResult {
   isError: true;
   content: Array<{ type: "text"; text: string }>;
+  // Index signature satisfies the MCP SDK's CallToolResult contract, which
+  // permits arbitrary string keys (e.g., `_meta`, future fields). Without
+  // this, `registerTool`'s callback rejects our return type.
+  [x: string]: unknown;
 }
 
 /**
