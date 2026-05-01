@@ -69,7 +69,13 @@ import {
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
@@ -375,6 +381,21 @@ export default function TestCaseDetails() {
     { enabled: isValidCaseId }
   );
   const parameterCount = caseParameters.length;
+  const parameterChipMeta = useMemo(
+    () =>
+      caseParameters.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        type: p.type as "STRING" | "INTEGER" | "BOOLEAN" | "SELECT",
+        defaultValue:
+          p.defaultValue === null || p.defaultValue === undefined
+            ? null
+            : typeof p.defaultValue === "string"
+              ? p.defaultValue
+              : JSON.stringify(p.defaultValue),
+      })),
+    [caseParameters]
+  );
 
   const [, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [breadcrumbItems, setBreadcrumbItems] = useState<FolderNode[]>([]);
@@ -2111,6 +2132,10 @@ export default function TestCaseDetails() {
                                   ? "steps"
                                   : undefined
                               }
+                              parameters={parameterChipMeta}
+                              onOpenParametersSheet={() =>
+                                setIsParamSheetOpen(true)
+                              }
                               {...(field.caseField.type.type === "Steps" && {
                                 onSharedStepCreated: refetch,
                               })}
@@ -2208,6 +2233,10 @@ export default function TestCaseDetails() {
                                   control={control}
                                   errors={errors}
                                   canEditRestricted={false}
+                                  parameters={parameterChipMeta}
+                                  onOpenParametersSheet={() =>
+                                    setIsParamSheetOpen(true)
+                                  }
                                 />
                                 <Separator
                                   orientation="horizontal"
