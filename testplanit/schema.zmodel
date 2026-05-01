@@ -1481,6 +1481,7 @@ model RepositoryCases {
     isArchived             Boolean                  @default(false)
     isDeleted              Boolean                  @default(false)
     currentVersion         Int                      @default(1)
+    hasParameters          Boolean                  @default(false)
     repositoryCaseVersions RepositoryCaseVersions[]
     caseFieldValues        CaseFieldValues[]
     resultFieldValues      ResultFieldValues[]
@@ -1499,6 +1500,8 @@ model RepositoryCases {
     duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
     stepSequenceMatchCases StepSequenceMatchCase[]
     comments               Comment[]
+    parameters             TestCaseParameter[]
+    ownedDataSets          DataSet[]                @relation("DataSetOwnerCase")
 
     @@unique([projectId, name, className, source])
     @@index([projectId, isDeleted, isArchived])
@@ -1507,6 +1510,7 @@ model RepositoryCases {
     @@index([stateId])
     @@index([automated])
     @@index([createdAt])
+    @@index([hasParameters])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
@@ -2374,8 +2378,13 @@ model TestRunCases {
     startedAt        DateTime?
     completedAt      DateTime?
     elapsed          Int?
+    passedIterations Int              @default(0)
+    failedIterations Int              @default(0)
+    totalIterations  Int              @default(0)
     createdAt        DateTime         @default(now()) @db.Timestamptz(6)
     results          TestRunResults[]
+    iterations       TestRunCaseIteration[]
+    dataSetSnapshot  TestRunCaseDataSetSnapshot?
 
     @@unique([testRunId, repositoryCaseId])
     @@index([testRunId])
@@ -2469,6 +2478,8 @@ model TestRunResults {
     attachments        Attachments[]
     resultFieldValues  ResultFieldValues[]
     attempt            Int                  @default(1)
+    iterationId        Int?
+    iteration          TestRunCaseIteration? @relation(fields: [iterationId], references: [id], onDelete: SetNull)
     stepResults        TestRunStepResults[]
     isDeleted          Boolean              @default(false)
     issues             Issue[]
@@ -2478,6 +2489,7 @@ model TestRunResults {
     @@index([statusId])
     @@index([executedAt])
     @@index([testRunCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
+    @@index([iterationId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
