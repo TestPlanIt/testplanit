@@ -31,7 +31,7 @@ describe("createParameterMentionExtension", () => {
 
   it("renderHTML returns plain-DOM tuple starting with 'span' and ending with '@<name>'", () => {
     const extension = createParameterMentionExtension(PARAMS);
-    const renderHTML = extension.config.renderHTML as (props: {
+    const renderHTML = extension.config.renderHTML as unknown as (props: {
       node: { attrs: Record<string, unknown> };
       HTMLAttributes: Record<string, unknown>;
     }) => unknown[];
@@ -53,7 +53,7 @@ describe("createParameterMentionExtension", () => {
 
   it("renderHTML attrs include the chip CSS class and data attributes", () => {
     const extension = createParameterMentionExtension(PARAMS);
-    const renderHTML = extension.config.renderHTML as (props: {
+    const renderHTML = extension.config.renderHTML as unknown as (props: {
       node: { attrs: Record<string, unknown> };
       HTMLAttributes: Record<string, unknown>;
     }) => unknown[];
@@ -78,7 +78,7 @@ describe("createParameterMentionExtension", () => {
 
   it("marks undeclared chips with data-undeclared='true'", () => {
     const extension = createParameterMentionExtension(PARAMS);
-    const renderHTML = extension.config.renderHTML as (props: {
+    const renderHTML = extension.config.renderHTML as unknown as (props: {
       node: { attrs: Record<string, unknown> };
       HTMLAttributes: Record<string, unknown>;
     }) => unknown[];
