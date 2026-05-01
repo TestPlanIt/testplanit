@@ -12,29 +12,24 @@ import {
  * Workflow under test: an admin clicks Delete on an outbound config card,
  * confirms via the shadcn AlertDialog (D-31 — never window.confirm), the
  * card disappears, the success toast renders, and subsequent test_run.
- * completed events for the project DO NOT fan out to that destination
- * (verified at the data layer — no new WebhookDelivery rows for the
- * deleted config id appear after the delete).
+ * completed events for the project DO NOT fan out to that destination.
  *
- * Schema reality (recorded for future maintainers):
- *   `WebhookDelivery.webhookConfigId` references `WebhookConfig` with
- *   `onDelete: Cascade` (schema.zmodel:3544). When the admin deletes a
- *   config, ALL existing WebhookDelivery rows for that config are
- *   cascade-deleted by Postgres in the same transaction — they do NOT
- *   survive on a 30-day retention cycle. This spec asserts the actual
- *   cascade contract: queries for the deleted config id return zero rows
- *   afterwards.
- *
- *   The original M-04 manual test case (.planning/v0.23.0-manual-test-
- *   cases.md:770) reads "Existing WebhookDelivery rows for this config
- *   are NOT deleted (audit history preserved); they purge on the 30-day
- *   cycle." That expectation is at odds with the schema's Cascade rule
- *   and would require an architectural change (e.g. `onDelete: SetNull`
- *   on the FK + a nullable webhookConfigId column to keep orphaned rows
- *   queryable). Documenting the discrepancy here so any future audit-
- *   history-preservation work has a starting point — and so this spec
- *   doesn't silently lock in the cascade behavior as intentional product
- *   policy.
+ * Schema contract (Plan 04-08 — `WebhookDelivery.webhookConfig` is
+ * `onDelete: SetNull` with a nullable `webhookConfigId`, schema.zmodel:
+ * 3541-3550). When the admin hard-deletes a `WebhookConfig`:
+ *   1. The `WebhookConfig` row is gone (`findUnique` returns null).
+ *   2. The pre-existing `WebhookDelivery` rows survive as orphaned audit
+ *      records — `webhookConfigId` flips to NULL on each row, the row
+ *      itself is retained for the standard 30-day retention cycle (the
+ *      retention worker is the only thing that purges delivery rows;
+ *      admin click-to-delete must not erase audit history per the SOC2
+ *      / GDPR audit-trail invariant).
+ *   3. Project-scoped Deliveries-tab queries naturally exclude orphans
+ *      because they filter by `webhookConfig.projectId`, and orphans
+ *      have no related WebhookConfig.
+ *   4. New events fired for the project after the delete CANNOT land
+ *      new rows on the deleted config id — no live config to dispatch
+ *      against.
  *
  * Tenant isolation isn't re-asserted here — `replay-bulk-deliveries.spec.
  * ts` and `cross-tenant-isolation` audits already lock that down. M-04 is
@@ -136,13 +131,50 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
     });
     expect(after).toBeNull();
 
-    // 5. Subsequent events do not fan out to the deleted destination.
+    // 5. Audit-history preservation (Plan 04-08 SetNull contract). The
+    //    pre-delete WebhookDelivery rows MUST survive the admin's Delete
+    //    click — the retention worker is the only path that purges
+    //    delivery rows. Each orphan keeps its `id`, its `payloadDigest`,
+    //    its `receivedAt`, etc., but `webhookConfigId` flips to NULL.
+    const orphanedRows = await prisma.webhookDelivery.findMany({
+      where: { id: { in: preDeleteDeliveryIds } },
+      select: { id: true, webhookConfigId: true },
+    });
+    expect(orphanedRows).toHaveLength(PRE_DELETE_DELIVERY_COUNT);
+    for (const row of orphanedRows) {
+      expect(row.webhookConfigId).toBeNull();
+    }
+
+    // 6. Project-scoped Deliveries-tab query naturally excludes orphans
+    //    (they filter by `webhookConfig.projectId`, and an orphan has no
+    //    related WebhookConfig). Mirrors the project-scoped query
+    //    pattern in webhook-deliveries-tab.tsx so the admin UI shows
+    //    zero rows for the deleted config — even though the rows are
+    //    still in the DB for audit purposes.
+    const projectScopedRows = await prisma.webhookDelivery.findMany({
+      where: { webhookConfig: { projectId } },
+      select: { id: true },
+    });
+    const projectScopedIds = new Set(projectScopedRows.map((r) => r.id));
+    for (const id of preDeleteDeliveryIds) {
+      expect(projectScopedIds.has(id)).toBe(false);
+    }
+    // Querying by the gone-config's id returns no project-scoped matches
+    // for the same reason — `webhookConfigId = configId` matches zero rows
+    // (orphans have NULL, no live row has the old id).
+    const byDeletedConfigId = await prisma.webhookDelivery.findMany({
+      where: { webhookConfigId: configId },
+      select: { id: true },
+    });
+    expect(byDeletedConfigId).toHaveLength(0);
+
+    // 7. Subsequent events do not fan out to the deleted destination.
     //    Trigger a real test_run.completed event via the API helper —
     //    this normally enqueues an outbound dispatch for every active
     //    OUTBOUND config in the project. With the only outbound config
     //    deleted, NO new WebhookDelivery rows can land on the deleted
-    //    config id (since the row itself is gone). Asserts at the data
-    //    layer to defend against a future regression where the
+    //    config id (no live config to dispatch against). Asserts at the
+    //    data layer to defend against a future regression where the
     //    dispatcher might somehow attempt fan-out using a stale cache
     //    of the config.
     const testRunId = await api.createTestRun(
@@ -151,9 +183,11 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
     );
     await api.completeTestRunViaStateChange(testRunId, projectId);
 
-    // Allow the dispatch worker a brief window to consume the event.
-    // No row CAN be written for the deleted config id (FK is gone), so
-    // we poll briefly then assert zero rows.
+    // Allow the dispatch worker a brief window to consume the event,
+    // then assert no NEW row landed for the deleted config id. The
+    // orphans from step 5 (id ∈ preDeleteDeliveryIds) remain with
+    // webhookConfigId = NULL — they don't satisfy `webhookConfigId =
+    // configId`, so the count below is purely "did a new row land".
     const pollDeadline = Date.now() + 5_000;
     let postDeleteRows: Array<{ id: string }> = [];
     while (Date.now() < pollDeadline) {
@@ -164,9 +198,6 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
       if (postDeleteRows.length > 0) break; // would be a regression
       await new Promise((r) => setTimeout(r, 200));
     }
-    // No new rows landed on the deleted config id. Schema cascade also
-    // removed the historical rows so the count is zero (see header note
-    // for the audit-history preservation discrepancy with M-04 case copy).
     expect(postDeleteRows).toHaveLength(0);
   });
 });
