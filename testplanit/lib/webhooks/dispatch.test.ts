@@ -82,7 +82,7 @@ const baseConfig = (overrides: Record<string, any> = {}) => ({
   subscribedEvents: [],
   endpointHealth: "HEALTHY",
   secrets: [],
-  project: { id: 7, name: "Acme" },
+  project: { id: 7, name: "Acme", isDeleted: false },
   ...overrides,
 });
 
@@ -127,6 +127,28 @@ describe("dispatchWebhook", () => {
     const prismaMock = buildPrismaMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ isActive: false }),
+    });
+
+    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+
+    expect(outcome).toEqual({ outcome: "skipped_inactive" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+  });
+
+  it("2a. returns skipped_inactive when project.isDeleted === true (L-05 tenancy gate, no fetch, no delivery)", async () => {
+    // Soft-deleted projects must not fan webhooks out to external systems —
+    // an outbox row that committed BEFORE the project was deleted would
+    // otherwise leak events for a tenant the admin has already removed.
+    // The dispatcher treats the soft-deleted project as functionally
+    // inactive: same outcome shape as the isActive===false path.
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: baseOutboxEvent,
+      config: baseConfig({
+        project: { id: 7, name: "Acme", isDeleted: true },
+      }),
     });
 
     const outcome = await dispatchWebhook(baseJobData, prismaMock);

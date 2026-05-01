@@ -91,7 +91,7 @@ export async function dispatchWebhook(
           where: { retiredAt: null },
           orderBy: { activatedAt: "desc" },
         },
-        project: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true, isDeleted: true } },
       },
     }),
   ]);
@@ -100,6 +100,16 @@ export async function dispatchWebhook(
   }
   if (!config) return { outcome: "skipped_inactive" };
   if (!config.isActive) return { outcome: "skipped_inactive" };
+  // L-05 / tenancy invariant — soft-deleted projects MUST NOT fan webhooks
+  // out to external systems. The `Projects.isDeleted` flag is the canonical
+  // signal that a project has been removed from the admin UI; without this
+  // gate, an in-flight outbox event whose row was committed BEFORE the
+  // project was soft-deleted would still POST to whatever URLs the (now-
+  // deleted) project's WebhookConfigs point at, leaking events for a
+  // tenant that no longer exists from the admin's point of view. Mirrors
+  // the `isActive` gate above with the same `skipped_inactive` outcome —
+  // a soft-deleted project is functionally inactive.
+  if (config.project.isDeleted) return { outcome: "skipped_inactive" };
   if (!config.url) {
     // Defense: OUTBOUND configs must have a URL; INBOUND configs reach this
     // dispatcher only if the fan-out filter is bypassed somehow. Treat as
