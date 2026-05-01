@@ -36,6 +36,12 @@ const { mockDb, mockTx, sessionRef, txCalls } = vi.hoisted(() => {
       })),
       create: vi.fn(),
     },
+    testCaseParameter: {
+      count: vi.fn(async () => 2),
+    },
+    repositoryCases: {
+      update: vi.fn(async () => ({})),
+    },
   };
   const db: any = {
     repositoryCases: { findFirst: vi.fn() },
