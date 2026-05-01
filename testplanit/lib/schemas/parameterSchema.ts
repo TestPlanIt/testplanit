@@ -86,3 +86,33 @@ export const parameterCreateSchema = z
       }
     }
   });
+
+/**
+ * Update schema for parameter PATCH endpoint. Mirrors parameterCreateSchema
+ * but every field is optional. The same SELECT XOR invariant fires when the
+ * update would leave the row in a forbidden shape (e.g. clearing
+ * allowedValuesJson on a SELECT param without setting lookupDataSetId).
+ *
+ * Because PATCH may be partial, the route is responsible for fetching the
+ * existing row and merging before parsing — OR the route may parse only the
+ * supplied fields and rely on the database `@@validate` clause for the
+ * combined-state check. Plan 02-02 routes use the partial-validate strategy:
+ * fields that ARE supplied are checked individually; the invariant on the
+ * resulting row is enforced by the `@@validate` constraint at write time.
+ */
+export const parameterUpdateSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullish(),
+    type: parameterTypeSchema.optional(),
+    defaultValue: z.unknown().nullish(),
+    order: z.number().int().nonnegative().optional(),
+    required: z.boolean().optional(),
+    sensitive: z.boolean().optional(),
+    allowedValuesJson: z.array(z.string()).nullish(),
+    lookupDataSetId: z.number().int().positive().nullish(),
+  })
+  .refine(
+    (val) => Object.keys(val).length > 0,
+    { message: "At least one field must be provided" },
+  );
