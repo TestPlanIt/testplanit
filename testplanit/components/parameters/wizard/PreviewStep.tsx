@@ -117,7 +117,7 @@ export function PreviewStep({
                   key={paramName}
                   className="px-2 py-1 text-left font-mono"
                 >
-                  @{paramName}
+                  {`@${paramName}`}
                 </th>
               ))}
             </tr>

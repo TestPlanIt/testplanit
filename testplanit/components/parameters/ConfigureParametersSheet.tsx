@@ -1,5 +1,6 @@
 "use client";
 
+import { DatasetImportWizard } from "@/components/parameters/DatasetImportWizard";
 import { DatasetTab } from "@/components/parameters/DatasetTab";
 import { ParametersTab } from "@/components/parameters/ParametersTab";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useTranslations } from "next-intl";
 import { createContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useFindManyTestCaseParameter } from "~/lib/hooks";
+import {
+  useCountDataSetRow,
+  useFindManyTestCaseParameter,
+} from "~/lib/hooks";
 
 /**
  * Context exposed to descendants of the Sheet so the dataset-cell editor
@@ -54,11 +58,30 @@ export function ConfigureParametersSheet({
   const t = useTranslations("parameters");
   const tCommon = useTranslations("common.actions");
   const [editingCell, setEditingCell] = useState(false);
+  const [showImportWizard, setShowImportWizard] = useState(false);
 
   const { data: parameters = [] } = useFindManyTestCaseParameter(
     {
       where: { testCaseId: caseId, isDeleted: false },
       orderBy: { order: "asc" },
+    },
+    { enabled: isOpen }
+  );
+
+  // Existing-row count drives the Replace/Append copy in the wizard's
+  // Confirm step. Cross-project filter is enforced server-side via the
+  // dataset read endpoint (Plan 02-02); the count hook here is purely
+  // for display copy.
+  const { data: existingRowCount = 0 } = useCountDataSetRow(
+    {
+      where: {
+        dataSet: {
+          ownerCaseId: caseId,
+          projectId,
+          isDeleted: false,
+        },
+        isDeleted: false,
+      },
     },
     { enabled: isOpen }
   );
@@ -144,7 +167,10 @@ export function ConfigureParametersSheet({
                   caseId={caseId}
                   projectId={projectId}
                   parameters={parameters}
-                  onOpenImportWizard={onOpenImportWizard}
+                  onOpenImportWizard={() => {
+                    setShowImportWizard(true);
+                    onOpenImportWizard?.();
+                  }}
                 />
               )}
             </TabsContent>
@@ -162,6 +188,14 @@ export function ConfigureParametersSheet({
           </div>
         </SheetContent>
       </Sheet>
+
+      <DatasetImportWizard
+        open={showImportWizard}
+        onClose={() => setShowImportWizard(false)}
+        caseId={caseId}
+        parameters={parameters as never}
+        existingRowCount={existingRowCount}
+      />
     </SheetEditingContext.Provider>
   );
 }

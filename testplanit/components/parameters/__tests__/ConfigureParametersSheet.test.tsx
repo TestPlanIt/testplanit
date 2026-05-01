@@ -34,9 +34,12 @@ vi.mock("next-intl", () => ({
 
 // Mock ZenStack hooks BEFORE importing the component under test
 const mockUseFindManyTestCaseParameter = vi.fn();
+const mockUseCountDataSetRow = vi.fn();
 vi.mock("~/lib/hooks", () => ({
   useFindManyTestCaseParameter: (args: any, opts?: any) =>
     mockUseFindManyTestCaseParameter(args, opts),
+  useCountDataSetRow: (args: any, opts?: any) =>
+    mockUseCountDataSetRow(args, opts),
 }));
 
 // Mock sonner toast
@@ -56,12 +59,23 @@ vi.mock("@/components/parameters/ParametersTab", () => ({
   ParametersTab: () => <div data-testid="stub-parameters-tab" />,
 }));
 
+// Plan 02-05 — DatasetImportWizard mounted at the Sheet level. Stub it
+// so we can assert the wiring without dragging in Papa.parse, fetch,
+// React Query, etc.
+vi.mock("@/components/parameters/DatasetImportWizard", () => ({
+  DatasetImportWizard: ({ open }: { open: boolean }) =>
+    open ? (
+      <div data-testid="stub-dataset-import-wizard" />
+    ) : null,
+}));
+
 import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
 
 describe("ConfigureParametersSheet", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseFindManyTestCaseParameter.mockReturnValue({ data: [] });
+    mockUseCountDataSetRow.mockReturnValue({ data: 0 });
   });
 
   it("renders sheet content when open=true", () => {

@@ -337,10 +337,7 @@ describe("DatasetImportWizard", () => {
       ),
     );
     await uploadCsv(VALID_CSV); // now on Map step
-    // Click the Cancel button in the footer
-    const cancelButtons = screen.getAllByText("Cancel");
-    // The first 'Cancel' is the wizard footer Cancel button
-    fireEvent.click(cancelButtons[0]);
+    fireEvent.click(screen.getByTestId("dataset-import-wizard-cancel"));
     await waitFor(() => {
       expect(screen.getByText("Discard upload?")).toBeInTheDocument();
     });
