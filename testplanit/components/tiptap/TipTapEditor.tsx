@@ -94,11 +94,17 @@ import {
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
 import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
+import {
+  createParameterMentionExtension,
+  type ParameterChipMeta,
+} from "~/lib/tiptap/parameterMentionExtension";
 import { cn } from "~/utils";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { tiptapToHtml } from "~/utils/tiptapToHtml";
 import LoadingSpinnerAlert from "../LoadingSpinnerAlert";
 import { Separator } from "../ui/separator";
+import { InsertParameterToolbarButton } from "./InsertParameterToolbarButton";
+import { UndeclaredParameterWarning } from "./UndeclaredParameterWarning";
 
 interface TipTapEditorProps {
   content: object;
@@ -107,6 +113,8 @@ interface TipTapEditorProps {
   className?: string;
   projectId?: string; // Made optional - AI features only work when valid project ID provided
   placeholder?: string;
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
 }
 
 const TipTapEditor: React.FC<TipTapEditorProps> = ({
@@ -116,6 +124,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   className = "h-[150px]",
   projectId,
   placeholder,
+  parameters,
+  onOpenParametersSheet,
 }) => {
   const t = useTranslations("common.editor");
   const tCommon = useTranslations("common");
@@ -287,6 +297,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       TableRow,
       TableCell,
       TableHeader,
+      ...(parameters && parameters.length > 0
+        ? [createParameterMentionExtension(parameters)]
+        : []),
     ],
     content: validateContent(content),
     onUpdate: ({ editor }) => {
@@ -1112,6 +1125,14 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             </PopoverContent>
           </Popover>
 
+          {parameters && parameters.length > 0 && editor && (
+            <InsertParameterToolbarButton
+              editor={editor}
+              parameters={parameters}
+              onOpenSheet={onOpenParametersSheet}
+            />
+          )}
+
           <Popover
             open={isEmojiPopoverOpen}
             onOpenChange={setIsEmojiPopoverOpen}
@@ -1192,6 +1213,37 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </Button>
         </div>
       )}
+      {parameters !== undefined && (
+        <style>{`
+          .parameter-ref-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+            padding: 0 0.375rem;
+            border-radius: 0.25rem;
+            background-color: hsl(var(--primary) / 0.10);
+            color: hsl(var(--primary));
+            font-family: ui-monospace, "SFMono-Regular", monospace;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            line-height: 1.4;
+            vertical-align: baseline;
+            white-space: nowrap;
+            cursor: default;
+            user-select: all;
+          }
+          .parameter-ref-chip[data-undeclared="true"] {
+            background-color: hsl(var(--warning) / 0.10);
+            color: hsl(var(--warning-foreground));
+            text-decoration: underline wavy hsl(var(--warning));
+            text-underline-offset: 2px;
+          }
+          .parameter-ref-chip[data-focused="true"] {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 1px;
+          }
+        `}</style>
+      )}
       <div className="overflow-y-auto flex-1 w-full relative">
         <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
@@ -1199,6 +1251,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           className={`mt-0.5 ${!readOnly ? "pl-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
         />
       </div>
+      {parameters && parameters.length > 0 && editor && (
+        <UndeclaredParameterWarning
+          editorJson={editor.getJSON() ?? null}
+          declaredNames={parameters.map((p) => p.name)}
+        />
+      )}
       {!readOnly && editor && (
         <>
           <TableRowMenu editor={editor} />
