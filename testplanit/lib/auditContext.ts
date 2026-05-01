@@ -25,6 +25,14 @@ export interface AuditContext {
    * captureAuditEvent merges it into event.metadata automatically.
    */
   systemReason?: string;
+  /**
+   * tokenScopes — scopes from the authenticating ApiToken, if any.
+   * Empty/undefined for session-authed requests (cookie auth).
+   * Set by enrichFromApiAuth() after token validation in Bearer-authed routes.
+   * Used by captureAuditEvent to derive metadata.source ("mcp" | "api") —
+   * unforgeable by request-time headers because attribution lives with the token.
+   */
+  tokenScopes?: string[];
 }
 
 /**

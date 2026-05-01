@@ -273,14 +273,35 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
   // wins over ALS to preserve intent when both are present.
   const existingMetadata = event.metadata;
   const alsSystemReason = context?.systemReason;
-  const mergedMetadata: Record<string, unknown> | undefined = alsSystemReason
-    ? {
-        ...(existingMetadata ?? {}),
-        systemReason:
-          (existingMetadata?.systemReason as string | undefined) ??
-          alsSystemReason,
-      }
-    : existingMetadata;
+  // Phase 5 (TOK-01 / SRV-06 / T-05-03): derive metadata.source from the
+  // authenticating token's scopes. The value lives on the ALS frame
+  // (set by enrichFromApiAuth) and is unforgeable by request-time headers.
+  // Bearer-with-MCP-scope -> "mcp"; any other Bearer -> "api"; no token
+  // (session auth) or empty scopes -> undefined. Caller-explicit
+  // event.metadata.source wins over derived value to preserve intent
+  // for hand-stamped sources like "import".
+  const derivedSource: "mcp" | "api" | undefined =
+    context?.tokenScopes && context.tokenScopes.length > 0
+      ? context.tokenScopes.includes("client:mcp")
+        ? "mcp"
+        : "api"
+      : undefined;
+  const mergedMetadata: Record<string, unknown> | undefined =
+    alsSystemReason || derivedSource
+      ? {
+          ...(existingMetadata ?? {}),
+          ...(alsSystemReason
+            ? {
+                systemReason:
+                  (existingMetadata?.systemReason as string | undefined) ??
+                  alsSystemReason,
+              }
+            : {}),
+          ...(derivedSource && existingMetadata?.source === undefined
+            ? { source: derivedSource }
+            : {}),
+        }
+      : existingMetadata;
   const eventWithMergedMetadata: AuditEvent =
     mergedMetadata === existingMetadata
       ? event
