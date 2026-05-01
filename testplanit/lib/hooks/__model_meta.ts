@@ -3602,6 +3602,10 @@ const metadata: ModelMeta = {
                     name: "attachments",
                     type: "Json",
                     isOptional: true,
+                }, parameters: {
+                    name: "parameters",
+                    type: "Json",
+                    isOptional: true,
                 },
             }, uniqueConstraints: {
                 id: {

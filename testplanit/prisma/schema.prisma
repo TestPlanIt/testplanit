@@ -1133,6 +1133,7 @@ model RepositoryCaseVersions {
   issues                 Json?
   links                  Json?
   attachments            Json?
+  parameters             Json?
 
   @@unique([repositoryCaseId, version])
 }
