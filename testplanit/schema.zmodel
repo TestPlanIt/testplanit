@@ -1869,6 +1869,93 @@ model Steps {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+enum ParameterType {
+    STRING
+    INTEGER
+    BOOLEAN
+    SELECT
+
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+}
+
+model TestCaseParameter {
+    id                Int             @id @default(autoincrement())
+    testCaseId        Int
+    testCase          RepositoryCases @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+    name              String          @length(1)
+    description       String?
+    type              ParameterType
+    defaultValue      Json?
+    order             Int             @default(0)
+    required          Boolean         @default(false)
+    sensitive         Boolean         @default(false)
+    allowedValuesJson Json?
+    lookupDataSetId   Int?
+    lookupDataSet     DataSet?        @relation("ParamLookupDataSet", fields: [lookupDataSetId], references: [id], onDelete: SetNull)
+    isDeleted         Boolean         @default(false)
+
+    @@unique([testCaseId, name])
+    @@index([testCaseId])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from test case's project
+    @@deny('read', testCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        testCase.project.creator == auth() ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testCase.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on repository permissions
+    @@allow('create,update,delete',
+        testCase.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                          (role.name == 'Project Admin' ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+    // User with GLOBAL_ROLE access type (use their global role)
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        testCase.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        testCase.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                           ((accessType == 'SPECIFIC_ROLE' &&
+                                             role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                            (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                             auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testCase.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+
+    @@validate(
+        (type == 'SELECT' && ((allowedValuesJson != null && lookupDataSetId == null) ||
+                              (allowedValuesJson == null && lookupDataSetId != null))) ||
+        (type != 'SELECT' && allowedValuesJson == null && lookupDataSetId == null),
+        "SELECT parameters require exactly one of allowedValuesJson or lookupDataSetId; non-SELECT types must specify neither"
+    )
+}
+
 model Sessions {
     id                   Int                  @id @default(autoincrement())
     projectId            Int
@@ -2479,6 +2566,128 @@ model TestRunStepResults {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+model TestRunCaseIteration {
+    id                Int                          @id @default(autoincrement())
+    testRunCaseId     Int
+    testRunCase       TestRunCases                 @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    rowIndex          Int
+    label             String?
+    valuesJson        Json
+    statusId          Int?
+    status            Status?                      @relation(fields: [statusId], references: [id])
+    assignedToId      String?
+    assignedTo        User?                        @relation(fields: [assignedToId], references: [id])
+    isCompleted       Boolean                      @default(false)
+    startedAt         DateTime?
+    completedAt       DateTime?
+    elapsed           Int?
+    notes             Json?
+    isDeleted         Boolean                      @default(false)
+    dataSetSnapshotId Int?
+    dataSetSnapshot   TestRunCaseDataSetSnapshot?  @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
+    results           TestRunResults[]
+
+    @@unique([testRunCaseId, rowIndex])
+    @@index([testRunCaseId])
+    @@index([statusId])
+    @@index([assignedToId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test run case's project
+    @@allow('read',
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRunCase.testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null)
+    )
+
+    // Create access - users with test run result permissions
+    @@allow('create',
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                                     (role.name == 'Project Admin' ||
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                                     auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+        testRunCase.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        testRunCase.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                      accessType == 'SPECIFIC_ROLE' &&
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+        testRunCase.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                      accessType == 'GLOBAL_ROLE' &&
+                                                      auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]) ||
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testRunCase.testRun.project.defaultRole.rolePermissions?[area == 'TestRunResults' && canAddEdit])
+    )
+
+    // Update access - assignee or users with test run result permissions
+    @@allow('update',
+        auth().id == assignedToId ||
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                                     (role.name == 'Project Admin' ||
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+        testRunCase.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestRunCaseDataSetSnapshot {
+    id                Int                    @id @default(autoincrement())
+    testRunCaseId     Int                    @unique
+    testRunCase       TestRunCases           @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    sourceDataSetId   Int?
+    sourceDataSet     DataSet?               @relation(fields: [sourceDataSetId], references: [id], onDelete: SetNull)
+    sourceDataSetName String                 @length(1)
+    parametersJson    Json
+    rowsJson          Json
+    snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
+    isDeleted         Boolean                @default(false)
+    iterations        TestRunCaseIteration[]
+
+    @@index([testRunCaseId])
+    @@index([sourceDataSetId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test run case's project
+    @@allow('read',
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRunCase.testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null)
+    )
+
+    // Mutations are ADMIN-only via the enhanced client; Phase 3 server actions
+    // create snapshots via the unenhanced client during run-creation orchestration.
+    @@allow('all', auth().access == 'ADMIN')
+}
+
 model Issue {
     id                 Int                  @id @default(autoincrement())
     name               String               @length(1)
@@ -2781,12 +2990,13 @@ enum ProjectAccessType {
 }
 
 model RolePermission {
-    roleId     Int
-    role       Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
-    area       ApplicationArea
-    canAddEdit Boolean         @default(false)
-    canDelete  Boolean         @default(false)
-    canClose   Boolean         @default(false)
+    roleId           Int
+    role             Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    area             ApplicationArea
+    canAddEdit       Boolean         @default(false)
+    canDelete        Boolean         @default(false)
+    canClose         Boolean         @default(false)
+    canReadSensitive Boolean         @default(false)
 
     @@id([roleId, area])
     @@deny('all', !auth())
@@ -3207,6 +3417,113 @@ model SharedStepItem {
         sharedStepGroup.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                                   accessType == 'SPECIFIC_ROLE' &&
                                                   role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model DataSet {
+    id           Int                 @id @default(autoincrement())
+    projectId    Int
+    project      Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    ownerCaseId  Int?
+    ownerCase    RepositoryCases?    @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
+    name         String              @length(1)
+    description  String?
+    isShared     Boolean             @default(false)
+    version      Int                 @default(1)
+    rows         DataSetRow[]
+    paramLookups TestCaseParameter[] @relation("ParamLookupDataSet")
+    snapshots    TestRunCaseDataSetSnapshot[]
+    isDeleted    Boolean             @default(false)
+    createdAt    DateTime            @default(now()) @db.Timestamptz(6)
+    createdById  String
+    createdBy    User                @relation(fields: [createdById], references: [id])
+
+    @@index([projectId])
+    @@index([ownerCaseId])
+    @@index([createdById])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // DSET-06: ownerCase must be in the same project (cross-project denial at policy)
+    @@deny('create,update', ownerCaseId != null && ownerCase.projectId != projectId)
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model DataSetRow {
+    id         Int      @id @default(autoincrement())
+    dataSetId  Int
+    dataSet    DataSet  @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
+    rowIndex   Int      @default(0)
+    label      String?
+    valuesJson Json
+    isDeleted  Boolean  @default(false)
+
+    @@unique([dataSetId, rowIndex])
+    @@index([dataSetId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', dataSet.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from data set's project
+    @@allow('read',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        dataSet.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (dataSet.project.assignedUsers?[user == auth()] &&
+         dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        dataSet.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        dataSet.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
     )
 
     @@allow('all', auth().access == 'ADMIN')
