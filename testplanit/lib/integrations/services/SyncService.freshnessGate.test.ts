@@ -67,23 +67,30 @@ vi.mock("../../auditContextEnqueue", () => ({
 
 // Valkey mock — simulates a real lock: the first SET NX wins, subsequent
 // callers see the existing key and SET NX returns null (lock held).
-const mockValkeyStore = new Map<string, string>();
-const mockValkeySet = vi.fn(
-  async (key: string, _val: string, ..._opts: unknown[]) => {
-    if (mockValkeyStore.has(key)) return null; // NX semantics
-    mockValkeyStore.set(key, "1");
-    return "OK";
-  }
-);
-const mockValkeyDel = vi.fn(async (key: string) => {
-  mockValkeyStore.delete(key);
-  return 1;
+// `vi.hoisted` so the refs survive vi.mock factory hoisting.
+const { mockValkeyStore, mockValkeySet, mockValkeyDel } = vi.hoisted(() => {
+  const store = new Map<string, string>();
+  return {
+    mockValkeyStore: store,
+    mockValkeySet: vi.fn(
+      async (key: string, _val: string, ..._opts: unknown[]) => {
+        if (store.has(key)) return null; // NX semantics
+        store.set(key, "1");
+        return "OK";
+      }
+    ),
+    mockValkeyDel: vi.fn(async (key: string) => {
+      store.delete(key);
+      return 1;
+    }),
+  };
 });
 
 vi.mock("../../valkey", () => ({
   default: {
-    set: (...args: any[]) => mockValkeySet(...args),
-    del: (...args: any[]) => mockValkeyDel(...args),
+    set: (key: string, val: string, ...opts: unknown[]) =>
+      mockValkeySet(key, val, ...opts),
+    del: (key: string) => mockValkeyDel(key),
   },
 }));
 

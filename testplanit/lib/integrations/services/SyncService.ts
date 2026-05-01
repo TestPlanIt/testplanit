@@ -46,6 +46,20 @@ export interface SyncServiceOptions {
 }
 
 /**
+ * Result envelope shared by both user-context and system-context issue
+ * refresh paths. `cached` and `locked` are the two short-circuit reasons —
+ * either the local row was within the caller's freshness window or another
+ * sync was already in flight for this issue. Both indicate "no upstream
+ * API call was made"; callers can use them to skip a refetch.
+ */
+export interface IssueRefreshResult {
+  success: boolean;
+  error?: string;
+  cached?: boolean;
+  locked?: boolean;
+}
+
+/**
  * Per-issue Redis lock for `performIssueRefresh` — prevents two concurrent
  * syncs from the same issue from each pulling Jira's API. The TTL is the
  * safety release: if the holder crashes mid-sync, the next caller can
@@ -639,18 +653,71 @@ export class SyncService {
     integrationId: number,
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
-  ): Promise<{
-    success: boolean;
-    error?: string;
-    cached?: boolean;
-    locked?: boolean;
-  }> {
+  ): Promise<IssueRefreshResult> {
+    return this._withGateAndLock(
+      integrationId,
+      externalIssueId,
+      serviceOptions,
+      () =>
+        this._performIssueRefreshInner(
+          userId,
+          integrationId,
+          externalIssueId,
+          serviceOptions
+        )
+    );
+  }
+
+  /**
+   * System-context counterpart of `performIssueRefresh` — used by inbound
+   * webhook handlers, schedulers, and any other server-triggered sync that
+   * has no user session.
+   *
+   * Differences from the user-context path:
+   *   • No `userId` / no user lookup. Audit attribution is the integration
+   *     itself; downstream `WebhookDelivery` rows already record the source.
+   *   • OAUTH2 integrations are rejected (their credentials are user-tied
+   *     and require token refresh logic that doesn't exist server-side).
+   *   • Auth check is purely "Integration.credentials present?".
+   *
+   * Same freshness gate + per-issue lock as the user path. Same
+   * `IssueRefreshResult` shape so callers can branch on `cached`/`locked`.
+   */
+  async performIssueRefreshSystem(
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<IssueRefreshResult> {
+    return this._withGateAndLock(
+      integrationId,
+      externalIssueId,
+      serviceOptions,
+      () =>
+        this._performIssueRefreshInnerSystem(
+          integrationId,
+          externalIssueId,
+          serviceOptions
+        )
+    );
+  }
+
+  /**
+   * Shared gate + lock around any inner sync. Splits the freshness check
+   * (cheap DB read) and lock acquisition from the actual sync work, and
+   * makes both `performIssueRefresh` and `performIssueRefreshSystem`
+   * thin wrappers.
+   */
+  private async _withGateAndLock(
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions,
+    inner: () => Promise<{ success: boolean; error?: string }>
+  ): Promise<IssueRefreshResult> {
     const prisma = serviceOptions.prismaClient || defaultPrisma;
     const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
     try {
-      // Freshness gate (server-side). Read the local `Issue.lastSyncedAt`;
-      // if it's within the caller's tolerance, skip the upstream fetch.
-      // Cheap query — short-circuits before user lookup / adapter resolve.
+      // Freshness gate — read the local `Issue.lastSyncedAt`; if it's
+      // within the caller's tolerance, skip the upstream fetch.
       if (minFreshnessSeconds > 0) {
         const stored = await prisma.issue.findFirst({
           where: {
@@ -671,9 +738,9 @@ export class SyncService {
       }
 
       // Per-issue lock — prevents two concurrent syncs against the same
-      // issue from both pulling the API. Skipping (rather than waiting) is
-      // the right call here: the in-flight sync will already write the
-      // latest state to the DB.
+      // issue from both pulling the API. Skipping (not waiting) is the
+      // right call: the in-flight sync will write the latest state to the
+      // DB anyway.
       const acquired = await acquireIssueSyncLock(
         integrationId,
         externalIssueId
@@ -683,12 +750,7 @@ export class SyncService {
       }
 
       try {
-        return await this._performIssueRefreshInner(
-          userId,
-          integrationId,
-          externalIssueId,
-          serviceOptions
-        );
+        return await inner();
       } finally {
         await releaseIssueSyncLock(integrationId, externalIssueId);
       }
@@ -769,87 +831,143 @@ export class SyncService {
         }
       }
 
-      // Get the adapter
-      const adapter = await integrationManager.getAdapter(
-        String(integrationId),
-        prisma
+      return await this._executeSyncWithAdapter(
+        prisma,
+        integration,
+        externalIssueId
       );
-
-      if (!adapter) {
-        throw new Error("Invalid adapter for issue synchronization");
-      }
-
-      // Check if adapter supports sync
-      const capabilities = adapter.getCapabilities();
-      if (!capabilities.syncIssue) {
-        throw new Error(
-          "This integration does not support syncing individual issues"
-        );
-      }
-
-      // For GitHub issues, we need to get the repo context from the stored issue data
-      let issueIdForSync = externalIssueId;
-      if (integration.provider === "GITHUB") {
-        // Fetch the stored issue to get the repo context
-        const storedIssue = await prisma.issue.findFirst({
-          where: {
-            integrationId,
-            OR: [
-              { externalId: externalIssueId },
-              { externalKey: externalIssueId },
-            ],
-          },
-        });
-
-        let owner: string | undefined;
-        let repo: string | undefined;
-
-        // Try to get owner/repo from externalData first
-        if (storedIssue?.externalData) {
-          const externalData = storedIssue.externalData as Record<string, any>;
-          if (externalData._github_owner && externalData._github_repo) {
-            owner = externalData._github_owner;
-            repo = externalData._github_repo;
-          }
-        }
-
-        // Fallback: Extract owner/repo from externalUrl if not in customFields
-        if ((!owner || !repo) && storedIssue?.externalUrl) {
-          const urlMatch = storedIssue.externalUrl.match(
-            /github\.com\/([^/]+)\/([^/]+)\/issues/
-          );
-          if (urlMatch) {
-            owner = urlMatch[1];
-            repo = urlMatch[2];
-          }
-        }
-
-        // Construct compound ID if we have owner/repo
-        if (owner && repo) {
-          const issueNumber = externalIssueId.replace(/^#/, "");
-          issueIdForSync = `${owner}/${repo}#${issueNumber}`;
-        } else {
-          throw new Error(
-            `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
-              `Issue data is missing repository context.`
-          );
-        }
-      }
-
-      // Fetch fresh issue data from external system
-      const issueData = await adapter.syncIssue(issueIdForSync);
-
-      // Update cache
-      await issueCache.set(integrationId, issueData.id, issueData);
-
-      // Update local database
-      await this.updateExistingIssue(prisma, integrationId, issueData);
-
-      return { success: true };
     } catch (error: any) {
       console.error(`Failed to refresh issue ${externalIssueId}:`, error);
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * System-context inner — used by `performIssueRefreshSystem`. Reuses
+   * `Integration.credentials` directly without any user lookup. OAUTH2
+   * integrations are rejected because their tokens require user-bound
+   * refresh logic that doesn't apply to a webhook-driven sync.
+   */
+  private async _performIssueRefreshInnerSystem(
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<{ success: boolean; error?: string }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    try {
+      const integration = await prisma.integration.findUnique({
+        where: { id: integrationId },
+      });
+
+      if (!integration) {
+        throw new Error("Integration not found");
+      }
+
+      if (integration.authType === "OAUTH2") {
+        throw new Error(
+          "System-context sync is not supported for OAUTH2 integrations — tokens are user-bound"
+        );
+      }
+
+      // For every other auth type, the integration-level `credentials`
+      // field is the credential surface. NONE skips this check.
+      if (integration.authType !== "NONE" && !integration.credentials) {
+        throw new Error("Integration is missing credentials");
+      }
+
+      return await this._executeSyncWithAdapter(
+        prisma,
+        integration,
+        externalIssueId
+      );
+    } catch (error: any) {
+      console.error(
+        `Failed to refresh issue (system) ${externalIssueId}:`,
+        error
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Post-auth tail of `_performIssueRefreshInner` — assumes the integration
+   * is loaded and authentication has already been validated. Resolves the
+   * adapter, normalizes the GitHub repo context, calls `adapter.syncIssue`,
+   * updates the Redis cache, and writes the local Issue row.
+   */
+  private async _executeSyncWithAdapter(
+    prisma: PrismaClient,
+    integration: { id: number; provider: string },
+    externalIssueId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const integrationId = integration.id;
+
+    const adapter = await integrationManager.getAdapter(
+      String(integrationId),
+      prisma
+    );
+
+    if (!adapter) {
+      throw new Error("Invalid adapter for issue synchronization");
+    }
+
+    const capabilities = adapter.getCapabilities();
+    if (!capabilities.syncIssue) {
+      throw new Error(
+        "This integration does not support syncing individual issues"
+      );
+    }
+
+    // GitHub issues need the owner/repo context resolved from the stored
+    // Issue row — the upstream adapter expects a compound `owner/repo#N`.
+    let issueIdForSync = externalIssueId;
+    if (integration.provider === "GITHUB") {
+      const storedIssue = await prisma.issue.findFirst({
+        where: {
+          integrationId,
+          OR: [
+            { externalId: externalIssueId },
+            { externalKey: externalIssueId },
+          ],
+        },
+      });
+
+      let owner: string | undefined;
+      let repo: string | undefined;
+
+      if (storedIssue?.externalData) {
+        const externalData = storedIssue.externalData as Record<string, any>;
+        if (externalData._github_owner && externalData._github_repo) {
+          owner = externalData._github_owner;
+          repo = externalData._github_repo;
+        }
+      }
+
+      if ((!owner || !repo) && storedIssue?.externalUrl) {
+        const urlMatch = storedIssue.externalUrl.match(
+          /github\.com\/([^/]+)\/([^/]+)\/issues/
+        );
+        if (urlMatch) {
+          owner = urlMatch[1];
+          repo = urlMatch[2];
+        }
+      }
+
+      if (owner && repo) {
+        const issueNumber = externalIssueId.replace(/^#/, "");
+        issueIdForSync = `${owner}/${repo}#${issueNumber}`;
+      } else {
+        throw new Error(
+          `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
+            `Issue data is missing repository context.`
+        );
+      }
+    }
+
+    const issueData = await adapter.syncIssue(issueIdForSync);
+    await issueCache.set(integrationId, issueData.id, issueData);
+    await this.updateExistingIssue(prisma, integrationId, issueData);
+    return { success: true };
   }
 
   /**
