@@ -15,8 +15,8 @@ import {
  * Sister of `webhooks-i18n-spanish-keys.spec.ts` — same surface, same
  * assertion shape, different locale. Driven against fr-FR by overriding
  * the auth fixture's NEXT_LOCALE=en-US cookie to `fr-FR` before the
- * first navigation; proxy.ts reads the cookie first and would otherwise
- * redirect /fr-FR/... back to /en-US/... See the Spanish sister spec
+ * first navigation; proxy.ts redirects when the URL prefix doesn't match
+ * the cookie, so cookie + URL must agree. See the Spanish sister spec
  * for the full rationale.
  *
  * Why a separate spec rather than a parameterised pair: the two locales
@@ -140,7 +140,8 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
   }) => {
     // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
     // does not redirect /fr-FR/... back to /en-US/... before the page
-    // renders. See the Spanish sister spec for the full rationale.
+    // renders. proxy.ts:379 reads NEXT_LOCALE and redirects when the URL
+    // prefix doesn't match the cookie, so cookie + URL must agree.
     await page.context().addCookies([
       {
         name: "NEXT_LOCALE",
@@ -155,8 +156,10 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
       timeout: 15_000,
     });
 
-    // Defence-in-depth: confirm the locale actually flipped before
-    // asserting any translated copy.
+    // Verify the product fix in `app/layout.tsx` (see PR for v0.23.0): the
+    // root layout now resolves <html lang> from `getLocale()` instead of
+    // hardcoding "en". Asserting fr-FR here gives a fast, specific failure
+    // if the layout regresses or the cookie override didn't take effect.
     await expect(page.locator("html")).toHaveAttribute("lang", "fr-FR");
 
     await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(

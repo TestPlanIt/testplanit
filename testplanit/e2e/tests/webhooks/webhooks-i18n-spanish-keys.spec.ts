@@ -16,12 +16,11 @@ import {
  * Deliveries tabs, plus the Add chooser, outbound create form, and the
  * Re-enable / Delete AlertDialog confirms — renders in Spanish when the
  * NEXT_LOCALE cookie is set to `es-ES` and the URL is prefixed with
- * `/es-ES/...`. The proxy.ts middleware reads NEXT_LOCALE FIRST and
- * redirects URL prefixes that don't match the cookie's locale, so the auth
- * fixture's en-US cookie would otherwise override the URL prefix and
- * silently downgrade the page back to English. The cookie override is set
- * per-test (not in storageState) so other specs in this directory keep
- * their en-US default.
+ * `/es-ES/...`. proxy.ts reads NEXT_LOCALE and redirects mismatched URL
+ * prefixes, so the cookie and URL prefix must agree: the auth fixture's
+ * default en-US cookie would otherwise force /es-ES/... back to /en-US/...
+ * before the page renders. The cookie override is set per-test (not in
+ * storageState) so other specs in this directory keep their en-US default.
  *
  * This is a DETERMINISTIC i18n key-coverage smoke: it does NOT evaluate
  * translation quality, only that
@@ -178,8 +177,8 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
   }) => {
     // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
     // does not redirect /es-ES/... back to /en-US/... before the page
-    // renders. The cookie is read first by the middleware (proxy.ts:380)
-    // and wins over the URL prefix.
+    // renders. proxy.ts:379 reads NEXT_LOCALE and redirects when the URL
+    // prefix doesn't match the cookie, so cookie + URL must agree.
     await page.context().addCookies([
       {
         name: "NEXT_LOCALE",
@@ -194,13 +193,15 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
       timeout: 15_000,
     });
 
-    // Defence-in-depth: confirm the locale actually flipped before
-    // asserting any translated copy. If this fails, the cookie override
-    // didn't take effect and every downstream toContainText would fail
-    // with a less informative "expected es-ES, got en-US" mismatch.
+    // Verify the product fix in `app/layout.tsx` (see PR for v0.23.0): the
+    // root layout now resolves <html lang> from `getLocale()` instead of
+    // hardcoding "en". Asserting es-ES here gives a fast, specific failure
+    // if the layout regresses or the cookie override didn't take effect —
+    // otherwise downstream toContainText assertions would fail less
+    // informatively.
     await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
 
-    // Tab triggers carry Spanish labels (URL prefix wins over en-US cookie).
+    // Tab triggers carry Spanish labels.
     await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(
       es.inboundTab
     );
