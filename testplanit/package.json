@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "audit:coverage": "tsx scripts/audit-coverage.ts",
-    "generate": "NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && prisma db push",
+    "generate": "NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && node scripts/fix-zenstack-symlink.js && prisma db push",
     "build": "node scripts/generate-version.js && node scripts/fix-zenstack-symlink.js && pnpm build:workers && next build",
     "build:workers": "node scripts/build-workers.js",
     "dev": "next dev",
