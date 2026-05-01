@@ -109,15 +109,16 @@ describe("runServer", () => {
   });
 
   it("does NOT call createServer when validateToken returns ok:false (Pitfall 6)", async () => {
+    const localOrder: string[] = [];
     const { deps, log } = makeDeps({
-      validateImpl: async () => ({
-        ok: false,
-        message: "Token rejected",
-      }),
+      validateImpl: async () => {
+        localOrder.push("validateImpl");
+        return { ok: false, message: "Token rejected" };
+      },
     });
     await runServer(deps);
     expect(log.order).toContain("parseEnvImpl");
-    expect(log.order).toContain("validateImpl");
+    expect(localOrder).toContain("validateImpl");
     expect(log.order).not.toContain("createServerImpl");
     expect(log.order).not.toContain("connectImpl");
   });
