@@ -225,8 +225,13 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     expect(latest.direction).toBe("INBOUND");
     expect(latest.statusCode).toBe(200);
     // First send-test in this test's lifetime should be the synthetic
-    // success path; error column null on success per Phase 1 contract.
-    expect(latest.error).toBeNull();
+    // success path. Per the Phase 1 D-20 contract (synthetic branch in
+    // applyInboundIssueUpdate.ts), the delivery row's `error` column is
+    // set to the literal string "synthetic" — NOT null. Null is reserved
+    // for the linked-Issue update path; synthetic is a separately-tagged
+    // outcome so admins can distinguish self-loop tests from real receipts
+    // in the deliveries log.
+    expect(latest.error).toBe("synthetic");
   });
 
   test("B-only PROJECTADMIN URL-tampering to Project A's webhooks page sees no send-test button on A's Jira card", async ({

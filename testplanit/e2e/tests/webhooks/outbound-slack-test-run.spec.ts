@@ -151,15 +151,48 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
     expect(deliveries[0].error).toBeNull();
     expect(deliveries[0].attempt).toBe(1);
 
-    // 5. Assert the audit log entry.
-    const audit = await prisma.auditLog.findFirst({
+    // 5. Assert the audit log entry. The audit row is written asynchronously
+    //    by the BullMQ audit worker (captureAuditEvent enqueues, the worker
+    //    drains). When the dispatcher returns and writes the WebhookDelivery
+    //    row, the audit job is just enqueued — the row may not exist yet.
+    //    Poll for it (mirrors waitForDelivery / waitForAudit patterns used
+    //    in other webhook specs; deterministic per feedback_no_flaky_tests).
+    const audit = await waitForAuditRow(prisma, {
       where: {
         action: "WEBHOOK_DISPATCHED",
         entityType: "WebhookDelivery",
         entityId: deliveries[0].id,
       },
+      timeoutMs: 10_000,
     });
-    expect(audit).not.toBeNull();
-    expect((audit!.metadata as { outcome?: string }).outcome).toBe("success");
+    expect((audit.metadata as { outcome?: string }).outcome).toBe("success");
   });
 });
+
+/**
+ * Poll Prisma until an AuditLog row matching `where` exists. Throws on
+ * timeout. Mirrors `waitForAudit` in auto-disable-and-reenable.spec.ts but
+ * without the predicate refinement — here a single `findFirst` match is
+ * sufficient because the (action, entityType, entityId) tuple uniquely
+ * identifies the dispatched-event audit row for this delivery.
+ */
+async function waitForAuditRow(
+  prisma: PrismaClient,
+  args: {
+    where: Record<string, unknown>;
+    timeoutMs: number;
+  }
+): Promise<{ metadata: unknown }> {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < args.timeoutMs) {
+    const row = await prisma.auditLog.findFirst({
+      where: args.where,
+      select: { metadata: true },
+    });
+    if (row) return row;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error(
+    `waitForAuditRow: timed out after ${args.timeoutMs}ms; where=${JSON.stringify(args.where)}`
+  );
+}
