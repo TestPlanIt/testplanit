@@ -363,7 +363,6 @@ function TestRunFormControls({
                     projectIntegration?.integration?.provider
                   }
                   integrationId={projectIntegration?.integration?.id}
-                  lastSyncedAt={issue.lastSyncedAt}
                   issueTypeName={issue.issueTypeName}
                   issueTypeIconUrl={issue.issueTypeIconUrl}
                 />

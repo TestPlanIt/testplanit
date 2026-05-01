@@ -5,6 +5,7 @@ import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { enqueueWithAuditContext } from "../../auditContextEnqueue";
 import { getCurrentTenantId } from "../../multiTenantPrisma";
 import { getSyncQueue } from "../../queues";
+import valkeyConnection from "../../valkey";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
@@ -31,6 +32,55 @@ export interface SyncJobData {
 
 export interface SyncServiceOptions {
   prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+  /**
+   * Skip the upstream API call if `Issue.lastSyncedAt` is fresher than this
+   * many seconds. Caller's choice based on the trigger context:
+   *   • manual sync button   → 0    (always fetch — user explicitly asked)
+   *   • hover/passive prefetch → 300 (5 min — dedupes tabs/refreshes)
+   *   • inbound webhook       → 15   (debounces Jira event bursts; tail-end
+   *                                   change at most 15s lag)
+   * When the gate triggers, the call resolves with `cached: true` and the
+   * upstream API is not contacted.
+   */
+  minFreshnessSeconds?: number;
+}
+
+/**
+ * Per-issue Redis lock for `performIssueRefresh` — prevents two concurrent
+ * syncs from the same issue from each pulling Jira's API. The TTL is the
+ * safety release: if the holder crashes mid-sync, the next caller can
+ * acquire after 60s.
+ */
+const ISSUE_SYNC_LOCK_TTL_SECONDS = 60;
+
+function issueSyncLockKey(integrationId: number, externalId: string): string {
+  return `sync-lock:issue:${integrationId}:${externalId}`;
+}
+
+async function acquireIssueSyncLock(
+  integrationId: number,
+  externalId: string
+): Promise<boolean> {
+  // Fail-open if Valkey isn't connected — better availability than blocking
+  // sync entirely on cache infra.
+  if (!valkeyConnection) return true;
+  const key = issueSyncLockKey(integrationId, externalId);
+  const result = await valkeyConnection.set(
+    key,
+    "1",
+    "EX",
+    ISSUE_SYNC_LOCK_TTL_SECONDS,
+    "NX"
+  );
+  return result === "OK";
+}
+
+async function releaseIssueSyncLock(
+  integrationId: number,
+  externalId: string
+): Promise<void> {
+  if (!valkeyConnection) return;
+  await valkeyConnection.del(issueSyncLockKey(integrationId, externalId));
 }
 
 export interface SyncOptions {
@@ -574,9 +624,81 @@ export class SyncService {
   }
 
   /**
-   * Refresh a single issue from the external system
+   * Refresh a single issue from the external system.
+   *
+   * Caller passes `minFreshnessSeconds` via `serviceOptions` to control
+   * whether to actually hit the upstream API:
+   *   • 0 / unset → always fetch (manual sync button)
+   *   • 300       → skip if synced < 5 min ago (hover prefetch)
+   *   • 15        → skip if synced < 15 s ago  (inbound webhook debounce)
+   * A per-issue Valkey lock additionally serializes concurrent fetches —
+   * the second caller resolves with `locked: true` without queueing.
    */
   async performIssueRefresh(
+    userId: string,
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    cached?: boolean;
+    locked?: boolean;
+  }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
+    try {
+      // Freshness gate (server-side). Read the local `Issue.lastSyncedAt`;
+      // if it's within the caller's tolerance, skip the upstream fetch.
+      // Cheap query — short-circuits before user lookup / adapter resolve.
+      if (minFreshnessSeconds > 0) {
+        const stored = await prisma.issue.findFirst({
+          where: {
+            integrationId,
+            OR: [
+              { externalId: externalIssueId },
+              { externalKey: externalIssueId },
+            ],
+          },
+          select: { lastSyncedAt: true },
+        });
+        if (stored?.lastSyncedAt) {
+          const ageMs = Date.now() - stored.lastSyncedAt.getTime();
+          if (ageMs < minFreshnessSeconds * 1000) {
+            return { success: true, cached: true };
+          }
+        }
+      }
+
+      // Per-issue lock — prevents two concurrent syncs against the same
+      // issue from both pulling the API. Skipping (rather than waiting) is
+      // the right call here: the in-flight sync will already write the
+      // latest state to the DB.
+      const acquired = await acquireIssueSyncLock(
+        integrationId,
+        externalIssueId
+      );
+      if (!acquired) {
+        return { success: true, locked: true };
+      }
+
+      try {
+        return await this._performIssueRefreshInner(
+          userId,
+          integrationId,
+          externalIssueId,
+          serviceOptions
+        );
+      } finally {
+        await releaseIssueSyncLock(integrationId, externalIssueId);
+      }
+    } catch (error: any) {
+      console.error(`Failed to refresh issue ${externalIssueId}:`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async _performIssueRefreshInner(
     userId: string,
     integrationId: number,
     externalIssueId: string,
@@ -821,15 +943,10 @@ export class SyncService {
       });
       if (updatedIssue && updatedIssue.projectId != null) {
         const { prisma: extendedPrisma } = await import("@/lib/prisma");
-        const { emitIssueUpdated } = await import(
-          "~/lib/webhooks/event-emitters/issueEvents"
-        );
+        const { emitIssueUpdated } =
+          await import("~/lib/webhooks/event-emitters/issueEvents");
         await extendedPrisma.$transaction(async (tx) => {
-          await emitIssueUpdated(
-            existingIssue as any,
-            updatedIssue as any,
-            tx
-          );
+          await emitIssueUpdated(existingIssue as any, updatedIssue as any, tx);
         });
       }
     } catch (error) {

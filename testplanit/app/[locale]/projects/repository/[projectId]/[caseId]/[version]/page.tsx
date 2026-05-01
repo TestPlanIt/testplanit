@@ -593,7 +593,6 @@ export default function TestCaseVersions() {
             data={currentIssueData?.data}
             integrationProvider={currentIssueData?.integration?.provider}
             integrationId={currentIssueData?.integrationId || undefined}
-            lastSyncedAt={currentIssueData?.lastSyncedAt}
             issueTypeName={currentIssueData?.issueTypeName}
             issueTypeIconUrl={currentIssueData?.issueTypeIconUrl}
           />

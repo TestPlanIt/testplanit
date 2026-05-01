@@ -31,7 +31,6 @@ interface IssueDisplayProps {
   data?: any; // Additional data from external system
   integrationProvider?: string; // e.g., "JIRA"
   integrationId?: number; // ID of the integration
-  lastSyncedAt?: Date | null; // When the issue was last synced
   issueTypeName?: string | null;
   issueTypeIconUrl?: string | null;
 }
@@ -76,7 +75,6 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   data: _data,
   integrationProvider,
   integrationId,
-  lastSyncedAt,
   issueTypeName,
   issueTypeIconUrl,
 }) => {
@@ -87,36 +85,23 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const syncTriggeredRef = useRef(false); // Track if we've already triggered a sync for this issue
+  const syncTriggeredRef = useRef(false); // Avoid duplicate fetches per mount.
 
-  // Function to check if sync is needed and trigger it
+  // Trigger a background sync for this issue. The freshness gate lives
+  // server-side now (?trigger=hover → 5-min skip window in SyncService);
+  // a per-issue Valkey lock additionally serializes concurrent fetches.
   const triggerSyncIfNeeded = () => {
-    // Only trigger once per component mount
-    if (syncTriggeredRef.current) {
-      return;
-    }
+    if (syncTriggeredRef.current) return;
+    if (!integrationId || !integrationProvider) return;
+    syncTriggeredRef.current = true;
 
-    // Only sync external issues with integration
-    if (!integrationId || !integrationProvider) {
-      return;
-    }
-
-    // Check if lastSyncedAt is older than 3 hours
-    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-    const now = new Date().getTime();
-    const lastSynced = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
-    const needsSync = !lastSyncedAt || now - lastSynced > THREE_HOURS_MS;
-
-    if (needsSync) {
-      syncTriggeredRef.current = true;
-
-      // Fire and forget - trigger background sync using the same endpoint as the sync button
-      fetch(`/api/issues/${id}/sync`, {
-        method: "POST",
-      }).catch((_err) => {
-        // Silently fail - this is a background optimization
-      });
-    }
+    // Fire and forget — the server returns `cached: true` cheaply when the
+    // issue is already fresh, so calling unconditionally is correct.
+    fetch(`/api/issues/${id}/sync?trigger=hover`, {
+      method: "POST",
+    }).catch((_err) => {
+      // Silently fail — this is a background optimization.
+    });
   };
 
   // Cleanup timeout on unmount

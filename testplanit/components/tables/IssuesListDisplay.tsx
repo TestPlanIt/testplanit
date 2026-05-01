@@ -25,7 +25,6 @@ interface Issue {
   } | null;
   integrationId?: number | null;
   projectIds: number[];
-  lastSyncedAt?: Date | null;
   issueTypeName?: string | null;
   issueTypeIconUrl?: string | null;
 }
@@ -86,7 +85,6 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
                   (issue.integrationId ? "JIRA" : undefined)
                 }
                 integrationId={issue.integrationId || issue.integration?.id}
-                lastSyncedAt={issue.lastSyncedAt}
                 issueTypeName={issue.issueTypeName}
                 issueTypeIconUrl={issue.issueTypeIconUrl}
               />
