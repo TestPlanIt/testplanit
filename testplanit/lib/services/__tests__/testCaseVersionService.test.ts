@@ -47,8 +47,12 @@ function buildTestCaseFixture(overrides: TestCaseFixtureOverrides = {}) {
 }
 
 function buildTx(testCase: ReturnType<typeof buildTestCaseFixture>) {
-  const create = vi.fn(async ({ data }) => ({ id: 999, ...data }));
-  const findUnique = vi.fn(async () => testCase);
+  const create = vi.fn<(args: { data: Record<string, unknown> }) => Promise<unknown>>(
+    async ({ data }) => ({ id: 999, ...data })
+  );
+  const findUnique = vi.fn<
+    (args: { where: { id: number }; include: Record<string, unknown> }) => Promise<unknown>
+  >(async () => testCase);
   return {
     tx: {
       repositoryCases: { findUnique },
@@ -94,7 +98,7 @@ describe("createTestCaseVersionInTransaction", () => {
     await createTestCaseVersionInTransaction(tx, 1, {});
 
     // The findUnique include must request parameters with the canonical filter/order/select.
-    const includeArg = findUnique.mock.calls[0][0].include;
+    const includeArg = findUnique.mock.calls[0]![0]!.include;
     expect(includeArg.parameters).toEqual(
       expect.objectContaining({
         where: { isDeleted: false },
@@ -103,7 +107,7 @@ describe("createTestCaseVersionInTransaction", () => {
     );
 
     // The version data must include a parameters array of the right shape.
-    const data = create.mock.calls[0][0].data;
+    const data = create.mock.calls[0]![0]!.data as Record<string, unknown>;
     expect(data.parameters).toEqual([
       {
         id: 101,
@@ -138,7 +142,7 @@ describe("createTestCaseVersionInTransaction", () => {
 
     await createTestCaseVersionInTransaction(tx, 1, {});
 
-    const data = create.mock.calls[0][0].data;
+    const data = create.mock.calls[0]![0]!.data as Record<string, unknown>;
     expect(Array.isArray(data.parameters)).toBe(true);
     expect(data.parameters).toEqual([]);
   });
@@ -166,12 +170,15 @@ describe("createTestCaseVersionInTransaction", () => {
 
     await createTestCaseVersionInTransaction(tx, 1, {});
 
-    expect(findUnique.mock.calls[0][0].include.parameters.where).toEqual({
-      isDeleted: false,
-    });
-    const data = create.mock.calls[0][0].data;
+    const include = findUnique.mock.calls[0]![0]!.include as {
+      parameters: { where: { isDeleted: boolean } };
+    };
+    expect(include.parameters.where).toEqual({ isDeleted: false });
+    const data = create.mock.calls[0]![0]!.data as {
+      parameters: Array<{ name: string }>;
+    };
     expect(data.parameters).toHaveLength(1);
-    expect(data.parameters[0].name).toBe("active");
+    expect(data.parameters[0]!.name).toBe("active");
   });
 
   it("preserves all existing snapshot fields alongside the new parameters field", async () => {
@@ -180,7 +187,7 @@ describe("createTestCaseVersionInTransaction", () => {
 
     await createTestCaseVersionInTransaction(tx, 1, {});
 
-    const data = create.mock.calls[0][0].data;
+    const data = create.mock.calls[0]![0]!.data as Record<string, unknown>;
     // Existing fields must remain present and unchanged.
     expect(data).toEqual(
       expect.objectContaining({
