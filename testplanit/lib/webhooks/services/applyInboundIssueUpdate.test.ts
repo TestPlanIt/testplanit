@@ -37,6 +37,11 @@ const mocks = vi.hoisted(() => {
     },
   };
   const $transaction = vi.fn(async (fn: any) => fn(tx));
+  // Used by the post-commit `triggerSystemSyncForInboundEvent` to resolve
+  // the project's active integration. Default: null so the sync trigger
+  // logs a warning and short-circuits — keeps the inbound-apply tests
+  // focused on the receipt + dedup behavior, not on sync wiring.
+  const projectIntegrationFindFirst = vi.fn(async () => null);
   const adapter = {
     adapterType: "JIRA" as AdapterType,
     verify: vi.fn(),
@@ -44,9 +49,16 @@ const mocks = vi.hoisted(() => {
     extractExternalStatus: vi.fn(),
   };
   const getAdapter = vi.fn(() => adapter);
+  // System-context sync — invoked post-commit on the 'updated' outcome
+  // when an active matching integration exists. Stub returns success;
+  // tests that care about the trigger override per-test.
+  const performIssueRefreshSystem = vi.fn(async () => ({ success: true }));
   return {
     tx,
-    prisma: { $transaction },
+    prisma: {
+      $transaction,
+      projectIntegration: { findFirst: projectIntegrationFindFirst },
+    },
     captureAuditEvent: vi.fn(async () => undefined),
     isUniqueConstraintError: vi.fn((err: unknown) => {
       return (
@@ -56,6 +68,9 @@ const mocks = vi.hoisted(() => {
     }),
     adapter,
     getAdapter,
+    syncService: { performIssueRefreshSystem },
+    performIssueRefreshSystem,
+    projectIntegrationFindFirst,
   };
 });
 
@@ -73,6 +88,10 @@ vi.mock("~/lib/utils/errors", () => ({
 
 vi.mock("~/lib/webhooks/adapters", () => ({
   getAdapter: mocks.getAdapter,
+}));
+
+vi.mock("~/lib/integrations/services/SyncService", () => ({
+  syncService: mocks.syncService,
 }));
 
 // Defer the import of the SUT until after the mocks are wired up so that the
@@ -109,9 +128,7 @@ const resetTxMocks = () => {
     }
   }
   mocks.prisma.$transaction.mockClear();
-  mocks.prisma.$transaction.mockImplementation(async (fn: any) =>
-    fn(mocks.tx)
-  );
+  mocks.prisma.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
   mocks.captureAuditEvent.mockReset();
   mocks.captureAuditEvent.mockResolvedValue(undefined);
   // Default: webhookDelivery.create returns a stable id.
@@ -125,6 +142,13 @@ const resetTxMocks = () => {
   // Tests that exercise the duplicate path override this to return a row.
   mocks.tx.webhookEventDedup.findFirst.mockResolvedValue(null);
   mocks.tx.issue.findFirst.mockResolvedValue(null);
+  // Reset the post-commit sync trigger mocks between tests — these are
+  // shared singletons from `vi.hoisted` and will accumulate calls across
+  // the suite otherwise.
+  mocks.projectIntegrationFindFirst.mockReset();
+  mocks.projectIntegrationFindFirst.mockResolvedValue(null);
+  mocks.performIssueRefreshSystem.mockReset();
+  mocks.performIssueRefreshSystem.mockResolvedValue({ success: true });
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
     return (
       err instanceof Prisma.PrismaClientKnownRequestError &&
@@ -230,7 +254,9 @@ describe("applyInboundIssueUpdate", () => {
     mocks.captureAuditEvent.mockClear();
     mocks.tx.webhookDelivery.create.mockResolvedValue({ id: "del_2" });
     // Second synthetic call: priorDedup SELECT returns the row from click 1 → outcome 'duplicate'.
-    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({ id: "dedup_1" });
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({
+      id: "dedup_1",
+    });
 
     // Second synthetic call: priorDedup detected → outcome 'duplicate'.
     const second = await applyInboundIssueUpdate(input);
@@ -262,7 +288,9 @@ describe("applyInboundIssueUpdate", () => {
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 99 });
     // priorDedup SELECT returns a row → linked-Issue branch detects duplicate.
-    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({ id: "dedup_1" });
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({
+      id: "dedup_1",
+    });
 
     const result = await applyInboundIssueUpdate(input);
 
@@ -367,14 +395,11 @@ describe("applyInboundIssueUpdate", () => {
         processedAt: input.receivedAt,
       },
     });
-    // 4. Issue.update with externalStatus + lastSyncedAt.
-    expect(mocks.tx.issue.update).toHaveBeenCalledWith({
-      where: { id: 100 },
-      data: {
-        externalStatus: "In Progress",
-        lastSyncedAt: input.receivedAt,
-      },
-    });
+    // 4. Issue mutation now happens POST-commit via the system sync path.
+    // The transaction itself MUST NOT touch the Issue row (the
+    // performIssueRefreshSystem call is wired AFTER tx commits — see
+    // applyInboundIssueUpdate.ts post-audit block).
+    expect(mocks.tx.issue.update).not.toHaveBeenCalled();
     // 5. Delivery row finalized error=null.
     expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
       where: { id: "del_1" },
@@ -391,39 +416,53 @@ describe("applyInboundIssueUpdate", () => {
     });
   });
 
-  it("Test 5: atomicity (D-11) — Issue.update throws → tx rolls back, no audit, returns error", async () => {
+  it("Test 5: atomicity (D-11) — dedup INSERT throws → tx rolls back, no audit, returns error", async () => {
+    // The Issue mutation moved to the post-commit sync path (see
+    // applyInboundIssueUpdate.ts). The remaining write that can fail INSIDE
+    // the tx for the linked-Issue happy path is `webhookEventDedup.create`
+    // (e.g. unique-constraint loss against a concurrent receipt). Verify
+    // the same rollback contract: when ANY tx step throws, no audit fires
+    // and the public outcome is "error".
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
-    // Simulate $transaction rolling back: callback throws, $transaction rejects.
     const txError = new Error("Connection lost mid-transaction");
-    mocks.tx.issue.update.mockRejectedValueOnce(txError);
-    mocks.prisma.$transaction.mockImplementationOnce(async (fn: any) => {
-      // Run the callback; if it throws, propagate (Prisma rolls back).
-      return fn(mocks.tx);
-    });
+    mocks.tx.webhookEventDedup.create.mockRejectedValueOnce(txError);
+    mocks.prisma.$transaction.mockImplementationOnce(async (fn: any) =>
+      fn(mocks.tx)
+    );
 
     const result = await applyInboundIssueUpdate(input);
 
     expect(result.outcome).toBe("error");
     expect(result.reason).toContain("Connection lost mid-transaction");
     expect(mocks.captureAuditEvent).not.toHaveBeenCalled();
+    // Sync trigger MUST NOT fire when the tx rolled back.
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
   });
 
-  it("Test 6: D-10 — Issue.status (internal) is NOT in the update data clause", async () => {
+  it("Test 6: post-commit sync triggers for the 'updated' outcome — calls performIssueRefreshSystem with webhook freshness window", async () => {
+    // D-10 retired: the inbound handler no longer caps the apply at
+    // externalStatus + lastSyncedAt. It now delegates the local Issue
+    // mutation to `performIssueRefreshSystem`, which pulls full upstream
+    // state and applies the integration's field mappings (matches the
+    // manual sync click). Test that the trigger fires with the right
+    // integration ID, externalKey, and freshness window.
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    mocks.projectIntegrationFindFirst.mockResolvedValueOnce({
+      integrationId: 42,
+      integration: { id: 42 },
+    } as any);
 
     await applyInboundIssueUpdate(input);
 
-    // Capture the data argument to issue.update and confirm 'status' is not a key.
-    const callArgs = mocks.tx.issue.update.mock.calls[0]?.[0];
-    expect(callArgs).toBeDefined();
-    expect(callArgs.data).toBeDefined();
-    expect(Object.keys(callArgs.data)).not.toContain("status");
-    expect(Object.keys(callArgs.data)).toEqual(
-      expect.arrayContaining(["externalStatus", "lastSyncedAt"])
+    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledTimes(1);
+    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
+      42, // integration.id from the resolved ProjectIntegration
+      "DEMO-42", // linkedRef.externalKey
+      { minFreshnessSeconds: 15 } // WEBHOOK_SYNC_FRESHNESS_SECONDS
     );
   });
 
@@ -554,16 +593,11 @@ describe("applyInboundIssueUpdate", () => {
     const second = await applyInboundIssueUpdate(input);
     expect(second.outcome).toBe("updated");
     expect(second.issueId).toBe(200);
-    // Dedup INSERT happened on second call (and only second call).
+    // Dedup INSERT happened on second call (and only second call). The
+    // Issue mutation itself moved to the post-commit system sync path —
+    // see Test 6 for trigger semantics.
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
-    // Issue.update happened on second call.
-    expect(mocks.tx.issue.update).toHaveBeenCalledWith({
-      where: { id: 200 },
-      data: {
-        externalStatus: "In Progress",
-        lastSyncedAt: input.receivedAt,
-      },
-    });
+    expect(mocks.tx.issue.update).not.toHaveBeenCalled();
   });
 
   // =========================================================================
@@ -645,13 +679,9 @@ describe("applyInboundIssueUpdate", () => {
         eventType: "workitem.updated",
       }),
     });
-    expect(mocks.tx.issue.update).toHaveBeenCalledWith({
-      where: { id: 297 },
-      data: {
-        externalStatus: "Closed",
-        lastSyncedAt: input.receivedAt,
-      },
-    });
+    // Issue mutation moved to post-commit sync (see Test 6); the tx
+    // itself never touches the Issue row.
+    expect(mocks.tx.issue.update).not.toHaveBeenCalled();
     expect(mocks.captureAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({
@@ -792,11 +822,95 @@ describe("applyInboundIssueUpdate", () => {
     });
     await applyInboundIssueUpdate(input);
 
-    const auditCall = (mocks.captureAuditEvent.mock.calls[0] as unknown as
-      | [{ metadata?: { adapterType?: AdapterType } }]
-      | undefined)?.[0];
+    const auditCall = (
+      mocks.captureAuditEvent.mock.calls[0] as unknown as
+        | [{ metadata?: { adapterType?: AdapterType } }]
+        | undefined
+    )?.[0];
     expect(auditCall?.metadata?.adapterType).toBe("GITHUB");
     // Sanity: ensure JIRA is NOT in the metadata for this GitHub call.
     expect(auditCall?.metadata?.adapterType).not.toBe("JIRA");
+  });
+
+  // ===========================================================================
+  // Post-commit system-sync trigger — ensures the inbound webhook → full sync
+  // wiring fires only on the 'updated' outcome, scopes to the project's
+  // active matching integration, and survives sync failures gracefully.
+  // ===========================================================================
+
+  it("Test 19: sync trigger filters by integration provider — Jira webhook on a project with only a GitHub integration is skipped", async () => {
+    const applyInboundIssueUpdate = await importSut();
+    const input = baseInput();
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    // Default mock returns null — simulates "no JIRA integration matches".
+    // The trigger logs and short-circuits without calling SyncService.
+
+    const result = await applyInboundIssueUpdate(input);
+
+    expect(result.outcome).toBe("updated");
+    expect(mocks.projectIntegrationFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          projectId: input.projectId,
+          isActive: true,
+          integration: { provider: "JIRA", isDeleted: false },
+        }),
+      })
+    );
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+  });
+
+  it("Test 20: sync trigger DOES NOT fire on no-link, no_handler, duplicate, or synthetic outcomes", async () => {
+    const applyInboundIssueUpdate = await importSut();
+
+    // no-link: linkedRef=null
+    (mocks.adapter.extractLinkedIssueRef as Mock).mockReturnValueOnce(null);
+    await applyInboundIssueUpdate(baseInput());
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+
+    // no_handler: externalStatus=null
+    (mocks.adapter.extractExternalStatus as Mock).mockReturnValueOnce(null);
+    await applyInboundIssueUpdate(baseInput());
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+
+    // duplicate: priorDedup row exists
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({ id: "x" });
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    await applyInboundIssueUpdate(baseInput());
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+
+    // synthetic: payload.synthetic=true
+    await applyInboundIssueUpdate(
+      baseInput({
+        payload: {
+          eventType: "jira:issue_updated",
+          issueKey: "DEMO-42",
+          externalStatus: "In Progress",
+          synthetic: true,
+        },
+      })
+    );
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+  });
+
+  it("Test 21: sync failure is logged but does NOT change the public outcome — webhook receipt stays 'updated'", async () => {
+    const applyInboundIssueUpdate = await importSut();
+    const input = baseInput();
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    mocks.projectIntegrationFindFirst.mockResolvedValueOnce({
+      integrationId: 42,
+      integration: { id: 42 },
+    } as any);
+    mocks.performIssueRefreshSystem.mockResolvedValueOnce({
+      success: false,
+      error: "upstream 502",
+    });
+
+    const result = await applyInboundIssueUpdate(input);
+
+    // Sync failed, but the inbound apply is still 'updated' — the dedup
+    // row is committed and the next webhook event will reconcile.
+    expect(result.outcome).toBe("updated");
+    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledTimes(1);
   });
 });

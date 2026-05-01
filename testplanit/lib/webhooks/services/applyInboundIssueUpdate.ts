@@ -1,4 +1,7 @@
+import type { AdapterType } from "@prisma/client";
+
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
+import { syncService } from "~/lib/integrations/services/SyncService";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getAdapter } from "~/lib/webhooks/adapters";
@@ -7,6 +10,98 @@ import type {
   ApplyInboundIssueUpdateInput,
   ApplyInboundIssueUpdateResult,
 } from "./types";
+
+/**
+ * Webhook-triggered freshness window — coalesces rapid Jira/GitHub/ADO
+ * event bursts (e.g. status change + assignee change firing within a few
+ * seconds) into a single upstream API pull. The next event after the
+ * window expires triggers another full sync. Tail-end change at most
+ * `WEBHOOK_SYNC_FRESHNESS_SECONDS`s lag, in exchange for predictable
+ * upstream API rate consumption during burst patterns.
+ */
+const WEBHOOK_SYNC_FRESHNESS_SECONDS = 15;
+
+/**
+ * Map webhook adapter type → Integration provider value. The webhook
+ * carries `WebhookConfig.adapterType` (JIRA / GITHUB / AZURE_DEVOPS); the
+ * Integration model uses `IntegrationProvider` (JIRA / GITHUB / AZURE_DEVOPS).
+ * They line up 1:1 today but `inboundProviderForAdapter` documents the
+ * mapping so a future adapter without a corresponding integration provider
+ * (e.g. SLACK inbound, hypothetical) can return null and skip system sync.
+ */
+function inboundProviderForAdapter(
+  adapterType: AdapterType
+): "JIRA" | "GITHUB" | "AZURE_DEVOPS" | null {
+  switch (adapterType) {
+    case "JIRA":
+      return "JIRA";
+    case "GITHUB":
+      return "GITHUB";
+    case "AZURE_DEVOPS":
+      return "AZURE_DEVOPS";
+    default:
+      return null;
+  }
+}
+
+/**
+ * After an inbound webhook commits the dedup row for a linked issue,
+ * trigger a full sync via `performIssueRefreshSystem`. Resolves the
+ * project's single active ProjectIntegration whose provider matches the
+ * webhook adapter; if none, logs and skips so the webhook receipt stays
+ * successful.
+ *
+ * Failures here do NOT roll back the dedup row — the upstream is the
+ * source of truth, and the next webhook event for the issue (or the next
+ * hover/manual sync) will reconcile. Sync errors land in console + the
+ * standard SyncService logging surface; the webhook delivery row is
+ * already finalized as "updated" (the application-level apply outcome).
+ */
+async function triggerSystemSyncForInboundEvent(args: {
+  projectId: number;
+  adapterType: AdapterType;
+  externalKey: string;
+}): Promise<void> {
+  const provider = inboundProviderForAdapter(args.adapterType);
+  if (!provider) {
+    console.warn(
+      `[applyInboundIssueUpdate] skipping system sync — adapter ${args.adapterType} has no integration provider mapping`
+    );
+    return;
+  }
+
+  // Single active integration per project (enforced in app code, see
+  // memory note `project_single_active_integration`). Filter by provider
+  // so a project with a Jira integration but a GitHub webhook (cross-
+  // tenant misconfiguration) doesn't trigger the wrong adapter.
+  const projectIntegration = await prisma.projectIntegration.findFirst({
+    where: {
+      projectId: args.projectId,
+      isActive: true,
+      integration: { provider, isDeleted: false },
+    },
+    include: { integration: { select: { id: true } } },
+  });
+
+  if (!projectIntegration) {
+    console.warn(
+      `[applyInboundIssueUpdate] skipping system sync — no active ${provider} integration for project ${args.projectId}`
+    );
+    return;
+  }
+
+  const result = await syncService.performIssueRefreshSystem(
+    projectIntegration.integration.id,
+    args.externalKey,
+    { minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS }
+  );
+
+  if (!result.success) {
+    console.error(
+      `[applyInboundIssueUpdate] system sync failed for issue ${args.externalKey}: ${result.error ?? "unknown"}`
+    );
+  }
+}
 
 const REASON_MAX_LEN = 500;
 
@@ -228,20 +323,27 @@ export async function applyInboundIssueUpdate(
           deliveryError = "duplicate";
           outcome = { outcome: "duplicate", deliveryId: delivery.id };
         } else {
-          // Step 8b: First-time linked apply — INSERT dedup + update Issue.
+          // Step 8b: First-time linked apply — INSERT dedup row inside the
+          // tx (idempotency for HTTP-level retries: Jira/GitHub redelivery
+          // sees the dedup hit and returns 'duplicate'). The actual Issue
+          // mutation runs AFTER this tx commits via
+          // `performIssueRefreshSystem`, which pulls full upstream state
+          // and applies the integration's field mappings — equivalent to
+          // a manual sync click. Reasoning behind the tx-split:
+          //   • Inline-tx field updates were a half-truth — only
+          //     externalStatus + lastSyncedAt copied across, leaving
+          //     title/assignee/etc. stale until a hover or manual sync.
+          //   • The freshness gate in performIssueRefreshSystem
+          //     (minFreshnessSeconds=15) coalesces rapid event bursts so
+          //     a single Jira edit firing N webhooks doesn't trigger N
+          //     API pulls.
+          //   • Sync failure is recoverable: the next webhook event (with
+          //     a different payloadDigest) bypasses dedup and re-attempts.
           await tx.webhookEventDedup.create({
             data: {
               webhookConfigId,
               payloadDigest,
               processedAt: receivedAt,
-            },
-          });
-          await tx.issue.update({
-            where: { id: linkedIssue.id },
-            data: {
-              externalStatus: externalStatus,
-              lastSyncedAt: receivedAt,
-              // D-10: deliberately NOT touching Issue.status (internal normalized status).
             },
           });
           deliveryError = null;
@@ -299,6 +401,19 @@ export async function applyInboundIssueUpdate(
     userId: SYSTEM_ACTOR_ID,
     metadata: baseMetadata,
   });
+
+  // Post-commit: trigger a full system-context sync for the linked Issue.
+  // Only fires for the 'updated' outcome — that's the path where a fresh
+  // dedup row was just written, signalling intent to apply upstream
+  // changes. Other outcomes (no-link, no_handler, duplicate, synthetic)
+  // explicitly skip syncing.
+  if (txResult.outcome === "updated" && linkedRef) {
+    await triggerSystemSyncForInboundEvent({
+      projectId,
+      adapterType,
+      externalKey: linkedRef.externalKey,
+    });
+  }
 
   // Map TxOutcome to public ApplyInboundIssueUpdateResult.
   switch (txResult.outcome) {
