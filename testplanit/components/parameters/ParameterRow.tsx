@@ -1,6 +1,18 @@
 "use client";
 
+import { ParameterDeleteDialog } from "@/components/parameters/ParameterDeleteDialog";
+import { ParameterRenameDialog } from "@/components/parameters/ParameterRenameDialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { TestCaseParameter } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { GripVertical, Lock, Pencil, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export interface ParameterRowProps {
   parameter: TestCaseParameter;
@@ -8,13 +20,184 @@ export interface ParameterRowProps {
   projectId: number;
 }
 
-/**
- * Placeholder shipped in Task 2 of plan 02-03 so the ParametersTab
- * imports compile. The full row (drag handle, edit, delete, inline-edit
- * + 3 confirmation dialogs) lands in Task 3 of the same plan.
- */
-export function ParameterRow({ parameter }: ParameterRowProps) {
+function typeChipLabel(parameter: TestCaseParameter): string {
+  if (parameter.type !== "SELECT") return parameter.type;
+  if (parameter.lookupDataSetId != null) {
+    return `SELECT (lookup: ${parameter.lookupDataSetId})`;
+  }
+  return "SELECT (inline)";
+}
+
+function defaultValueDisplay(parameter: TestCaseParameter): string {
+  if (parameter.defaultValue == null) return "";
+  if (typeof parameter.defaultValue === "string") return parameter.defaultValue;
+  return JSON.stringify(parameter.defaultValue);
+}
+
+export function ParameterRow({
+  parameter,
+  caseId,
+}: ParameterRowProps) {
+  const t = useTranslations("parameters");
+  const queryClient = useQueryClient();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: parameter.id });
+
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(parameter.name);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const commitNameChange = () => {
+    if (draftName === parameter.name) {
+      setEditing(false);
+      return;
+    }
+    if (!draftName.trim()) {
+      toast.error(t("addError"));
+      setDraftName(parameter.name);
+      setEditing(false);
+      return;
+    }
+    setRenameOpen(true);
+  };
+
   return (
-    <div data-testid={`parameter-row-${parameter.id}`}>{parameter.name}</div>
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="border rounded-md bg-card p-3 flex items-center gap-3"
+        data-testid={`parameter-row-${parameter.id}`}
+      >
+        <div
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground"
+          data-testid="parameter-row-drag-handle"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+
+        {editing ? (
+          <Input
+            autoFocus
+            className="h-8 w-40 text-sm font-mono"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onBlur={commitNameChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitNameChange();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setDraftName(parameter.name);
+                setEditing(false);
+              }
+            }}
+            data-testid="parameter-row-name-input"
+          />
+        ) : (
+          <span className="text-sm font-mono">{parameter.name}</span>
+        )}
+
+        <Badge variant="secondary">{typeChipLabel(parameter)}</Badge>
+
+        {defaultValueDisplay(parameter) && (
+          <span className="text-xs text-muted-foreground">
+            {defaultValueDisplay(parameter)}
+          </span>
+        )}
+
+        {parameter.required && (
+          <Badge variant="outline">{t("formRequired")}</Badge>
+        )}
+
+        {parameter.sensitive && (
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1"
+            title={t("formSensitiveHelp")}
+          >
+            <Lock className="w-3 h-3" />
+            {t("formSensitive")}
+          </Badge>
+        )}
+
+        <div className="flex-1" />
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={t("editAria")}
+          title={t("editAria")}
+          onClick={() => {
+            setDraftName(parameter.name);
+            setEditing((v) => !v);
+          }}
+          data-testid="parameter-row-edit-button"
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={t("deleteAria")}
+          title={t("deleteAria")}
+          className="text-destructive"
+          onClick={() => setDeleteOpen(true)}
+          data-testid="parameter-row-delete-button"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <ParameterDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        caseId={caseId}
+        paramId={parameter.id}
+        paramName={parameter.name}
+        currentCaseVersion={1}
+      />
+
+      <ParameterRenameDialog
+        open={renameOpen}
+        onOpenChange={(open) => {
+          setRenameOpen(open);
+          if (!open) {
+            setEditing(false);
+            queryClient.invalidateQueries({ queryKey: ["TestCaseParameter"] });
+          }
+        }}
+        caseId={caseId}
+        paramId={parameter.id}
+        oldName={parameter.name}
+        newName={draftName}
+        currentCaseVersion={1}
+        onComplete={() => {
+          setEditing(false);
+        }}
+      />
+    </>
   );
 }
