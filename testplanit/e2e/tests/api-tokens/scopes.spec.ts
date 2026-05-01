@@ -99,8 +99,9 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   test("read-only token can GET tag entities", async ({ baseURL, browser }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.get(`${baseURL}/api/model/tag/findMany`, {
+      const r = await ctx.request.get(`${baseURL}/api/model/tags/findMany`, {
         headers: { Authorization: `Bearer ${readOnlyToken}` },
+        params: { q: JSON.stringify({}) },
       });
       expect(r.status()).toBe(200);
     } finally {
@@ -108,13 +109,13 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
     }
   });
 
-  test("read-only token receives 403 on POST mutation (TOK-05 single chokepoint, locked entity: Tag)", async ({
+  test("read-only token receives 403 on POST mutation (TOK-05 single chokepoint, locked entity: Tags)", async ({
     baseURL,
     browser,
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(`${baseURL}/api/model/tag/create`, {
+      const r = await ctx.request.post(`${baseURL}/api/model/tags/create`, {
         headers: { Authorization: `Bearer ${readOnlyToken}` },
         data: { data: { name: uniqueTagName() } },
       });
@@ -126,13 +127,13 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
     }
   });
 
-  test("full-access token CAN POST mutation (TOK-06 regression, locked entity: Tag)", async ({
+  test("full-access token CAN POST mutation (TOK-06 regression, locked entity: Tags)", async ({
     baseURL,
     browser,
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(`${baseURL}/api/model/tag/create`, {
+      const r = await ctx.request.post(`${baseURL}/api/model/tags/create`, {
         headers: { Authorization: `Bearer ${fullAccessToken}` },
         data: { data: { name: uniqueTagName() } },
       });
