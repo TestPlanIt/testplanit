@@ -3540,8 +3540,16 @@ model WebhookConfig {
 // WebhookEventDedup. Indexes only.
 model WebhookDelivery {
     id              String           @id @default(cuid())
-    webhookConfigId String
-    webhookConfig   WebhookConfig    @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    // SetNull (NOT Cascade): when an admin hard-deletes a WebhookConfig the
+    // historical delivery rows MUST survive as orphaned audit records (SOC2/
+    // GDPR audit-trail invariant). The 30-day retention worker is the only
+    // thing that purges delivery rows; admin click-to-delete must not erase
+    // history. Mirrors the same SetNull posture as `replayedFromDeliveryId`
+    // below. Project-scoped Deliveries-tab queries naturally exclude orphans
+    // because they filter by `webhookConfig.projectId` and an orphan has no
+    // related WebhookConfig.
+    webhookConfigId String?
+    webhookConfig   WebhookConfig?   @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
     direction       WebhookDirection
     adapterType     AdapterType
     eventType       String?          // e.g. "jira:issue_updated"; nullable because adapter may fail before parsing

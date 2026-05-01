@@ -1908,8 +1908,8 @@ model WebhookConfig {
 
 model WebhookDelivery {
   id                     String            @id() @default(cuid())
-  webhookConfigId        String
-  webhookConfig          WebhookConfig     @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+  webhookConfigId        String?
+  webhookConfig          WebhookConfig?    @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
   direction              WebhookDirection
   adapterType            AdapterType
   eventType              String?

@@ -6821,15 +6821,17 @@ const metadata: ModelMeta = {
                 }, webhookConfigId: {
                     name: "webhookConfigId",
                     type: "String",
+                    isOptional: true,
                     isForeignKey: true,
                     relationField: 'webhookConfig',
                 }, webhookConfig: {
                     name: "webhookConfig",
                     type: "WebhookConfig",
                     isDataModel: true,
+                    isOptional: true,
                     backLink: 'deliveries',
                     isRelationOwner: true,
-                    onDeleteAction: 'Cascade',
+                    onDeleteAction: 'SetNull',
                     foreignKeyMapping: { "id": "webhookConfigId" },
                 }, direction: {
                     name: "direction",
@@ -8576,7 +8578,7 @@ const metadata: ModelMeta = {
         sharedStepGroup: ['SharedStepItem'],
         shareLink: ['ShareLinkAccessLog'],
         projectIntegration: ['IntegrationProject'],
-        webhookConfig: ['WebhookDelivery', 'WebhookEventDedup', 'WebhookConfigSecret'],
+        webhookConfig: ['WebhookEventDedup', 'WebhookConfigSecret'],
         promptConfig: ['PromptConfigPrompt'],
         ssoProvider: ['SamlConfiguration'],
         testmoImportJob: ['TestmoImportDataset'],
