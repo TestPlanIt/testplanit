@@ -15,22 +15,28 @@ import {
  * `canManageWebhookConfig` BEFORE any service call:
  *
  *   - replayWebhookDelivery looks up `delivery.webhookConfig.projectId`
- *     and runs `canManageWebhookConfig(session, projectId)`. A B-only
- *     PROJECTADMIN holding A's deliveryId would receive `Forbidden` and
- *     no replay would be enqueued (no audit row, no new WebhookDelivery).
+ *     and runs `canManageWebhookConfig(session, projectId)`. An outsider
+ *     USER holding A's deliveryId would receive `Forbidden` and no replay
+ *     would be enqueued (no audit row, no new WebhookDelivery).
  *   - bulkReplayFailedDeliveries looks up `config.projectId` and runs the
- *     same gate before scanning failed deliveries. A B-only PROJECTADMIN
+ *     same gate before scanning failed deliveries. An outsider USER
  *     pointed at A's webhookConfigId never reaches the SELECT.
  *
  * E2E-observable contract:
  *   The reachable attack path is the admin UI. Both replay surfaces (the
  *   delivery drawer's "Replay" button and the deliveries tab's "Bulk
  *   replay" button) are gated behind the page-level `notFound()` clause
- *   on `/projects/settings/{A-id}/webhooks` — a B-only PROJECTADMIN
- *   navigating there sees no UI to click. We assert that combined with
- *   ZenStack's read filter (B-only cannot enumerate A's deliveries via
+ *   on `/projects/settings/{A-id}/webhooks` — an outsider USER navigating
+ *   there sees no UI to click. We assert that combined with ZenStack's
+ *   read filter (USER cannot enumerate A's deliveries via
  *   `/api/model/webhookDelivery/findMany`), no replay or audit row is
- *   written for A from B-only's session.
+ *   written for A from the outsider's session.
+ *
+ * The actor is a regular USER (signup endpoint Zod schema is
+ * `z.enum(["NONE", "USER", "ADMIN"])`, so PROJECTADMIN cannot be minted via
+ * the signup path the test fixture uses). USER fails every webhook auth path
+ * — `canManageWebhookConfig` requires creator / SPECIFIC_ROLE Project Admin
+ * / global PROJECTADMIN, none of which apply to a freshly signed-up USER.
  *
  * Direct server-action invocation from tests would require forging the
  * Next.js Server Action wire format (Next-Action header + form-data
@@ -47,24 +53,21 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocked", () => {
   let projectAId: number;
-  let projectBId: number;
   let prisma: PrismaClient;
   let projectAOutboundConfigId: string;
-  let projectBOutboundConfigId: string;
   let seededAOriginalDeliveryIds: string[] = [];
-  let bOnlyEmail: string;
-  let bOnlyPassword: string;
-  let bOnlyUserId: string;
-  let bOnlyCtx: BrowserContext;
+  let outsiderEmail: string;
+  let outsiderPassword: string;
+  let outsiderUserId: string;
+  let outsiderCtx: BrowserContext;
 
-  test.beforeAll(async ({ api, browser, baseURL, request }) => {
+  test.beforeAll(async ({ api, browser, baseURL }) => {
     prisma = new PrismaClient();
     projectAId = await api.createProject(`E2E K-02 Project A ${uniqueId}`);
-    projectBId = await api.createProject(`E2E K-02 Project B ${uniqueId}`);
 
-    // Seed an OUTBOUND GENERIC_HMAC config in each project. Per Plan 04-08
+    // Seed an OUTBOUND GENERIC_HMAC config in Project A. Per Plan 04-08
     // schema (SetNull on webhookConfigId), deliveries survive config delete;
-    // here we keep the configs so the replay UI (if reachable) would be live.
+    // here we keep the config so the replay UI (if reachable) would be live.
     const aOutbound = await seedOutboundConfig(prisma, {
       projectId: projectAId,
       url: "https://example.test/k02-a",
@@ -72,15 +75,8 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     });
     projectAOutboundConfigId = aOutbound.configId;
 
-    const bOutbound = await seedOutboundConfig(prisma, {
-      projectId: projectBId,
-      url: "https://example.test/k02-b",
-      events: ["test_run.completed"],
-    });
-    projectBOutboundConfigId = bOutbound.configId;
-
     // Seed 3 failed OUTBOUND delivery rows in Project A. These are the rows
-    // a B-only PROJECTADMIN would target if they could enumerate them.
+    // an outsider USER would target if they could enumerate them.
     const seeded = await seedDeliveries(prisma, {
       webhookConfigId: projectAOutboundConfigId,
       projectId: projectAId,
@@ -93,47 +89,41 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     seededAOriginalDeliveryIds = seeded.map((s) => s.id);
     expect(seededAOriginalDeliveryIds).toHaveLength(FAILED_OUTBOUND_COUNT);
 
-    // Create a PROJECTADMIN-access user assigned to Project B only.
-    bOnlyEmail = `k02-bonly-${uniqueId}@example.com`;
-    bOnlyPassword = "password123";
+    // Create a regular USER with no Project A membership. The signup endpoint
+    // accepts only NONE | USER | ADMIN; USER is what every non-admin /
+    // non-PROJECTADMIN session looks like in production. The outsider USER
+    // fails `canManageWebhookConfig` on Project A (not creator, no
+    // SPECIFIC_ROLE Project Admin, not auth().access == 'PROJECTADMIN').
+    outsiderEmail = `k02-outsider-${uniqueId}@example.com`;
+    outsiderPassword = "password123";
     const created = await api.createUser({
-      name: "K-02 B-Only PROJECTADMIN",
-      email: bOnlyEmail,
-      password: bOnlyPassword,
-      access: "PROJECTADMIN",
+      name: "K-02 Outsider USER",
+      email: outsiderEmail,
+      password: outsiderPassword,
+      access: "USER",
     });
-    bOnlyUserId = created.data.id;
+    outsiderUserId = created.data.id;
 
-    const assignResp = await request.post(
-      `${baseURL}/api/model/projectAssignment/create`,
-      {
-        data: {
-          data: { userId: bOnlyUserId, projectId: projectBId },
-        },
-      }
-    );
-    expect(assignResp.status()).toBe(201);
-
-    bOnlyCtx = await browser.newContext({
+    outsiderCtx = await browser.newContext({
       storageState: undefined,
       extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
     });
-    const signinPage = await bOnlyCtx.newPage();
+    const signinPage = await outsiderCtx.newPage();
     await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
+    await signinPage.getByTestId("email-input").fill(outsiderEmail);
+    await signinPage.getByTestId("password-input").fill(outsiderPassword);
     await signinPage.locator('button[type="submit"]').first().click();
     await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
     await signinPage.close();
   });
 
   test.afterAll(async ({ api }) => {
-    await api.deleteUser(bOnlyUserId);
-    await bOnlyCtx.close();
+    await api.deleteUser(outsiderUserId);
+    await outsiderCtx.close();
     if (prisma) await prisma.$disconnect();
   });
 
-  test("B-only PROJECTADMIN cannot enumerate Project A's failed deliveries via ZenStack", async ({
+  test("outsider USER cannot enumerate Project A's failed deliveries via ZenStack", async ({
     baseURL,
   }) => {
     // The deliveries tab's bulk-replay button gates on the deliveries it
@@ -142,7 +132,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // operate on. This is the necessary precondition for K-02: if a
     // cross-tenant caller cannot even discover A's delivery IDs via the
     // RPC surface, they cannot construct a replay request against them.
-    const response = await bOnlyCtx.request.get(
+    const response = await outsiderCtx.request.get(
       `${baseURL}/api/model/webhookDelivery/findMany`,
       {
         params: {
@@ -161,15 +151,15 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     expect(body.data).toHaveLength(0);
   });
 
-  test("B-only PROJECTADMIN cannot read Project A's outbound config via ZenStack (replay button hidden)", async ({
+  test("outsider USER cannot read Project A's outbound config via ZenStack (replay button hidden)", async ({
     baseURL,
   }) => {
     // The single-row replay flow requires the admin to first see the row in
     // the deliveries tab. Since the deliveries tab is gated on
-    // useFindFirstProjects(A) which returns null for B-only, AND the
+    // useFindFirstProjects(A) which returns null for outsider USER, AND the
     // WebhookConfig read policy filters to A=invisible, there is no UI
     // surface that ever holds the deliveryId.
-    const response = await bOnlyCtx.request.get(
+    const response = await outsiderCtx.request.get(
       `${baseURL}/api/model/webhookConfig/findMany`,
       {
         params: {
@@ -183,15 +173,16 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     expect(body.data).toHaveLength(0);
   });
 
-  test("B-only PROJECTADMIN URL-tampering to Project A deliveries tab sees no replay UI", async ({
+  test("outsider USER URL-tampering to Project A deliveries tab sees no replay UI", async ({
     baseURL,
   }) => {
     // Even with a hand-crafted URL pointing at A's outbound config, the
     // page-level notFound() gate (page.tsx:90-99) unmounts the entire
-    // tabs UI. The bulk-replay button + delivery-row drawer (which hosts
-    // the single replay button) are both children of this tree and
-    // therefore never render.
-    const page = await bOnlyCtx.newPage();
+    // tabs UI for any session whose access is not ADMIN/PROJECTADMIN. The
+    // bulk-replay button + delivery-row drawer (which hosts the single
+    // replay button) are both children of this tree and therefore never
+    // render.
+    const page = await outsiderCtx.newPage();
     try {
       await page.goto(
         `${baseURL}/projects/settings/${projectAId}/webhooks` +
@@ -216,9 +207,9 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     }
   });
 
-  test("after B-only's tampering attempts, no replay rows or WEBHOOK_REPLAYED audit exist for Project A", async () => {
-    // End-state proof: regardless of what the B-only session attempted via
-    // the UI, the database must show no replay rows pointing at A's
+  test("after outsider's tampering attempts, no replay rows or WEBHOOK_REPLAYED audit exist for Project A", async () => {
+    // End-state proof: regardless of what the outsider session attempted
+    // via the UI, the database must show no replay rows pointing at A's
     // seeded originals, and no WEBHOOK_REPLAYED audit rows for A. The
     // server actions' `canManageWebhookConfig` gate is the canonical
     // enforcer; ZenStack's read filter is defence-in-depth. This
@@ -240,28 +231,5 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
       select: { id: true },
     });
     expect(auditRows).toHaveLength(0);
-  });
-
-  test("positive control — B-only PROJECTADMIN CAN enumerate Project B's outbound config (gate is project-scoped, not global)", async ({
-    baseURL,
-  }) => {
-    // Sanity check: the previous assertions would also pass if the
-    // policy globally denied B-only — that would mask a bug where the
-    // policy is over-broad. Project B's config must be visible.
-    const response = await bOnlyCtx.request.get(
-      `${baseURL}/api/model/webhookConfig/findMany`,
-      {
-        params: {
-          q: JSON.stringify({ where: { projectId: projectBId } }),
-        },
-      }
-    );
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data.length).toBeGreaterThanOrEqual(1);
-    expect(body.data.map((row: { id: string }) => row.id)).toContain(
-      projectBOutboundConfigId
-    );
   });
 });

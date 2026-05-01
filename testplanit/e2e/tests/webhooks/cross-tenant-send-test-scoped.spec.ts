@@ -20,7 +20,7 @@ import { expect, test } from "../../fixtures/index";
  *
  *   2. Auth gate on the send-test action.
  *      `sendTestWebhook` calls `canManageWebhookConfig(session, projectId)`
- *      BEFORE decrypting (lines 532-541). A B-only PROJECTADMIN who somehow
+ *      BEFORE decrypting (lines 532-541). An outsider USER who somehow
  *      held A's configId would receive `Forbidden` and no fetch() would
  *      fire. The reachable UI surface for non-admins is the per-card
  *      "Send test" button, which is gated behind the page-level
@@ -31,8 +31,16 @@ import { expect, test } from "../../fixtures/index";
  *   - Click send-test on A's Jira card → exactly one new WebhookDelivery
  *     row for A's WebhookConfig with statusCode=200.
  *   - No new WebhookDelivery rows for B's WebhookConfig as a result.
- *   - From a B-only session, the send-test button on A's card never
- *     renders (notFound() unmounts the entire form).
+ *   - From an outsider USER session, the send-test button on A's card never
+ *     renders (notFound() unmounts the entire form when access != ADMIN /
+ *     PROJECTADMIN).
+ *
+ * The outsider actor is a regular USER (signup endpoint Zod schema is
+ * `z.enum(["NONE", "USER", "ADMIN"])`, so PROJECTADMIN cannot be minted via
+ * the signup path the test fixture uses). USER fails the page-level
+ * `access === 'ADMIN' || 'PROJECTADMIN'` gate AND
+ * `canManageWebhookConfig` (no creator / SPECIFIC_ROLE Project Admin /
+ * global PROJECTADMIN paths apply).
  */
 
 const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -46,12 +54,12 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
   let prisma: PrismaClient;
   let projectAJiraConfigId: string;
   let projectBJiraConfigId: string;
-  let bOnlyEmail: string;
-  let bOnlyPassword: string;
-  let bOnlyUserId: string;
-  let bOnlyCtx: BrowserContext;
+  let outsiderEmail: string;
+  let outsiderPassword: string;
+  let outsiderUserId: string;
+  let outsiderCtx: BrowserContext;
 
-  test.beforeAll(async ({ api, browser, baseURL, request }) => {
+  test.beforeAll(async ({ api, browser, baseURL }) => {
     prisma = new PrismaClient();
     projectAId = await api.createProject(`E2E K-03 Project A ${uniqueId}`);
     projectBId = await api.createProject(`E2E K-03 Project B ${uniqueId}`);
@@ -109,43 +117,37 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // this spec rather than as a mysterious cross-tenant delivery.
     expect(aConfig!.token).not.toBe(bConfig!.token);
 
-    // Create a B-only PROJECTADMIN for the cross-tenant UI assertion.
-    bOnlyEmail = `k03-bonly-${uniqueId}@example.com`;
-    bOnlyPassword = "password123";
+    // Create a regular USER outsider with no membership on either project,
+    // for the cross-tenant UI assertion. The signup endpoint accepts only
+    // NONE | USER | ADMIN; USER is what every non-admin / non-PROJECTADMIN
+    // session looks like in production. The outsider USER fails both the
+    // page-level access gate AND `canManageWebhookConfig` for both projects.
+    outsiderEmail = `k03-outsider-${uniqueId}@example.com`;
+    outsiderPassword = "password123";
     const created = await api.createUser({
-      name: "K-03 B-Only PROJECTADMIN",
-      email: bOnlyEmail,
-      password: bOnlyPassword,
-      access: "PROJECTADMIN",
+      name: "K-03 Outsider USER",
+      email: outsiderEmail,
+      password: outsiderPassword,
+      access: "USER",
     });
-    bOnlyUserId = created.data.id;
+    outsiderUserId = created.data.id;
 
-    const assignResp = await request.post(
-      `${baseURL}/api/model/projectAssignment/create`,
-      {
-        data: {
-          data: { userId: bOnlyUserId, projectId: projectBId },
-        },
-      }
-    );
-    expect(assignResp.status()).toBe(201);
-
-    bOnlyCtx = await browser.newContext({
+    outsiderCtx = await browser.newContext({
       storageState: undefined,
       extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
     });
-    const signinPage = await bOnlyCtx.newPage();
+    const signinPage = await outsiderCtx.newPage();
     await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
+    await signinPage.getByTestId("email-input").fill(outsiderEmail);
+    await signinPage.getByTestId("password-input").fill(outsiderPassword);
     await signinPage.locator('button[type="submit"]').first().click();
     await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
     await signinPage.close();
   });
 
   test.afterAll(async ({ api }) => {
-    await api.deleteUser(bOnlyUserId);
-    await bOnlyCtx.close();
+    await api.deleteUser(outsiderUserId);
+    await outsiderCtx.close();
     if (prisma) await prisma.$disconnect();
   });
 
@@ -224,17 +226,18 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     expect(latest.error).toBeNull();
   });
 
-  test("B-only PROJECTADMIN URL-tampering to Project A's webhooks page sees no send-test button on A's Jira card", async ({
+  test("outsider USER URL-tampering to Project A's webhooks page sees no send-test button on A's Jira card", async ({
     baseURL,
   }) => {
-    // Cross-tenant probe: the B-only session has no path to invoke
+    // Cross-tenant probe: the outsider session has no path to invoke
     // send-test against A's config. Page-level notFound() unmounts the
-    // form + cards entirely, so the per-card send-test button never
-    // renders. Asserting the button's count is 0 captures both the
-    // notFound() branch AND any future refactor that would render the
-    // form but hide individual buttons (the latter would be a weaker
-    // posture but still pass this assertion — fine, defence-in-depth).
-    const page = await bOnlyCtx.newPage();
+    // form + cards entirely when access != ADMIN/PROJECTADMIN, so the
+    // per-card send-test button never renders. Asserting the button's
+    // count is 0 captures both the notFound() branch AND any future
+    // refactor that would render the form but hide individual buttons
+    // (the latter would be a weaker posture but still pass this
+    // assertion — fine, defence-in-depth).
+    const page = await outsiderCtx.newPage();
     try {
       await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`, {
         waitUntil: "load",

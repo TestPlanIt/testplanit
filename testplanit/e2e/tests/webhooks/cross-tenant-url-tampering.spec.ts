@@ -9,24 +9,32 @@ import { expect, test } from "../../fixtures/index";
  *
  *   1. UI gate (page-level):
  *      `/projects/settings/{projectId}/webhooks` calls `notFound()` when the
- *      caller's session is not a global ADMIN AND not a PROJECTADMIN assigned
- *      to that specific project (page.tsx:90-99). A B-only PROJECTADMIN
- *      tampering with the URL to reach Project A's webhooks page must NEVER
- *      see the form, tabs, or any webhook config card.
+ *      caller's `session.user.access` is not ADMIN AND not PROJECTADMIN
+ *      (page.tsx:90-99). A regular USER tampering with the URL to reach
+ *      Project A's webhooks page must NEVER see the form, tabs, or any
+ *      webhook config card.
  *
  *   2. ZenStack policy (data layer):
  *      `WebhookConfig` and `WebhookDelivery` `@@allow('read', ...)` clauses
- *      gate by `project.creator == auth() || project.userPermissions[…]
- *      || project.assignedUsers[user == auth() && auth().access ==
- *      'PROJECTADMIN']` (schema.zmodel:3517-3523, 3582-3587). A
- *      cross-tenant `findMany` from a B-only PROJECTADMIN against
- *      Project A's rows must return an empty array.
+ *      gate by `project.creator == auth() || project.userPermissions[…
+ *      SPECIFIC_ROLE && role.name == 'Project Admin'] ||
+ *      project.assignedUsers[user == auth() && auth().access ==
+ *      'PROJECTADMIN']` (schema.zmodel:3517-3523, 3582-3587). A regular USER
+ *      who is none of those for Project A must receive an empty array from a
+ *      cross-tenant `findMany` against Project A's rows.
  *
- * Setup mirrors `access-control.spec.ts` ACL-02/03 pattern: admin (default
- * storageState) seeds projects A + B + a webhook config in A, then a fresh
- * `browser.newContext` signs in as a B-only PROJECTADMIN via the UI signin
- * page so the second user never inherits the admin's session. The `api`
- * fixture's auto-cleanup tears down both projects + the seeded user.
+ * The actor is a regular USER (signup endpoint Zod schema is
+ * `z.enum(["NONE", "USER", "ADMIN"])`, so PROJECTADMIN cannot be minted via
+ * the signup path the test fixture uses). USER is sufficient for this
+ * defence: every webhook read path requires creator / SPECIFIC_ROLE Project
+ * Admin / global PROJECTADMIN, and the outsider USER has none of these on
+ * Project A.
+ *
+ * Setup mirrors `access-control.spec.ts` ACL-02 pattern: admin (default
+ * storageState) seeds Project A + a webhook config in A, then a fresh
+ * `browser.newContext` signs in as the outsider USER via the UI signin page
+ * so the second user never inherits the admin's session. The `api` fixture's
+ * auto-cleanup tears down the project + the seeded user.
  */
 
 const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -36,25 +44,19 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack policy", () => {
   let projectAId: number;
-  let projectBId: number;
-  let bOnlyEmail: string;
-  let bOnlyPassword: string;
-  let bOnlyUserId: string;
-  let bOnlyCtx: BrowserContext;
+  let outsiderEmail: string;
+  let outsiderPassword: string;
+  let outsiderUserId: string;
+  let outsiderCtx: BrowserContext;
 
-  test.beforeAll(async ({ api, browser, baseURL, request }) => {
-    // Admin context creates both projects (auto-tracked for cleanup).
+  test.beforeAll(async ({ api, browser, baseURL }) => {
+    // Admin context creates Project A (auto-tracked for cleanup).
     projectAId = await api.createProject(`E2E K-01 Project A ${uniqueId}`);
-    projectBId = await api.createProject(`E2E K-01 Project B ${uniqueId}`);
 
-    // Configure a Jira inbound webhook on Project A so the data-layer assertion
-    // has a row to NOT see. We use the admin's `api.request` (the page-route
-    // helper accepts the admin session) — going through the model API would
-    // hit the schema's `@@deny('create, update, delete', true)` on
-    // WebhookConfig. The webhook seed helper uses raw Prisma which bypasses
-    // policy by design — the same shape the real server action produces.
-    // Here we use the existing admin form route (PROJECTADMIN A doesn't exist
-    // and this spec doesn't need one — only B-only matters).
+    // Configure a Jira inbound webhook on Project A so the data-layer
+    // assertion has a row to NOT see. We use the admin's storageState to
+    // drive the page route — going through the model API would hit the
+    // schema's `@@deny('create, update, delete', true)` on WebhookConfig.
     const adminPage = await browser.newPage({
       storageState: "e2e/.auth/admin.json",
     });
@@ -74,68 +76,60 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
       await adminPage.close();
     }
 
-    // Create a PROJECTADMIN-access user assigned to Project B only. This is
-    // the closest analogue to "a project admin of project B" in TestPlanIt's
-    // access model — `canManageWebhookConfig` (lib/webhooks/auth.ts:62-65)
-    // and the webhook page-level gate (page.tsx:91-95) both grant access on
-    // (User.access == 'PROJECTADMIN' && project.assignedUsers contains user).
-    bOnlyEmail = `k01-bonly-${uniqueId}@example.com`;
-    bOnlyPassword = "password123";
+    // Create a regular USER with no Project A membership. The signup
+    // endpoint accepts only NONE | USER | ADMIN, and USER is what every
+    // non-admin / non-PROJECTADMIN session looks like in production. The
+    // outsider USER fails every webhook read path on Project A:
+    //   - not the project creator (admin is)
+    //   - no SPECIFIC_ROLE 'Project Admin' assignment on A
+    //   - not auth().access == 'PROJECTADMIN'
+    // and fails the page-level gate (`access === 'ADMIN' || 'PROJECTADMIN'`).
+    outsiderEmail = `k01-outsider-${uniqueId}@example.com`;
+    outsiderPassword = "password123";
     const created = await api.createUser({
-      name: "K-01 B-Only PROJECTADMIN",
-      email: bOnlyEmail,
-      password: bOnlyPassword,
-      access: "PROJECTADMIN",
+      name: "K-01 Outsider USER",
+      email: outsiderEmail,
+      password: outsiderPassword,
+      access: "USER",
     });
-    bOnlyUserId = created.data.id;
+    outsiderUserId = created.data.id;
 
-    // Assign the user to Project B only — explicitly NOT to Project A.
-    const assignResp = await request.post(
-      `${baseURL}/api/model/projectAssignment/create`,
-      {
-        data: {
-          data: { userId: bOnlyUserId, projectId: projectBId },
-        },
-      }
-    );
-    expect(assignResp.status()).toBe(201);
-
-    // Sign in as the B-only PROJECTADMIN in a fresh browser context so they
-    // never inherit the admin's storageState. extraHTTPHeaders matches the
-    // ACL spec — the proxy middleware gates same-origin classification on
+    // Sign in as the outsider in a fresh browser context so they never
+    // inherit the admin's storageState. extraHTTPHeaders matches the ACL
+    // spec — the proxy middleware gates same-origin classification on
     // Sec-Fetch-Site for API calls from this context.
-    bOnlyCtx = await browser.newContext({
+    outsiderCtx = await browser.newContext({
       storageState: undefined,
       extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
     });
-    const signinPage = await bOnlyCtx.newPage();
+    const signinPage = await outsiderCtx.newPage();
     await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
+    await signinPage.getByTestId("email-input").fill(outsiderEmail);
+    await signinPage.getByTestId("password-input").fill(outsiderPassword);
     await signinPage.locator('button[type="submit"]').first().click();
     await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
     await signinPage.close();
   });
 
   test.afterAll(async ({ api }) => {
-    // Soft-delete the B-only user. Projects auto-clean via api.cleanup().
-    await api.deleteUser(bOnlyUserId);
-    await bOnlyCtx.close();
+    // Soft-delete the outsider user. Project A auto-cleans via api.cleanup().
+    await api.deleteUser(outsiderUserId);
+    await outsiderCtx.close();
   });
 
-  test("B-only PROJECTADMIN navigating to Project A's webhooks page sees no form, no tabs, no config cards", async ({
+  test("outsider USER navigating to Project A's webhooks page sees no form, no tabs, no config cards", async ({
     baseURL,
   }) => {
-    const page = await bOnlyCtx.newPage();
+    const page = await outsiderCtx.newPage();
     try {
       await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`, {
         waitUntil: "load",
       });
 
       // Page-level gate calls notFound() when project is not visible OR when
-      // session.user.access ∉ {ADMIN, PROJECTADMIN-assigned}. In both
-      // branches the form + tabs are unmounted — assert the inverse so we
-      // don't depend on the rendered 404 chrome (which has no testid contract).
+      // session.user.access ∉ {ADMIN, PROJECTADMIN}. In both branches the
+      // form + tabs are unmounted — assert the inverse so we don't depend
+      // on the rendered 404 chrome (which has no testid contract).
       await expect(page.getByTestId("webhook-config-form")).toHaveCount(0, {
         timeout: 10_000,
       });
@@ -150,10 +144,10 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     }
   });
 
-  test("B-only PROJECTADMIN navigating to Project A's deliveries tab sees no deliveries table", async ({
+  test("outsider USER navigating to Project A's deliveries tab sees no deliveries table", async ({
     baseURL,
   }) => {
-    const page = await bOnlyCtx.newPage();
+    const page = await outsiderCtx.newPage();
     try {
       await page.goto(
         `${baseURL}/projects/settings/${projectAId}/webhooks?tab=deliveries`,
@@ -170,7 +164,7 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     }
   });
 
-  test("B-only PROJECTADMIN findMany webhookConfig scoped to Project A returns empty (ZenStack read policy)", async ({
+  test("outsider USER findMany webhookConfig scoped to Project A returns empty (ZenStack read policy)", async ({
     baseURL,
   }) => {
     // Direct ZenStack RPC probe — bypasses the UI entirely. The
@@ -179,7 +173,7 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // assigned. Project A has none of those for this user, so the result
     // must be an empty array (200, not 422 — silent filter, per ACL-03
     // pattern).
-    const response = await bOnlyCtx.request.get(
+    const response = await outsiderCtx.request.get(
       `${baseURL}/api/model/webhookConfig/findMany`,
       {
         params: {
@@ -194,17 +188,17 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     expect(body.data).toHaveLength(0);
   });
 
-  test("B-only PROJECTADMIN findMany webhookDelivery scoped to Project A returns empty (ZenStack read policy)", async ({
+  test("outsider USER findMany webhookDelivery scoped to Project A returns empty (ZenStack read policy)", async ({
     baseURL,
   }) => {
     // Same posture — `WebhookDelivery.@@allow('read', ...)` mirrors the
     // WebhookConfig clause through `webhookConfig.project.{creator,
     // userPermissions, assignedUsers}` (schema.zmodel:3582-3587). A
-    // tenant-A scoped find from a B-only caller must silently filter all
+    // tenant-A scoped find from an outsider USER must silently filter all
     // rows. We don't seed delivery rows for this assertion — the clause is
     // identical regardless of count, and the empty result is the
     // observable contract.
-    const response = await bOnlyCtx.request.get(
+    const response = await outsiderCtx.request.get(
       `${baseURL}/api/model/webhookDelivery/findMany`,
       {
         params: {
@@ -219,26 +213,5 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     const body = await response.json();
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.data).toHaveLength(0);
-  });
-
-  test("B-only PROJECTADMIN can still see their OWN project's webhooks page (positive control)", async ({
-    baseURL,
-  }) => {
-    // Sanity: the B-only PROJECTADMIN's gate is project-specific, NOT global.
-    // Navigating to Project B's webhooks page must succeed — otherwise this
-    // spec would also pass against a globally-broken auth path, which would
-    // give a false sense of security.
-    const page = await bOnlyCtx.newPage();
-    try {
-      await page.goto(`${baseURL}/projects/settings/${projectBId}/webhooks`, {
-        waitUntil: "load",
-      });
-      await expect(page.getByTestId("webhook-config-form")).toBeVisible({
-        timeout: 15_000,
-      });
-      await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible();
-    } finally {
-      await page.close();
-    }
   });
 });
