@@ -1,0 +1,93 @@
+import { expect, test } from "../../fixtures/index";
+
+/**
+ * Deliveries tab empty state (E-06).
+ *
+ * Workflow under test: a fresh project with NO webhooks configured →
+ * navigate to the Deliveries tab → empty-state copy renders ("No
+ * deliveries match these filters") with a Reset filters button → click
+ * Reset filters → URL query params reset to just `?tab=deliveries`
+ * (no `configIds`, `status`, `since`, or `until` params). The reset
+ * also resets the cursor pagination state to null.
+ *
+ * The empty-state CTA matters because the Deliveries tab renders the
+ * filter bar above the empty box: a confused admin staring at "No
+ * deliveries" with `?status=failed&since=...&configIds=...` in the URL
+ * needs an obvious one-click escape back to the default view. The
+ * reset path lives in resetFilters() in webhook-deliveries-tab.tsx:
+ * 221-226 — it builds a fresh URLSearchParams with just `tab=
+ * deliveries` and replace()s the route.
+ *
+ * No webhooks setup is required for this spec — empty state surfaces
+ * regardless of webhook config presence when there are zero deliveries
+ * matching the active filter (the gate is `deliveries.length === 0`).
+ * Driving with a freshly-created project avoids any pre-existing rows
+ * from earlier runs leaking into the view.
+ */
+
+test.use({ storageState: "e2e/.auth/admin.json" });
+test.describe.configure({ mode: "serial" });
+
+test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (E-06)", () => {
+  let projectId: number;
+
+  test.beforeAll(async ({ api }) => {
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    projectId = await api.createProject(`E2E Empty Deliveries ${uniqueId}`);
+  });
+
+  test("admin lands on Deliveries tab, sees empty-state copy + Reset filters button, click clears filter query params", async ({
+    page,
+    baseURL,
+  }) => {
+    // 1. Land on the Deliveries tab with a non-default filter applied.
+    //    Using `status=failed` ensures the empty-state branch renders
+    //    even if a future seed accidentally drops a stray delivery row;
+    //    the empty-state gate is `deliveries.length === 0` after filter
+    //    application, so the test stays meaningful regardless.
+    const filteredUrl =
+      `${baseURL}/projects/settings/${projectId}/webhooks` +
+      `?tab=deliveries&status=failed&since=${new Date(0).toISOString()}`;
+    await page.goto(filteredUrl);
+    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // 2. The empty-state container renders with the expected copy + a
+    //    Reset filters button inside it (sibling to the "ghost" reset
+    //    button in the filter bar — both reach the same handler).
+    const empty = page.getByTestId("webhook-deliveries-empty");
+    await expect(empty).toBeVisible({ timeout: 10_000 });
+    await expect(empty).toContainText(/No deliveries match these filters/i);
+
+    const resetButton = page.getByTestId("webhook-deliveries-reset");
+    await expect(resetButton).toBeVisible();
+    await expect(resetButton).toContainText(/Reset filters/i);
+
+    // 3. The full deliveries TABLE is NOT rendered when the empty state
+    //    is showing (the component renders one or the other, never both).
+    await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(0);
+
+    // 4. Click Reset filters → URL collapses to just `?tab=deliveries`.
+    //    The component's resetFilters() implementation builds a fresh
+    //    URLSearchParams (everything else is dropped, including
+    //    `status`, `since`, `until`, and `configIds`).
+    await resetButton.click();
+    await expect(page).toHaveURL(/\?tab=deliveries$/, { timeout: 5_000 });
+
+    // 5. Defensive parse — none of the filter params survived. This
+    //    catches a regression where resetFilters() forgot to drop one
+    //    of the four filter keys.
+    const url = new URL(page.url());
+    expect(url.searchParams.get("tab")).toBe("deliveries");
+    expect(url.searchParams.get("status")).toBeNull();
+    expect(url.searchParams.get("since")).toBeNull();
+    expect(url.searchParams.get("until")).toBeNull();
+    expect(url.searchParams.get("configIds")).toBeNull();
+
+    // 6. The empty state is still showing — a fresh project has zero
+    //    deliveries to match the now-default filter (last-7-days,
+    //    status=all, configIds=all), so the empty branch holds.
+    await expect(page.getByTestId("webhook-deliveries-empty")).toBeVisible();
+  });
+});
