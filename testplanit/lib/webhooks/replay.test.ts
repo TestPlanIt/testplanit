@@ -303,20 +303,23 @@ describe("lib/webhooks/replay", () => {
       expect.stringMatching(/^bat_/)
     );
     expect((result as { enqueuedCount: number }).enqueuedCount).toBe(3);
-    expect((result as { skippedInboundCount: number }).skippedInboundCount).toBe(
-      2
-    );
+    expect(
+      (result as { skippedInboundCount: number }).skippedInboundCount
+    ).toBe(2);
 
     expect(mockQueueAdd).toHaveBeenCalledTimes(3);
     expect(mockedCaptureAudit).toHaveBeenCalledTimes(3);
 
     // Every audit emitted carries source=bulk and the same batchId.
     const batchIds = mockedCaptureAudit.mock.calls.map(
-      (c: unknown[]) => (c[0] as { metadata: Record<string, unknown> }).metadata.batchId
+      (c: unknown[]) =>
+        (c[0] as { metadata: Record<string, unknown> }).metadata.batchId
     );
     expect(new Set(batchIds).size).toBe(1);
     for (const call of mockedCaptureAudit.mock.calls) {
-      expect((call[0] as { metadata: Record<string, unknown> }).metadata.source).toBe("bulk");
+      expect(
+        (call[0] as { metadata: Record<string, unknown> }).metadata.source
+      ).toBe("bulk");
     }
 
     // Defense-in-depth: also verify each inbound id is treated as
@@ -351,22 +354,27 @@ describe("lib/webhooks/replay", () => {
     }
     const prisma = buildPrismaMock({ deliveriesById, outboxByEventId });
 
-    const result = await bulkReplayDeliveries(ids, { actorUserId: "u1" }, prisma);
+    const result = await bulkReplayDeliveries(
+      ids,
+      { actorUserId: "u1" },
+      prisma
+    );
 
     expect(result.outcome).toBe("queued");
     expect((result as { batchId: string }).batchId).toEqual(
       expect.stringMatching(/^bat_/)
     );
     expect((result as { enqueuedCount: number }).enqueuedCount).toBe(N);
-    expect((result as { skippedInboundCount: number }).skippedInboundCount).toBe(
-      0
-    );
+    expect(
+      (result as { skippedInboundCount: number }).skippedInboundCount
+    ).toBe(0);
 
     expect(mockQueueAdd).toHaveBeenCalledTimes(N);
     expect(mockedCaptureAudit).toHaveBeenCalledTimes(N);
 
     const batchIds = mockedCaptureAudit.mock.calls.map(
-      (c: unknown[]) => (c[0] as { metadata: Record<string, unknown> }).metadata.batchId
+      (c: unknown[]) =>
+        (c[0] as { metadata: Record<string, unknown> }).metadata.batchId
     );
     expect(new Set(batchIds).size).toBe(1);
 
@@ -377,5 +385,37 @@ describe("lib/webhooks/replay", () => {
     const mod = await import("./replay");
     expect(mod.BULK_REPLAY_HARD_CAP).toBe(100);
     expect(BULK_REPLAY_HARD_CAP).toBe(100);
+  });
+
+  it("12. orphaned-row-replay-rejects (Plan 04-08): webhookConfigId === null returns config_deleted; NO queue, NO audit", async () => {
+    // Plan 04-08 — when the WebhookConfig was hard-deleted (admin Delete in
+    // the UI), the FK SetNull leaves the delivery row in place as an
+    // orphaned audit record. Replay against an orphan must reject with a
+    // typed reason BEFORE any direction or outbox lookup so admins see a
+    // consistent rejection in the UI rather than a misleading
+    // outbox_purged or inbound_replay_not_supported.
+    const prisma = buildPrismaMock({
+      deliveriesById: {
+        orphan_outbound: baseOutboundDelivery({
+          id: "orphan_outbound",
+          webhookConfigId: null,
+          webhookConfig: null,
+        }),
+      },
+    });
+
+    const result = await replayDelivery(
+      "orphan_outbound",
+      { actorUserId: "u1", source: "single" },
+      prisma
+    );
+
+    expect(result).toEqual({
+      outcome: "rejected",
+      reason: "config_deleted",
+    });
+    expect(mockQueueAdd).not.toHaveBeenCalled();
+    expect(mockedCaptureAudit).not.toHaveBeenCalled();
+    expect(prisma.webhookDelivery.create).not.toHaveBeenCalled();
   });
 });

@@ -288,7 +288,7 @@ async function waitForCount(
 ): Promise<
   Array<{
     id: string;
-    webhookConfigId: string;
+    webhookConfigId: string | null;
     replayedFromDeliveryId: string | null;
     statusCode: number | null;
     error: string | null;

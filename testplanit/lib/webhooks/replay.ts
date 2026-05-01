@@ -32,6 +32,7 @@ export type ReplayRejectionReason =
   | "inbound_replay_not_supported" // D-17a — inbound rejected at helper boundary
   | "delivery_not_found"
   | "outbox_purged" // outbound delivery's eventId points at a purged WebhookOutboxEvent (or null eventId on legacy rows)
+  | "config_deleted" // delivery row is an orphaned audit record — its WebhookConfig was hard-deleted (schema.zmodel: webhookConfig SetNull)
   | "exceeds_cap"; // bulk-only hard cap
 
 export interface ReplayOptions {
@@ -64,14 +65,24 @@ export async function replayDelivery(
     return { outcome: "rejected", reason: "delivery_not_found" };
   }
 
-  // 2. D-17a — inbound is rejected at the helper boundary. No audit, no
+  // 2. Orphaned audit row — the WebhookConfig has been hard-deleted (admin
+  //    pressed Delete in the UI). The delivery row survived per the
+  //    SetNull FK so the audit trail is preserved, but there is no live
+  //    config to dispatch against. Reject with a typed reason BEFORE the
+  //    direction branch so both INBOUND and OUTBOUND orphans surface the
+  //    same `config_deleted` signal to admins.
+  if (delivery.webhookConfigId === null || delivery.webhookConfig === null) {
+    return { outcome: "rejected", reason: "config_deleted" };
+  }
+
+  // 3. D-17a — inbound is rejected at the helper boundary. No audit, no
   //    stub row, no service call. The admin UI (Plan 04-07) renders a
   //    gray info banner for inbound rows instead of a Replay button.
   if (delivery.direction === "INBOUND") {
     return { outcome: "rejected", reason: "inbound_replay_not_supported" };
   }
 
-  // 3. OUTBOUND path. Load the source WebhookOutboxEvent by eventId so we
+  // 4. OUTBOUND path. Load the source WebhookOutboxEvent by eventId so we
   //    can re-enqueue dispatch with the original payload. The link relies
   //    on Plan 04-01's @unique on WebhookOutboxEvent.eventId.
   if (!delivery.eventId) {
@@ -89,7 +100,7 @@ export async function replayDelivery(
     return { outcome: "rejected", reason: "outbox_purged" };
   }
 
-  // 4. Enqueue the dispatch job with replayedFromDeliveryId threaded in.
+  // 5. Enqueue the dispatch job with replayedFromDeliveryId threaded in.
   //    jobId pattern: `replay--<originalDeliveryId>--<timestamp>` so the
   //    same row can be replayed multiple times without BullMQ jobId collision.
   const queue = getWebhookDispatchQueue();
@@ -106,7 +117,7 @@ export async function replayDelivery(
     { jobId }
   );
 
-  // 5. Audit per D-23. Outbound success path only — inbound rejection
+  // 6. Audit per D-23. Outbound success path only — inbound rejection
   //    above already returned without emitting. The new replay row is
   //    written by the dispatch worker at attempt-completion time, so
   //    `replayDeliveryId` is null at this point; the worker's own

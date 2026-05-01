@@ -107,7 +107,12 @@ test.describe("Webhook delivery replay — single outbound", () => {
     expect(failedRows.length).toBeGreaterThanOrEqual(1);
     const failed = failedRows[0];
     originalDeliveryId = failed.id;
-    webhookConfigId = failed.webhookConfigId;
+    // Schema (Plan 04-08 SetNull): webhookConfigId is nullable on the row,
+    // but a freshly dispatched failure row from this seeded config has the
+    // FK populated. Narrow with a runtime guard so the local non-null
+    // variable stays type-safe.
+    expect(failed.webhookConfigId).not.toBeNull();
+    webhookConfigId = failed.webhookConfigId as string;
     expect(failed.statusCode).toBe(500);
     expect(failed.error).not.toBeNull();
     expect(failed.eventId).not.toBeNull();
@@ -184,7 +189,7 @@ async function waitForDelivery(
 ): Promise<
   Array<{
     id: string;
-    webhookConfigId: string;
+    webhookConfigId: string | null;
     statusCode: number | null;
     error: string | null;
     eventId: string | null;
