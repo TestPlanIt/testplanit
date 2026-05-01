@@ -58,7 +58,7 @@ export async function runServer(deps: RunDeps = defaultRunDeps): Promise<void> {
   const probe = await deps.validateImpl(env);
   if (!probe.ok) {
     deps.errLog(
-      `[testplanit-mcp] token validation failed (${redactToken(env.apiToken)}): ${probe.message}`,
+      `[testplanit-mcp] token validation failed (${redactToken(env.apiToken)}): ${probe.message}`
     );
     deps.exitImpl(1);
     return;
@@ -70,12 +70,24 @@ export async function runServer(deps: RunDeps = defaultRunDeps): Promise<void> {
 }
 
 // Top-level entry guard: only fires when this module is the npm bin entry.
-// We check `process.argv[1]` (the script that node was invoked with) rather
-// than `import.meta.url` or `require.main` so the same source compiles into
-// both the ESM source path (vitest) and the CJS bundled output (tsup) without
-// firing during unit tests, which import `runServer` directly.
-const invokedAsBin = process.argv[1]?.endsWith("cli.js") ?? false;
-if (invokedAsBin) {
+// We resolve `process.argv[1]` through realpathSync because npm/npx install
+// the bin as a symlink (e.g. `.bin/testplanit-mcp-server` → `dist/cli.js`),
+// and node's `process.argv[1]` reports the shim path, not the symlink target.
+// A naive `endsWith("cli.js")` check would silently exit 0 on `npx` invocation.
+// Vitest imports `runServer` directly so its argv[1] is the vitest runner —
+// the realpath check returns false there, so unit tests don't fire the bin.
+function isInvokedAsBin(): boolean {
+  const argv1 = process.argv[1];
+  if (!argv1) return false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("node:fs") as typeof import("node:fs");
+    return fs.realpathSync(argv1).endsWith("cli.js");
+  } catch {
+    return false;
+  }
+}
+if (isInvokedAsBin()) {
   runServer().catch((err) => {
     console.error("[testplanit-mcp] fatal:", err);
     process.exit(1);
