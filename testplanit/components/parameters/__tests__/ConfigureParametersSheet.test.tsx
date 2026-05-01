@@ -1,0 +1,177 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
+// Mock ZenStack hooks BEFORE importing the component under test
+const mockUseFindManyTestCaseParameter = vi.fn();
+vi.mock("~/lib/hooks", () => ({
+  useFindManyTestCaseParameter: (args: any, opts?: any) =>
+    mockUseFindManyTestCaseParameter(args, opts),
+}));
+
+// Mock sonner toast
+const toastMessage = vi.fn();
+const toastSuccess = vi.fn();
+const toastError = vi.fn();
+vi.mock("sonner", () => ({
+  toast: Object.assign(vi.fn(), {
+    message: (...args: any[]) => toastMessage(...args),
+    success: (...args: any[]) => toastSuccess(...args),
+    error: (...args: any[]) => toastError(...args),
+  }),
+}));
+
+// Stub child tabs/content (ParametersTab) for shell-level testing
+vi.mock("@/components/parameters/ParametersTab", () => ({
+  ParametersTab: () => <div data-testid="stub-parameters-tab" />,
+}));
+
+import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
+
+describe("ConfigureParametersSheet", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseFindManyTestCaseParameter.mockReturnValue({ data: [] });
+  });
+
+  it("renders sheet content when open=true", () => {
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    expect(screen.getByTestId("configure-parameters-sheet")).toBeInTheDocument();
+  });
+
+  it("does not render sheet content when open=false", () => {
+    render(
+      <ConfigureParametersSheet
+        isOpen={false}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    expect(screen.queryByTestId("configure-parameters-sheet")).toBeNull();
+  });
+
+  it("renders both tab triggers (Parameters and Dataset)", () => {
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    expect(screen.getByTestId("tab-parameters")).toBeInTheDocument();
+    expect(screen.getByTestId("tab-dataset")).toBeInTheDocument();
+  });
+
+  it("disables the Dataset tab when zero parameters exist", () => {
+    mockUseFindManyTestCaseParameter.mockReturnValue({ data: [] });
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    const datasetTab = screen.getByTestId("tab-dataset");
+    expect(datasetTab).toHaveAttribute("disabled");
+  });
+
+  it("enables the Dataset tab when at least one parameter exists", () => {
+    mockUseFindManyTestCaseParameter.mockReturnValue({
+      data: [
+        {
+          id: 1,
+          name: "username",
+          type: "STRING",
+          testCaseId: 1,
+          isDeleted: false,
+        },
+      ],
+    });
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    const datasetTab = screen.getByTestId("tab-dataset");
+    expect(datasetTab).not.toHaveAttribute("disabled");
+  });
+
+  it("close button calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={onClose}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    const closeBtn = screen.getByTestId("configure-parameters-sheet-close");
+    fireEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Cmd+S inside the sheet fires the autosave-hint toast and prevents default", () => {
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    const event = new KeyboardEvent("keydown", {
+      key: "s",
+      metaKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    window.dispatchEvent(event);
+    expect(toastMessage).toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("does not register the Cmd+S listener when isOpen is false", () => {
+    render(
+      <ConfigureParametersSheet
+        isOpen={false}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    const event = new KeyboardEvent("keydown", {
+      key: "s",
+      metaKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    window.dispatchEvent(event);
+    expect(toastMessage).not.toHaveBeenCalled();
+  });
+
+  it("renders the dataset placeholder when on dataset tab is unavailable but content area exists", () => {
+    render(
+      <ConfigureParametersSheet
+        isOpen={true}
+        onClose={() => {}}
+        caseId={1}
+        projectId={2}
+      />
+    );
+    // ParametersTab is stubbed; just confirm the parameters tab body renders.
+    expect(screen.getByTestId("stub-parameters-tab")).toBeInTheDocument();
+  });
+});
