@@ -464,12 +464,20 @@ async function seedCoreData() {
       roleId: adminRole.id,
       emailVerified: new Date(),
       name: adminName,
+      // Self-heal corrupted admin records on re-seed: a human admin must be
+      // active and must NOT be flagged as an API/service-account user.
+      // Historic seeds set isApi: true, which broke the admin UI; this
+      // update clause undoes that on every `pnpm seed`.
+      isActive: true,
+      isApi: false,
+      access: "ADMIN",
     },
     create: {
       email: adminEmail,
       name: adminName,
       password: hashedPassword,
-      isApi: true,
+      isActive: true,
+      isApi: false,
       roleId: adminRole.id,
       emailVerified: new Date(),
       access: "ADMIN",
