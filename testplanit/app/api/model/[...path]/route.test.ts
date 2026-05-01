@@ -1,4 +1,89 @@
-import { describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hoisted mocks for the chokepoint route-level mode:read enforcement tests
+// (Task 4). Must run BEFORE the route module is imported in the second
+// describe block. Mocks for `~/lib/api-token-auth` use vi.fn so individual
+// tests can configure return values per case.
+// ─────────────────────────────────────────────────────────────────────────────
+
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: vi.fn(),
+}));
+
+vi.mock("~/lib/api-token-auth", () => ({
+  authenticateApiToken: vi.fn(),
+  authenticateApiTokenForMethod: vi.fn(),
+  extractBearerToken: vi.fn(),
+}));
+
+vi.mock("~/lib/auditContextWrappers", () => ({
+  enrichFromApiAuth: vi.fn(),
+  // withAuditContext is the HOF wrapper around the inner handler — return
+  // the handler unchanged so tests invoke innerHandler logic directly.
+  withAuditContext: <T extends (...args: any[]) => any>(handler: T): T =>
+    handler,
+}));
+
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
+    apiToken: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("~/lib/multiTenantPrisma", () => ({
+  getCurrentTenantId: vi.fn(() => undefined),
+}));
+
+vi.mock("~/lib/access-fast-path", () => ({
+  tryFastPathCreate: vi.fn(async () => null),
+}));
+
+vi.mock("~/lib/services/auditLog", () => ({
+  captureAuditEvent: vi.fn(async () => undefined),
+}));
+
+vi.mock("~/services/issueSearch", () => ({
+  syncIssueToElasticsearch: vi.fn(),
+}));
+vi.mock("~/services/milestoneSearch", () => ({
+  syncMilestoneToElasticsearch: vi.fn(),
+}));
+vi.mock("~/services/projectSearch", () => ({
+  syncProjectToElasticsearch: vi.fn(),
+}));
+vi.mock("~/services/repositoryCaseSync", () => ({
+  syncRepositoryCaseToElasticsearch: vi.fn(),
+}));
+vi.mock("~/services/sessionSearch", () => ({
+  syncSessionToElasticsearch: vi.fn(),
+}));
+vi.mock("~/services/sharedStepSearch", () => ({
+  syncSharedStepToElasticsearch: vi.fn(),
+}));
+vi.mock("~/services/testRunSearch", () => ({
+  syncTestRunToElasticsearch: vi.fn(),
+}));
+
+// Mock ZenStack runtime + server adapter so importing the route does NOT
+// pull in the real database/policy layer. The base handler is replaced
+// by a vi.fn so tests can assert call-through.
+const baseHandlerMock = vi.fn(
+  async () => new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 })
+);
+vi.mock("@zenstackhq/runtime", () => ({
+  enhance: vi.fn((p: unknown) => p),
+}));
+vi.mock("@zenstackhq/server/next", () => ({
+  NextRequestHandler: vi.fn(() => baseHandlerMock),
+}));
 
 // Since we can't directly import private functions from route.ts,
 // we'll test the audit interception logic by replicating the pure functions
@@ -620,5 +705,158 @@ describe("ZenStack API Route Audit Interception", () => {
         metadata: { operation: "delete" },
       });
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 4: route-level mode:read enforcement at the ZenStack chokepoint.
+// Verifies that innerHandler calls authenticateApiTokenForMethod (NOT the
+// bare authenticateApiToken) and that READ_ONLY_TOKEN errors short-circuit
+// before any prisma/baseHandler call. Empty-scopes tokens still pass through.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("ZenStack chokepoint mode:read enforcement", () => {
+  function makeRequest(
+    method: string,
+    authHeader = "Bearer tpi_test_token"
+  ): NextRequest {
+    const headers = new Headers();
+    headers.set("authorization", authHeader);
+    return {
+      method,
+      headers,
+      url: "http://localhost:3000/api/model/repositoryCases/create",
+      clone() {
+        return this;
+      },
+      async text() {
+        return "";
+      },
+    } as unknown as NextRequest;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue(null);
+
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue("tpi_test_token");
+
+    baseHandlerMock.mockClear();
+    baseHandlerMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 })
+    );
+  });
+
+  async function importRoute() {
+    return await import("./route");
+  }
+
+  it("blocks POST with READ_ONLY_TOKEN errorCode when token has mode:read", async () => {
+    const { authenticateApiTokenForMethod, authenticateApiToken } =
+      await import("~/lib/api-token-auth");
+    (authenticateApiTokenForMethod as any).mockResolvedValue({
+      authenticated: false,
+      error: "Token is read-only; write operations are not permitted.",
+      errorCode: "READ_ONLY_TOKEN",
+    });
+    const { prisma } = await import("~/lib/prisma");
+    const { POST } = await importRoute();
+
+    const req = makeRequest("POST");
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "create"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(401);
+    expect(body.code).toBe("READ_ONLY_TOKEN");
+    // The swap MUST have happened — bare authenticateApiToken not called.
+    expect(authenticateApiToken).not.toHaveBeenCalled();
+    expect(authenticateApiTokenForMethod).toHaveBeenCalledWith(req);
+    // No mutation reached the underlying ZenStack handler.
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+    // No prisma write touched.
+    expect((prisma as any).apiToken.update).not.toHaveBeenCalled();
+  });
+
+  it("allows POST through to ZenStack handler when token has empty scopes (TOK-06 regression)", async () => {
+    const { authenticateApiTokenForMethod, authenticateApiToken } =
+      await import("~/lib/api-token-auth");
+    (authenticateApiTokenForMethod as any).mockResolvedValue({
+      authenticated: true,
+      userId: "user-123",
+      access: "USER",
+      scopes: [],
+    });
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).user.findUnique.mockResolvedValue({
+      id: "user-123",
+      email: "u@e.com",
+      name: "U",
+    });
+    const { POST } = await importRoute();
+
+    const req = makeRequest("POST");
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(authenticateApiTokenForMethod).toHaveBeenCalledWith(req);
+    expect(authenticateApiToken).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("allows GET through when token has mode:read scope (read allowed)", async () => {
+    const { authenticateApiTokenForMethod, authenticateApiToken } =
+      await import("~/lib/api-token-auth");
+    (authenticateApiTokenForMethod as any).mockResolvedValue({
+      authenticated: true,
+      userId: "user-123",
+      access: "USER",
+      scopes: ["mode:read"],
+    });
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).user.findUnique.mockResolvedValue({
+      id: "user-123",
+      email: "u@e.com",
+      name: "U",
+    });
+    const { GET } = await importRoute();
+
+    const req = makeRequest("GET");
+    const res = await GET(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "findMany"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(authenticateApiTokenForMethod).toHaveBeenCalledWith(req);
+    expect(authenticateApiToken).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("verifies the swap: route never calls bare authenticateApiToken", async () => {
+    // Independent assertion: across both blocked and allowed flows, the
+    // bare authenticateApiToken function must remain uncalled. This is the
+    // W-11 verification at the route layer (separate from the file-grep gate
+    // documented in the plan acceptance criteria).
+    const { authenticateApiTokenForMethod, authenticateApiToken } =
+      await import("~/lib/api-token-auth");
+    (authenticateApiTokenForMethod as any).mockResolvedValue({
+      authenticated: false,
+      error: "Invalid API token",
+      errorCode: "INVALID_TOKEN",
+    });
+    const { POST } = await importRoute();
+
+    const req = makeRequest("POST");
+    await POST(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "create"] }),
+    });
+
+    expect(authenticateApiToken).not.toHaveBeenCalled();
+    expect(authenticateApiTokenForMethod).toHaveBeenCalled();
   });
 });
