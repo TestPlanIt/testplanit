@@ -79,11 +79,14 @@ describe("UploadStep", () => {
       "dataset-import-wizard-file-input",
     ) as HTMLInputElement;
     const txt = new File(["hello"], "foo.txt", { type: "text/plain" });
-    await userEvent.upload(input, txt);
+    // fireEvent bypasses the input.accept filter that userEvent.upload enforces.
+    fireEvent.change(input, { target: { files: [txt] } });
+    await waitFor(() => {
+      expect(
+        screen.getByText("Only .csv files are supported."),
+      ).toBeInTheDocument();
+    });
     expect(onFileSelected).not.toHaveBeenCalled();
-    expect(
-      screen.getByText("Only .csv files are supported."),
-    ).toBeInTheDocument();
   });
 
   it("Test 3: rejects oversize file and does NOT call onFileSelected", async () => {
@@ -96,11 +99,13 @@ describe("UploadStep", () => {
     const big = new File([new Uint8Array(6 * 1024 * 1024)], "big.csv", {
       type: "text/csv",
     });
-    await userEvent.upload(input, big);
+    fireEvent.change(input, { target: { files: [big] } });
+    await waitFor(() => {
+      expect(
+        screen.getByText("File is too large. Maximum is 5 MB."),
+      ).toBeInTheDocument();
+    });
     expect(onFileSelected).not.toHaveBeenCalled();
-    expect(
-      screen.getByText("File is too large. Maximum is 5 MB."),
-    ).toBeInTheDocument();
   });
 
   it("Test 4: valid CSV → onFileSelected(file, csvText)", async () => {
@@ -110,7 +115,7 @@ describe("UploadStep", () => {
       "dataset-import-wizard-file-input",
     ) as HTMLInputElement;
     const csv = new File(["a,b\n1,2\n"], "ok.csv", { type: "text/csv" });
-    await userEvent.upload(input, csv);
+    fireEvent.change(input, { target: { files: [csv] } });
     await waitFor(() => {
       expect(onFileSelected).toHaveBeenCalledTimes(1);
     });
@@ -130,9 +135,9 @@ describe("MapColumnsStep", () => {
   it("Test 5: renders test-id + one row per CSV header", () => {
     render(
       <MapColumnsStep
-        csvHeaders={["username", "amount"]}
+        csvHeaders={["col_user", "col_amt"]}
         parameters={params}
-        mapping={{ username: "username", amount: "amount" }}
+        mapping={{ col_user: "username", col_amt: "amount" }}
         onMappingChange={vi.fn()}
         onValidityChange={vi.fn()}
       />,
@@ -140,8 +145,14 @@ describe("MapColumnsStep", () => {
     expect(
       screen.getByTestId("dataset-import-wizard-step-map"),
     ).toBeInTheDocument();
-    expect(screen.getByText("username")).toBeInTheDocument();
-    expect(screen.getByText("amount")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("dataset-import-wizard-map-row-col_user"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("dataset-import-wizard-map-row-col_amt"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("col_user")).toBeInTheDocument();
+    expect(screen.getByText("col_amt")).toBeInTheDocument();
   });
 
   it("Test 6: auto-maps headers case-insensitively on mount when mapping is empty", async () => {
