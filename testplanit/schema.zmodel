@@ -36,6 +36,7 @@ model AppConfig {
     @@allow ('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
+
 // Account table is required by NextAuth for OAuth providers
 model Account {
     id                String  @id @default(cuid())
@@ -135,7 +136,7 @@ model User {
     twoFactorSecret         String?                 @omit // Encrypted TOTP secret
     twoFactorBackupCodes    String?                 @omit // JSON array of hashed backup codes
 
-    // Account lockout and password management (Phase 66)
+    // Account lockout and password management
     failedLoginAttempts     Int                     @default(0)
     lockedUntil             DateTime?               @db.Timestamptz(6)
     passwordChangedAt       DateTime?               @db.Timestamptz(6)
@@ -151,7 +152,7 @@ model User {
     @@allow('read', auth().access != null)
 }
 
-// Password history for preventing password reuse (Phase 66)
+// Password history for preventing password reuse
 model PasswordHistory {
     id        String   @id @default(cuid())
     userId    String
@@ -2539,7 +2540,6 @@ enum AdapterType {
     JIRA
     GITHUB
     AZURE_DEVOPS
-    // v0.23.0 Phase 2 — outbound webhook adapters
     SLACK
     GENERIC_HMAC
 
@@ -2557,9 +2557,6 @@ enum WebhookDirection {
     @@allow('read', auth().access != null)
 }
 
-// v0.23.0 Phase 2 — outbound webhook endpoint health.
-// Phase 2 only writes HEALTHY (default). DEGRADED/DISABLED transitions land in
-// Phase 4 (DEL-04..07) — column added now to avoid a Phase 4 migration (D-26).
 enum EndpointHealth {
     HEALTHY
     DEGRADED
@@ -2664,7 +2661,7 @@ model CodeRepository {
 
 model ProjectCodeRepositoryConfig {
     id                 Int            @id @default(autoincrement())
-    projectId          Int            @unique  // One repository config per project (v1)
+    projectId          Int            @unique
     project            Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
     repositoryId       Int
     repository         CodeRepository @relation(fields: [repositoryId], references: [id])
@@ -2689,7 +2686,7 @@ model ProjectCodeRepositoryConfig {
 }
 
 // ============================================
-// LLM/AI Models - Completely separate from Issue Tracking
+// LLM/AI Models
 // ============================================
 
 model LlmIntegration {
@@ -3465,57 +3462,36 @@ model IntegrationProject {
     @@allow('all', auth().access == 'ADMIN')
 }
 
-// =============================================================================
-// Webhooks (v0.23.0 Phase 1) — three-model architecture per BLOCKER #1:
-//   WebhookConfig:     per-project receiver config (one row per (projectId, adapterType, direction))
-//   WebhookDelivery:   delivery LOG — every HTTP attempt gets its own row (NO unique constraint on payloadDigest)
-//   WebhookEventDedup: idempotency tracker — one row per APPLIED payload, @@unique([webhookConfigId, payloadDigest])
-// Phase 1 writes INBOUND only; OUTBOUND placeholder reserved for Phase 2+.
-// =============================================================================
-
 model WebhookConfig {
-    id              String              @id @default(cuid())
-    projectId       Int
-    project         Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    adapterType     AdapterType
-    direction       WebhookDirection
-    token           String              @unique // routing key, e.g. "whk_<32-byte-hex>"
-    secret          String              // HMAC verification secret, encrypted at rest by application code
-    isActive        Boolean             @default(true)
-    // v0.23.0 Phase 2 — outbound dispatch additions (all nullable for Phase 1 back-compat)
-    subscribedEvents String[]           @default([])     // OUT-19: per-event opt-in; empty array = subscribe-all (D-33)
-    endpointHealth  EndpointHealth      @default(HEALTHY) // Phase 2 only writes HEALTHY; DEGRADED/DISABLED transitions land in Phase 4 (DEL-04..07)
-    url             String?                              // OUTBOUND destination URL (e.g. https://hooks.slack.com/services/...). Phase 1 INBOUND leaves NULL — receiver derives URL from token.
-    name            String?                              // D-28: admin-facing label for OUTBOUND configs (e.g. "Engineering Slack"). Phase 1 INBOUND leaves NULL.
-    lastReceivedAt  DateTime?           @db.Timestamptz(6)
-    lastDispatchedAt        DateTime?           @db.Timestamptz(6)  // DEL-08 — set by dispatch.ts at attempt entry (Plan 04-05)
-    lastSuccessAt           DateTime?           @db.Timestamptz(6)  // DEL-08 — set by dispatch.ts on 2xx (Plan 04-05)
-    lastFailureAt           DateTime?           @db.Timestamptz(6)  // DEL-08 — set by dispatch.ts on non-2xx/timeout/error (Plan 04-05)
-    consecutiveFailureCount Int                 @default(0)         // D-12, D-19 — counter updated by lib/webhooks/health.ts (Plan 04-02)
-    createdAt       DateTime            @default(now()) @db.Timestamptz(6)
-    updatedAt       DateTime            @updatedAt
-    deliveries      WebhookDelivery[]
-    eventDedups     WebhookEventDedup[]
-    secrets         WebhookConfigSecret[] // v0.23.0 Phase 2 — two-secret overlap rotation (D-04)
+    id                      String                @id @default(cuid())
+    projectId               Int
+    project                 Projects              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    adapterType             AdapterType
+    direction               WebhookDirection
+    token                   String                @unique
+    secret                  String
+    isActive                Boolean               @default(true)
+    subscribedEvents        String[]              @default([])
+    endpointHealth          EndpointHealth        @default(HEALTHY)
+    url                     String?
+    name                    String?
+    lastReceivedAt          DateTime?             @db.Timestamptz(6)
+    lastDispatchedAt        DateTime?             @db.Timestamptz(6)
+    lastSuccessAt           DateTime?             @db.Timestamptz(6)
+    lastFailureAt           DateTime?             @db.Timestamptz(6)
+    consecutiveFailureCount Int                   @default(0)
+    createdAt               DateTime              @default(now()) @db.Timestamptz(6)
+    updatedAt               DateTime              @updatedAt
+    deliveries              WebhookDelivery[]
+    eventDedups             WebhookEventDedup[]
+    secrets                 WebhookConfigSecret[]
 
-    // INBOUND: one config per (project, adapter) — enforced in
-    // createOrRotateInboundWebhook via findFirst-then-update-or-create.
-    // OUTBOUND: multiple configs per (project, adapter) allowed so a team
-    // can fire different events to multiple Slack channels / HMAC URLs.
     @@index([projectId, adapterType, direction])
     @@index([projectId])
     @@index([token])
 
     @@deny('all', !auth())
 
-    // Read policy (matches the project's two-tier admin hierarchy):
-    //   - System Admin (User.access == 'ADMIN') — full read across all projects.
-    //   - Project Admin — read on their project, granted via any of:
-    //       project.creator, SPECIFIC_ROLE='Project Admin' on this project,
-    //       or assigned to this project with global User.access='PROJECTADMIN'.
-    //   - Everyone else (regular project members, NO_ACCESS) — denied.
-    // Webhook secrets are sensitive: regular members must not see the URL/secret
-    // even if they have project read access.
     @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
     @@allow('read',
@@ -3523,66 +3499,36 @@ model WebhookConfig {
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
         project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
     )
-
     @@allow('read', auth().access == 'ADMIN')
-
-    // Write policy (CR-02): ALL client-side writes are blocked. Mutations must
-    // flow through the server actions in `app/actions/webhook-config.ts` so:
-    //   - `token` is generated as 32 random bytes (never client-supplied)
-    //   - `secret` is encrypted at rest via `utils/encryption.ts`
-    //   - `isActive` toggle goes through `setWebhookActive` (audit-logged)
-    // Mirrors the WebhookDelivery + WebhookEventDedup posture (system-only
-    // writes via raw prisma). Adding an @@allow here would let a project
-    // admin write plaintext secrets and predictable tokens via ZenStack RPC,
-    // bypassing the encryption-at-rest invariant entirely.
     @@deny('create, update, delete', true)
 }
 
-// Delivery LOG — every inbound HTTP attempt and (Phase 2+) every outbound dispatch
-// gets its own row. Duplicates produce SEPARATE rows with `error='duplicate'`.
-// NO unique constraint on (webhookConfigId, payloadDigest) — that lives on
-// WebhookEventDedup. Indexes only.
 model WebhookDelivery {
-    id              String           @id @default(cuid())
-    // SetNull (NOT Cascade): when an admin hard-deletes a WebhookConfig the
-    // historical delivery rows MUST survive as orphaned audit records (SOC2/
-    // GDPR audit-trail invariant). The 30-day retention worker is the only
-    // thing that purges delivery rows; admin click-to-delete must not erase
-    // history. Mirrors the same SetNull posture as `replayedFromDeliveryId`
-    // below. Project-scoped Deliveries-tab queries naturally exclude orphans
-    // because they filter by `webhookConfig.projectId` and an orphan has no
-    // related WebhookConfig.
-    webhookConfigId String?
-    webhookConfig   WebhookConfig?   @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
-    direction       WebhookDirection
-    adapterType     AdapterType
-    eventType       String?          // e.g. "jira:issue_updated"; nullable because adapter may fail before parsing
-    eventId         String?          // OUT-05 / DEL-01 — outbox event UUID for outbound; NULL for inbound (Phase 1 inbound has no eventId)
-    statusCode      Int?             // HTTP response code (nullable — set after delivery resolves)
-    latencyMs       Int?             // wall-clock receive→respond duration (nullable — set on finalize)
-    payloadDigest   String           // sha256 hex digest of the raw request body — for correlation/admin search, NOT for uniqueness
-    error           String?          // structured reason: "duplicate", "no-link", "synthetic", null on success
-    attempt         Int              @default(1) // Phase 1 always 1 for INBOUND; reserved for Phase 2+ outbound retries
-    replayedFromDeliveryId   String?
-    replayedFrom             WebhookDelivery?  @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
-    replays                  WebhookDelivery[] @relation("WebhookDeliveryReplay")
-    receivedAt      DateTime         @default(now()) @db.Timestamptz(6)
+    id                     String            @id @default(cuid())
+    webhookConfigId        String?
+    webhookConfig          WebhookConfig?    @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
+    direction              WebhookDirection
+    adapterType            AdapterType
+    eventType              String?
+    eventId                String?
+    statusCode             Int?
+    latencyMs              Int?
+    payloadDigest          String
+    error                  String?
+    attempt                Int               @default(1)
+    replayedFromDeliveryId String?
+    replayedFrom           WebhookDelivery?  @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
+    replays                WebhookDelivery[] @relation("WebhookDeliveryReplay")
+    receivedAt             DateTime          @default(now()) @db.Timestamptz(6)
 
-    // Indexes only — no unique constraint per BLOCKER #1 / D-03 REVISED
     @@index([webhookConfigId, receivedAt])
     @@index([webhookConfigId, eventId])
     @@index([direction, receivedAt])
     @@index([payloadDigest])
     @@index([replayedFromDeliveryId])
 
-    // Audit-row-style posture: System Admin and Project Admin can read for the
-    // admin delivery-history UI (Phase 4+). Writes are intentionally unallowed for
-    // ALL clients — the receiver service writes rows using a raw prisma client that
-    // bypasses ZenStack policies entirely. Adding a CRUD allow here would NOT enable
-    // client writes (the deny('create, update, delete', true) below blocks them
-    // unconditionally) and would only confuse future maintainers.
     @@deny('all', !auth())
-    @@deny('create, update, delete', true) // System-only writes via raw prisma; no client-side mutations
+    @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
         webhookConfig.project.creator == auth() ||
@@ -3591,10 +3537,6 @@ model WebhookDelivery {
     )
 }
 
-// Idempotency tracker — one row per APPLIED payload. The dedup INSERT inside
-// the sync service's transaction is what enforces "at-most-once Issue update"
-// (WBHK-06). Phase 1 writes INBOUND only. Phase 2+ outbound dispatch does NOT
-// use this table (each retry gets its own delivery row, full attempt history).
 model WebhookEventDedup {
     id              String        @id @default(cuid())
     webhookConfigId String
@@ -3602,10 +3544,9 @@ model WebhookEventDedup {
     payloadDigest   String
     processedAt     DateTime      @default(now()) @db.Timestamptz(6)
 
-    @@unique([webhookConfigId, payloadDigest]) // BLOCKER #1 / D-04 REVISED — actual idempotency guard for WBHK-06
+    @@unique([webhookConfigId, payloadDigest])
     @@index([webhookConfigId, processedAt])
 
-    // Same posture as WebhookDelivery: system-only writes, project-admin reads.
     @@deny('all', !auth())
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
@@ -3616,34 +3557,19 @@ model WebhookEventDedup {
     )
 }
 
-// v0.23.0 Phase 2 — two-secret overlap rotation (D-04..07).
-//
-// Child rows are the rotation history of `WebhookConfig.secret`. Steady state
-// is one row (active). Pressing "Rotate" creates a NEW row (becomes the active
-// one — its activatedAt is now()) and demotes the previous row by setting
-// autoRetireAt = now() + 7d. A daily scheduler cron retires rows where
-// retiredAt IS NULL AND autoRetireAt < now(). During the rotation window the
-// generic-HMAC adapter signs with BOTH secrets and emits both v1= entries
-// (D-06: Stripe wire format `t=<ts>,v1=<active>,v1=<retiring>`).
-//
-// `secret` is encrypted at rest using the same `utils/encryption.ts` helper
-// Phase 1 uses for `WebhookConfig.secret` (D-07).
 model WebhookConfigSecret {
     id              String        @id @default(cuid())
     webhookConfigId String
     webhookConfig   WebhookConfig @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
-    secret          String        // HMAC signing secret; encrypted at rest by application code (utils/encryption.ts)
+    secret          String
     activatedAt     DateTime      @default(now()) @db.Timestamptz(6)
     retiredAt       DateTime?     @db.Timestamptz(6) // null = currently active or retiring; non-null = retired and unused
     autoRetireAt    DateTime?     @db.Timestamptz(6) // null = no auto-retire scheduled (steady state); non-null = retiring; cron retires when now() > autoRetireAt
     createdAt       DateTime      @default(now()) @db.Timestamptz(6)
 
     @@index([webhookConfigId, activatedAt])
-    @@index([retiredAt, autoRetireAt]) // for the daily auto-retire cron sweep
+    @@index([retiredAt, autoRetireAt])
 
-    // Same posture as WebhookConfig: ALL client writes blocked at policy layer.
-    // Server actions in app/actions/webhook-config.ts use raw `prisma` after
-    // calling canManageWebhookConfig(session, projectId) — D-32.
     @@deny('all', !auth())
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
@@ -3654,40 +3580,21 @@ model WebhookConfigSecret {
     )
 }
 
-// v0.23.0 Phase 2 — transactional outbox table for outbound webhook events (D-01, D-03).
-//
-// Each domain mutation that should fire an outbound event writes ONE row here
-// inside the producing transaction (via the lib/webhooks/events.ts helper that
-// the lib/prisma.ts $extends middleware calls — D-01 revised). Crash safety is
-// guaranteed because the row commits in the same tx as the entity change.
-//
-// The webhookOutboxWorker polls this table every ~2s for `dispatchedAt IS NULL`
-// rows using `SELECT ... FOR UPDATE SKIP LOCKED` (D-02), fans each row out to
-// every matching WebhookConfig (subscribedEvents match — D-33), enqueues one
-// dispatch job per matching config, and marks `dispatchedAt = now()`.
-//
-// Deliberately NO FK to WebhookConfig (D-03): one outbox row → N delivery
-// chains; the fan-out happens at dispatch time. eventId is the stable UUID
-// that lands on every WebhookDelivery row produced from this row (OUT-05).
 model WebhookOutboxEvent {
-    id              String      @id @default(cuid())
-    projectId       Int
-    project         Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    eventName       String      // e.g. "test_run.completed", "issue.created" (D-09..D-13 catalog)
-    eventId         String      @unique  // UUID v4 generated at emit time (OUT-05); stable across retries; lands on every WebhookDelivery row
-    eventTimestamp  DateTime    @default(now()) @db.Timestamptz(6) // ISO-8601 envelope eventTimestamp (OUT-20)
-    actorUserId     String?     // null when actor is the system (e.g. backfill, cron); resolved from auditContext at emit time (D-01)
-    payload         Json        // event-specific data; full envelope is built at dispatch time (D-14)
-    dispatchedAt    DateTime?   @db.Timestamptz(6) // null = pending poll; non-null = the poller has fanned out and enqueued
-    createdAt       DateTime    @default(now()) @db.Timestamptz(6)
+    id             String    @id @default(cuid())
+    projectId      Int
+    project        Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    eventName      String
+    eventId        String    @unique
+    eventTimestamp DateTime  @default(now()) @db.Timestamptz(6)
+    actorUserId    String?
+    payload        Json
+    dispatchedAt   DateTime? @db.Timestamptz(6)
+    createdAt      DateTime  @default(now()) @db.Timestamptz(6)
 
-    @@index([dispatchedAt, createdAt]) // poller scans WHERE dispatchedAt IS NULL ORDER BY createdAt
-    @@index([projectId, eventName])    // ad-hoc admin reads for a single project's event stream
+    @@index([dispatchedAt, createdAt])
+    @@index([projectId, eventName])
 
-    // Same posture as WebhookConfig/WebhookDelivery: deny-all-writes at the
-    // policy layer; the lib/webhooks/events.ts helper writes via raw prisma
-    // (D-32). Reads are project-admin scoped — note the policy traverses
-    // `project` directly because there is NO FK to WebhookConfig (D-03).
     @@deny('all', !auth())
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
@@ -3701,48 +3608,48 @@ model WebhookOutboxEvent {
 // LLM Integration Models
 
 model LlmProviderConfig {
-    id                   Int             @id @default(autoincrement())
-    llmIntegrationId     Int?            @unique  // Made optional for migration
-    llmIntegration       LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
+    id                    Int             @id @default(autoincrement())
+    llmIntegrationId      Int?            @unique  // Made optional for migration
+    llmIntegration        LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
 
     // Model configuration
-    defaultModel         String   // e.g., "gpt-4", "claude-3-opus", "llama2"
-    availableModels      Json     // Array of available models with their configs
+    defaultModel          String   // e.g., "gpt-4", "claude-3-opus", "llama2"
+    availableModels       Json     // Array of available models with their configs
 
     // Rate limiting
-    maxTokensPerRequest  Int             @default(4096)
-    maxRequestsPerMinute Int             @default(60)
-    maxRequestsPerDay    Int?      // Optional daily limit
+    maxTokensPerRequest   Int             @default(4096)
+    maxRequestsPerMinute  Int             @default(60)
+    maxRequestsPerDay     Int?      // Optional daily limit
 
     // Cost tracking (0 for Ollama since it's local)
-    costPerInputToken    Decimal         @db.Decimal(10, 8)
-    costPerOutputToken   Decimal         @db.Decimal(10, 8)
-    monthlyBudget        Decimal?        @db.Decimal(10, 2)
+    costPerInputToken     Decimal         @db.Decimal(10, 8)
+    costPerOutputToken    Decimal         @db.Decimal(10, 8)
+    monthlyBudget         Decimal?        @db.Decimal(10, 2)
 
     // Day of month (1-31) when the billing period starts. Defaults to 1
     // for calendar-month behavior. Values >28 clamp to last day of short
     // months (e.g., 31 -> Feb 28/29).
-    billingPeriodStartDay Int            @default(1)
+    billingPeriodStartDay Int             @default(1)
 
     // Settings
-    defaultTemperature   Float           @default(0.7)
-    defaultMaxTokens     Int             @default(2048)
-    timeout              Int             @default(30000) // milliseconds
-    retryAttempts        Int             @default(3)
-    streamingEnabled     Boolean         @default(false) // Ollama supports streaming
-    isDefault            Boolean         @default(false) // Whether this is the default LLM provider
+    defaultTemperature    Float           @default(0.7)
+    defaultMaxTokens      Int             @default(2048)
+    timeout               Int             @default(30000) // milliseconds
+    retryAttempts         Int             @default(3)
+    streamingEnabled      Boolean         @default(false) // Ollama supports streaming
+    isDefault             Boolean         @default(false) // Whether this is the default LLM provider
 
     // Ollama-specific settings (stored in settings Json)
-    settings             Json?     // Contains baseUrl, keepAlive, numGpu, etc.
+    settings              Json?     // Contains baseUrl, keepAlive, numGpu, etc.
 
     // Budget alert tracking - which thresholds have fired per billing period.
     // Key is the period-start ISO date `YYYY-MM-DD` (derived from
     // `billingPeriodStartDay`); e.g., {"2026-03-15": [80, 90]} means 80% and
     // 90% alerts fired for the period starting March 15 2026.
-    alertThresholdsFired Json?
+    alertThresholdsFired  Json?
 
-    createdAt            DateTime        @default(now()) @db.Timestamptz(6)
-    updatedAt            DateTime        @updatedAt
+    createdAt             DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt             DateTime        @updatedAt
 
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
@@ -3776,15 +3683,15 @@ model PromptConfigPrompt {
     id               String          @id @default(cuid())
     promptConfigId   String
     promptConfig     PromptConfig    @relation(fields: [promptConfigId], references: [id], onDelete: Cascade)
-    feature          String       // e.g., "test_case_generation", "markdown_parsing"
+    feature          String
     systemPrompt     String          @db.Text
-    userPrompt       String          @db.Text  // Can include {{placeholders}}
+    userPrompt       String          @db.Text
     temperature      Float           @default(0.7)
     maxOutputTokens  Int             @default(2048)
-    variables        Json            @default("[]") // Array of variable definitions
+    variables        Json            @default("[]")
     llmIntegrationId Int?
     llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
-    modelOverride    String?          // Override model name for this specific prompt
+    modelOverride    String?
     createdAt        DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt        DateTime        @updatedAt
 
@@ -4029,7 +3936,6 @@ model RegistrationSettings {
     force2FAAllLogins        Boolean  @default(false) // Force 2FA for all logins including SSO
     // Email verification settings
     requireEmailVerification Boolean  @default(true)  // Require email verification for email/password sign-ups
-    // Password policy (Phase 66)
     minPasswordLength        Int      @default(12)
     requireUppercase         Boolean  @default(false)
     requireLowercase         Boolean  @default(false)
@@ -4344,7 +4250,6 @@ enum AuditAction {
     SHARE_LINK_CREATED
     SHARE_LINK_ACCESSED
     SHARE_LINK_REVOKED
-    // Phase 62 additions — coverage fixes (v0.22.1)
     DUPLICATE_RESOLVED
     IMPORT_STARTED
     MAGIC_LINK_REQUESTED
@@ -4353,17 +4258,13 @@ enum AuditAction {
     TWO_FACTOR_ENABLED
     TWO_FACTOR_SETUP_REQUIRED
     TWO_FACTOR_VERIFIED
-    // Password policy & security hardening additions
     ACCOUNT_LOCKED
     ACCOUNT_UNLOCKED
     PASSWORD_POLICY_CHANGED
     FORCE_PASSWORD_CHANGE
     PASSWORD_REVOKED
-    // v0.23.0 Phase 1 — webhook system
     WEBHOOK_RECEIVED
-    // v0.23.0 Phase 2 — outbound webhook dispatch
     WEBHOOK_DISPATCHED
-    // v0.23.0 Phase 4 — delivery tracking + admin UI
     WEBHOOK_REPLAYED
     WEBHOOK_HEALTH_CHANGED
     WEBHOOK_RETENTION_PURGED
@@ -4401,8 +4302,6 @@ model AuditLog {
     @@index([timestamp])
     @@index([action])
 
-    // Immutability: Audit logs should never be modified or deleted via app
-    // Only admins can read, and only the system (bypassing ZenStack) can create
     @@deny('all', !auth())
     @@deny('update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
