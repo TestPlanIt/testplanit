@@ -1,3 +1,13 @@
+## [0.24.0](https://github.com/TestPlanIt/testplanit/compare/v0.23.1...v0.24.0) (2026-05-02)
+
+### Features
+
+* webhooks — two-way sync with issue trackers + outbound delivery ([#266](https://github.com/TestPlanIt/testplanit/issues/266)) ([2da2188](https://github.com/TestPlanIt/testplanit/commit/2da2188b91e12c7b23836677e28cb23108c8b6be)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#5](https://github.com/TestPlanIt/testplanit/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#5](https://github.com/TestPlanIt/testplanit/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#22c55e](https://github.com/TestPlanIt/testplanit/issues/22c55e) [#ef4444](https://github.com/TestPlanIt/testplanit/issues/ef4444) [#eab308](https://github.com/TestPlanIt/testplanit/issues/eab308) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#4](https://github.com/TestPlanIt/testplanit/issues/4) [#5](https://github.com/TestPlanIt/testplanit/issues/5)
+
+### Bug Fixes
+
+* **docs:** correct link to API Tokens in user profile documentation ([9beda77](https://github.com/TestPlanIt/testplanit/commit/9beda778d66be84d031cfa75225edb190041669f))
+
 ## [0.23.1](https://github.com/TestPlanIt/testplanit/compare/v0.23.0...v0.23.1) (2026-04-30)
 
 ### Enhancements
